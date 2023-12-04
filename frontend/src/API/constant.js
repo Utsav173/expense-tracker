@@ -1,4 +1,4 @@
-export const BASE_URL = "http://localhost:1337";
+export const BASE_URL = "https://exp-v-4.onrender.com";
 
 export const URL = {
   LOGIN: `${BASE_URL}/auth/login`,
