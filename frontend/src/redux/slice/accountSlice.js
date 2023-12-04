@@ -65,7 +65,6 @@ export const accountSlice = createSlice({
         state.previousShares = action.payload;
       })
       .addCase(fetchSignleAccount.fulfilled, (state, action) => {
-        console.log("action.payload", action.payload);
         state.accountStat = action.payload;
       })
       .addCase(fetchSignleAccount.rejected, (state, action) => {

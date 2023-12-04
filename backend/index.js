@@ -62,7 +62,7 @@ server.on("error", (error) => {
 });
 
 cron.schedule("*/15 * * * *", async () => {
-  const response = await axios.get(`http://localhost:1337/auth/test`);
+  const response = await axios.get(`https://exp-v-4.onrender.com/auth/test`);
   console.log(response.data);
 });
 

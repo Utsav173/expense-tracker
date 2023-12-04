@@ -86,10 +86,8 @@ export const fetchSignleAccount = createAsyncThunk(
         {},
         true
       );
-      console.log(response,"response");
       return response;
     } catch (error) {
-      console.log("error 123",error);
       toast.error(error.response?.data?.message);
       throw error;
     }
