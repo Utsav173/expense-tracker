@@ -3,7 +3,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { ThemeProvider, createTheme } from "@mui/material";
 import "./App.css";
 import { useSelector } from "react-redux";
-import { selectDarkMode } from "./redux/slice/darkmodeSlice";
+import { selectDarkMode } from "./redux/slice/darkModeSlice";
 import { Suspense, lazy, useMemo } from "react";
 import Loader from "./components/common/Loader.jsx";
 import { THEME_ID as MATERIAL_THEME_ID } from "@mui/material/styles";

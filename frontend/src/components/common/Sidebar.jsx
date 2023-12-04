@@ -16,7 +16,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   selectDarkMode,
   toggleDarkMode,
-} from "../../redux/slice/darkmodeSlice";
+} from "../../redux/slice/darkModeSlice";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import { Link, useNavigate } from "react-router-dom";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
