@@ -76,8 +76,8 @@ const Statement = () => {
       setEndDate("");
       setNumTransactions("");
     } catch (error) {
-      console.error(error);
-      toast.error("Failed to generate statement. Please try again.");
+      toast.error(error);
+      // toast.error("Failed to generate statement. Please try again.");
     }
   };
 
