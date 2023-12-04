@@ -1,0 +1,21 @@
+import { configureStore } from "@reduxjs/toolkit";
+import darkModeReducer from "./slice/darkmodeSlice";
+import homeSliceReducer from "./slice/homeSlice";
+import accountSliceReducer from "./slice/accountSlice";
+import dashboardSliceReducer from "./slice/dashboardSlice";
+import profileSliceReducer from "./slice/profileSlice";
+
+export const store = configureStore({
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: false,
+    }),
+  devTools: true,
+  reducer: {
+    darkMode: darkModeReducer,
+    homePage: homeSliceReducer,
+    accountPage: accountSliceReducer,
+    dashboardPage: dashboardSliceReducer,
+    profilePage: profileSliceReducer,
+  },
+});
