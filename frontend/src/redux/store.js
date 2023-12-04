@@ -1,5 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
-import darkModeReducer from "./slice/darkmodeSlice";
+import darkModeReducer from "./slice/darkModeSlice";
 import homeSliceReducer from "./slice/homeSlice";
 import accountSliceReducer from "./slice/accountSlice";
 import dashboardSliceReducer from "./slice/dashboardSlice";
