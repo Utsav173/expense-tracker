@@ -10,7 +10,7 @@ const AccStatChart = lazy(() => import("./chart/AccStatChart"));
 
 const AccountStat = () => {
   const { accountStat, amountCharts } = useSelector(
-    (state) => state.accountPage
+    (state) => state.accountPage,
   );
   const theme = useTheme();
 
@@ -59,12 +59,13 @@ const AccountStat = () => {
                 justifyContent: "center",
                 alignItems: "center",
                 padding: "16px",
+                background: "transparent",
               }}
             >
               <Typography
                 variant="h6"
                 gutterBottom
-                sx={{ color: "inherit", fontSize: "20px" }}
+                sx={{ color: "inherit", fontSize: "20px", zIndex: 100 }}
               >
                 Income
               </Typography>
@@ -72,6 +73,7 @@ const AccountStat = () => {
                 variant="h5"
                 gutterBottom
                 sx={{
+                  zIndex: 100,
                   fontWeight: "bold",
                   color: (theme) =>
                     theme.palette.mode === "dark" ? "#75c783" : "#1e2620",
@@ -79,11 +81,20 @@ const AccountStat = () => {
               >
                 {currencyFormat(accountStat.income)}
               </Typography>
-              <Box display="flex" alignItems="center" color={"green"}>
+              <Box
+                display="flex"
+                alignItems="center"
+                color={"green"}
+                zIndex={100}
+              >
                 <Typography sx={{}}>
                   {accountStat.IncomePercentageChange}%
                 </Typography>
-                <TrendingUpIcon sx={{ fontSize: 20, color: "green" }} />
+                {accountStat.IncomePercentageChange > 0 ? (
+                  <TrendingUpIcon sx={{ fontSize: 20, color: "green" }} />
+                ) : (
+                  <TrendingDownIcon sx={{ fontSize: 20, color: "green" }} />
+                )}
               </Box>
             </Box>
             <Box
@@ -166,6 +177,7 @@ const AccountStat = () => {
                 justifyContent: "center",
                 alignItems: "center",
                 padding: "16px",
+                background: "transparent",
               }}
             >
               <Typography variant="h6" gutterBottom>
@@ -175,6 +187,7 @@ const AccountStat = () => {
                 variant="h5"
                 gutterBottom
                 sx={{
+                  zIndex: 100,
                   fontWeight: "bold",
                   color: (theme) =>
                     theme.palette.mode === "dark" ? "#db6e6e" : "#261e1e",
@@ -182,9 +195,18 @@ const AccountStat = () => {
               >
                 {currencyFormat(accountStat.expense)}
               </Typography>
-              <Box display="flex" alignItems="center" color={"red"}>
+              <Box
+                display="flex"
+                alignItems="center"
+                color={"red"}
+                zIndex={100}
+              >
                 <Typography>{accountStat.ExpensePercentageChange}%</Typography>
-                <TrendingDownIcon sx={{ fontSize: 20, color: "red" }} />
+                {accountStat.ExpensePercentageChange > 0 ? (
+                  <TrendingUpIcon sx={{ fontSize: 20, color: "red" }} />
+                ) : (
+                  <TrendingDownIcon sx={{ fontSize: 20, color: "red" }} />
+                )}
               </Box>
             </Box>
             <Box

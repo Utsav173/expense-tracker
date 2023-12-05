@@ -1,6 +1,5 @@
 import * as React from "react";
 import Avatar from "@mui/material/Avatar";
-import CssBaseline from "@mui/material/CssBaseline";
 import TextField from "@mui/material/TextField";
 import MULink from "@mui/material/Link";
 import Grid from "@mui/material/Grid";
@@ -110,7 +109,7 @@ export default function SignUpPage() {
       /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (!passwordRegex.test(password.trim())) {
       toast.error(
-        "Password should contain at least one letter, one digit, and one special character"
+        "Password should contain at least one letter, one digit, and one special character",
       );
       return;
     }
@@ -135,7 +134,6 @@ export default function SignUpPage() {
         alignItems: "center",
       }}
     >
-      <CssBaseline />
       <CustomContainer>
         <Avatar sx={{ m: 1, backgroundColor: "#ff499e" }}>
           <LockOutlinedIcon />
@@ -212,7 +210,7 @@ export default function SignUpPage() {
                   <FormHelperText>
                     Size: {importFile.size} KB, lastModified:{" "}
                     {new Date(importFile.lastModified).toLocaleDateString(
-                      "en-US"
+                      "en-US",
                     )}
                   </FormHelperText>
                 )}

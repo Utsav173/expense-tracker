@@ -1,12 +1,14 @@
 import { lazy } from "react";
-import { ScaleLoader } from "react-spinners";
 import { currencyFormat } from "../../../utils";
-
+import Loader from "../../common/Loader";
+import { useMediaQuery } from "@mui/material";
 const Chart = lazy(() => import("react-apexcharts"));
 
 const PieChart = ({ data, themeMode }) => {
   const totalIncome = data.totalIncome;
   const totalExpense = data.totalExpense;
+
+  const isMobile = useMediaQuery("(max-width: 600px)");
 
   const series = [totalIncome, totalExpense];
   const labels = ["Total Income", "Total Expense"];
@@ -14,7 +16,6 @@ const PieChart = ({ data, themeMode }) => {
   const options = {
     chart: {
       type: "donut",
-      height: 350,
       background: "transparent",
       toolbar: {
         show: true,
@@ -95,6 +96,11 @@ const PieChart = ({ data, themeMode }) => {
           legend: {
             show: false,
           },
+          title: {
+            style: {
+              fontSize: "10px",
+            },
+          },
         },
       },
     ],
@@ -104,15 +110,14 @@ const PieChart = ({ data, themeMode }) => {
   };
 
   return !data || !data.totalIncome || !data.totalExpense ? (
-    <ScaleLoader />
+    <Loader diff />
   ) : (
     <Chart
       options={options}
       series={series}
       type="donut"
-      height={350}
-      width={"100%"}
-      // style={{ borderRadius: '15px', overflow: 'hidden' }}
+      height={isMobile ? 300 : 400}
+      width="100%"
     />
   );
 };

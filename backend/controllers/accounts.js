@@ -8,6 +8,7 @@ const {
   calculatePercentageChange,
   calculateTotalPercentageChange,
   getIntervalValue,
+  calculateBalanceData,
 } = require("../utils");
 const { Transaction } = require("../models/Transaction");
 const { default: mongoose } = require("mongoose");
@@ -580,12 +581,12 @@ const getCustomAnalytics = async (req, res) => {
       balance: analyticsData.totalBalance,
       IncomePercentageChange: parseFloat(TIPChange.toFixed(2)),
       futurePredictedIncome: predictedIncomes.map((e) =>
-        parseFloat(e.toFixed(2))
+        parseFloat(e.toFixed(2)),
       ),
       futureIncomePercentageChange: parseFloat(FIPChange.toFixed(2)),
       ExpensePercentageChange: parseFloat(TEPChange.toFixed(2)),
       futurePredictedExpense: predictedExpenses.map((e) =>
-        parseFloat(e.toFixed(2))
+        parseFloat(e.toFixed(2)),
       ),
       futureExpensePercentageChange: parseFloat(FEPChange.toFixed(2)),
     };
@@ -634,7 +635,7 @@ const importTransactions = async (req, res) => {
 
     // check if fileHeaders contains all requiredHeaders
     const containsAllHeaders = requiredHeaders.every((header) =>
-      fileHeaders.includes(header)
+      fileHeaders.includes(header),
     );
 
     if (!containsAllHeaders) {
@@ -791,7 +792,7 @@ const getSampleFile = async (req, res) => {
     return res
       .status(200)
       .sendFile(
-        path.join(__dirname, "../public/sample/sample_transactions.xlsx")
+        path.join(__dirname, "../public/sample/sample_transactions.xlsx"),
       );
   } catch (error) {
     console.log(error);
@@ -873,7 +874,7 @@ const generateStatement = async (req, res) => {
       transactions = await fetchTransactionsByDateRange(
         startDate,
         endDate,
-        accountId
+        accountId,
       );
     } else if (numTransactions) {
       transactions = await fetchRecentTransactions(numTransactions, accountId);
@@ -915,7 +916,7 @@ const generateStatement = async (req, res) => {
       // Compile EJS template
       const ejsTemplate = fs.readFileSync(
         path.join(__dirname, "../public/template/statement.ejs"),
-        "utf-8"
+        "utf-8",
       );
       const html = ejs.render(ejsTemplate, {
         transactions,
@@ -940,13 +941,62 @@ const generateStatement = async (req, res) => {
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
-        "attachment; filename=statement.pdf"
+        "attachment; filename=statement.pdf",
       );
       res.send(pdfBuffer);
     }
   } catch (error) {
     console.error(97, error);
     return res.status(500).json({ error: error.message });
+  }
+};
+
+const getDailyData = async (userId) => {
+  try {
+    // Group transactions by date using MongoDB aggregation
+    const dailyData = await Transaction.aggregate([
+      {
+        $match: {
+          owner: new mongoose.Types.ObjectId(userId),
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+          },
+          income: {
+            $sum: {
+              $cond: [{ $eq: ["$isIncome", true] }, "$amount", 0],
+            },
+          },
+          expense: {
+            $sum: {
+              $cond: [{ $eq: ["$isIncome", false] }, "$amount", 0],
+            },
+          },
+        },
+      },
+      {
+        $sort: { _id: 1 },
+      },
+    ]);
+
+    const incomeData = [];
+    const expenseData = [];
+    const balanceData = [];
+
+    dailyData.forEach((data) => {
+      const formattedDate = new Date(data._id).getTime(); // Assuming _id holds the date
+      incomeData.push({ x: formattedDate, y: data.income });
+      expenseData.push({ x: formattedDate, y: data.expense });
+      balanceData.push({ x: formattedDate, y: data.income - data.expense });
+    });
+
+    return { incomeData, expenseData, balanceData };
+  } catch (error) {
+    console.log(error);
+    throw error;
   }
 };
 
@@ -973,9 +1023,12 @@ const getDashBoardData = async (req, res) => {
       },
     ]);
 
-    const totalTransaction = await Transaction.countDocuments({
+    const totalTransaction = await Transaction.find({
       owner: userId,
     });
+
+    // Calculate chart data for income, expense, and balance
+    const { incomeData, expenseData, balanceData } = await getDailyData(userId);
 
     let overallIncome = 0;
     let overallExpense = 0;
@@ -986,15 +1039,15 @@ const getDashBoardData = async (req, res) => {
     if (accountInfo.length > 0) {
       overallIncome = accountInfo.reduce(
         (acc, account) => acc + parseFloat(account.analytics.income),
-        0
+        0,
       );
       overallExpense = accountInfo.reduce(
         (acc, account) => acc + parseFloat(account.analytics.expense),
-        0
+        0,
       );
       overallBalance = accountInfo.reduce(
         (acc, account) => acc + parseFloat(account.analytics.balance),
-        0
+        0,
       );
 
       overallIncome = parseFloat(overallIncome.toFixed(2));
@@ -1003,12 +1056,12 @@ const getDashBoardData = async (req, res) => {
 
       overallIncomePercentageChange = accountInfo.reduce(
         (acc, account) => acc + account.analytics.incomePercentageChange,
-        0
+        0,
       );
 
       overallExpensePercentageChange = accountInfo.reduce(
         (acc, account) => acc + account.analytics.expensePercentageChange,
-        0
+        0,
       );
 
       overallIncomePercentageChange /= accountInfo.length;
@@ -1022,18 +1075,21 @@ const getDashBoardData = async (req, res) => {
           obj[item._id] = item.transactionsCount;
           return obj;
         },
-        {}
+        {},
       ),
-      totalTransaction,
+      totalTransaction: totalTransaction.length,
       overallIncome: parseFloat(overallIncome.toFixed(2)),
       overallExpense: parseFloat(overallExpense.toFixed(2)),
       overallBalance: parseFloat(overallBalance.toFixed(2)),
       overallIncomePercentageChange: parseFloat(
-        overallIncomePercentageChange.toFixed(2)
+        overallIncomePercentageChange.toFixed(2),
       ),
       overallExpensePercentageChange: parseFloat(
-        overallExpensePercentageChange.toFixed(2)
+        overallExpensePercentageChange.toFixed(2),
       ),
+      incomeChartData: incomeData,
+      expenseChartData: expenseData,
+      balanceChartData: balanceData,
     };
 
     return res.status(200).json(response);
@@ -1042,127 +1098,6 @@ const getDashBoardData = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 };
-
-// const getDashBoardData = async (req, res) => {
-//   try {
-//     const userId = req.user.id;
-
-//     const pipeline = [
-//       {
-//         $match: {
-//           owner: new mongoose.Types.ObjectId(userId),
-//         },
-//       },
-//       {
-//         $lookup: {
-//           from: 'transactions', // Replace 'transactions' with your transaction collection name
-//           localField: '_id',
-//           foreignField: 'account',
-//           as: 'accountTransactions',
-//         },
-//       },
-//       {
-//         $group: {
-//           _id: '$_id',
-//           accountInfo: { $first: '$$ROOT' },
-//           transactionsCount: {
-//             $sum: { $cond: [{ $isArray: '$accountTransactions' }, { $size: '$accountTransactions' }, 0] },
-//           },
-//           totalIncome: { $sum: '$analytics.income' },
-//           totalExpense: { $sum: '$analytics.expense' },
-//           overallBalance: { $sum: '$analytics.balance' }, // Include overall balance aggregation
-//         },
-//       },
-//       {
-//         $group: {
-//           _id: null,
-//           accountInfo: { $push: '$accountInfo' },
-//           transactionsCountByAccount: {
-//             $push: {
-//               accountId: '$_id',
-//               transactionsCount: '$transactionsCount',
-//             },
-//           },
-//           totalTransaction: { $sum: '$transactionsCount' },
-//           overallIncome: { $sum: '$totalIncome' },
-//           overallExpense: { $sum: '$totalExpense' },
-//           overallBalance: { $sum: '$overallBalance' }, // Use the computed overallBalance
-//         },
-//       },
-//       {
-//         $project: {
-//           _id: 0,
-//           accountsInfo: {
-//             $cond: {
-//               if: { $isArray: '$accountInfo' },
-//               then: '$accountInfo',
-//               else: [],
-//             },
-//           },
-//           transactionsCountByAccount: 1,
-//           totalTransaction: 1,
-//           overallIncome: 1,
-//           overallExpense: 1,
-//           overallBalance: 1,
-//           overallIncomePercentageChange: {
-//             $cond: {
-//               if: { $gt: [{ $size: { $ifNull: ['$accountInfo', []] } }, 1] },
-//               then: {
-//                 $multiply: [
-//                   {
-//                     $divide: [
-//                       {
-//                         $subtract: [
-//                           { $last: { $ifNull: ['$accountInfo.analytics.income', 0] } },
-//                           { $first: { $ifNull: ['$accountInfo.analytics.income', 0] } },
-//                         ],
-//                       },
-//                       { $first: { $ifNull: ['$accountInfo.analytics.income', 1] } },
-//                     ],
-//                   },
-//                   100,
-//                 ],
-//               },
-//               else: 0,
-//             },
-//           },
-//           overallExpensePercentageChange: {
-//             $cond: {
-//               if: { $gt: [{ $size: { $ifNull: ['$accountInfo', []] } }, 1] },
-//               then: {
-//                 $multiply: [
-//                   {
-//                     $divide: [
-//                       {
-//                         $subtract: [
-//                           { $last: { $ifNull: ['$accountInfo.analytics.expense', 0] } },
-//                           { $first: { $ifNull: ['$accountInfo.analytics.expense', 0] } },
-//                         ],
-//                       },
-//                       { $first: { $ifNull: ['$accountInfo.analytics.expense', 1] } },
-//                     ],
-//                   },
-//                   100,
-//                 ],
-//               },
-//               else: 0,
-//             },
-//           },
-//         },
-//       },
-//     ];
-
-//     const result = await Account.aggregate(pipeline);
-
-//     // Assuming the aggregation returns only one result
-//     const response = result[0] || {};
-
-//     return res.status(200).json(response);
-//   } catch (error) {
-//     console.error(98, error.message);
-//     return res.status(500).json({ error: error.message });
-//   }
-// };
 
 module.exports = {
   findAccountOne,

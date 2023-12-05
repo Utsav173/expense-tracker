@@ -40,7 +40,7 @@ const MobileDetailTable = () => {
     >
       {transactions &&
         transactions.map((transaction, index) => (
-          <Accordion 
+          <Accordion
             key={transaction._id}
             sx={{
               "&.Mui-expanded": {

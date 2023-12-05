@@ -1,9 +1,9 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const AnalyticsSchema = new mongoose.Schema(
   {
-    account: { type: mongoose.Schema.Types.ObjectId, ref: 'Account' },
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    account: { type: mongoose.Schema.Types.ObjectId, ref: "Account" },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     income: { type: Number, default: 0 },
     expense: { type: Number, default: 0 },
     balance: { type: Number, default: 0 },
@@ -13,7 +13,7 @@ const AnalyticsSchema = new mongoose.Schema(
     incomePercentageChange: { type: Number, default: 100 },
     expensePercentageChange: { type: Number, default: 100 },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-module.exports.Analytics = mongoose.model('Analytics', AnalyticsSchema);
+module.exports.Analytics = mongoose.model("Analytics", AnalyticsSchema);

@@ -74,7 +74,7 @@ export default function AddTransaction({ accountId }) {
           transfer,
           category,
           account: accountId,
-        })
+        }),
       );
       setLoading(false);
       setOpen(false);

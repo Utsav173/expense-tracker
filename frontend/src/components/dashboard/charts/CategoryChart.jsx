@@ -36,6 +36,7 @@ const CategoryChart = ({ categoryChartData }) => {
     },
   ];
 
+  /** @type {import('apexcharts').ApexOptions} */
   const options = {
     chart: {
       background: "transparent",
@@ -75,6 +76,18 @@ const CategoryChart = ({ categoryChartData }) => {
         opacity: 0.1,
       },
     },
+    responsive: [
+      {
+        breakpoint: 870,
+        options: {
+          title: {
+            style: {
+              fontSize: "10px",
+            },
+          },
+        },
+      },
+    ],
     grid: {
       show: false,
     },
@@ -134,7 +147,6 @@ const CategoryChart = ({ categoryChartData }) => {
     title: {
       text: "Group By Category",
       style: {
-        // color: colorMode === 'light' ? '#858585' : '#e8e8e8',
         fontSize: "16px",
       },
       offsetX: 14,

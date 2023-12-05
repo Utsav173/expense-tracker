@@ -1,6 +1,5 @@
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
-import CssBaseline from "@mui/material/CssBaseline";
 import Divider from "@mui/material/Divider";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
@@ -12,11 +11,8 @@ import ListItemText from "@mui/material/ListItemText";
 import MenuIcon from "@mui/icons-material/Menu";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  selectDarkMode,
-  toggleDarkMode,
-} from "../../redux/slice/darkModeSlice";
+import { useDispatch } from "react-redux";
+import { toggleDarkMode } from "../../redux/slice/darkModeSlice";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import { Link, useNavigate } from "react-router-dom";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
@@ -31,6 +27,8 @@ import { userLogout } from "../../redux/asyncThunk/home";
 import AddchartIcon from "@mui/icons-material/Addchart";
 import RequestPageIcon from "@mui/icons-material/RequestPage";
 import AccountBoxIcon from "@mui/icons-material/AccountBox";
+import { useColorScheme as useMaterialColorScheme } from "@mui/material/styles";
+import { useColorScheme as useJoyColorScheme } from "@mui/joy/styles";
 
 const drawerWidth = 240;
 
@@ -101,7 +99,8 @@ const generateListItem = (item) => (
 function Sidebar(props) {
   const { window, children, isHomepage } = props;
   const [mobileOpen, setMobileOpen] = React.useState(false);
-
+  const { mode, setMode } = useMaterialColorScheme();
+  const { setMode: setJoyMode } = useJoyColorScheme();
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
@@ -121,10 +120,11 @@ function Sidebar(props) {
   const container =
     window !== undefined ? () => window().document.body : undefined;
   const dispatch = useDispatch();
-  const darkMode = useSelector(selectDarkMode);
   const navigate = useNavigate();
   const handleThemeToggle = () => {
     dispatch(toggleDarkMode());
+    setMode(mode === "dark" ? "light" : "dark");
+    setJoyMode(mode === "dark" ? "light" : "dark");
   };
 
   const handleLogout = async () => {
@@ -134,7 +134,6 @@ function Sidebar(props) {
   };
   return (
     <Box sx={{ display: "flex" }}>
-      <CssBaseline />
       <AppBar
         position="fixed"
         sx={{
@@ -164,7 +163,7 @@ function Sidebar(props) {
             onClick={handleThemeToggle}
             sx={{ ml: "auto" }}
           >
-            {darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
+            {mode === "dark" ? <Brightness7Icon /> : <Brightness4Icon />}
           </IconButton>
           {JSON.parse(localStorage.getItem("user"))?.token && (
             <IconButton

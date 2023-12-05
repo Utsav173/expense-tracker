@@ -1,14 +1,15 @@
+import CssBaseline from "@mui/material/CssBaseline";
 import { Toaster } from "react-hot-toast";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { ThemeProvider, createTheme } from "@mui/material";
 import "./App.css";
-import { useSelector } from "react-redux";
-import { selectDarkMode } from "./redux/slice/darkModeSlice";
-import { Suspense, lazy, useMemo } from "react";
+import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import Loader from "./components/common/Loader.jsx";
-import { THEME_ID as MATERIAL_THEME_ID } from "@mui/material/styles";
+import {
+  experimental_extendTheme as materialExtendTheme,
+  Experimental_CssVarsProvider as MaterialCssVarsProvider,
+  THEME_ID as MATERIAL_THEME_ID,
+} from "@mui/material/styles";
 import { CssVarsProvider as JoyCssVarsProvider } from "@mui/joy/styles";
-import CssBaseline from "@mui/material/CssBaseline";
 
 // Lazy-loaded components
 const SignUpPage = lazy(() => import("./pages/Signup.jsx"));
@@ -21,39 +22,42 @@ const ShareAccPage = lazy(() => import("./pages/ShareAccPage.jsx"));
 const Statement = lazy(() => import("./pages/Statement.jsx"));
 const Profile = lazy(() => import("./pages/Profile.jsx"));
 const PrivateRoute = lazy(() => import("./API/PrivateRoute.jsx"));
+const materialTheme = materialExtendTheme();
 
 function App() {
-  const darkMode = useSelector(selectDarkMode);
-  const appliedTheme = useMemo(
-    () =>
-      createTheme({
-        palette: {
-          mode: darkMode ? "dark" : "light",
-        },
-      }),
-    [darkMode]
-  );
-
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  if (!mounted) {
+    return null;
+  }
   return (
     <Suspense fallback={<Loader />}>
-      <ThemeProvider theme={appliedTheme}>
-        <Toaster position="top-center" reverseOrder={false} />
-        <BrowserRouter>
-          <Routes>
-            <Route element={<PrivateRoute />}>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/account/:id" element={<AccountPage />} />
-              <Route path="/share-accounts" element={<ShareAccPage />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/import" element={<ImportPage />} />
-              <Route path="/statement" element={<Statement />} />
-              <Route path="/profile" element={<Profile />} />
-            </Route>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignUpPage />} />
-          </Routes>
-        </BrowserRouter>
-      </ThemeProvider>
+      <MaterialCssVarsProvider
+        defaultMode="system"
+        theme={{ [MATERIAL_THEME_ID]: materialTheme }}
+      >
+        <JoyCssVarsProvider defaultMode="system">
+          <CssBaseline enableColorScheme />
+          <Toaster position="top-center" reverseOrder={false} />
+          <BrowserRouter>
+            <Routes>
+              <Route element={<PrivateRoute />}>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/account/:id" element={<AccountPage />} />
+                <Route path="/share-accounts" element={<ShareAccPage />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/import" element={<ImportPage />} />
+                <Route path="/statement" element={<Statement />} />
+                <Route path="/profile" element={<Profile />} />
+              </Route>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignUpPage />} />
+            </Routes>
+          </BrowserRouter>
+        </JoyCssVarsProvider>
+      </MaterialCssVarsProvider>
     </Suspense>
   );
 }

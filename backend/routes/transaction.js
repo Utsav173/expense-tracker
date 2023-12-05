@@ -22,14 +22,14 @@ transactionRoutes.put("/:id", authenticateToken, editTransaction);
 transactionRoutes.get(
   "/by/income/expense",
   authenticateToken,
-  findIncomeAndExpense
+  findIncomeAndExpense,
 );
 transactionRoutes.get("/by/category", authenticateToken, getByCategory);
 transactionRoutes.get("/by/:field", authenticateToken, getByField);
 transactionRoutes.get(
   "/by/income/expense/chart",
   authenticateToken,
-  findIncomeAndExpenseDuration
+  findIncomeAndExpenseDuration,
 );
 transactionRoutes.get("/fakeData/by", getFakeData);
 

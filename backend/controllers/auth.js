@@ -42,7 +42,7 @@ const login = async (req, res) => {
         email: userData.email,
       },
       "your-secret-key", // Replace with your actual secret key for token generation
-      { expiresIn: "1d" } // You can adjust the expiration time as needed
+      { expiresIn: "1d" }, // You can adjust the expiration time as needed
     );
 
     await User.findByIdAndUpdate(userData.id, {
@@ -134,7 +134,7 @@ const signup = async (req, res) => {
       html: WelcomeEmailTemp(
         newUser.name,
         process.env.LOGINPAGE,
-        newUser.email
+        newUser.email,
       ),
     };
 
@@ -161,7 +161,7 @@ const me = async (req, res) => {
     }
 
     const user = await User.findById(userId).select(
-      "_id name email profilePic lastLoginAt createdAt"
+      "_id name email profilePic lastLoginAt createdAt",
     );
 
     if (!user) {

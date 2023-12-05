@@ -155,13 +155,12 @@ const ShareAccounts = ({ accountId }) => {
                   ))}
               </Box>
             )}
-            <FormControl margin="normal" fullWidth>
+            <FormControl margin="dense" fullWidth>
               <InputLabel id="drop-user-label">Share with</InputLabel>
               <Select
                 name="shareUser"
                 label="Share with"
-                size="small"
-                variant="standard"
+                variant="outlined"
                 labelId="drop-user-label"
               >
                 {dropdownUsers &&

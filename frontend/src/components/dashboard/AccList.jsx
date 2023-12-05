@@ -6,10 +6,11 @@ import ListItemText from "@mui/material/ListItemText";
 import ScaleLoader from "react-spinners/ScaleLoader";
 import List from "@mui/material/List";
 import Typography from "@mui/material/Typography";
+import Loader from "../common/Loader";
 
 export default function AccList({ dashboardData }) {
   return !dashboardData || !dashboardData.accountsInfo ? (
-    <ScaleLoader />
+    <Loader diff />
   ) : (
     <Box
       sx={{

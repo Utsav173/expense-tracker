@@ -16,13 +16,13 @@ export const fetchTransactions = createAsyncThunk(
         }`,
         {},
         {},
-        true
+        true,
       );
       return response;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Error occurred");
     }
-  }
+  },
 );
 
 export const fetchCategorys = createAsyncThunk(
@@ -34,13 +34,13 @@ export const fetchCategorys = createAsyncThunk(
         `${URL.GET_CATEGORY}?page=1&limit=1000`,
         {},
         {},
-        true
+        true,
       );
       return response.categories;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Error occurred");
     }
-  }
+  },
 );
 
 export const fetchDropdownUser = createAsyncThunk(
@@ -53,7 +53,7 @@ export const fetchDropdownUser = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Error occurred");
     }
-  }
+  },
 );
 
 export const fetchPreviousShares = createAsyncThunk(
@@ -65,14 +65,14 @@ export const fetchPreviousShares = createAsyncThunk(
         `${URL.GET_PREVIOUS_SHARES}${accountId}`,
         {},
         {},
-        true
+        true,
       );
 
       return response.users;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Error occurred");
     }
-  }
+  },
 );
 
 export const fetchSignleAccount = createAsyncThunk(
@@ -84,14 +84,14 @@ export const fetchSignleAccount = createAsyncThunk(
         `${URL.ACC_ANALYTICS}${accountId}?duration=${duration || "thisMonth"}`,
         {},
         {},
-        true
+        true,
       );
       return response;
     } catch (error) {
       toast.error(error.response?.data?.message);
       throw error;
     }
-  }
+  },
 );
 
 export const handleCreate = createAsyncThunk(
@@ -103,7 +103,7 @@ export const handleCreate = createAsyncThunk(
         URL.CREATE_TRANSACTION,
         data,
         {},
-        true
+        true,
       );
 
       dispatch(
@@ -113,13 +113,13 @@ export const handleCreate = createAsyncThunk(
           accountId: data.account,
           duration: "thisMonth",
           q: "",
-        })
+        }),
       );
       dispatch(
-        fetchSignleAccount({ accountId: data.account, duration: "thisMonth" })
+        fetchSignleAccount({ accountId: data.account, duration: "thisMonth" }),
       );
       dispatch(
-        fetchIEcharts({ accountId: data.account, duration: "thisMonth" })
+        fetchIEcharts({ accountId: data.account, duration: "thisMonth" }),
       );
       return toast.success(response.message);
     } catch (error) {
@@ -127,7 +127,7 @@ export const handleCreate = createAsyncThunk(
       toast.error(error.response?.data?.message);
       return rejectWithValue(error.response?.data?.message);
     }
-  }
+  },
 );
 
 export const handleEdit = createAsyncThunk(
@@ -139,7 +139,7 @@ export const handleEdit = createAsyncThunk(
         `${URL.UPDATE_TRANSACTION}${id}`,
         data,
         {},
-        true
+        true,
       );
 
       dispatch(
@@ -149,13 +149,13 @@ export const handleEdit = createAsyncThunk(
           accountId: data.account,
           duration: "thisMonth",
           q: "",
-        })
+        }),
       );
       dispatch(
-        fetchSignleAccount({ accountId: data.account, duration: "thisMonth" })
+        fetchSignleAccount({ accountId: data.account, duration: "thisMonth" }),
       );
       dispatch(
-        fetchIEcharts({ accountId: data.account, duration: "thisMonth" })
+        fetchIEcharts({ accountId: data.account, duration: "thisMonth" }),
       );
       return toast.success(response.message);
     } catch (error) {
@@ -163,7 +163,7 @@ export const handleEdit = createAsyncThunk(
       toast.error(error.response?.data?.message);
       return rejectWithValue(error.response?.data?.message);
     }
-  }
+  },
 );
 
 export const handleDelete = createAsyncThunk(
@@ -175,7 +175,7 @@ export const handleDelete = createAsyncThunk(
         `${URL.DELETE_TRANSACTION}${id}`,
         {},
         {},
-        true
+        true,
       );
 
       dispatch(
@@ -185,10 +185,10 @@ export const handleDelete = createAsyncThunk(
           accountId: accountId,
           duration: "thisMonth",
           q: "",
-        })
+        }),
       );
       dispatch(
-        fetchSignleAccount({ accountId: accountId, duration: "thisMonth" })
+        fetchSignleAccount({ accountId: accountId, duration: "thisMonth" }),
       );
       dispatch(fetchIEcharts({ accountId: accountId, duration: "thisMonth" }));
       return toast.success(response.message);
@@ -197,7 +197,7 @@ export const handleDelete = createAsyncThunk(
       toast.error(error.response?.data?.message);
       return rejectWithValue(error.response?.data?.message);
     }
-  }
+  },
 );
 
 export const fetchIEcharts = createAsyncThunk(
@@ -211,7 +211,7 @@ export const fetchIEcharts = createAsyncThunk(
         }`,
         {},
         {},
-        true
+        true,
       );
 
       return response;
@@ -220,5 +220,5 @@ export const fetchIEcharts = createAsyncThunk(
       toast.error(errorMessage);
       return rejectWithValue(errorMessage);
     }
-  }
+  },
 );

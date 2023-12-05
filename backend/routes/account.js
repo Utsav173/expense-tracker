@@ -35,7 +35,7 @@ accountRoutes.post(
   "/import/transaction",
   upload.single("document"),
   authenticateToken,
-  importTransactions
+  importTransactions,
 );
 accountRoutes.get("/sampleFile/import", authenticateToken, getSampleFile);
 accountRoutes.get("/get-shares", authenticateToken, findShareAccounts);
@@ -44,7 +44,7 @@ accountRoutes.post("/confirm/import/:id", authenticateToken, confirmImport);
 accountRoutes.get(
   "/customAnalytics/:id",
   authenticateToken,
-  getCustomAnalytics
+  getCustomAnalytics,
 );
 accountRoutes.get("/:id/statement", authenticateToken, generateStatement);
 accountRoutes.put("/:id", authenticateToken, editAccount);

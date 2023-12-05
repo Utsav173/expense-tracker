@@ -1,8 +1,6 @@
 import { Button, Stack, useTheme } from "@mui/material";
 import { Suspense, lazy, useState } from "react";
-import { currencyFormat } from "../../../utils";
-import { ScaleLoader } from "react-spinners";
-
+import Loader from "../../common/Loader";
 const Chart = lazy(() => import("react-apexcharts"));
 
 const FieldChart = ({ fieldChartData }) => {
@@ -54,6 +52,18 @@ const FieldChart = ({ fieldChartData }) => {
         opacity: 0.2,
       },
     },
+    responsive: [
+      {
+        breakpoint: 870,
+        options: {
+          title: {
+            style: {
+              fontSize: "10px",
+            },
+          },
+        },
+      },
+    ],
     plotOptions: {
       bar: {
         horizontal: false,
@@ -120,7 +130,7 @@ const FieldChart = ({ fieldChartData }) => {
   };
   const shouldShowMoreButton = showRecent < maxEntries;
   return (
-    <Suspense fallback={<ScaleLoader />}>
+    <Suspense fallback={<Loader diff />}>
       <Stack direction={"column"} spacing={2}>
         <Chart
           options={options}
@@ -128,7 +138,6 @@ const FieldChart = ({ fieldChartData }) => {
           type="bar"
           height={350}
           width={"100%"}
-          // style={{ borderRadius: '15px', overflow: 'hidden' }}
         />
         {shouldShowMoreButton && (
           <Button onClick={handleShowMore}>Show More</Button>

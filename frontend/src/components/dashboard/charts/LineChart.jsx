@@ -1,5 +1,5 @@
 import { lazy } from "react";
-import { ScaleLoader } from "react-spinners";
+import Loader from "../../common/Loader";
 const Chart = lazy(() => import("react-apexcharts"));
 
 const LineChart = ({ data, themeMode }) => {
@@ -24,8 +24,8 @@ const LineChart = ({ data, themeMode }) => {
 
   const options = {
     chart: {
-      type: "line",
-      height: 350,
+      type: "area",
+      stacked: true,
       background: "transparent",
       toolbar: {
         show: true,
@@ -54,8 +54,26 @@ const LineChart = ({ data, themeMode }) => {
         },
       },
     },
+    responsive: [
+      {
+        breakpoint: 870,
+        options: {
+          title: {
+            style: {
+              fontSize: "10px",
+            },
+          },
+        },
+      },
+    ],
     grid: {
       show: false,
+    },
+    dataLabels: {
+      enabled: false,
+    },
+    stroke: {
+      curve: "smooth",
     },
     xaxis: {
       type: "datetime", // Setting x-axis type to datetime
@@ -91,22 +109,32 @@ const LineChart = ({ data, themeMode }) => {
       },
       offsetX: 14,
     },
+    fill: {
+      type: "gradient",
+      gradient: {
+        shadeIntensity: 1,
+        inverseColors: false,
+        opacityFrom: 0.45,
+        opacityTo: 0.05,
+        stops: [20, 100, 100, 100],
+      },
+    },
     theme: {
       mode: themeMode,
     },
-    colors: ["#5E35B1", "#EF6C00"],
+    colors:
+      themeMode === "light" ? ["#35b15e", "#5E35B1"] : ["#00ef6c", "#EF6C00"],
   };
 
   return !data || !data.income || !data.expense ? (
-    <ScaleLoader />
+    <Loader diff />
   ) : (
     <Chart
       options={options}
       series={series}
-      type="line"
-      height={350}
-      width={"100%"}
-      // style={{ borderRadius: '15px', overflow: 'hidden' }}
+      type="area"
+      height={400}
+      width="100%"
     />
   );
 };

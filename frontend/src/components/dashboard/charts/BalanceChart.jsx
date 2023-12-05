@@ -1,10 +1,9 @@
-import { useTheme } from "@mui/material";
+import { useMediaQuery, useTheme } from "@mui/material";
 import React, { Suspense, lazy } from "react";
 import { currencyFormat } from "../../../utils";
-import { ScaleLoader } from "react-spinners";
 import { useSelector } from "react-redux";
 import { selectBalanceChartData } from "../../../redux/slice/dashboardSlice";
-
+import Loader from "../../common/Loader";
 const Chart = lazy(() => import("react-apexcharts"));
 
 const BalanceChart = () => {
@@ -13,7 +12,9 @@ const BalanceChart = () => {
   const {
     palette: { mode: colorMode },
   } = useTheme();
+  const isMobile = useMediaQuery("(max-width: 600px)");
 
+  /** @type {import('apexcharts').ApexOptions} */
   const options = {
     chart: {
       type: "pie",
@@ -78,6 +79,11 @@ const BalanceChart = () => {
           legend: {
             show: false,
           },
+          title: {
+            style: {
+              fontSize: "10px",
+            },
+          },
         },
       },
     ],
@@ -111,16 +117,16 @@ const BalanceChart = () => {
   };
 
   return (
-    <Suspense fallback={<ScaleLoader />}>
+    <Suspense fallback={<Loader diff />}>
       {!data.labels || !data.series ? (
-        <ScaleLoader />
+        <Loader diff />
       ) : (
         <Chart
           options={options}
           series={data.series}
           type="pie"
-          height={350}
-          // style={{ borderRadius: '15px', overflow: 'hidden' }}
+          height={isMobile ? 300 : 400}
+          width="100%"
         />
       )}
     </Suspense>

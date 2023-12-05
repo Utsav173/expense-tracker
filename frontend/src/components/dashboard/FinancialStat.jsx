@@ -128,7 +128,7 @@ const FinancialStat = ({ dashboardData }) => {
           variant="elevation"
           sx={{
             backgroundColor: (theme) =>
-              theme.palette.mode === "light" ? "#f0f8ff" : "#666ec9",
+              theme.palette.mode === "light" ? "#bed9ff" : "#666ec9",
             color: (theme) =>
               theme.palette.mode === "light" ? "#0c2233" : "#00086b",
           }}
@@ -179,7 +179,7 @@ const FinancialStat = ({ dashboardData }) => {
           variant="elevation"
           sx={{
             backgroundColor: (theme) =>
-              theme.palette.mode === "light" ? "#f0fff5" : "#3fdb69",
+              theme.palette.mode === "light" ? "#d2ffcd" : "#3fdb69",
             color: (theme) =>
               theme.palette.mode === "light" ? "#0d3900" : "#004c00",
           }}
@@ -266,7 +266,7 @@ const FinancialStat = ({ dashboardData }) => {
           variant="elevation"
           sx={{
             backgroundColor: (theme) =>
-              theme.palette.mode === "light" ? "#fff0f0" : "#db3f3f",
+              theme.palette.mode === "light" ? "#ffcdd2" : "#db3f3f",
             color: (theme) =>
               theme.palette.mode === "light" ? "#330000" : "#4c0000",
           }}

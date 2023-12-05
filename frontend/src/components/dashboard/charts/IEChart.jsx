@@ -1,6 +1,7 @@
 import { Button, Stack, useTheme } from "@mui/material";
 import React, { Suspense, lazy, useState } from "react";
 import { ScaleLoader } from "react-spinners";
+import Loader from "../../common/Loader";
 
 const PieChart = lazy(() => import("./PieChart"));
 const LineChart = lazy(() => import("./LineChart"));
@@ -13,8 +14,8 @@ const IEChart = ({ data }) => {
   };
 
   return (
-    <Suspense fallback={<ScaleLoader />}>
-      <Stack direction={"column"} spacing={2}>
+    <Suspense fallback={<Loader diff />}>
+      <Stack direction={"column"} spacing={2} width={"100%"}>
         {showLineChart ? (
           <LineChart data={data} themeMode={theme.palette.mode} />
         ) : (

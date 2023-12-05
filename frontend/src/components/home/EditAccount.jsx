@@ -80,12 +80,14 @@ const EditAccountDialog = ({ id, name, balance }) => {
           backdropFilter: "blur(6px)",
           "& .MuiDialog-paper": {
             padding: 1,
-            borderRadius: (theme) =>
-              theme.breakpoints.down("md") ? "0px" : "10px",
-            borderBottomLeftRadius: (theme) =>
-              theme.breakpoints.down("md") && "10px",
-            borderBottomRightRadius: (theme) =>
-              theme.breakpoints.down("md") && "10px",
+            borderRadius: "10px", // Default border-radius for larger screens
+            borderBottomLeftRadius: "10px",
+            borderBottomRightRadius: "10px",
+            [theme.breakpoints.down("md")]: {
+              borderRadius: "0px", // Change to 0px for smaller screens
+              borderBottomLeftRadius: "10px",
+              borderBottomRightRadius: "10px",
+            },
             boxShadow: "0px 20px 40px rgba(0, 0, 0, 0.1)",
           },
         }}
@@ -107,7 +109,7 @@ const EditAccountDialog = ({ id, name, balance }) => {
               defaultValue={name}
               fullWidth
               required
-              variant="standard"
+              variant="outlined"
             />
             <TextField
               autoFocus
@@ -117,7 +119,7 @@ const EditAccountDialog = ({ id, name, balance }) => {
               type="number"
               defaultValue={balance}
               fullWidth
-              variant="standard"
+              variant="outlined"
             />
           </DialogContent>
           <DialogActions role="none">

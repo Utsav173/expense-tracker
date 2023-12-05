@@ -53,10 +53,8 @@ const AccountHeader = ({ id, durationFilter, handleApplyFilter, setQ }) => {
             label="Filter by Duration"
             size="small"
             sx={{
-              borderRadius: (theme) =>
-                theme.palette.mode == "light" ? "20px" : "5px",
-              paddingBlock: (theme) =>
-                theme.palette.mode == "light" && theme.spacing(0.2),
+              borderRadius: "20px",
+              paddingBlock: (theme) => theme.spacing(0.2),
             }}
           >
             <MenuItem value="today">Today</MenuItem>

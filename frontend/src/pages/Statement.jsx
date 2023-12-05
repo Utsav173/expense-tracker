@@ -44,11 +44,11 @@ const Statement = () => {
     try {
       if (startDate && endDate) {
         url = `${URL.EXPORT_STATEMENT(selectedAccount)}?startDate=${new Date(
-          startDate
+          startDate,
         ).toISOString()}&endDate=${new Date(endDate).toISOString()}`;
       } else {
         url = `${URL.EXPORT_STATEMENT(
-          selectedAccount
+          selectedAccount,
         )}?numTransactions=${numTransactions}`;
       }
 

@@ -44,7 +44,7 @@ const DesktopDetailTable = ({ totalPages, setQ }) => {
                   handleDelete({
                     id: values.row._id,
                     accountId: values.row.account,
-                  })
+                  }),
                 )
               }
               key={`delete-${values.row._id}`}

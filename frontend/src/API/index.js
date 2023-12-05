@@ -1,5 +1,5 @@
-import axios from 'axios';
-import toast from 'react-hot-toast';
+import axios from "axios";
+import toast from "react-hot-toast";
 export const APIs = async (
   method,
   url,

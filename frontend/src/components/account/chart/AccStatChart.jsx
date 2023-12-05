@@ -1,9 +1,9 @@
-import React from "react";
+import React, { lazy } from "react";
 import { useTheme } from "@mui/material";
 import { ApexOptions } from "apexcharts";
 import { currencyFormat } from "../../../utils";
 import { ScaleLoader } from "react-spinners";
-const Chart = React.lazy(() => import("react-apexcharts"));
+const Chart = lazy(() => import("react-apexcharts"));
 
 const AccStatChart = ({ icomeType, height = 100, data }) => {
   const theme = useTheme();

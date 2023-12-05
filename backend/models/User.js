@@ -1,5 +1,5 @@
-const Joi = require('joi');
-const mongoose = require('mongoose');
+const Joi = require("joi");
+const mongoose = require("mongoose");
 
 const UserSchema = new mongoose.Schema(
   {
@@ -10,26 +10,26 @@ const UserSchema = new mongoose.Schema(
     isSocial: { type: Boolean, default: false },
     profilePic: {
       type: String,
-      default: 'https://i.stack.imgur.com/l60Hf.png',
+      default: "https://i.stack.imgur.com/l60Hf.png",
     },
     role: {
       type: String,
-      enum: ['user', 'admin'],
-      default: 'user',
+      enum: ["user", "admin"],
+      default: "user",
     },
     isActive: { type: Boolean, default: true },
     lastLoginAt: { type: Number },
-    otherAccount: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Account' }],
+    otherAccount: [{ type: mongoose.Schema.Types.ObjectId, ref: "Account" }],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 function validateUser(user) {
   const schema = Joi.object({
-    name: Joi.string().required().label('Name'),
-    email: Joi.string().required().email().label('Email'),
-    password: Joi.string().required().label('Password'),
+    name: Joi.string().required().label("Name"),
+    email: Joi.string().required().email().label("Email"),
+    password: Joi.string().required().label("Password"),
   });
   return schema.validate(user);
 }
 module.exports.validateUser = validateUser;
-module.exports.User = mongoose.model('User', UserSchema);
+module.exports.User = mongoose.model("User", UserSchema);

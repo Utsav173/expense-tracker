@@ -1,6 +1,5 @@
 import { lazy } from "react";
 import { useTheme } from "@mui/material";
-
 const Chart = lazy(() => import("react-apexcharts"));
 
 const SmallChart = ({ data }) => {
@@ -30,8 +29,8 @@ const SmallChart = ({ data }) => {
     stroke: {
       show: false, // Hide stroke
     },
-    dataLabels:{
-      enabled: false
+    dataLabels: {
+      enabled: false,
     },
     fill: {
       type: "gradient",

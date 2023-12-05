@@ -18,6 +18,9 @@ const initialState = {
   duration: "thisMonth",
   field: "transfer",
   balanceChartData: [],
+  iSparkLineData: [],
+  eSparkLineData: [],
+  bSparkLineData: [],
 };
 
 export const dashboardSlice = createSlice({
@@ -44,6 +47,24 @@ export const dashboardSlice = createSlice({
             ),
             labels: action.payload.accountsInfo.map((account) => account.name),
           };
+        }
+        if (
+          action.payload.incomeChartData &&
+          action.payload.incomeChartData.length > 0
+        ) {
+          state.iSparkLineData = action.payload.incomeChartData;
+        }
+        if (
+          action.payload.expenseChartData &&
+          action.payload.expenseChartData.length > 0
+        ) {
+          state.eSparkLineData = action.payload.expenseChartData;
+        }
+        if (
+          action.payload.balanceChartData &&
+          action.payload.balanceChartData.length > 0
+        ) {
+          state.bSparkLineData = action.payload.balanceChartData;
         }
       })
       .addCase(fetchDashboardData.rejected, (state, action) => {

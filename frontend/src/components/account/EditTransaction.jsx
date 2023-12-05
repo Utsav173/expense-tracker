@@ -127,25 +127,25 @@ export default function EditTransaction({ transaction }) {
               fullWidth
               variant="outlined"
             />
-            <FormControl margin="normal" fullWidth>
+            <FormControl margin="dense" fullWidth>
               <Select
                 defaultValue={isIncome}
                 name="isIncome"
                 label="Transaction type"
-                size="small"
                 variant="outlined"
+                fullWidth
               >
                 <MenuItem value={true}>income</MenuItem>
                 <MenuItem value={false}>expense</MenuItem>
               </Select>
             </FormControl>
-            <FormControl margin="normal" fullWidth>
+            <FormControl margin="dense" fullWidth>
               <Select
                 defaultValue={category._id}
                 name="category"
                 label="Category"
-                size="small"
                 variant="outlined"
+                fullWidth
               >
                 <MenuItem value={category._id}>{category.name}</MenuItem>
                 {categoryData &&

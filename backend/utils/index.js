@@ -118,7 +118,7 @@ function calculatePercentageChange(oldValue, newValue) {
     }
   } else {
     return parseFloat(
-      (((newValue - oldValue) / Math.abs(oldValue)) * 100).toFixed(2)
+      (((newValue - oldValue) / Math.abs(oldValue)) * 100).toFixed(2),
     );
   }
 }
@@ -281,6 +281,57 @@ function getMonthDate(month) {
   return format(date, "MMMM");
 }
 
+function calculateBalanceData(income, expense) {
+  try {
+    const allTransactions = [...income, ...expense];
+
+    // Group transactions by date using date-fns
+    const groupedTransactions = allTransactions.reduce(
+      (grouped, transaction) => {
+        const dateKey = startOfDay(
+          new Date(transaction.createdAt),
+        ).toISOString(); // Assuming transaction.createdAt is a valid Date object
+
+        if (!grouped[dateKey]) {
+          grouped[dateKey] = [];
+        }
+        grouped[dateKey].push(transaction);
+
+        return grouped;
+      },
+      {},
+    );
+
+    const dates = Object.keys(groupedTransactions);
+
+    const incomeData = [];
+    const expenseData = [];
+    const balanceData = [];
+
+    for (const date of dates) {
+      const transactionsOnDate = groupedTransactions[date];
+      let incomeOnDate = 0;
+      let expenseOnDate = 0;
+
+      for (const transaction of transactionsOnDate) {
+        if (transaction.isIncome) {
+          incomeOnDate += transaction.amount;
+        } else {
+          expenseOnDate += transaction.amount;
+        }
+      }
+
+      // Push the sums of income and expense for the day
+      incomeData.push(incomeOnDate);
+      expenseData.push(expenseOnDate);
+      balanceData.push(incomeOnDate - expenseOnDate);
+    }
+    return { incomeData, expenseData, balanceData };
+  } catch (error) {
+    throw error;
+  }
+}
+
 module.exports = {
   WelcomeEmailTemp,
   calculatePercentageChange,
@@ -292,4 +343,5 @@ module.exports = {
   getDayOfWeekDate,
   getMonthDate,
   getDayOfMonthDate,
+  calculateBalanceData,
 };

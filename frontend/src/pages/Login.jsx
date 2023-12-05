@@ -97,7 +97,7 @@ export default function LoginPage() {
       return;
     }
     if (password.trim().length < 8) {
-      toast.error('Password should be at least 8 characters long');
+      toast.error("Password should be at least 8 characters long");
       return;
     }
 
@@ -127,7 +127,6 @@ export default function LoginPage() {
         alignItems: "center",
       }}
     >
-      <CssBaseline />
       <CustomContainer>
         <Avatar sx={{ m: 1, bgcolor: "primary.main" }}>
           <LockOutlinedIcon />

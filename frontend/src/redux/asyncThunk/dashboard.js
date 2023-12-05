@@ -60,6 +60,7 @@ export const fetchDashboardIEChart = createAsyncThunk(
         {},
         true,
       );
+
       return fulfillWithValue(response);
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Error occurred");

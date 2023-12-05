@@ -21,7 +21,7 @@ import axios from "axios";
 const AddImportFile = ({ handleSubmitFile }) => {
   const dispatch = useDispatch();
   const { accounts, importFile, importingLoading } = useSelector(
-    (state) => state.homePage
+    (state) => state.homePage,
   );
 
   const handleFileChange = (e) => {

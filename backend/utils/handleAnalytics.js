@@ -31,7 +31,7 @@ const handleAnalytics = async function (payload) {
         balance:
           parseFloat(balance) + (isIncome ? parsedAmount : -parsedAmount),
         [isIncome ? "previousIncome" : "previousExpense"]: parseFloat(
-          parsedAmount.toFixed(2)
+          parsedAmount.toFixed(2),
         ),
         [isIncome ? "incomePercentageChange" : "expensePercentageChange"]:
           percentageChange,

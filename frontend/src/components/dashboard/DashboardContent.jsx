@@ -1,4 +1,4 @@
-import React, { Suspense } from "react";
+import { Suspense, lazy } from "react";
 import { Box, styled } from "@mui/material";
 import { useSelector } from "react-redux";
 import {
@@ -8,15 +8,16 @@ import {
   selectByIEData,
 } from "../../redux/slice/dashboardSlice";
 
-import { FadeLoader } from "react-spinners";
+import Loader from "../common/Loader";
 
-const CategoryChart = React.lazy(() => import("./charts/CategoryChart"));
-const IVEChart = React.lazy(() => import("./charts/IVEChart"));
-const FieldChart = React.lazy(() => import("./charts/FieldChart"));
-const BalanceChart = React.lazy(() => import("./charts/BalanceChart"));
-const IEChart = React.lazy(() => import("./charts/IEChart"));
+const IEBCharts = lazy(() => import("./IEBCharts"));
+const CategoryChart = lazy(() => import("./charts/CategoryChart"));
+const IVEChart = lazy(() => import("./charts/IVEChart"));
+const FieldChart = lazy(() => import("./charts/FieldChart"));
+const BalanceChart = lazy(() => import("./charts/BalanceChart"));
+const IEChart = lazy(() => import("./charts/IEChart"));
 
-const ChartBox = styled(Box)(({ theme }) => ({
+export const ChartBox = styled(Box)(({ theme }) => ({
   flex: 1,
   borderRadius: "8px",
   paddingLeft: "6px",
@@ -30,8 +31,9 @@ const DashboardContent = () => {
   const fieldChartData = useSelector(selectByFieldData);
   const ieChartData = useSelector(selectByIEData);
   const ieChartTwoData = useSelector(selectByIEChartData);
+
   return (
-    <Suspense fallback={<FadeLoader />}>
+    <Suspense fallback={<Loader diff />}>
       <Box
         sx={{
           display: "flex",
@@ -42,6 +44,7 @@ const DashboardContent = () => {
           justifyContent: "center",
         }}
       >
+        <IEBCharts />
         <Box
           sx={{
             width: "100%",
@@ -107,6 +110,10 @@ const DashboardContent = () => {
           <ChartBox
             sx={{
               flex: 1,
+              width: {
+                xs: "100%",
+                md: "auto",
+              },
               backgroundColor: (theme) =>
                 theme.palette.mode === "light" ? "#baeaffD6" : "#1a1915",
             }}
@@ -117,6 +124,10 @@ const DashboardContent = () => {
             <ChartBox
               sx={{
                 flex: 1,
+                width: {
+                  xs: "100%",
+                  md: "auto",
+                },
                 backgroundColor: (theme) =>
                   theme.palette.mode === "light" ? "#f0e6ff" : "#1c1429",
               }}

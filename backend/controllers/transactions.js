@@ -129,7 +129,6 @@ const findIncomeAndExpense = async (req, res) => {
         .json({ message: "start and end date is required" });
     }
 
-    // Ensure accountId is a valid ObjectId
     let matchQuery = {
       createdAt: {
         $gte: new Date(startDate),
@@ -285,6 +284,7 @@ const findIncomeAndExpenseDuration = async (req, res) => {
         date: dateValue,
         income: item.totalIncome,
         expense: item.totalExpense,
+        balance: item.totalIncome - item.totalExpense,
       };
     });
 
@@ -433,7 +433,7 @@ const deleteTransaction = async (req, res) => {
 
     const validTransaction = await Transaction.findById(
       id,
-      "account amount isIncome createdBy"
+      "account amount isIncome createdBy",
     );
 
     if (!validTransaction) {
@@ -448,11 +448,11 @@ const deleteTransaction = async (req, res) => {
 
     const accountData = await Account.findById(
       validTransaction.account,
-      "balance"
+      "balance",
     );
     const analyticsData = await Analytics.findOne(
       { account: validTransaction.account },
-      "income expense balance"
+      "income expense balance",
     );
 
     const updatedAccountBalance = accountData.balance - validTransaction.amount;
@@ -473,7 +473,7 @@ const deleteTransaction = async (req, res) => {
 
       await Analytics.findOneAndUpdate(
         { account: validTransaction.account },
-        { $set: { income: updatedIncome, balance: updatedBalance } }
+        { $set: { income: updatedIncome, balance: updatedBalance } },
       );
     } else {
       const updatedExpense = analyticsData.expense - validTransaction.amount;
@@ -481,7 +481,7 @@ const deleteTransaction = async (req, res) => {
 
       await Analytics.findOneAndUpdate(
         { account: validTransaction.account },
-        { $set: { expense: updatedExpense, balance: updatedBalance } }
+        { $set: { expense: updatedExpense, balance: updatedBalance } },
       );
     }
 
@@ -572,7 +572,7 @@ const editTransaction = async (req, res) => {
     if (Object.keys(updateOperations).length > 0) {
       await Analytics.findOneAndUpdate(
         { account: validTransaction.account },
-        { $inc: updateOperations }
+        { $inc: updateOperations },
       );
 
       await Account.findByIdAndUpdate(validTransaction.account, {
@@ -621,7 +621,7 @@ const getFakeData = async (req, res) => {
 
       const randomDate = new Date(
         startDateObj.getTime() +
-          Math.random() * (endDateObj.getTime() - startDateObj.getTime())
+          Math.random() * (endDateObj.getTime() - startDateObj.getTime()),
       );
 
       const temp = {
@@ -646,7 +646,7 @@ const getFakeData = async (req, res) => {
     // Send the Excel file to the user
     res.setHeader(
       "Content-Disposition",
-      "attachment; filename=Transactions_data.xlsx"
+      "attachment; filename=Transactions_data.xlsx",
     );
     res.type("application/octet-stream");
     res.send(excelBuffer);
