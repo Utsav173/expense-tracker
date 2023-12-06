@@ -128,7 +128,7 @@ export const createTransactionValidation = (formData) => {
       toast.error("Transfer is required");
       return false;
     }
-    if ((isIncome && amount < 0) || (!isIncome && amount > 0)) {
+    if ((isIncome && amount < 0) || (!isIncome && amount < 0)) {
       toast.error("Invalid amount");
       return false;
     }
