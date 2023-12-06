@@ -6,19 +6,28 @@ const SmallChart = ({ data }) => {
   const {
     palette: { mode: themeMode },
   } = useTheme();
-  const totalIncome = data.income;
+  const totalBalance = data.balance;
   const totalExpense = data.expense;
 
-  const series = [totalIncome, totalExpense];
-  const labels = ["income", "expense"];
+  const series = [totalBalance, totalExpense];
+  const labels = ["balance", "expense"];
 
+  /** @type {import('apexcharts').ApexOptions} */
   const options = {
     chart: {
       type: "donut",
       background: "transparent",
+      dropShadow: {
+        enabled: true,
+        top: 2,
+        left: 0,
+        blur: 3,
+        opacity: 0.1,
+      },
     },
     plotOptions: {
       pie: {
+        expandOnClick: false,
         donut: {
           labels: {
             show: false, // Hide all labels
@@ -34,6 +43,18 @@ const SmallChart = ({ data }) => {
     },
     fill: {
       type: "gradient",
+      colors:
+        themeMode === "dark" ? ["#6f6f6f", "#f00f3e"] : ["#020800", "#ff100f"],
+      gradient: {
+        shade: themeMode,
+        type: "vertical",
+        shadeIntensity: 0.3,
+        gradientToColors: undefined,
+        inverseColors: true,
+        opacityFrom: 1,
+        opacityTo: 1,
+        stops: [0, 70, 0],
+      },
     },
     labels: labels,
     tooltip: {
@@ -45,6 +66,9 @@ const SmallChart = ({ data }) => {
     theme: {
       mode: themeMode,
     },
+
+    colors:
+      themeMode === "dark" ? ["#a8a8a8", "#f00f3e"] : ["#020800", "#f00f3e"],
   };
 
   return (
