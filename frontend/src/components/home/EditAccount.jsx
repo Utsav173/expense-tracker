@@ -9,17 +9,14 @@ import useTheme from "@mui/material/styles/useTheme";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import toast from "react-hot-toast";
-import { useDispatch } from "react-redux";
-import { APIs } from "../../API";
-import { URL } from "../../API/constant";
 import EditTwoToneIcon from "@mui/icons-material/EditTwoTone";
-import { fetchAccounts } from "../../redux/asyncThunk/home";
+import { useDispatch, useSelector } from "react-redux";
+import { handleEditAccount } from "../../redux/asyncThunk/home";
 
 const EditAccountDialog = ({ id, name, balance }) => {
   const dispatch = useDispatch();
   const [open, setOpen] = React.useState(false);
-  const [loading, setLoading] = React.useState(false);
-
+  const { editLoading } = useSelector((state) => state.homePage);
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("md"));
 
@@ -30,29 +27,23 @@ const EditAccountDialog = ({ id, name, balance }) => {
   const handleAddAccount = async (event) => {
     try {
       event.preventDefault();
-      setLoading(true);
       const formData = new FormData(event.target);
       const name = formData.get("name");
       const balance = formData.get("balance");
 
-      await APIs(
-        "PUT",
-        `${URL.UPDATE_ACCOUNT}${id}`,
-        {
-          name,
-          balance,
-        },
-        {},
-        true,
-      );
+      if (!name || !name.trim()) {
+        toast.error("Name is required");
+        return;
+      }
 
-      setLoading(false);
+      if (!balance) {
+        toast.error("Balance is required");
+        return;
+      }
 
-      toast.success("Account Updated successfully");
-      await dispatch(fetchAccounts());
+      dispatch(handleEditAccount({ id, data: { name, balance } }));
       return setOpen(false);
     } catch (error) {
-      setLoading(false);
       toast.error(error.resonse.data.message);
     }
   };
@@ -124,7 +115,7 @@ const EditAccountDialog = ({ id, name, balance }) => {
           </DialogContent>
           <DialogActions role="none">
             <Button onClick={handleClose}>Cancel</Button>
-            <Button type="submit" disabled={loading} autoFocus>
+            <Button type="submit" disabled={editLoading} autoFocus>
               Update
             </Button>
           </DialogActions>

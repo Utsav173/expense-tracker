@@ -6,8 +6,14 @@ import { useNavigate } from "react-router-dom";
 const CustomPaper = styled(Paper)(({ theme }) => ({
   backgroundColor: theme.palette.mode === "light" ? "#FFFFFF" : "#1C1C1C",
   boxShadow: theme.palette.mode === "light" ? "0px 1px 3px #00000033" : "none",
-  padding: theme.spacing(2),
-  borderRadius: 12,
+  padding: {
+    xs: theme.spacing(2),
+    sm: theme.spacing(3),
+  },
+  borderRadius: {
+    xs: 8,
+    sm: 12,
+  },
   border: `1px solid ${theme.palette.mode === "light" ? "#d9d9d9" : "#3b3b3b"}`,
   "&:hover": {
     boxShadow:
@@ -54,19 +60,19 @@ const SearchList = ({ searchResult }) => {
               py={1}
             >
               <Box flex={1} textAlign={"center"}>
-                <Typography variant={"body1"}>
+                <Typography variant={"body1"} fontSize={{ xs: 12, md: 14 }}>
                   Text: {result.text?.toString().slice(0, 20)}...
                 </Typography>
               </Box>
 
               <Box flex={1} textAlign={"center"}>
-                <Typography variant={"body1"}>
+                <Typography variant={"body1"} fontSize={{ xs: 12, md: 14 }}>
                   Transfer: {result.transfer}
                 </Typography>
               </Box>
 
               <Box flex={1} textAlign={"center"}>
-                <Typography variant={"body1"}>
+                <Typography variant={"body1"} fontSize={{ xs: 12, md: 14 }}>
                   Amount:{" "}
                   <Typography
                     component="span"

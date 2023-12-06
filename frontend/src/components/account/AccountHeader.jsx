@@ -24,7 +24,7 @@ const AccountHeader = ({ id, durationFilter, handleApplyFilter, setQ }) => {
         alignItems: "center",
         boxShadow: (theme) =>
           theme.palette.mode === "dark"
-            ? "rgb(174 173 173 / 25%) 0px 4px 9px -2px, rgb(19 57 65 / 50%) 0px 0px 0px 1px"
+            ? "rgb(174 173 173 / 25%) 0px 4px 9px -2px, rgb(39 45 49 / 50%) 0px 0px 0px 1px"
             : "rgba(9, 30, 66, 0.25) 0px 4px 8px -2px, rgba(9, 30, 66, 0.08) 0px 0px 0px 1px",
         borderRadius: "8px",
         py: 2,

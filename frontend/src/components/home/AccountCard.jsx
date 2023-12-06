@@ -8,7 +8,7 @@ import SvgIcon from "@mui/joy/SvgIcon";
 import IconButton from "@mui/joy/IconButton";
 import { memo, useState } from "react";
 import EditAccountDialog from "./EditAccount";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { handleDelete } from "../../redux/asyncThunk/home";
 import { currencyFormat } from "../../utils";
@@ -19,6 +19,7 @@ import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 const AccountCard = memo(({ cardNumber, name, analytics }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { deleteLoading } = useSelector((state) => state.homePage);
   const theme = useTheme();
   const [isHovered, setIsHovered] = useState(false);
   const isXsScreen = useMediaQuery("(max-width:600px)");
@@ -144,7 +145,10 @@ const AccountCard = memo(({ cardNumber, name, analytics }) => {
             borderColor: "divider",
           }}
         >
-          <IconButton onClick={() => dispatch(handleDelete(cardNumber))}>
+          <IconButton
+            onClick={() => dispatch(handleDelete(cardNumber))}
+            disabled={deleteLoading}
+          >
             <DeleteOutlineIcon />
           </IconButton>
           <EditAccountDialog

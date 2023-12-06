@@ -2,6 +2,12 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { APIs } from "../../API";
 import { URL } from "../../API/constant";
 import toast from "react-hot-toast";
+import {
+  setCreateLoading,
+  setDeleteLoading,
+  setEditLoading,
+  setSearchResultLoading,
+} from "../slice/homeSlice";
 
 export const fetchAccounts = createAsyncThunk(
   "homePage/fetchAccounts",
@@ -32,7 +38,7 @@ export const fetchShareAccounts = createAsyncThunk(
   async (_, { rejectWithValue, fulfillWithValue }) => {
     try {
       const response = await APIs("GET", URL.GET_SHARE_ACC, {}, {}, true);
-      return fulfillWithValue(response); // Assuming the data you need is in the response.data
+      return fulfillWithValue(response);
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Error occurred");
     }
@@ -41,8 +47,9 @@ export const fetchShareAccounts = createAsyncThunk(
 
 export const fetchSearchResult = createAsyncThunk(
   "homePage/fetchSearchResult",
-  async (q, { rejectWithValue, fulfillWithValue }) => {
+  async (q, { rejectWithValue, fulfillWithValue, dispatch }) => {
     try {
+      dispatch(setSearchResultLoading(true));
       const response = await APIs(
         "GET",
         `${URL.SEARCH_ALL}?q=${q}`,
@@ -50,6 +57,9 @@ export const fetchSearchResult = createAsyncThunk(
         {},
         true,
       );
+      if (response.length === 0) {
+        toast("No search result found");
+      }
       return fulfillWithValue(response);
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Error occurred");
@@ -98,6 +108,7 @@ export const handleDelete = createAsyncThunk(
   "homePage/handleDelete",
   async (id, { rejectWithValue, dispatch }) => {
     try {
+      dispatch(setDeleteLoading(true));
       const response = await APIs(
         "DELETE",
         `${URL.DELETE_ACCOUNT}${id}`,
@@ -116,7 +127,27 @@ export const handleCreateAccount = createAsyncThunk(
   "homePage/handleCreateAccount",
   async (data, { rejectWithValue, dispatch }) => {
     try {
+      dispatch(setCreateLoading(true));
       const response = await APIs("POST", URL.CREATE_ACCOUNT, data, {}, true);
+      dispatch(fetchAccounts());
+      return toast.success(response.message);
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Error occurred");
+    }
+  },
+);
+export const handleEditAccount = createAsyncThunk(
+  "homePage/handleEditAccount",
+  async ({ id, data }, { rejectWithValue, dispatch }) => {
+    try {
+      dispatch(setEditLoading(true));
+      const response = await APIs(
+        "PUT",
+        `${URL.UPDATE_ACCOUNT}${id}`,
+        data,
+        {},
+        true,
+      );
       dispatch(fetchAccounts());
       return toast.success(response.message);
     } catch (error) {

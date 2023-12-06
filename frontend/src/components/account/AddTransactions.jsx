@@ -19,6 +19,7 @@ import {
 import toast from "react-hot-toast";
 import AccountBalanceWalletRoundedIcon from "@mui/icons-material/AccountBalanceWalletRounded";
 import { fetchCategorys, handleCreate } from "../../redux/asyncThunk/account";
+import { createTransactionValidation } from "../../utils";
 
 const CustomButton = styled(Button)(({ theme }) => ({
   width: "100%",
@@ -61,26 +62,35 @@ export default function AddTransaction({ accountId }) {
       event.preventDefault();
       setLoading(true);
       const formData = new FormData(event.target);
-      const text = formData.get("text");
-      const amount = formData.get("amount");
-      const isIncome = formData.get("isIncome") === "true";
-      const transfer = formData.get("transfer");
-      const category = formData.get("category");
+
+      const validationError = createTransactionValidation(formData);
+
+      if (validationError === false) {
+        setLoading(false);
+        return;
+      }
+
+      const { text, amount, isIncome, transfer, category } = Object.fromEntries(
+        formData.entries(),
+      );
+
       await dispatch(
         handleCreate({
           text,
           amount,
-          isIncome,
+          isIncome: isIncome === "true",
           transfer,
           category,
           account: accountId,
         }),
       );
+
       setLoading(false);
       setOpen(false);
     } catch (error) {
+      console.log(error);
       setLoading(false);
-      toast.error(error.resonse.data.message);
+      toast.error(error.response?.data?.message || "An error occurred");
     }
   };
 
@@ -96,7 +106,7 @@ export default function AddTransaction({ accountId }) {
         startIcon={<AccountBalanceWalletRoundedIcon />}
         onClick={() => handleClickOpen()}
       >
-        {theme.breakpoints.down("sm") ? "Add Transaction" : "Add"}
+        {theme.breakpoints.down("sm") ? "Add" : "Add Transaction"}
       </CustomButton>
 
       <Dialog

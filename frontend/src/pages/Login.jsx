@@ -1,9 +1,7 @@
-import * as React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { styled } from "@mui/material/styles";
 import {
   Avatar,
-  CssBaseline,
   TextField,
   Link as MULink,
   Grid,
@@ -18,6 +16,8 @@ import toast from "react-hot-toast";
 import { APIs } from "../API";
 import { URL } from "../API/constant";
 import CustomBtn from "../components/Buttons/CustomBtn";
+import { useState } from "react";
+import { validateForm } from "../utils";
 
 const CustomTextField = styled(TextField)(({ theme }) => ({
   "& input:-webkit-autofill": {
@@ -73,46 +73,31 @@ const CustomContainer = styled(Box)(({ theme }) => ({
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setLoading(true);
 
     const formData = new FormData(event.currentTarget);
     const email = formData.get("email");
     const password = formData.get("password");
 
-    // Validate email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email || !email.trim()) {
-      toast.error("Email is required");
-      return;
-    }
-    if (!emailRegex.test(email.trim())) {
-      toast.error("Please enter a valid email address");
-      return;
-    }
-
-    // Validate password
-    if (!password || !password.trim()) {
-      toast.error("Password is required");
-      return;
-    }
-    if (password.trim().length < 8) {
-      toast.error("Password should be at least 8 characters long");
+    if (!validateForm(email, password)) {
+      setLoading(false);
       return;
     }
 
     try {
-      const resonse = await APIs("POST", URL.LOGIN, {
-        email,
-        password,
-      });
-      if (resonse?.data?.token) {
+      const response = await APIs("POST", URL.LOGIN, { email, password });
+      if (response?.data?.token) {
         toast.success("Login Success");
-        localStorage.setItem("user", JSON.stringify(resonse.data));
+        setLoading(false);
+        localStorage.setItem("user", JSON.stringify(response.data));
         navigate("/");
       }
     } catch (error) {
-      console.log(error);
+      setLoading(false);
+      console.error(error);
     }
   };
 
@@ -162,7 +147,13 @@ export default function LoginPage() {
             autoComplete="current-password"
             variant="outlined"
           />
-          <CustomBtn type="submit" fullWidth size="medium" variant="contained">
+          <CustomBtn
+            type="submit"
+            fullWidth
+            size="medium"
+            disabled={loading}
+            variant="contained"
+          >
             Sign In
           </CustomBtn>
 

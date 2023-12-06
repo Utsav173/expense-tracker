@@ -5,11 +5,13 @@ import {
   Card,
   CardContent,
   CardMedia,
+  IconButton,
   Typography,
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProfile } from "../redux/asyncThunk/profile";
 import Loader from "../components/common/Loader";
+import ToggleOnIcon from "@mui/icons-material/ToggleOn";
 
 const Sidebar = lazy(() => import("../components/common/Sidebar"));
 
@@ -51,7 +53,9 @@ const Profile = () => {
                 alignItems="center"
                 mt={2}
               >
-                <Button variant="outlined">Edit</Button>
+                <IconButton>
+                  <ToggleOnIcon />
+                </IconButton>
                 <Typography variant="body2" ml={1}>
                   Last Login At:{" "}
                   {profileData

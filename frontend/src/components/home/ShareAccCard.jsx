@@ -1,98 +1,63 @@
-import {
-  Button,
-  Card,
-  CardContent,
-  Typography,
-  CardActionArea,
-  Box,
-} from "@mui/material";
+import Button from "@mui/joy/Button";
+import Card from "@mui/joy/Card";
+import CardContent from "@mui/joy/CardContent";
+import CardActions from "@mui/joy/CardActions";
+import Typography from "@mui/joy/Typography";
+import SvgIcon from "@mui/joy/SvgIcon";
+import IconButton from "@mui/joy/IconButton";
 import { currencyFormat } from "../../utils";
 import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { Link } from "react-router-dom";
+import { Icon, Tooltip } from "@mui/material";
 
 export default function ShareAccCard({ name, balance, owner, id }) {
   return (
-    <Card
-      variant="outlined"
-      key={id + 1}
-      sx={{
-        maxWidth: 375,
-      }}
-    >
-      <CardActionArea>
-        <CardContent
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "space-between",
-            width: "100%",
-            gap: 2,
-          }}
-        >
-          <Box
+    <>
+      <Card variant="outlined" invertedColors>
+        <CardContent orientation="horizontal" sx={{ alignItems: "center" }}>
+          <AccountBalanceWalletIcon
             sx={{
-              display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              width: "100%",
+              transition: "transform 0.2s ease",
+              fontSize: {
+                xs: 30,
+                sm: 40,
+                md: 60,
+              },
+            }}
+            color="warning"
+          />
+          <CardContent
+            sx={{
+              textAlign: "right",
             }}
           >
-            <AccountBalanceWalletIcon sx={{ fontSize: 45 }} color="warning" />
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "start",
-                gap: 1,
-                textAlign: "right",
-              }}
-            >
-              <Typography variant="h5">{name}</Typography>
-              <Typography variant="body1" marginBottom={0}>
-                {currencyFormat(balance, "standard")}
+            <Tooltip title={name} placement="top">
+              <Typography level="body-md">
+                {name.length > 20 ? `${name.slice(0, 20)}...` : name}
               </Typography>
-            </Box>
-          </Box>
-          <Box
-            display={{
-              xs: "flex",
-              md: "inline-flex",
-            }}
-            width={"100%"}
-            flexDirection={{ xs: "column", md: "row" }}
-            justifyContent={"space-between"}
-            gap={2}
-          >
-            <Link to={`/account/${id}`} style={{ textDecoration: "none" }}>
-              <Button
-                variant="contained"
-                size="small"
-                startIcon={<RemoveRedEyeIcon />}
-                fullWidth
-              >
-                View
-              </Button>
-            </Link>
-            <Button
-              variant="contained"
-              size="small"
-              sx={{
-                backgroundColor: "white",
-                color: "black",
-                transition: "all 0.3s ease",
-                "&:hover": {
-                  backgroundColor: "black",
-                  color: "white",
-                },
-              }}
-            >
-              Shared By : {owner}
-            </Button>
-          </Box>
+            </Tooltip>
+            <Typography level="h3">
+              {currencyFormat(balance, "standard")}
+            </Typography>
+          </CardContent>
         </CardContent>
-      </CardActionArea>
-    </Card>
+        <CardActions>
+          <Link to={`/account/${id}`} style={{ textDecoration: "none" }}>
+            <Button
+              startDecorator={<RemoveRedEyeIcon />}
+              fullWidth
+              variant="soft"
+              size="sm"
+            >
+              View
+            </Button>
+          </Link>
+          <Button fullWidth variant="solid" size="sm">
+            Shared By : {owner}
+          </Button>
+        </CardActions>
+      </Card>
+    </>
   );
 }

@@ -7,6 +7,7 @@ const Loader = ({ diff = false }) => {
   const {
     palette: { mode },
   } = useTheme();
+
   return diff === true ? (
     <Box
       sx={{

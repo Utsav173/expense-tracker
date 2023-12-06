@@ -15,7 +15,7 @@ const SearchComponent = ({
   }, 1500);
 
   return (
-    <Box>
+    <Box width={{ xs: "100%", sm: "auto" }}>
       <TextField
         id="outlined-basic"
         variant="outlined"
@@ -29,7 +29,7 @@ const SearchComponent = ({
           ),
         }}
         aria-label="search-input"
-        autoComplete="new-password"
+        autoComplete="garbage"
         type="text"
         size="small"
         sx={{
@@ -48,10 +48,8 @@ const SearchComponent = ({
                 : isHomepage
                   ? "white"
                   : "black",
-            borderRadius: (theme) =>
-              theme.palette.mode === "light" && isSpecial ? "21px" : "12px",
-            paddingBlock: (theme) =>
-              theme.palette.mode === "light" && !isHomepage && 0.2,
+            borderRadius: "20px",
+            paddingBlock: !isHomepage && 0.2,
           },
           "& .MuiOutlinedInput-notchedOutline": {
             borderColor: (theme) =>

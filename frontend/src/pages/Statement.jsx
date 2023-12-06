@@ -29,15 +29,18 @@ const Statement = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [numTransactions, setNumTransactions] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     dispatch(fetchAccounts());
   }, [dispatch]);
 
   const handleGenerateStatement = async () => {
+    setLoading(true);
     let url = "";
 
     if (!selectedAccount || (!startDate && !endDate)) {
+      setLoading(false);
       return toast.error("Please fill all the required fields");
     }
 
@@ -75,8 +78,9 @@ const Statement = () => {
       setStartDate("");
       setEndDate("");
       setNumTransactions("");
+      setLoading(false);
     } catch (error) {
-      console.error(error);
+      setLoading(false);
       toast.error("Failed to generate statement. Please try again.");
     }
   };
@@ -91,7 +95,7 @@ const Statement = () => {
           alignItems="center"
           flexDirection="column"
         >
-          <Typography component="h1" variant="h5">
+          <Typography component="h4" variant="h4">
             Generate Statements
           </Typography>
           <Box
@@ -148,7 +152,7 @@ const Statement = () => {
                       fullWidth
                       value={numTransactions}
                       onChange={(e) => setNumTransactions(e.target.value)}
-                      label="Number of transactions"
+                      label="Recent Transactions"
                     />
                   </Box>
                 </Box>
@@ -158,6 +162,7 @@ const Statement = () => {
               variant="contained"
               type="submit"
               mt={2}
+              disabled={loading}
               sx={{
                 backgroundColor: (theme) =>
                   theme.palette.mode === "dark" ? "#ffe878" : "#242d38",

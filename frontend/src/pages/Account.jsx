@@ -75,7 +75,7 @@ const Account = () => {
 
   return (
     <Sidebar isHomepage={false}>
-      <Box my={6} mx={2} overflow={"auto"}>
+      <Box my={6} mx={{ xs: 1, md: 2 }} overflow={"auto"}>
         <Paper
           sx={{
             width: "100%",
@@ -121,7 +121,7 @@ const Account = () => {
           )}
         </Paper>
         {transactions.length > 0 && (
-          <Box mt={2} display="flex" justifyContent="center">
+          <Box mt={2} display="flex" width={"100%"} justifyContent="center">
             <Pagination
               count={totalPages}
               page={currentPage}

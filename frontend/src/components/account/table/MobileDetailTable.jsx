@@ -17,6 +17,7 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import { useDispatch, useSelector } from "react-redux";
 import { handleDelete } from "../../../redux/asyncThunk/account";
+import { Stack } from "@mui/material";
 
 const EditTransaction = lazy(() => import("../EditTransaction"));
 
@@ -31,7 +32,7 @@ const MobileDetailTable = () => {
       sx={{
         boxShadow: (theme) =>
           theme.palette.mode === "dark"
-            ? "rgb(174 173 173 / 25%) 0px 4px 9px -2px, rgb(19 57 65 / 50%) 0px 0px 0px 1px"
+            ? "rgb(143 143 143 / 25%) 0px 4px 9px -2px, rgb(39 45 49 / 50%) 0px 0px 0px 1px"
             : "rgba(9, 30, 66, 0.25) 0px 4px 8px -2px, rgba(9, 30, 66, 0.08) 0px 0px 0px 1px",
         borderRadius: "8px",
         overflow: "auto",
@@ -56,6 +57,7 @@ const MobileDetailTable = () => {
                 boxShadow: (theme) =>
                   theme.palette.mode === "dark" &&
                   "rgba(24, 27, 30, 0.04) 0px 3px 5px",
+                overflow: "clip",
               },
             }}
           >
@@ -214,20 +216,22 @@ const MobileDetailTable = () => {
                   <Typography variant="subtitle1">Action:</Typography>
                 </Grid>
                 <Grid item xs={6}>
-                  <EditTransaction transaction={transaction} />
-                  <IconButton
-                    aria-label="delete-trans-mob-btn"
-                    onClick={() =>
-                      dispatch(
-                        handleDelete({
-                          id: transaction._id,
-                          accountId: transaction.account,
-                        }),
-                      )
-                    }
-                  >
-                    <DeleteForeverTwoToneIcon />
-                  </IconButton>
+                  <Stack width={"100%"} direction={"row"}>
+                    <EditTransaction transaction={transaction} />
+                    <IconButton
+                      aria-label="delete-trans-mob-btn"
+                      onClick={() =>
+                        dispatch(
+                          handleDelete({
+                            id: transaction._id,
+                            accountId: transaction.account,
+                          }),
+                        )
+                      }
+                    >
+                      <DeleteForeverTwoToneIcon />
+                    </IconButton>
+                  </Stack>
                 </Grid>
               </Grid>
             </AccordionDetails>

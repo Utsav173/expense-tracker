@@ -2,7 +2,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { Toaster } from "react-hot-toast";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "./App.css";
-import { Suspense, lazy, useEffect, useMemo, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import Loader from "./components/common/Loader.jsx";
 import {
   experimental_extendTheme as materialExtendTheme,
@@ -10,6 +10,8 @@ import {
   THEME_ID as MATERIAL_THEME_ID,
 } from "@mui/material/styles";
 import { CssVarsProvider as JoyCssVarsProvider } from "@mui/joy/styles";
+import { useSelector } from "react-redux";
+import { selectDarkMode } from "./redux/slice/darkModeSlice.js";
 
 // Lazy-loaded components
 const SignUpPage = lazy(() => import("./pages/Signup.jsx"));
@@ -26,6 +28,7 @@ const materialTheme = materialExtendTheme();
 
 function App() {
   const [mounted, setMounted] = useState(false);
+  const userMode = useSelector(selectDarkMode);
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -35,10 +38,10 @@ function App() {
   return (
     <Suspense fallback={<Loader />}>
       <MaterialCssVarsProvider
-        defaultMode="system"
+        defaultMode={userMode ? "dark" : "light"}
         theme={{ [MATERIAL_THEME_ID]: materialTheme }}
       >
-        <JoyCssVarsProvider defaultMode="system">
+        <JoyCssVarsProvider defaultMode={userMode ? "dark" : "light"}>
           <CssBaseline enableColorScheme />
           <Toaster position="top-center" reverseOrder={false} />
           <BrowserRouter>

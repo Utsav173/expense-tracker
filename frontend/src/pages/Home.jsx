@@ -17,6 +17,9 @@ function HomePage() {
   const dispatch = useDispatch();
   const accountsData = useSelector((state) => state.homePage.accounts);
   const searchResult = useSelector((state) => state.homePage.serachResults);
+  const searchResultLoading = useSelector(
+    (state) => state.homePage.searchResultLoading,
+  );
 
   useEffect(() => {
     dispatch(fetchAccounts());
@@ -29,7 +32,7 @@ function HomePage() {
           <Grid container gap={2} justifyContent="center">
             <Grid item>
               <Box textAlign="center">
-                {searchResult.length > 0 && (
+                {searchResult.length > 0 && searchResultLoading === false && (
                   <SearchList searchResult={searchResult} />
                 )}
 
@@ -41,7 +44,7 @@ function HomePage() {
             </Grid>
             <Grid
               container
-              gap={4}
+              gap={3}
               justifyContent="center"
               my={{
                 xs: 2,

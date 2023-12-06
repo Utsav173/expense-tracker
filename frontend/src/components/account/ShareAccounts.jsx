@@ -33,7 +33,7 @@ const CustomButton = styled(Button)(({ theme }) => ({
       : "0px 4px 11px rgba(224, 224, 224, 1)",
   fontWeight: "bold",
   transition: "background-color 0.2s, color 0.2s, box-shadow 0.3s",
-  backgroundColor: theme.palette.mode === "dark" ? "#2980d6" : "#338fd6",
+  backgroundColor: theme.palette.mode === "dark" ? "#2980d6" : "#4b9aec",
   color: "#152636",
   "&:hover": {
     backgroundColor: theme.palette.mode === "light" ? "#094067" : "#1b2d42",
@@ -107,7 +107,7 @@ const ShareAccounts = ({ accountId }) => {
         startIcon={<CoPresentIcon />}
         onClick={() => handleClickOpen()}
       >
-        Share account
+        {theme.breakpoints.down("sm") ? "Share" : "Share account"}
       </CustomButton>
 
       <Dialog

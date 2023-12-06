@@ -8,9 +8,9 @@ import { styled, useTheme } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import toast from "react-hot-toast";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { handleCreateAccount } from "../../redux/asyncThunk/home";
-import React, { useState } from "react";
+import { useState } from "react";
 
 const CustomAddAccBtn = styled(Button)(({ theme }) => ({
   borderRadius: "20px",
@@ -35,8 +35,7 @@ const CustomAddAccBtn = styled(Button)(({ theme }) => ({
 export default function AddAccount() {
   const dispatch = useDispatch();
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-
+  const { createLoading } = useSelector((state) => state.homePage);
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("md"));
 
@@ -47,23 +46,20 @@ export default function AddAccount() {
   const handleAddAccount = async (event) => {
     try {
       event.preventDefault();
-      setLoading(true);
+
       const formData = new FormData(event.target);
       const name = formData.get("name");
       const balance = formData.get("balance");
 
       if (!name || !name.trim()) {
         toast.error("Name is required");
-        setLoading(false);
         return;
       }
 
       await dispatch(handleCreateAccount({ name, balance }));
 
-      setLoading(false);
       return handleClose();
     } catch (error) {
-      setLoading(false);
       return toast.error(error.response.data.message);
     }
   };
@@ -131,7 +127,7 @@ export default function AddAccount() {
             <Button
               variant="contained"
               type="submit"
-              disabled={loading}
+              disabled={createLoading}
               autoFocus
             >
               Create

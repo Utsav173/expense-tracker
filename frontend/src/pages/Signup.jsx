@@ -14,6 +14,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { styled } from "@mui/material/styles";
 import CustomBtn from "../components/Buttons/CustomBtn";
 import { FormHelperText, Input } from "@mui/material";
+import { handleValidation } from "../utils";
 
 const CustomTextField = styled(TextField)(({ theme }) => ({
   "& input:-webkit-autofill": {
@@ -69,57 +70,33 @@ const CustomContainer = styled(Box)(({ theme }) => ({
 export default function SignUpPage() {
   const navigate = useNavigate();
   const [importFile, setImportFile] = React.useState(null);
+  const [loading, setLoading] = React.useState(false);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setLoading(true);
 
     const formData = new FormData(event.currentTarget);
     const name = formData.get("name");
     const email = formData.get("email");
     const password = formData.get("password");
+    const isValid = handleValidation({ name, email, password });
+
+    if (!isValid) {
+      setLoading(false);
+      return;
+    }
+
     formData.append("profilePic", importFile);
-    // Validate name
-    if (!name || !name.trim()) {
-      toast.error("Name is required");
-      return;
-    }
-
-    // Validate email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email || !email.trim()) {
-      toast.error("Email is required");
-      return;
-    }
-    if (!emailRegex.test(email.trim())) {
-      toast.error("Please enter a valid email address");
-      return;
-    }
-
-    // Validate password
-    if (!password || !password.trim()) {
-      toast.error("Password is required");
-      return;
-    }
-    if (password.trim().length < 8) {
-      toast.error("Password should be at least 8 characters long");
-      return;
-    }
-
-    // Check if password contains at least one letter and one number
-    const passwordRegex =
-      /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    if (!passwordRegex.test(password.trim())) {
-      toast.error(
-        "Password should contain at least one letter, one digit, and one special character",
-      );
-      return;
-    }
 
     try {
       const response = await APIs("POST", URL.SIGNUP, formData);
       toast.success(response.message);
-      return navigate("/login");
+      setLoading(false);
+      navigate("/login");
     } catch (error) {
-      console.log(error);
+      setLoading(false);
+      console.error(error);
     }
   };
 
@@ -229,7 +206,13 @@ export default function SignUpPage() {
               </label>
             </Grid>
           </Grid>
-          <CustomBtn type="submit" fullWidth size="medium" variant="contained">
+          <CustomBtn
+            type="submit"
+            fullWidth
+            size="medium"
+            disabled={loading}
+            variant="contained"
+          >
             Sign Up
           </CustomBtn>
           <Grid container justifyContent="flex-end">

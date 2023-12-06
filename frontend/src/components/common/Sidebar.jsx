@@ -29,6 +29,8 @@ import RequestPageIcon from "@mui/icons-material/RequestPage";
 import AccountBoxIcon from "@mui/icons-material/AccountBox";
 import { useColorScheme as useMaterialColorScheme } from "@mui/material/styles";
 import { useColorScheme as useJoyColorScheme } from "@mui/joy/styles";
+import iconImage from "../../assets/icon.png";
+import { Stack } from "@mui/material";
 
 const drawerWidth = 240;
 
@@ -85,7 +87,14 @@ const generateListItem = (item) => (
         LinkComponent={Link}
         to={item.route}
       >
-        <ListItemIcon>{item.icon}</ListItemIcon>
+        <ListItemIcon
+          sx={{
+            color: (theme) =>
+              theme.palette.mode === "dark" ? "#f7f7f7" : "#3e474d",
+          }}
+        >
+          {item.icon}
+        </ListItemIcon>
         <ListItemText
           primary={item.label}
           aria-label={item.label}
@@ -106,15 +115,45 @@ function Sidebar(props) {
   };
 
   const drawer = (
-    <div>
-      <Toolbar>
+    <Stack
+      direction={"column"}
+      sx={{
+        height: "100%",
+        backgroundColor: (theme) =>
+          theme.palette.mode === "dark" ? "#212121" : "#f7f7f7",
+
+        color: (theme) =>
+          theme.palette.mode === "dark" ? theme.palette.text.primary : "black",
+      }}
+    >
+      <Toolbar
+        sx={{
+          boxShadow: (theme) => theme.shadows[3],
+          color: (theme) =>
+            theme.palette.mode === "dark"
+              ? theme.palette.text.primary
+              : "white",
+          backgroundColor: (theme) =>
+            theme.palette.mode === "dark" ? "#272d31" : theme.palette.grey[900],
+        }}
+      >
+        <img
+          loading="lazy"
+          style={{
+            width: "30px",
+            height: "30px",
+            marginRight: "10px",
+            marginBlock: "auto",
+          }}
+          src={iconImage}
+          alt="logo"
+        />
         <Typography variant="h6" noWrap component="div">
           Expense Tracker
         </Typography>
       </Toolbar>
-      <Divider />
       <List>{navigationItems.map((item) => generateListItem(item))}</List>
-    </div>
+    </Stack>
   );
 
   const container =
@@ -144,7 +183,9 @@ function Sidebar(props) {
         <Toolbar
           sx={{
             backgroundColor: (theme) =>
-              theme.palette.mode === "dark" ? "#272d31" : "#001f37",
+              theme.palette.mode === "dark"
+                ? "#272d31"
+                : theme.palette.grey[900],
           }}
         >
           <IconButton
@@ -196,9 +237,11 @@ function Sidebar(props) {
           }}
           sx={{
             display: { xs: "block", sm: "none" },
+            border: "none",
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
               width: drawerWidth,
+              border: "none",
             },
           }}
         >

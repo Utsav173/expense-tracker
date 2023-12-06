@@ -123,7 +123,6 @@ export const handleCreate = createAsyncThunk(
       );
       return toast.success(response.message);
     } catch (error) {
-      console.log("error", error);
       toast.error(error.response?.data?.message);
       return rejectWithValue(error.response?.data?.message);
     }
@@ -159,7 +158,6 @@ export const handleEdit = createAsyncThunk(
       );
       return toast.success(response.message);
     } catch (error) {
-      console.log("error", error);
       toast.error(error.response?.data?.message);
       return rejectWithValue(error.response?.data?.message);
     }
@@ -193,7 +191,6 @@ export const handleDelete = createAsyncThunk(
       dispatch(fetchIEcharts({ accountId: accountId, duration: "thisMonth" }));
       return toast.success(response.message);
     } catch (error) {
-      console.log("error", error);
       toast.error(error.response?.data?.message);
       return rejectWithValue(error.response?.data?.message);
     }
