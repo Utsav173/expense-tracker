@@ -32,7 +32,7 @@ const SparkLines = ({ data, type, color, textColor }) => {
     },
     stroke: {
       curve: "smooth",
-      width: 0.5,
+      width: 1,
     },
     fill: {
       opacity: mode === "dark" && 0.1,
@@ -83,7 +83,8 @@ const SparkLines = ({ data, type, color, textColor }) => {
       show: false,
     },
     tooltip: {
-      theme: mode,
+      theme: true,
+      cssClass:`apex-chart-tooltip-${mode}-${type}`,
       x: {
         show: false,
       },
@@ -95,6 +96,7 @@ const SparkLines = ({ data, type, color, textColor }) => {
       marker: {
         show: false,
       },
+      fillSeriesColor:true
     },
     title: {
       text: type,

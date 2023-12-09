@@ -20,6 +20,10 @@ import toast from "react-hot-toast";
 import AccountBalanceWalletRoundedIcon from "@mui/icons-material/AccountBalanceWalletRounded";
 import { fetchCategorys, handleCreate } from "../../redux/asyncThunk/account";
 import { createTransactionValidation } from "../../utils";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import { renderTimeViewClock } from "@mui/x-date-pickers/timeViewRenderers";
 
 const CustomButton = styled(Button)(({ theme }) => ({
   width: "100%",
@@ -48,12 +52,17 @@ export default function AddTransaction({ accountId }) {
   const dispatch = useDispatch();
   const [open, setOpen] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
+  const [type, setType] = React.useState("");
+  const [username, setUsername] = React.useState("");
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("md"));
   const categoryData = useSelector((state) => state.accountPage.categorys);
+  const [newCreatedAt, setNewCreatedAt] = React.useState(null);
 
   const handleClickOpen = () => {
     setOpen(true);
+    const userName = JSON.parse(localStorage.getItem("user"))?.user.name;
+    setUsername(userName);
     dispatch(fetchCategorys());
   };
 
@@ -71,8 +80,14 @@ export default function AddTransaction({ accountId }) {
       }
 
       const { text, amount, isIncome, transfer, category } = Object.fromEntries(
-        formData.entries(),
+        formData.entries()
       );
+
+      if(newCreatedAt > new Date()) {
+        toast.error("Date cannot be in the future");
+        setLoading(false);
+        return;
+      }
 
       await dispatch(
         handleCreate({
@@ -81,10 +96,12 @@ export default function AddTransaction({ accountId }) {
           isIncome: isIncome === "true",
           transfer,
           category,
+          createdAt: newCreatedAt || new Date(),
           account: accountId,
-        }),
+        })
       );
-
+      setType("");
+      setUsername("");
       setLoading(false);
       setOpen(false);
     } catch (error) {
@@ -164,17 +181,6 @@ export default function AddTransaction({ accountId }) {
               required
               variant="outlined"
             />
-            <TextField
-              autoFocus
-              margin="dense"
-              name="transfer"
-              label="Transfer"
-              type="text"
-              autoComplete="off"
-              fullWidth
-              required
-              variant="outlined"
-            />
             <FormControl margin="dense" fullWidth>
               <InputLabel id="trans-type-label">Type</InputLabel>
               <Select
@@ -183,11 +189,27 @@ export default function AddTransaction({ accountId }) {
                 variant="outlined"
                 required
                 labelId="trans-type-label"
+                onChange={(e) => setType(e.target.value)}
               >
                 <MenuItem value={"true"}>income</MenuItem>
                 <MenuItem value={"false"}>expense</MenuItem>
               </Select>
             </FormControl>
+            <TextField
+              autoFocus
+              margin="dense"
+              name="transfer"
+              label="Transfer"
+              type="text"
+              autoComplete="off"
+              disabled={type == ""}
+              value={type === "true" ? username : ""}
+              defaultChecked={type === "true" ? true : false}
+              fullWidth
+              required
+              variant="outlined"
+            />
+
             <FormControl margin="dense" fullWidth>
               <InputLabel id="trans-cat-label">Category</InputLabel>
               <Select
@@ -204,6 +226,26 @@ export default function AddTransaction({ accountId }) {
                     </MenuItem>
                   ))}
               </Select>
+            </FormControl>
+            <FormControl margin="dense" fullWidth>
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DateTimePicker
+                  label="createdAt"
+                  defaultValue={new Date()}
+                  onChange={(latestDate) => {
+                    if (latestDate > new Date()) {
+                      return toast.error("Date cannot be in the future");
+                    } else {
+                      setNewCreatedAt(latestDate);
+                    }
+                  }}
+                  viewRenderers={{
+                    hours: renderTimeViewClock,
+                    minutes: renderTimeViewClock,
+                    seconds: renderTimeViewClock,
+                  }}
+                />
+              </LocalizationProvider>
             </FormControl>
           </DialogContent>
           <DialogActions>

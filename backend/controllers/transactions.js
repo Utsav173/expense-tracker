@@ -58,6 +58,7 @@ const createTransaction = async (req, res) => {
       createdBy: req.user.id,
       updatedBy: req.user.id,
       owner: validBalance.owner,
+      createdAt: new Date(req.body.createdAt),
     });
     await handleAnalytics(helperData);
 
@@ -433,7 +434,7 @@ const deleteTransaction = async (req, res) => {
 
     const validTransaction = await Transaction.findById(
       id,
-      "account amount isIncome createdBy",
+      "account amount isIncome createdBy"
     );
 
     if (!validTransaction) {
@@ -448,11 +449,11 @@ const deleteTransaction = async (req, res) => {
 
     const accountData = await Account.findById(
       validTransaction.account,
-      "balance",
+      "balance"
     );
     const analyticsData = await Analytics.findOne(
       { account: validTransaction.account },
-      "income expense balance",
+      "income expense balance"
     );
 
     const updatedAccountBalance = accountData.balance - validTransaction.amount;
@@ -473,7 +474,7 @@ const deleteTransaction = async (req, res) => {
 
       await Analytics.findOneAndUpdate(
         { account: validTransaction.account },
-        { $set: { income: updatedIncome, balance: updatedBalance } },
+        { $set: { income: updatedIncome, balance: updatedBalance } }
       );
     } else {
       const updatedExpense = analyticsData.expense - validTransaction.amount;
@@ -481,7 +482,7 @@ const deleteTransaction = async (req, res) => {
 
       await Analytics.findOneAndUpdate(
         { account: validTransaction.account },
-        { $set: { expense: updatedExpense, balance: updatedBalance } },
+        { $set: { expense: updatedExpense, balance: updatedBalance } }
       );
     }
 
@@ -499,7 +500,7 @@ const deleteTransaction = async (req, res) => {
 const editTransaction = async (req, res) => {
   try {
     const id = req.params.id;
-    if (!id) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: "Transaction ID is required" });
     }
 
@@ -517,16 +518,16 @@ const editTransaction = async (req, res) => {
       updatedBy: req.user.id,
     };
 
+    if (req.body.createdAt) {
+      transactionData.createdAt = new Date(req.body.createdAt);
+    }
+
     const validTransaction = await Transaction.findById(id);
     if (!validTransaction) {
       return res.status(400).json({ message: "Transaction not found" });
     }
 
     const validBalance = await Account.findById(validTransaction.account);
-    const analyticsData = await Analytics.findOne({
-      account: validTransaction.account,
-    });
-
     const amountDifference = transactionData.amount - validTransaction.amount;
     const typeChanged = validTransaction.isIncome !== transactionData.isIncome;
     const amountChanged = amountDifference !== 0;
@@ -572,7 +573,7 @@ const editTransaction = async (req, res) => {
     if (Object.keys(updateOperations).length > 0) {
       await Analytics.findOneAndUpdate(
         { account: validTransaction.account },
-        { $inc: updateOperations },
+        { $inc: updateOperations }
       );
 
       await Account.findByIdAndUpdate(validTransaction.account, {
@@ -580,7 +581,10 @@ const editTransaction = async (req, res) => {
       });
     }
 
-    await Transaction.findByIdAndUpdate(id, transactionData);
+    const newUpatedd = await Transaction.updateOne(
+      { _id: id },
+      { $set: transactionData }
+    );
 
     return res
       .status(200)
@@ -621,7 +625,7 @@ const getFakeData = async (req, res) => {
 
       const randomDate = new Date(
         startDateObj.getTime() +
-          Math.random() * (endDateObj.getTime() - startDateObj.getTime()),
+          Math.random() * (endDateObj.getTime() - startDateObj.getTime())
       );
 
       const temp = {
@@ -646,7 +650,7 @@ const getFakeData = async (req, res) => {
     // Send the Excel file to the user
     res.setHeader(
       "Content-Disposition",
-      "attachment; filename=Transactions_data.xlsx",
+      "attachment; filename=Transactions_data.xlsx"
     );
     res.type("application/octet-stream");
     res.send(excelBuffer);

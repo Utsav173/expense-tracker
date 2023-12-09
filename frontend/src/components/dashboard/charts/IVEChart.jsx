@@ -48,36 +48,14 @@ const IVEChart = ({ ieChartTwoData }) => {
 
   const colors = mode === "light" ? lightModeColors : darkModeColors;
 
+  /** @type {import('apexcharts').ApexOptions} */
   const options = {
     chart: {
       background: "transparent",
-      type: "bar",
-      stacked: false,
+      type: chartType === "line" ? "area" : "bar",
+      stacked: chartType === "line" ? true : false,
       toolbar: {
-        show: true,
-        tools: {
-          download: true,
-          selection: true,
-          zoom: true,
-          reset: true | '<img src="/static/icons/reset.png" width="20">',
-        },
-        export: {
-          csv: {
-            filename: undefined,
-            columnDelimiter: ",",
-            headerCategory: "category",
-            headerValue: "value",
-            dateFormatter(timestamp) {
-              return new Date(timestamp).toDateString();
-            },
-          },
-          svg: {
-            filename: undefined,
-          },
-          png: {
-            filename: undefined,
-          },
-        },
+        show: false,
       },
       dropShadow: {
         enabled: true,
@@ -97,34 +75,34 @@ const IVEChart = ({ ieChartTwoData }) => {
       enabled: false,
     },
     legend: {
-      show: false,
+      show: true,
     },
     stroke: {
-      curve: chartType === "line" ? "smooth" : "straight",
+      width: chartType === "line" && 2,
+      curve: chartType === "line" && "smooth",
     },
     plotOptions: {
       bar: {
         horizontal: false,
-        columnWidth: "50%",
+        columnWidth: "30%",
         dataLabels: {
           position: "top",
         },
       },
+      area: {
+        fillTo: "end",
+      },
     },
     xaxis: {
-      // type: 'datetime',
       categories: categories,
-      title: {
-        text: "Duration",
-      },
       axisBorder: {
-        show: true, // Show x-axis border
+        show: true,
         color: mode === "light" ? "#16202b" : "#c2cbff", // X-axis border color
       },
     },
     yaxis: {
       title: {
-        text: "Amount",
+        text: "Income vs Expense by Duration",
       },
       axisBorder: {
         show: true, // Show x-axis border
@@ -138,14 +116,6 @@ const IVEChart = ({ ieChartTwoData }) => {
         formatter: (val) => currencyFormat(val, "compact"),
       },
     },
-    title: {
-      text: "Income vs Expense by Duration",
-      style: {
-        // color: colorMode === 'light' ? '#858585' : '#e8e8e8',
-        fontSize: "16px",
-      },
-      offsetX: 14,
-    },
     responsive: [
       {
         breakpoint: 870,
@@ -158,7 +128,7 @@ const IVEChart = ({ ieChartTwoData }) => {
         },
       },
     ],
-    colors: colors,
+    colors: [colors],
   };
 
   return (

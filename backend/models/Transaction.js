@@ -12,8 +12,14 @@ const TransactionSchema = new mongoose.Schema(
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     owner: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    createdAt: { type: Date, default: Date.now, immutable: false },
   },
-  { timestamps: true },
+  {
+    timestamps: {
+      createdAt: false,
+      updatedAt: true,
+    },
+  }
 );
 
 function validateTransaction(transaction) {
@@ -24,6 +30,7 @@ function validateTransaction(transaction) {
     transfer: Joi.string().required().label("Transfer"),
     category: Joi.string().required().label("Category"),
     account: Joi.string().required().label("Account"),
+    createdAt: Joi.date().required().label("CreatedAt"),
   });
   return schema.validate(transaction);
 }
@@ -35,6 +42,7 @@ function validateEditTransaction(transaction) {
     isIncome: Joi.boolean().optional().label("isIncome"),
     transfer: Joi.string().optional().label("Transfer"),
     category: Joi.string().optional().label("Category"),
+    createdAt: Joi.date().optional().label("CreatedAt"),
   });
   return schema.validate(transaction);
 }

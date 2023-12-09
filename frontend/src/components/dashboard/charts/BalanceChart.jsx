@@ -20,30 +20,7 @@ const BalanceChart = () => {
       type: "pie",
       background: "transparent",
       toolbar: {
-        show: true,
-        tools: {
-          download: true,
-          selection: true,
-          zoom: true,
-          reset: true | '<img src="/static/icons/reset.png" width="20">',
-        },
-        export: {
-          csv: {
-            filename: undefined,
-            columnDelimiter: ",",
-            headerCategory: "category",
-            headerValue: "value",
-            dateFormatter(timestamp) {
-              return new Date(timestamp).toDateString();
-            },
-          },
-          svg: {
-            filename: undefined,
-          },
-          png: {
-            filename: undefined,
-          },
-        },
+        show: false,
       },
       dropShadow: {
         enabled: true,
@@ -60,7 +37,7 @@ const BalanceChart = () => {
     theme: {
       monochrome: {
         enabled: true,
-        color: colorMode == "light" ? "#26bdff" : "#f2df35",
+        color: colorMode == "light" ? "#26bdff" : "#53e11e",
       },
       mode: colorMode,
     },
@@ -81,7 +58,7 @@ const BalanceChart = () => {
           },
           title: {
             style: {
-              fontSize: "10px",
+              fontSize: "12px",
             },
           },
         },
@@ -103,7 +80,7 @@ const BalanceChart = () => {
       },
     },
     title: {
-      text: "Account Balance",
+      text: "Balance By account",
       style: {
         // color: colorMode === 'light' ? '#858585' : '#e8e8e8',
         fontSize: "16px",

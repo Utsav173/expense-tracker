@@ -76,7 +76,9 @@ const MobileDetailTable = () => {
                   boxShadow: (theme) =>
                     theme.palette.mode === "light" &&
                     "rgba(9, 30, 66, 0.25) 0px 4px 8px -2px, rgba(9, 30, 66, 0.08) 0px 0px 0px 1px;",
-                  borderRadius: (theme) =>
+                  borderBottomLeftRadius: (theme) =>
+                    theme.palette.mode === "light" && "15px",
+                  borderBottomRightRadius: (theme) =>
                     theme.palette.mode === "light" && "15px",
                   marginBottom: (theme) =>
                     theme.palette.mode === "light" ? 1 : 0,
@@ -121,14 +123,14 @@ const MobileDetailTable = () => {
                   sx={{
                     fontWeight: "bolder",
                     fontSmooth: "auto",
-                    color: (theme) =>
-                      theme.palette.mode === "dark"
-                        ? transaction.isIncome
-                          ? "#9eff9c"
-                          : "#db4848"
-                        : transaction.isIncome
-                          ? "#82bf62"
-                          : "#b54a4a",
+                    // color: (theme) =>
+                    //   theme.palette.mode === "dark"
+                    //     ? transaction.isIncome
+                    //       ? "#9eff9c"
+                    //       : "#db4848"
+                    //     : transaction.isIncome
+                    //       ? "#82bf62"
+                    //       : "#b54a4a",
                   }}
                 >
                   {currencyFormat(transaction.amount)}
@@ -142,6 +144,14 @@ const MobileDetailTable = () => {
               }}
             >
               <Grid container spacing={2}>
+              <Grid item xs={6}>
+                  <Typography variant="subtitle1">Text:</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="body1" flexWrap={true}>
+                    {transaction.text}
+                  </Typography>
+                </Grid>
                 <Grid item xs={6}>
                   <Typography variant="subtitle1">Amount:</Typography>
                 </Grid>

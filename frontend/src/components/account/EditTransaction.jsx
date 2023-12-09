@@ -17,13 +17,27 @@ import EditTwoToneIcon from "@mui/icons-material/EditTwoTone";
 import { fetchCategorys, handleEdit } from "../../redux/asyncThunk/account";
 import IconButton from "@mui/material/IconButton";
 
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import { renderTimeViewClock } from "@mui/x-date-pickers/timeViewRenderers";
+
 export default function EditTransaction({ transaction }) {
-  const { _id, text, amount, isIncome, transfer, category, account } =
-    transaction;
+  const {
+    _id,
+    text,
+    amount,
+    isIncome,
+    transfer,
+    category,
+    account,
+    createdAt,
+  } = transaction;
 
   const dispatch = useDispatch();
   const [open, setOpen] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
+  const [newCreatedAt, setNewCreatedAt] = React.useState(null);
 
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("md"));
@@ -44,18 +58,28 @@ export default function EditTransaction({ transaction }) {
       const isIncome = formData.get("isIncome") === "true";
       const transfer = formData.get("transfer");
       const category = formData.get("category");
+
+      if (newCreatedAt > new Date()) {
+        toast.error("Date cannot be in the future");
+        setLoading(false);
+        return;
+      }
+
       await dispatch(
         handleEdit({
           id: _id,
+          accountId: account,
           data: {
             text,
             amount,
             isIncome,
             transfer,
             category,
+            createdAt: newCreatedAt || createdAt,
           },
-        }),
+        })
       );
+
       setLoading(false);
       setOpen(false);
     } catch (error) {
@@ -157,6 +181,26 @@ export default function EditTransaction({ transaction }) {
                       </MenuItem>
                     ))}
               </Select>
+            </FormControl>
+            <FormControl margin="dense" fullWidth>
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DateTimePicker
+                  label="createdAt"
+                  value={new Date(createdAt)}
+                  onChange={(latestDate) => {
+                    if (latestDate > new Date()) {
+                      return toast.error("Date cannot be in the future");
+                    } else {
+                      setNewCreatedAt(latestDate);
+                    }
+                  }}
+                  viewRenderers={{
+                    hours: renderTimeViewClock,
+                    minutes: renderTimeViewClock,
+                    seconds: renderTimeViewClock,
+                  }}
+                />
+              </LocalizationProvider>
             </FormControl>
           </DialogContent>
           <DialogActions>

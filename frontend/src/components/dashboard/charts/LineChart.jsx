@@ -6,52 +6,46 @@ const LineChart = ({ data, themeMode }) => {
   const incomeData =
     data.income &&
     data.income.map((item) => ({
-      x: new Date(item.createdAt).getTime(), // Using timestamp as x-value
+      x: new Date(item.createdAt).getTime(),
       y: item.amount,
     }));
 
   const expenseData =
     data.expense &&
     data.expense.map((item) => ({
-      x: new Date(item.createdAt).getTime(), // Using timestamp as x-value
+      x: new Date(item.createdAt).getTime(),
       y: item.amount,
     }));
 
   const series = [
-    { name: "Income", data: incomeData },
-    { name: "Expense", data: expenseData },
+    {
+      name: "Income",
+      data: incomeData.map((item) => item.y),
+    },
+    {
+      name: "Expense",
+      data: expenseData.map((item) => item.y),
+    },
   ];
 
+  const categories =
+    data.income &&
+    data.income.map((item) => new Date(item.createdAt).toLocaleDateString());
+
+  /** @type {import('apexcharts').ApexOptions} */
   const options = {
     chart: {
-      type: "area",
-      stacked: true,
+      type: "bar",
       background: "transparent",
       toolbar: {
-        show: true,
-        tools: {
-          download: true,
-          selection: true,
-          zoom: true,
-          reset: true | '<img src="/static/icons/reset.png" width="20">',
-        },
-        export: {
-          csv: {
-            filename: undefined,
-            columnDelimiter: ",",
-            headerCategory: "category",
-            headerValue: "value",
-            dateFormatter(timestamp) {
-              return new Date(timestamp).toDateString();
-            },
-          },
-          svg: {
-            filename: undefined,
-          },
-          png: {
-            filename: undefined,
-          },
-        },
+        show: false,
+      },
+    },
+    plotOptions: {
+      bar: {
+        horizontal: false,
+        columnWidth: "40%",
+        endingShape: "rounded",
       },
     },
     responsive: [
@@ -66,57 +60,43 @@ const LineChart = ({ data, themeMode }) => {
         },
       },
     ],
-    grid: {
-      show: false,
+    tooltip: {
+      theme: themeMode,
     },
     dataLabels: {
       enabled: false,
     },
-    stroke: {
-      curve: "smooth",
+    grid: {
+      show: false,
     },
     xaxis: {
-      type: "datetime", // Setting x-axis type to datetime
+      categories: categories,
+      labels: {
+        style: {
+          cssClass: "apexcharts-xaxis-label",
+          colors: themeMode === "light" ? "#5E35B1" : "#fff",
+        },
+      },
       axisBorder: {
         show: true,
-        color: themeMode === "light" ? "#473069" : "#c096ff",
+        color: themeMode === "light" ? "#8f00a7" : "#c0b6ff",
       },
-      labels: {
+      axisTicks: {
         show: true,
-        style: {
-          colors: themeMode === "light" ? "#333" : "#fff",
-        },
+        color: themeMode === "light" ? "#8f00a7" : "#c0b6ff",
       },
     },
     yaxis: {
       title: {
-        text: "Amount",
+        text: "Income vs Expense Bar Chart",
       },
       axisBorder: {
-        show: true, // Show x-axis border
-        color: themeMode === "light" ? "#473069" : "#c096ff", // X-axis border color
+        show: true,
+        color: themeMode === "light" ? "#8f00a7" : "#c0b6ff",
       },
       axisTicks: {
         show: true,
-        color: themeMode === "light" ? "#473069" : "#c096ff", // X-axis border color
-      },
-    },
-    title: {
-      text: "Income vs Expense Line Chart",
-      style: {
-        // color: colorMode === 'light' ? '#858585' : '#e8e8e8',
-        fontSize: "16px",
-      },
-      offsetX: 14,
-    },
-    fill: {
-      type: "gradient",
-      gradient: {
-        shadeIntensity: 1,
-        inverseColors: false,
-        opacityFrom: 0.45,
-        opacityTo: 0.05,
-        stops: [20, 100, 100, 100],
+        color: themeMode === "light" ? "#8f00a7" : "#c0b6ff",
       },
     },
     theme: {
@@ -132,7 +112,7 @@ const LineChart = ({ data, themeMode }) => {
     <Chart
       options={options}
       series={series}
-      type="area"
+      type="bar"
       height={400}
       width="100%"
     />

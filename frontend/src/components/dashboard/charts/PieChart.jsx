@@ -18,30 +18,7 @@ const PieChart = ({ data, themeMode }) => {
       type: "donut",
       background: "transparent",
       toolbar: {
-        show: true,
-        tools: {
-          download: true,
-          selection: true,
-          zoom: true,
-          reset: true | '<img src="/static/icons/reset.png" width="20">',
-        },
-        export: {
-          csv: {
-            filename: undefined,
-            columnDelimiter: ",",
-            headerCategory: "category",
-            headerValue: "value",
-            dateFormatter(timestamp) {
-              return new Date(timestamp).toDateString();
-            },
-          },
-          svg: {
-            filename: undefined,
-          },
-          png: {
-            filename: undefined,
-          },
-        },
+        show: false,
       },
       dropShadow: {
         enabled: true,
@@ -62,17 +39,19 @@ const PieChart = ({ data, themeMode }) => {
           labels: {
             show: true,
             name: {
-              show: false,
+              show: true,
             },
             value: {
               show: true,
               formatter: (val) => {
                 return currencyFormat(val, "scientific");
               },
+              fontWeight: "bold",
             },
             total: {
               showAlways: true,
               show: true,
+              label:"Balance"
             },
           },
         },

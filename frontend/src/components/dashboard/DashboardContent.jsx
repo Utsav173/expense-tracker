@@ -61,8 +61,11 @@ const DashboardContent = () => {
             <ChartBox
               sx={{
                 flex: 1,
+                flexFlow: "column",
+                flexGrow: 1,
                 backgroundColor: (theme) =>
-                  theme.palette.mode === "dark" ? "#16222e" : "#dcedffff",
+                  theme.palette.mode === "dark" ? "#16222e" : "#fff0db",
+                height: "full"
               }}
             >
               <CategoryChart

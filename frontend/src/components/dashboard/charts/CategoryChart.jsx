@@ -43,30 +43,7 @@ const CategoryChart = ({ categoryChartData }) => {
       type: "bar",
       stacked: false,
       toolbar: {
-        show: true,
-        tools: {
-          download: true,
-          selection: true,
-          zoom: true,
-          reset: true | '<img src="/static/icons/reset.png" width="20">',
-        },
-        export: {
-          csv: {
-            filename: undefined,
-            columnDelimiter: ",",
-            headerCategory: "category",
-            headerValue: "value",
-            dateFormatter(timestamp) {
-              return new Date(timestamp).toDateString();
-            },
-          },
-          svg: {
-            filename: undefined,
-          },
-          png: {
-            filename: undefined,
-          },
-        },
+        show: false,
       },
       dropShadow: {
         enabled: true,
@@ -93,21 +70,11 @@ const CategoryChart = ({ categoryChartData }) => {
     },
     xaxis: {
       categories: categories,
-      title: {
-        text: "Category",
-      },
       axisBorder: {
         show: true,
         color: colorMode === "light" ? "#16202b" : "#6d89a8",
       },
       labels: {
-        formatter: (val) => {
-          if (val.length > 5) {
-            return val.substring(0, 5) + "...";
-          } else {
-            return val;
-          }
-        },
         show: true,
         tooltip: {
           enabled: true,
@@ -122,7 +89,7 @@ const CategoryChart = ({ categoryChartData }) => {
         formatter: (val) => currencyFormat(val, "compact"),
       },
       title: {
-        text: "Amount Spent",
+        text: "Spent by Category",
       },
       axisBorder: {
         show: true, // Show x-axis border
@@ -144,13 +111,6 @@ const CategoryChart = ({ categoryChartData }) => {
         formatter: (val) => currencyFormat(val, "compact"),
       },
     },
-    title: {
-      text: "Group By Category",
-      style: {
-        fontSize: "16px",
-      },
-      offsetX: 14,
-    },
     theme: {
       mode: colorMode,
     },
@@ -166,7 +126,7 @@ const CategoryChart = ({ categoryChartData }) => {
         options={options}
         series={series}
         type="bar"
-        height={350}
+        height={400}
         width={"100%"}
       />
     </Suspense>

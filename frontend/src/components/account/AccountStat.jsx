@@ -132,7 +132,7 @@ const AccountStat = () => {
                 boxShadow: (theme) =>
                   theme.palette.mode === "light"
                     ? "rgba(0, 0, 0, 0.04) 0px 3px 5px;"
-                    : "rgba(0, 99, 166, 0.2) 0px 0px 25px inset;",
+                    : "rgba(0, 81, 135, 0.2) 0px 0px 25px inset;",
               },
             }}
           >

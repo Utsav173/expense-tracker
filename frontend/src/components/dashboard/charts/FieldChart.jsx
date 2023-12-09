@@ -13,36 +13,14 @@ const FieldChart = ({ fieldChartData }) => {
   const counts = fieldChartData.slice(0, showRecent).map((data) => data.count);
   const series = [{ data: counts }];
 
+  /** @type {import('apexcharts').ApexOptions} */
   const options = {
     chart: {
       background: "transparent",
       type: "bar",
       height: 350,
       toolbar: {
-        show: true,
-        tools: {
-          download: true,
-          selection: true,
-          zoom: true,
-          reset: true | '<img src="/static/icons/reset.png" width="20">',
-        },
-        export: {
-          csv: {
-            filename: undefined,
-            columnDelimiter: ",",
-            headerCategory: "category",
-            headerValue: "value",
-            dateFormatter(timestamp) {
-              return new Date(timestamp).toDateString();
-            },
-          },
-          svg: {
-            filename: undefined,
-          },
-          png: {
-            filename: undefined,
-          },
-        },
+        show: false,
       },
       dropShadow: {
         enabled: true,
