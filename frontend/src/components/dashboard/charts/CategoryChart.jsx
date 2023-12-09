@@ -41,8 +41,7 @@ const CategoryChart = ({ categoryChartData }) => {
     chart: {
       background: "transparent",
       type: "bar",
-      stacked: false,
-      height: 400, 
+      stacked: false,  
       toolbar: {
         show: false,
       },
@@ -127,7 +126,7 @@ const CategoryChart = ({ categoryChartData }) => {
         options={options}
         series={series}
         type="bar"
-        height={400}
+        height={350}
         width={"100%"}
       />
     </Suspense>
