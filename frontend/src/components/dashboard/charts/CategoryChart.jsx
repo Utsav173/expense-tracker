@@ -42,6 +42,7 @@ const CategoryChart = ({ categoryChartData }) => {
       background: "transparent",
       type: "bar",
       stacked: false,
+      height: 400, 
       toolbar: {
         show: false,
       },
