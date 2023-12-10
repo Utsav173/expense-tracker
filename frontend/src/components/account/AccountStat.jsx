@@ -7,10 +7,11 @@ import { currencyFormat } from "../../utils";
 import Loader from "../common/Loader";
 
 const AccStatChart = lazy(() => import("./chart/AccStatChart"));
+const AccBalanceChart = lazy(() => import("./chart/AccBalanceChart"));
 
 const AccountStat = () => {
   const { accountStat, amountCharts } = useSelector(
-    (state) => state.accountPage,
+    (state) => state.accountPage
   );
   const theme = useTheme();
 
@@ -128,30 +129,48 @@ const AccountStat = () => {
                 theme.palette.mode === "dark" && "0.15px solid",
               borderColor: (theme) =>
                 theme.palette.mode === "dark" && "#111417",
-              "&:hover": {
-                boxShadow: (theme) =>
-                  theme.palette.mode === "light"
-                    ? "rgba(0, 0, 0, 0.04) 0px 3px 5px;"
-                    : "rgba(0, 81, 135, 0.2) 0px 0px 25px inset;",
-              },
+              zIndex: 1,
+              position: "relative",
             }}
           >
-            <Tooltip title="this balance is only related to the duration and it not sync with main balance">
-              <Typography variant="h6" gutterBottom>
-                Balance
-              </Typography>
-              <Typography
-                variant="h5"
-                gutterBottom
-                fontWeight={"bold"}
-                sx={{
-                  color: (theme) =>
-                    theme.palette.mode === "dark" ? "#759ec7" : "#161c21",
-                }}
-              >
-                {currencyFormat(accountStat.balance)}
-              </Typography>{" "}
-            </Tooltip>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                padding: "16px",
+                background: "transparent",
+              }}
+            >
+              <Tooltip title="this balance is only related to the duration and it not sync with main balance">
+                <Typography variant="h6" gutterBottom>
+                  Balance
+                </Typography>
+                <Typography
+                  variant="h5"
+                  gutterBottom
+                  fontWeight={"bold"}
+                  sx={{
+                    color: (theme) =>
+                      theme.palette.mode === "dark" ? "#759ec7" : "#161c21",
+                  }}
+                >
+                  {currencyFormat(accountStat.balance)}
+                </Typography>{" "}
+              </Tooltip>
+            </Box>
+            <Box
+              sx={{
+                position: "absolute",
+                zIndex: 0,
+                bottom: (theme) => (theme.palette.mode === "light" ? 3 : 5),
+                width: "100%",
+                opacity: 0.8,
+              }}
+            >
+              <AccBalanceChart data={amountCharts.balance} />
+            </Box>
           </Box>
           <Box
             sx={{

@@ -35,7 +35,7 @@ export const URL = {
   DELETE_TRANSACTION: `${BASE_URL}/transactions/`,
   GET_ONE_TRANSACTION: `${BASE_URL}/transactions/`,
   BY_INCOME_EXP: `${BASE_URL}/transactions/by/income/expense`,
-  BY_CATEGORY: `${BASE_URL}/transactions/by/category`,
+  BY_CATEGORY: `${BASE_URL}/transactions/by/category/chart`,
   BY_FIELD: `${BASE_URL}/transactions/by/`,
   BY_I_E_DURATION: `${BASE_URL}/transactions/by/income/expense/chart`,
   GET_FAKEDATA: `${BASE_URL}/transactions/fakeData/by`,

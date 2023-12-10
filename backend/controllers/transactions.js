@@ -190,6 +190,27 @@ const findIncomeAndExpense = async (req, res) => {
           totalExpense: { $sum: "$expense.amount" },
           income: 1,
           expense: 1,
+          balance: {
+            $map: {
+              input: "$income",
+              as: "incomeItem",
+              in: {
+                $let: {
+                  vars: {
+                    expenseItem: {
+                      $arrayElemAt: [
+                        "$expense",
+                        { $indexOfArray: ["$income", "$$incomeItem"] },
+                      ],
+                    },
+                  },
+                  in: {
+                    $subtract: ["$$incomeItem.amount", "$$expenseItem.amount"],
+                  },
+                },
+              },
+            },
+          },
         },
       },
     ]);

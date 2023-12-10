@@ -53,6 +53,7 @@ export default function AddTransaction({ accountId }) {
   const [open, setOpen] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [type, setType] = React.useState("");
+  const [transfer, setTransfer] = React.useState("");
   const [username, setUsername] = React.useState("");
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("md"));
@@ -83,7 +84,7 @@ export default function AddTransaction({ accountId }) {
         formData.entries()
       );
 
-      if(newCreatedAt > new Date()) {
+      if (newCreatedAt > new Date()) {
         toast.error("Date cannot be in the future");
         setLoading(false);
         return;
@@ -203,8 +204,9 @@ export default function AddTransaction({ accountId }) {
               type="text"
               autoComplete="off"
               disabled={type == ""}
-              value={type === "true" ? username : ""}
+              value={type === "true" ? username : transfer}
               defaultChecked={type === "true" ? true : false}
+              onChange={(e) => setTransfer(e.target.value)}
               fullWidth
               required
               variant="outlined"
