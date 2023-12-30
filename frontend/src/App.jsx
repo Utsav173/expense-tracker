@@ -1,6 +1,6 @@
 import CssBaseline from "@mui/material/CssBaseline";
 import { Toaster } from "react-hot-toast";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "./App.css";
 import { Suspense, lazy, useEffect, useState } from "react";
 import Loader from "./components/common/Loader.jsx";
@@ -57,6 +57,7 @@ function App() {
               </Route>
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignUpPage />} />
+              <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </BrowserRouter>
         </JoyCssVarsProvider>
