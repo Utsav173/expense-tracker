@@ -86,6 +86,9 @@ const CategoryChart = ({ categoryChartData }) => {
       },
       title: {
         text: "Spent by Category",
+        style:{
+          color: colorMode === "light" ? "#6e1600" : "#6d89a8",
+        }
       },
       axisBorder: {
         show: true, // Show x-axis border

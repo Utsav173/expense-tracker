@@ -47,11 +47,11 @@ const Statement = () => {
     try {
       if (startDate && endDate) {
         url = `${URL.EXPORT_STATEMENT(selectedAccount)}?startDate=${new Date(
-          startDate,
+          startDate
         ).toISOString()}&endDate=${new Date(endDate).toISOString()}`;
       } else {
         url = `${URL.EXPORT_STATEMENT(
-          selectedAccount,
+          selectedAccount
         )}?numTransactions=${numTransactions}`;
       }
 
@@ -165,7 +165,11 @@ const Statement = () => {
               disabled={loading}
               sx={{
                 backgroundColor: (theme) =>
-                  theme.palette.mode === "dark" ? "#ffe878" : "#242d38",
+                  loading
+                    ? "grey"
+                    : theme.palette.mode === "dark"
+                    ? "#ffe878"
+                    : "#242d38",
                 color: (theme) =>
                   theme.palette.mode === "dark" ? "#241e00" : "#a8caf7",
                 transition: "all 0.3s ease",

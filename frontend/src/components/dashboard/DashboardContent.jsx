@@ -115,6 +115,7 @@ const DashboardContent = () => {
                 xs: "100%",
                 md: "auto",
               },
+              paddingBlock: (theme) => theme.spacing(2),
               backgroundColor: (theme) =>
                 theme.palette.mode === "light" ? "#baeaffD6" : "#1a1915",
             }}
@@ -129,6 +130,7 @@ const DashboardContent = () => {
                   xs: "100%",
                   md: "auto",
                 },
+                paddingBlock: (theme) => theme.spacing(2),
                 backgroundColor: (theme) =>
                   theme.palette.mode === "light" ? "#f0e6ff" : "#1c1429",
               }}

@@ -13,6 +13,7 @@ const PieChart = ({ data, themeMode }) => {
   const series = [totalIncome, totalExpense];
   const labels = ["Total Income", "Total Expense"];
 
+  /** @type {import('apexcharts').ApexOptions} */
   const options = {
     chart: {
       type: "donut",
@@ -33,8 +34,15 @@ const PieChart = ({ data, themeMode }) => {
       width: 0.5,
       colors: ["transparent"],
     },
+    colors:
+      themeMode === "dark" ? ["#44188c", "#a56eff"] : ["#a432d9", "#51108f"],
+    // fill: {
+    //   colors: themeMode === "dark" ? "#f9f9f9" : "#000000",
+    // },
     plotOptions: {
       pie: {
+        expandOnClick: true,
+
         donut: {
           labels: {
             show: true,
@@ -51,7 +59,10 @@ const PieChart = ({ data, themeMode }) => {
             total: {
               showAlways: true,
               show: true,
-              label:"Balance"
+              label: "Balance",
+              formatter: (w) => {
+                return currencyFormat(w.globals.seriesTotals.reduce((a, b) => a + b, 0), "compact");
+              }
             },
           },
         },
@@ -61,6 +72,7 @@ const PieChart = ({ data, themeMode }) => {
       text: "Total Income vs Total Expense Pie Chart",
       style: {
         fontSize: "16px",
+        color: themeMode === "dark" ? "#c8b5e6" : "#11002e",
       },
       offsetX: 14,
     },

@@ -37,9 +37,17 @@ const BalanceChart = () => {
     theme: {
       monochrome: {
         enabled: true,
-        color: colorMode == "light" ? "#26bdff" : "#53e11e",
+        color: colorMode == "light" ? "#0073ff" : "#53e11e",
       },
       mode: colorMode,
+    },
+    states: {
+      hover: {
+        filter: {
+          type: colorMode === "dark" ? "none" : "darken",
+          value: 0.45,
+        },
+      },
     },
     labels: data.labels,
     tooltip: {
@@ -47,6 +55,9 @@ const BalanceChart = () => {
         formatter: (val) => {
           return currencyFormat(val, "standard");
         },
+      },
+      onDatasetHover: {
+        highlightDataSeries: false,
       },
     },
     responsive: [
@@ -82,7 +93,7 @@ const BalanceChart = () => {
     title: {
       text: "Balance By account",
       style: {
-        // color: colorMode === 'light' ? '#858585' : '#e8e8e8',
+        color: colorMode === 'light' ? '#002363' : '#ccffd4',
         fontSize: "16px",
       },
       offsetX: 14,
