@@ -61,17 +61,13 @@ server.on("error", (error) => {
   }
 });
 
-cron.schedule("*/14 * * * *", async () => {
-  setTimeout(async () => {
-    try {
-      const response = await axios.get(
-        "https://exp-v-4.onrender.com/auth/test"
-      );
-      console.log(response.data);
-    } catch (error) {
-      console.error("Error:", error.message);
-    }
-  }, 55000);
+cron.schedule("*/15 * * * *", async () => {
+  try {
+    const response = await axios.get("https://exp-v-4.onrender.com/auth/test");
+    console.log(response.data);
+  } catch (error) {
+    console.error("Error:", error.message);
+  }
 });
 
 const PORT = process.env.PORT || 1337;
