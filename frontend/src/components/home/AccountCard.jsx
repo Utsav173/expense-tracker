@@ -101,7 +101,8 @@ const AccountCard = memo(({ cardNumber, name, analytics }) => {
             {name.length > 15 ? `${name.slice(0, 15)}...` : name}
           </Typography>
           <Typography
-            level="h3"
+            level="h4"
+            fontWeight={"normal"}
             onClick={() => navigate(`/account/${cardNumber}`)}
           >
             {displayCardNumber}
@@ -109,10 +110,39 @@ const AccountCard = memo(({ cardNumber, name, analytics }) => {
         </CardContent>
       </CardContent>
       <CardActions>
-        <Button fullWidth variant="soft" size="sm">
+        <Button
+          fullWidth
+          variant="soft"
+          size="sm"
+          sx={{
+            backgroundColor:
+              theme.palette.mode === "dark" ? "#374531" : "#13471a",
+            fontWeight: "normal",
+            color: theme.palette.mode === "dark" ? "#59ff7a" : "#e2ffd6",
+            transition: "background-color 0.3s, color 0.3s",
+            "&:hover": {
+              backgroundColor: theme.palette.success.dark,
+            },
+          }}
+        >
           {currencyFormat(analytics.income.toFixed(2), "compact")}
         </Button>
-        <Button fullWidth variant="solid" size="sm">
+        <Button
+          fullWidth
+          variant="solid"
+          size="sm"
+          sx={{
+            backgroundColor:
+              theme.palette.mode === "dark" ? "#453131" : "#ffd6d6",
+            fontWeight: "normal",
+            color: theme.palette.mode === "dark" ? "#ff4747" : "#d63c3c",
+            transition: "background-color 0.3s, color 0.3s",
+            "&:hover": {
+              backgroundColor: theme.palette.error.dark,
+              color: theme.palette.mode === "dark" ? "white" : "#ffd6d6",
+            },
+          }}
+        >
           {currencyFormat(analytics.expense.toFixed(2), "compact")}
         </Button>
         <Button
@@ -141,8 +171,6 @@ const AccountCard = memo(({ cardNumber, name, analytics }) => {
             fontWeight: "xl",
             letterSpacing: "1px",
             textTransform: "uppercase",
-            borderLeft: "1px solid",
-            borderColor: "divider",
           }}
         >
           <IconButton

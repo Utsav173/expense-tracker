@@ -12,13 +12,14 @@ const SearchList = lazy(() => import("../components/common/SearchList"));
 // Other imports
 import "../App.css";
 import { fetchAccounts } from "../redux/asyncThunk/home";
+import { Helmet } from "react-helmet";
 
 function HomePage() {
   const dispatch = useDispatch();
   const accountsData = useSelector((state) => state.homePage.accounts);
   const searchResult = useSelector((state) => state.homePage.serachResults);
   const searchResultLoading = useSelector(
-    (state) => state.homePage.searchResultLoading,
+    (state) => state.homePage.searchResultLoading
   );
 
   useEffect(() => {
@@ -28,6 +29,14 @@ function HomePage() {
   return (
     <Sidebar isHomepage={true}>
       <Suspense fallback={<Loader />}>
+        <Helmet>
+          <title>Home | Expense Pro</title>
+          <meta
+            name="description"
+            content="Welcome to homepage of expense pro, where you can find your accounts and create new account for transactions"
+          />
+          <link rel="canonical" href="https://track-expense-tan.vercel.app/" />
+        </Helmet>
         <Box my={7}>
           <Grid container gap={2} justifyContent="center">
             <Grid item>
@@ -35,9 +44,8 @@ function HomePage() {
                 {searchResult.length > 0 && searchResultLoading === false && (
                   <SearchList searchResult={searchResult} />
                 )}
-
                 <Typography variant="h5" component="h5" gutterBottom>
-                  Welcome to the Home Page
+                  Welcome to the Expense Pro
                 </Typography>
                 <AddAccount />
               </Box>

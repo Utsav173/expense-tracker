@@ -15,6 +15,7 @@ import { styled } from "@mui/material/styles";
 import CustomBtn from "../components/Buttons/CustomBtn";
 import { FormHelperText, Input } from "@mui/material";
 import { handleValidation } from "../utils";
+import { Helmet } from "react-helmet";
 
 const CustomTextField = styled(TextField)(({ theme }) => ({
   "& input:-webkit-autofill": {
@@ -111,6 +112,11 @@ export default function SignUpPage() {
         alignItems: "center",
       }}
     >
+      <Helmet>
+        <title>Signup | Expense Pro</title>
+        <meta name="description" content="Sign up page of expense pro where you can signup with your email and password" />
+        <link rel="canonical" href="https://track-expense-tan.vercel.app/signup" />
+      </Helmet>
       <CustomContainer>
         <Avatar sx={{ m: 1, backgroundColor: "#ff499e" }}>
           <LockOutlinedIcon />

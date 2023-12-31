@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import toast from "react-hot-toast";
+import { Helmet } from "react-helmet";
 
 // Other imports
 import { APIs } from "../API";
@@ -112,12 +113,17 @@ export default function LoginPage() {
         alignItems: "center",
       }}
     >
+      <Helmet>
+        <title>Login | Expense Pro</title>
+        <meta name="description" content="Welcome to Expense Pro login with email and password" />
+        <link rel="canonical" href="https://track-expense-tan.vercel.app/login" />
+      </Helmet>
       <CustomContainer>
         <Avatar sx={{ m: 1, bgcolor: "primary.main" }}>
           <LockOutlinedIcon />
         </Avatar>
         <Typography component="h1" variant="h5" sx={{ mt: 2 }}>
-          Sign in
+          Welcome to Expense Pro!
         </Typography>
         <Box
           component="form"

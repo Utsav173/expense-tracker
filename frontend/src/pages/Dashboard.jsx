@@ -12,22 +12,23 @@ import {
 } from "../redux/asyncThunk/dashboard";
 import Lottie from "lottie-react";
 import noDataLight from "../assets/noData-light.json";
+import { Helmet } from "react-helmet";
 
 const Sidebar = lazy(() => import("../components/common/Sidebar"));
-const DashboardContent = lazy(
-  () => import("../components/dashboard/DashboardContent"),
+const DashboardContent = lazy(() =>
+  import("../components/dashboard/DashboardContent")
 );
-const DashBoradHeader = lazy(
-  () => import("../components/dashboard/DashBoradHeader"),
+const DashBoradHeader = lazy(() =>
+  import("../components/dashboard/DashBoradHeader")
 );
-const DashboardStat = lazy(
-  () => import("../components/dashboard/DashboardStat"),
+const DashboardStat = lazy(() =>
+  import("../components/dashboard/DashboardStat")
 );
 
 const Dashboard = () => {
   const dispatch = useDispatch();
   const { duration, field, dashboardData } = useSelector(
-    (state) => state.dashboardPage,
+    (state) => state.dashboardPage
   );
 
   useEffect(() => {
@@ -46,6 +47,17 @@ const Dashboard = () => {
   return (
     <Sidebar isHomepage={false}>
       <Suspense fallback={<Loader />}>
+        <Helmet>
+          <title>Dashboard | Expense Pro</title>
+          <meta
+            name="description"
+            content="Welcome to dashboard of expense pro, where you can find multiple analytics of your accounts with different chart and useful information"
+          />
+          <link
+            rel="canonical"
+            href="https://track-expense-tan.vercel.app/dashboard"
+          />
+        </Helmet>
         {dashboardData.totalTransaction < 4 ? (
           <Box
             my={7}

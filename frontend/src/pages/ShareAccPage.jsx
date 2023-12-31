@@ -5,6 +5,7 @@ import { fetchShareAccounts } from "../redux/asyncThunk/home";
 import Lottie from "lottie-react";
 import noDataLight from "../assets/noData-light.json";
 import Loader from "../components/common/Loader";
+import { Helmet } from "react-helmet";
 
 const ShareAccCard = lazy(() => import("../components/home/ShareAccCard"));
 const Sidebar = lazy(() => import("../components/common/Sidebar"));
@@ -19,6 +20,11 @@ const ShareAccPage = () => {
   return (
     <Sidebar isHomepage={false}>
       <Suspense fallback={<Loader />}>
+      <Helmet>
+        <title>Share Accounts | Expense Pro</title>
+        <meta name="description" content="Share accounts page where you can find shared accounts which shared by others to you" />
+        <link rel="canonical" href="https://track-expense-tan.vercel.app/share-accounts" />
+      </Helmet>
         {sharesAccounts.length > 0 ? (
           <Box
             my={6}

@@ -27,14 +27,7 @@ const PrivateRoute = lazy(() => import("./API/PrivateRoute.jsx"));
 const materialTheme = materialExtendTheme();
 
 function App() {
-  const [mounted, setMounted] = useState(false);
   const userMode = useSelector(selectDarkMode);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-  if (!mounted) {
-    return null;
-  }
   return (
     <Suspense fallback={<Loader />}>
       <MaterialCssVarsProvider

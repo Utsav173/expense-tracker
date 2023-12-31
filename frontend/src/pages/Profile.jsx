@@ -12,6 +12,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchProfile } from "../redux/asyncThunk/profile";
 import Loader from "../components/common/Loader";
 import ToggleOnIcon from "@mui/icons-material/ToggleOn";
+import { Helmet } from "react-helmet";
 
 const Sidebar = lazy(() => import("../components/common/Sidebar"));
 
@@ -32,6 +33,11 @@ const Profile = () => {
   return (
     <Sidebar isHomepage={false}>
       <Suspense fallback={<Loader />}>
+      <Helmet>
+        <title>Profile | Expense Pro</title>
+        <meta name="description" content="Profile page of expense pro where you can manage your user profile" />
+        <link rel="canonical" href="https://track-expense-tan.vercel.app/profile" />
+      </Helmet>
         <Box mt={7} display="flex" justifyContent="center" alignItems="center">
           <Card sx={{ maxWidth: 400, my: 3 }}>
             <CardMedia

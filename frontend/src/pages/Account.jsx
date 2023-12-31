@@ -10,11 +10,11 @@ import toast from "react-hot-toast";
 const Sidebar = lazy(() => import("../components/common/Sidebar"));
 const AccountHeader = lazy(() => import("../components/account/AccountHeader"));
 const AccountStat = lazy(() => import("../components/account/AccountStat"));
-const DesktopDetailTable = lazy(
-  () => import("../components/account/table/DesktopDetailTable"),
+const DesktopDetailTable = lazy(() =>
+  import("../components/account/table/DesktopDetailTable")
 );
-const MobileDetailTable = lazy(
-  () => import("../components/account/table/MobileDetailTable"),
+const MobileDetailTable = lazy(() =>
+  import("../components/account/table/MobileDetailTable")
 );
 
 // MUI-related imports batched together
@@ -32,12 +32,13 @@ import {
   fetchTransactions,
 } from "../redux/asyncThunk/account";
 import { setCurrentPage } from "../redux/slice/accountSlice";
+import { Helmet } from "react-helmet";
 
 const Account = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
   const { transactions, currentPage, totalCount, totalPages } = useSelector(
-    (state) => state.accountPage,
+    (state) => state.accountPage
   );
   const [durationFilter, setDurationFilter] = useState("thisMonth");
   const [q, setQ] = useState("");
@@ -52,13 +53,13 @@ const Account = () => {
           page: currentPage,
           duration: durationFilter,
           q: q,
-        }),
+        })
       );
       await dispatch(
-        fetchSignleAccount({ accountId: id, duration: durationFilter }),
+        fetchSignleAccount({ accountId: id, duration: durationFilter })
       );
       await dispatch(
-        fetchIEcharts({ accountId: id, duration: durationFilter }),
+        fetchIEcharts({ accountId: id, duration: durationFilter })
       );
     };
 
@@ -75,6 +76,13 @@ const Account = () => {
 
   return (
     <Sidebar isHomepage={false}>
+      <Helmet>
+        <title>Account | Expense Pro</title>
+        <meta
+          name="description"
+          content="Detail account page where you can manage transaction related to this account and share account to other also has income expense chart"
+        />
+      </Helmet>
       <Box my={6} mx={{ xs: 1, md: 2 }} overflow={"auto"}>
         <Paper
           sx={{

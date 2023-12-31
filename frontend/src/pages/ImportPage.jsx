@@ -21,6 +21,7 @@ import {
   handleConfirmImport,
   handleImportFile,
 } from "../redux/asyncThunk/home";
+import { Helmet } from "react-helmet";
 
 const AddImportFile = lazy(() => import("../components/import/AddImportFile"));
 const ConfirmImport = lazy(() => import("../components/import/ConfirmImport"));
@@ -28,7 +29,7 @@ const ConfirmImport = lazy(() => import("../components/import/ConfirmImport"));
 const ImportPage = () => {
   const dispatch = useDispatch();
   const { importFile, importFileResult } = useSelector(
-    (state) => state.homePage,
+    (state) => state.homePage
   );
   useEffect(() => {
     dispatch(fetchAccounts());
@@ -54,6 +55,17 @@ const ImportPage = () => {
   return (
     <Sidebar isHomepage={false}>
       <Suspense fallback={<Loader />}>
+        <Helmet>
+          <title>Import Transaction | Expense Pro</title>
+          <meta
+            name="description"
+            content="Welcome to import transaction page where you can import number of transactions in excel format to any of your accounts"
+          />
+          <link
+            rel="canonical"
+            href="https://track-expense-tan.vercel.app/import"
+          />
+        </Helmet>
         <Box
           my={7}
           sx={{

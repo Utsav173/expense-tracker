@@ -18,6 +18,7 @@ import { fetchAccounts } from "../redux/asyncThunk/home";
 import { URL } from "../API/constant";
 import toast from "react-hot-toast";
 import axios from "axios";
+import { Helmet } from "react-helmet";
 
 const DateField = lazy(() => import("../components/statement/DateField"));
 const Sidebar = lazy(() => import("../components/common/Sidebar"));
@@ -88,6 +89,17 @@ const Statement = () => {
   return (
     <Sidebar isHomepage={false}>
       <Suspense fallback={<Loader />}>
+        <Helmet>
+          <title>Account Statement | Expense Pro</title>
+          <meta
+            name="description"
+            content="Welcome to statement page of expense pro, where you can generate statement for your accounts"
+          />
+          <link
+            rel="canonical"
+            href="https://track-expense-tan.vercel.app/statement"
+          />
+        </Helmet>
         <Box
           mt={7}
           display="flex"
