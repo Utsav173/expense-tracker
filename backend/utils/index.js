@@ -118,7 +118,7 @@ function calculatePercentageChange(oldValue, newValue) {
     }
   } else {
     return parseFloat(
-      (((newValue - oldValue) / Math.abs(oldValue)) * 100).toFixed(2),
+      (((newValue - oldValue) / Math.abs(oldValue)) * 100).toFixed(2)
     );
   }
 }
@@ -152,6 +152,11 @@ function getIntervalValue(interval) {
     case "thisYear":
       startDate = startOfYear(new Date()).getTime();
       endDate = endOfYear(new Date()).getTime();
+      break;
+
+    case "all":
+      startDate = startOfYear(new Date("1970-01-01")).getTime();
+      endDate = endOfDay(new Date()).getTime();
       break;
 
     default:
@@ -289,7 +294,7 @@ function calculateBalanceData(income, expense) {
     const groupedTransactions = allTransactions.reduce(
       (grouped, transaction) => {
         const dateKey = startOfDay(
-          new Date(transaction.createdAt),
+          new Date(transaction.createdAt)
         ).toISOString(); // Assuming transaction.createdAt is a valid Date object
 
         if (!grouped[dateKey]) {
@@ -299,7 +304,7 @@ function calculateBalanceData(income, expense) {
 
         return grouped;
       },
-      {},
+      {}
     );
 
     const dates = Object.keys(groupedTransactions);

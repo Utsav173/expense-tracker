@@ -581,12 +581,12 @@ const getCustomAnalytics = async (req, res) => {
       balance: analyticsData.totalBalance,
       IncomePercentageChange: parseFloat(TIPChange.toFixed(2)),
       futurePredictedIncome: predictedIncomes.map((e) =>
-        parseFloat(e.toFixed(2)),
+        parseFloat(e.toFixed(2))
       ),
       futureIncomePercentageChange: parseFloat(FIPChange.toFixed(2)),
       ExpensePercentageChange: parseFloat(TEPChange.toFixed(2)),
       futurePredictedExpense: predictedExpenses.map((e) =>
-        parseFloat(e.toFixed(2)),
+        parseFloat(e.toFixed(2))
       ),
       futureExpensePercentageChange: parseFloat(FEPChange.toFixed(2)),
     };
@@ -635,7 +635,7 @@ const importTransactions = async (req, res) => {
 
     // check if fileHeaders contains all requiredHeaders
     const containsAllHeaders = requiredHeaders.every((header) =>
-      fileHeaders.includes(header),
+      fileHeaders.includes(header)
     );
 
     if (!containsAllHeaders) {
@@ -792,7 +792,7 @@ const getSampleFile = async (req, res) => {
     return res
       .status(200)
       .sendFile(
-        path.join(__dirname, "../public/sample/sample_transactions.xlsx"),
+        path.join(__dirname, "../public/sample/sample_transactions.xlsx")
       );
   } catch (error) {
     console.log(error);
@@ -874,7 +874,7 @@ const generateStatement = async (req, res) => {
       transactions = await fetchTransactionsByDateRange(
         startDate,
         endDate,
-        accountId,
+        accountId
       );
     } else if (numTransactions) {
       transactions = await fetchRecentTransactions(numTransactions, accountId);
@@ -916,7 +916,7 @@ const generateStatement = async (req, res) => {
       // Compile EJS template
       const ejsTemplate = fs.readFileSync(
         path.join(__dirname, "../public/template/statement.ejs"),
-        "utf-8",
+        "utf-8"
       );
       const html = ejs.render(ejsTemplate, {
         transactions,
@@ -941,7 +941,7 @@ const generateStatement = async (req, res) => {
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
-        "attachment; filename=statement.pdf",
+        "attachment; filename=statement.pdf"
       );
       res.send(pdfBuffer);
     }
@@ -1025,7 +1025,39 @@ const getDashBoardData = async (req, res) => {
 
     const totalTransaction = await Transaction.find({
       owner: userId,
-    });
+    }).select("_id");
+
+    const [
+      mostExpensiveExpense,
+      cheapestExpense,
+      mostExpensiveIncome,
+      cheapestIncome,
+    ] = await Promise.all([
+      Transaction.findOne({
+        owner: userId,
+        isIncome: false,
+      })
+        .sort({ amount: -1 })
+        .limit(1),
+      Transaction.findOne({
+        owner: userId,
+        isIncome: false,
+      })
+        .sort({ amount: 1 })
+        .limit(1),
+      Transaction.findOne({
+        owner: userId,
+        isIncome: true,
+      })
+        .sort({ amount: -1 })
+        .limit(1),
+      Transaction.findOne({
+        owner: userId,
+        isIncome: true,
+      })
+        .sort({ amount: 1 })
+        .limit(1),
+    ]);
 
     // Calculate chart data for income, expense, and balance
     const { incomeData, expenseData, balanceData } = await getDailyData(userId);
@@ -1039,15 +1071,15 @@ const getDashBoardData = async (req, res) => {
     if (accountInfo.length > 0) {
       overallIncome = accountInfo.reduce(
         (acc, account) => acc + parseFloat(account.analytics.income),
-        0,
+        0
       );
       overallExpense = accountInfo.reduce(
         (acc, account) => acc + parseFloat(account.analytics.expense),
-        0,
+        0
       );
       overallBalance = accountInfo.reduce(
         (acc, account) => acc + parseFloat(account.analytics.balance),
-        0,
+        0
       );
 
       overallIncome = parseFloat(overallIncome.toFixed(2));
@@ -1056,12 +1088,12 @@ const getDashBoardData = async (req, res) => {
 
       overallIncomePercentageChange = accountInfo.reduce(
         (acc, account) => acc + account.analytics.incomePercentageChange,
-        0,
+        0
       );
 
       overallExpensePercentageChange = accountInfo.reduce(
         (acc, account) => acc + account.analytics.expensePercentageChange,
-        0,
+        0
       );
 
       overallIncomePercentageChange /= accountInfo.length;
@@ -1075,21 +1107,25 @@ const getDashBoardData = async (req, res) => {
           obj[item._id] = item.transactionsCount;
           return obj;
         },
-        {},
+        {}
       ),
       totalTransaction: totalTransaction.length,
       overallIncome: parseFloat(overallIncome.toFixed(2)),
       overallExpense: parseFloat(overallExpense.toFixed(2)),
       overallBalance: parseFloat(overallBalance.toFixed(2)),
       overallIncomePercentageChange: parseFloat(
-        overallIncomePercentageChange.toFixed(2),
+        overallIncomePercentageChange.toFixed(2)
       ),
       overallExpensePercentageChange: parseFloat(
-        overallExpensePercentageChange.toFixed(2),
+        overallExpensePercentageChange.toFixed(2)
       ),
       incomeChartData: incomeData,
       expenseChartData: expenseData,
       balanceChartData: balanceData,
+      mostExpensiveExpense,
+      cheapestExpense,
+      mostExpensiveIncome,
+      cheapestIncome,
     };
 
     return res.status(200).json(response);

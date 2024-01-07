@@ -88,7 +88,6 @@ const Dashboard = () => {
               display: "flex",
               justifyContent: "center",
               flexDirection: "column",
-              gap: 3,
             }}
           >
             <DashboardStat />

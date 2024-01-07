@@ -224,6 +224,29 @@ const DesktopDetailTable = ({ totalPages, setQ }) => {
               margin: 0,
               padding: 0,
               overflow: "hidden",
+              '& .MuiDataGrid-virtualScroller': {
+                '&::-webkit-scrollbar': {
+                  width: '2px',
+                  height: '7px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  border: 'none',
+                  background: (theme) =>
+                    theme.palette.mode === 'light' ? '#FFFFFF' : '#1E1E1E',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  display: 'none',
+                  backgroundColor: (theme) =>
+                    theme.palette.mode === 'light' ? '#e8e8e8' : '#2D2D2D',
+                  borderRadius: '8px',
+                  transition: 'all 0.5s ease',
+                },
+                '&::-webkit-scrollbar-thumb:hover': {
+                  display: 'block',
+                  background: (theme) =>
+                    theme.palette.mode === 'light' ? '#d3d3d3' : '#555',
+                },
+              },
             },
             "& .MuiDataGrid-toolbarContainer": {
               paddingBottom: "8px",
@@ -248,18 +271,18 @@ const DesktopDetailTable = ({ totalPages, setQ }) => {
               fontWeight: "500",
             },
             overflow: "auto",
-            scrollbarWidth: "thin",
-            "&::-webkit-scrollbar": {
-              width: "8px",
+            scrollbarWidth: 'thin',
+            '&::-webkit-scrollbar': {
+              width: '8px',
             },
-            "&::-webkit-scrollbar-thumb": {
+            '&::-webkit-scrollbar-thumb': {
               backgroundColor: (theme) =>
-                theme.palette.mode === "light" ? "#BBBBBB" : "#666666",
-              borderRadius: "4px",
+                theme.palette.mode === 'light' ? '#BBBBBB' : '#666666',
+              borderRadius: '4px',
             },
-            "&::-webkit-scrollbar-track": {
-              backgroundColor: "transparent",
-              borderRadius: "4px",
+            '&::-webkit-scrollbar-track': {
+              backgroundColor: 'transparent',
+              borderRadius: '4px',
             },
             "@media print": {
               ".MuiDataGrid-main": {

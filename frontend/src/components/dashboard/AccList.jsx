@@ -7,6 +7,7 @@ import ScaleLoader from "react-spinners/ScaleLoader";
 import List from "@mui/material/List";
 import Typography from "@mui/material/Typography";
 import Loader from "../common/Loader";
+import { currencyFormat } from "../../utils";
 
 export default function AccList({ dashboardData }) {
   return !dashboardData || !dashboardData.accountsInfo ? (
@@ -75,7 +76,7 @@ export default function AccList({ dashboardData }) {
                   }
                   secondary={
                     <Typography variant="body2" color="text.secondary">
-                      Balance: {item.balance}
+                      Balance: {currencyFormat(item.balance)}
                     </Typography>
                   }
                 />

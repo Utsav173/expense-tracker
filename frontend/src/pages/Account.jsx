@@ -105,9 +105,12 @@ const Account = () => {
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-                border: "1px solid",
                 borderColor: theme.palette.mode === "dark" ? "#555" : "#ccc",
-                borderRadius: "8px",
+                borderRadius: "9px",
+                boxShadow: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? "rgb(174 173 173 / 25%) 0px 4px 9px -2px, rgb(39 45 49 / 50%) 0px 0px 0px 1px"
+                    : "rgba(9, 30, 66, 0.25) 0px 4px 8px -2px, rgba(9, 30, 66, 0.08) 0px 0px 0px 1px",
                 py: 2,
               }}
             >

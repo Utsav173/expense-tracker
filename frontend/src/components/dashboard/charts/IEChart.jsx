@@ -9,22 +9,10 @@ const PieChart = lazy(() => import("./PieChart"));
 const IEChart = ({ data }) => {
   const [showLineChart, setShowLineChart] = useState(true);
   const theme = useTheme();
-  const toggleChart = () => {
-    setShowLineChart(!showLineChart);
-  };
 
   return (
     <Suspense fallback={<Loader diff />}>
-      {/* <Stack direction={"column"} spacing={2} width={"100%"}>
-        {showLineChart ? (
-          <LineChart data={data} themeMode={theme.palette.mode} />
-        ) : ( */}
       <PieChart data={data} themeMode={theme.palette.mode} />
-      {/* )}
-        <Button onClick={toggleChart}>
-          {showLineChart ? "Show Pie Chart" : "Show Line Chart"}
-        </Button>
-      </Stack> */}
     </Suspense>
   );
 };

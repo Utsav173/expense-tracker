@@ -103,6 +103,9 @@ const AccountCard = memo(({ cardNumber, name, analytics }) => {
           <Typography
             level="h4"
             fontWeight={"normal"}
+            sx={{
+              cursor: "pointer",
+            }}
             onClick={() => navigate(`/account/${cardNumber}`)}
           >
             {displayCardNumber}

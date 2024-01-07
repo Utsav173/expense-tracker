@@ -101,7 +101,7 @@ const PieChart = ({ data, themeMode }) => {
   };
 
   return !data || !data.totalIncome || !data.totalExpense ? (
-    <Loader diff />
+    null
   ) : (
     <Chart
       options={options}

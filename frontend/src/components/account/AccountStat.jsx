@@ -143,10 +143,10 @@ const AccountStat = () => {
                 background: "transparent",
               }}
             >
+              <Typography variant="h6" gutterBottom>
+                Balance
+              </Typography>
               <Tooltip title="this balance is only related to the duration and it not sync with main balance">
-                <Typography variant="h6" gutterBottom>
-                  Balance
-                </Typography>
                 <Typography
                   variant="h5"
                   gutterBottom

@@ -37,6 +37,7 @@ const DashBoradHeader = () => {
           <MenuItem value="thisWeek">This Week</MenuItem>
           <MenuItem value="thisMonth">This Month</MenuItem>
           <MenuItem value="thisYear">This Year</MenuItem>
+          <MenuItem value="all">All Time</MenuItem>
         </Select>
       </FormControl>
       <FormControl
