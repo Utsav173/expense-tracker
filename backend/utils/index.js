@@ -155,7 +155,7 @@ function getIntervalValue(interval) {
       break;
 
     case "all":
-      startDate = startOfYear(new Date("1970-01-01")).getTime();
+      startDate = startOfYear(new Date("2000-01-01")).getTime();
       endDate = endOfDay(new Date()).getTime();
       break;
 
@@ -164,9 +164,6 @@ function getIntervalValue(interval) {
       endDate = null;
       break;
   }
-
-  // startDate = new Date(startDate).toISOString()
-  // endDate = new Date(endDate).toISOString()
 
   return {
     startDate,
