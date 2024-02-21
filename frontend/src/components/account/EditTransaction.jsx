@@ -155,7 +155,6 @@ export default function EditTransaction({ transaction }) {
               <Select
                 defaultValue={isIncome}
                 name="isIncome"
-                label="Transaction type"
                 variant="outlined"
                 fullWidth
               >
@@ -167,7 +166,6 @@ export default function EditTransaction({ transaction }) {
               <Select
                 defaultValue={category._id}
                 name="category"
-                label="Category"
                 variant="outlined"
                 fullWidth
               >

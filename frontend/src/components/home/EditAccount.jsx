@@ -108,7 +108,8 @@ const EditAccountDialog = ({ id, name, balance }) => {
               name="balance"
               label="Account Balance"
               type="number"
-              defaultValue={balance}
+              defaultValue={balance.toFixed(2)}
+              disabled
               fullWidth
               variant="outlined"
             />

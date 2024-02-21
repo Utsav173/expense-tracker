@@ -187,7 +187,7 @@ export default function AddTransaction({ accountId }) {
               <InputLabel id="trans-type-label">Type</InputLabel>
               <Select
                 name="isIncome"
-                label="Transaction type"
+                label="Type"
                 variant="outlined"
                 required
                 labelId="trans-type-label"

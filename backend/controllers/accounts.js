@@ -45,6 +45,32 @@ const createAccount = async (req, res) => {
       createdBy: req.user.id,
     });
 
+    // find or create default openning balance category
+    let category = await Category.findOne({
+      name: "Opening Balance",
+      $or: [{ owner: { $in: [null, undefined] } }, { owner: req.user.id }],
+    }).select("id");
+
+    if (!category) {
+      category = await Category.create({ name: "Opening Balance" });
+    }
+
+    category = category.id;
+
+    // create opening balance
+    await Transaction.create({
+      text: "Opening Balance",
+      amount: balance,
+      isIncome: true,
+      transfer: req.user.email,
+      category,
+      account: accountData.id,
+      createdBy: req.user.id,
+      updatedBy: req.user.id,
+      owner: req.user.id,
+      createdAt: new Date(),
+    });
+
     accountData.analytics = analyticsData.id;
 
     await accountData.save();

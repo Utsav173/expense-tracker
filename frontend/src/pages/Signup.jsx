@@ -88,7 +88,9 @@ export default function SignUpPage() {
       return;
     }
 
-    formData.append("profilePic", importFile);
+    if (importFile) {
+      formData.append("profilePic", importFile);
+    }
 
     try {
       const response = await APIs("POST", URL.SIGNUP, formData);
