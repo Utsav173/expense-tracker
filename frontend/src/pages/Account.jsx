@@ -1,10 +1,7 @@
-import { Suspense, lazy, useCallback, useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
-import { APIs } from "../API";
-import { URL } from "../API/constant";
 import Loader from "../components/common/Loader";
-import toast from "react-hot-toast";
 
 // Lazy-loaded components
 const Sidebar = lazy(() => import("../components/common/Sidebar"));

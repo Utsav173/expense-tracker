@@ -24,6 +24,7 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { renderTimeViewClock } from "@mui/x-date-pickers/timeViewRenderers";
+import AddCategory from "./AddCategory";
 
 const CustomButton = styled(Button)(({ theme }) => ({
   width: "100%",
@@ -136,7 +137,7 @@ export default function AddTransaction({ accountId }) {
           "& .MuiDialog-paper": {
             backgroundColor: (theme) =>
               theme.palette.mode === "dark" ? "#000000" : "#fff",
-            borderRadius: "16px",
+            borderRadius: fullScreen ? 0 : "16px",
             border: "1px solid",
             borderColor: (theme) =>
               theme.palette.mode === "dark" ? "#1c1c1c" : "#ccc",
@@ -227,6 +228,7 @@ export default function AddTransaction({ accountId }) {
                       {item.name}
                     </MenuItem>
                   ))}
+                <AddCategory />
               </Select>
             </FormControl>
             <FormControl margin="dense" fullWidth>

@@ -328,11 +328,20 @@ const getByCategory = async (req, res) => {
         .json({ message: "start and end date are required" });
     }
 
+    // First, match categories owned by the user
+    const categoriesOwnedByUser = await Category.find({
+      $or: [{ owner: { $in: [null, undefined] } }, { owner: req.user.id }],
+    }).select("_id");
+
+    // Extract category IDs
+    const categoryIds = categoriesOwnedByUser.map((category) => category._id);
+
     const result = await Transaction.aggregate([
       {
         $match: {
           createdAt: { $gte: new Date(startDate), $lte: new Date(endDate) },
           owner: new mongoose.Types.ObjectId(req.user.id),
+          category: { $in: categoryIds },
         },
       },
       {
@@ -631,7 +640,23 @@ const getFakeData = async (req, res) => {
       return res.status(400).json({ message: "length is required" });
     }
 
-    const catIds = await Category.find().distinct("name");
+    const catIds = [
+      "Groceries",
+      "Utilities",
+      "Rent/Mortgage",
+      "Transportation",
+      "Healthcare/Medical",
+      "Entertainment",
+      "Eating Out",
+      "Clothing",
+      "Education",
+      "Gifts/Donations",
+      "Travel",
+      "Insurance",
+      "Home Improvement",
+      "Savings",
+      "Other",
+    ];
 
     const exportedArray = [];
     for (let index = 0; index < length; index++) {

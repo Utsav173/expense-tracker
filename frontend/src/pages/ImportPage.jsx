@@ -1,16 +1,4 @@
-import {
-  Box,
-  Button,
-  FormControl,
-  FormHelperText,
-  FormLabel,
-  Grid,
-  Input,
-  InputLabel,
-  MenuItem,
-  Select,
-  Typography,
-} from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import React, { Suspense, lazy, useEffect, useState } from "react";
 import Sidebar from "../components/common/Sidebar";
 import Loader from "../components/common/Loader";
@@ -28,6 +16,7 @@ const ConfirmImport = lazy(() => import("../components/import/ConfirmImport"));
 
 const ImportPage = () => {
   const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false);
   const { importFile, importFileResult } = useSelector(
     (state) => state.homePage
   );
@@ -37,19 +26,25 @@ const ImportPage = () => {
   const handleSubmitFile = async (e) => {
     try {
       e.preventDefault();
+      setLoading(true);
       dispatch(setImportingLoading(true));
       const formData = new FormData(e.currentTarget);
       formData.append("document", importFile);
       await dispatch(handleImportFile(formData));
+      setLoading(false);
     } catch (error) {
+      setLoading(false);
       console.log(error);
     }
   };
   const handleConfirm = (id) => {
     try {
+      setLoading(true);
       dispatch(handleConfirmImport(id));
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
   return (
@@ -87,11 +82,13 @@ const ImportPage = () => {
             <ConfirmImport
               handleConfirm={handleConfirm}
               key={"confirm-file-comp"}
+              loading={loading}
             />
           ) : (
             <AddImportFile
               handleSubmitFile={handleSubmitFile}
               key={"add-file-comp"}
+              loading={loading}
             />
           )}
         </Box>

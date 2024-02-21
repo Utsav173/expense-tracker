@@ -9,6 +9,7 @@ import {
   handleCreate,
   handleEdit,
   handleDelete,
+  handleCreateCategory,
 } from "../asyncThunk/account";
 
 const initialState = {
@@ -98,6 +99,13 @@ export const accountSlice = createSlice({
         state.status = "succeeded";
       })
       .addCase(handleDelete.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload;
+      })
+      .addCase(handleCreateCategory.fulfilled, (state, action) => {
+        state.status = "succeeded";
+      })
+      .addCase(handleCreateCategory.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload;
       });

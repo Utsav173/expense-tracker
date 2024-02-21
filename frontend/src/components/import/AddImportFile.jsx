@@ -3,7 +3,6 @@ import {
   Button,
   FormControl,
   FormHelperText,
-  FormLabel,
   Grid,
   Input,
   InputLabel,
@@ -11,18 +10,16 @@ import {
   Select,
   Typography,
 } from "@mui/material";
-import React, { useState } from "react";
+import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setImportFile } from "../../redux/slice/homeSlice";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
 import InfoIcon from "@mui/icons-material/Info";
 import { URL } from "../../API/constant";
 import axios from "axios";
-const AddImportFile = ({ handleSubmitFile }) => {
+const AddImportFile = ({ handleSubmitFile, loading }) => {
   const dispatch = useDispatch();
-  const { accounts, importFile, importingLoading } = useSelector(
-    (state) => state.homePage,
-  );
+  const { accounts, importFile } = useSelector((state) => state.homePage);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -70,6 +67,7 @@ const AddImportFile = ({ handleSubmitFile }) => {
               label="Account"
               name="accountId"
               size="small"
+              disabled={loading}
             >
               {accounts.length > 0 &&
                 accounts.map((v, i) => (
@@ -121,6 +119,7 @@ const AddImportFile = ({ handleSubmitFile }) => {
               inputProps={{
                 accept: ".xlsx",
               }}
+              disabled={loading}
               onChange={(e) => handleFileChange(e)}
               sx={{
                 display: "none",
@@ -156,7 +155,7 @@ const AddImportFile = ({ handleSubmitFile }) => {
             theme.palette.mode === "light" ? "#001f37" : "#353f46",
           color: (theme) => (theme.palette.mode === "light" ? "#fff" : "#fff"),
         }}
-        disabled={importingLoading}
+        disabled={loading}
       >
         Confirm
       </Button>

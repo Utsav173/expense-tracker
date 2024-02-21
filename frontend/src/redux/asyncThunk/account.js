@@ -217,3 +217,18 @@ export const fetchIEcharts = createAsyncThunk(
     }
   }
 );
+
+export const handleCreateCategory = createAsyncThunk(
+  "accountPage/handleCreateCategory",
+  async (data, { rejectWithValue, dispatch, getState }) => {
+    try {
+      const response = await APIs("POST", URL.CREATE_CATEGORY, data, {}, true);
+
+      dispatch(fetchCategorys());
+      return toast.success(response.message);
+    } catch (error) {
+      toast.error(error.response?.data?.message);
+      return rejectWithValue(error.response?.data?.message);
+    }
+  }
+);

@@ -175,6 +175,7 @@ const findBySearch = async (req, res) => {
 
     const categories = await Category.find({
       name: { $regex: searchTerm, $options: "i" },
+      owner: req.user.id,
     }).lean();
     const categoryIds = categories.map((category) => category._id);
 
@@ -678,11 +679,18 @@ const importTransactions = async (req, res) => {
               // find category by name with regex pattern
               const isExist = await Category.findOne({
                 name: { $regex: item[key], $options: "i" },
+                $or: [
+                  { owner: { $in: [null, undefined] } },
+                  { owner: req.user.id },
+                ],
               });
               if (isExist) {
                 temp["category"] = isExist.id;
               } else {
-                const categoryData = await Category.create({ name: item[key] });
+                const categoryData = await Category.create({
+                  name: item[key],
+                  owner: req.user.id,
+                });
                 if (categoryData) {
                   temp["category"] = categoryData.id;
                 } else {

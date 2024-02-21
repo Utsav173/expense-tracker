@@ -1,9 +1,9 @@
 import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import { useSelector } from "react-redux";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-const ConfirmImport = ({ handleConfirm }) => {
+const ConfirmImport = ({ handleConfirm, loading }) => {
   const { importingLoading, importFileResult } = useSelector(
-    (state) => state.homePage,
+    (state) => state.homePage
   );
   return (
     <Box sx={{ mt: 3 }}>
@@ -21,7 +21,7 @@ const ConfirmImport = ({ handleConfirm }) => {
       <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
         <Button
           variant="contained"
-          disabled={importingLoading}
+          disabled={loading}
           onClick={() => handleConfirm(importFileResult.successId)}
           startIcon={importingLoading ? <CircularProgress size={20} /> : null}
         >

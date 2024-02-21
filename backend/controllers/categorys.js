@@ -12,7 +12,24 @@ const categoryController = {
       } = req.query;
 
       // Define the initial query to filter by search term if provided
-      const query = search ? { name: { $regex: new RegExp(search, "i") } } : {};
+      const query = search
+        ? {
+            $and: [
+              { name: { $regex: new RegExp(search, "i") } }, // Optional search
+              {
+                $or: [
+                  { owner: { $in: [null, undefined] } },
+                  { owner: req.user.id },
+                ],
+              },
+            ],
+          }
+        : {
+            $or: [
+              { owner: { $in: [null, undefined] } },
+              { owner: req.user.id },
+            ],
+          };
 
       // Define the sort options based on sortBy and sortOrder
       const sortOptions = {};
@@ -55,8 +72,11 @@ const categoryController = {
         return res.status(409).json({ message: "Category already exists" });
       }
 
-      const categoryData = await Category.create({ name });
-      return res.status(200).json(categoryData);
+      const categoryData = await Category.create({ name, owner: req.user.id });
+      return res.status(200).json({
+        message: "Category created successfully",
+        data: categoryData,
+      });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: error.message });
@@ -68,6 +88,12 @@ const categoryController = {
       const id = req.params.id;
       if (!id) {
         return res.status(400).json({ message: "Category ID is required" });
+      }
+
+      const validOwner = await Category.findOne({ id: id, owner: req.user.id });
+
+      if (!validOwner) {
+        return res.status(401).json({ message: "Unauthorized" });
       }
 
       const categoryData = await Category.findByIdAndDelete(id);
@@ -90,11 +116,17 @@ const categoryController = {
         return res.status(400).json({ message: "Category ID is required" });
       }
 
+      const validOwner = await Category.findOne({ id: id, owner: req.user.id });
+
+      if (!validOwner) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
       const { name } = req.body;
       const categoryData = await Category.findByIdAndUpdate(
         id,
         { name },
-        { new: true },
+        { new: true }
       );
 
       if (!categoryData) {
