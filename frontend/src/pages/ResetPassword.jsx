@@ -1,13 +1,5 @@
-import { Link, useNavigate } from "react-router-dom";
-import {
-  Avatar,
-  TextField,
-  Link as MULink,
-  Grid,
-  Box,
-  Typography,
-  Container,
-} from "@mui/material";
+import {  useNavigate } from "react-router-dom";
+import { Avatar, Box, Typography, Container } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import toast from "react-hot-toast";
 import { Helmet } from "react-helmet";
@@ -16,39 +8,51 @@ import { Helmet } from "react-helmet";
 import { APIs } from "../API";
 import { URL } from "../API/constant";
 import CustomBtn from "../components/Buttons/CustomBtn";
-import { useState } from "react";
-import { validateForm } from "../utils";
-import { CustomContainer, CustomTextField, LoginLink } from "./style";
+import { useEffect, useState } from "react";
+import { CustomContainer, CustomTextField } from "./style";
 
-export default function LoginPage() {
+export default function ResetPassword() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [resetPasswordToken, setResetPasswordToken] = useState("");
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setLoading(true);
 
     const formData = new FormData(event.currentTarget);
-    const email = formData.get("email");
+    const comfirmPassword = formData.get("confirmPassword");
     const password = formData.get("password");
 
-    if (!validateForm(email, password)) {
+    if (comfirmPassword !== password) {
+      toast.error("Passwords do not match");
       setLoading(false);
       return;
     }
 
     try {
-      const response = await APIs("POST", URL.LOGIN, { email, password });
-      if (response?.data?.token) {
-        toast.success("Login Success");
+      const response = await APIs("POST", URL.RESET_PASSWORD, {
+        password,
+        resetPasswordToken,
+      });
+      if (response?.message) {
+        toast.success(response.message);
         setLoading(false);
-        localStorage.setItem("user", JSON.stringify(response.data));
-        navigate("/");
+        navigate("/login");
       }
     } catch (error) {
       setLoading(false);
       console.error(error);
     }
   };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    if (token) {
+      setResetPasswordToken(token);
+    }
+  }, []);
 
   return (
     <Container
@@ -62,14 +66,14 @@ export default function LoginPage() {
       }}
     >
       <Helmet>
-        <title>Login | Expense Pro</title>
+        <title>Reset Password | Expense Pro</title>
         <meta
           name="description"
-          content="Welcome to Expense Pro login with email and password"
+          content="Welcome to Expense Pro where you can reset your password"
         />
         <link
           rel="canonical"
-          href="https://track-expense-tan.vercel.app/login"
+          href="https://track-expense-tan.vercel.app/reset-password"
         />
       </Helmet>
       <CustomContainer>
@@ -77,7 +81,7 @@ export default function LoginPage() {
           <LockOutlinedIcon />
         </Avatar>
         <Typography component="h1" variant="h5" sx={{ mt: 2 }}>
-          Welcome to Expense Pro!
+          Reset Password
         </Typography>
         <Box
           component="form"
@@ -89,22 +93,22 @@ export default function LoginPage() {
             margin="normal"
             required
             fullWidth
-            id="email"
-            label="Email Address"
-            name="email"
-            autoComplete="email"
-            autoFocus
+            name="password"
+            label="Password"
+            type="password"
+            id="password"
+            autoComplete="off"
             variant="outlined"
           />
           <CustomTextField
             margin="normal"
             required
             fullWidth
-            name="password"
-            label="Password"
+            name="confirmPassword"
+            label="Confirm Password"
             type="password"
-            id="password"
-            autoComplete="current-password"
+            id="confirmPassword"
+            autoComplete="off"
             variant="outlined"
           />
           <CustomBtn
@@ -114,21 +118,8 @@ export default function LoginPage() {
             disabled={loading}
             variant="contained"
           >
-            Sign In
+            Set Password
           </CustomBtn>
-
-          <Grid container marginLeft={"auto"}>
-            <Grid item xs={12}>
-              <LoginLink component={Link} to="/signup" variant="body1">
-                {"Don't have an account? Sign Up"}
-              </LoginLink>
-            </Grid>
-            <Grid item xs={12}>
-              <LoginLink component={Link} to="/forgot-password" variant="body2">
-                {"Forgot Password?"}
-              </LoginLink>
-            </Grid>
-          </Grid>
         </Box>
       </CustomContainer>
     </Container>

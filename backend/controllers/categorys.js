@@ -14,22 +14,22 @@ const categoryController = {
       // Define the initial query to filter by search term if provided
       const query = search
         ? {
-          $and: [
-            { name: { $regex: new RegExp(search, "i") } }, // Optional search
-            {
-              $or: [
-                { owner: { $in: [null, undefined] } },
-                { owner: req.user.id },
-              ],
-            },
-          ],
-        }
+            $and: [
+              { name: { $regex: new RegExp(search, "i") } }, // Optional search
+              {
+                $or: [
+                  { owner: { $in: [null, undefined] } },
+                  { owner: req.user.id },
+                ],
+              },
+            ],
+          }
         : {
-          $or: [
-            { owner: { $in: [null, undefined] } },
-            { owner: req.user.id },
-          ],
-        };
+            $or: [
+              { owner: { $in: [null, undefined] } },
+              { owner: req.user.id },
+            ],
+          };
 
       // Define the sort options based on sortBy and sortOrder
       const sortOptions = {};
@@ -66,7 +66,7 @@ const categoryController = {
   create: async (req, res) => {
     try {
       const { name } = req.body;
-      const isExists = await Category.findOne({ name, $or: [{ owner: { $in: [null, undefined] } }, { owner: req.user.id }], });
+      const isExists = await Category.findOne({ name, owner: req.user.id });
 
       if (isExists) {
         return res.status(400).json({ message: "Category already exists" });

@@ -9,7 +9,7 @@ const {
   endOfYear,
 } = require("date-fns");
 const sharp = require("sharp");
-const { format, getDate } = require("date-fns");
+const { format } = require("date-fns");
 
 /**
  * Generates a welcome email template for a new user.
@@ -55,20 +55,21 @@ function WelcomeEmailTemp(username, loginpage, email) {
         margin-bottom: 30px;
       }
       .button {
-        display: inline-block;
-        background-color: #2672FF;
-        color: #FFFFFF;
+        display: block;
+        margin: 0 auto;
+        background-color: #FFFFFF;
         text-align: center;
         font-size: 18px;
         font-weight: bold;
         padding: 12px 30px;
         border-radius: 30px;
         text-decoration: none;
-        transition: background-color 0.2s ease;
+        transition: border 0.2s ease;
+        border: 1px solid transparent;
       }
+      
       .button:hover {
-        background-color: #214B8F;
-        color:#fff;
+        border: 1px solid #214B8F;
       }
       .footer {
         font-size: 14px;
@@ -101,6 +102,109 @@ function WelcomeEmailTemp(username, loginpage, email) {
   </body>
   </html>
   `;
+}
+
+/**
+ * The function generates an HTML email template for a "Forgot Password" feature in an Expense Manager
+ * application.
+ * @param username - The `username` parameter in the `forgotPasswordTemp` function represents the name
+ * of the user for whom the password reset email is being sent.
+ * @param resetPasswordLink - The `resetPasswordLink` parameter in the `forgotPasswordTemp` function is
+ * the link that the user will click on to reset their password. It should be a valid URL pointing to
+ * the password reset page of your application. When the user clicks on this link, they should be
+ * directed to a page
+ * @param email - The `email` parameter in the `forgotPasswordTemp` function represents the email
+ * address of the user to whom the forgot password email will be sent. This email address is used in
+ * the email content to inform the user about the email being sent to their email address.
+ * @returns The function `forgotPasswordTemp` returns an HTML email template for a "Forgot Password"
+ * email notification for an Expense Manager application. The template includes the username, reset
+ * password link, and email address provided as parameters in the function. The email template contains
+ * a header with the title, a message for resetting the password with a button to reset the password,
+ * and a footer with additional information and contact details for
+ */
+function forgotPasswordTemp(username, resetPasswordLink, email) {
+  return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Forgot Password - Expense Manager</title>
+          <style>
+            body {
+              font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+              background-color: #F2F2F2;
+              margin: 0;
+              padding: 0;
+            }
+            .container {
+              max-width: 600px;
+              margin: 20px auto;
+              padding: 20px;
+              background-color: #FFFFFF;
+              border-radius: 10px;
+              box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.1);
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 20px;
+            }
+            .header h1 {
+              font-size: 36px;
+              margin: 0;
+              color: #2672FF;
+            }
+            .content {
+              font-size: 18px;
+              line-height: 1.6;
+              margin-bottom: 30px;
+            }
+            .button {
+              display: block;
+              margin: 0 auto;
+              background-color: #FFFFFF;
+              text-align: center;
+              font-size: 18px;
+              font-weight: bold;
+              padding: 12px 30px;
+              border-radius: 30px;
+              text-decoration: none;
+              transition: border 0.2s ease;
+              border: 1px solid transparent;
+            }
+            
+            .button:hover {
+              border: 1px solid #214B8F;
+            }
+            
+            .footer {
+              font-size: 14px;
+              color: #999999;
+              text-align: center;
+              margin-top: 30px;
+            }
+            .footer p {
+              margin: 5px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Forgot Password - Expense Manager</h1>
+            </div>
+            <div class="content">
+              <p>Hi <strong>${username}</strong>,</p>
+              <p>We received a request to reset your Expense Manager account password. To reset your password, please click the button below:</p>
+              <a href="${resetPasswordLink}" class="button">Reset Password</a>
+              <p>If you did not request a password reset, you can safely ignore this email.</p>
+            </div>
+            <div class="footer">
+              <p>This email was sent to <strong>${email}</strong>. If you did not request a password reset, please ignore this email.</p>
+              <p>If you have any questions or need assistance, feel free to contact our support team at support@expensemanager.com.</p>
+            </div>
+          </div>
+        </body>
+      </html>`;
 }
 
 /**
@@ -346,4 +450,5 @@ module.exports = {
   getMonthDate,
   getDayOfMonthDate,
   calculateBalanceData,
+  forgotPasswordTemp,
 };

@@ -2,7 +2,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { Toaster } from "react-hot-toast";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "./App.css";
-import { Suspense, lazy, useEffect, useState } from "react";
+import { Suspense, lazy } from "react";
 import Loader from "./components/common/Loader.jsx";
 import {
   experimental_extendTheme as materialExtendTheme,
@@ -17,6 +17,8 @@ import { selectDarkMode } from "./redux/slice/darkModeSlice.js";
 const SignUpPage = lazy(() => import("./pages/Signup.jsx"));
 const Dashboard = lazy(() => import("./pages/Dashboard.jsx"));
 const LoginPage = lazy(() => import("./pages/Login.jsx"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword.jsx"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword.jsx"));
 const HomePage = lazy(() => import("./pages/Home.jsx"));
 const ImportPage = lazy(() => import("./pages/ImportPage.jsx"));
 const AccountPage = lazy(() => import("./pages/Account.jsx"));
@@ -49,6 +51,8 @@ function App() {
                 <Route path="/profile" element={<Profile />} />
               </Route>
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/signup" element={<SignUpPage />} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>

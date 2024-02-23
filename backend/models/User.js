@@ -20,6 +20,7 @@ const UserSchema = new mongoose.Schema(
     isActive: { type: Boolean, default: true },
     lastLoginAt: { type: Number },
     otherAccount: [{ type: mongoose.Schema.Types.ObjectId, ref: "Account" }],
+    resetPasswordToken: { type: String },
   },
   { timestamps: true },
 );

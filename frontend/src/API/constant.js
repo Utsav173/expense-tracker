@@ -6,6 +6,8 @@ export const URL = {
   SIGNUP: `${BASE_URL}/auth/signup`,
   ME: `${BASE_URL}/auth/me`,
   LOGOUT: `${BASE_URL}/auth/logout`,
+  FORGOT_PASSWORD: `${BASE_URL}/auth/forgot-password`,
+  RESET_PASSWORD: `${BASE_URL}/auth/reset-password`,
 
   GET_DASHBOARD: `${BASE_URL}/accounts/dashboard`,
   GET_ACCOUNTS: `${BASE_URL}/accounts/`,

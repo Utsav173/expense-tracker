@@ -13,6 +13,7 @@ import {
   useTheme,
 } from "@mui/material";
 import { useDispatch } from "react-redux";
+import toast from "react-hot-toast";
 
 const AddCategory = () => {
   const dispatch = useDispatch();
