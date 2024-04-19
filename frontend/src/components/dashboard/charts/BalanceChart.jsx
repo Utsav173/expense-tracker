@@ -93,7 +93,7 @@ const BalanceChart = () => {
     title: {
       text: "Balance By account",
       style: {
-        color: colorMode === 'light' ? '#002363' : '#ccffd4',
+        color: colorMode === "light" ? "#002363" : "#ccffd4",
         fontSize: "16px",
       },
       offsetX: 14,

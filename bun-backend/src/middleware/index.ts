@@ -39,8 +39,7 @@ const authMiddleware: MiddlewareHandler<any> = async (c, next) => {
       }
     }
   } catch (error: Error | any) {
-    c.error = error;
-    throw error;
+    throw new HTTPException(403, { message: error.message });
   }
 };
 

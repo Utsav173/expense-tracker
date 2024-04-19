@@ -3,6 +3,7 @@ import {
   boolean,
   date,
   index,
+  integer,
   pgEnum,
   pgTable,
   primaryKey,
@@ -64,7 +65,7 @@ export const Account = pgTable(
     updatedAt: timestamp('updatedAt'),
   },
   (t) => ({
-    accountNameIndex: uniqueIndex('accountNameIndex').on(t.name),
+    accountNameIndex: index('accountNameIndex').on(t.name),
   })
 );
 
@@ -121,7 +122,7 @@ export const Category = pgTable(
     updatedAt: timestamp('updatedAt'),
   },
   (t) => ({
-    catNameIndex: index('catNameIndex').on(t.name),
+    catNameIndex: uniqueIndex('catNameIndex').on(t.name, t.owner),
   })
 );
 
@@ -133,7 +134,7 @@ export const Analytics = pgTable('analytics', {
   account: varchar('account', { length: 64 }).references(() => Account.id),
   user: varchar('user', { length: 64 }).references(() => User.id),
   income: real('income').default(0),
-  expenses: real('expenses').default(0),
+  expense: real('expense').default(0),
   balance: real('balance').default(0),
   previousIncome: real('previousIncome').default(0),
   previousExpenses: real('previousExpenses').default(0),
@@ -152,6 +153,9 @@ export const ImportData = pgTable('import_data', {
   account: varchar('account', { length: 64 }).references(() => Account.id),
   user: varchar('user', { length: 64 }).references(() => User.id),
   data: text('data').notNull(),
+  totalRecords: integer('totalRecords').notNull(),
+  errorRecords: integer('errorRecords').notNull(),
+  isImported: boolean('isImported').default(false),
   createdAt: timestamp('createdAt').defaultNow(),
   updatedAt: timestamp('updatedAt'),
 });
@@ -183,6 +187,13 @@ export const userAccountRelations = relations(UserAccount, ({ one }) => ({
   }),
   user: one(User, {
     fields: [UserAccount.userId],
+    references: [User.id],
+  }),
+}));
+
+export const categoriesRelations = relations(Category, ({ one }) => ({
+  owner: one(User, {
+    fields: [Category.owner],
     references: [User.id],
   }),
 }));

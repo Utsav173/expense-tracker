@@ -77,16 +77,13 @@ export const accountSlice = createSlice({
         state.amountCharts = action.payload;
       })
       .addCase(fetchIEcharts.rejected, (state, action) => {
-        state.amountCharts = {
-          error: action.payload || "Error occurred",
-        };
+        state.status = "failed";
       })
       .addCase(handleCreate.fulfilled, (state, action) => {
         state.status = "succeeded";
       })
       .addCase(handleCreate.rejected, (state, action) => {
         state.status = "failed";
-        state.error = action.payload;
       })
       .addCase(handleEdit.fulfilled, (state, action) => {
         state.status = "succeeded";

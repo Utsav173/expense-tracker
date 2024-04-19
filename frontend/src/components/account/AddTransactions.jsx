@@ -94,7 +94,7 @@ export default function AddTransaction({ accountId }) {
       await dispatch(
         handleCreate({
           text,
-          amount,
+          amount: Number(amount),
           isIncome: isIncome === "true",
           transfer,
           category,
@@ -192,6 +192,7 @@ export default function AddTransaction({ accountId }) {
                 required
                 labelId="trans-type-label"
                 onChange={(e) => setType(e.target.value)}
+                value={type}
               >
                 <MenuItem value={"true"}>income</MenuItem>
                 <MenuItem value={"false"}>expense</MenuItem>
@@ -206,7 +207,6 @@ export default function AddTransaction({ accountId }) {
               autoComplete="off"
               disabled={type == ""}
               value={type === "true" ? username : transfer}
-              defaultChecked={type === "true" ? true : false}
               onChange={(e) => setTransfer(e.target.value)}
               fullWidth
               required
@@ -221,10 +221,11 @@ export default function AddTransaction({ accountId }) {
                 variant="outlined"
                 required
                 labelId="trans-cat-label"
+                defaultValue={""}
               >
                 {categoryData &&
                   categoryData.map((item) => (
-                    <MenuItem value={item._id} key={item._id}>
+                    <MenuItem value={item.id} key={item.id}>
                       {item.name}
                     </MenuItem>
                   ))}
@@ -235,7 +236,7 @@ export default function AddTransaction({ accountId }) {
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DateTimePicker
                   label="createdAt"
-                  defaultValue={new Date()}
+                  value={newCreatedAt ?? new Date()}
                   onChange={(latestDate) => {
                     if (latestDate > new Date()) {
                       return toast.error("Date cannot be in the future");

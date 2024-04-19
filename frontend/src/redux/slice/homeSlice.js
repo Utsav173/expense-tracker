@@ -25,6 +25,8 @@ const initialState = {
   deleteLoading: false,
   editLoading: false,
   createLoading: false,
+  total: 0,
+  pageSize: 10,
 };
 
 export const homeSlice = createSlice({
@@ -49,12 +51,17 @@ export const homeSlice = createSlice({
     setCreateLoading: (state, action) => {
       state.createLoading = action.payload;
     },
+    setPageSize: (state, action) => {
+      state.pageSize = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
       .addCase(fetchAccounts.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.accounts = action.payload;
+        state.accounts = action.payload.accounts;
+        state.total = action.payload.total;
+        state.pageSize = action.payload.limit;
       })
       .addCase(fetchAccounts.rejected, (state, action) => {
         state.status = "failed";
@@ -136,6 +143,7 @@ export const {
   setDeleteLoading,
   setEditLoading,
   setCreateLoading,
+  setPageSize,
 } = homeSlice.actions;
 
 export default homeSlice.reducer;

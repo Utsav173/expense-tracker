@@ -164,17 +164,17 @@ export default function EditTransaction({ transaction }) {
             </FormControl>
             <FormControl margin="dense" fullWidth>
               <Select
-                defaultValue={category._id}
+                defaultValue={category.id}
                 name="category"
                 variant="outlined"
                 fullWidth
               >
-                <MenuItem value={category._id}>{category.name}</MenuItem>
+                <MenuItem value={category.id}>{category.name}</MenuItem>
                 {categoryData &&
                   categoryData
-                    ?.filter((item) => item._id !== category._id)
+                    ?.filter((item) => item.id !== category.id)
                     .map((item) => (
-                      <MenuItem value={item._id} key={item._id}>
+                      <MenuItem value={item.id} key={item.id}>
                         {item.name}
                       </MenuItem>
                     ))}

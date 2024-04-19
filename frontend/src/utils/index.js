@@ -5,7 +5,9 @@ export const currencyFormat = (value, notation) => {
     style: "currency",
     currency: "INR",
     notation: notation,
-  }).format(value);
+  }).format(
+    typeof value === "number" ? value.toFixed(2) : parseFloat(value).toFixed(2)
+  );
 };
 export const dateFormater = (date) => {
   return new Intl.DateTimeFormat("en-IN", {
@@ -77,7 +79,7 @@ export const handleValidation = (formData) => {
     /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
   if (!passwordRegex.test(password.trim())) {
     toast.error(
-      "Password should contain at least one letter, one digit, and one special character",
+      "Password should contain at least one letter, one digit, and one special character"
     );
     return false;
   }

@@ -42,7 +42,7 @@ const MobileDetailTable = () => {
       {transactions &&
         transactions.map((transaction, index) => (
           <Accordion
-            key={transaction._id}
+            key={transaction.id}
             sx={{
               "&.Mui-expanded": {
                 marginBottom: 1,
@@ -233,7 +233,7 @@ const MobileDetailTable = () => {
                       onClick={() =>
                         dispatch(
                           handleDelete({
-                            id: transaction._id,
+                            id: transaction.id,
                             accountId: transaction.account,
                           }),
                         )

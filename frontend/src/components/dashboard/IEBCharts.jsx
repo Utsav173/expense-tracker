@@ -11,7 +11,7 @@ const IEBCharts = () => {
     palette: { mode },
   } = useTheme();
   const { iSparkLineData, eSparkLineData, bSparkLineData } = useSelector(
-    (state) => state.dashboardPage,
+    (state) => state.dashboardPage
   );
 
   const chartData = [
@@ -41,51 +41,53 @@ const IEBCharts = () => {
   return (
     <Suspense fallback={<Loader diff />}>
       {iSparkLineData.length > 0 &&
-        eSparkLineData.length > 0 &&
-        bSparkLineData.length > 0 && (
-          <Box
-            sx={{
-              width: "100%",
-              display: "flex",
-              flexFlow: "column",
-              height: {
-                xs: "auto",
-                md: "220px",
-              },
-              gap: 2,
-              alignItems: "center",
-              flexDirection: {
-                xs: "column",
-                md: "row",
-              },
-            }}
-          >
-            {chartData.map((data, index) => (
-              <React.Fragment key={index}>
-                {data.data && data.data.length > 0 && (
-                  <ChartBox
-                    sx={{
-                      flex: 1,
-                      height: "100%",
-                      width: {
-                        xs: "100%",
-                        md: "auto",
-                      },
-                      backgroundColor: data.backgroundColor,
-                    }}
-                  >
-                    <SparkLines
-                      data={data.data}
-                      type={data.type}
-                      color={data.color}
-                      textColor={data.textColor}
-                    />
-                  </ChartBox>
-                )}
-              </React.Fragment>
-            ))}
-          </Box>
-        )}
+      eSparkLineData.length > 0 &&
+      bSparkLineData.length > 0 ? (
+        <Box
+          sx={{
+            width: "100%",
+            display: "flex",
+            flexFlow: "column",
+            height: {
+              xs: "auto",
+              md: "220px",
+            },
+            gap: 2,
+            alignItems: "center",
+            flexDirection: {
+              xs: "column",
+              md: "row",
+            },
+          }}
+        >
+          {chartData.map((data, index) => (
+            <React.Fragment key={index}>
+              {data.data && data.data.length > 0 && (
+                <ChartBox
+                  sx={{
+                    flex: 1,
+                    height: "100%",
+                    width: {
+                      xs: "100%",
+                      md: "auto",
+                    },
+                    backgroundColor: data.backgroundColor,
+                  }}
+                >
+                  <SparkLines
+                    data={data.data}
+                    type={data.type}
+                    color={data.color}
+                    textColor={data.textColor}
+                  />
+                </ChartBox>
+              )}
+            </React.Fragment>
+          ))}
+        </Box>
+      ) : (
+        <Loader diff />
+      )}
     </Suspense>
   );
 };

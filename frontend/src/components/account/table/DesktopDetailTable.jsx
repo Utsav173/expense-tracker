@@ -34,7 +34,7 @@ const DesktopDetailTable = ({ totalPages, setQ }) => {
       cellClassName: "actions",
       getActions: (values) => {
         return [
-          <React.Fragment key={`actions-${values.row._id}`}>
+          <React.Fragment key={`actions-${values.row.id}`}>
             <EditTransaction transaction={values.row} />
             <IconButton
               aria-label={`delete-transaction-${values.row.amount.toFixed(0)}`}
@@ -42,12 +42,12 @@ const DesktopDetailTable = ({ totalPages, setQ }) => {
               onClick={() =>
                 dispatch(
                   handleDelete({
-                    id: values.row._id,
+                    id: values.row.id,
                     accountId: values.row.account,
                   }),
                 )
               }
-              key={`delete-${values.row._id}`}
+              key={`delete-${values.row.id}`}
               role="button"
             >
               <DeleteForeverTwoToneIcon />
@@ -158,7 +158,7 @@ const DesktopDetailTable = ({ totalPages, setQ }) => {
         <DataGrid
           rows={transactions}
           columns={columns}
-          getRowId={(row) => row._id}
+          getRowId={(row) => row.id}
           initialState={{
             pagination: false, // Disable pagination
             sorting: { sortModel: [{ field: "updatedAt", sort: "desc" }] },

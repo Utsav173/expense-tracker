@@ -1,5 +1,5 @@
-export const BASE_URL = "https://exp-v-4.onrender.com";
-// export const BASE_URL = "http://localhost:1337";
+// export const BASE_URL = "https://exp-v-4.onrender.com";
+export const BASE_URL = "http://localhost:1337";
 
 export const URL = {
   LOGIN: `${BASE_URL}/auth/login`,
@@ -10,11 +10,11 @@ export const URL = {
   RESET_PASSWORD: `${BASE_URL}/auth/reset-password`,
 
   GET_DASHBOARD: `${BASE_URL}/accounts/dashboard`,
-  GET_ACCOUNTS: `${BASE_URL}/accounts/`,
+  GET_ACCOUNTS: `${BASE_URL}/accounts`,
   SEARCH_ALL: `${BASE_URL}/accounts/searchTerm`,
   CREATE_ACCOUNT: `${BASE_URL}/accounts`,
   UPDATE_ACCOUNT: `${BASE_URL}/accounts/`,
-  DELETE_ACCOUNT: `${BASE_URL}/accounts/`,
+  DELETE_ACCOUNT: `${BASE_URL}/accounts`,
   GET_ONE_ACCOUNT: `${BASE_URL}/accounts/`,
   GET_PREVIOUS_SHARES: `${BASE_URL}/accounts/previous/share/`,
   USER_DROPDOWN: `${BASE_URL}/accounts/dropdown/user`,
@@ -26,15 +26,15 @@ export const URL = {
   GET_SAMPLE_FILE: `${BASE_URL}/accounts/sampleFile/import`,
   EXPORT_STATEMENT: (id) => `${BASE_URL}/accounts/${id}/statement`,
 
-  GET_CATEGORY: `${BASE_URL}/category/`,
-  CREATE_CATEGORY: `${BASE_URL}/category/`,
+  GET_CATEGORY: `${BASE_URL}/category`,
+  CREATE_CATEGORY: `${BASE_URL}/category`,
   UPDATE_CATEGORY: `${BASE_URL}/category/`,
   DELETE_CATEGORY: `${BASE_URL}/category/`,
 
-  CREATE_TRANSACTION: `${BASE_URL}/transactions/`,
-  GET_TRANSACTIONS: `${BASE_URL}/transactions/`,
+  CREATE_TRANSACTION: `${BASE_URL}/transactions`,
+  GET_TRANSACTIONS: `${BASE_URL}/transactions`,
   UPDATE_TRANSACTION: `${BASE_URL}/transactions/`,
-  DELETE_TRANSACTION: `${BASE_URL}/transactions/`,
+  DELETE_TRANSACTION: `${BASE_URL}/transactions`,
   GET_ONE_TRANSACTION: `${BASE_URL}/transactions/`,
   BY_INCOME_EXP: `${BASE_URL}/transactions/by/income/expense`,
   BY_CATEGORY: `${BASE_URL}/transactions/by/category/chart`,

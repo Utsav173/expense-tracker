@@ -71,7 +71,7 @@ const AddImportFile = ({ handleSubmitFile, loading }) => {
             >
               {accounts.length > 0 &&
                 accounts.map((v, i) => (
-                  <MenuItem key={i} value={v._id}>
+                  <MenuItem key={i} value={v.id}>
                     {v.name}
                   </MenuItem>
                 ))}

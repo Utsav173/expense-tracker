@@ -7,7 +7,6 @@ const PieChart = lazy(() => import("./PieChart"));
 // const LineChart = lazy(() => import("./LineChart"));
 
 const IEChart = ({ data }) => {
-  const [showLineChart, setShowLineChart] = useState(true);
   const theme = useTheme();
 
   return (

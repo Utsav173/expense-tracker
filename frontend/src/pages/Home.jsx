@@ -1,4 +1,4 @@
-import { useEffect, lazy, Suspense } from "react";
+import { useEffect, lazy, Suspense, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Box, Grid, Typography } from "@mui/material";
 
@@ -13,18 +13,41 @@ const SearchList = lazy(() => import("../components/common/SearchList"));
 import "../App.css";
 import { fetchAccounts } from "../redux/asyncThunk/home";
 import { Helmet } from "react-helmet";
+import { setPageSize } from "../redux/slice/homeSlice";
 
 function HomePage() {
   const dispatch = useDispatch();
   const accountsData = useSelector((state) => state.homePage.accounts);
+  const pageSize = useSelector((state) => state.homePage.pageSize);
+  const total = useSelector((state) => state.homePage.total);
   const searchResult = useSelector((state) => state.homePage.serachResults);
   const searchResultLoading = useSelector(
     (state) => state.homePage.searchResultLoading
   );
+  const observerTarget = useRef(null);
 
   useEffect(() => {
     dispatch(fetchAccounts());
   }, [dispatch]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        dispatch(setPageSize(total == pageSize ? total : pageSize + 10));
+        dispatch(fetchAccounts());
+      }
+    });
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
+      }
+    };
+  }, [dispatch, observerTarget, pageSize, total]);
 
   return (
     <Sidebar isHomepage={true}>
@@ -61,10 +84,10 @@ function HomePage() {
               }}
             >
               {accountsData &&
-                accountsData.map((account) => (
+                accountsData.map((account, index) => (
                   <Grid
                     item
-                    key={account._id}
+                    key={account.id}
                     sm={12}
                     md={6}
                     lg={4}
@@ -74,13 +97,14 @@ function HomePage() {
                     <AccountCard
                       balance={account.balance}
                       name={account.name}
-                      cardNumber={account._id}
-                      key={account._id}
+                      cardNumber={account.id}
+                      key={account.id}
                       analytics={account.analytics}
                     />
                   </Grid>
                 ))}
             </Grid>
+            <div ref={observerTarget} />
           </Grid>
         </Box>
       </Suspense>

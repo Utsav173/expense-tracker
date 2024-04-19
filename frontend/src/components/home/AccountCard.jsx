@@ -23,7 +23,6 @@ const AccountCard = memo(({ cardNumber, name, analytics }) => {
   const theme = useTheme();
   const [isHovered, setIsHovered] = useState(false);
   const isXsScreen = useMediaQuery("(max-width:600px)");
-
   const displayCardNumber = isXsScreen
     ? `**** **** ${cardNumber.slice(-4)}`
     : `**** **** **** ${cardNumber.slice(-4)}`;

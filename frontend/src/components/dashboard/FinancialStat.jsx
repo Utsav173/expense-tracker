@@ -243,18 +243,18 @@ const FinancialStat = ({ dashboardData }) => {
                 display={"inline-flex"}
                 sx={{
                   color:
-                    dashboardData.overallIncomePercentageChange < 0
+                    dashboardData.overallIncomeChange < 0
                       ? "red"
                       : "green",
                 }}
               >
-                {dashboardData.overallIncomePercentageChange < 0 ? (
+                {dashboardData.overallIncomeChange < 0 ? (
                   <TrendingDownIcon sx={{ color: "red", fontSize: 17 }} />
                 ) : (
                   <TrendingUpIcon sx={{ color: "green", fontSize: 17 }} />
                 )}
                 <Typography fontStyle={"italic"} fontSize={"smaller"}>
-                  {dashboardData.overallIncomePercentageChange}%
+                  {dashboardData.overallIncomeChange}%
                 </Typography>
               </Box>
             </Box>
@@ -330,18 +330,18 @@ const FinancialStat = ({ dashboardData }) => {
                 display={"inline-flex"}
                 sx={{
                   color:
-                    dashboardData.overallExpensePercentageChange < 0
+                    dashboardData.overallExpenseChange < 0
                       ? "green"
                       : "#4c0000",
                 }}
               >
-                {dashboardData.overallExpensePercentageChange < 0 ? (
+                {dashboardData.overallExpenseChange < 0 ? (
                   <TrendingDownIcon sx={{ color: "green", fontSize: 17 }} />
                 ) : (
                   <TrendingUpIcon sx={{ color: "#4c0000", fontSize: 17 }} />
                 )}
                 <Typography fontStyle={"italic"} fontSize={"smaller"}>
-                  {dashboardData.overallExpensePercentageChange}%
+                  {dashboardData.overallExpenseChange}%
                 </Typography>
               </Box>
             </Box>

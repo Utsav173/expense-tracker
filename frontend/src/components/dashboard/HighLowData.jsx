@@ -54,7 +54,7 @@ const HighLowData = ({ dashboardData }) => {
               Expensive Expense:{" "}
               {dashboardData.mostExpensiveExpense
                 ? currencyFormat(
-                    dashboardData.mostExpensiveExpense.amount,
+                    dashboardData.mostExpensiveExpense,
                     "compact"
                   )
                 : "N/A"}
@@ -90,7 +90,7 @@ const HighLowData = ({ dashboardData }) => {
               Cheapest Expense:{" "}
               {dashboardData.cheapestExpense
                 ? currencyFormat(
-                    dashboardData.cheapestExpense.amount,
+                    dashboardData.cheapestExpense,
                     "compact"
                   )
                 : "N/A"}
@@ -126,7 +126,7 @@ const HighLowData = ({ dashboardData }) => {
               Biggest Income:{" "}
               {dashboardData.mostExpensiveIncome
                 ? currencyFormat(
-                    dashboardData.mostExpensiveIncome.amount,
+                    dashboardData.mostExpensiveIncome,
                     "compact"
                   )
                 : "N/A"}
@@ -161,7 +161,7 @@ const HighLowData = ({ dashboardData }) => {
             <Typography textTransform={"capitalize"}>
               Cheapest Income:{" "}
               {dashboardData.cheapestIncome
-                ? currencyFormat(dashboardData.cheapestIncome.amount, "compact")
+                ? currencyFormat(dashboardData.cheapestIncome, "compact")
                 : "N/A"}
             </Typography>
           </CardContent>

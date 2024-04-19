@@ -149,7 +149,7 @@ const ShareAccounts = ({ accountId }) => {
                 You Previously shared with:{" "}
                 {previousShares &&
                   previousShares.map((item) => (
-                    <Typography key={item._id} sx={{ display: "inline" }}>
+                    <Typography key={item.id} sx={{ display: "inline" }}>
                       {item.email}{" "}
                     </Typography>
                   ))}
@@ -165,7 +165,7 @@ const ShareAccounts = ({ accountId }) => {
               >
                 {dropdownUsers &&
                   dropdownUsers.map((item) => (
-                    <MenuItem value={item._id} key={item._id}>
+                    <MenuItem value={item.id} key={item.id}>
                       {item.email}
                     </MenuItem>
                   ))}

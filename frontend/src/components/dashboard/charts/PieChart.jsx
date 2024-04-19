@@ -5,12 +5,13 @@ import { useMediaQuery } from "@mui/material";
 const Chart = lazy(() => import("react-apexcharts"));
 
 const PieChart = ({ data, themeMode }) => {
-  const totalIncome = data.totalIncome;
-  const totalExpense = data.totalExpense;
+  const totalIncome = data.income;
+  const totalExpense = data.expense;
 
   const isMobile = useMediaQuery("(max-width: 600px)");
 
   const series = [totalIncome, totalExpense];
+  console.log("🚀 ~ PieChart ~ series:", series)
   const labels = ["Total Income", "Total Expense"];
 
   /** @type {import('apexcharts').ApexOptions} */
@@ -61,8 +62,11 @@ const PieChart = ({ data, themeMode }) => {
               show: true,
               label: "Balance",
               formatter: (w) => {
-                return currencyFormat(w.globals.seriesTotals.reduce((a, b) => a + b, 0), "compact");
-              }
+                return currencyFormat(
+                  w.globals.seriesTotals.reduce((a, b) => a + b, 0),
+                  "compact"
+                );
+              },
             },
           },
         },
@@ -100,9 +104,7 @@ const PieChart = ({ data, themeMode }) => {
     },
   };
 
-  return !data || !data.totalIncome || !data.totalExpense ? (
-    null
-  ) : (
+  return !data || !data.income || !data.expense ? null : (
     <Chart
       options={options}
       series={series}

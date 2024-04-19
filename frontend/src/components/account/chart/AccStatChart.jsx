@@ -11,7 +11,7 @@ const AccStatChart = ({ icomeType, height = 100, data }) => {
   const series = [
     {
       name: icomeType ? "Income" : "Expense",
-      data: (data && data.map((x) => x.amount)) || [],
+      data: data ?? [],
     },
   ];
 
@@ -41,8 +41,8 @@ const AccStatChart = ({ icomeType, height = 100, data }) => {
               ? "#a3ffb980"
               : "#ff8a8a80"
             : icomeType
-              ? "#33b50e80"
-              : "#ff000080",
+            ? "#33b50e80"
+            : "#ff000080",
         ],
         inverseColors: true,
         opacityFrom: 1,
@@ -59,8 +59,8 @@ const AccStatChart = ({ icomeType, height = 100, data }) => {
           ? "#a3ffb9"
           : "#ff8a8aBF"
         : icomeType
-          ? "#e9fce800"
-          : "#cf535300",
+        ? "#e9fce800"
+        : "#cf535300",
     ],
     tooltip: {
       theme: theme.palette.mode,

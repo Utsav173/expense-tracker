@@ -84,7 +84,7 @@ export default function AccList({ dashboardData }) {
                   primary={
                     <Typography variant="subtitle1" component="div">
                       {dashboardData.transactionsCountByAccount &&
-                        dashboardData.transactionsCountByAccount[item._id]}
+                        dashboardData.transactionsCountByAccount[item.name]}
                     </Typography>
                   }
                   secondary={

@@ -1,3 +1,15 @@
+import {
+  endOfDay,
+  endOfMonth,
+  endOfWeek,
+  endOfYear,
+  format,
+  startOfDay,
+  startOfMonth,
+  startOfWeek,
+  startOfYear,
+} from 'date-fns';
+import { AnyColumn, sql } from 'drizzle-orm';
 import sharp from 'sharp';
 
 export async function compressImage(imageData: any) {
@@ -116,7 +128,11 @@ export function WelcomeEmailTemp(username: any, loginpage: any, email: any) {
   `;
 }
 
-export function forgotPasswordTemp(username: any, resetPasswordLink: any, email: any) {
+export function forgotPasswordTemp(
+  username: any,
+  resetPasswordLink: any,
+  email: any
+) {
   return `
         <!DOCTYPE html>
         <html>
@@ -200,3 +216,71 @@ export function forgotPasswordTemp(username: any, resetPasswordLink: any, email:
         </body>
       </html>`;
 }
+
+export function getIntervalValue(interval: any) {
+  let startDate;
+  let endDate;
+
+  switch (interval) {
+    case 'today':
+      startDate = startOfDay(new Date()).getTime();
+      endDate = endOfDay(new Date()).getTime();
+      break;
+
+    case 'thisMonth':
+      startDate = startOfMonth(new Date()).getTime();
+      endDate = endOfMonth(new Date()).getTime();
+      break;
+
+    case 'thisWeek':
+      startDate = startOfWeek(new Date()).getTime();
+      endDate = endOfWeek(new Date()).getTime();
+      break;
+
+    case 'thisYear':
+      startDate = startOfYear(new Date()).getTime();
+      endDate = endOfYear(new Date()).getTime();
+      break;
+
+    case 'all':
+      startDate = startOfYear(new Date('2000-01-01')).getTime();
+      endDate = endOfDay(new Date()).getTime();
+      break;
+
+    default:
+      startDate = startOfYear(new Date('1995-01-01')).getTime();
+      endDate = endOfDay(new Date()).getTime();
+      break;
+  }
+  const formatDate = (date: any) => {
+    return format(date, 'yyyy-MM-dd HH:mm:ss.SSS');
+  };
+  return {
+    startDate: formatDate(new Date(startDate)),
+    endDate: formatDate(new Date(endDate)),
+  };
+}
+
+export const getDateTruncate = (duration: string | undefined) => {
+  switch (duration) {
+    case 'today':
+      return `TO_CHAR("createdAt"::timestamp, 'HH12') || TO_CHAR("createdAt"::timestamp, 'AM')`;
+    case 'thisWeek':
+      return `TO_CHAR("createdAt"::timestamp,'Day')`;
+    case 'thisMonth':
+      return `TO_CHAR("createdAt"::timestamp,'YYYY-MM-DD')`;
+    case 'thisYear':
+      return `TO_CHAR("createdAt"::timestamp,'MM-Mon')`;
+    case 'all':
+      return `TO_CHAR("createdAt"::timestamp,'YYYY')`;
+    default:
+      return `TO_CHAR("createdAt"::timestamp,'YYYY-MM-DD')`;
+  }
+};
+
+export const increment = (
+  column: AnyColumn,
+  value: number | null | undefined
+) => {
+  return sql`${column} + ${value}`;
+};

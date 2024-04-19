@@ -17,10 +17,10 @@ const IVEChart = ({ ieChartTwoData }) => {
     setChartType(chartType === "bar" ? "line" : "bar");
   };
 
-  const categories = ieChartTwoData?.map((item) => item.date);
-  const incomeData = ieChartTwoData?.map((item) => item.income);
-  const expenseData = ieChartTwoData?.map((item) => item.expense);
-  const balanceData = ieChartTwoData?.map((item) => item.balance);
+  const categories = ieChartTwoData?.date;
+  const incomeData = ieChartTwoData?.income;
+  const expenseData = ieChartTwoData?.expense;
+  const balanceData = ieChartTwoData?.balance;
 
   const series = [
     {

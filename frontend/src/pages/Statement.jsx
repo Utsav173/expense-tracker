@@ -138,7 +138,7 @@ const Statement = () => {
                     onChange={(e) => setSelectedAccount(e.target.value)}
                   >
                     {accounts.map((account) => (
-                      <MenuItem key={account._id} value={account._id}>
+                      <MenuItem key={account.id} value={account.id}>
                         {account.name}
                       </MenuItem>
                     ))}

@@ -11,14 +11,21 @@ import {
 
 export const fetchAccounts = createAsyncThunk(
   "homePage/fetchAccounts",
-  async (_, { rejectWithValue, fulfillWithValue }) => {
+  async (_, { rejectWithValue, fulfillWithValue, getState }) => {
     try {
-      const response = await APIs("GET", URL.GET_ACCOUNTS, {}, {}, true);
+      const pageSize = getState().homePage.pageSize;
+      const response = await APIs(
+        "GET",
+        `${URL.GET_ACCOUNTS}?limit=${pageSize}`,
+        {},
+        {},
+        true
+      );
       return fulfillWithValue(response);
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Error occurred");
     }
-  },
+  }
 );
 
 export const userLogout = createAsyncThunk(
@@ -30,7 +37,7 @@ export const userLogout = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Error occurred");
     }
-  },
+  }
 );
 
 export const fetchShareAccounts = createAsyncThunk(
@@ -42,7 +49,7 @@ export const fetchShareAccounts = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Error occurred");
     }
-  },
+  }
 );
 
 export const fetchSearchResult = createAsyncThunk(
@@ -55,7 +62,7 @@ export const fetchSearchResult = createAsyncThunk(
         `${URL.SEARCH_ALL}?q=${q}`,
         {},
         {},
-        true,
+        true
       );
       if (response.length === 0) {
         toast("No search result found");
@@ -64,7 +71,7 @@ export const fetchSearchResult = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Error occurred");
     }
-  },
+  }
 );
 
 export const handleImportFile = createAsyncThunk(
@@ -76,13 +83,13 @@ export const handleImportFile = createAsyncThunk(
         `${URL.IMPORT_TRANSACTIONS}`,
         data,
         {},
-        true,
+        true
       );
       return response; // Return response directly when fulfilled
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Error occurred");
     }
-  },
+  }
 );
 
 export const handleConfirmImport = createAsyncThunk(
@@ -94,14 +101,14 @@ export const handleConfirmImport = createAsyncThunk(
         `${URL.CONFIRM_IMPORT}${id}`,
         {},
         {},
-        true,
+        true
       );
       toast.success(response.message);
       return fulfillWithValue(response);
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Error occurred");
     }
-  },
+  }
 );
 
 export const handleDelete = createAsyncThunk(
@@ -114,14 +121,14 @@ export const handleDelete = createAsyncThunk(
         `${URL.DELETE_ACCOUNT}${id}`,
         {},
         {},
-        true,
+        true
       );
       dispatch(fetchAccounts());
       return toast.success(response.message);
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Error occurred");
     }
-  },
+  }
 );
 export const handleCreateAccount = createAsyncThunk(
   "homePage/handleCreateAccount",
@@ -134,7 +141,7 @@ export const handleCreateAccount = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Error occurred");
     }
-  },
+  }
 );
 export const handleEditAccount = createAsyncThunk(
   "homePage/handleEditAccount",
@@ -146,12 +153,12 @@ export const handleEditAccount = createAsyncThunk(
         `${URL.UPDATE_ACCOUNT}${id}`,
         data,
         {},
-        true,
+        true
       );
       dispatch(fetchAccounts());
       return toast.success(response.message);
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Error occurred");
     }
-  },
+  }
 );

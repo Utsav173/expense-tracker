@@ -14,9 +14,9 @@ const CategoryChart = ({ categoryChartData }) => {
   const lightModeExpenseColor = "#e64719";
   const darkModeExpenseColor = "#8f73ff";
 
-  const categories = categoryChartData.map((category) => category.name);
-  const totalIncomes = categoryChartData.map((category) => category.totalIncome);
-  const totalExpenses = categoryChartData.map((category) => category.totalExpense);
+  const categories = categoryChartData.name;
+  const totalIncomes = categoryChartData.totalIncome;
+  const totalExpenses = categoryChartData.totalExpense;
 
   const series = [
     {
@@ -86,9 +86,9 @@ const CategoryChart = ({ categoryChartData }) => {
       },
       title: {
         text: "Spent by Category",
-        style:{
+        style: {
           color: colorMode === "light" ? "#6e1600" : "#6d89a8",
-        }
+        },
       },
       axisBorder: {
         show: true, // Show x-axis border
@@ -121,7 +121,7 @@ const CategoryChart = ({ categoryChartData }) => {
         <ScaleLoader color={colorMode === "light" ? "#000000" : "#ffffff"} />
       }
     >
-      {categoryChartData.length > 0 ? ( // Ensure categoryChartData is not empty
+      {categoryChartData ? (
         <Chart
           options={options}
           series={series}

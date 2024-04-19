@@ -98,17 +98,19 @@ const AccountStat = () => {
                 )}
               </Box>
             </Box>
-            <Box
-              sx={{
-                position: "absolute",
-                zIndex: 0,
-                bottom: (theme) => (theme.palette.mode === "light" ? 3 : 5),
-                width: "100%",
-                opacity: 0.8,
-              }}
-            >
-              <AccStatChart icomeType={true} data={amountCharts.income} />
-            </Box>
+            <Suspense fallback={<Loader diff />}>
+              <Box
+                sx={{
+                  position: "absolute",
+                  zIndex: 0,
+                  bottom: (theme) => (theme.palette.mode === "light" ? 3 : 5),
+                  width: "100%",
+                  opacity: 0.8,
+                }}
+              >
+                <AccStatChart icomeType={true} data={amountCharts.income} />
+              </Box>
+            </Suspense>
           </Box>
           <Box
             sx={{
@@ -157,7 +159,7 @@ const AccountStat = () => {
                   }}
                 >
                   {currencyFormat(accountStat.balance)}
-                </Typography>{" "}
+                </Typography>
               </Tooltip>
             </Box>
             <Box
@@ -228,17 +230,19 @@ const AccountStat = () => {
                 )}
               </Box>
             </Box>
-            <Box
-              sx={{
-                position: "absolute",
-                bottom: (theme) => (theme.palette.mode === "light" ? 3 : 5),
-                zIndex: 0,
-                width: "100%",
-                opacity: 0.8,
-              }}
-            >
-              <AccStatChart icomeType={false} data={amountCharts.expense} />
-            </Box>
+            <Suspense fallback={<Loader diff />}>
+              <Box
+                sx={{
+                  position: "absolute",
+                  bottom: (theme) => (theme.palette.mode === "light" ? 3 : 5),
+                  zIndex: 0,
+                  width: "100%",
+                  opacity: 0.8,
+                }}
+              >
+                <AccStatChart icomeType={false} data={amountCharts.expense} />
+              </Box>
+            </Suspense>
           </Box>
         </Box>
       )}

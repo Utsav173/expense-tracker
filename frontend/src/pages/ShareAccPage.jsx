@@ -37,10 +37,10 @@ const ShareAccPage = () => {
           >
             {sharesAccounts.map((account) => (
               <ShareAccCard
-                key={account._id}
+                key={account.id}
                 owner={account.owner.name}
                 balance={account.balance}
-                id={account._id}
+                id={account.id}
                 name={account.name}
               />
             ))}

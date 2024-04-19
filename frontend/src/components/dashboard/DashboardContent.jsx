@@ -31,7 +31,7 @@ const DashboardContent = () => {
   const fieldChartData = useSelector(selectByFieldData);
   const ieChartData = useSelector(selectByIEData);
   const ieChartTwoData = useSelector(selectByIEChartData);
-
+  console.log(ieChartData,"ieChartData");
   return (
     <Suspense fallback={<Loader diff />}>
       <Box
@@ -57,13 +57,13 @@ const DashboardContent = () => {
             },
           }}
         >
-          {categoryChartData.length > 0 && (
+          {Object.keys(categoryChartData).length > 0 && (
             <ChartBox
               sx={{
                 flex: 1,
                 backgroundColor: (theme) =>
                   theme.palette.mode === "dark" ? "#16222e" : "#fff0db",
-                height: "full"
+                height: "full",
               }}
             >
               <CategoryChart
@@ -72,7 +72,7 @@ const DashboardContent = () => {
               />
             </ChartBox>
           )}
-          {ieChartTwoData.length > 0 && (
+          {Object.keys(ieChartTwoData).length > 0 && (
             <ChartBox
               sx={{
                 flex: 1,

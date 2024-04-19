@@ -123,8 +123,26 @@ export const handleCreate = createAsyncThunk(
       );
       return toast.success(response.message);
     } catch (error) {
-      toast.error(error.response?.data?.message);
-      return rejectWithValue(error.response?.data?.message);
+      if (error?.name === "ZodError") {
+        // Construct a more comprehensive error message
+        let errorMessage = "Failed to create transaction. Errors:\n";
+
+        if (error.issues) {
+          // Iterate over each issue and append to the error message
+          error.issues.forEach((issue) => {
+            errorMessage += `Field: ${issue.path[0]} - ${issue.message}\n`;
+          });
+        } else {
+          // If no specific issues are provided, use the general error message
+          errorMessage += "Validation failed";
+        }
+
+        console.log("🚀 ~ errorMessage:", errorMessage);
+        return toast.error(errorMessage);
+      } else {
+        toast.error(error.response?.data?.message);
+        return rejectWithValue(error.response?.data?.message);
+      }
     }
   }
 );
@@ -201,7 +219,7 @@ export const fetchIEcharts = createAsyncThunk(
     try {
       const response = await APIs(
         "GET",
-        `${URL.BY_INCOME_EXP}?accountId=${accountId}&duration=${
+        `${URL.BY_I_E_DURATION}?accountId=${accountId}&duration=${
           duration || "thisMonth"
         }`,
         {},
