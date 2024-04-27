@@ -1,6 +1,7 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice } from '@reduxjs/toolkit'
 import {
   fetchAccounts,
+  fetchAccountsDropdown,
   fetchSearchResult,
   fetchShareAccounts,
   handleConfirmImport,
@@ -8,12 +9,13 @@ import {
   handleDelete,
   handleEditAccount,
   handleImportFile,
-  userLogout,
-} from "../asyncThunk/home";
+  userLogout
+} from '../asyncThunk/home'
 
 const initialState = {
   accounts: [],
-  status: "idle",
+  accountsDropdown: [],
+  status: 'idle',
   error: null,
   serachResults: [],
   searchResultLoading: false,
@@ -25,116 +27,138 @@ const initialState = {
   deleteLoading: false,
   editLoading: false,
   createLoading: false,
-  total: 0,
+  totalPage: 1,
   pageSize: 10,
-};
+  currentPage: 1
+}
 
 export const homeSlice = createSlice({
-  name: "homePage",
+  name: 'homePage',
   initialState,
   reducers: {
     setImportFile: (state, action) => {
-      state.importFile = action.payload;
+      state.importFile = action.payload
     },
     setImportingLoading: (state, action) => {
-      state.importingLoading = action.payload;
+      state.importingLoading = action.payload
     },
     setSearchResultLoading: (state, action) => {
-      state.searchResultLoading = action.payload;
+      state.searchResultLoading = action.payload
     },
     setDeleteLoading: (state, action) => {
-      state.deleteLoading = action.payload;
+      state.deleteLoading = action.payload
     },
     setEditLoading: (state, action) => {
-      state.editLoading = action.payload;
+      state.editLoading = action.payload
     },
     setCreateLoading: (state, action) => {
-      state.createLoading = action.payload;
+      state.createLoading = action.payload
     },
     setPageSize: (state, action) => {
-      state.pageSize = action.payload;
+      state.pageSize = action.payload
     },
+    setCurrentPage: (state, action) => {
+      state.currentPage = action.payload
+    },
+    setSerachResults: (state, action) => {
+      state.serachResults = action.payload
+    }
   },
-  extraReducers: (builder) => {
+  extraReducers: builder => {
     builder
       .addCase(fetchAccounts.fulfilled, (state, action) => {
-        state.status = "succeeded";
-        state.accounts = action.payload.accounts;
-        state.total = action.payload.total;
-        state.pageSize = action.payload.limit;
+        state.status = 'succeeded'
+        state.accounts = action.payload.accounts
+        state.totalPage = action.payload.totalPage
+        state.pageSize = action.payload.limit
       })
       .addCase(fetchAccounts.rejected, (state, action) => {
-        state.status = "failed";
-        state.error = action.payload;
-        state.accounts = [];
+        state.status = 'failed'
+        state.error = action.payload
+        state.accounts = []
+      })
+      .addCase(fetchAccountsDropdown.fulfilled, (state, action) => {
+        state.status = 'succeeded'
+        state.accountsDropdown = action.payload
+      })
+      .addCase(fetchAccountsDropdown.rejected, (state, action) => {
+        state.status = 'failed'
+        state.error = action.payload
+        state.accountsDropdown = []
       })
       .addCase(fetchSearchResult.fulfilled, (state, action) => {
-        state.searchResultLoading = false;
-        state.serachResults = action.payload;
+        state.searchResultLoading = false
+        state.serachResults = action.payload
       })
       .addCase(fetchSearchResult.rejected, (state, _action) => {
-        state.searchResultLoading = false;
-        state.serachResults = [];
+        state.searchResultLoading = false
+        state.serachResults = []
       })
       .addCase(fetchShareAccounts.fulfilled, (state, action) => {
         if (action.payload.length > 0) {
-          state.sharesAccounts = action.payload;
+          state.sharesAccounts = action.payload
         }
       })
       .addCase(fetchShareAccounts.rejected, (state, _action) => {
-        state.sharesAccounts = [];
+        state.sharesAccounts = []
       })
       .addCase(userLogout.fulfilled, (state, _action) => {
-        state.isLogin = false;
+        state.isLogin = false
+        state.accounts = []
+        state.serachResults = []
+        state.sharesAccounts = []
+        state.totalPage = 1
+        state.pageSize = 10
+        state.currentPage = 1
       })
       .addCase(handleImportFile.fulfilled, (state, action) => {
-        state.importFileResult = action.payload;
-        state.importingLoading = false;
+        state.importFileResult = action.payload
+        state.importingLoading = false
       })
       .addCase(handleImportFile.rejected, (state, action) => {
-        state.status = "failed";
-        state.importingLoading = false;
-        state.importFileResult = null;
-        state.error = action.payload;
+        state.status = 'failed'
+        state.importingLoading = false
+        state.importFileResult = null
+        state.error = action.payload
       })
       .addCase(handleConfirmImport.fulfilled, (state, _action) => {
-        state.importFileResult = null;
-        state.importingLoading = false;
+        state.importFileResult = null
+        state.importingLoading = false
       })
       .addCase(handleConfirmImport.rejected, (state, _action) => {
-        state.status = "failed";
-        state.importFileResult = null;
-        state.importingLoading = false;
+        state.status = 'failed'
+        state.importFileResult = null
+        state.importingLoading = false
       })
       .addCase(handleDelete.fulfilled, (state, _action) => {
-        state.deleteLoading = false;
-        state.status = "succeeded";
+        state.deleteLoading = false
+        state.status = 'succeeded'
       })
       .addCase(handleDelete.rejected, (state, action) => {
-        state.deleteLoading = false;
-        state.status = "failed";
-        state.error = action.payload;
+        state.deleteLoading = false
+        state.status = 'failed'
+        state.error = action.payload
       })
       .addCase(handleEditAccount.fulfilled, (state, _action) => {
-        state.editLoading = false;
-        state.status = "succeeded";
+        state.editLoading = false
+        state.status = 'succeeded'
       })
       .addCase(handleEditAccount.rejected, (state, action) => {
-        state.editLoading = false;
-        state.status = "failed";
-        state.error = action.payload;
+        state.editLoading = false
+        state.status = 'failed'
+        state.error = action.payload
       })
       .addCase(handleCreateAccount.fulfilled, (state, _action) => {
-        state.createLoading = false;
-        state.status = "succeeded";
+        state.createLoading = false
+        state.status = 'succeeded'
       })
       .addCase(handleCreateAccount.rejected, (state, action) => {
-        state.createLoading = false;
-        state.status = "failed";
-        state.error = action.payload;
-      });
-  },
-});
+        state.createLoading = false
+        state.status = 'failed'
+        state.error = action.payload
+      })
+  }
+})
 
 export const {
   setImportFile,
@@ -144,6 +168,8 @@ export const {
   setEditLoading,
   setCreateLoading,
   setPageSize,
-} = homeSlice.actions;
+  setCurrentPage,
+  setSerachResults
+} = homeSlice.actions
 
-export default homeSlice.reducer;
+export default homeSlice.reducer

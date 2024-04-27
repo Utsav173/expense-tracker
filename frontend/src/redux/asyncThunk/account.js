@@ -1,252 +1,208 @@
-import { createAsyncThunk } from "@reduxjs/toolkit";
-import { APIs } from "../../API";
-import toast from "react-hot-toast";
-import { URL } from "../../API/constant";
+import { createAsyncThunk } from '@reduxjs/toolkit'
+import { APIs } from '../../API'
+import toast from 'react-hot-toast'
+import { URL } from '../../API/constant'
+import { setAccountStatLoading } from '../slice/accountSlice'
 
 export const fetchTransactions = createAsyncThunk(
-  "accountPage/fetchTransactions",
+  'accountPage/fetchTransactions',
   async ({ page, limit, accountId, duration, q }, { rejectWithValue }) => {
     try {
       const response = await APIs(
-        "GET",
+        'GET',
         `${URL.GET_TRANSACTIONS}?page=${page || 1}&limit=${
           limit || 10
-        }&accountId=${accountId}&duration=${duration || "thisMonth"}&q=${
-          q || ""
+        }&accountId=${accountId}&duration=${duration || 'thisMonth'}${
+          q && q.trim().length > 0 ? `&q=${q}` : ''
         }`,
         {},
         {},
         true
-      );
-      return response;
+      )
+      return response
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || "Error occurred");
+      return rejectWithValue(error.response?.data?.message || 'Error occurred')
     }
   }
-);
+)
 
 export const fetchCategorys = createAsyncThunk(
-  "accountPage/fetchCategorys",
+  'accountPage/fetchCategorys',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await APIs(
-        "GET",
-        `${URL.GET_CATEGORY}?page=1&limit=1000`,
-        {},
-        {},
-        true
-      );
-      return response.categories;
+      const response = await APIs('GET', `${URL.GET_CATEGORY}?page=1&limit=1000`, {}, {}, true)
+      return response.categories
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || "Error occurred");
+      return rejectWithValue(error.response?.data?.message || 'Error occurred')
     }
   }
-);
+)
 
 export const fetchDropdownUser = createAsyncThunk(
-  "accountPage/fetchDropdownUser",
+  'accountPage/fetchDropdownUser',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await APIs("GET", `${URL.USER_DROPDOWN}`, {}, {}, true);
+      const response = await APIs('GET', `${URL.USER_DROPDOWN}`, {}, {}, true)
 
-      return response;
+      return response
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || "Error occurred");
+      return rejectWithValue(error.response?.data?.message || 'Error occurred')
     }
   }
-);
+)
 
 export const fetchPreviousShares = createAsyncThunk(
-  "accountPage/fetchPreviousShares",
+  'accountPage/fetchPreviousShares',
   async ({ accountId }, { rejectWithValue }) => {
     try {
-      const response = await APIs(
-        "GET",
-        `${URL.GET_PREVIOUS_SHARES}${accountId}`,
-        {},
-        {},
-        true
-      );
+      const response = await APIs('GET', `${URL.GET_PREVIOUS_SHARES}${accountId}`, {}, {}, true)
 
-      return response.users;
+      return response.users
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || "Error occurred");
+      return rejectWithValue(error.response?.data?.message || 'Error occurred')
     }
   }
-);
+)
 
 export const fetchSignleAccount = createAsyncThunk(
-  "accountPage/fetchSignleAccount",
+  'accountPage/fetchSignleAccount',
   async ({ accountId, duration }, { rejectWithValue }) => {
     try {
       const response = await APIs(
-        "GET",
-        `${URL.ACC_ANALYTICS}${accountId}?duration=${duration || "thisMonth"}`,
+        'GET',
+        `${URL.ACC_ANALYTICS}${accountId}?duration=${duration || 'thisMonth'}`,
         {},
         {},
         true
-      );
-      return response;
+      )
+      return response
     } catch (error) {
-      toast.error(error.response?.data?.message);
-      throw error;
+      return rejectWithValue(error.response?.data?.message || 'Error occurred')
     }
   }
-);
+)
 
 export const handleCreate = createAsyncThunk(
-  "accountPage/handleCreate",
+  'accountPage/handleCreate',
   async (data, { rejectWithValue, dispatch, getState }) => {
     try {
-      const response = await APIs(
-        "POST",
-        URL.CREATE_TRANSACTION,
-        data,
-        {},
-        true
-      );
+      const response = await APIs('POST', URL.CREATE_TRANSACTION, data, {}, true)
 
       dispatch(
         fetchTransactions({
           page: getState().accountPage.currentPage,
           limit: 10,
           accountId: data.account,
-          duration: "thisMonth",
-          q: "",
+          duration: 'thisMonth',
+          q: ''
         })
-      );
-      dispatch(
-        fetchSignleAccount({ accountId: data.account, duration: "thisMonth" })
-      );
-      dispatch(
-        fetchIEcharts({ accountId: data.account, duration: "thisMonth" })
-      );
-      return toast.success(response.message);
+      )
+      dispatch(fetchSignleAccount({ accountId: data.account, duration: 'thisMonth' }))
+      dispatch(fetchIEcharts({ accountId: data.account, duration: 'thisMonth' }))
+      return toast.success(response.message)
     } catch (error) {
-      if (error?.name === "ZodError") {
+      if (error?.name === 'ZodError') {
         // Construct a more comprehensive error message
-        let errorMessage = "Failed to create transaction. Errors:\n";
-
+        let errorMessage = 'Failed to create transaction. Errors:\n'
         if (error.issues) {
           // Iterate over each issue and append to the error message
-          error.issues.forEach((issue) => {
-            errorMessage += `Field: ${issue.path[0]} - ${issue.message}\n`;
-          });
+          error.issues.forEach(issue => {
+            errorMessage += `Field: ${issue.path[0]} - ${issue.message}\n`
+          })
         } else {
           // If no specific issues are provided, use the general error message
-          errorMessage += "Validation failed";
+          errorMessage += 'Validation failed'
         }
-
-        console.log("🚀 ~ errorMessage:", errorMessage);
-        return toast.error(errorMessage);
+        return toast.error(errorMessage)
       } else {
-        toast.error(error.response?.data?.message);
-        return rejectWithValue(error.response?.data?.message);
+        console.log(error)
+        return rejectWithValue(error.response?.data?.message)
       }
     }
   }
-);
+)
 
 export const handleEdit = createAsyncThunk(
-  "accountPage/handleEdit",
+  'accountPage/handleEdit',
   async ({ id, data, accountId }, { rejectWithValue, dispatch, getState }) => {
     try {
-      const response = await APIs(
-        "PUT",
-        `${URL.UPDATE_TRANSACTION}${id}`,
-        data,
-        {},
-        true
-      );
+      const response = await APIs('PUT', `${URL.UPDATE_TRANSACTION}${id}`, data, {}, true)
 
       dispatch(
         fetchTransactions({
           page: getState().accountPage.currentPage,
           limit: 10,
           accountId: accountId,
-          duration: "thisMonth",
-          q: "",
+          duration: 'thisMonth',
+          q: ''
         })
-      );
-      dispatch(
-        fetchSignleAccount({ accountId: accountId, duration: "thisMonth" })
-      );
-      dispatch(fetchIEcharts({ accountId: accountId, duration: "thisMonth" }));
-      return toast.success(response.message);
+      )
+      dispatch(fetchSignleAccount({ accountId: accountId, duration: 'thisMonth' }))
+      dispatch(fetchIEcharts({ accountId: accountId, duration: 'thisMonth' }))
+      return toast.success(response.message)
     } catch (error) {
-      toast.error(error.response?.data?.message);
-      return rejectWithValue(error.response?.data?.message);
+      return rejectWithValue(error.response?.data?.message)
     }
   }
-);
+)
 
 export const handleDelete = createAsyncThunk(
-  "accountPage/handleDelete",
+  'accountPage/handleDelete',
   async ({ id, accountId }, { rejectWithValue, dispatch, getState }) => {
     try {
-      const response = await APIs(
-        "DELETE",
-        `${URL.DELETE_TRANSACTION}${id}`,
-        {},
-        {},
-        true
-      );
+      const response = await APIs('DELETE', `${URL.DELETE_TRANSACTION}${id}`, {}, {}, true)
 
       dispatch(
         fetchTransactions({
           page: getState().accountPage.currentPage,
           limit: 10,
           accountId: accountId,
-          duration: "thisMonth",
-          q: "",
+          duration: 'thisMonth',
+          q: ''
         })
-      );
-      dispatch(
-        fetchSignleAccount({ accountId: accountId, duration: "thisMonth" })
-      );
-      dispatch(fetchIEcharts({ accountId: accountId, duration: "thisMonth" }));
-      return toast.success(response.message);
+      )
+      dispatch(fetchSignleAccount({ accountId: accountId, duration: 'thisMonth' }))
+      dispatch(fetchIEcharts({ accountId: accountId, duration: 'thisMonth' }))
+      return toast.success(response.message)
     } catch (error) {
-      toast.error(error.response?.data?.message);
-      return rejectWithValue(error.response?.data?.message);
+      return rejectWithValue(error.response?.data?.message)
     }
   }
-);
+)
 
 export const fetchIEcharts = createAsyncThunk(
-  "accountPage/fetchIEcharts",
-  async ({ accountId, duration }, { rejectWithValue }) => {
+  'accountPage/fetchIEcharts',
+  async ({ accountId, duration }, { rejectWithValue, dispatch }) => {
     try {
+      dispatch(setAccountStatLoading(true))
       const response = await APIs(
-        "GET",
-        `${URL.BY_I_E_DURATION}?accountId=${accountId}&duration=${
-          duration || "thisMonth"
-        }`,
+        'GET',
+        `${URL.BY_I_E_DURATION}?accountId=${accountId}&duration=${duration || 'thisMonth'}`,
         {},
         {},
         true
-      );
+      )
 
-      return response;
+      dispatch(setAccountStatLoading(false))
+      return response
     } catch (error) {
-      const errorMessage = error.response?.data?.message || "Error occurred";
-      toast.error(errorMessage);
-      return rejectWithValue(errorMessage);
+      const errorMessage = error.response?.data?.message || 'Error occurred'
+      toast.error(errorMessage)
+      return rejectWithValue(errorMessage)
     }
   }
-);
+)
 
 export const handleCreateCategory = createAsyncThunk(
-  "accountPage/handleCreateCategory",
+  'accountPage/handleCreateCategory',
   async (data, { rejectWithValue, dispatch, getState }) => {
     try {
-      const response = await APIs("POST", URL.CREATE_CATEGORY, data, {}, true);
+      const response = await APIs('POST', URL.CREATE_CATEGORY, data, {}, true)
 
-      dispatch(fetchCategorys());
-      return toast.success(response.message);
+      dispatch(fetchCategorys())
+      return toast.success(response.message)
     } catch (error) {
-      toast.error(error.response?.data?.message);
-      return rejectWithValue(error.response?.data?.message);
+      return rejectWithValue(error.response?.data?.message)
     }
   }
-);
+)

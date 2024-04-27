@@ -1,66 +1,66 @@
-import { lazy } from "react";
-import { currencyFormat } from "../../../utils";
-import { useTheme } from "@mui/material";
-import Loader from "../../common/Loader";
-const Chart = lazy(() => import("react-apexcharts"));
+import { lazy } from 'react'
+import { currencyFormat } from '../../../utils'
+import { useTheme } from '@mui/material'
+import Loader from '../../common/Loader'
+const Chart = lazy(() => import('react-apexcharts'))
 
 const SparkLines = ({ data, type, color, textColor }) => {
   const {
-    palette: { mode },
-  } = useTheme();
+    palette: { mode }
+  } = useTheme()
   const series = [
     {
       name: type,
-      data: data || [],
-    },
-  ];
+      data: data || []
+    }
+  ]
 
   /** @type {import('apexcharts').ApexOptions} */
   const options = {
     chart: {
-      type: "area",
-      background: "transparent",
+      type: 'area',
+      background: 'transparent',
       toolbar: {
-        show: false,
-      },
+        show: false
+      }
     },
     grid: {
-      show: false,
+      show: false
     },
     dataLabels: {
-      enabled: false,
+      enabled: false
     },
     stroke: {
-      curve: "smooth",
-      width: 1,
+      curve: 'smooth',
+      width: 1
     },
     fill: {
-      opacity: mode === "dark" && 0.1,
-      type: mode === "light" && "gradient",
+      opacity: mode === 'dark' && 0.1,
+      type: mode === 'light' && 'gradient',
       gradient: {
         shadeIntensity: 1,
         inverseColors: false,
         opacityFrom: 1,
-        opacityTo: 0.3,
-      },
+        opacityTo: 0.3
+      }
     },
     xaxis: {
-      type: "datetime",
+      type: 'datetime',
       crosshairs: {
-        width: 1,
+        width: 1
       },
       axisBorder: {
         show: true,
         color: textColor,
-        height: 0.2,
+        height: 0.2
       },
       axisTicks: {
         show: true,
-        color: textColor,
+        color: textColor
       },
       labels: {
-        style: { colors: textColor },
-      },
+        style: { colors: textColor }
+      }
     },
     responsive: [
       {
@@ -68,60 +68,54 @@ const SparkLines = ({ data, type, color, textColor }) => {
         options: {
           title: {
             style: {
-              fontSize: "16px",
-            },
-          },
-        },
-      },
+              fontSize: '16px'
+            }
+          }
+        }
+      }
     ],
     plotOptions: {
       area: {
-        fillTo: "end",
-      },
+        fillTo: 'end'
+      }
     },
     yaxis: {
-      show: false,
+      show: false
     },
     tooltip: {
       theme: true,
-      cssClass:`apex-chart-tooltip-${mode}-${type}`,
+      cssClass: `apex-chart-tooltip-${mode}-${type}`,
       x: {
-        show: false,
+        show: false
       },
       y: {
         formatter: function (val) {
-          return currencyFormat(val, "standard");
-        },
+          return currencyFormat(val, 'standard')
+        }
       },
       marker: {
-        show: false,
+        show: false
       },
-      fillSeriesColor:true
+      fillSeriesColor: true
     },
     title: {
       text: type,
       offsetX: 0,
       style: {
-        fontSize: "22px",
-        color: textColor,
-      },
+        fontSize: '22px',
+        color: textColor
+      }
     },
     theme: {
-      mode: mode,
+      mode: mode
     },
-    colors: [color],
-  };
+    colors: [color]
+  }
   return !data ? (
     <Loader diff />
   ) : (
-    <Chart
-      options={options}
-      series={series}
-      type="area"
-      width={"100%"}
-      height="100%"
-    />
-  );
-};
+    <Chart options={options} series={series} type='area' width={'100%'} height='100%' />
+  )
+}
 
-export default SparkLines;
+export default SparkLines

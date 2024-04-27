@@ -1,99 +1,88 @@
-import React, { lazy } from "react";
-import { useTheme } from "@mui/material";
-import { ApexOptions } from "apexcharts";
-import { currencyFormat } from "../../../utils";
-import { ScaleLoader } from "react-spinners";
-const Chart = lazy(() => import("react-apexcharts"));
+import { Suspense, lazy } from 'react'
+import { useTheme } from '@mui/material'
+import { currencyFormat } from '../../../utils'
+import { ScaleLoader } from 'react-spinners'
+const Chart = lazy(() => import('react-apexcharts'))
 
 const AccStatChart = ({ icomeType, height = 100, data }) => {
-  const theme = useTheme();
+  const theme = useTheme()
 
   const series = [
     {
-      name: icomeType ? "Income" : "Expense",
-      data: data ?? [],
-    },
-  ];
+      name: icomeType ? 'Income' : 'Expense',
+      data: data ?? []
+    }
+  ]
 
-  /** @type {ApexOptions} */
+  /** @type {import('apexcharts').ApexOptions} */
   const options = {
     chart: {
-      type: "area",
-      width: "100%",
+      type: 'area',
+      width: '100%',
       sparkline: {
-        enabled: true,
-      },
+        enabled: true
+      }
     },
     stroke: {
-      curve: "straight",
-      width: 1,
+      curve: 'straight',
+      width: 1
     },
     fill: {
       opacity: 0.5,
-      type: "gradient",
+      type: 'gradient',
       gradient: {
         shade: theme.palette.mode,
-        type: "vertical",
+        type: 'vertical',
         shadeIntensity: 0.5,
         gradientToColors: [
-          theme.palette.mode === "light"
+          theme.palette.mode === 'light'
             ? icomeType
-              ? "#a3ffb980"
-              : "#ff8a8a80"
+              ? '#a3ffb980'
+              : '#ff8a8a80'
             : icomeType
-            ? "#33b50e80"
-            : "#ff000080",
+              ? '#33b50e80'
+              : '#ff000080'
         ],
         inverseColors: true,
         opacityFrom: 1,
         opacityTo: 0,
-        stops: [0, 100],
-      },
+        stops: [0, 100]
+      }
     },
     yaxis: {
-      show: false,
+      show: false
     },
     colors: [
-      theme.palette.mode === "light"
+      theme.palette.mode === 'light'
         ? icomeType
-          ? "#a3ffb9"
-          : "#ff8a8aBF"
+          ? '#a3ffb9'
+          : '#ff8a8aBF'
         : icomeType
-        ? "#e9fce800"
-        : "#cf535300",
+          ? '#e9fce800'
+          : '#cf535300'
     ],
     tooltip: {
       theme: theme.palette.mode,
       x: {
-        show: false,
+        show: false
       },
       y: {
         formatter: function (val) {
-          return currencyFormat(val, "standard");
-        },
+          return currencyFormat(val, 'standard')
+        }
       },
       marker: {
-        show: false,
-      },
-    },
-  };
-  return (
-    <React.Suspense
-      fallback={
-        <ScaleLoader
-          color={theme.palette.mode === "light" ? "#000000" : "#ffffff"}
-        />
+        show: false
       }
+    }
+  }
+  return (
+    <Suspense
+      fallback={<ScaleLoader color={theme.palette.mode === 'light' ? '#000000' : '#ffffff'} />}
     >
-      <Chart
-        options={options}
-        series={series}
-        type="area"
-        width={"100%"}
-        height={height}
-      />
-    </React.Suspense>
-  );
-};
+      <Chart options={options} series={series} type='area' width={'100%'} height={height} />
+    </Suspense>
+  )
+}
 
-export default AccStatChart;
+export default AccStatChart

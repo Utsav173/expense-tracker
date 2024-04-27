@@ -1,23 +1,23 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice } from '@reduxjs/toolkit'
 
-const storedDarkMode = localStorage.getItem("darkMode");
+const storedDarkMode = localStorage.getItem('darkMode')
 
 export const darkModeSlice = createSlice({
-  name: "darkMode",
+  name: 'darkMode',
   initialState: {
-    value: storedDarkMode ? storedDarkMode === "true" : false,
+    value: storedDarkMode ? storedDarkMode === 'true' : false
   },
   reducers: {
-    toggleDarkMode: (state) => {
-      const newValue = !state.value;
-      localStorage.setItem("darkMode", newValue);
-      state.value = newValue;
-    },
-  },
-});
+    toggleDarkMode: state => {
+      const newValue = !state.value
+      localStorage.setItem('darkMode', newValue)
+      state.value = newValue
+    }
+  }
+})
 
-export const { toggleDarkMode } = darkModeSlice.actions;
+export const { toggleDarkMode } = darkModeSlice.actions
 
-export const selectDarkMode = (state) => state.darkMode.value;
+export const selectDarkMode = state => state.darkMode.value
 
-export default darkModeSlice.reducer;
+export default darkModeSlice.reducer

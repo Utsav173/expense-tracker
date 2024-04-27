@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice } from '@reduxjs/toolkit'
 import {
   fetchCategorys,
   fetchDropdownUser,
@@ -9,107 +9,120 @@ import {
   handleCreate,
   handleEdit,
   handleDelete,
-  handleCreateCategory,
-} from "../asyncThunk/account";
+  handleCreateCategory
+} from '../asyncThunk/account'
 
 const initialState = {
   transactions: [],
   categorys: [],
   dropdownUsers: [],
   previousShares: [],
-  status: "idle",
+  status: 'idle',
   error: null,
   currentPage: 1,
   totalCount: 0,
   totalPages: 0,
   accountStat: {},
+  accountStatLoading: false,
   amountCharts: {},
-};
+  amountChartsLoading: false
+}
 
 export const accountSlice = createSlice({
-  name: "accountPage",
+  name: 'accountPage',
   initialState,
   reducers: {
     setTransactions: (state, action) => {
-      state.transactions = action.payload;
+      state.transactions = action.payload
     },
     setCurrentPage: (state, action) => {
-      state.currentPage = action.payload;
+      state.currentPage = action.payload
     },
     setTotalCount: (state, action) => {
-      state.totalCount = action.payload;
+      state.totalCount = action.payload
     },
     setTotalPages: (state, action) => {
-      state.totalPages = action.payload;
+      state.totalPages = action.payload
     },
+    setAccountStatLoading: (state, action) => {
+      state.accountStatLoading = action.payload
+    },
+    setAmountChartsLoading: (state, action) => {
+      state.amountChartsLoading = action.payload
+    }
   },
-  extraReducers: (builder) => {
+  extraReducers: builder => {
     builder
       .addCase(fetchTransactions.fulfilled, (state, action) => {
-        state.status = "succeeded";
-        state.transactions = action.payload.transactions || [];
-        state.totalCount = action.payload.totalCount;
-        state.currentPage = action.payload.currentPage;
-        state.totalPages = action.payload.totalPages;
+        state.status = 'succeeded'
+        state.transactions = action.payload.transactions || []
+        state.totalCount = action.payload.totalCount
+        state.currentPage = action.payload.currentPage
+        state.totalPages = action.payload.totalPages
       })
       .addCase(fetchTransactions.rejected, (state, action) => {
-        state.status = "failed";
-        state.error = action.payload;
+        state.status = 'failed'
+        state.error = action.payload
       })
       .addCase(fetchCategorys.fulfilled, (state, action) => {
-        state.categorys = action.payload;
+        state.categorys = action.payload
       })
       .addCase(fetchDropdownUser.fulfilled, (state, action) => {
-        state.dropdownUsers = action.payload;
+        state.dropdownUsers = action.payload
       })
       .addCase(fetchPreviousShares.fulfilled, (state, action) => {
-        state.previousShares = action.payload;
+        state.previousShares = action.payload
       })
       .addCase(fetchSignleAccount.fulfilled, (state, action) => {
-        state.accountStat = action.payload;
+        state.accountStat = action.payload
       })
       .addCase(fetchSignleAccount.rejected, (state, action) => {
         state.accountStat = {
-          error: action.payload || "Error occurred",
-        };
+          error: action.payload || 'Error occurred'
+        }
       })
       .addCase(fetchIEcharts.fulfilled, (state, action) => {
-        state.amountCharts = action.payload;
+        state.amountCharts = action.payload
       })
       .addCase(fetchIEcharts.rejected, (state, action) => {
-        state.status = "failed";
+        state.status = 'failed'
       })
       .addCase(handleCreate.fulfilled, (state, action) => {
-        state.status = "succeeded";
+        state.status = 'succeeded'
       })
       .addCase(handleCreate.rejected, (state, action) => {
-        state.status = "failed";
+        state.status = 'failed'
       })
       .addCase(handleEdit.fulfilled, (state, action) => {
-        state.status = "succeeded";
+        state.status = 'succeeded'
       })
       .addCase(handleEdit.rejected, (state, action) => {
-        state.status = "failed";
-        state.error = action.payload;
+        state.status = 'failed'
+        state.error = action.payload
       })
       .addCase(handleDelete.fulfilled, (state, action) => {
-        state.status = "succeeded";
+        state.status = 'succeeded'
       })
       .addCase(handleDelete.rejected, (state, action) => {
-        state.status = "failed";
-        state.error = action.payload;
+        state.status = 'failed'
+        state.error = action.payload
       })
       .addCase(handleCreateCategory.fulfilled, (state, action) => {
-        state.status = "succeeded";
+        state.status = 'succeeded'
       })
       .addCase(handleCreateCategory.rejected, (state, action) => {
-        state.status = "failed";
-        state.error = action.payload;
-      });
-  },
-});
+        state.status = 'failed'
+        state.error = action.payload
+      })
+  }
+})
 
-export const { setTransactions, setCurrentPage, setTotalCount } =
-  accountSlice.actions;
+export const {
+  setTransactions,
+  setCurrentPage,
+  setTotalCount,
+  setAccountStatLoading,
+  setAmountChartsLoading
+} = accountSlice.actions
 
-export default accountSlice.reducer;
+export default accountSlice.reducer

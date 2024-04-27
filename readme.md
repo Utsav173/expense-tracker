@@ -82,10 +82,10 @@
 
 **Technologies:**
 
-* Node.js
-* Express
-* MongoDB
-* Mongoose
+* Bun.js
+* Hono framework
+* Drizzle orm
+* Postgres
 * Nodemailer
 * Crypto
 * Sharp

@@ -1,86 +1,90 @@
-import { createAsyncThunk } from "@reduxjs/toolkit";
-import { APIs } from "../../API";
-import { URL } from "../../API/constant";
-import toast from "react-hot-toast";
+import { createAsyncThunk } from '@reduxjs/toolkit'
+import { APIs } from '../../API'
+import { URL } from '../../API/constant'
+import toast from 'react-hot-toast'
 
 export const fetchDashboardData = createAsyncThunk(
-  "dashboardPage/fetchDashboardData",
+  'dashboardPage/fetchDashboardData',
   async (_, { rejectWithValue, fulfillWithValue }) => {
     try {
-      const response = await APIs("GET", URL.GET_DASHBOARD, {}, {}, true);
-      return fulfillWithValue(response);
+      const response = await APIs('GET', URL.GET_DASHBOARD, {}, {}, true)
+      return fulfillWithValue(response)
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || "Error occurred");
+      return rejectWithValue(error.response?.data?.message || 'Error occurred')
     }
-  },
-);
+  }
+)
 
 export const fetchByCategory = createAsyncThunk(
-  "dashboardPage/fetchByCategory",
+  'dashboardPage/fetchByCategory',
   async ({ duration }, { rejectWithValue, fulfillWithValue }) => {
     try {
       const response = await APIs(
-        "GET",
-        `${URL.BY_CATEGORY}?duration=${duration || "thisMonth"}`,
+        'GET',
+        `${URL.BY_CATEGORY}?duration=${duration || 'thisMonth'}`,
         {},
         {},
-        true,
-      );
-      return fulfillWithValue(response);
+        true
+      )
+      return fulfillWithValue(response)
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || "Error occurred");
+      return rejectWithValue(error.response?.data?.message || 'Error occurred')
     }
-  },
-);
+  }
+)
 export const fetchByField = createAsyncThunk(
-  "dashboardPage/fetchByField",
+  'dashboardPage/fetchByField',
   async ({ field, duration }, { rejectWithValue, fulfillWithValue }) => {
     try {
       const response = await APIs(
-        "GET",
-        `${URL.BY_FIELD}${field}?duration=${duration || "thisMonth"}`,
+        'GET',
+        `${URL.BY_FIELD}${field}?duration=${duration || 'thisMonth'}`,
         {},
         {},
-        true,
-      );
-      return fulfillWithValue(response);
+        true
+      )
+      return fulfillWithValue(response)
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || "Error occurred");
+      return rejectWithValue(error.response?.data?.message || 'Error occurred')
     }
-  },
-);
+  }
+)
 export const fetchDashboardIEChart = createAsyncThunk(
-  "dashboardPage/fetchDashboardIEChart",
-  async ({ duration }, { rejectWithValue, fulfillWithValue }) => {
+  'dashboardPage/fetchDashboardIEChart',
+  async ({ duration, accountId }, { rejectWithValue, fulfillWithValue }) => {
     try {
       const response = await APIs(
-        "GET",
-        `${URL.BY_I_E_DURATION}?duration=${duration || "thisMonth"}`,
+        'GET',
+        `${URL.BY_I_E_DURATION}?duration=${duration || 'thisMonth'}${
+          accountId ? `&accountId=${accountId}` : ''
+        }`,
         {},
         {},
-        true,
-      );
+        true
+      )
 
-      return fulfillWithValue(response);
+      return fulfillWithValue(response)
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || "Error occurred");
+      return rejectWithValue(error.response?.data?.message || 'Error occurred')
     }
-  },
-);
+  }
+)
 export const fetchIEData = createAsyncThunk(
-  "dashboardPage/fetchIEData",
-  async ({ duration }, { rejectWithValue, fulfillWithValue }) => {
+  'dashboardPage/fetchIEData',
+  async ({ duration, accountId }, { rejectWithValue, fulfillWithValue }) => {
     try {
       const response = await APIs(
-        "GET",
-        `${URL.BY_INCOME_EXP}?duration=${duration || "thisMonth"}`,
+        'GET',
+        `${URL.BY_INCOME_EXP}?duration=${duration || 'thisMonth'}${
+          accountId ? `&accountId=${accountId}` : ''
+        }`,
         {},
         {},
-        true,
-      );
-      return fulfillWithValue(response);
+        true
+      )
+      return fulfillWithValue(response)
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || "Error occurred");
+      return rejectWithValue(error.response?.data?.message || 'Error occurred')
     }
-  },
-);
+  }
+)
