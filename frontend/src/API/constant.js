@@ -1,5 +1,4 @@
-// export const BASE_URL = "https://exp-v-4.onrender.com";
-export const BASE_URL = 'http://localhost:1337'
+export const BASE_URL = import.meta.env.VITE_BACKEND_URL ?? 'http://localhost:1337';
 
 export const URL = {
   LOGIN: `${BASE_URL}/auth/login`,

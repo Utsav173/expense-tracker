@@ -25,6 +25,7 @@
     "apexcharts": "^3.44.0",
     "axios": "^1.6.2",
     "date-fns": "^2.30.0",
+    "dotenv": "^16.4.5",
     "framer-motion": "^10.16.5",
     "lodash": "^4.17.21",
     "particles.js": "^2.0.0",
