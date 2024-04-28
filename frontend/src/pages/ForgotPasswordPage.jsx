@@ -51,7 +51,7 @@ export function ForgotPasswordPage() {
       <Helmet>
         <title>Forgot Password | Expense Pro</title>
         <meta name='description' content='Welcome to Expense Pro forgot password page' />
-        <link rel='canonical' href='https://track-expense-tan.vercel.app/forgot-password' />
+        <link rel='canonical' href='https://expense-pro.onrender.com/forgot-password' />
       </Helmet>
       <CustomContainer>
         <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>

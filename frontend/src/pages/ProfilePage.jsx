@@ -25,7 +25,7 @@ export function ProfilePage() {
             name='description'
             content='Profile page of expense pro where you can manage your user profile'
           />
-          <link rel='canonical' href='https://track-expense-tan.vercel.app/profile' />
+          <link rel='canonical' href='https://expense-pro.onrender.com/profile' />
         </Helmet>
         <Box mt={7} display='flex' justifyContent='center' alignItems='center'>
           <Card sx={{ maxWidth: 400, my: 3 }}>

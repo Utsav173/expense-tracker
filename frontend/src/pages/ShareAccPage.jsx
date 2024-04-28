@@ -25,7 +25,7 @@ export function ShareAccPage() {
             name='description'
             content='Share accounts page where you can find shared accounts which shared by others to you'
           />
-          <link rel='canonical' href='https://track-expense-tan.vercel.app/share-accounts' />
+          <link rel='canonical' href='https://expense-pro.onrender.com/share-accounts' />
         </Helmet>
         {sharesAccounts.length > 0 ? (
           <Box

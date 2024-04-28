@@ -39,7 +39,7 @@ export function DebtPage() {
             name='description'
             content='Debt page where you can find shared accounts which shared by others to you'
           />
-          <link rel='canonical' href='https://track-expense-tan.vercel.app/debts' />
+          <link rel='canonical' href='https://expense-pro.onrender.com/debts' />
         </Helmet>
         <Box
           my={6}

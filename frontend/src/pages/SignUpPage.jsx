@@ -117,7 +117,7 @@ export function SignUpPage() {
           name='description'
           content='Sign up page of expense pro where you can signup with your email and password'
         />
-        <link rel='canonical' href='https://track-expense-tan.vercel.app/signup' />
+        <link rel='canonical' href='https://expense-pro.onrender.com/signup' />
       </Helmet>
       <CustomContainer>
         <Avatar sx={{ m: 1, backgroundColor: '#ff499e' }}>

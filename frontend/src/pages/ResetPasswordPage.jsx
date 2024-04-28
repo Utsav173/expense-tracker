@@ -71,7 +71,7 @@ export function ResetPasswordPage() {
           name='description'
           content='Welcome to Expense Pro where you can reset your password'
         />
-        <link rel='canonical' href='https://track-expense-tan.vercel.app/reset-password' />
+        <link rel='canonical' href='https://expense-pro.onrender.com/reset-password' />
       </Helmet>
       <CustomContainer>
         <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>

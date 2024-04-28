@@ -48,7 +48,7 @@ export function HomePage() {
             name='description'
             content='Welcome to homepage of expense pro, where you can find your accounts and create new account for transactions'
           />
-          <link rel='canonical' href='https://track-expense-tan.vercel.app/' />
+          <link rel='canonical' href='https://expense-pro.onrender.com/' />
         </Helmet>
         <Box my={7}>
           <Grid container gap={2} justifyContent='center' direction={'column'}>

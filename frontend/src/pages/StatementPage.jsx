@@ -109,7 +109,7 @@ export function StatementPage() {
             name='description'
             content='Welcome to statement page of expense pro, where you can generate statement for your accounts'
           />
-          <link rel='canonical' href='https://track-expense-tan.vercel.app/statement' />
+          <link rel='canonical' href='https://expense-pro.onrender.com/statement' />
         </Helmet>
         <Box
           mt={7}

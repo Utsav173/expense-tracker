@@ -98,7 +98,7 @@ export function DashboardPage() {
             name='description'
             content='Welcome to dashboard of expense pro, where you can find multiple analytics of your accounts with different chart and useful information'
           />
-          <link rel='canonical' href='https://track-expense-tan.vercel.app/dashboard' />
+          <link rel='canonical' href='https://expense-pro.onrender.com/dashboard' />
         </Helmet>
         {dashboardData.totalTransaction < 4 ? (
           <Box

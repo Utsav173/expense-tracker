@@ -56,7 +56,7 @@ export function LoginPage() {
       <Helmet>
         <title>Login | Expense Pro</title>
         <meta name='description' content='Welcome to Expense Pro login with email and password' />
-        <link rel='canonical' href='https://track-expense-tan.vercel.app/login' />
+        <link rel='canonical' href='https://expense-pro.onrender.com/login' />
       </Helmet>
       <CustomContainer>
         <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>

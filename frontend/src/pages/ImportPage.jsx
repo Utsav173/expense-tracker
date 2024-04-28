@@ -51,7 +51,7 @@ export function ImportPage() {
             name='description'
             content='Welcome to import transaction page where you can import number of transactions in excel format to any of your accounts'
           />
-          <link rel='canonical' href='https://track-expense-tan.vercel.app/import' />
+          <link rel='canonical' href='https://expense-pro.onrender.com/import' />
         </Helmet>
         <Box
           my={7}
