@@ -262,7 +262,7 @@ const seeding = () => {
 
   createUser().then((data) =>
     createAccount(data, 10).then((acc) =>
-      createCategory().then(() => createTransaction(data, acc, 10000)),
+      createCategory().then(() => createTransaction(data, acc, 100)),
     ),
   );
 };

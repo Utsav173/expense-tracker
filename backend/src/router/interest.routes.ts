@@ -217,14 +217,6 @@ interestRouter.get('/debts', authMiddleware, async (c) => {
       throw new HTTPException(500, { message: err.message });
     });
 
-  console.log({
-    data: debts,
-    totalCount: totalCount[0].count,
-    totalPages: Math.ceil(totalCount[0].count / +pageSize),
-    currentPage: +page,
-    pageSize: +pageSize,
-  });
-
   return c.json({
     data: debts,
     totalCount: totalCount[0].count,

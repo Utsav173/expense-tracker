@@ -3,8 +3,8 @@ import postgres from 'postgres';
 import * as schema from './schema';
 
 // for development
-const queryClient = postgres(process.env.DATABASE_URL!, { max: 1 });
-export const db = drizzle(queryClient, { schema: schema, logger: true });
+const queryClient = postgres(process.env.DATABASE_URL!, { max: 1, ssl: { rejectUnauthorized: false } });
+export const db = drizzle(queryClient, { schema: schema, logger: false });
 
 // for production
 // import { neon } from '@neondatabase/serverless';

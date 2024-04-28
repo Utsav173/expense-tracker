@@ -165,8 +165,8 @@ userRouter.post('/signup', zValidator('form', userSchema), async (c) => {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: process.env.EMAIL,
-      pass: process.env.PASSWORD,
+      user: process.env.GMAIL_USERNAME,
+      pass: process.env.GMAIL_PASS,
     },
   });
 
@@ -220,8 +220,8 @@ userRouter.post('/forgot-password', async (c) => {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: process.env.EMAIL,
-      pass: process.env.PASSWORD,
+      user: process.env.GMAIL_USERNAME,
+      pass: process.env.GMAIL_PASS,
     },
   });
 
