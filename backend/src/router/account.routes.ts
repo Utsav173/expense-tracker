@@ -401,19 +401,17 @@ accountRouter.post('/import/transaction', authMiddleware, async (c) => {
     });
   }
 
-  const validAccount = await db.query.Account.findFirst({
-    where(fields, operators) {
-      return operators.eq(fields.id, accountId as string);
-    },
-  });
+  const [validAccount, workbook, userId] = await Promise.all([
+    db.query.Account.findFirst({
+      where: eq(Account.id, accountId as string),
+    }),
+    read(Buffer.from(await docFile.arrayBuffer()), { type: 'buffer' }),
+    c.get('userId' as any),
+  ]);
 
   if (!validAccount) {
     throw new HTTPException(400, { message: 'Account not found' });
   }
-
-  const workbook = read(Buffer.from(await docFile.arrayBuffer()), {
-    type: 'buffer',
-  });
 
   if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
     throw new HTTPException(400, { message: 'Document is empty' });
@@ -438,13 +436,17 @@ accountRouter.post('/import/transaction', authMiddleware, async (c) => {
     throw new HTTPException(400, { message: 'Missing required headers' });
   }
 
-  const finalArray = [];
-  let totalRecords = 0;
-  let errorRecords = 0;
-  const userId = await c.get('userId' as any);
+  const existingCategories = await db.query.Category.findMany({
+    where: inArray(
+      Category.name,
+      jsonData.map((item) => item.Category),
+    ),
+  });
+  const categoryNameToIdMap = new Map(
+    existingCategories.map((category) => [category.name, category.id]),
+  );
 
-  for (const item of jsonData) {
-    totalRecords++;
+  const finalArray = jsonData.map((item) => {
     const typedItem = item as Record<string, any>;
 
     const temp: any = {
@@ -458,36 +460,44 @@ accountRouter.post('/import/transaction', authMiddleware, async (c) => {
       if (requiredHeaders.includes(key)) {
         switch (key.toLowerCase()) {
           case 'type':
-            temp['isIncome'] = item[key].toLowerCase() === 'income' ? true : false;
+            temp['isIncome'] = item[key].toLowerCase() === 'income'; // simplified
             break;
           case 'date':
-            temp['createdAt'] = new Date(item[key]) || new Date();
+            temp.createdAt = new Date(item[key]);
             break;
           case 'category':
-            temp['category'] = await db
-              .insert(Category)
-              .values({ name: item[key] })
-              .onConflictDoUpdate({
-                set: { name: item[key] },
-                target: Category.name,
-              })
-              .returning({
-                id: Category.id,
-              })
-              .then((data) => data[0].id)
-              .catch((err) => {
-                throw new HTTPException(400, { message: err.message });
-              });
+            // Utilize the map for efficient lookup
+            let categoryId = categoryNameToIdMap.get(item[key]);
+            if (!categoryId) {
+              categoryId = crypto.randomUUID();
+              categoryNameToIdMap.set(item[key], categoryId);
+            }
+            temp.category = categoryId;
+            break;
+          case 'amount':
+            temp.amount = parseFloat(item[key]);
             break;
           default:
             temp[key.toLowerCase()] = item[key];
         }
       }
     }
+    return temp;
+  });
 
-    finalArray.push(temp);
+  // Insert categories outside the loop
+  const newCategoryNames = Array.from(categoryNameToIdMap.keys()).filter(
+    // Use Array.from here
+    (name) => !existingCategories.some((cat) => cat.name === name),
+  );
+
+  if (newCategoryNames.length > 0) {
+    await db
+      .insert(Category)
+      .values(newCategoryNames.map((name) => ({ name, id: categoryNameToIdMap.get(name) })));
   }
 
+  const totalRecords = jsonData.length;
   const successId = await db
     .insert(ImportData)
     .values({
@@ -495,7 +505,7 @@ accountRouter.post('/import/transaction', authMiddleware, async (c) => {
       user: userId,
       data: JSON.stringify(finalArray),
       totalRecords,
-      errorRecords,
+      errorRecords: 0,
     })
     .returning({ id: ImportData.id })
     .then((data) => data[0].id)
@@ -643,7 +653,10 @@ accountRouter.post('/confirm/import/:id', authMiddleware, async (c) => {
 
     await db
       .insert(Transaction)
-      .values(item as any)
+      .values({
+        ...item,
+        createdAt: new Date(item.createdAt),
+      })
       .catch((err) => {
         throw new HTTPException(400, { message: err.message });
       });
