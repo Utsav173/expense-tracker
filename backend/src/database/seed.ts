@@ -121,6 +121,8 @@ const createTransaction = async (
 
     const updatedAnalyticsData: InferInsertModel<typeof Analytics> = {
       ...accountAnalytics,
+      account: accountAnalytics?.account ?? '',
+      user: accountAnalytics?.user ?? '',
       balance: 0,
     };
 
@@ -170,7 +172,7 @@ const createTransaction = async (
         isIncome: type === 'income',
         transfer: chance.name(),
         category: randomCategory.id,
-        account: account[j].id,
+        account: account[j].id ?? '',
         createdBy: user?.id!,
         updatedBy: user?.id!,
         owner: user?.id!,

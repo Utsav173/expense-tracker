@@ -1,0 +1,996 @@
+{
+  "info": {
+    "_postman_id": "your-postman-id",
+    "name": "Expense Manager API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "User Auth",
+      "item": [
+        {
+          "name": "Sign Up",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "Test User",
+                  "type": "text"
+                },
+                {
+                  "key": "email",
+                  "value": "test1@example.com",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "Strongpass@1",
+                  "type": "text"
+                },
+                {
+                  "key": "profilePic",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "http://localhost:1337/auth/signup",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["auth", "signup"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Log In",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\":\"test1@example.com\",\n    \"password\":\"Strongpass@1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:1337/auth/login",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"test1@example.com\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:1337/auth/forgot-password",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["auth", "forgot-password"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"password\": \"newpass\",\n     \"resetPasswordToken\":\"valid-token\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:1337/auth/reset-password",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["auth", "reset-password"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer Valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:1337/auth/me",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["auth", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Log out",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:1337/auth/logout",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["auth", "logout"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Category",
+      "item": [
+        {
+          "name": "Create Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer Valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Groceries\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:1337/category",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["category"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Category",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Shopping\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:1337/category/valid-uuid-of-category",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["category", "valid-uuid-of-category"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Category (pagination included)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:1337/category?page=1&limit=5&search=test&sortBy=createdAt&sortOrder=asc",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["category"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "integer: current page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "integer: number of item per page"
+                },
+                {
+                  "key": "search",
+                  "value": "test",
+                  "description": "String: Search by Category names "
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt",
+                  "description": "string, which fields you want to sortBy: (name, createdAt, id) can be default"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "asc",
+                  "description": "string: type (desc,asc) if nothing provided, sort order DESC"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Category",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:1337/category/valid-uuid-of-category",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["category", "valid-uuid-of-category"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Accounts",
+      "item": [
+        {
+          "name": "Create Account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\":\"Main\",\n    \"balance\":100,\n    \"currency\":\"USD\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:1337/accounts",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["accounts"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Accounts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:1337/accounts?page=1&limit=5&search=test&sortBy=createdAt&sortOrder=asc",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["accounts"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "integer: current page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "integer: items per page number"
+                },
+                {
+                  "key": "search",
+                  "value": "test",
+                  "description": "string: searches by account names, or balance"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt",
+                  "description": "string, fields to sort, possible values are (id,name, createdAt,balance)"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "asc",
+                  "description": "String :type(asc,desc) or leave empty, for DESC by default"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update account currency",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\":\"Saving Account Updated\",\n   \"balance\":2000,\n  \"currency\":\"EUR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:1337/accounts/valid-uuid-of-account",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["accounts", "valid-uuid-of-account"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get all account for dropdown (no pagination)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:1337/accounts/list",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["accounts", "list"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Transactions",
+      "item": [
+        {
+          "name": "Create Transactions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"text\":\"Groceries from Market\",\n     \"amount\":50,\n     \"isIncome\":false,\n  \"transfer\":\"Self\",\n \"category\":\"valid-uuid-of-category\",\n   \"account\":\"valid-uuid-of-account\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:1337/transactions",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["transactions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get all Transaction of account  (pagination included)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:1337/transactions?accountId=valid-uuid-of-account&duration=thisMonth&page=1&pageSize=10&q=market",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["transactions"],
+              "query": [
+                {
+                  "key": "accountId",
+                  "value": "valid-uuid-of-account",
+                  "description": "string, Id of the existing account"
+                },
+                {
+                  "key": "duration",
+                  "value": "thisMonth",
+                  "description": "string : (thisMonth,thisWeek, today or thisYear)"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "number : curent Page"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10",
+                  "description": "number, numbers of records on single page"
+                },
+                {
+                  "key": "q",
+                  "value": "market",
+                  "description": "string : query term, by description ,or category, transfer text or amount "
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+
+    {
+      "name": "Budget Routes",
+      "item": [
+        {
+          "name": "Create budget",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"categoryId\":\"valid-uuid-of-category\",  \"month\":7,  \"year\":2024,  \"amount\":100 }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:1337/budget",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["budget"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All budget by userId (pagination included)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:1337/budget/all?page=1&limit=10",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["budget", "all"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "integer, which page"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "integer : item on one page"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update budget by ID",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"amount\": 1000}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:1337/budget/valid-uuid-of-budget",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["budget", "valid-uuid-of-budget"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Budget",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:1337/budget/valid-uuid-of-budget",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["budget", "valid-uuid-of-budget"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Goal Routes",
+      "item": [
+        {
+          "name": "Create New Goals",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"New Goal\",    \"targetAmount\":10000,  \"targetDate\":\"2025-12-30T23:59:59.000Z\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:1337/goal",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["goal"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All goal for user",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:1337/goal/all?page=1&limit=10",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["goal", "all"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "integer, current Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "integer, records per page "
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update existing goal",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"targetAmount\":20000,  \"targetDate\":\"2025-12-30T23:59:59.000Z\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:1337/goal/valid-uuid-of-goal",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["goal", "valid-uuid-of-goal"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Goal",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:1337/goal/valid-uuid-of-goal",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["goal", "valid-uuid-of-goal"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Investment Account Routes",
+      "item": [
+        {
+          "name": "Create Investment Account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Roth IRA\",\"platform\":\"fidelity\", \"currency\":\"USD\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:1337/investmentAccount",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["investmentAccount"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Investment Account(pagination included)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:1337/investmentAccount/all?page=1&limit=5",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["investmentAccount", "all"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "string, page number to request"
+                },
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "string, number of record on single page."
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update investment account by id",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Roth IRA Updated\",  \"platform\":\"Schwab\" }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:1337/investmentAccount/valid-uuid-of-investmentaccount",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["investmentAccount", "valid-uuid-of-investmentaccount"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete existing Investment Account by Id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:1337/investmentAccount/valid-uuid-of-investmentaccount",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["investmentAccount", "valid-uuid-of-investmentaccount"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Investment Routes",
+      "item": [
+        {
+          "name": "Create new Investments",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"symbol\":\"TSLA\",   \"shares\": 10,    \"purchasePrice\":1000 ,  \"purchaseDate\":\"2024-05-30T23:59:59.000Z\",  \"investmentAccount\":\"valid-uuid-of-investmentaccount\"   }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:1337/investment",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["investment"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Investment By account Id (pagination)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:1337/investment/valid-uuid-of-investmentaccount?page=1&limit=10",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["investment", "valid-uuid-of-investmentaccount"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Integer,  Current Page"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Integer, item per Page number"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Existing investment by ID",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"shares\":100,   \"purchasePrice\":1100,     \"purchaseDate\":\"2024-10-30T23:59:59.000Z\"   }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:1337/investment/valid-uuid-of-investment",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["investment", "valid-uuid-of-investment"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Investment by id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer valid-Token-from-Login-route",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:1337/investment/valid-uuid-of-investment",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "1337",
+              "path": ["investment", "valid-uuid-of-investment"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

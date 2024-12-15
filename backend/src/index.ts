@@ -9,6 +9,10 @@ import accountRouter from './router/account.routes';
 import categoryRouter from './router/category.routes';
 import transactionRouter from './router/transaction.routes';
 import interestRouter from './router/interest.routes';
+import budgetRouter from './router/budget.routes';
+import goalRouter from './router/goal.routes';
+import investmentAccountRouter from './router/investmentAccount.routes';
+import investmentRouter from './router/investment.routes';
 
 const app = new Hono();
 app.use('*', cors());
@@ -20,6 +24,10 @@ app.route('/accounts', accountRouter);
 app.route('/interest', interestRouter);
 app.route('/transactions', transactionRouter);
 app.route('/category', categoryRouter);
+app.route('/budget', budgetRouter);
+app.route('/goal', goalRouter);
+app.route('/investmentAccount', investmentAccountRouter);
+app.route('/investment', investmentRouter);
 
 // <---------------------------------------------- Middlewares ----------------------------------------------->
 app.onError((error, c) => {

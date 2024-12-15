@@ -85,7 +85,9 @@ accountRouter.get('/dashboard', authMiddleware, async (c) => {
       [{ incomeData, expenseData, balanceData }],
       dashboardDataQuery,
     ] = await Promise.all([
-      db.execute(sql`
+      db
+        .execute(
+          sql`
       WITH account_counts AS (
         SELECT
           a.name,
@@ -99,14 +101,18 @@ accountRouter.get('/dashboard', authMiddleware, async (c) => {
       SELECT
         json_object_agg(name, count) AS count_data
       FROM account_counts;
-    `),
+    `,
+        )
+        .then((res) => res.rows),
       db
         .select({
           count: count(Transaction.id),
         })
         .from(Transaction)
         .where(eq(Transaction.owner, userId)),
-      db.execute(sql`
+      db
+        .execute(
+          sql`
         SELECT
           MAX(COALESCE(amount, 0)) FILTER (WHERE "isIncome" = FALSE) AS "mostExpensiveExpense",
           MIN(COALESCE(amount, 0)) FILTER (WHERE "isIncome" = FALSE) AS "cheapestExpense",
@@ -114,8 +120,12 @@ accountRouter.get('/dashboard', authMiddleware, async (c) => {
           MIN(COALESCE(amount, 0)) FILTER (WHERE "isIncome" = TRUE) AS "cheapestIncome"
         FROM public.transaction
         WHERE owner = ${userId};
-      `),
-      db.execute(sql`
+      `,
+        )
+        .then((res) => res.rows),
+      db
+        .execute(
+          sql`
       WITH daily_data AS (
         SELECT
           DATE_TRUNC('day', "createdAt") AS date,
@@ -132,8 +142,12 @@ accountRouter.get('/dashboard', authMiddleware, async (c) => {
         json_agg(json_build_object('x', EXTRACT(EPOCH FROM date)::BIGINT, 'y', expense)) AS "expenseData",
         json_agg(json_build_object('x', EXTRACT(EPOCH FROM date)::BIGINT, 'y', balance)) AS "balanceData"
       FROM daily_data;    
-    `),
-      db.execute(sql`
+    `,
+        )
+        .then((res) => res.rows),
+      db
+        .execute(
+          sql`
         WITH analytics_summary AS (
           SELECT
             a.account,
@@ -159,7 +173,9 @@ accountRouter.get('/dashboard', authMiddleware, async (c) => {
           COALESCE(AVG(s.avg_expenses_percentage_change), 0) AS overall_expense_percentage_change
         FROM
           analytics_summary s;
-      `),
+      `,
+        )
+        .then((res) => res.rows),
     ]);
 
     // Extracting overall data
@@ -494,7 +510,13 @@ accountRouter.post('/import/transaction', authMiddleware, async (c) => {
   if (newCategoryNames.length > 0) {
     await db
       .insert(Category)
-      .values(newCategoryNames.map((name) => ({ name, id: categoryNameToIdMap.get(name) })));
+      .values(
+        newCategoryNames.map((name) => ({
+          name,
+          owner: userId,
+          id: categoryNameToIdMap.get(name),
+        })),
+      );
   }
 
   const totalRecords = jsonData.length;
@@ -730,6 +752,7 @@ accountRouter.get('/customAnalytics/:id', authMiddleware, async (c) => {
       LEFT JOIN PreviousPeriodData ppd ON 1=1;
       `),
     )
+    .then((res) => res.rows)
     .catch((err) => {
       throw new HTTPException(500, { message: err.message });
     });
@@ -813,6 +836,7 @@ accountRouter.get('/', authMiddleware, async (c) => {
         email: User.email,
         profilePic: User.profilePic,
       },
+      currency: Account.currency,
     })
     .from(Account)
     .leftJoin(Analytics, eq(Analytics.account, Account.id))
@@ -840,6 +864,7 @@ accountRouter.get('/list', authMiddleware, async (c) => {
     .select({
       id: Account.id,
       name: Account.name,
+      currency: Account.currency,
     })
     .from(Account)
     .where(eq(Account.owner, userId))
@@ -851,7 +876,7 @@ accountRouter.get('/list', authMiddleware, async (c) => {
 
 // POST / - Create a new account
 accountRouter.post('/', authMiddleware, zValidator('json', accountSchema), async (c) => {
-  const { name, balance } = await c.req.json();
+  const { name, balance, currency } = await c.req.json();
   const userId = await c.get('userId' as any);
   const accountData = await db
     .insert(Account)
@@ -859,6 +884,7 @@ accountRouter.post('/', authMiddleware, zValidator('json', accountSchema), async
       name,
       balance,
       owner: userId,
+      currency,
     })
     .returning()
     .catch((err) => {
@@ -1120,13 +1146,12 @@ accountRouter.get('/:id', authMiddleware, async (c) => {
 // PUT /account/:id - Update an account
 accountRouter.put('/:id', authMiddleware, async (c) => {
   try {
-    const { name, balance } = await c.req.json();
-
+    const { name, balance, currency } = await c.req.json();
     await db
       .transaction(async (tx) => {
         await tx
           .update(Account)
-          .set({ name, balance })
+          .set({ name, balance, currency })
           .where(eq(Account.id, c.req.param('id')))
           .returning()
           .catch((err) => {

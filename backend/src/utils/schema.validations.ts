@@ -86,3 +86,28 @@ export const importDataSchema = z.object({
   data: z.any(),
   updatedAt: z.date(),
 });
+
+export const budgetSchema = z.object({
+  categoryId: z.string(),
+  month: z.number().min(1).max(12),
+  year: z.number(),
+  amount: z.number(),
+});
+
+export const savingGoalSchema = z.object({
+  name: z.string(),
+  targetAmount: z.number(),
+  targetDate: z.date(),
+});
+
+export const investmentAccountSchema = z.object({
+  name: z.string(),
+  platform: z.string(),
+  currency: z.string(),
+});
+export const investmentSchema = z.object({
+  symbol: z.string(),
+  shares: z.number(),
+  purchasePrice: z.number(),
+  purchaseDate: z.date(),
+});

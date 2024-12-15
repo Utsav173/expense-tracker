@@ -291,7 +291,7 @@ transactionRouter.get('/by/category/chart', authMiddleware, async (c) => {
           c.name
       ) AS subquery;
       `,
-    )
+    ).then((res) => res.rows)
     .catch((err) => {
       throw new HTTPException(500, { message: err.message });
     });
@@ -333,7 +333,7 @@ transactionRouter.get('/by/income/expense', authMiddleware, async (c) => {
             t."createdAt" BETWEEN '${startDate}' AND '${endDate}'
         AND ${accountId ? `t.account = '${accountId}'` : `t.owner = '${userId}'`}`),
     )
-    .then((res) => res[0])
+    .then((res) => res.rows[0])
     .catch((err) => {
       throw new HTTPException(500, { message: err.message });
     });
@@ -383,7 +383,7 @@ transactionRouter.get('/by/income/expense/chart', authMiddleware, async (c) => {
     ) AS subquery`),
     )
     .then((result) => {
-      return result[0];
+      return result.rows[0];
     })
     .catch((err) => {
       throw new HTTPException(500, { message: err.message });
@@ -587,6 +587,9 @@ transactionRouter.put('/:id', authMiddleware, async (c) => {
     category,
     updatedBy: userId,
     updatedAt: new Date(),
+    account: '',
+    owner: '',
+    createdBy: ''
   };
 
   if (createdAt) {

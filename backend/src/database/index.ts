@@ -1,13 +1,5 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
+import { drizzle } from 'drizzle-orm/neon-http';
 import * as schema from './schema';
+import { neon } from '@neondatabase/serverless';
 
-// for development
-const queryClient = postgres(process.env.DATABASE_URL!, { max: 1, ssl: { rejectUnauthorized: false } });
-export const db = drizzle(queryClient, { schema: schema, logger: false });
-
-// for production
-// import { neon } from '@neondatabase/serverless';
-// import { drizzle } from 'drizzle-orm/neon-http';
-// const sql = neon(process.env.DATABASE_URL!, { max: 1 });
-// export const db = drizzle(sql);
+export const db = drizzle(neon(process.env.DATABASE_URL!), { schema: schema, logger: false });
