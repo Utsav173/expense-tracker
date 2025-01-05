@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, BookOpen, Terminal } from "lucide-react";
 import SyntaxHighlighter from "react-syntax-highlighter";
@@ -12,6 +12,42 @@ const Home = () => {
   } | null>(null);
   const [activeTab, setActiveTab] = useState("docs");
   const [error, setError] = useState<string | null>(null);
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCollection = async () => {
+      try {
+        // Convert GitHub URL to raw URL
+        const rawUrl =
+          "https://raw.githubusercontent.com/Utsav173/expense-tracker/refs/heads/v-bun-feature/backend/expense-backend-api.collection.json";
+
+        const response = await fetch(rawUrl);
+        if (!response.ok) {
+          throw new Error("Failed to fetch collection");
+        }
+
+        const postmanCollection = await response.json();
+        setCollection(postmanCollection);
+        setError(null);
+      } catch (error) {
+        console.error("Error fetching collection:", error);
+        setError("Failed to load the Postman collection.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCollection();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
