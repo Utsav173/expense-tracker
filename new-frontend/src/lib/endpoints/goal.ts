@@ -1,9 +1,14 @@
+import { Pagination, SavingGoal, ApiResponse } from '../types';
 import apiFetch from '../api-client';
 
 export const goalCreate = (body: any, successMessage?: string, errorMessage?: string) =>
   apiFetch('/goal', 'POST', body, undefined, successMessage, errorMessage);
 
-export const goalGetAll = (params: any, successMessage?: string, errorMessage?: string) =>
+export const goalGetAll = (
+  params: any,
+  successMessage?: string,
+  errorMessage?: string,
+): Promise<ApiResponse<{ data: SavingGoal[]; pagination: Pagination }>> => // Added explicit type return here
   apiFetch('/goal/all', 'GET', undefined, { params }, successMessage, errorMessage);
 
 export const goalUpdate = (id: string, body: any, successMessage?: string, errorMessage?: string) =>

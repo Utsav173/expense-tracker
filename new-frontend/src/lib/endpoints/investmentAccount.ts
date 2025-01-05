@@ -1,4 +1,5 @@
 import apiFetch from '../api-client';
+import { InvestmentAccount, Pagination, ApiResponse } from '../types';
 
 export const investmentAccountCreate = (
   body: any,
@@ -10,7 +11,8 @@ export const investmentAccountGetAll = (
   params: any,
   successMessage?: string,
   errorMessage?: string,
-) => apiFetch('/investmentAccount/all', 'GET', undefined, { params }, successMessage, errorMessage);
+): Promise<ApiResponse<{ data: InvestmentAccount[]; pagination: Pagination }>> => //  response type here
+  apiFetch('/investmentAccount/all', 'GET', undefined, { params }, successMessage, errorMessage);
 
 export const investmentAccountUpdate = (
   id: string,
@@ -37,7 +39,7 @@ export const investmentAccountGetById = (
   id: string,
   successMessage?: string,
   errorMessage?: string,
-) =>
+): Promise<ApiResponse<InvestmentAccount>> =>
   apiFetch(`/investmentAccount/${id}`, 'GET', undefined, undefined, successMessage, errorMessage);
 
 export const investmentAccountGetSummary = (

@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { removeAuthToken } from './(auth)/actions';
 import toast from 'react-hot-toast';
+import Loader from '@/components/ui/loader';
 
 function AccountList() {
   const { data, isLoading, error } = useQuery({
@@ -15,7 +16,7 @@ function AccountList() {
   });
 
   if (isLoading) {
-    return <div>Loading accounts..</div>;
+    return <Loader />;
   }
 
   if (error) {

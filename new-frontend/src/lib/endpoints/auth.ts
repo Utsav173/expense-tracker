@@ -1,6 +1,7 @@
-// src/app/lib/endpoints/auth.ts
-
 import apiFetch from '../api-client';
+import { LoginResponse, User, ApiResponse } from '@/lib/types';
+type UserApiResponse = ApiResponse<User>;
+type LoginApiResponse = ApiResponse<LoginResponse>;
 
 export const authSignup = (body: any, successMessage?: string, errorMessage?: string) =>
   apiFetch(
@@ -12,7 +13,11 @@ export const authSignup = (body: any, successMessage?: string, errorMessage?: st
     errorMessage,
   );
 
-export const authLogin = (body: any, successMessage?: string, errorMessage?: string) =>
+export const authLogin = (
+  body: any,
+  successMessage?: string,
+  errorMessage?: string,
+): Promise<LoginApiResponse> =>
   apiFetch('/auth/login', 'POST', body, undefined, successMessage, errorMessage);
 
 export const authForgotPassword = (body: any, successMessage?: string, errorMessage?: string) =>
@@ -21,8 +26,18 @@ export const authForgotPassword = (body: any, successMessage?: string, errorMess
 export const authResetPassword = (body: any, successMessage?: string, errorMessage?: string) =>
   apiFetch('/auth/reset-password', 'POST', body, undefined, successMessage, errorMessage);
 
-export const authGetMe = (successMessage?: string, errorMessage?: string) =>
-  apiFetch('/auth/me', 'GET', undefined, undefined, successMessage, errorMessage);
+export const authGetMe = (
+  successMessage?: string,
+  errorMessage?: string,
+): Promise<UserApiResponse> =>
+  apiFetch(
+    '/auth/me',
+    'GET',
+    undefined,
+    undefined,
+    successMessage,
+    errorMessage,
+  ) as Promise<UserApiResponse>;
 
 export const authUpdateUser = (body: any, successMessage?: string, errorMessage?: string) =>
   apiFetch('/auth/update', 'PUT', body, undefined, successMessage, errorMessage);
@@ -33,8 +48,14 @@ export const authUpdateUserPreferences = (
   errorMessage?: string,
 ) => apiFetch('/auth/preferences', 'PUT', body, undefined, successMessage, errorMessage);
 
-export const authGetUserPreferences = (successMessage?: string, errorMessage?: string) =>
+export const authGetUserPreferences = (
+  successMessage?: string,
+  errorMessage?: string,
+): Promise<ApiResponse<{ preferredCurrency: string }>> =>
   apiFetch('/auth/preferences', 'GET', undefined, undefined, successMessage, errorMessage);
 
-export const authLogOut = (successMessage?: string, errorMessage?: string) =>
+export const authLogOut = (
+  successMessage?: string,
+  errorMessage?: string,
+): Promise<ApiResponse<null>> =>
   apiFetch('/auth/logout', 'POST', undefined, undefined, successMessage, errorMessage);

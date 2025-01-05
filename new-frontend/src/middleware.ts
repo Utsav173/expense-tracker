@@ -1,46 +1,28 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { jwtDecode } from 'jwt-decode';
+import { cookies } from 'next/headers';
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
+  const authCookie = (await cookies()).get('token')?.value;
 
-  const isAuth = request.cookies.has('token') && jwtDecode(request.cookies.get('token')?.value!);
-  const isPublicPath = path.startsWith('/auth');
-  // If path is "/"
-  if (path === '/') {
-    if (isAuth) {
-      return NextResponse.redirect(new URL('/dashboard', request.nextUrl));
-    }
-    return NextResponse.next();
-  }
+  // public routes accessible without any  token
+  const publicRoutes = ['/login', '/signup', '/forgot-password', '/reset-password'];
 
-  // If path is auth route
+  const isPublicPath = publicRoutes.includes(path);
+
   if (isPublicPath) {
-    if (isAuth) {
-      return NextResponse.redirect(new URL('/dashboard', request.nextUrl));
-    }
     return NextResponse.next();
   }
 
-  // For all other protected routes
-  if (!isAuth) {
+  // for dashboard route must authorize with  auth cookie
+  if (!authCookie && !publicRoutes.some((route) => path.startsWith(route))) {
     return NextResponse.redirect(new URL('/login', request.nextUrl));
   }
 
   return NextResponse.next();
 }
 
-// See "Matching Paths" below to learn more
 export const config = {
-  matcher: [
-    '/',
-    '/dashboard',
-    '/accounts/:path*',
-    '/transactions/:path*',
-    '/budget/:path*',
-    '/goal/:path*',
-    '/investment/:path*',
-    '/debts/:path*',
-  ],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)'],
 };

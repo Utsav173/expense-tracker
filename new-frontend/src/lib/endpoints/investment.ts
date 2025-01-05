@@ -1,4 +1,5 @@
 import apiFetch from '../api-client';
+import { Investment, ApiResponse } from '../types';
 
 export const investmentCreate = (body: any, successMessage?: string, errorMessage?: string) =>
   apiFetch('/investment', 'POST', body, undefined, successMessage, errorMessage);
@@ -8,7 +9,8 @@ export const investmentGetAll = (
   params: any,
   successMessage?: string,
   errorMessage?: string,
-) => apiFetch(`/investment/${id}`, 'GET', undefined, { params }, successMessage, errorMessage);
+): Promise<ApiResponse<{ data: Investment[]; pagination: any }>> => // adding response here for inference
+  apiFetch(`/investment/${id}`, 'GET', undefined, { params }, successMessage, errorMessage);
 
 export const investmentUpdate = (
   id: string,
@@ -20,7 +22,11 @@ export const investmentUpdate = (
 export const investmentDelete = (id: string, successMessage?: string, errorMessage?: string) =>
   apiFetch(`/investment/${id}`, 'DELETE', undefined, undefined, successMessage, errorMessage);
 
-export const investmentGetDetails = (id: string, successMessage?: string, errorMessage?: string) =>
+export const investmentGetDetails = (
+  id: string,
+  successMessage?: string,
+  errorMessage?: string,
+): Promise<ApiResponse<Investment>> => // explicitly set type
   apiFetch(`/investment/details/${id}`, 'GET', undefined, undefined, successMessage, errorMessage);
 
 export const investmentUpdateDividend = (
