@@ -17,6 +17,11 @@ export const userSchema = z.object({
   resetPasswordToken: z.string().optional(),
 });
 
+export const updateUserSchema = z.object({
+  name: z.string().min(3, 'Name must be at least 3 characters long'),
+  preferredCurrency: z.string().optional(),
+});
+
 export const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8).max(255),
@@ -29,6 +34,7 @@ export const accountSchema = z.object({
     .max(64)
     .transform((value) => value.trim()),
   balance: z.number().min(0),
+  currency: z.string().min(3).max(3, 'Currency must be 3 characters long'),
 });
 
 export const userAccountSchema = z.object({
@@ -39,7 +45,7 @@ export const userAccountSchema = z.object({
 export const transactionSchema = z.object({
   text: z
     .string()
-    .min(1)
+    .min(3, 'text must be at least 3 character long')
     .max(255)
     .transform((value) => value.trim()),
   amount: z.number(),
@@ -47,6 +53,10 @@ export const transactionSchema = z.object({
   transfer: z.string().optional(),
   category: z.string().optional(),
   account: z.string().uuid(),
+  recurring: z.boolean().optional(),
+  recurrenceType: z.enum(['daily', 'weekly', 'monthly', 'yearly']).optional().nullable(),
+  recurrenceEndDate: z.string().optional().nullable(),
+  currency: z.string().optional(),
 });
 
 export const interestSchema = z.object({

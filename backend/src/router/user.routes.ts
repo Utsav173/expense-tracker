@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { sign, verify } from 'hono/jwt';
 import { HTTPException } from 'hono/http-exception';
 import { zValidator } from '@hono/zod-validator';
-import { loginSchema, userSchema } from '../utils/schema.validations';
+import { loginSchema, userSchema, updateUserSchema } from '../utils/schema.validations';
 import { db } from '../database';
 import { Account, Analytics, User } from '../database/schema';
 import { eq } from 'drizzle-orm';
@@ -29,6 +29,7 @@ userRouter.get('/me', authMiddleware, async (c) => {
       profilePic: true,
       lastLoginAt: true,
       createdAt: true,
+      preferredCurrency: true,
     },
   }).catch((err) => {
     throw new HTTPException(500, { message: err.message });
@@ -273,6 +274,66 @@ userRouter.post('/reset-password', async (c) => {
     });
 
   return c.json({ message: 'Password reset successfully!' });
+});
+
+// POST /update-user - Update user details
+userRouter.put('/update', authMiddleware, zValidator('json', updateUserSchema), async (c) => {
+  try {
+    const userId = await c.get('userId' as any);
+    const { name, preferredCurrency } = await c.req.json();
+
+    await db
+      .update(User)
+      .set({
+        name: name,
+        preferredCurrency: preferredCurrency,
+      })
+      .where(eq(User.id, userId));
+
+    return c.json({
+      message: 'User updated successfully',
+    });
+  } catch (error) {
+    throw new HTTPException(500, {
+      message: error instanceof Error ? error.message : 'Something went wrong',
+    });
+  }
+});
+
+// PUT /user/preferences - Update user preferences
+userRouter.put('/preferences', authMiddleware, async (c) => {
+  const userId = await c.get('userId' as any);
+  const { preferredCurrency } = await c.req.json();
+
+  try {
+    await db.update(User).set({ preferredCurrency }).where(eq(User.id, userId));
+
+    return c.json({ message: 'User preferences updated successfully' });
+  } catch (error) {
+    throw new HTTPException(500, {
+      message: error instanceof Error ? error.message : 'Something went wrong',
+    });
+  }
+});
+
+// GET /user/preferences - Get user preferences
+userRouter.get('/preferences', authMiddleware, async (c) => {
+  const userId = await c.get('userId' as any);
+
+  try {
+    const user = await db.query.User.findFirst({
+      where: eq(User.id, userId),
+      columns: {
+        preferredCurrency: true,
+      },
+    });
+
+    return c.json(user || {});
+  } catch (error) {
+    throw new HTTPException(500, {
+      message: error instanceof Error ? error.message : 'Something went wrong',
+    });
+  }
 });
 
 // POST /logout - Log out the currently authenticated user

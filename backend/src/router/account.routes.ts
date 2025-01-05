@@ -508,15 +508,13 @@ accountRouter.post('/import/transaction', authMiddleware, async (c) => {
   );
 
   if (newCategoryNames.length > 0) {
-    await db
-      .insert(Category)
-      .values(
-        newCategoryNames.map((name) => ({
-          name,
-          owner: userId,
-          id: categoryNameToIdMap.get(name),
-        })),
-      );
+    await db.insert(Category).values(
+      newCategoryNames.map((name) => ({
+        name,
+        owner: userId,
+        id: categoryNameToIdMap.get(name),
+      })),
+    );
   }
 
   const totalRecords = jsonData.length;
@@ -869,7 +867,7 @@ accountRouter.get('/list', authMiddleware, async (c) => {
     .from(Account)
     .where(eq(Account.owner, userId))
     .catch((err) => {
-      throw new HTTPException(500, { message: err.message });
+      throw new HTTPException(500, { message: err.message + ' 1' });
     });
   return c.json(accounts);
 });
@@ -878,6 +876,20 @@ accountRouter.get('/list', authMiddleware, async (c) => {
 accountRouter.post('/', authMiddleware, zValidator('json', accountSchema), async (c) => {
   const { name, balance, currency } = await c.req.json();
   const userId = await c.get('userId' as any);
+
+  // check if account with name already exists
+  const account = await db
+    .select({ id: Account.id })
+    .from(Account)
+    .where(eq(Account.name, name))
+    .catch((err) => {
+      throw new HTTPException(500, { message: err.message + ' 1' });
+    });
+
+  if (account.length > 0) {
+    throw new HTTPException(409, { message: 'Account already exists' });
+  }
+
   const accountData = await db
     .insert(Account)
     .values({
@@ -888,7 +900,7 @@ accountRouter.post('/', authMiddleware, zValidator('json', accountSchema), async
     })
     .returning()
     .catch((err) => {
-      throw new HTTPException(500, { message: err.message });
+      throw new HTTPException(500, { message: err.message + ' 1' });
     });
 
   await db.insert(Analytics).values({
@@ -915,12 +927,12 @@ accountRouter.post('/', authMiddleware, zValidator('json', accountSchema), async
       })
       .onConflictDoUpdate({
         set: { name: 'Opening Balance' },
-        target: Category.name,
+        target: [Category.name, Category.owner],
       })
       .returning()
       .then((data) => data[0])
       .catch((err) => {
-        throw new HTTPException(500, { message: err.message });
+        throw new HTTPException(500, { message: err.message + ' 2' });
       });
   }
   await db.insert(Transaction).values({
@@ -933,6 +945,7 @@ accountRouter.post('/', authMiddleware, zValidator('json', accountSchema), async
     createdBy: userId,
     transfer: 'self',
     updatedBy: userId,
+    currency: currency,
   });
   return c.json({
     message: 'Account created successfully',
@@ -984,6 +997,7 @@ accountRouter.get('/:id/statement', authMiddleware, async (c) => {
           isIncome: true,
           transfer: true,
           account: true,
+          currency: true, // Include transaction currency here
         },
         with: {
           category: true,
@@ -1010,6 +1024,7 @@ accountRouter.get('/:id/statement', authMiddleware, async (c) => {
           isIncome: true,
           transfer: true,
           account: true,
+          currency: true, // Include transaction currency here
         },
         with: {
           category: true,
@@ -1088,12 +1103,13 @@ accountRouter.get('/:id/statement', authMiddleware, async (c) => {
         transaction.text,
         transaction.isIncome ? transaction.amount : -transaction.amount,
         transaction.category?.name,
+        transaction.currency, // Include transaction currency in the Excel file
       ]);
 
       const worksheetData = [
         ['Total Income', 'Total Expense', 'Balance', 'Income % Change', 'Expense % Change'],
         [totalIncome, totalExpense, balance, incomePercentageChange, expensePercentageChange],
-        ['Date', 'Text', 'Amount', 'Category'],
+        ['Date', 'Text', 'Amount', 'Category', 'Currency'], // Add "Currency" header
         ...transactionsData,
       ];
 
@@ -1132,6 +1148,7 @@ accountRouter.get('/:id', authMiddleware, async (c) => {
         profilePic: User.profilePic,
       },
       analytics: Analytics,
+      currency: Account.currency,
     })
     .from(Account)
     .leftJoin(Analytics, eq(Analytics.account, Account.id))

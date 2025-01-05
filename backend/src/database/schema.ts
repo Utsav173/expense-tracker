@@ -17,6 +17,7 @@ import {
 export const roleEnum = pgEnum('role', ['user', 'admin']);
 export const DebtType = pgEnum('DebtType', ['given', 'taken']);
 export const InterestType = pgEnum('InterestType', ['simple', 'compound']);
+export const RecurrenceType = pgEnum('recurrence_type', ['daily', 'weekly', 'monthly', 'yearly']);
 
 // <---------------------------------------------- Common Columns ----------------------------------------------->
 const commonFields = {
@@ -42,6 +43,7 @@ export const User = pgTable(
     isActive: boolean('isActive').default(true),
     lastLoginAt: timestamp('lastLoginAt'),
     resetPasswordToken: text('resetPasswordToken'),
+    preferredCurrency: varchar('preferredCurrency', { length: 3 }).default('INR'),
   },
   (table) => [
     uniqueIndex('user_email_idx').on(table.email),
@@ -109,6 +111,11 @@ export const Transaction = pgTable(
     owner: varchar('owner', { length: 64 })
       .notNull()
       .references(() => User.id),
+    // Recurring Transaction Fields
+    recurring: boolean('recurring').default(false),
+    recurrenceType: RecurrenceType('recurrence_type'),
+    recurrenceEndDate: timestamp('recurrence_end_date'),
+    currency: varchar('currency', { length: 3 }).notNull().default('INR'), // Multi-Currency Support
   },
   (table) => [
     index('textIndex').on(table.text),

@@ -43,22 +43,28 @@ export default async function handleAnalytics({
 
   if (analyticsData && latestTransaction) {
     const { balance, expense, income } = analyticsData;
-    const oldValue = income ?? expense ?? 0;
-
-    const parseAmount = parseFloat(amount.toString());
-    const newValue = parseFloat(oldValue?.toString()) + parseAmount;
+    const oldValue = isIncome ? income : expense;
+    const parseAmount = Number(amount);
 
     if (isNaN(parseAmount)) {
       throw new Error('Invalid amount');
     }
 
-    const percentageChange = ((newValue - oldValue) / oldValue) * 100;
+    const newValue = (Number(oldValue) || 0) + parseAmount;
+    const newBalance = (Number(balance) || 0) + (isIncome ? parseAmount : -parseAmount);
+
+    let percentageChange: number;
+    if (oldValue === 0) {
+      percentageChange = 100;
+    } else {
+      percentageChange = ((newValue - (Number(oldValue) || 0)) / (Number(oldValue) || 1)) * 100;
+    }
 
     const updatedAnalytics = {
       updatedBy: user,
       [isIncome ? 'income' : 'expense']: newValue,
-      balance: parseFloat(balance?.toString() ?? '0') + (isIncome ? parseAmount : -parseAmount),
-      [isIncome ? 'previousIncome' : 'previousExpense']: parseAmount,
+      balance: newBalance,
+      [isIncome ? 'previousIncome' : 'previousExpenses']: parseAmount,
       [isIncome ? 'incomePercentageChange' : 'expensePercentageChange']: percentageChange,
     };
 
@@ -75,7 +81,7 @@ export default async function handleAnalytics({
 
     await db
       .update(Account)
-      .set({ balance: updatedAnalytics.balance })
+      .set({ balance: newBalance })
       .where(eq(Account.id, account))
       .then(() => {
         return;

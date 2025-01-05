@@ -96,6 +96,10 @@ transactionRouter.get('/', authMiddleware, async (c) => {
         profilePic: UpdatedBy.profilePic,
       },
       updatedAt: Transaction.updatedAt,
+      recurring: Transaction.recurring,
+      recurrenceType: Transaction.recurrenceType,
+      recurrenceEndDate: Transaction.recurrenceEndDate,
+      currency: Transaction.currency,
     })
     .from(Transaction)
     .leftJoin(Category, eq(Category.id, Transaction.category))
@@ -158,6 +162,10 @@ transactionRouter.get('/:id', authMiddleware, async (c) => {
         profilePic: UpdatedBy.profilePic,
       },
       updatedAt: Transaction.updatedAt,
+      recurring: Transaction.recurring,
+      recurrenceType: Transaction.recurrenceType,
+      recurrenceEndDate: Transaction.recurrenceEndDate,
+      currency: Transaction.currency,
     })
     .from(Transaction)
     .leftJoin(Category, eq(Category.id, Transaction.category))
@@ -210,11 +218,11 @@ transactionRouter.get('/by/:field', authMiddleware, async (c) => {
   }
 
   /* The below code is executing a database query to retrieve transaction data based on
-  certain criteria. It is selecting the label and counting the occurrences of each label within a
-  specified date range and for a specific user. The query groups the results by label and orders
-  them based on the count in either ascending or descending order, depending on the value of the
-  `sortBy` variable. If there is an error during the database query execution, it will throw an
-  HTTPException with a status code of 500 and an error message. */
+    certain criteria. It is selecting the label and counting the occurrences of each label within a
+    specified date range and for a specific user. The query groups the results by label and orders
+    them based on the count in either ascending or descending order, depending on the value of the
+    `sortBy` variable. If there is an error during the database query execution, it will throw an
+    HTTPException with a status code of 500 and an error message. */
   const transactionData = await db
     .execute(
       sql.raw(`
@@ -255,8 +263,8 @@ transactionRouter.get('/by/category/chart', authMiddleware, async (c) => {
   }
 
   /* The below code is a SQL query that retrieves aggregated data on income and expenses
-  for categories associated with a specific user within a given time range. Here is a breakdown
-  of the code: */
+    for categories associated with a specific user within a given time range. Here is a breakdown
+    of the code: */
   const result = await db
     .execute(
       sql`
@@ -291,7 +299,8 @@ transactionRouter.get('/by/category/chart', authMiddleware, async (c) => {
           c.name
       ) AS subquery;
       `,
-    ).then((res) => res.rows)
+    )
+    .then((res) => res.rows)
     .catch((err) => {
       throw new HTTPException(500, { message: err.message });
     });
@@ -316,12 +325,12 @@ transactionRouter.get('/by/income/expense', authMiddleware, async (c) => {
   }
 
   /* The below code is executing a SQL query to retrieve the sum of income and expenses from
-  the "transaction" table based on certain conditions. It uses conditional aggregation with CASE
-  statements to calculate the sum of amounts for income and expenses separately. The query filters
-  transactions based on the "createdAt" field falling between the specified startDate and endDate.
-  Additionally, it includes a condition to filter transactions based on either the account ID or user
-  ID depending on the presence of the accountId variable. The result of the query is then returned as
-  an object with the income and expense values. If an error occurs during the execution of the */
+    the "transaction" table based on certain conditions. It uses conditional aggregation with CASE
+    statements to calculate the sum of amounts for income and expenses separately. The query filters
+    transactions based on the "createdAt" field falling between the specified startDate and endDate.
+    Additionally, it includes a condition to filter transactions based on either the account ID or user
+    ID depending on the presence of the accountId variable. The result of the query is then returned as
+    an object with the income and expense values. If an error occurs during the execution of the */
   const result = await db
     .execute(
       sql.raw(`
@@ -507,14 +516,25 @@ transactionRouter.get('/fakeData/by', async (c) => {
 // POST / - Create a new transaction
 transactionRouter.post('/', zValidator('json', transactionSchema), authMiddleware, async (c) => {
   // get body params
-  const { text, amount, isIncome, transfer, category, account } = await c.req.json();
+  const {
+    text,
+    amount,
+    isIncome,
+    transfer,
+    category,
+    account,
+    recurring,
+    recurrenceType,
+    recurrenceEndDate,
+    currency,
+  } = await c.req.json();
 
   // get userId from token
   const userId = await c.get('userId' as any);
 
   // validate account
   const validAccount = await db
-    .select({ id: Account.id, balance: Account.balance })
+    .select({ id: Account.id, balance: Account.balance, currency: Account.currency })
     .from(Account)
     .where(eq(Account.id, account))
     .catch((err) => {
@@ -554,6 +574,10 @@ transactionRouter.post('/', zValidator('json', transactionSchema), authMiddlewar
       owner: userId,
       createdBy: userId,
       updatedBy: userId,
+      recurring: recurring,
+      recurrenceType: recurring ? recurrenceType : null,
+      recurrenceEndDate: recurring ? new Date(recurrenceEndDate) : null,
+      currency: currency ?? validAccount[0].currency,
     })
     .returning()
     .then(async (data) => {
@@ -573,7 +597,18 @@ transactionRouter.post('/', zValidator('json', transactionSchema), authMiddlewar
 transactionRouter.put('/:id', authMiddleware, async (c) => {
   const { id } = c.req.param();
   // get body params
-  const { text, amount, isIncome, transfer, category, createdAt } = await c.req.json();
+  const {
+    text,
+    amount,
+    isIncome,
+    transfer,
+    category,
+    createdAt,
+    recurring,
+    recurrenceType,
+    recurrenceEndDate,
+    currency,
+  } = await c.req.json();
 
   // get userId from token
   const userId = await c.get('userId' as any);
@@ -589,7 +624,11 @@ transactionRouter.put('/:id', authMiddleware, async (c) => {
     updatedAt: new Date(),
     account: '',
     owner: '',
-    createdBy: ''
+    createdBy: '',
+    recurring: recurring,
+    recurrenceType: recurring ? recurrenceType : null,
+    recurrenceEndDate: recurring ? new Date(recurrenceEndDate) : null,
+    currency: currency,
   };
 
   if (createdAt) {
@@ -655,7 +694,7 @@ transactionRouter.put('/:id', authMiddleware, async (c) => {
   }
 
   /* The below code is using the `await` keyword to handle asynchronous operations within a
-  database transaction. Here's a breakdown of what the code is doing: */
+    database transaction. Here's a breakdown of what the code is doing: */
   await db
     .transaction(async (tx) => {
       if (Object.keys(updateOperation).length > 0) {
@@ -784,6 +823,367 @@ transactionRouter.delete('/:id', authMiddleware, async (c) => {
       message: error instanceof Error ? error.message : 'Something went wrong',
     });
   }
+});
+
+// GET /transactions/recurring - Get a list of all recurring transactions for a user
+transactionRouter.get('/recurring', authMiddleware, async (c) => {
+  const userId = await c.get('userId' as any);
+  const { page = 1, pageSize = 10 } = c.req.query();
+
+  const totalCount = await db
+    .select({ count: count(Transaction.id) })
+    .from(Transaction)
+    .where(and(eq(Transaction.owner, userId), eq(Transaction.recurring, true)))
+    .catch((err) => {
+      throw new HTTPException(500, { message: err.message });
+    });
+
+  const recurringTransactions = await db
+    .select({
+      id: Transaction.id,
+      amount: Transaction.amount,
+      category: {
+        id: Category.id,
+        name: Category.name,
+      },
+      text: Transaction.text,
+      isIncome: Transaction.isIncome,
+      account: Transaction.account,
+      transfer: Transaction.transfer,
+      createdAt: Transaction.createdAt,
+      recurring: Transaction.recurring,
+      recurrenceType: Transaction.recurrenceType,
+      recurrenceEndDate: Transaction.recurrenceEndDate,
+      currency: Transaction.currency,
+    })
+    .from(Transaction)
+    .leftJoin(Category, eq(Category.id, Transaction.category))
+    .where(and(eq(Transaction.owner, userId), eq(Transaction.recurring, true)))
+    .limit(+pageSize)
+    .offset(+pageSize * (+page - 1))
+    .orderBy(desc(Transaction.createdAt))
+    .catch((err) => {
+      throw new HTTPException(500, { message: err.message });
+    });
+
+  return c.json({
+    transactions: recurringTransactions,
+    totalCount: totalCount[0].count,
+    totalPages: Math.ceil(totalCount[0].count / +pageSize),
+    currentPage: +page,
+    pageSize: +pageSize,
+  });
+});
+
+// GET /transactions/recurring/:id - Get details of a specific recurring transaction
+transactionRouter.get('/recurring/:id', authMiddleware, async (c) => {
+  const { id } = c.req.param();
+  const userId = await c.get('userId' as any);
+
+  const recurringTransaction = await db
+    .select({
+      id: Transaction.id,
+      amount: Transaction.amount,
+      category: {
+        id: Category.id,
+        name: Category.name,
+      },
+      text: Transaction.text,
+      isIncome: Transaction.isIncome,
+      account: Transaction.account,
+      transfer: Transaction.transfer,
+      createdAt: Transaction.createdAt,
+      recurring: Transaction.recurring,
+      recurrenceType: Transaction.recurrenceType,
+      recurrenceEndDate: Transaction.recurrenceEndDate,
+      currency: Transaction.currency,
+    })
+    .from(Transaction)
+    .leftJoin(Category, eq(Category.id, Transaction.category))
+    .where(
+      and(eq(Transaction.owner, userId), eq(Transaction.id, id), eq(Transaction.recurring, true)),
+    )
+    .catch((err) => {
+      throw new HTTPException(500, { message: err.message });
+    });
+
+  if (!recurringTransaction) {
+    throw new HTTPException(404, { message: 'Recurring transaction not found' });
+  }
+
+  return c.json({ transaction: recurringTransaction[0] });
+});
+
+// PUT /transactions/recurring/:id - Update a specific recurring transaction
+transactionRouter.put(
+  '/recurring/:id',
+  authMiddleware,
+  zValidator('json', transactionSchema),
+  async (c) => {
+    const { id } = c.req.param();
+    // get body params
+    const {
+      text,
+      amount,
+      isIncome,
+      transfer,
+      category,
+      createdAt,
+      recurring,
+      recurrenceType,
+      recurrenceEndDate,
+      currency,
+    } = await c.req.json();
+
+    // get userId from token
+    const userId = await c.get('userId' as any);
+
+    // prepare transaction data
+    let transactionData: InferInsertModel<typeof Transaction> = {
+      text,
+      amount,
+      isIncome,
+      transfer,
+      category,
+      updatedBy: userId,
+      updatedAt: new Date(),
+      account: '',
+      owner: '',
+      createdBy: '',
+      recurring: recurring,
+      recurrenceType: recurring ? recurrenceType : null,
+      recurrenceEndDate: recurring ? new Date(recurrenceEndDate) : null,
+      currency: currency,
+    };
+
+    if (createdAt) {
+      transactionData['createdAt'] = new Date(createdAt);
+    }
+
+    // validate transaction
+    const validTransaction = await db.query.Transaction.findFirst({
+      where: and(eq(Transaction.id, id), eq(Transaction.recurring, true)),
+    });
+
+    if (!validTransaction) {
+      throw new HTTPException(400, { message: 'Transaction not found' });
+    }
+
+    // validate account balance
+    const validBalance = await db.query.Account.findFirst({
+      where: eq(Account.id, validTransaction.account as string),
+    });
+
+    const amountDifference = transactionData.amount - validTransaction.amount;
+    const typeChanged = validTransaction.isIncome !== transactionData.isIncome;
+    const amountChanged = amountDifference !== 0;
+
+    let typeChange = 0;
+    let amountChange = 0;
+
+    if (typeChanged) {
+      typeChange = transactionData.isIncome ? transactionData.amount : -transactionData.amount;
+    } else if (amountChanged) {
+      amountChange = transactionData.isIncome ? amountDifference : -amountDifference;
+    }
+
+    const totalChange = typeChange + amountChange;
+    const updatedBalance = validBalance?.balance! + totalChange;
+
+    if (totalChange !== 0 && updatedBalance < 0) {
+      throw new HTTPException(400, { message: 'Insufficient balance' });
+    }
+
+    let updateOperation: any = {};
+
+    if (typeChange !== 0) {
+      const typeChangeField = transactionData.isIncome ? 'income' : 'expense';
+      const typeChangeValue = Math.max(Math.abs(typeChange), 0);
+
+      updateOperation = {
+        ...updateOperation,
+        [typeChangeField]: increment(typeChangeField, typeChangeValue),
+        balance: increment('balance', typeChange),
+      };
+    }
+
+    if (amountChange !== 0) {
+      const amountChangeField = transactionData.isIncome ? 'income' : 'expense';
+      const amountChangeValue = Math.max(Math.abs(amountChange), 0);
+
+      updateOperation = {
+        ...updateOperation,
+        [amountChangeField]: increment(amountChangeField, amountChangeValue),
+        balance: increment('balance', amountChange),
+      };
+    }
+
+    await db
+      .transaction(async (tx) => {
+        if (Object.keys(updateOperation).length > 0) {
+          await tx
+            .update(Analytics)
+            .set(updateOperation)
+            .where(eq(Analytics.account, validTransaction.account as string))
+            .catch((err) => {
+              throw new HTTPException(500, { message: err.message });
+            });
+
+          await tx
+            .update(Account)
+            .set({ balance: sql`${Account.balance} + ${totalChange}` })
+            .where(eq(Account.id, validTransaction.account as string))
+            .catch((err) => {
+              throw new HTTPException(500, { message: err.message });
+            });
+        }
+
+        await tx
+          .update(Transaction)
+          .set(transactionData)
+          .where(eq(Transaction.id, id))
+          .catch((err) => {
+            throw new HTTPException(500, { message: err.message });
+          });
+      })
+      .catch((err) => {
+        throw new HTTPException(500, { message: err.message });
+      });
+
+    return c.json({ message: 'Recurring transaction updated successfully' });
+  },
+);
+
+// DELETE /transactions/recurring/:id - Delete a specific recurring transaction
+transactionRouter.delete('/recurring/:id', authMiddleware, async (c) => {
+  const { id } = c.req.param();
+  const userId = await c.get('userId' as any);
+
+  // validate transaction
+  const validTransaction = await db.query.Transaction.findFirst({
+    where: and(eq(Transaction.id, id), eq(Transaction.recurring, true)),
+    columns: {
+      account: true,
+      amount: true,
+      isIncome: true,
+      createdBy: true,
+      owner: true,
+    },
+  });
+
+  // validate transaction exists and belongs to the user
+  if (!validTransaction) {
+    throw new HTTPException(400, { message: 'Transaction not found' });
+  }
+
+  // validate user
+  if (userId !== validTransaction.createdBy || userId !== validTransaction.owner) {
+    throw new HTTPException(400, {
+      message: 'You are not authorized to delete this transaction',
+    });
+  }
+
+  // validate account
+  const accountData = await db.query.Account.findFirst({
+    where: eq(Account.id, validTransaction.account as string),
+    columns: {
+      balance: true,
+    },
+  });
+
+  // validate account analytics
+  const analyticsData = await db.query.Analytics.findFirst({
+    where: eq(Analytics.account, validTransaction.account as string),
+    columns: {
+      income: true,
+      expense: true,
+      balance: true,
+    },
+  });
+
+  const updatedAccountBalance = accountData?.balance! - validTransaction.amount;
+
+  if (validTransaction.isIncome && updatedAccountBalance < 0) {
+    throw new HTTPException(400, { message: 'Insufficient balance' });
+  }
+
+  await db
+    .update(Account)
+    .set({ balance: updatedAccountBalance })
+    .where(eq(Account.id, validTransaction.account as string));
+
+  if (validTransaction.isIncome) {
+    const updatedIncome = analyticsData?.income! - validTransaction.amount;
+    const updatedBalance = analyticsData?.balance! - validTransaction.amount;
+    await db
+      .update(Analytics)
+      .set({ income: updatedIncome, balance: updatedBalance })
+      .where(eq(Analytics.account, validTransaction.account as string));
+  } else {
+    const updatedExpenses = analyticsData?.expense! - validTransaction.amount;
+    const updatedBalance = analyticsData?.balance! + validTransaction.amount;
+    await db
+      .update(Analytics)
+      .set({ expense: updatedExpenses, balance: updatedBalance })
+      .where(eq(Analytics.account, validTransaction.account as string));
+  }
+
+  // delete transaction
+  await db.delete(Transaction).where(eq(Transaction.id, id));
+
+  return c.json({ message: 'Recurring transaction deleted successfully' });
+});
+
+// POST /transactions/recurring/:id/skip - Skip next occurrence of a recurring transaction
+transactionRouter.post('/recurring/:id/skip', authMiddleware, async (c) => {
+  const { id } = c.req.param();
+  const userId = await c.get('userId' as any);
+
+  // validate transaction
+  const validTransaction = await db.query.Transaction.findFirst({
+    where: and(eq(Transaction.id, id), eq(Transaction.recurring, true)),
+    columns: {
+      recurrenceEndDate: true,
+      recurrenceType: true,
+    },
+  });
+
+  // validate transaction exists and belongs to the user
+  if (!validTransaction) {
+    throw new HTTPException(400, { message: 'Transaction not found' });
+  }
+
+  let newRecurrenceEndDate = null;
+
+  if (validTransaction.recurrenceEndDate) {
+    let date = new Date(validTransaction.recurrenceEndDate);
+
+    switch (validTransaction.recurrenceType) {
+      case 'daily':
+        date.setDate(date.getDate() + 1);
+        break;
+      case 'weekly':
+        date.setDate(date.getDate() + 7);
+        break;
+      case 'monthly':
+        date.setMonth(date.getMonth() + 1);
+        break;
+      case 'yearly':
+        date.setFullYear(date.getFullYear() + 1);
+        break;
+      default:
+        break;
+    }
+
+    newRecurrenceEndDate = date;
+  }
+
+  await db
+    .update(Transaction)
+    .set({ recurrenceEndDate: newRecurrenceEndDate })
+    .where(and(eq(Transaction.id, id), eq(Transaction.owner, userId)));
+
+  return c.json({ message: 'Recurring transaction skipped successfully' });
 });
 
 export default transactionRouter;

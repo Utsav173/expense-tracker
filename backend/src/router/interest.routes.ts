@@ -14,6 +14,19 @@ const interestRouter = new Hono();
 // POST /interest - Create an interest
 interestRouter.post('/create', zValidator('json', interestSchema), authMiddleware, async (c) => {
   const { amount, percentage, type, duration, compoundingFrequency } = await c.req.json();
+  const amountValue = Number(amount);
+  const percentageValue = Number(percentage);
+  const compoundingFrequencyValue = Number(compoundingFrequency);
+
+  if (
+    isNaN(amountValue) ||
+    isNaN(percentageValue) ||
+    (type === 'compound' && isNaN(compoundingFrequencyValue))
+  ) {
+    throw new HTTPException(400, {
+      message: 'Invalid amount, percentage, or compounding frequency',
+    });
+  }
 
   const today = new Date();
   let endDate: Date; // Declare endDate as a Date
@@ -56,11 +69,11 @@ interestRouter.post('/create', zValidator('json', interestSchema), authMiddlewar
 
   switch (type) {
     case 'simple':
-      totalAmount = amount * (1 + (percentage / 100) * (days / 365));
-      interest = totalAmount - amount;
+      totalAmount = amountValue * (1 + (percentageValue / 100) * (days / 365));
+      interest = totalAmount - amountValue;
       break;
     case 'compound':
-      let n = compoundingFrequency || 365;
+      let n = compoundingFrequencyValue || 365;
 
       switch (duration) {
         case 'year':
@@ -80,14 +93,14 @@ interestRouter.post('/create', zValidator('json', interestSchema), authMiddlewar
           days = 365;
       }
 
-      totalAmount = amount * Math.pow(1 + percentage / (days * 100), n * days);
-      interest = totalAmount - amount;
+      totalAmount = amountValue * Math.pow(1 + percentageValue / (days * 100), n * days);
+      interest = totalAmount - amountValue;
       break;
     default:
       throw new HTTPException(400, { message: 'Invalid interest type' });
   }
 
-  // Rounding to two decimal places (optional)
+  // Rounding to two decimal places
   totalAmount = +totalAmount.toFixed(2);
   interest = +interest.toFixed(2);
 
@@ -112,27 +125,42 @@ interestRouter.post('/debts', zValidator('json', debtSchema), authMiddleware, as
   const userId = user;
 
   let dueDate = new Date();
+  const amountValue = Number(amount);
+  const premiumAmountValue = Number(premiumAmount);
+  const percentageValue = Number(percentage);
+
+  if (isNaN(amountValue) || isNaN(premiumAmountValue) || isNaN(percentageValue)) {
+    throw new HTTPException(400, {
+      message: 'Invalid amount, premium amount or percentage',
+    });
+  }
 
   if (duration.split(',').length > 1) {
     // by month only
-    const monthsDiff = differenceInMonths(
-      new Date(duration.split(',')[1]),
-      new Date(duration.split(',')[0]),
-    );
-    dueDate.setDate(dueDate.getMonth() + 1 + monthsDiff);
+    const [startDateString, endDateString] = duration.split(',');
+    const startDate = new Date(startDateString);
+    const endDate = new Date(endDateString);
+
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      throw new HTTPException(400, { message: 'Invalid date format' });
+    }
+
+    const monthsDiff = differenceInMonths(endDate, startDate);
+    dueDate = new Date(startDate);
+    dueDate.setMonth(dueDate.getMonth() + monthsDiff);
   } else {
     switch (duration) {
       case 'year':
-        dueDate.setFullYear(dueDate.getFullYear() + 1 * frequency);
+        dueDate.setFullYear(dueDate.getFullYear() + 1 * Number(frequency));
         break;
       case 'month':
-        dueDate.setMonth(dueDate.getMonth() + 2 * frequency);
+        dueDate.setMonth(dueDate.getMonth() + 1 * Number(frequency));
         break;
       case 'week':
-        dueDate.setDate(dueDate.getDate() + 7 * frequency);
+        dueDate.setDate(dueDate.getDate() + 7 * Number(frequency));
         break;
       case 'day':
-        dueDate.setDate(dueDate.getDate() + 1 * frequency);
+        dueDate.setDate(dueDate.getDate() + Number(frequency));
         break;
       default:
         break;
@@ -248,6 +276,19 @@ interestRouter.delete('/debts/:id', authMiddleware, async (c) => {
   await db.delete(Debts).where(and(eq(Debts.id, id), eq(Debts.createdBy, userId)));
 
   return c.json({ message: 'Debts deleted successfully' });
+});
+
+// PUT /debts/:id/mark-paid - Mark a debt as paid
+interestRouter.put('/debts/:id/mark-paid', authMiddleware, async (c) => {
+  const { id } = c.req.param();
+  const userId = await c.get('userId' as any);
+
+  await db
+    .update(Debts)
+    .set({ isPaid: true })
+    .where(and(eq(Debts.id, id), eq(Debts.createdBy, userId)));
+
+  return c.json({ message: 'Debt marked as paid' });
 });
 
 export default interestRouter;

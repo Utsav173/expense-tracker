@@ -2,14 +2,31 @@
   "info": {
     "_postman_id": "your-postman-id",
     "name": "Expense Manager API",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "A comprehensive collection of requests for the Expense Manager API. Includes endpoints for authentication, category management, accounts, transactions, budgets, goals, investments, and debts."
   },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:1337",
+      "type": "string",
+      "description": "Base URL for the API"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string",
+      "description": "Authentication token"
+    }
+  ],
   "item": [
     {
       "name": "User Auth",
+      "description": "Endpoints for user authentication and user data management",
       "item": [
         {
           "name": "Sign Up",
+          "description": "Register a new user account. Accepts user details such as name, email, and password.",
           "request": {
             "method": "POST",
             "header": [],
@@ -19,30 +36,40 @@
                 {
                   "key": "name",
                   "value": "Test User",
-                  "type": "text"
+                  "type": "text",
+                  "description": "User's full name"
                 },
                 {
                   "key": "email",
                   "value": "test1@example.com",
+                  "description": "User's valid email address",
                   "type": "text"
                 },
                 {
                   "key": "password",
                   "value": "Strongpass@1",
+                  "description": "User's password. Must be at least 8 characters long.",
                   "type": "text"
                 },
                 {
                   "key": "profilePic",
                   "type": "file",
+                  "description": "User's profile picture. Accepts formats such as JPG, JPEG, PNG and GIF",
                   "src": []
                 }
               ]
             },
             "url": {
-              "raw": "http://localhost:1337/auth/signup",
+              "raw": "{{base_url}}/auth/signup",
+              "description": "Endpoint to register a new user account.",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["auth", "signup"]
             }
           },
@@ -50,6 +77,7 @@
         },
         {
           "name": "Log In",
+          "description": "Log in user with email and password. Returns a JWT token.",
           "request": {
             "method": "POST",
             "header": [],
@@ -63,10 +91,16 @@
               }
             },
             "url": {
-              "raw": "http://localhost:1337/auth/login",
+              "raw": "{{base_url}}/auth/login",
+              "description": "Endpoint to log in an existing user.",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["auth", "login"]
             }
           },
@@ -74,6 +108,7 @@
         },
         {
           "name": "Forgot Password",
+          "description": "Request a password reset link via email.",
           "request": {
             "method": "POST",
             "header": [],
@@ -87,10 +122,16 @@
               }
             },
             "url": {
-              "raw": "http://localhost:1337/auth/forgot-password",
+              "raw": "{{base_url}}/auth/forgot-password",
+              "description": "Endpoint to request password reset link for the user.",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["auth", "forgot-password"]
             }
           },
@@ -98,6 +139,7 @@
         },
         {
           "name": "Reset Password",
+          "description": "Reset user password using reset password token.",
           "request": {
             "method": "POST",
             "header": [],
@@ -111,10 +153,16 @@
               }
             },
             "url": {
-              "raw": "http://localhost:1337/auth/reset-password",
+              "raw": "{{base_url}}/auth/reset-password",
+              "description": "Endpoint to reset the user password",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["auth", "reset-password"]
             }
           },
@@ -122,41 +170,159 @@
         },
         {
           "name": "Get Me",
+          "description": "Fetch data of logged in user.",
           "request": {
             "method": "GET",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer Valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "url": {
-              "raw": "http://localhost:1337/auth/me",
+              "raw": "{{base_url}}/auth/me",
+              "description": "Endpoint to fetch data of logged in user",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["auth", "me"]
             }
           },
           "response": []
         },
         {
+          "name": "Update User Preference",
+          "description": "Update user name and prefered currency.",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"test update\",  \"preferredCurrency\":\"EUR\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/update",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
+              "protocol": "http",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "update"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User Preference only Currency",
+          "description": "Update user's preferred currency.",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"preferredCurrency\":\"INR\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/preferences",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
+              "protocol": "http",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "preferences"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Preference",
+          "description": "Fetch user's currency preference",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/preferences",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
+              "protocol": "http",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "preferences"]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Log out",
+          "description": "Log out the current logged in user",
           "request": {
             "method": "POST",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "url": {
-              "raw": "http://localhost:1337/auth/logout",
+              "raw": "{{base_url}}/auth/logout",
+              "description": "Endpoint to log out an user by invalidating the token.",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["auth", "logout"]
             }
           },
@@ -166,16 +332,19 @@
     },
     {
       "name": "Category",
+      "description": "Endpoints to manage transaction categories.",
       "item": [
         {
           "name": "Create Category",
+          "description": "Create a new transaction category",
           "request": {
             "method": "POST",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer Valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "body": {
@@ -188,10 +357,16 @@
               }
             },
             "url": {
-              "raw": "http://localhost:1337/category",
+              "raw": "{{base_url}}/category",
+              "description": "Endpoint to create a new transaction category.",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["category"]
             }
           },
@@ -199,13 +374,15 @@
         },
         {
           "name": "Update Category",
+          "description": "Update an existing transaction category",
           "request": {
             "method": "PUT",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "body": {
@@ -218,10 +395,16 @@
               }
             },
             "url": {
-              "raw": "http://localhost:1337/category/valid-uuid-of-category",
+              "raw": "{{base_url}}/category/valid-uuid-of-category",
+              "description": "Endpoint to update an existing transaction category.",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["category", "valid-uuid-of-category"]
             }
           },
@@ -229,20 +412,28 @@
         },
         {
           "name": "Get All Category (pagination included)",
+          "description": "Fetch a list of all transaction categories with pagination, search, and sort.",
           "request": {
             "method": "GET",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "url": {
-              "raw": "http://localhost:1337/category?page=1&limit=5&search=test&sortBy=createdAt&sortOrder=asc",
+              "raw": "{{base_url}}/category?page=1&limit=5&search=test&sortBy=createdAt&sortOrder=asc",
+              "description": "Endpoint to fetch all transaction categories",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["category"],
               "query": [
                 {
@@ -277,20 +468,28 @@
         },
         {
           "name": "Delete Category",
+          "description": "Delete a transaction category using it's Id",
           "request": {
             "method": "DELETE",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "url": {
-              "raw": "http://localhost:1337/category/valid-uuid-of-category",
+              "raw": "{{base_url}}/category/valid-uuid-of-category",
+              "description": "Endpoint to delete an existing transaction category.",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["category", "valid-uuid-of-category"]
             }
           },
@@ -300,16 +499,19 @@
     },
     {
       "name": "Accounts",
+      "description": "Endpoints to manage user accounts.",
       "item": [
         {
           "name": "Create Account",
+          "description": "Create a new financial account for the user.",
           "request": {
             "method": "POST",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "body": {
@@ -322,10 +524,16 @@
               }
             },
             "url": {
-              "raw": "http://localhost:1337/accounts",
+              "raw": "{{base_url}}/accounts",
+              "description": "Endpoint to create new financial account",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["accounts"]
             }
           },
@@ -333,20 +541,28 @@
         },
         {
           "name": "Get All Accounts",
+          "description": "Fetch a list of all accounts for the logged in user with pagination and search filters.",
           "request": {
             "method": "GET",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "url": {
-              "raw": "http://localhost:1337/accounts?page=1&limit=5&search=test&sortBy=createdAt&sortOrder=asc",
+              "raw": "{{base_url}}/accounts?page=1&limit=5&search=test&sortBy=createdAt&sortOrder=asc",
+              "description": "Endpoint to fetch list of all account",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["accounts"],
               "query": [
                 {
@@ -381,13 +597,15 @@
         },
         {
           "name": "Update account currency",
+          "description": "Update existing account's currency, name and balance",
           "request": {
             "method": "PUT",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "body": {
@@ -400,10 +618,16 @@
               }
             },
             "url": {
-              "raw": "http://localhost:1337/accounts/valid-uuid-of-account",
+              "raw": "{{base_url}}/accounts/valid-uuid-of-account",
+              "description": "Endpoint to update existing account data",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["accounts", "valid-uuid-of-account"]
             }
           },
@@ -411,20 +635,28 @@
         },
         {
           "name": "Get all account for dropdown (no pagination)",
+          "description": "Fetch all the user accounts for dropdown usage",
           "request": {
             "method": "GET",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "url": {
-              "raw": "http://localhost:1337/accounts/list",
+              "raw": "{{base_url}}/accounts/list",
+              "description": "Endpoint to fetch all account for dropdown selection",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["accounts", "list"]
             }
           },
@@ -434,16 +666,19 @@
     },
     {
       "name": "Transactions",
+      "description": "Endpoints to manage financial transactions",
       "item": [
         {
           "name": "Create Transactions",
+          "description": "Create a new financial transaction. It also support recurring transaction based on recurrenceType, and recurrenceEndDate.",
           "request": {
             "method": "POST",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "body": {
@@ -456,10 +691,16 @@
               }
             },
             "url": {
-              "raw": "http://localhost:1337/transactions",
+              "raw": "{{base_url}}/transactions",
+              "description": "Endpoint to create new transaction",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["transactions"]
             }
           },
@@ -467,20 +708,28 @@
         },
         {
           "name": "Get all Transaction of account  (pagination included)",
+          "description": "Fetch all the transaction for user with filters.",
           "request": {
             "method": "GET",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "url": {
-              "raw": "http://localhost:1337/transactions?accountId=valid-uuid-of-account&duration=thisMonth&page=1&pageSize=10&q=market",
+              "raw": "{{base_url}}/transactions?accountId=valid-uuid-of-account&duration=thisMonth&page=1&pageSize=10&q=market",
+              "description": "Endpoint to get all the transactions for a user with pagination and various filters.",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["transactions"],
               "query": [
                 {
@@ -512,22 +761,195 @@
             }
           },
           "response": []
-        }
-      ]
-    },
-
-    {
-      "name": "Budget Routes",
-      "item": [
+        },
         {
-          "name": "Create budget",
+          "name": "Get all Recurring Transaction for user (pagination)",
+          "description": "Fetch all the recurring transactions for logged in user with pagination",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/transactions/recurring?page=1&pageSize=10",
+              "description": "Endpoint to fetch all the recurring transactions for a user with pagination",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
+              "protocol": "http",
+              "host": ["{{base_url}}"],
+              "path": ["transactions", "recurring"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "string, page number for pagination"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10",
+                  "description": "string, number of record per page."
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get recurring transaction details",
+          "description": "Fetch details of specific recurring transactions with id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/transactions/recurring/valid-uuid-of-transaction",
+              "description": "Endpoint to get detail of specific recurring transaction",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
+              "protocol": "http",
+              "host": ["{{base_url}}"],
+              "path": ["transactions", "recurring", "valid-uuid-of-transaction"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update recurring transaction",
+          "description": "Update the existing recurring transaction.",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"text\":\"Groceries from Market\",\n     \"amount\":100,\n     \"isIncome\":false,\n  \"transfer\":\"Self\",\n \"category\":\"valid-uuid-of-category\",\n  \"recurring\":true,\n \"recurrenceType\":\"monthly\",\n    \"recurrenceEndDate\":\"2025-05-30T23:59:59.000Z\",\n   \"account\":\"valid-uuid-of-account\",\n \"currency\":\"USD\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/transactions/recurring/valid-uuid-of-transaction",
+              "description": "Endpoint to update an existing recurring transaction",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
+              "protocol": "http",
+              "host": ["{{base_url}}"],
+              "path": ["transactions", "recurring", "valid-uuid-of-transaction"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Recurring Transaction",
+          "description": "Delete an existing recurring transaction.",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/transactions/recurring/valid-uuid-of-transaction",
+              "description": "Endpoint to delete recurring transaction.",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
+              "protocol": "http",
+              "host": ["{{base_url}}"],
+              "path": ["transactions", "recurring", "valid-uuid-of-transaction"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Skip recurring transaction",
+          "description": "Skip next occurance of recurring transaction by updating `recurrenceEndDate`",
           "request": {
             "method": "POST",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/transactions/recurring/valid-uuid-of-transaction/skip",
+              "description": "Endpoint to Skip next occurance of a recurring transaction",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
+              "protocol": "http",
+              "host": ["{{base_url}}"],
+              "path": [
+                "transactions",
+                "recurring",
+                "valid-uuid-of-transaction",
+                "skip"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Budget Routes",
+      "description": "Endpoints to manage user's financial budgets",
+      "item": [
+        {
+          "name": "Create budget",
+          "description": "Create new budget for particular month, year, and category for a user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "body": {
@@ -540,10 +962,16 @@
               }
             },
             "url": {
-              "raw": "http://localhost:1337/budget",
+              "raw": "{{base_url}}/budget",
+              "description": "Endpoint to create a new user budget",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["budget"]
             }
           },
@@ -551,20 +979,28 @@
         },
         {
           "name": "Get All budget by userId (pagination included)",
+          "description": "Fetch list of all user's budgets with pagination support",
           "request": {
             "method": "GET",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "url": {
-              "raw": "http://localhost:1337/budget/all?page=1&limit=10",
+              "raw": "{{base_url}}/budget/all?page=1&limit=10",
+              "description": "Endpoint to fetch all user's budget.",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["budget", "all"],
               "query": [
                 {
@@ -589,8 +1025,9 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "body": {
@@ -603,10 +1040,16 @@
               }
             },
             "url": {
-              "raw": "http://localhost:1337/budget/valid-uuid-of-budget",
+              "raw": "{{base_url}}/budget/valid-uuid-of-budget",
+              "description": "Endpoint to update existing budget record by id.",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["budget", "valid-uuid-of-budget"]
             }
           },
@@ -614,21 +1057,99 @@
         },
         {
           "name": "Delete Budget",
+          "description": "Delete an existing budget record with specific id.",
           "request": {
             "method": "DELETE",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "url": {
-              "raw": "http://localhost:1337/budget/valid-uuid-of-budget",
+              "raw": "{{base_url}}/budget/valid-uuid-of-budget",
+              "description": "Endpoint to delete budget record using the id.",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["budget", "valid-uuid-of-budget"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get budget summary for month and year",
+          "description": "Get a summary of budgets and actual spending for a given month and year",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/budget/summary?month=7&year=2024",
+              "description": "Endpoint to get budget summary for specified month and year.",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
+              "protocol": "http",
+              "host": ["{{base_url}}"],
+              "path": ["budget", "summary"],
+              "query": [
+                {
+                  "key": "month",
+                  "value": "7",
+                  "description": "integer, Month of year"
+                },
+                {
+                  "key": "year",
+                  "value": "2024",
+                  "description": "integer, year number"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get progress of specific budget",
+          "description": "Get the progress of specific budget for an user",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/budget/valid-uuid-of-budget/progress",
+              "description": "Endpoint to get the progress of a specific budget.",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
+              "protocol": "http",
+              "host": ["{{base_url}}"],
+              "path": ["budget", "valid-uuid-of-budget", "progress"]
             }
           },
           "response": []
@@ -637,16 +1158,19 @@
     },
     {
       "name": "Goal Routes",
+      "description": "Endpoints to manage user's saving goals.",
       "item": [
         {
           "name": "Create New Goals",
+          "description": "Create a new saving goal for a user.",
           "request": {
             "method": "POST",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "body": {
@@ -659,10 +1183,16 @@
               }
             },
             "url": {
-              "raw": "http://localhost:1337/goal",
+              "raw": "{{base_url}}/goal",
+              "description": "Endpoint to create new saving goals.",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["goal"]
             }
           },
@@ -670,20 +1200,28 @@
         },
         {
           "name": "Get All goal for user",
+          "description": "Get all the saved goals for a user",
           "request": {
             "method": "GET",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "url": {
-              "raw": "http://localhost:1337/goal/all?page=1&limit=10",
+              "raw": "{{base_url}}/goal/all?page=1&limit=10",
+              "description": "Endpoint to get all the saved goals for an user",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["goal", "all"],
               "query": [
                 {
@@ -703,18 +1241,20 @@
         },
         {
           "name": "Update existing goal",
+          "description": "Update existing goal details.",
           "request": {
             "method": "PUT",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"targetAmount\":20000,  \"targetDate\":\"2025-12-30T23:59:59.000Z\"}",
+              "raw": "{\"targetAmount\":20000,  \"targetDate\":\"2025-12-30T23:59:59.000Z\", \"savedAmount\": 1000}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -722,31 +1262,120 @@
               }
             },
             "url": {
-              "raw": "http://localhost:1337/goal/valid-uuid-of-goal",
+              "raw": "{{base_url}}/goal/valid-uuid-of-goal",
+              "description": "Endpoint to update an existing goal",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["goal", "valid-uuid-of-goal"]
             }
           },
           "response": []
         },
         {
+          "name": "Add amount in the saving goals",
+          "description": "Add amount to existing saving goals.",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"amount\": 1000 }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/goal/valid-uuid-of-goal/add-amount",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
+              "protocol": "http",
+              "host": ["{{base_url}}"],
+              "path": ["goal", "valid-uuid-of-goal", "add-amount"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Withdraw Amount from saving goals",
+          "description": "Withdraw the specified amount from existing saving goals.",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"amount\": 1000 }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/goal/valid-uuid-of-goal/withdraw-amount",
+              "description": "Endpoint to withdraw amount from specific goal",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
+              "protocol": "http",
+              "host": ["{{base_url}}"],
+              "path": ["goal", "valid-uuid-of-goal", "withdraw-amount"]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Delete Goal",
+          "description": "Delete a particular goal using it's Id",
           "request": {
             "method": "DELETE",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "url": {
-              "raw": "http://localhost:1337/goal/valid-uuid-of-goal",
+              "raw": "{{base_url}}/goal/valid-uuid-of-goal",
+              "description": "Endpoint to delete specific goal by it's Id.",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["goal", "valid-uuid-of-goal"]
             }
           },
@@ -756,16 +1385,19 @@
     },
     {
       "name": "Investment Account Routes",
+      "description": "Endpoints to manage investment accounts.",
       "item": [
         {
           "name": "Create Investment Account",
+          "description": "Create a new investment account for user",
           "request": {
             "method": "POST",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "body": {
@@ -778,10 +1410,16 @@
               }
             },
             "url": {
-              "raw": "http://localhost:1337/investmentAccount",
+              "raw": "{{base_url}}/investmentAccount",
+              "description": "Endpoint to create new investment account",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["investmentAccount"]
             }
           },
@@ -789,20 +1427,28 @@
         },
         {
           "name": "Get All Investment Account(pagination included)",
+          "description": "Fetch list of all investment accounts for the user",
           "request": {
             "method": "GET",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "url": {
-              "raw": "http://localhost:1337/investmentAccount/all?page=1&limit=5",
+              "raw": "{{base_url}}/investmentAccount/all?page=1&limit=5",
+              "description": "Endpoint to fetch list of investment accounts with pagination",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["investmentAccount", "all"],
               "query": [
                 {
@@ -822,13 +1468,15 @@
         },
         {
           "name": "Update investment account by id",
+          "description": "Update existing investment account details",
           "request": {
             "method": "PUT",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "body": {
@@ -841,10 +1489,16 @@
               }
             },
             "url": {
-              "raw": "http://localhost:1337/investmentAccount/valid-uuid-of-investmentaccount",
+              "raw": "{{base_url}}/investmentAccount/valid-uuid-of-investmentaccount",
+              "description": "Endpoint to update existing investment account details",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["investmentAccount", "valid-uuid-of-investmentaccount"]
             }
           },
@@ -852,21 +1506,91 @@
         },
         {
           "name": "Delete existing Investment Account by Id",
+          "description": "Delete existing investment account by it's Id",
           "request": {
             "method": "DELETE",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "url": {
-              "raw": "http://localhost:1337/investmentAccount/valid-uuid-of-investmentaccount",
+              "raw": "{{base_url}}/investmentAccount/valid-uuid-of-investmentaccount",
+              "description": "Endpoint to delete existing investment account using Id",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["investmentAccount", "valid-uuid-of-investmentaccount"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Investment Account Details",
+          "description": "Get all the details for an investment account",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/investmentAccount/valid-uuid-of-investmentaccount",
+              "description": "Endpoint to fetch details of specific investment account",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
+              "protocol": "http",
+              "host": ["{{base_url}}"],
+              "path": ["investmentAccount", "valid-uuid-of-investmentaccount"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get investment account Summary",
+          "description": "Fetch summary of an investment account by it's Id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/investmentAccount/valid-uuid-of-investmentaccount/summary",
+              "description": "Endpoint to get the summary of investment account",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
+              "protocol": "http",
+              "host": ["{{base_url}}"],
+              "path": [
+                "investmentAccount",
+                "valid-uuid-of-investmentaccount",
+                "summary"
+              ]
             }
           },
           "response": []
@@ -875,16 +1599,19 @@
     },
     {
       "name": "Investment Routes",
+      "description": "Endpoints to manage user investments",
       "item": [
         {
           "name": "Create new Investments",
+          "description": "Create new investments in an investment account",
           "request": {
             "method": "POST",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "body": {
@@ -897,10 +1624,16 @@
               }
             },
             "url": {
-              "raw": "http://localhost:1337/investment",
+              "raw": "{{base_url}}/investment",
+              "description": "Endpoint to create new investment",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["investment"]
             }
           },
@@ -908,20 +1641,28 @@
         },
         {
           "name": "Get Investment By account Id (pagination)",
+          "description": "Fetch all the investments for an account",
           "request": {
             "method": "GET",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "url": {
-              "raw": "http://localhost:1337/investment/valid-uuid-of-investmentaccount?page=1&limit=10",
+              "raw": "{{base_url}}/investment/valid-uuid-of-investmentaccount?page=1&limit=10",
+              "description": "Endpoint to fetch all investment for an account id.",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["investment", "valid-uuid-of-investmentaccount"],
               "query": [
                 {
@@ -941,13 +1682,15 @@
         },
         {
           "name": "Update Existing investment by ID",
+          "description": "Update details for existing investments",
           "request": {
             "method": "PUT",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "body": {
@@ -960,32 +1703,246 @@
               }
             },
             "url": {
-              "raw": "http://localhost:1337/investment/valid-uuid-of-investment",
+              "raw": "{{base_url}}/investment/valid-uuid-of-investment",
+              "description": "Endpoint to update existing investment by id",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["investment", "valid-uuid-of-investment"]
             }
           },
           "response": []
         },
         {
+          "name": "Update Investment Dividend",
+          "description": "Update dividend for existing investment by id",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"dividend\": 1000 }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/investment/valid-uuid-of-investment/update-divident",
+              "description": "Endpoint to update the dividend for specific investment.",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
+              "protocol": "http",
+              "host": ["{{base_url}}"],
+              "path": [
+                "investment",
+                "valid-uuid-of-investment",
+                "update-divident"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Delete Investment by id",
+          "description": "Delete an investment record by its ID",
           "request": {
             "method": "DELETE",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer valid-Token-from-Login-route",
-                "type": "text"
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
               }
             ],
             "url": {
-              "raw": "http://localhost:1337/investment/valid-uuid-of-investment",
+              "raw": "{{base_url}}/investment/valid-uuid-of-investment",
+              "description": "Endpoint to delete existing investment.",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "1337",
+              "host": ["{{base_url}}"],
               "path": ["investment", "valid-uuid-of-investment"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get single investment details",
+          "description": "Fetch detail of single investment",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/investment/details/valid-uuid-of-investment",
+              "description": "Endpoint to fetch detail of single investment.",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
+              "protocol": "http",
+              "host": ["{{base_url}}"],
+              "path": ["investment", "details", "valid-uuid-of-investment"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get investment portfolio",
+          "description": "Fetch details for investment portfolio",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/investment/portfolio",
+              "description": "Endpoint to fetch investment portfolio.",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
+              "protocol": "http",
+              "host": ["{{base_url}}"],
+              "path": ["investment", "portfolio"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search Stock by Symbol",
+          "description": "Search stock using symbol or name",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/investment/stocks/search?q=TSLA",
+              "description": "Endpoint to search stock by symbol",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
+              "protocol": "http",
+              "host": ["{{base_url}}"],
+              "path": ["investment", "stocks", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "TSLA",
+                  "description": "string, stock symbol or name"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Stock Price by Symbol",
+          "description": "Get latest stock price by it's symbol",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/investment/stocks/price/TSLA",
+              "description": "Endpoint to get the latest price of a specific stock",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
+              "protocol": "http",
+              "host": ["{{base_url}}"],
+              "path": ["investment", "stocks", "price", "TSLA"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Debt Routes",
+      "description": "Endpoints to manage user's debts.",
+      "item": [
+        {
+          "name": "Mark debt as paid",
+          "description": "Mark particular debt as paid.",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text",
+                "description": "Authorization token from login"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/interest/debts/valid-uuid-of-debt/mark-paid",
+              "description": "Endpoint to mark particular debt as paid.",
+              "variable": [
+                {
+                  "key": "base_url",
+                  "value": "{{base_url}}"
+                }
+              ],
+              "protocol": "http",
+              "host": ["{{base_url}}"],
+              "path": ["interest", "debts", "valid-uuid-of-debt", "mark-paid"]
             }
           },
           "response": []
