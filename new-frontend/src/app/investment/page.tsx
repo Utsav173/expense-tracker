@@ -9,11 +9,11 @@ const InvestmentPage = () => {
   const {
     data: investmentAccounts,
     isLoading,
-    error,
+    error
   } = useQuery({
     queryKey: ['investmentAccounts', { page }],
     queryFn: () => investmentAccountGetAll({ page, limit: 10 }),
-    retry: false,
+    retry: false
   });
   const handlePageChange = (page: number) => {
     setPage(page);
@@ -48,7 +48,7 @@ const InvestmentPage = () => {
                 >
                   {page}
                 </button>
-              ),
+              )
             )}
         </div>
       </div>

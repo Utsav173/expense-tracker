@@ -2,7 +2,7 @@
 
 import { authGetMe, authLogin, authLogOut } from '@/lib/endpoints/auth';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { storeAuthToken, storeUser, removeAuthToken } from '@/app/(auth)/actions';
+import { storeAuthToken, storeUser, removeAuthToken } from '@/app/auth/actions';
 import { getAuthTokenClient } from '@/lib/auth';
 import { LoginResponse, User, ApiResponse } from '@/lib/types';
 
@@ -16,12 +16,12 @@ export const useAuth = () => {
   const {
     data: user,
     isLoading: userIsLoading,
-    isError: userIsError,
+    isError: userIsError
   } = useQuery<UserApiResponse>({
     queryKey: ['user'],
     queryFn: () => authGetMe() as Promise<User | null>,
     enabled: !!token,
-    retry: false,
+    retry: false
   });
 
   const loginMutation = useMutation<User, Error, { email: string; password: string }>({
@@ -37,7 +37,7 @@ export const useAuth = () => {
       } else {
         throw new Error('Failed to login');
       }
-    },
+    }
   });
 
   const { mutate: login, isLoading: loginLoading, isError: loginIsError } = loginMutation as any;
@@ -49,13 +49,13 @@ export const useAuth = () => {
       await removeAuthToken();
       queryClient.removeQueries({ queryKey: ['user'] });
       return response;
-    },
+    }
   });
 
   const {
     mutate: logout,
     isLoading: logoutLoading,
-    isError: logoutIsError,
+    isError: logoutIsError
   } = logoutMutation as any;
 
   const loginAction = async (email: string, password: string) => {
@@ -75,6 +75,6 @@ export const useAuth = () => {
     logoutIsError,
     logoutLoading,
     userIsLoading,
-    userIsError,
+    userIsError
   };
 };

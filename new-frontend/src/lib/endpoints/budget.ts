@@ -8,7 +8,7 @@ export const budgetGetAll = (
   id: string,
   params: any,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ): Promise<ApiResponse<{ data: Budget[]; pagination: Pagination }>> =>
   apiFetch(`/budget/${id}/all`, 'GET', undefined, { params }, successMessage, errorMessage);
 
@@ -16,7 +16,7 @@ export const budgetUpdate = (
   id: string,
   body: any,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ) => apiFetch(`/budget/${id}`, 'PUT', body, undefined, successMessage, errorMessage);
 
 export const budgetDelete = (id: string, successMessage?: string, errorMessage?: string) =>

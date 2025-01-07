@@ -13,6 +13,7 @@ export interface User {
   resetPasswordToken?: string;
   createdAt: string;
   updatedAt?: string;
+  preferredCurrency: string;
 }
 
 // Analytics Interface

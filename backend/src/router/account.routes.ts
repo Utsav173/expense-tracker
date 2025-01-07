@@ -953,6 +953,103 @@ accountRouter.post('/', authMiddleware, zValidator('json', accountSchema), async
   });
 });
 
+// GET /account/:id - Get an account
+accountRouter.get('/:id', authMiddleware, async (c) => {
+  const { id } = c.req.param();
+
+  const accountData = await db
+    .select({
+      id: Account.id,
+      name: Account.name,
+      balance: Account.balance,
+      createdAt: Account.createdAt,
+      updatedAt: Account.updatedAt,
+      owner: {
+        id: User.id,
+        name: User.name,
+        email: User.email,
+        profilePic: User.profilePic,
+      },
+      analytics: Analytics,
+      currency: Account.currency,
+    })
+    .from(Account)
+    .leftJoin(Analytics, eq(Analytics.account, Account.id))
+    .leftJoin(User, eq(User.id, Account.owner))
+    .where(eq(Account.id, id))
+    .catch((err) => {
+      throw new HTTPException(400, { message: err.message });
+    });
+  return c.json(accountData);
+});
+
+// PUT /account/:id - Update an account
+accountRouter.put('/:id', authMiddleware, async (c) => {
+  const { name, balance, currency } = await c.req.json();
+
+  await db
+    .transaction(async (tx) => {
+      await tx
+        .update(Account)
+        .set({ name, balance, currency })
+        .where(eq(Account.id, c.req.param('id')))
+        .returning()
+        .catch((err) => {
+          throw new HTTPException(400, { message: err.message });
+        });
+
+      await tx
+        .update(Analytics)
+        .set({ balance })
+        .where(eq(Analytics.account, c.req.param('id')));
+    })
+    .catch((err) => {
+      throw new HTTPException(500, { message: err.message });
+    });
+  return c.json({
+    message: 'Account updated successfully',
+  });
+});
+
+// DELETE /account/:id - Delete an account
+accountRouter.delete('/:id', authMiddleware, async (c) => {
+  const userId = await c.get('userId' as any);
+
+  const validUser = await db.query.Account.findFirst({
+    where: and(eq(Account.owner, userId), eq(Account.id, c.req.param('id'))),
+  });
+
+  if (!validUser) {
+    throw new HTTPException(401, { message: 'Unauthorized' });
+  }
+
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(Transaction)
+      .where(eq(Transaction.account, c.req.param('id')))
+      .catch((err) => {
+        throw new HTTPException(400, { message: err.message });
+      });
+
+    await tx
+      .delete(Analytics)
+      .where(eq(Analytics.account, c.req.param('id')))
+      .catch((err) => {
+        throw new HTTPException(400, { message: err.message });
+      });
+
+    await tx
+      .delete(Account)
+      .where(eq(Account.id, c.req.param('id')))
+      .catch((err) => {
+        throw new HTTPException(400, { message: err.message });
+      });
+  });
+  return c.json({
+    message: 'Account deleted successfully',
+  });
+});
+
 // GET /:id/statement - Generate an account statement PDF
 accountRouter.get('/:id/statement', authMiddleware, async (c) => {
   try {
@@ -1128,106 +1225,6 @@ accountRouter.get('/:id/statement', authMiddleware, async (c) => {
   } catch (error) {
     console.log(error);
   }
-});
-
-// GET /account/:id - Get an account
-accountRouter.get('/:id', authMiddleware, async (c) => {
-  const { id } = c.req.param();
-
-  const accountData = await db
-    .select({
-      id: Account.id,
-      name: Account.name,
-      balance: Account.balance,
-      createdAt: Account.createdAt,
-      updatedAt: Account.updatedAt,
-      owner: {
-        id: User.id,
-        name: User.name,
-        email: User.email,
-        profilePic: User.profilePic,
-      },
-      analytics: Analytics,
-      currency: Account.currency,
-    })
-    .from(Account)
-    .leftJoin(Analytics, eq(Analytics.account, Account.id))
-    .leftJoin(User, eq(User.id, Account.owner))
-    .where(eq(Account.id, id))
-    .catch((err) => {
-      throw new HTTPException(400, { message: err.message });
-    });
-  return c.json(accountData);
-});
-
-// PUT /account/:id - Update an account
-accountRouter.put('/:id', authMiddleware, async (c) => {
-  try {
-    const { name, balance, currency } = await c.req.json();
-    await db
-      .transaction(async (tx) => {
-        await tx
-          .update(Account)
-          .set({ name, balance, currency })
-          .where(eq(Account.id, c.req.param('id')))
-          .returning()
-          .catch((err) => {
-            throw new HTTPException(400, { message: err.message });
-          });
-
-        await tx
-          .update(Analytics)
-          .set({ balance })
-          .where(eq(Analytics.account, c.req.param('id')));
-      })
-      .catch((err) => {
-        throw new HTTPException(500, { message: err.message });
-      });
-    return c.json({
-      message: 'Account updated successfully',
-    });
-  } catch (error) {
-    console.log(error);
-  }
-});
-
-// DELETE /account/:id - Delete an account
-accountRouter.delete('/:id', authMiddleware, async (c) => {
-  const userId = await c.get('userId' as any);
-
-  const validUser = await db.query.Account.findFirst({
-    where: and(eq(Account.owner, userId), eq(Account.id, c.req.param('id'))),
-  });
-
-  if (!validUser) {
-    throw new HTTPException(401, { message: 'Unauthorized' });
-  }
-
-  await db.transaction(async (tx) => {
-    await tx
-      .delete(Transaction)
-      .where(eq(Transaction.account, c.req.param('id')))
-      .catch((err) => {
-        throw new HTTPException(400, { message: err.message });
-      });
-
-    await tx
-      .delete(Analytics)
-      .where(eq(Analytics.account, c.req.param('id')))
-      .catch((err) => {
-        throw new HTTPException(400, { message: err.message });
-      });
-
-    await tx
-      .delete(Account)
-      .where(eq(Account.id, c.req.param('id')))
-      .catch((err) => {
-        throw new HTTPException(400, { message: err.message });
-      });
-  });
-  return c.json({
-    message: 'Account deleted successfully',
-  });
 });
 
 export default accountRouter;

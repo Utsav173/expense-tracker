@@ -7,7 +7,12 @@ export async function middleware(request: NextRequest) {
   const authCookie = (await cookies()).get('token')?.value;
 
   // public routes accessible without any  token
-  const publicRoutes = ['/login', '/signup', '/forgot-password', '/reset-password'];
+  const publicRoutes = [
+    '/auth/login',
+    '/auth/signup',
+    '/auth/forgot-password',
+    '/auth/reset-password'
+  ];
 
   const isPublicPath = publicRoutes.includes(path);
 
@@ -17,12 +22,12 @@ export async function middleware(request: NextRequest) {
 
   // for dashboard route must authorize with  auth cookie
   if (!authCookie && !publicRoutes.some((route) => path.startsWith(route))) {
-    return NextResponse.redirect(new URL('/login', request.nextUrl));
+    return NextResponse.redirect(new URL('/auth/login', request.nextUrl));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)'],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)']
 };

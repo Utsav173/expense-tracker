@@ -1,5 +1,5 @@
 import { jwtDecode } from 'jwt-decode';
-import { getAuthToken } from '@/app/(auth)/actions';
+import { getAuthToken } from '@/app/auth/actions';
 
 // Function to decode the auth token
 export function decodeAuthToken(token: string | null | undefined) {
@@ -8,7 +8,6 @@ export function decodeAuthToken(token: string | null | undefined) {
     const decoded = jwtDecode(token);
     return decoded;
   } catch (e) {
-    console.log(e);
     return null;
   }
 }

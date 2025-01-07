@@ -8,7 +8,7 @@ export const investmentGetAll = (
   id: string,
   params: any,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ): Promise<ApiResponse<{ data: Investment[]; pagination: any }>> => // adding response here for inference
   apiFetch(`/investment/${id}`, 'GET', undefined, { params }, successMessage, errorMessage);
 
@@ -16,7 +16,7 @@ export const investmentUpdate = (
   id: string,
   body: any,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ) => apiFetch(`/investment/${id}`, 'PUT', body, undefined, successMessage, errorMessage);
 
 export const investmentDelete = (id: string, successMessage?: string, errorMessage?: string) =>
@@ -25,7 +25,7 @@ export const investmentDelete = (id: string, successMessage?: string, errorMessa
 export const investmentGetDetails = (
   id: string,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ): Promise<ApiResponse<Investment>> => // explicitly set type
   apiFetch(`/investment/details/${id}`, 'GET', undefined, undefined, successMessage, errorMessage);
 
@@ -33,7 +33,7 @@ export const investmentUpdateDividend = (
   id: string,
   body: any,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ) =>
   apiFetch(
     `/investment/${id}/update-divident`,
@@ -41,7 +41,7 @@ export const investmentUpdateDividend = (
     body,
     undefined,
     successMessage,
-    errorMessage,
+    errorMessage
   );
 
 export const investmentGetPortfolio = (successMessage?: string, errorMessage?: string) =>
@@ -50,14 +50,14 @@ export const investmentGetPortfolio = (successMessage?: string, errorMessage?: s
 export const investmentStockSearch = (
   params: any,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ) =>
   apiFetch('/investment/stocks/search', 'GET', undefined, { params }, successMessage, errorMessage);
 
 export const investmentStockPrice = (
   symbol: string,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ) =>
   apiFetch(
     `/investment/stocks/price/${symbol}`,
@@ -65,5 +65,5 @@ export const investmentStockPrice = (
     undefined,
     undefined,
     successMessage,
-    errorMessage,
+    errorMessage
   );

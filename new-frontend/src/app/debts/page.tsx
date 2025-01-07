@@ -11,11 +11,11 @@ const DebtsPage = () => {
   const {
     data: debts,
     isLoading,
-    error,
+    error
   } = useQuery({
     queryKey: ['debts', { duration, page }],
     queryFn: () => apiFetchDebts({ duration, page, pageSize: 10 }),
-    retry: false,
+    retry: false
   });
   const handlePageChange = (page: number) => {
     setPage(page);

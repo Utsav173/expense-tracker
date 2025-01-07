@@ -5,7 +5,7 @@ import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
-  useReactTable,
+  useReactTable
 } from '@tanstack/react-table';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { useEffect, useState } from 'react';
@@ -28,28 +28,28 @@ const TransactionTable = ({ transactions }: TransactionProps) => {
 
   const columns = [
     columnHelper.accessor('text', {
-      header: 'Text',
+      header: 'Text'
     }),
     columnHelper.accessor('amount', {
-      header: 'Amount',
+      header: 'Amount'
     }),
     columnHelper.accessor('category.name', {
-      header: 'Category',
+      header: 'Category'
     }),
     columnHelper.accessor('createdAt', {
       header: 'Date',
-      cell: (info) => new Date(info.getValue()).toLocaleDateString(),
+      cell: (info) => new Date(info.getValue()).toLocaleDateString()
     }),
     columnHelper.accessor('isIncome', {
       header: 'Type',
-      cell: (info) => (info.getValue() ? 'Income' : 'Expense'),
-    }),
+      cell: (info) => (info.getValue() ? 'Income' : 'Expense')
+    })
   ];
 
   const table = useReactTable({
     data,
     columns,
-    getCoreRowModel: getCoreRowModel(),
+    getCoreRowModel: getCoreRowModel()
   });
 
   return (

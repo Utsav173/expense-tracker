@@ -10,11 +10,11 @@ const BudgetPage = () => {
   const {
     data: budgets,
     isLoading,
-    error,
+    error
   } = useQuery({
     queryKey: ['budgets', { userId, page }],
     queryFn: () => budgetGetAll(userId, { page, limit: 10 }),
-    retry: false,
+    retry: false
   });
   const handlePageChange = (page: number) => {
     setPage(page);

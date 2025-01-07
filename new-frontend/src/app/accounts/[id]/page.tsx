@@ -34,21 +34,21 @@ const AccountDetailsPage = ({ params }: { params: { id: string } }) => {
   const {
     data: account,
     isLoading: isAccountLoading,
-    error: accountError,
+    error: accountError
   } = useQuery({
     queryKey: ['account', id],
     queryFn: () => accountGetById(id),
-    retry: false,
+    retry: false
   });
 
   const {
     data: transactions,
     isLoading: isTransactionLoading,
-    error: transactionError,
+    error: transactionError
   } = useQuery({
     queryKey: ['accountTransactions', id],
     queryFn: () => transactionGetAll({ accountId: id, pageSize: 10 }),
-    retry: false,
+    retry: false
   });
   if (isAccountLoading) {
     return <Loader />;

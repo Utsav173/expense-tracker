@@ -8,13 +8,13 @@ export const categoryUpdate = (
   id: string,
   body: any,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ) => apiFetch(`/category/${id}`, 'PUT', body, undefined, successMessage, errorMessage);
 
 export const categoryGetAll = (
   params: any,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ): Promise<ApiResponse<{ categories: Category[]; pagination: any }>> => // added response type
   apiFetch(`/category`, 'GET', undefined, { params }, successMessage, errorMessage);
 

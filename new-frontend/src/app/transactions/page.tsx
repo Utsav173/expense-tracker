@@ -29,12 +29,12 @@ const TransactionsPage = () => {
   const {
     data: transactions,
     isLoading,
-    error,
+    error
   } = useQuery({
     queryKey: ['transactions', { accountId, duration, page, search }],
     queryFn: () => transactionGetAll({ accountId, duration, page, pageSize: 10, q: search }),
     enabled: !!accountId,
-    retry: false,
+    retry: false
   });
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);

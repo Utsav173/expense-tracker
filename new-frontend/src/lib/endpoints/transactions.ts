@@ -11,28 +11,28 @@ export const transactionCreate = (body: any, successMessage?: string, errorMessa
 export const transactionGetAll = (
   params: any,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ): Promise<TransactionsResponse> => // explicitly set generic types to data from axios
   apiFetch(`/transactions`, 'GET', undefined, { params }, successMessage, errorMessage);
 
 export const transactionGetById = (
   id: string,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ): Promise<ApiResponse<Transaction>> => // explicitly type
   apiFetch(`/transactions/${id}`, 'GET', undefined, undefined, successMessage, errorMessage);
 
 export const transactionGetRecurringAll = (
   params: any,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ) =>
   apiFetch('/transactions/recurring', 'GET', undefined, { params }, successMessage, errorMessage);
 
 export const transactionGetRecurringById = (
   id: string,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ) =>
   apiFetch(
     `/transactions/recurring/${id}`,
@@ -40,21 +40,21 @@ export const transactionGetRecurringById = (
     undefined,
     undefined,
     successMessage,
-    errorMessage,
+    errorMessage
   );
 
 export const transactionUpdateRecurring = (
   id: string,
   body: any,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ) =>
   apiFetch(`/transactions/recurring/${id}`, 'PUT', body, undefined, successMessage, errorMessage);
 
 export const transactionDeleteRecurring = (
   id: string,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ) =>
   apiFetch(
     `/transactions/recurring/${id}`,
@@ -62,13 +62,13 @@ export const transactionDeleteRecurring = (
     undefined,
     undefined,
     successMessage,
-    errorMessage,
+    errorMessage
   );
 
 export const transactionSkipRecurring = (
   id: string,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ) =>
   apiFetch(
     `/transactions/recurring/${id}/skip`,
@@ -76,5 +76,5 @@ export const transactionSkipRecurring = (
     undefined,
     undefined,
     successMessage,
-    errorMessage,
+    errorMessage
   );

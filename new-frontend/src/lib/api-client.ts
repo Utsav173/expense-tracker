@@ -6,8 +6,8 @@ const API_BASE_URL = 'http://localhost:1337';
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
-  },
+    'Content-Type': 'application/json'
+  }
 });
 
 api.interceptors.request.use((config) => {
@@ -26,14 +26,14 @@ const apiFetch = async <T>(
   body?: any,
   config?: AxiosRequestConfig,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ): Promise<T> => {
   try {
     const response: ApiResponse<T> = await api.request({
       url,
       method,
       data: body,
-      ...config,
+      ...config
     });
 
     if (successMessage) {

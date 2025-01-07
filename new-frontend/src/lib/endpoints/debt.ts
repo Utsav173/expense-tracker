@@ -15,7 +15,7 @@ export const debtsMarkAsPaid = (id: string, successMessage?: string, errorMessag
     undefined,
     undefined,
     successMessage,
-    errorMessage,
+    errorMessage
   );
 
 export const apiFetchDebts = async (params: any): Promise<DebtResponse> => {

@@ -11,7 +11,7 @@ export async function storeAuthToken(token: string) {
     httpOnly: true,
     secure: true,
     sameSite: 'strict',
-    maxAge: 60 * 60 * 24 * 30, // 30 days
+    maxAge: 60 * 60 * 24 * 30 // 30 days
   });
 }
 
@@ -21,7 +21,7 @@ export async function storeUser(user: any) {
     httpOnly: true,
     secure: true,
     sameSite: 'strict',
-    maxAge: 60 * 60 * 24 * 30, // 30 days
+    maxAge: 60 * 60 * 24 * 30 // 30 days
   });
 }
 
@@ -43,7 +43,7 @@ export async function removeAuthToken() {
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters long'),
+  password: z.string().min(8, 'Password must be at least 8 characters long')
 });
 
 export async function userLogin(state: any, formData: FormData) {
@@ -53,7 +53,7 @@ export async function userLogin(state: any, formData: FormData) {
   if (!email || !password) {
     return {
       error: 'Please enter email and password',
-      prevState: state,
+      prevState: state
     };
   }
 
@@ -62,7 +62,7 @@ export async function userLogin(state: any, formData: FormData) {
   if (!result.success) {
     return {
       error: result.error.issues[0].message,
-      prevState: state,
+      prevState: state
     };
   }
 
@@ -70,9 +70,9 @@ export async function userLogin(state: any, formData: FormData) {
     const response = await fetch('http://localhost:1337/auth/login', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password })
     });
 
     if (!response.ok) {
@@ -84,7 +84,7 @@ export async function userLogin(state: any, formData: FormData) {
     if (data.error) {
       return {
         error: data.error,
-        prevState: state,
+        prevState: state
       };
     }
 
@@ -97,12 +97,12 @@ export async function userLogin(state: any, formData: FormData) {
     return {
       error: '',
       prevState: state,
-      data: data,
+      data: data
     };
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : 'Something went wrong',
-      prevState: state,
+      prevState: state
     };
   }
 }

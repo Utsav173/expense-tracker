@@ -54,7 +54,6 @@ categoryRouter.post('/', authMiddleware, zValidator('json', categorySchema), asy
   try {
     const { name } = await c.req.json();
     const userId = await c.get('userId' as any);
-    console.log("🚀 ~ categoryRouter.post ~ userId:", userId)
     const categoryData = await db
       .insert(Category)
       .values({

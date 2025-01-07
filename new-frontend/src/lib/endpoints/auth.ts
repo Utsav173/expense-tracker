@@ -10,13 +10,13 @@ export const authSignup = (body: any, successMessage?: string, errorMessage?: st
     body,
     { headers: { 'Content-Type': 'multipart/form-data' } },
     successMessage,
-    errorMessage,
+    errorMessage
   );
 
 export const authLogin = (
   body: any,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ): Promise<LoginApiResponse> =>
   apiFetch('/auth/login', 'POST', body, undefined, successMessage, errorMessage);
 
@@ -28,7 +28,7 @@ export const authResetPassword = (body: any, successMessage?: string, errorMessa
 
 export const authGetMe = (
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ): Promise<UserApiResponse> =>
   apiFetch(
     '/auth/me',
@@ -36,7 +36,7 @@ export const authGetMe = (
     undefined,
     undefined,
     successMessage,
-    errorMessage,
+    errorMessage
   ) as Promise<UserApiResponse>;
 
 export const authUpdateUser = (body: any, successMessage?: string, errorMessage?: string) =>
@@ -45,17 +45,17 @@ export const authUpdateUser = (body: any, successMessage?: string, errorMessage?
 export const authUpdateUserPreferences = (
   body: any,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ) => apiFetch('/auth/preferences', 'PUT', body, undefined, successMessage, errorMessage);
 
 export const authGetUserPreferences = (
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ): Promise<ApiResponse<{ preferredCurrency: string }>> =>
   apiFetch('/auth/preferences', 'GET', undefined, undefined, successMessage, errorMessage);
 
 export const authLogOut = (
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ): Promise<ApiResponse<null>> =>
   apiFetch('/auth/logout', 'POST', undefined, undefined, successMessage, errorMessage);

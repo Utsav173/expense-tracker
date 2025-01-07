@@ -7,7 +7,7 @@ export const goalCreate = (body: any, successMessage?: string, errorMessage?: st
 export const goalGetAll = (
   params: any,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ): Promise<ApiResponse<{ data: SavingGoal[]; pagination: Pagination }>> => // Added explicit type return here
   apiFetch('/goal/all', 'GET', undefined, { params }, successMessage, errorMessage);
 
@@ -21,12 +21,12 @@ export const goalAddAmount = (
   id: string,
   body: any,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ) => apiFetch(`/goal/${id}/add-amount`, 'PUT', body, undefined, successMessage, errorMessage);
 
 export const goalWithdrawAmount = (
   id: string,
   body: any,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ) => apiFetch(`/goal/${id}/withdraw-amount`, 'PUT', body, undefined, successMessage, errorMessage);

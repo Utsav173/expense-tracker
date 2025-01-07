@@ -4,13 +4,13 @@ import { InvestmentAccount, Pagination, ApiResponse } from '../types';
 export const investmentAccountCreate = (
   body: any,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ) => apiFetch('/investmentAccount', 'POST', body, undefined, successMessage, errorMessage);
 
 export const investmentAccountGetAll = (
   params: any,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ): Promise<ApiResponse<{ data: InvestmentAccount[]; pagination: Pagination }>> => //  response type here
   apiFetch('/investmentAccount/all', 'GET', undefined, { params }, successMessage, errorMessage);
 
@@ -18,13 +18,13 @@ export const investmentAccountUpdate = (
   id: string,
   body: any,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ) => apiFetch(`/investmentAccount/${id}`, 'PUT', body, undefined, successMessage, errorMessage);
 
 export const investmentAccountDelete = (
   id: string,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ) =>
   apiFetch(
     `/investmentAccount/${id}`,
@@ -32,20 +32,20 @@ export const investmentAccountDelete = (
     undefined,
     undefined,
     successMessage,
-    errorMessage,
+    errorMessage
   );
 
 export const investmentAccountGetById = (
   id: string,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ): Promise<ApiResponse<InvestmentAccount>> =>
   apiFetch(`/investmentAccount/${id}`, 'GET', undefined, undefined, successMessage, errorMessage);
 
 export const investmentAccountGetSummary = (
   id: string,
   successMessage?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ) =>
   apiFetch(
     `/investmentAccount/${id}/summary`,
@@ -53,5 +53,5 @@ export const investmentAccountGetSummary = (
     undefined,
     undefined,
     successMessage,
-    errorMessage,
+    errorMessage
   );

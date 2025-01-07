@@ -10,11 +10,11 @@ const GoalPage = () => {
   const {
     data: goals,
     isLoading,
-    error,
+    error
   } = useQuery({
     queryKey: ['goals', { page }],
     queryFn: () => goalGetAll({ page, limit: 10 }),
-    retry: false,
+    retry: false
   });
 
   const handlePageChange = (page: number) => {
