@@ -1,5 +1,5 @@
 import apiFetch from '../api-client';
-import { Account, ApiResponse } from '../types';
+import { Account, AccountDropdown, ApiResponse, DashboardData } from '../types';
 
 export const accountCreate = (body: any, successMessage?: string, errorMessage?: string) =>
   apiFetch('/accounts', 'POST', body, undefined, successMessage, errorMessage);
@@ -21,11 +21,8 @@ export const accountUpdate = (
 export const accountDelete = (id: string, successMessage?: string, errorMessage?: string) =>
   apiFetch(`/accounts/${id}`, 'DELETE', undefined, undefined, successMessage, errorMessage);
 
-export const accountGetDropdown = (
-  successMessage?: string,
-  errorMessage?: string
-): Promise<ApiResponse<Account[]>> => // explicitly type here
-  apiFetch('/accounts/list', 'GET', undefined, undefined, successMessage, errorMessage);
+export const accountGetDropdown = (): Promise<ApiResponse<AccountDropdown[]>> =>
+  apiFetch('/accounts/list', 'GET', undefined, undefined, '', 'Failed to get accounts list');
 
 export const accountGetById = (
   id: string,
@@ -41,3 +38,6 @@ export const accountGetStatement = (
   errorMessage?: string
 ) =>
   apiFetch(`/accounts/${id}/statement`, 'GET', undefined, { params }, successMessage, errorMessage);
+
+export const accountGetDashboard = (): Promise<ApiResponse<DashboardData>> => // Use the new type!
+  apiFetch('/accounts/dashboard', 'GET', undefined, undefined, '', 'Failed to get dashboard');

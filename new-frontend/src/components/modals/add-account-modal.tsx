@@ -60,6 +60,7 @@ const AddAccountModal = () => {
       title='Add Account'
       description=' Add an new expense tracker  account.'
       triggerButton={<Button> Create Account</Button>}
+      isOpen={isOpen}
     >
       <form onSubmit={handleSubmit(handleCreate)} className='space-y-6'>
         <div>

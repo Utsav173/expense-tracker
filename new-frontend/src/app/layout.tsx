@@ -1,9 +1,7 @@
 import ReactQueryProvider from '@/components/provider';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import Link from 'next/link';
 import './globals.css';
-import { getUser } from './auth/actions';
 import SidebarLayout from '@/components/sidebar-layout';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -14,8 +12,6 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const user = await getUser();
-
   return (
     <html lang='en'>
       <body suppressHydrationWarning={true} className={inter.className}>

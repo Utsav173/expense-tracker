@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 import { toast } from 'react-hot-toast';
 
 const API_BASE_URL = 'http://localhost:1337';
@@ -18,7 +18,11 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-type ApiResponse<T> = AxiosResponse<T> | any;
+interface ApiResponse<T> {
+  data: T;
+  message?: string;
+  status?: number | string;
+}
 
 const apiFetch = async <T>(
   url: string,
@@ -38,8 +42,8 @@ const apiFetch = async <T>(
 
     if (successMessage) {
       toast.success(successMessage);
-    } else {
-      toast.success('Operation success!');
+    } else if (response?.message) {
+      toast.success(response.message);
     }
 
     return response?.data;

@@ -16,11 +16,19 @@ interface AddModalProps {
   children: ReactNode;
   triggerButton: ReactNode;
   onOpenChange?: (open: boolean) => void;
+  isOpen?: boolean;
 }
 
-const AddModal = ({ title, description, children, triggerButton, onOpenChange }: AddModalProps) => {
+const AddModal = ({
+  title,
+  description,
+  children,
+  triggerButton,
+  onOpenChange,
+  isOpen
+}: AddModalProps) => {
   return (
-    <Dialog onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={isOpen}>
       <DialogTrigger asChild>{triggerButton}</DialogTrigger>
       <DialogContent className='sm:max-w-[425px]'>
         <DialogHeader>

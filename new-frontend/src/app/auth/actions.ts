@@ -11,7 +11,8 @@ export async function storeAuthToken(token: string) {
     httpOnly: true,
     secure: true,
     sameSite: 'strict',
-    maxAge: 60 * 60 * 24 * 30 // 30 days
+    maxAge: 60 * 60 * 24 * 30,
+    path: '/'
   });
 }
 
@@ -21,7 +22,8 @@ export async function storeUser(user: any) {
     httpOnly: true,
     secure: true,
     sameSite: 'strict',
-    maxAge: 60 * 60 * 24 * 30 // 30 days
+    maxAge: 60 * 60 * 24 * 30,
+    path: '/'
   });
 }
 
@@ -94,11 +96,7 @@ export async function userLogin(state: any, formData: FormData) {
     // Store the user data in a server-side cookie
     (await cookies()).set('user', JSON.stringify(data.user));
 
-    return {
-      error: '',
-      prevState: state,
-      data: data
-    };
+    return { error: '', prevState: state, data: data };
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : 'Something went wrong',

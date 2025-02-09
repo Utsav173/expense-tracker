@@ -12,7 +12,7 @@ const BudgetPage = () => {
     isLoading,
     error
   } = useQuery({
-    queryKey: ['budgets', { userId, page }],
+    queryKey: ['budgets', userId, page],
     queryFn: () => budgetGetAll(userId, { page, limit: 10 }),
     retry: false
   });

@@ -7,7 +7,6 @@ import { getAuthTokenClient } from '@/lib/auth';
 import { LoginResponse, User, ApiResponse } from '@/lib/types';
 
 type LoginResponseData = ApiResponse<LoginResponse>;
-type UserApiResponse = ApiResponse<User>;
 
 export const useAuth = () => {
   const token = getAuthTokenClient();
@@ -16,23 +15,26 @@ export const useAuth = () => {
   const {
     data: user,
     isLoading: userIsLoading,
-    isError: userIsError
-  } = useQuery<UserApiResponse>({
+    isError: userIsError,
+    error: userQueryError
+  } = useQuery({
     queryKey: ['user'],
-    queryFn: () => authGetMe() as Promise<User | null>,
+    queryFn: authGetMe,
     enabled: !!token,
-    retry: false
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false
   });
 
   const loginMutation = useMutation<User, Error, { email: string; password: string }>({
     mutationFn: async (param) => {
       const res = (await authLogin(param)) as LoginResponseData;
-
       if (res?.data?.token) {
         localStorage.setItem('token', res.data.token);
-        await storeAuthToken(res.data.token);
-        await storeUser(res.data.user);
-        queryClient.invalidateQueries({ queryKey: ['user'] });
+        await Promise.all([storeAuthToken(res.data.token), storeUser(res.data.user)]);
+        // Instead of invalidating, directly set the query data
+        queryClient.setQueryData(['user'], res.data.user);
         return res.data.user;
       } else {
         throw new Error('Failed to login');
@@ -40,9 +42,14 @@ export const useAuth = () => {
     }
   });
 
-  const { mutate: login, isLoading: loginLoading, isError: loginIsError } = loginMutation as any;
+  const {
+    mutate: login,
+    isLoading: loginLoading,
+    isError: loginIsError,
+    error: loginError
+  } = loginMutation as any;
 
-  const logoutMutation = useMutation({
+  const { mutate: logout } = useMutation({
     mutationFn: async () => {
       const response = await authLogOut();
       localStorage.removeItem('token');
@@ -51,12 +58,6 @@ export const useAuth = () => {
       return response;
     }
   });
-
-  const {
-    mutate: logout,
-    isLoading: logoutLoading,
-    isError: logoutIsError
-  } = logoutMutation as any;
 
   const loginAction = async (email: string, password: string) => {
     await login({ email, password });
@@ -69,12 +70,12 @@ export const useAuth = () => {
   return {
     user,
     login: loginAction,
-    logoutAction,
+    logoutAction: logoutAction,
     loginIsError,
     loginLoading,
-    logoutIsError,
-    logoutLoading,
     userIsLoading,
-    userIsError
+    userIsError,
+    loginError,
+    userQueryError
   };
 };

@@ -1,7 +1,11 @@
 import apiFetch from '../api-client';
 import { ApiResponse, Category } from '../types';
 
-export const categoryCreate = (body: any, successMessage?: string, errorMessage?: string) =>
+export const categoryCreate = (
+  body: any,
+  successMessage?: string,
+  errorMessage?: string
+): Promise<ApiResponse<Category>> =>
   apiFetch('/category', 'POST', body, undefined, successMessage, errorMessage);
 
 export const categoryUpdate = (

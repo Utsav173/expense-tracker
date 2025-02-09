@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { z } from 'zod';
 import { useToast } from '@/lib/hooks/useToast';
 import { Pencil, Trash2 } from 'lucide-react';
+import AddTransactionModal from '@/components/modals/add-transaction-modal'; // Import AddTransactionModal
 
 const accountSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters long').max(64),
@@ -77,12 +78,14 @@ const AccountList = () => {
         <h1 className='text-xl font-bold'>Accounts</h1>
         <div className='flex items-center gap-2'>
           <AddAccountModal />
+
+          <AddTransactionModal />
         </div>
       </div>
 
       <div className='grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3'>
         {data?.accounts?.map((acc) => (
-          <AccountCard href={`/transactions?accountId=${acc.id}`} key={acc.id}>
+          <AccountCard href={`/accounts/${acc.id}`} key={acc.id}>
             <AccountCardContent>
               <div className='flex flex-col space-y-3'>
                 <div className='flex flex-col'>
@@ -143,6 +146,7 @@ const AccountList = () => {
           submit={async (values: AccountFormSchema) => {
             if (selectedItem) {
               await handleEditAccount(selectedItem.id, values);
+
               setOpenEdit(false);
             }
           }}

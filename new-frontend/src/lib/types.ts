@@ -103,6 +103,12 @@ export interface Account {
   currency: string;
 }
 
+export interface AccountDropdown {
+  id: string;
+  name: string;
+  currency: string;
+}
+
 // UserAccount Interface
 export interface UserAccount {
   userId: string;
@@ -177,3 +183,28 @@ export interface LoginResponse {
 }
 
 export type ApiResponse<T> = T | null;
+
+export interface DashboardData {
+  accountsInfo: {
+    id: string;
+    name: string;
+    balance: number;
+    income: number | null; // Make optional, as in initial stage it may contains NULL values.
+    expense: number | null;
+    currency: string; //added explicitly.
+  }[];
+  transactionsCountByAccount: Record<string, number>; // Object with account names as keys, counts as values
+  totalTransaction: number;
+  mostExpensiveExpense: number | null;
+  cheapestExpense: number | null;
+  mostExpensiveIncome: number | null;
+  cheapestIncome: number | null;
+  incomeChartData: { x: number; y: number }[];
+  expenseChartData: { x: number; y: number }[];
+  balanceChartData: { x: number; y: number }[];
+  overallIncome: number;
+  overallExpense: number;
+  overallBalance: number;
+  overallIncomeChange: number;
+  overallExpenseChange: number;
+}

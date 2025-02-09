@@ -1,32 +1,11 @@
-// src/app/accounts/[id]/page.tsx
 'use client';
+
 import { useQuery } from '@tanstack/react-query';
 import { accountGetById } from '@/lib/endpoints/accounts';
 import { useRouter } from 'next/navigation';
 import { transactionGetAll } from '@/lib/endpoints/transactions';
 import TransactionTable from '@/components/transactions-table';
 import Loader from '@/components/ui/loader';
-
-interface Transaction {
-  id: string;
-  text: string;
-  amount: number;
-  isIncome: boolean;
-  transfer: string;
-  category: {
-    id: string;
-    name: string;
-  };
-  account: string;
-  createdAt: string;
-}
-
-interface Account {
-  id: string;
-  name: string;
-  balance: number;
-  currency: string;
-}
 
 const AccountDetailsPage = ({ params }: { params: { id: string } }) => {
   const { id } = params;

@@ -26,17 +26,14 @@ export const authForgotPassword = (body: any, successMessage?: string, errorMess
 export const authResetPassword = (body: any, successMessage?: string, errorMessage?: string) =>
   apiFetch('/auth/reset-password', 'POST', body, undefined, successMessage, errorMessage);
 
-export const authGetMe = (
-  successMessage?: string,
-  errorMessage?: string
-): Promise<UserApiResponse> =>
+export const authGetMe = (): Promise<UserApiResponse> =>
   apiFetch(
     '/auth/me',
     'GET',
     undefined,
     undefined,
-    successMessage,
-    errorMessage
+    undefined,
+    'Failed to get current user'
   ) as Promise<UserApiResponse>;
 
 export const authUpdateUser = (body: any, successMessage?: string, errorMessage?: string) =>
@@ -48,11 +45,19 @@ export const authUpdateUserPreferences = (
   errorMessage?: string
 ) => apiFetch('/auth/preferences', 'PUT', body, undefined, successMessage, errorMessage);
 
-export const authGetUserPreferences = (
-  successMessage?: string,
-  errorMessage?: string
-): Promise<ApiResponse<{ preferredCurrency: string }>> =>
-  apiFetch('/auth/preferences', 'GET', undefined, undefined, successMessage, errorMessage);
+export const authGetUserPreferences = (): Promise<
+  ApiResponse<{
+    preferredCurrency: string | null;
+  }>
+> =>
+  apiFetch(
+    '/auth/preferences',
+    'GET',
+    undefined,
+    undefined,
+    undefined,
+    'Failed to get user preferences'
+  );
 
 export const authLogOut = (
   successMessage?: string,
