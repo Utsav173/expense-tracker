@@ -22,14 +22,17 @@ const transactionRouter = new Hono();
 transactionRouter.get('/', authMiddleware, async (c) => {
   // get query params
   const { accountId, duration, page = 1, pageSize = 10, q } = c.req.query();
-
-  // validate query params
+  let query: SQL<unknown> | undefined;
+  // // validate query params
   if (!accountId) {
-    throw new HTTPException(400, { message: 'Account id is required' });
+    const userId = await c.get('userId' as any);
+
+    query = eq(Transaction.owner, userId);
+  } else {
+    query = eq(Transaction.account, accountId);
   }
 
   // constructed serach condition
-  let query: SQL<unknown> | undefined = eq(Transaction.account, accountId);
 
   // check if duration is provided
   if (duration && duration.trim().length > 0) {

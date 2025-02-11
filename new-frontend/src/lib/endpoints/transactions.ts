@@ -78,3 +78,13 @@ export const transactionSkipRecurring = (
     successMessage,
     errorMessage
   );
+
+export const transactionUpdate = (
+  id: string,
+  body: any,
+  successMessage?: string,
+  errorMessage?: string
+) => apiFetch(`/transactions/${id}`, 'PUT', body, undefined, successMessage, errorMessage);
+
+export const transactionDelete = (id: string, successMessage?: string, errorMessage?: string) =>
+  apiFetch(`/transactions/${id}`, 'DELETE', undefined, undefined, successMessage, errorMessage);

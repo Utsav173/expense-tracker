@@ -89,6 +89,7 @@ export interface Transaction {
   owner: string;
   createdAt: string;
   updatedAt?: string;
+  currency: string;
 }
 
 // Account Interface
