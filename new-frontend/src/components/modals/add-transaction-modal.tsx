@@ -9,7 +9,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { transactionCreate } from '@/lib/endpoints/transactions';
 import AddModal from './add-modal';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { categoryGetAll, categoryCreate } from '@/lib/endpoints/category';
 import { accountGetDropdown } from '@/lib/endpoints/accounts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -20,6 +20,7 @@ import { Label } from '../ui/label';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { COMMON_CURRENCIES, fetchCurrencies } from '@/lib/endpoints/currency';
 import CurrencySelect from '../currency-select';
+import DateTimePicker from '../date-time-picker';
 
 const transactionSchema = z.object({
   text: z.string().min(3, 'Transaction description must be at least 3 characters').max(255),
@@ -27,6 +28,7 @@ const transactionSchema = z.object({
   isIncome: z.boolean(),
   categoryId: z.string().optional(),
   accountId: z.string(),
+  createdAt: z.date(), // Keep as z.date()
   currency: z.string()
 });
 
@@ -41,8 +43,11 @@ const categorySchema = z.object({
 type TransactionFormSchema = z.infer<typeof transactionSchema>;
 type CategoryFormSchema = z.infer<typeof categorySchema>; //Created type
 
-const AddTransactionModal = () => {
-  const queryClient = useQueryClient();
+interface AddTransactionModalProps {
+  onTransactionAdded: () => void;
+}
+
+const AddTransactionModal = ({ onTransactionAdded }: AddTransactionModalProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   const [isIncome, setIsIncome] = useState(false);
@@ -127,12 +132,13 @@ const AddTransactionModal = () => {
         ...data,
         amount: Number(data.amount),
         category: data.categoryId,
-        account: data.accountId
+        account: data.accountId,
+        createdAt: data.createdAt.toISOString() // Convert back to ISO string
       });
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
       showSuccess('Transaction created successfully!');
       setIsOpen(false);
       reset();
+      onTransactionAdded();
     } catch (error: any) {
       showError(error.message);
     }
@@ -296,6 +302,13 @@ const AddTransactionModal = () => {
               )}
             </SelectContent>
           </Select>
+        </div>
+        <div className='space-y-2'>
+          <Label htmlFor='createdAt'>Date and Time</Label>
+          <DateTimePicker
+            value={watch('createdAt')}
+            onChange={(date) => setValue('createdAt', date)}
+          />
         </div>
 
         <Button type='submit' className='w-full' disabled={isSubmitting}>

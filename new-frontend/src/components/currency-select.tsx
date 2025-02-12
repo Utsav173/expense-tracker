@@ -8,10 +8,11 @@ import {
   CommandEmpty,
   CommandGroup,
   CommandInput,
-  CommandItem,
-  CommandList
+  CommandList,
+  CommandItem
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
 // Define a proper type for currency.
@@ -57,29 +58,30 @@ const CurrencySelect: React.FC<CurrencySelectProps> = ({
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent className='w-full min-w-[var(--radix-popper-anchor-width)] border-input p-0'>
+      <PopoverContent className='z-[100] w-full min-w-[var(--radix-popper-anchor-width)] border-input p-0'>
         <Command>
           <CommandInput placeholder='Search currencies...' />
-          <CommandList className='max-h-[200px] overflow-y-auto'>
-            <CommandEmpty>No currency found.</CommandEmpty>
-            <CommandGroup>
-              {currencies.map((currency) => (
-                <CommandItem
-                  key={currency.code}
-                  // The combined value is used for search matching.
-                  value={`${currency.code} ${currency.name}`.toLowerCase()}
-                  onSelect={() => {
-                    onValueChange(currency.code);
-                    setOpen(false);
-                  }}
-                  className='cursor-pointer'
-                >
-                  {`${currency.code} - ${currency.name}`}
-                  {value === currency.code && <Check size={16} className='ml-auto' />}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
+          <ScrollArea className='max-h-[200px]'>
+            <CommandList>
+              <CommandEmpty>No currency found.</CommandEmpty>
+              <CommandGroup>
+                {currencies.map((currency) => (
+                  <CommandItem
+                    key={currency.code}
+                    value={`${currency.code} ${currency.name}`.toLowerCase()}
+                    onSelect={() => {
+                      onValueChange(currency.code);
+                      setOpen(false);
+                    }}
+                    className='cursor-pointer'
+                  >
+                    {`${currency.code} - ${currency.name}`}
+                    {value === currency.code && <Check size={16} className='ml-auto' />}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </ScrollArea>
         </Command>
       </PopoverContent>
     </Popover>

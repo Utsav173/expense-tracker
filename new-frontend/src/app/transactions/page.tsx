@@ -20,8 +20,9 @@ import { categoryGetAll } from '@/lib/endpoints/category';
 import { AccountDropdown, Category } from '@/lib/types';
 import { format } from 'date-fns';
 import { DateRange } from 'react-day-picker';
-import DateRangePicker from '@/components/date-range-picker'; // Import
-
+import DateRangePicker from '@/components/date-range-picker';
+import { useToast } from '@/lib/hooks/useToast';
+import { Separator } from '@/components/ui/separator';
 
 const TransactionsPage = () => {
   const [accountId, setAccountId] = useState<string | undefined>(undefined);
@@ -31,9 +32,10 @@ const TransactionsPage = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [categoryId, setCategoryId] = useState<string | undefined>(undefined);
   const [isIncome, setIsIncome] = useState<boolean | undefined>(undefined);
-
-  // Date Range Picker State
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [tempDateRange, setTempDateRange] = useState<DateRange | undefined>();
+
+  const { showError } = useToast();
 
   const {
     data: transactions,
@@ -61,7 +63,7 @@ const TransactionsPage = () => {
         duration:
           dateRange?.from && dateRange.to
             ? `${format(dateRange.from, 'yyyy-MM-dd')},${format(dateRange.to, 'yyyy-MM-dd')}`
-            : '', // Format for backend, handle undefined
+            : '',
         page,
         pageSize: 10,
         q: search,
@@ -73,12 +75,12 @@ const TransactionsPage = () => {
     retry: false
   });
 
-  const { data: accountsData } = useQuery({
+  const { data: accountsData, isLoading: isLoadingAccounts } = useQuery({
     queryKey: ['accountsDropdown'],
     queryFn: accountGetDropdown
   });
 
-  const { data: categoriesData } = useQuery({
+  const { data: categoriesData, isLoading: isLoadingCategories } = useQuery({
     queryKey: ['categories'],
     queryFn: categoryGetAll
   });
@@ -100,7 +102,7 @@ const TransactionsPage = () => {
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
-    setPage(1); // Reset to page 1 on new search
+    setPage(1);
   };
 
   const handlePageChange = (page: number) => {
@@ -112,28 +114,36 @@ const TransactionsPage = () => {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
       setSortBy(field);
-      setSortOrder('asc'); // Default to ascending when changing sort field
+      setSortOrder('asc');
     }
-    setPage(1); // Reset to page 1 on new sort
+    setPage(1);
   };
 
-  const handleDateRangeChange = (range: DateRange | undefined) => {
-    setDateRange(range);
-    setPage(1); // Reset page on date range change
+  const handleDateRangeSelect = (range: DateRange | undefined) => {
+    setTempDateRange(range);
+    if (range?.from && range.to) {
+      setDateRange(range);
+      setPage(1);
+    }
   };
 
-  if (isLoading) {
-    return <Loader />;
-  }
+  const handleClearDateRange = () => {
+    setDateRange(undefined);
+    setTempDateRange(undefined);
+    setPage(1);
+  };
 
   if (error) {
-    return <div>Error fetching transactions: {error.message}</div>;
+    showError(`Failed to get Transaction Details : ${(error as Error).message}`);
+    return null;
   }
 
   return (
     <div className='p-4'>
       <h1 className='text-xl font-bold'>Transactions</h1>
-      <div className='mt-4 flex flex-col gap-2 md:flex-row'>
+      <Separator className='my-4' />
+
+      <div className='mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'>
         <Select
           onValueChange={(value) => {
             setAccountId(value === 'all' ? undefined : value);
@@ -141,16 +151,22 @@ const TransactionsPage = () => {
           }}
           value={accountId || 'all'}
         >
-          <SelectTrigger className='w-full md:w-[180px]'>
+          <SelectTrigger className='w-full'>
             <SelectValue placeholder='Select Account' />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value='all'>All Accounts</SelectItem>
-            {accounts.map((account) => (
-              <SelectItem key={account.id} value={account.id}>
-                {account.name}
+            {isLoadingAccounts ? (
+              <SelectItem value='loading-accounts' disabled>
+                Loading accounts...
               </SelectItem>
-            ))}
+            ) : (
+              accounts.map((account) => (
+                <SelectItem key={account.id} value={account.id}>
+                  {account.name}
+                </SelectItem>
+              ))
+            )}
           </SelectContent>
         </Select>
 
@@ -161,16 +177,22 @@ const TransactionsPage = () => {
           }}
           value={categoryId || 'all'}
         >
-          <SelectTrigger className='w-full md:w-[180px]'>
+          <SelectTrigger className='w-full'>
             <SelectValue placeholder='Select Category' />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value='all'>All Categories</SelectItem>
-            {categories.map((category) => (
-              <SelectItem key={category.id} value={category.id}>
-                {category.name}
+            {isLoadingCategories ? (
+              <SelectItem value='loading-categories' disabled>
+                Loading categories...
               </SelectItem>
-            ))}
+            ) : (
+              categories.map((category) => (
+                <SelectItem key={category.id} value={category.id}>
+                  {category.name}
+                </SelectItem>
+              ))
+            )}
           </SelectContent>
         </Select>
 
@@ -181,7 +203,7 @@ const TransactionsPage = () => {
           }}
           value={isIncome === undefined ? 'all' : isIncome ? 'true' : 'false'}
         >
-          <SelectTrigger className='w-full md:w-[180px]'>
+          <SelectTrigger className='w-full'>
             <SelectValue placeholder='Select Type' />
           </SelectTrigger>
           <SelectContent>
@@ -191,39 +213,51 @@ const TransactionsPage = () => {
           </SelectContent>
         </Select>
 
-        <Input
-          type='text'
-          placeholder='Search...'
-          onChange={handleSearch}
-          className='w-full md:w-auto'
-        />
-        <AddTransactionModal />
+        <Input type='text' placeholder='Search...' onChange={handleSearch} className='w-full' />
       </div>
 
-      {/* Use the DateRangePicker component */}
-      <DateRangePicker dateRange={dateRange} setDateRange={setDateRange} className='mt-4' />
+      <div className='mb-4'>
+        <DateRangePicker dateRange={tempDateRange} setDateRange={handleDateRangeSelect} />
+        {dateRange?.from && (
+          <Button variant='outline' size='sm' className='ml-2' onClick={handleClearDateRange}>
+            Clear Dates
+          </Button>
+        )}
+      </div>
 
       <div className='mt-4'>
-        <TransactionTable
-          transactions={transactions?.transactions}
-          onUpdate={refetch}
-          onSort={handleSort}
-          sortBy={sortBy}
-          sortOrder={sortOrder}
-        />
-        <div className='mt-4 flex items-center justify-center gap-2'>
-          {transactions?.totalPages &&
-            Array.from({ length: transactions?.totalPages }, (_, i) => i + 1).map((page) => (
-              <Button
-                variant='outline'
-                className='rounded-sm border px-2 py-1'
-                key={page}
-                onClick={() => handlePageChange(page)}
-              >
-                {page}
-              </Button>
-            ))}
-        </div>
+        {isLoading ? (
+          <Loader />
+        ) : (
+          <>
+            <TransactionTable
+              transactions={transactions?.transactions}
+              onUpdate={refetch}
+              onSort={handleSort}
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+            />
+            <div className='mt-4 flex items-center justify-center gap-2'>
+              {transactions?.totalPages
+                ? Array.from({ length: transactions.totalPages }, (_, i) => i + 1).map((page) => (
+                    <Button
+                      variant='outline'
+                      className='rounded-sm border px-2 py-1'
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      disabled={page === transactions.currentPage}
+                    >
+                      {page}
+                    </Button>
+                  ))
+                : null}
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className='mt-4'>
+        <AddTransactionModal onTransactionAdded={refetch} />
       </div>
     </div>
   );

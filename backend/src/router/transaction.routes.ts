@@ -3,7 +3,21 @@ import authMiddleware from '../middleware';
 import { HTTPException } from 'hono/http-exception';
 import { db } from '../database';
 import { Account, Analytics, Category, Transaction, User } from '../database/schema';
-import { InferInsertModel, SQL, and, count, desc, eq, gt, like, lt, or, sql } from 'drizzle-orm';
+import {
+  AnyColumn,
+  InferInsertModel,
+  SQL,
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gt,
+  like,
+  lt,
+  or,
+  sql,
+} from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { getDateTruncate, getIntervalValue, increment } from '../utils';
 import { transactionSchema } from '../utils/schema.validations';
@@ -18,59 +32,107 @@ const chance = new Chance();
 // create a new Hono instance for the transaction router
 const transactionRouter = new Hono();
 
+const getFilterConditions = (
+  query: SQL<unknown> | undefined,
+  {
+    duration,
+    q,
+    isIncome,
+    categoryId,
+    startDate,
+    endDate,
+  }: {
+    duration?: string;
+    q?: string;
+    isIncome?: string;
+    categoryId?: string;
+    startDate?: Date;
+    endDate?: Date;
+  },
+) => {
+  return and(
+    query,
+    // Apply duration filter if provided
+    duration && duration.trim().length > 0
+      ? and(
+          gt(Transaction.createdAt, new Date(startDate as any)),
+          lt(Transaction.createdAt, new Date(endDate as any)),
+        )
+      : undefined,
+    // Apply search filter if provided
+    q && q.length > 0
+      ? or(
+          like(Transaction.text, `%${q}%`),
+          like(Transaction.transfer, `%${q}%`),
+          eq(Transaction.amount, +q),
+        )
+      : undefined,
+    // Apply isIncome filter if provided
+    isIncome !== undefined ? eq(Transaction.isIncome, isIncome === 'true') : undefined,
+    // Apply categoryId filter if provided
+    categoryId ? eq(Transaction.category, categoryId) : undefined,
+  );
+};
+
 // GET / - Get a list of transactions
 transactionRouter.get('/', authMiddleware, async (c) => {
-  // get query params
-  const { accountId, duration, page = 1, pageSize = 10, q } = c.req.query();
+  const {
+    accountId,
+    duration,
+    page = 1,
+    pageSize = 10,
+    q,
+    isIncome,
+    categoryId,
+    sortBy = 'createdAt',
+    sortOrder = 'desc',
+  } = c.req.query();
   let query: SQL<unknown> | undefined;
-  // // validate query params
+
+  // get query params
   if (!accountId) {
     const userId = await c.get('userId' as any);
-
     query = eq(Transaction.owner, userId);
   } else {
     query = eq(Transaction.account, accountId);
   }
 
-  // constructed serach condition
+  // Get interval values if duration is provided
+  const { startDate: start, endDate: end } = duration ? await getIntervalValue(duration) : {};
+  const startDate = start ? new Date(start) : undefined;
+  const endDate = end ? new Date(end) : undefined;
 
-  // check if duration is provided
-  if (duration && duration.trim().length > 0) {
-    // duration is one of from this 4 "today", "thisWeek", "thisMonth", "thisYear"
-    const { endDate, startDate } = await getIntervalValue(duration);
-
-    // check if start date and end date are provided
-    query = and(
-      query,
-      and(
-        gt(Transaction.createdAt, new Date(startDate as any)),
-        lt(Transaction.createdAt, new Date(endDate as any)),
-      ),
-    );
-  }
-
-  // check if q is provided and length is greater than 0
-  if (q && q.length > 0) {
-    query = and(
-      query,
-      or(
-        like(Transaction.text, `%${q}%`),
-        like(Transaction.transfer, `%${q}%`),
-        eq(Transaction.amount, +q),
-      ),
-    );
-  }
+  // Create filter conditions
+  const filterConditions = getFilterConditions(query, {
+    duration,
+    q,
+    isIncome,
+    categoryId,
+    startDate,
+    endDate,
+  });
 
   // get total count
   const totalCount = await db
     .select({ count: count(Transaction.id) })
     .from(Transaction)
-    .where(query)
+    .leftJoin(Category, eq(Category.id, Transaction.category))
+    .leftJoin(User, eq(User.id, Transaction.createdBy))
+    .where(filterConditions)
     .catch((err) => {
       throw new HTTPException(500, { message: err.message });
     });
 
   const UpdatedBy = alias(User, 'UpdatedBy');
+
+  // Validate and prepare sorting
+  const validSortFields = ['createdAt', 'amount', 'text'];
+  const validSortOrders = ['asc', 'desc'];
+
+  const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+  const finalSortOrder = validSortOrders.includes(sortOrder.toLowerCase())
+    ? sortOrder.toLowerCase()
+    : 'desc';
 
   // get transactions data
   const transactionData = await db
@@ -108,10 +170,14 @@ transactionRouter.get('/', authMiddleware, async (c) => {
     .leftJoin(Category, eq(Category.id, Transaction.category))
     .leftJoin(User, eq(User.id, Transaction.createdBy))
     .leftJoin(UpdatedBy, eq(UpdatedBy.id, Transaction.updatedBy))
-    .where(query)
+    .where(filterConditions)
     .limit(+pageSize)
     .offset(+pageSize * (+page - 1))
-    .orderBy(desc(Transaction.createdAt))
+    .orderBy(
+      finalSortOrder === 'desc'
+        ? desc(Transaction[finalSortBy as keyof typeof Transaction] as AnyColumn)
+        : asc(Transaction[finalSortBy as keyof typeof Transaction] as AnyColumn),
+    )
     .catch((err) => {
       throw new HTTPException(500, { message: err.message });
     });
@@ -123,6 +189,12 @@ transactionRouter.get('/', authMiddleware, async (c) => {
     totalPages: Math.ceil(totalCount[0].count / +pageSize),
     currentPage: +page,
     pageSize: +pageSize,
+    filters: {
+      isIncome: isIncome === 'true',
+      categoryId,
+      sortBy: finalSortBy,
+      sortOrder: finalSortOrder,
+    },
   });
 });
 

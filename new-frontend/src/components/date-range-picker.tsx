@@ -1,7 +1,8 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   endOfMonth,
   endOfYear,
@@ -25,7 +26,7 @@ interface DateRangePickerProps {
 
 const DateRangePicker = ({ dateRange, setDateRange, className }: DateRangePickerProps) => {
   const [open, setOpen] = useState(false);
-  const [month, setMonth] = useState(dateRange?.from || new Date());
+  const [month, setMonth] = useState(dateRange?.from || new Date()); // Month for calendar display
 
   const today = new Date();
   const presets = [
@@ -51,6 +52,7 @@ const DateRangePicker = ({ dateRange, setDateRange, className }: DateRangePicker
     }
   ];
 
+  // for display current selected range.
   useEffect(() => {
     if (dateRange?.from) {
       setMonth(dateRange.from);
@@ -91,25 +93,16 @@ const DateRangePicker = ({ dateRange, setDateRange, className }: DateRangePicker
         </Button>
       </PopoverTrigger>
       <PopoverContent className='w-auto p-0' align='start'>
-        <div className='flex'>
-          <Calendar
-            mode='range'
-            selected={dateRange}
-            onSelect={handleDateSelect}
-            month={month}
-            onMonthChange={setMonth}
-            className='rounded-md border p-2'
-            disabled={[{ after: today }]}
-          />
-          <div className='border-l'>
-            <ScrollArea className='h-80'>
-              <div className='flex flex-col gap-1 p-2'>
+        <div className='flex max-sm:flex-col'>
+          <div className='relative border-border py-4 max-sm:order-1 max-sm:border-t sm:w-32'>
+            <div className='sm:border-e'>
+              <div className='flex max-h-80 flex-col overflow-y-auto px-2'>
                 {presets.map((preset) => (
                   <Button
                     key={preset.label}
                     variant='ghost'
                     size='sm'
-                    className='justify-start'
+                    className='w-full justify-start'
                     onClick={() => {
                       setDateRange(preset.range);
                       setMonth(preset.range.to!);
@@ -120,8 +113,17 @@ const DateRangePicker = ({ dateRange, setDateRange, className }: DateRangePicker
                   </Button>
                 ))}
               </div>
-            </ScrollArea>
+            </div>
           </div>
+          <Calendar
+            mode='range'
+            selected={dateRange}
+            onSelect={handleDateSelect}
+            month={month}
+            onMonthChange={setMonth}
+            className='rounded-md border p-2'
+            disabled={[{ after: today }]} // Disable future dates
+          />
         </div>
       </PopoverContent>
     </Popover>

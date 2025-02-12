@@ -1,14 +1,8 @@
+import * as React from 'react';
 import { AppSidebar } from '@/components/app-sidebar';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator
-} from '@/components/ui/breadcrumb';
 import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import RouteBreadcrumbs from './route-breadcrumbs'; // Import the new component
 
 const SidebarLayout = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -19,17 +13,7 @@ const SidebarLayout = ({ children }: { children: React.ReactNode }) => {
           <div className='flex items-center gap-2 px-4'>
             <SidebarTrigger className='-ml-1' />
             <Separator orientation='vertical' className='mr-2 h-4' />
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem className='hidden md:block'>
-                  <BreadcrumbLink href='#'>Building Your Application</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className='hidden md:block' />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>Data Fetching</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
+            <RouteBreadcrumbs />
           </div>
         </header>
         <div className='relative flex min-h-[calc(100dvh-4rem)] w-full flex-1 flex-col gap-4 p-4 pt-0'>

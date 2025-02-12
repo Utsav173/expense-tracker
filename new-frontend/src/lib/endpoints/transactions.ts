@@ -4,6 +4,9 @@ import { Transaction, ApiResponse } from '../types';
 type TransactionsResponse = ApiResponse<{
   transactions: Transaction[];
   totalPages: number;
+  totalCount: number;
+  currentPage: number;
+  pageSize: number;
 }>;
 export const transactionCreate = (body: any, successMessage?: string, errorMessage?: string) =>
   apiFetch('/transactions', 'POST', body, undefined, successMessage, errorMessage);

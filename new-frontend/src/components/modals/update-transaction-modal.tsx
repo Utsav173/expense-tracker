@@ -15,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { categoryGetAll } from '@/lib/endpoints/category';
 import { accountGetDropdown } from '@/lib/endpoints/accounts';
 import {
@@ -28,14 +28,8 @@ import {
 import { Label } from '../ui/label';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Transaction as TransactionType } from '@/lib/types';
-import { format } from 'date-fns';
-import { Calendar } from '../ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { ScrollArea, ScrollBar } from '../ui/scroll-area';
-import { cn } from '@/lib/utils';
 import { COMMON_CURRENCIES, fetchCurrencies } from '@/lib/endpoints/currency';
 import CurrencySelect from '../currency-select';
-import { CalendarIcon } from 'lucide-react';
 import DateTimePicker from '../date-time-picker';
 
 const transactionSchema = z.object({
@@ -63,7 +57,6 @@ const UpdateTransactionModal = ({
   transaction,
   onUpdate
 }: UpdateTransactionModalProps) => {
-  const queryClient = useQueryClient();
   const [isIncome, setIsIncome] = useState(false);
   const [openPopover, setOpenPopover] = useState(false); // Control Popover visibility
 
@@ -131,7 +124,6 @@ const UpdateTransactionModal = ({
         account: data.accountId,
         createdAt: data.createdAt.toISOString() // Convert back to ISO string
       });
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
       showSuccess('Transaction updated successfully!');
       onOpenChange(false);
       onUpdate();
@@ -140,33 +132,6 @@ const UpdateTransactionModal = ({
       showError(error.message);
     }
   };
-
-  function handleDateSelect(date: Date | undefined) {
-    if (date) {
-      setValue('createdAt', date);
-      setOpenPopover(false); // Close the popover after selecting a date
-    }
-  }
-
-  function handleTimeChange(type: 'hour' | 'minute' | 'ampm', value: string) {
-    const currentDate = watch('createdAt') || new Date(); // Use watch to get current value
-    let newDate = new Date(currentDate);
-
-    if (type === 'hour') {
-      const hour = parseInt(value, 10);
-      newDate.setHours(newDate.getHours() >= 12 ? hour + 12 : hour);
-    } else if (type === 'minute') {
-      newDate.setMinutes(parseInt(value, 10));
-    } else if (type === 'ampm') {
-      const hours = newDate.getHours();
-      if (value === 'AM' && hours >= 12) {
-        newDate.setHours(hours - 12);
-      } else if (value === 'PM' && hours < 12) {
-        newDate.setHours(hours + 12);
-      }
-    }
-    setValue('createdAt', newDate);
-  }
 
   // Close popover when dialog closes
   useEffect(() => {
@@ -219,7 +184,7 @@ const UpdateTransactionModal = ({
                   placeholder={isLoadingAccount ? 'Loading accounts...' : 'Select account'}
                 />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className='z-[100]'>
                 {accountData && accountData.length > 0 ? (
                   accountData.map((acc) => (
                     <SelectItem key={acc.id} value={acc.id}>
@@ -248,7 +213,6 @@ const UpdateTransactionModal = ({
             />
             {errors.text && <p className='text-sm text-red-500'>{errors.text.message}</p>}
           </div>
-
           <div className='space-y-2'>
             <Label htmlFor='currency'>Currency</Label>
             <CurrencySelect
@@ -283,7 +247,7 @@ const UpdateTransactionModal = ({
                   placeholder={isLoadingCategory ? 'Loading categories...' : 'Select category'}
                 />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className='z-[100]'>
                 {categoriesData?.categories && categoriesData.categories.length > 0 ? (
                   categoriesData.categories.map((cat) => (
                     <SelectItem key={cat.id} value={cat.id}>

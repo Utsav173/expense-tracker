@@ -1,4 +1,3 @@
-// src/components/transactions-table.tsx
 'use client';
 
 import {
@@ -75,7 +74,8 @@ const TransactionTable = ({
         >
           Category {sortBy === 'category.name' && (sortOrder === 'asc' ? '▲' : '▼')}
         </div>
-      )
+      ),
+      cell: (info) => info.getValue() ?? 'N/A'
     }),
     columnHelper.accessor('createdAt', {
       header: () => (
