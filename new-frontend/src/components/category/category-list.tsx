@@ -117,7 +117,6 @@ const CategoryList = () => {
                     variant='ghost'
                     onClick={() => onHandleChangeModal(true, category)}
                   >
-                    {' '}
                     <Pencil size={18} />
                   </Button>
                   <DeleteConfirmationModal
@@ -127,7 +126,6 @@ const CategoryList = () => {
                     title='Delete Category'
                     triggerButton={
                       <Button size='sm' variant='ghost'>
-                        {' '}
                         <Trash2 size={18} />
                       </Button>
                     }

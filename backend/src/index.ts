@@ -46,4 +46,5 @@ app.notFound((c) => c.json({ message: 'Not Found', status: '𐚤' }));
 export default {
   port: 1337,
   fetch: app.fetch,
+  idleTimeout: 30,
 };

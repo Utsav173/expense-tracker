@@ -14,10 +14,12 @@ import { Button } from '@/components/ui/button';
 
 interface DeleteConfirmationModalProps {
   title: string;
-  description: string;
+  description: ReactNode;
   onConfirm: () => void;
-  triggerButton: ReactNode;
+  triggerButton?: ReactNode;
   onOpenChange?: (open: boolean) => void;
+  open?: boolean;
+  noTriggerButton?: boolean;
 }
 
 const DeleteConfirmationModal = ({
@@ -25,11 +27,13 @@ const DeleteConfirmationModal = ({
   description,
   onConfirm,
   triggerButton,
-  onOpenChange
+  onOpenChange,
+  open,
+  noTriggerButton
 }: DeleteConfirmationModalProps) => {
   return (
-    <Dialog onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>{triggerButton}</DialogTrigger>
+    <Dialog onOpenChange={onOpenChange} {...(noTriggerButton && { open })}>
+      {noTriggerButton ? null : <DialogTrigger asChild>{triggerButton}</DialogTrigger>}
       <DialogContent className='sm:max-w-[425px]'>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>

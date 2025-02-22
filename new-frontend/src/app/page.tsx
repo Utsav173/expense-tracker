@@ -32,6 +32,7 @@ const AccountList = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [openEdit, setOpenEdit] = useState(false);
+  const [openDelete, setOpenDelete] = useState(false);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['accounts', page, search],
@@ -61,9 +62,16 @@ const AccountList = () => {
     setOpenEdit(open);
   };
 
+  const handleChangeDeleteModal = (open: boolean, data?: Account) => {
+    setOpenDelete(open);
+    setSelectedItem(data);
+  };
+
   const handleDelete = async (id: string) => {
     try {
       await accountDelete(id);
+      setOpenDelete(false);
+      setSelectedItem(undefined);
       showSuccess('Account Successfully Removed!');
       refetch();
     } catch (e: any) {
@@ -139,28 +147,43 @@ const AccountList = () => {
                   >
                     Edit
                   </Button>
-                  <DeleteConfirmationModal
-                    title='Delete Account'
-                    description='Are you sure you want to delete this account?'
-                    onConfirm={() => handleDelete(account.id)}
-                    triggerButton={
-                      <Button size='sm' variant='destructive'>
-                        Delete
-                      </Button>
-                    }
-                  />
+                  <Button
+                    size='sm'
+                    variant='destructive'
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleChangeDeleteModal(true, account);
+                    }}
+                  >
+                    Delete
+                  </Button>
                 </div>
               </div>
             </AccountCardContent>
           </AccountCard>
         ))}
       </div>
+
+      {openDelete && selectedItem && (
+        <DeleteConfirmationModal
+          title='Delete Account'
+          description={
+            <>
+              Are you sure you want to delete <b>{selectedItem?.name}</b> account?
+            </>
+          }
+          onConfirm={() => handleDelete(selectedItem?.id)}
+          open={openDelete}
+          noTriggerButton
+          onOpenChange={() => handleChangeDeleteModal(false, undefined)}
+        />
+      )}
       {selectedItem && (
         <UpdateModal
           title='Edit account info'
           formSchema={accountSchema}
           defaultValues={selectedItem}
-          triggerButton={<></>} // as button will be manully handling to avoid any mis-leading.
+          triggerButton={<></>}
           description='Update your account name, initial amount, and currency information'
           submit={async (values: AccountFormSchema) => {
             if (selectedItem) {

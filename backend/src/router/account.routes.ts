@@ -38,6 +38,7 @@ import { calcPercentageChange, getIntervalValue, getSQLInterval } from '../utils
 import ejs from 'ejs';
 import puppeteer from 'puppeteer';
 import path from 'path';
+import PromisePool from '@supercharge/promise-pool';
 
 const accountRouter = new Hono();
 
@@ -663,25 +664,33 @@ accountRouter.post('/confirm/import/:id', authMiddleware, async (c) => {
 
   const finalData = JSON.parse(dataImport.data);
 
-  for (const item of finalData) {
-    const helperData = {
-      account: item.account,
-      user: userId,
-      isIncome: item.isIncome,
-      amount: item.amount,
-    };
+  // Process items concurrently with a maximum of 5 at a time
+  const { errors } = await PromisePool.for(finalData)
+    .withConcurrency(25)
+    .process(async (item: any) => {
+      const helperData = {
+        account: item.account,
+        user: userId,
+        isIncome: item.isIncome,
+        amount: item.amount,
+      };
 
-    await db
-      .insert(Transaction)
-      .values({
-        ...item,
-        createdAt: new Date(item.createdAt),
-      })
-      .catch((err) => {
-        throw new HTTPException(400, { message: err.message });
-      });
+      await db
+        .insert(Transaction)
+        .values({
+          ...item,
+          createdAt: new Date(item.createdAt),
+        })
+        .catch((err) => {
+          throw new HTTPException(400, { message: err.message });
+        });
 
-    await handleAnalytics(helperData);
+      await handleAnalytics(helperData);
+    });
+
+  if (errors && errors.length > 0) {
+    // Optionally, you can aggregate and return error info here.
+    throw new HTTPException(400, { message: 'One or more items failed to import' });
   }
 
   return c.json({ message: 'Data imported successfully' });

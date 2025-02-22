@@ -12,6 +12,7 @@ import {
   Settings2,
   SquareTerminal,
   Tag,
+  Upload,
   Wallet
 } from 'lucide-react';
 
@@ -44,6 +45,11 @@ const data: any[] = [
     title: 'Transactions',
     url: '/transactions',
     icon: ArrowLeftRight
+  },
+  {
+    title: 'Import Transactions',
+    url: '/transactions/import',
+    icon: Upload
   },
   {
     title: 'Categories',

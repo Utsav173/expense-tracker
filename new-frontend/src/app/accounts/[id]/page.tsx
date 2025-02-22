@@ -22,6 +22,15 @@ import { DateRange } from 'react-day-picker';
 import DateRangePicker from '@/components/date-range-picker';
 import { useToast } from '@/lib/hooks/useToast';
 import { AccountHeader, AnalyticsCards, IncomeExpenseChart } from '@/components/account';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious
+} from '@/components/ui/pagination';
 
 const AccountDetailsPage = ({ params }: { params: { id: string } }) => {
   const { id } = params;
@@ -189,6 +198,40 @@ const AccountDetailsPage = ({ params }: { params: { id: string } }) => {
     return chartArray;
   }, [chartData]);
 
+  const getPaginationItems = (currentPage: number, totalPages: number) => {
+    const pages = [];
+    const pageRange = 2;
+
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      pages.push(1);
+      if (currentPage > pageRange + 2) {
+        pages.push('ellipsis');
+      }
+      for (
+        let i = Math.max(2, currentPage - pageRange);
+        i <= Math.min(totalPages - 1, currentPage + pageRange);
+        i++
+      ) {
+        pages.push(i);
+      }
+      if (currentPage < totalPages - (pageRange + 1)) {
+        pages.push('ellipsis');
+      }
+      pages.push(totalPages);
+    }
+
+    return pages;
+  };
+
+  const paginationItems = useMemo(() => {
+    if (!transactionsData) return [];
+    return getPaginationItems(page, transactionsData.totalPages);
+  }, [transactionsData, page]);
+
   return (
     <div className='min-h-screen'>
       <AccountHeader account={account} isLoading={isAccountLoading} router={router} />
@@ -271,25 +314,43 @@ const AccountDetailsPage = ({ params }: { params: { id: string } }) => {
                   sortBy={sortBy}
                   sortOrder={sortOrder}
                 />
-                <div className='mt-6 flex justify-center gap-2'>
-                  {transactionsData &&
-                    transactionsData?.totalPages > 0 &&
-                    Array.from({ length: transactionsData.totalPages }, (_, i) => i + 1).map(
-                      (pageNum) => (
-                        <button
-                          key={pageNum}
-                          onClick={() => handlePageChange(pageNum)}
-                          className={`rounded px-3 py-1 ${
-                            pageNum === page
-                              ? 'bg-blue-500 text-white'
-                              : 'bg-gray-100 hover:bg-gray-200'
-                          }`}
-                        >
-                          {pageNum}
-                        </button>
-                      )
-                    )}
-                </div>
+                <Pagination className='mt-6'>
+                  {transactionsData && transactionsData?.totalPages > 0 && (
+                    <PaginationContent>
+                      {page !== 1 && (
+                        <PaginationPrevious
+                          href='#'
+                          onClick={() => handlePageChange(Math.max(1, page - 1))}
+                        />
+                      )}
+                      {paginationItems.map((item, index) =>
+                        item === 'ellipsis' ? (
+                          <PaginationItem key={`ellipsis-${index}`}>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        ) : (
+                          <PaginationItem key={item}>
+                            <PaginationLink
+                              href='#'
+                              isActive={item === page}
+                              onClick={() => handlePageChange(item as number)}
+                            >
+                              {item}
+                            </PaginationLink>
+                          </PaginationItem>
+                        )
+                      )}
+                      {page !== transactionsData.totalPages && (
+                        <PaginationNext
+                          href='#'
+                          onClick={() =>
+                            handlePageChange(Math.min(transactionsData.totalPages, page + 1))
+                          }
+                        />
+                      )}
+                    </PaginationContent>
+                  )}
+                </Pagination>
               </>
             )}
           </div>

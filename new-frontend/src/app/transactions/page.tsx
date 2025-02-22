@@ -23,6 +23,7 @@ import { DateRange } from 'react-day-picker';
 import DateRangePicker from '@/components/date-range-picker';
 import { useToast } from '@/lib/hooks/useToast';
 import { Separator } from '@/components/ui/separator';
+import Link from 'next/link';
 
 const TransactionsPage = () => {
   const [accountId, setAccountId] = useState<string | undefined>(undefined);
@@ -256,8 +257,11 @@ const TransactionsPage = () => {
         )}
       </div>
 
-      <div className='mt-4'>
+      <div className='mt-4 flex gap-4'>
         <AddTransactionModal onTransactionAdded={refetch} />
+        <Link href='/transactions/import'>
+          <Button variant='secondary'>Import Transactions</Button>
+        </Link>
       </div>
     </div>
   );
