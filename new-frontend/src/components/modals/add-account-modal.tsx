@@ -10,10 +10,11 @@ import { Input } from '../ui/input';
 import AddModal from './add-modal';
 import { accountCreate } from '@/lib/endpoints/accounts';
 import { useQueryClient } from '@tanstack/react-query';
+import { Label } from '../ui/label';
 
 const accountSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters long').max(64),
-  balance: z.string().refine((value) => !isNaN(Number(value)), 'Must be Valid Number'), // number is better if client data types not changed
+  balance: z.string().refine((value) => !isNaN(Number(value)), 'Must be a valid number'), // number is better if client data types not changed
   currency: z
     .string()
     .min(3, 'Currency must have three characters ')
@@ -29,12 +30,12 @@ const AddAccountModal = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting }, // Add isSubmitting
     reset
   } = useForm<Type>({
     resolver: zodResolver(accountSchema),
     defaultValues: {
-      currency: 'INR' // provide  a generic data
+      currency: 'INR' // provide a generic data
     }
   });
   const { showError, showSuccess } = useToast();
@@ -44,7 +45,7 @@ const AddAccountModal = () => {
         { ...data, balance: Number(data.balance) },
         'Account created successfully!'
       );
-      queryClient.invalidateQueries({ queryKey: ['accounts'] }); //invalidate
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
       showSuccess('Created successfully!');
 
       setIsOpen(false);
@@ -54,20 +55,30 @@ const AddAccountModal = () => {
     }
   };
 
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+
+    if (!open) {
+      reset();
+    }
+  };
+
   return (
     <AddModal
-      onOpenChange={(open) => setIsOpen(open)}
+      onOpenChange={handleOpenChange}
       title='Add Account'
       description=' Add an new expense tracker  account.'
       triggerButton={<Button> Create Account</Button>}
       isOpen={isOpen}
     >
       <form onSubmit={handleSubmit(handleCreate)} className='space-y-6'>
-        <div>
+        <div className='space-y-2'>
+          <Label>Account Name</Label>
           <Input type='text' placeholder='Account Name' {...register('name')} className='w-full' />
           {errors.name && <p className='text-sm text-red-500'>{errors.name.message}</p>}
         </div>
-        <div>
+        <div className='space-y-2'>
+          <Label>Starting Balance</Label>
           <Input
             type='text'
             placeholder='Starting Balance'
@@ -76,16 +87,14 @@ const AddAccountModal = () => {
           />
           {errors.balance && <p className='text-sm text-red-500'> {errors.balance.message}</p>}
         </div>
-
-        <div>
+        <div className='space-y-2'>
+          <Label>Currency</Label>
           <Input type='text' placeholder='Currency' {...register('currency')} className='w-full' />
 
           {errors.currency && <p className='text-sm text-red-500'> {errors.currency.message} </p>}
         </div>
-
-        <Button type='submit' className='w-full'>
-          {' '}
-          Create{' '}
+        <Button type='submit' className='w-full' disabled={isSubmitting}>
+          {isSubmitting ? 'Creating...' : 'Create'}
         </Button>
       </form>
     </AddModal>

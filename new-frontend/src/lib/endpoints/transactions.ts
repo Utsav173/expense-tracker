@@ -1,5 +1,5 @@
 import apiFetch from '../api-client';
-import { Transaction, ApiResponse } from '../types';
+import { Transaction, ApiResponse, IncomeExpenseChartData } from '../types';
 
 type TransactionsResponse = ApiResponse<{
   transactions: Transaction[];
@@ -91,3 +91,16 @@ export const transactionUpdate = (
 
 export const transactionDelete = (id: string, successMessage?: string, errorMessage?: string) =>
   apiFetch(`/transactions/${id}`, 'DELETE', undefined, undefined, successMessage, errorMessage);
+
+export const transactionGetIncomeExpenseChart = (params: {
+  accountId: string;
+  duration: string;
+}): Promise<ApiResponse<IncomeExpenseChartData>> =>
+  apiFetch(
+    '/transactions/by/income/expense/chart',
+    'GET',
+    undefined,
+    { params },
+    undefined,
+    undefined
+  );

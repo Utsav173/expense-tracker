@@ -1,12 +1,11 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { accountGetById } from '@/lib/endpoints/accounts';
+import { accountGetById, accountGetCustomAnalytics } from '@/lib/endpoints/accounts';
 import { useRouter } from 'next/navigation';
-import { transactionGetAll } from '@/lib/endpoints/transactions';
+import { transactionGetAll, transactionGetIncomeExpenseChart } from '@/lib/endpoints/transactions';
 import TransactionTable from '@/components/transactions-table';
-import Loader from '@/components/ui/loader';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -17,12 +16,12 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { categoryGetAll } from '@/lib/endpoints/category';
-import { Category } from '@/lib/types'; // Import TransactionType
+import { Category, ChartDataType } from '@/lib/types';
 import { format } from 'date-fns';
 import { DateRange } from 'react-day-picker';
-import DateRangePicker from '@/components/date-range-picker'; // Import
+import DateRangePicker from '@/components/date-range-picker';
 import { useToast } from '@/lib/hooks/useToast';
-import { Separator } from '@/components/ui/separator';
+import { AccountHeader, AnalyticsCards, IncomeExpenseChart } from '@/components/account';
 
 const AccountDetailsPage = ({ params }: { params: { id: string } }) => {
   const { id } = params;
@@ -41,6 +40,7 @@ const AccountDetailsPage = ({ params }: { params: { id: string } }) => {
   const {
     data: account,
     isLoading: isAccountLoading,
+    isError: isAccountError,
     error: accountError
   } = useQuery({
     queryKey: ['account', id],
@@ -49,8 +49,46 @@ const AccountDetailsPage = ({ params }: { params: { id: string } }) => {
   });
 
   const {
+    data: customAnalytics,
+    isLoading: isAnalyticsLoading,
+    isError: isAnalyticsError,
+    error: analyticsError
+  } = useQuery({
+    queryKey: ['customAnalytics', id, dateRange],
+    queryFn: () =>
+      accountGetCustomAnalytics(id, {
+        duration:
+          dateRange?.from && dateRange.to
+            ? `${format(dateRange.from, 'yyyy-MM-dd')},${format(dateRange.to, 'yyyy-MM-dd')}`
+            : 'thisMonth'
+      }),
+    enabled: !!id,
+    retry: false
+  });
+
+  const {
+    data: chartData,
+    isLoading: isChartLoading,
+    isError: isChartError,
+    error: chartError
+  } = useQuery({
+    queryKey: ['incomeExpenseChart', id, dateRange],
+    queryFn: () =>
+      transactionGetIncomeExpenseChart({
+        accountId: id,
+        duration:
+          dateRange?.from && dateRange.to
+            ? `${format(dateRange.from, 'yyyy-MM-dd')},${format(dateRange.to, 'yyyy-MM-dd')}`
+            : 'thisMonth' // Default to this month
+      }),
+    enabled: !!id,
+    retry: false
+  });
+
+  const {
     data: transactionsData,
     isLoading: isTransactionLoading,
+    isError: isTransactionError,
     error: transactionError,
     refetch
   } = useQuery({
@@ -65,9 +103,7 @@ const AccountDetailsPage = ({ params }: { params: { id: string } }) => {
         duration:
           dateRange?.from && dateRange.to
             ? `${format(dateRange.from, 'yyyy-MM-dd')},${format(dateRange.to, 'yyyy-MM-dd')}`
-            : dateRange?.from
-              ? `${format(dateRange.from, 'yyyy-MM-dd')},${format(dateRange.from, 'yyyy-MM-dd')}`
-              : '', // Only send duration if both from and to are set, or a single date
+            : '',
         page,
         pageSize: 10,
         q: search,
@@ -113,9 +149,9 @@ const AccountDetailsPage = ({ params }: { params: { id: string } }) => {
   };
 
   const handleDateRangeSelect = (range: DateRange | undefined) => {
-    setTempDateRange(range); // Update temporary range
+    setTempDateRange(range);
     if (range?.from && range.to) {
-      setDateRange(range); // Update main range when both dates are selected
+      setDateRange(range);
       setPage(1);
     }
   };
@@ -126,108 +162,139 @@ const AccountDetailsPage = ({ params }: { params: { id: string } }) => {
     setPage(1);
   };
 
-  if (isAccountLoading || isLoadingCategories) {
-    return <Loader />;
+  // combines All errors from useQuery Hooks
+  if (isAccountError || isTransactionError || isAnalyticsError) {
+    const errorMessage = isAccountError
+      ? (accountError as Error).message
+      : isTransactionError
+        ? (transactionError as Error).message
+        : (analyticsError as Error).message;
+    showError(`Failed to load data: ${errorMessage}`);
+    return <div>Error: {errorMessage}</div>;
   }
 
-  if (accountError || transactionError) {
-    const errorMessage = accountError
-      ? (accountError as Error).message
-      : (transactionError as Error).message;
-    showError(`Failed to load account or transaction data: ${errorMessage}`);
-    return null; // Or a more user-friendly error message/component
-  }
+  const transformedChartData = useMemo(() => {
+    if (!chartData) {
+      return [];
+    }
+    const chartArray: ChartDataType[] = [];
+    chartData.date?.forEach((date: string, i) => {
+      chartArray.push({
+        date,
+        income: chartData.income?.[i],
+        expense: chartData.expense?.[i],
+        balance: chartData.balance?.[i]
+      });
+    });
+    return chartArray;
+  }, [chartData]);
 
   return (
-    <div className='p-4'>
-      <h1 className='text-xl font-bold'>{account?.name}</h1>
-      <p>Balance: {account?.balance}</p>
-      <Separator className='my-4' />
+    <div className='min-h-screen'>
+      <AccountHeader account={account} isLoading={isAccountLoading} router={router} />
 
-      <div className='mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'>
-        {/* Category Select */}
-        <Select
-          onValueChange={(value) => {
-            setCategoryId(value === 'all' ? undefined : value);
-            setPage(1);
-          }}
-          value={categoryId || 'all'}
-        >
-          <SelectTrigger className='w-full'>
-            <SelectValue placeholder='Select Category' />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value='all'>All Categories</SelectItem>
-            {categories.map((category) => (
-              <SelectItem key={category.id} value={category.id}>
-                {category.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className='mx-auto max-w-7xl space-y-6 p-4'>
+        <AnalyticsCards analytics={customAnalytics} isLoading={isAnalyticsLoading} />
 
-        {/* Income/Expense Select */}
-        <Select
-          onValueChange={(value) => {
-            setIsIncome(value === 'all' ? undefined : value === 'true');
-            setPage(1);
-          }}
-          value={isIncome === undefined ? 'all' : isIncome ? 'true' : 'false'}
-        >
-          <SelectTrigger className='w-full'>
-            <SelectValue placeholder='Select Type' />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value='all'>All Types</SelectItem>
-            <SelectItem value='true'>Income</SelectItem>
-            <SelectItem value='false'>Expense</SelectItem>
-          </SelectContent>
-        </Select>
+        <IncomeExpenseChart data={transformedChartData} isLoading={isChartLoading} />
 
-        {/* Search Input */}
-        <Input type='text' placeholder='Search...' onChange={handleSearch} className='w-full' />
-      </div>
-      <div className='mb-4'>
-        <DateRangePicker dateRange={tempDateRange} setDateRange={handleDateRangeSelect} />
-        {dateRange?.from && (
-          <Button variant='outline' size='sm' className='ml-2' onClick={handleClearDateRange}>
-            Clear Dates
-          </Button>
-        )}
-      </div>
-
-      <div className='mt-4'>
-        {transactionsData?.transactions && (
-          <TransactionTable
-            transactions={transactionsData.transactions}
-            onUpdate={refetch}
-            onSort={handleSort}
-            sortBy={sortBy}
-            sortOrder={sortOrder}
-          />
-        )}
-        <div className='relative mt-4 flex items-center justify-center gap-2'>
-          {isTransactionLoading ? (
-            <Loader />
-          ) : (
-            transactionsData?.totalPages &&
-            Array.from({ length: transactionsData.totalPages }, (_, i) => i + 1).map((page) => (
-              <Button
-                variant='outline'
-                className='rounded-sm border px-2 py-1'
-                key={page}
-                onClick={() => handlePageChange(page)}
-                disabled={page === transactionsData.currentPage}
+        <div className='rounded-xl bg-white shadow-sm'>
+          <div className='border-b p-6'>
+            <h2 className='text-xl font-semibold'>Transactions</h2>
+          </div>
+          <div className='p-4'>
+            <div className='mb-6 flex flex-wrap gap-4'>
+              <Input
+                type='text'
+                placeholder='Search transactions...'
+                value={search}
+                onChange={handleSearch}
+                className='w-full'
+              />
+              <Select
+                onValueChange={(value) => {
+                  setCategoryId(value === 'all' ? undefined : value);
+                  setPage(1);
+                }}
+                value={categoryId || 'all'}
               >
-                {page}
-              </Button>
-            ))
-          )}
+                <SelectTrigger className='w-full'>
+                  <SelectValue placeholder='Select Category' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='all'>All Categories</SelectItem>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                onValueChange={(value) => {
+                  setIsIncome(value === 'all' ? undefined : value === 'true');
+                  setPage(1);
+                }}
+                value={isIncome === undefined ? 'all' : isIncome ? 'true' : 'false'}
+              >
+                <SelectTrigger className='w-full'>
+                  <SelectValue placeholder='Select Type' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='all'>All Types</SelectItem>
+                  <SelectItem value='true'>Income</SelectItem>
+                  <SelectItem value='false'>Expense</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <DateRangePicker dateRange={tempDateRange} setDateRange={handleDateRangeSelect} />
+              {dateRange?.from && (
+                <Button variant='outline' size='sm' className='ml-2' onClick={handleClearDateRange}>
+                  Clear Dates
+                </Button>
+              )}
+            </div>
+
+            {isTransactionLoading ? (
+              <div className='space-y-4'>
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className='h-16 animate-pulse rounded bg-gray-200'></div>
+                ))}
+              </div>
+            ) : (
+              <>
+                <TransactionTable
+                  transactions={transactionsData?.transactions}
+                  onUpdate={refetch}
+                  onSort={handleSort}
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                />
+                <div className='mt-6 flex justify-center gap-2'>
+                  {transactionsData &&
+                    transactionsData?.totalPages > 0 &&
+                    Array.from({ length: transactionsData.totalPages }, (_, i) => i + 1).map(
+                      (pageNum) => (
+                        <button
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`rounded px-3 py-1 ${
+                            pageNum === page
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-gray-100 hover:bg-gray-200'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      )
+                    )}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
-      <Button className='mt-4 text-blue-500 hover:underline' onClick={() => router.back()}>
-        Back
-      </Button>
     </div>
   );
 };

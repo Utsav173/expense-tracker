@@ -1,26 +1,24 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { accountGetAll } from '@/lib/endpoints/accounts';
 import { useQuery } from '@tanstack/react-query';
+import { accountGetAll, accountDelete, accountUpdate } from '@/lib/endpoints/accounts';
 import Loader from '@/components/ui/loader';
 import AddAccountModal from '@/components/modals/add-account-modal';
 import { AccountCard, AccountCardContent } from '@/components/ui/account-card';
-import DeleteConfirmationModal from '@/components/modals/delete-confirmation-modal';
 import UpdateModal from '@/components/modals/update-modal';
 import { useState } from 'react';
 import { Account } from '@/lib/types';
-import { accountUpdate, accountDelete } from '@/lib/endpoints/accounts';
-import { useQueryClient } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { z } from 'zod';
 import { useToast } from '@/lib/hooks/useToast';
-import { Pencil, Trash2 } from 'lucide-react';
-import AddTransactionModal from '@/components/modals/add-transaction-modal'; // Import AddTransactionModal
+import { Button } from '@/components/ui/button';
+import { formatCurrency } from '@/lib/utils';
+import DeleteConfirmationModal from '@/components/modals/delete-confirmation-modal';
+import AddTransactionModal from '@/components/modals/add-transaction-modal';
 
 const accountSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters long').max(64),
-  balance: z.string().refine((value) => !isNaN(Number(value)), 'Must be Valid Number'),
+  balance: z.string().refine((value) => !isNaN(Number(value)), 'Must be a valid number'),
   currency: z
     .string()
     .min(3, 'Currency must have three characters')
@@ -31,22 +29,31 @@ const accountSchema = z.object({
 type AccountFormSchema = z.infer<typeof accountSchema>;
 
 const AccountList = () => {
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['accounts'],
-    queryFn: () => accountGetAll({ sortBy: 'createdAt', sortOrder: 'asc', page: 1, limit: 10 })
-  });
-  const queryClient = useQueryClient();
-  const [selectedItem, setSelectedItem] = useState<Account | undefined>();
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
   const [openEdit, setOpenEdit] = useState(false);
+
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ['accounts', page, search],
+    queryFn: () =>
+      accountGetAll({ page, limit: 10, search, sortBy: 'createdAt', sortOrder: 'asc' }),
+    retry: false
+  });
+
+  const [selectedItem, setSelectedItem] = useState<Account | undefined>();
+
   const { showError, showSuccess } = useToast();
 
-  const handleEditAccount = async (
-    id: string,
-    values: { name: string; balance: string; currency: string }
-  ) => {
-    await accountUpdate(id, values);
-    queryClient.invalidateQueries({ queryKey: ['accounts'] });
-    showSuccess('Account data Updated Success!');
+  const handleEditAccount = async (id: string, values: AccountFormSchema) => {
+    try {
+      await accountUpdate(id, values);
+      showSuccess('Account data Updated Success!');
+      refetch();
+    } catch (e: any) {
+      showError(e.message);
+    } finally {
+      setOpenEdit(false);
+    }
   };
 
   const handleChangeModal = (open: boolean, data?: Account) => {
@@ -58,7 +65,7 @@ const AccountList = () => {
     try {
       await accountDelete(id);
       showSuccess('Account Successfully Removed!');
-      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      refetch();
     } catch (e: any) {
       showError(e.message);
     }
@@ -68,8 +75,21 @@ const AccountList = () => {
     return <Loader />;
   }
 
-  if (error) {
-    return <div>Failed to get user's account</div>;
+  if (isError) {
+    return (
+      <div>Error: {error instanceof Error ? error.message : 'An unknown error occurred.'}</div>
+    );
+  }
+
+  if (!data || data.accounts.length === 0) {
+    return (
+      <div className='p-4'>
+        <h1 className='text-xl font-bold'>Accounts</h1>
+        <p>
+          No accounts found. <AddAccountModal />
+        </p>
+      </div>
+    );
   }
 
   return (
@@ -78,56 +98,56 @@ const AccountList = () => {
         <h1 className='text-xl font-bold'>Accounts</h1>
         <div className='flex items-center gap-2'>
           <AddAccountModal />
-
-          <AddTransactionModal />
+          <AddTransactionModal onTransactionAdded={() => {}} />
         </div>
       </div>
+      <Input
+        type='text'
+        placeholder='Search accounts...'
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className='mb-4'
+      />
 
-      <div className='grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3'>
-        {data?.accounts?.map((acc) => (
-          <AccountCard href={`/accounts/${acc.id}`} key={acc.id}>
+      <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
+        {data.accounts.map((account) => (
+          <AccountCard key={account.id} href={`/accounts/${account.id}`}>
             <AccountCardContent>
               <div className='flex flex-col space-y-3'>
                 <div className='flex flex-col'>
                   <span className='text-sm font-medium text-primary-foreground/60'>
                     Account Name
                   </span>
-                  <h2 className='text-xl font-bold'>{acc.name}</h2>
+                  <h2 className='text-xl font-bold'>{account.name}</h2>
                 </div>
-
                 <div className='flex flex-col'>
                   <span className='text-sm font-medium text-primary-foreground/60'>Balance</span>
                   <div className='flex items-baseline space-x-1'>
-                    <span className='text-2xl font-bold'>{acc.balance}</span>
-                    <span className='text-lg font-medium text-primary-foreground/80'>
-                      {acc.currency}
+                    <span className='text-2xl font-bold'>
+                      {formatCurrency(account.balance, account.currency)}
                     </span>
                   </div>
                 </div>
-
                 <div className='flex items-center space-x-2'>
                   <Button
                     size='sm'
                     variant='secondary'
                     onClick={(e) => {
                       e.preventDefault();
-                      handleChangeModal(true, acc);
+                      handleChangeModal(true, account);
                     }}
                   >
-                    <Pencil className='mr-1 size-4' />
                     Edit
                   </Button>
                   <DeleteConfirmationModal
-                    onOpenChange={() => {}}
-                    title='Delete account'
+                    title='Delete Account'
+                    description='Are you sure you want to delete this account?'
+                    onConfirm={() => handleDelete(account.id)}
                     triggerButton={
-                      <Button variant='secondary' size='sm'>
-                        <Trash2 className='mr-1 size-4' />
+                      <Button size='sm' variant='destructive'>
                         Delete
                       </Button>
                     }
-                    description='Are you sure you want to delete this account? This action cannot be undone.'
-                    onConfirm={() => handleDelete(acc.id)}
                   />
                 </div>
               </div>
@@ -135,13 +155,12 @@ const AccountList = () => {
           </AccountCard>
         ))}
       </div>
-
       {selectedItem && (
         <UpdateModal
           title='Edit account info'
           formSchema={accountSchema}
           defaultValues={selectedItem}
-          triggerButton={<></>}
+          triggerButton={<></>} // as button will be manully handling to avoid any mis-leading.
           description='Update your account name, initial amount, and currency information'
           submit={async (values: AccountFormSchema) => {
             if (selectedItem) {
@@ -163,6 +182,29 @@ const AccountList = () => {
           <Input type='text' name='currency' placeholder='Currency' className='my-2 w-full' />
         </UpdateModal>
       )}
+
+      <div className='mt-4 flex justify-center'>
+        {data.total > 10 && (
+          <div className='flex space-x-2'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => setPage((old) => Math.max(old - 1, 1))}
+              disabled={page === 1}
+            >
+              Previous
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => setPage((old) => old + 1)}
+              disabled={page >= Math.ceil(data.total / 10)}
+            >
+              Next
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

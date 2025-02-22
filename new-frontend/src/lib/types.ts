@@ -104,6 +104,22 @@ export interface Account {
   currency: string;
 }
 
+export interface AccountDetails {
+  id: string;
+  name: string;
+  balance: number | null;
+  createdAt: Date | null;
+  updatedAt: Date | null;
+  owner: {
+    id: string;
+    name: string;
+    email: string;
+    profilePic: string | null;
+  } | null;
+  analytics: Analytics | null;
+  currency: string;
+}
+
 export interface AccountDropdown {
   id: string;
   name: string;
@@ -209,3 +225,26 @@ export interface DashboardData {
   overallIncomeChange: number;
   overallExpenseChange: number;
 }
+
+export interface CustomAnalytics {
+  income: number;
+  expense: number;
+  balance: number;
+  BalancePercentageChange: number;
+  IncomePercentageChange: number;
+  ExpensePercentageChange: number;
+}
+
+export interface IncomeExpenseChartData {
+  date: string[];
+  income: number[];
+  expense: number[];
+  balance: number[];
+}
+
+export type ChartDataType = {
+  date: string;
+  income: number;
+  expense: number;
+  balance: number;
+};

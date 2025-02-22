@@ -8,7 +8,7 @@ import {
   ColumnDef
 } from '@tanstack/react-table';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { Button } from './ui/button';
+import { Button } from '@/components/ui/button';
 import { Pencil, Trash2 } from 'lucide-react';
 import UpdateTransactionModal from './modals/update-transaction-modal';
 import React, { useState } from 'react';
@@ -16,6 +16,8 @@ import DeleteConfirmationModal from './modals/delete-confirmation-modal';
 import { transactionDelete } from '@/lib/endpoints/transactions';
 import { useToast } from '@/lib/hooks/useToast';
 import { Transaction as TransactionType } from '@/lib/types'; // Import TransactionType
+import { formatCurrency } from '@/lib/utils';
+import { format } from 'date-fns';
 
 interface TransactionTableProps {
   transactions: TransactionType[] | undefined;
@@ -49,7 +51,8 @@ const TransactionTable = ({
         >
           Text {sortBy === 'text' && (sortOrder === 'asc' ? '▲' : '▼')}
         </div>
-      )
+      ),
+      cell: (info) => info.getValue()
     }),
     columnHelper.accessor('amount', {
       header: () => (
@@ -62,7 +65,10 @@ const TransactionTable = ({
           Amount {sortBy === 'amount' && (sortOrder === 'asc' ? '▲' : '▼')}
         </div>
       ),
-      cell: (info) => info.getValue().toFixed(2)
+      cell: (info) => {
+        const transaction = info.row.original; // Access the original row data
+        return formatCurrency(info.getValue(), transaction.currency);
+      }
     }),
     columnHelper.accessor('category.name', {
       header: () => (
@@ -88,7 +94,7 @@ const TransactionTable = ({
           Date {sortBy === 'createdAt' && (sortOrder === 'asc' ? '▲' : '▼')}
         </div>
       ),
-      cell: (info) => new Date(info.getValue()).toLocaleDateString()
+      cell: (info) => format(new Date(info.getValue()), 'yyyy-MM-dd HH:mm:ss')
     }),
     columnHelper.accessor('isIncome', {
       header: 'Type',
@@ -97,7 +103,7 @@ const TransactionTable = ({
     columnHelper.display({
       id: 'actions',
       cell: ({ row }) => (
-        <div>
+        <div className='flex gap-2'>
           <Button
             size='sm'
             variant='ghost'
@@ -156,15 +162,23 @@ const TransactionTable = ({
           ))}
         </TableHeader>
         <TableBody>
-          {table.getRowModel().rows.map((row) => (
-            <TableRow key={row.id}>
-              {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.id}>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </TableCell>
-              ))}
+          {table.getRowModel().rows.length ? (
+            table.getRowModel().rows.map((row) => (
+              <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={columns.length} className='h-24 text-center'>
+                No results.
+              </TableCell>
             </TableRow>
-          ))}
+          )}
         </TableBody>
       </Table>
 
