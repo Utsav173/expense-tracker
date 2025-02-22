@@ -22,7 +22,7 @@ import { alias } from 'drizzle-orm/pg-core';
 import { getDateTruncate, getIntervalValue, increment } from '../utils';
 import { transactionSchema } from '../utils/schema.validations';
 import { zValidator } from '@hono/zod-validator';
-import handleAnalytics from '../utils/handleAnalytics';
+import {handleAnalytics} from '../utils/handleAnalytics';
 import { z } from 'zod';
 import { Chance } from 'chance';
 import { utils, write } from 'xlsx';

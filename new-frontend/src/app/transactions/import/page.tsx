@@ -220,7 +220,7 @@ const ImportTransactions = () => {
 
   return (
     <div className='flex flex-1 justify-center p-4 md:p-8'>
-      <Card className='w-full max-w-4xl max-h-fit'>
+      <Card className='max-h-fit w-full max-w-4xl'>
         <CardHeader className='space-y-1'>
           <CardTitle className='text-2xl font-bold'>Import Transactions</CardTitle>
           <p className='text-sm text-muted-foreground'>
@@ -228,6 +228,30 @@ const ImportTransactions = () => {
           </p>
         </CardHeader>
         <CardContent className='space-y-6'>
+          <div className='space-y-2'>
+            <label className='text-sm font-medium'>Select Account</label>
+            <Select onValueChange={setAccountId} value={accountId}>
+              <SelectTrigger className='w-full'>
+                <SelectValue
+                  placeholder={isLoadingAccounts ? 'Loading accounts...' : 'Select account'}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {accountsData?.length ? (
+                  accountsData.map((acc) => (
+                    <SelectItem key={acc.id} value={acc.id}>
+                      {acc.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value='no-account' disabled>
+                    No accounts available
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div
             {...getRootProps()}
             className={`relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors ${
@@ -256,30 +280,6 @@ const ImportTransactions = () => {
                 Selected: <span className='font-medium'>{file.name}</span>
               </div>
             )}
-          </div>
-
-          <div className='space-y-2'>
-            <label className='text-sm font-medium'>Select Account</label>
-            <Select onValueChange={setAccountId} value={accountId}>
-              <SelectTrigger className='w-full'>
-                <SelectValue
-                  placeholder={isLoadingAccounts ? 'Loading accounts...' : 'Select account'}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {accountsData?.length ? (
-                  accountsData.map((acc) => (
-                    <SelectItem key={acc.id} value={acc.id}>
-                      {acc.name}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value='no-account' disabled>
-                    No accounts available
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
           </div>
 
           <div className='flex flex-col gap-4 sm:flex-row sm:justify-between'>

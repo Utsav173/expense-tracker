@@ -79,24 +79,9 @@ const AccountList = () => {
     }
   };
 
-  if (isLoading) {
-    return <Loader />;
-  }
-
   if (isError) {
     return (
       <div>Error: {error instanceof Error ? error.message : 'An unknown error occurred.'}</div>
-    );
-  }
-
-  if (!data || data.accounts.length === 0) {
-    return (
-      <div className='p-4'>
-        <h1 className='text-xl font-bold'>Accounts</h1>
-        <p>
-          No accounts found. <AddAccountModal />
-        </p>
-      </div>
     );
   }
 
@@ -118,50 +103,83 @@ const AccountList = () => {
       />
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
-        {data.accounts.map((account) => (
-          <AccountCard key={account.id} href={`/accounts/${account.id}`}>
-            <AccountCardContent>
-              <div className='flex flex-col space-y-3'>
-                <div className='flex flex-col'>
-                  <span className='text-sm font-medium text-primary-foreground/60'>
-                    Account Name
-                  </span>
-                  <h2 className='text-xl font-bold'>{account.name}</h2>
-                </div>
-                <div className='flex flex-col'>
-                  <span className='text-sm font-medium text-primary-foreground/60'>Balance</span>
-                  <div className='flex items-baseline space-x-1'>
-                    <span className='text-2xl font-bold'>
-                      {formatCurrency(account.balance, account.currency)}
+        {isLoading ? (
+          <div className='col-span-3 row-auto flex items-center justify-center'>
+            <Loader />
+          </div>
+        ) : !data || !data.accounts ? (
+          <div className='col-span-3 flex items-center justify-center'>
+            <h2 className='text-2xl font-bold'>No Accounts Found</h2>
+          </div>
+        ) : (
+          data.accounts.map((account) => (
+            <AccountCard key={account.id} href={`/accounts/${account.id}`}>
+              <AccountCardContent>
+                <div className='flex flex-col space-y-3'>
+                  <div className='flex flex-col'>
+                    <span className='text-sm font-medium text-primary-foreground/60'>
+                      Account Name
                     </span>
+                    <h2 className='text-xl font-bold'>{account.name}</h2>
+                  </div>
+                  <div className='flex flex-col'>
+                    <span className='text-sm font-medium text-primary-foreground/60'>Balance</span>
+                    <div className='flex items-baseline space-x-1'>
+                      <span className='text-2xl font-bold'>
+                        {formatCurrency(account.balance, account.currency)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className='flex items-center space-x-2'>
+                    <Button
+                      size='sm'
+                      variant='secondary'
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleChangeModal(true, account);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      size='sm'
+                      variant='destructive'
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleChangeDeleteModal(true, account);
+                      }}
+                    >
+                      Delete
+                    </Button>
                   </div>
                 </div>
-                <div className='flex items-center space-x-2'>
-                  <Button
-                    size='sm'
-                    variant='secondary'
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleChangeModal(true, account);
-                    }}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    size='sm'
-                    variant='destructive'
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleChangeDeleteModal(true, account);
-                    }}
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </div>
-            </AccountCardContent>
-          </AccountCard>
-        ))}
+              </AccountCardContent>
+            </AccountCard>
+          ))
+        )}
+      </div>
+
+      <div className='mt-4 flex justify-center'>
+        {data && data.total > 10 && (
+          <div className='flex space-x-2'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => setPage((old) => Math.max(old - 1, 1))}
+              disabled={page === 1}
+            >
+              Previous
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => setPage((old) => old + 1)}
+              disabled={page >= Math.ceil(data.total / 10)}
+            >
+              Next
+            </Button>
+          </div>
+        )}
       </div>
 
       {openDelete && selectedItem && (
@@ -205,29 +223,6 @@ const AccountList = () => {
           <Input type='text' name='currency' placeholder='Currency' className='my-2 w-full' />
         </UpdateModal>
       )}
-
-      <div className='mt-4 flex justify-center'>
-        {data.total > 10 && (
-          <div className='flex space-x-2'>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => setPage((old) => Math.max(old - 1, 1))}
-              disabled={page === 1}
-            >
-              Previous
-            </Button>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => setPage((old) => old + 1)}
-              disabled={page >= Math.ceil(data.total / 10)}
-            >
-              Next
-            </Button>
-          </div>
-        )}
-      </div>
     </div>
   );
 };

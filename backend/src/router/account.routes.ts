@@ -33,12 +33,11 @@ import {
 import nodemailer from 'nodemailer';
 import { read, utils, write } from 'xlsx';
 import { BunFile } from 'bun';
-import handleAnalytics from '../utils/handleAnalytics';
 import { calcPercentageChange, getIntervalValue, getSQLInterval } from '../utils';
 import ejs from 'ejs';
 import puppeteer from 'puppeteer';
 import path from 'path';
-import PromisePool from '@supercharge/promise-pool';
+import { handleBulkAnalytics } from '../utils/handleAnalytics';
 
 const accountRouter = new Hono();
 
@@ -664,33 +663,29 @@ accountRouter.post('/confirm/import/:id', authMiddleware, async (c) => {
 
   const finalData = JSON.parse(dataImport.data);
 
-  // Process items concurrently with a maximum of 5 at a time
-  const { errors } = await PromisePool.for(finalData)
-    .withConcurrency(25)
-    .process(async (item: any) => {
-      const helperData = {
-        account: item.account,
-        user: userId,
-        isIncome: item.isIncome,
-        amount: item.amount,
-      };
+  const transactionsForInsert = finalData.map((item: { createdAt: string | number | Date }) => ({
+    ...item,
+    createdAt: new Date(item.createdAt),
+  }));
 
-      await db
-        .insert(Transaction)
-        .values({
-          ...item,
-          createdAt: new Date(item.createdAt),
-        })
-        .catch((err) => {
-          throw new HTTPException(400, { message: err.message });
-        });
+  const analyticsTransactionsData = finalData.map((item: { amount: any; isIncome: any }) => ({
+    amount: item.amount,
+    isIncome: item.isIncome,
+  }));
 
-      await handleAnalytics(helperData);
+  try {
+    await db.transaction(async (tx) => {
+      await tx.insert(Transaction).values(transactionsForInsert);
+
+      await handleBulkAnalytics({
+        accountId: dataImport.account,
+        userId: userId,
+        transactions: analyticsTransactionsData,
+      });
     });
-
-  if (errors && errors.length > 0) {
-    // Optionally, you can aggregate and return error info here.
-    throw new HTTPException(400, { message: 'One or more items failed to import' });
+  } catch (error: any) {
+    console.error('Bulk import transaction failed:', error);
+    throw new HTTPException(400, { message: 'Bulk import failed: ' + error.message }); // More informative error
   }
 
   return c.json({ message: 'Data imported successfully' });
@@ -989,7 +984,7 @@ accountRouter.get('/:id', authMiddleware, async (c) => {
     .catch((err) => {
       throw new HTTPException(400, { message: err.message });
     });
-  return c.json(accountData);
+  return c.json(accountData[0]);
 });
 
 // PUT /account/:id - Update an account
