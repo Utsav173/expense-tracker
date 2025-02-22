@@ -55,7 +55,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ value, onChange, disabl
   };
 
   return (
-    <Popover open={openPopover} onOpenChange={setOpenPopover}>
+    <Popover open={openPopover} onOpenChange={setOpenPopover} modal>
       <PopoverTrigger asChild>
         <Button
           variant='outline'

@@ -67,7 +67,7 @@ const DateRangePicker = ({ dateRange, setDateRange, className }: DateRangePicker
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal>
       <PopoverTrigger asChild>
         <Button
           id='date'
