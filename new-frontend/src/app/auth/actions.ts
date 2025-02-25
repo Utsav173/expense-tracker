@@ -43,6 +43,32 @@ export async function removeAuthToken() {
   cookieStore.delete('user');
 }
 
+export async function userLogout() {
+  const cookieStore = await cookies();
+  cookieStore.delete('token');
+  cookieStore.delete('user');
+
+  // Make an API call to the backend to logout
+  try {
+    const response = await fetch('http://localhost:1337/auth/logout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      console.error('Failed to logout from backend');
+    }
+
+    // Clear the token from local storage (client-side)
+    // window.localStorage.removeItem('token'); // This will cause error since it's server action
+
+  } catch (error) {
+    console.error('Error logging out:', error);
+  }
+}
+
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters long')

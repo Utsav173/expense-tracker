@@ -176,7 +176,7 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
 
   return (
     <div className='min-h-screen'>
-      <AccountHeader account={account} isLoading={isAccountLoading} router={router} />
+      <AccountHeader account={account} isLoading={isAccountLoading} router={router} id={id} />
 
       <div className='mx-auto max-w-7xl space-y-6 p-4'>
         <AnalyticsCards analytics={customAnalytics} isLoading={isAnalyticsLoading} />

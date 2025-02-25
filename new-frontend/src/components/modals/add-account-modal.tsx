@@ -11,15 +11,14 @@ import AddModal from './add-modal';
 import { accountCreate } from '@/lib/endpoints/accounts';
 import { useQueryClient } from '@tanstack/react-query';
 import { Label } from '../ui/label';
+import CurrencySelect from '../currency-select';
+import { useQuery } from '@tanstack/react-query';
+import { fetchCurrencies, COMMON_CURRENCIES } from '@/lib/endpoints/currency';
 
 const accountSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters long').max(64),
   balance: z.string().refine((value) => !isNaN(Number(value)), 'Must be a valid number'), // number is better if client data types not changed
-  currency: z
-    .string()
-    .min(3, 'Currency must have three characters ')
-    .max(3, 'Currency must have three characters ')
-    .transform((val) => val.toUpperCase())
+  currency: z.string()
 });
 type Type = z.infer<typeof accountSchema>;
 
@@ -31,7 +30,9 @@ const AddAccountModal = () => {
     register,
     handleSubmit,
     formState: { errors, isSubmitting }, // Add isSubmitting
-    reset
+    reset,
+    setValue,
+    watch
   } = useForm<Type>({
     resolver: zodResolver(accountSchema),
     defaultValues: {
@@ -39,6 +40,19 @@ const AddAccountModal = () => {
     }
   });
   const { showError, showSuccess } = useToast();
+
+  const { data: currencies, isLoading: isLoadingCurrencies } = useQuery({
+    queryKey: ['currencies'],
+    queryFn: fetchCurrencies,
+    staleTime: 24 * 60 * 60 * 1000,
+    gcTime: 7 * 24 * 60 * 60 * 1000,
+    retry: 2,
+    placeholderData: Object.entries(COMMON_CURRENCIES).map(([code, name]) => ({
+      code,
+      name
+    }))
+  });
+
   const handleCreate = async (data: Type) => {
     try {
       await accountCreate(
@@ -88,9 +102,13 @@ const AddAccountModal = () => {
           {errors.balance && <p className='text-sm text-red-500'> {errors.balance.message}</p>}
         </div>
         <div className='space-y-2'>
-          <Label>Currency</Label>
-          <Input type='text' placeholder='Currency' {...register('currency')} className='w-full' />
-
+          <Label htmlFor='currency'>Currency</Label>
+          <CurrencySelect
+            currencies={currencies}
+            value={watch('currency')}
+            onValueChange={(value) => setValue('currency', value)}
+            isLoading={isLoadingCurrencies}
+          />
           {errors.currency && <p className='text-sm text-red-500'> {errors.currency.message} </p>}
         </div>
         <Button type='submit' className='w-full' disabled={isSubmitting}>

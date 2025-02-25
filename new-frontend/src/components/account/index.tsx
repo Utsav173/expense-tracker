@@ -1,8 +1,11 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, TrendingDown, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Trash2, TrendingDown, TrendingUp, Pencil } from 'lucide-react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import { ApiResponse, AccountDetails, CustomAnalytics, ChartDataType } from '@/lib/types';
+import { Button } from '@/components/ui/button';
+import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
+import { accountDelete } from '@/lib/endpoints/accounts';
 
 interface AccountHeaderProps {
   account: ApiResponse<AccountDetails> | undefined;
@@ -10,6 +13,7 @@ interface AccountHeaderProps {
   router: {
     back: () => void;
   };
+  id: string;
 }
 
 interface AnalyticsCardsProps {
@@ -58,6 +62,21 @@ export const AccountHeader: React.FC<AccountHeaderProps> = ({ account, isLoading
             Back
           </button>
           <h1 className='text-xl font-semibold'>{account?.name}</h1>
+          <DeleteConfirmationModal
+            title='Delete Account'
+            description='Are you sure you want to delete this account? All related transactions will also be deleted.'
+            triggerButton={
+              <Button size='sm' variant='ghost'>
+                <Trash2 size={18} />
+              </Button>
+            }
+            onConfirm={async () => {
+              if (account?.id) {
+                await accountDelete(account.id);
+                router.back();
+              }
+            }}
+          />
         </div>
         <div className='text-lg font-medium text-green-600'>
           {new Intl.NumberFormat('en-IN', {

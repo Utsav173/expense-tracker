@@ -9,8 +9,9 @@ import { useToast } from '@/lib/hooks/useToast';
 import { authResetPassword } from '@/lib/endpoints/auth';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import Link from 'next/link';
 
 const resetPasswordSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters long').max(255),
@@ -29,28 +30,27 @@ const ResetPasswordPage = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors },
-    reset,
-    setValue
+    formState: { errors }
   } = useForm<ResetPasswordSchemaType>({
-    resolver: zodResolver(resetPasswordSchema)
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      resetPasswordToken: token || ''
+    }
   });
 
   useEffect(() => {
-    if (token) {
-      setValue('resetPasswordToken', token);
-    } else {
+    if (!token) {
       router.replace('/auth/login');
       showError('No Token Found, Try Again!');
     }
-  }, [token]);
+  }, [token, router, showError]);
 
   const handleResetPassword = async (data: ResetPasswordSchemaType) => {
     try {
       setIsLoading(true);
-      await authResetPassword(data, 'Password updated', 'Failed to reset  password');
+      await authResetPassword(data, 'Password updated', 'Failed to reset password');
       showSuccess('Password Reset Successfully');
-      router.push('/login');
+      router.push('/auth/login');
     } catch (e: any) {
       showError(e.message);
     } finally {
@@ -62,34 +62,35 @@ const ResetPasswordPage = () => {
     <Card className='w-[400px] rounded-md bg-white shadow-md md:w-[450px]'>
       <CardHeader className='pb-4'>
         <CardTitle className='text-center text-xl font-bold tracking-wide text-gray-700'>
-          {' '}
-          Reset Password{' '}
+          Reset Password
         </CardTitle>
-
         <Separator className='my-2' />
       </CardHeader>
       <CardContent className='space-y-6 pb-4'>
-        <form onSubmit={handleSubmit(handleResetPassword)}>
+        <form onSubmit={handleSubmit(handleResetPassword)} className='space-y-4'>
           <div>
             <Input
               type='password'
-              placeholder='Password'
+              placeholder='New Password'
               {...register('password')}
               className='w-full'
+              disabled={isLoading}
             />
-            {errors.password && <p className='text-sm text-red-500'> {errors.password.message} </p>}
+            {errors.password && <p className='text-sm text-red-500'>{errors.password.message}</p>}
           </div>
-          <Button
-            type='submit'
-            className='mb-2 mt-6 w-full'
-            disabled={isLoading}
-            variant={'authButton'}
-          >
-            {isLoading ? 'Resetting Password' : 'Reset'}{' '}
+
+          <Button type='submit' className='w-full' disabled={isLoading} variant={'authButton'}>
+            {isLoading ? 'Resetting Password...' : 'Reset Password'}
           </Button>
         </form>
       </CardContent>
+      <CardFooter className='flex justify-center p-4'>
+        <Link href='/auth/login' className='text-sm text-blue-500 hover:underline'>
+          Back to Login
+        </Link>
+      </CardFooter>
     </Card>
   );
 };
+
 export default ResetPasswordPage;
