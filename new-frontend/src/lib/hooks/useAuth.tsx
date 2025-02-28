@@ -2,7 +2,7 @@
 
 import { authGetMe, authLogin, authLogOut } from '@/lib/endpoints/auth';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { storeAuthToken, storeUser, removeAuthToken } from '@/app/auth/actions';
+import { storeAuthToken, storeUser, removeAuthToken } from '@/app/(public)/auth/actions';
 import { getAuthTokenClient } from '@/lib/auth';
 import { LoginResponse, User, ApiResponse } from '@/lib/types';
 
@@ -16,7 +16,8 @@ export const useAuth = () => {
     data: user,
     isLoading: userIsLoading,
     isError: userIsError,
-    error: userQueryError
+    error: userQueryError,
+    refetch
   } = useQuery({
     queryKey: ['user'],
     queryFn: authGetMe,
@@ -76,6 +77,7 @@ export const useAuth = () => {
     userIsLoading,
     userIsError,
     loginError,
-    userQueryError
+    userQueryError,
+    refetchUser: refetch
   };
 };

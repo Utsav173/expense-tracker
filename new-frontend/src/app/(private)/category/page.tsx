@@ -39,7 +39,6 @@ const CategoryPage = () => {
           {/* Remove CategoryForm here - we will handle form inside AddModal if needed, or create a new simpler form */}
           {/* <CategoryForm onCategoryAdded={refetch} isAdd={true} /> */}
           <div>
-            {/* You can add simple input fields here if you still need a form in AddModal */}
             Category creation form will go here if needed, or remove AddModal if category creation
             is handled elsewhere. For now, let's leave it empty or remove AddModal if not needed.
           </div>

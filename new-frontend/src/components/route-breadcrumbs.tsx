@@ -11,7 +11,8 @@ import {
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Home } from 'lucide-react';
-import React from 'react'; // Import React
+import React, { useEffect, useState } from 'react';
+import { accountGetById } from '@/lib/endpoints/accounts';
 
 interface BreadcrumbItemType {
   href: string;
@@ -21,6 +22,26 @@ interface BreadcrumbItemType {
 
 const RouteBreadcrumbs = () => {
   const pathname = usePathname();
+  const [accountName, setAccountName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchAccountName = async () => {
+      if (pathname.startsWith('/accounts/') && pathname.split('/').length === 3) {
+        const accountId = pathname.split('/')[2];
+        try {
+          const account = await accountGetById(accountId);
+          setAccountName(account?.name || null);
+        } catch (error) {
+          console.error('Error fetching account:', error);
+          setAccountName(null);
+        }
+      } else {
+        setAccountName(null);
+      }
+    };
+
+    fetchAccountName();
+  }, [pathname]);
 
   // Build breadcrumb items based on the path
   const buildBreadcrumbs = (): BreadcrumbItemType[] => {
@@ -33,8 +54,13 @@ const RouteBreadcrumbs = () => {
     for (let i = 0; i < pathSegments.length; i++) {
       const segment = pathSegments[i];
       currentPath += `/${segment}`;
-      const label = segment.charAt(0).toUpperCase() + segment.slice(1); // Capitalize
+      let label = segment.charAt(0).toUpperCase() + segment.slice(1); // Capitalize
       const isCurrentPage = i === pathSegments.length - 1;
+
+      // Check if it's the account details page and use the account name
+      if (currentPath.startsWith('/accounts/') && currentPath.split('/').length === 3) {
+        label = accountName || 'Account Details';
+      }
 
       breadcrumbs.push({
         href: currentPath,

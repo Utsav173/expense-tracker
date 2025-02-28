@@ -80,19 +80,6 @@ const data: any[] = [
   }
 ];
 
-const projects = [
-  {
-    name: 'settings',
-    url: '/settings',
-    icon: Settings2
-  },
-  {
-    name: 'Profile ',
-    url: '/profile',
-    icon: Bot
-  }
-];
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth();
   const teams = [
@@ -110,7 +97,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data} />
-        <NavProjects projects={projects} />
       </SidebarContent>
       <SidebarFooter>{user && <NavUser user={user} />}</SidebarFooter>
       <SidebarRail />

@@ -14,21 +14,28 @@ import {
   startOfYear,
   sub,
 } from 'date-fns';
-import { AnyColumn, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import sharp from 'sharp';
 import { Analytics } from '../database/schema';
 import { db } from '../database';
 
 export async function compressImage(imageData: any) {
   try {
-    const ext = imageData.mimetype.split('/')[1];
+    // Check if imageData exists and has the expected properties
+    if (!imageData || !imageData.type) {
+      throw new Error('Invalid image data');
+    }
+
+    const ext = imageData.type.split('/')[1];
     const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
 
     if (!allowedExtensions.includes(ext)) {
       throw new Error('Invalid image file format');
     }
 
-    const reducedFile = await sharp(imageData.buffer).resize(250, 250).toBuffer();
+    // Use arrayBuffer() instead of buffer for FormData file objects
+    const buffer = await imageData.arrayBuffer();
+    const reducedFile = await sharp(Buffer.from(buffer)).resize(250, 250).toBuffer();
 
     const size = reducedFile.length / (1024 * 1024); // Calculate size in MB
 
@@ -47,7 +54,6 @@ export async function compressImage(imageData: any) {
     };
   }
 }
-
 export function WelcomeEmailTemp(username: any, loginpage: any, email: any) {
   return `<!DOCTYPE html>
 <html>

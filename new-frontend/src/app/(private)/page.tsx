@@ -1,11 +1,10 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { accountGetAll, accountDelete, accountUpdate } from '@/lib/endpoints/accounts';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { accountGetAll, accountDelete } from '@/lib/endpoints/accounts';
 import Loader from '@/components/ui/loader';
 import AddAccountModal from '@/components/modals/add-account-modal';
 import { AccountCard, AccountCardContent } from '@/components/ui/account-card';
-import UpdateModal from '@/components/modals/update-modal';
 import { useState } from 'react';
 import { Account } from '@/lib/types';
 import { Input } from '@/components/ui/input';
@@ -14,7 +13,9 @@ import { useToast } from '@/lib/hooks/useToast';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
 import DeleteConfirmationModal from '@/components/modals/delete-confirmation-modal';
+import ShareAccountModal from '@/components/modals/share-account-modal';
 import AddTransactionModal from '@/components/modals/add-transaction-modal';
+import { EditAccountModal } from '@/components/modals/edit-account-modal';
 
 const accountSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters long').max(64),
@@ -26,13 +27,9 @@ const accountSchema = z.object({
     .transform((val) => val.toUpperCase())
 });
 
-type AccountFormSchema = z.infer<typeof accountSchema>;
-
 const AccountList = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [openEdit, setOpenEdit] = useState(false);
-  const [openDelete, setOpenDelete] = useState(false);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['accounts', page, search],
@@ -44,38 +41,26 @@ const AccountList = () => {
   const [selectedItem, setSelectedItem] = useState<Account | undefined>();
 
   const { showError, showSuccess } = useToast();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const handleEditAccount = async (id: string, values: AccountFormSchema) => {
-    try {
-      await accountUpdate(id, values);
-      showSuccess('Account data Updated Success!');
-      refetch();
-    } catch (e: any) {
-      showError(e.message);
-    } finally {
-      setOpenEdit(false);
+  const [deleteAccountId, setDeleteAccountId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  const deleteAccountMutation = useMutation({
+    mutationFn: (id: string) => accountDelete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      showSuccess('Account deleted successfully!');
+      setDeleteAccountId(null); // Clear selection
+    },
+    onError: (error: any) => {
+      showError(error.message);
     }
-  };
+  });
 
-  const handleChangeModal = (open: boolean, data?: Account) => {
-    setSelectedItem(data);
-    setOpenEdit(open);
-  };
-
-  const handleChangeDeleteModal = (open: boolean, data?: Account) => {
-    setOpenDelete(open);
-    setSelectedItem(data);
-  };
-
-  const handleDelete = async (id: string) => {
-    try {
-      await accountDelete(id);
-      setOpenDelete(false);
-      setSelectedItem(undefined);
-      showSuccess('Account Successfully Removed!');
-      refetch();
-    } catch (e: any) {
-      showError(e.message);
+  const handleDelete = async () => {
+    if (deleteAccountId) {
+      deleteAccountMutation.mutate(deleteAccountId);
     }
   };
 
@@ -122,6 +107,7 @@ const AccountList = () => {
                     </span>
                     <h2 className='text-xl font-bold'>{account.name}</h2>
                   </div>
+
                   <div className='flex flex-col'>
                     <span className='text-sm font-medium text-primary-foreground/60'>Balance</span>
                     <div className='flex items-baseline space-x-1'>
@@ -136,21 +122,25 @@ const AccountList = () => {
                       variant='secondary'
                       onClick={(e) => {
                         e.preventDefault();
-                        handleChangeModal(true, account);
+                        setSelectedItem(account);
+                        setIsEditModalOpen(true);
                       }}
                     >
                       Edit
                     </Button>
+
                     <Button
                       size='sm'
                       variant='destructive'
                       onClick={(e) => {
                         e.preventDefault();
-                        handleChangeDeleteModal(true, account);
+                        setDeleteAccountId(account.id);
                       }}
                     >
                       Delete
                     </Button>
+
+                    {/* <ShareAccountModal accountId={account.id} /> */}
                   </div>
                 </div>
               </AccountCardContent>
@@ -182,46 +172,31 @@ const AccountList = () => {
         )}
       </div>
 
-      {openDelete && selectedItem && (
-        <DeleteConfirmationModal
-          title='Delete Account'
-          description={
-            <>
-              Are you sure you want to delete <b>{selectedItem?.name}</b> account?
-            </>
-          }
-          onConfirm={() => handleDelete(selectedItem?.id)}
-          open={openDelete}
-          noTriggerButton
-          onOpenChange={() => handleChangeDeleteModal(false, undefined)}
-        />
-      )}
-      {selectedItem && (
-        <UpdateModal
-          title='Edit account info'
-          formSchema={accountSchema}
-          defaultValues={selectedItem}
-          triggerButton={<></>}
-          description='Update your account name, initial amount, and currency information'
-          submit={async (values: AccountFormSchema) => {
-            if (selectedItem) {
-              await handleEditAccount(selectedItem.id, values);
+      <DeleteConfirmationModal
+        title='Delete Account'
+        description={
+          <>
+            Are you sure you want to delete <b>{selectedItem?.name}</b> account?
+          </>
+        }
+        onConfirm={handleDelete}
+        open={!!deleteAccountId}
+        noTriggerButton
+        onOpenChange={() => setDeleteAccountId(null)}
+      />
 
-              setOpenEdit(false);
-            }
+      {selectedItem && (
+        <EditAccountModal
+          open={isEditModalOpen}
+          onOpenChange={setIsEditModalOpen}
+          accountId={selectedItem.id}
+          initialValues={{
+            name: selectedItem.name,
+            balance: selectedItem.balance,
+            currency: selectedItem.currency
           }}
-          onOpenChange={(open) => handleChangeModal(open, open ? selectedItem : undefined)}
-          open={openEdit}
-        >
-          <Input type='text' name='name' placeholder='Account Name' className='my-2 w-full' />
-          <Input
-            type='number'
-            name='balance'
-            placeholder='Starting Balance'
-            className='my-2 w-full'
-          />
-          <Input type='text' name='currency' placeholder='Currency' className='my-2 w-full' />
-        </UpdateModal>
+          onAccountUpdated={refetch}
+        />
       )}
     </div>
   );

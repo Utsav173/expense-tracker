@@ -1,3 +1,5 @@
+// /home/utsav/coding/expense-tracker/new-frontend/src/components/modals/edit-account-modal.tsx
+
 'use client';
 
 import * as React from 'react';
@@ -26,7 +28,7 @@ import {
 import { accountUpdate } from '@/lib/endpoints/accounts';
 import CurrencySelect from '../currency-select';
 import { fetchCurrencies, COMMON_CURRENCIES } from '@/lib/endpoints/currency';
-import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
 import { useToast } from '@/lib/hooks/useToast';
 
 const formSchema = z.object({
@@ -46,13 +48,15 @@ interface EditAccountModalProps {
     balance: number | undefined;
     currency: string | undefined;
   };
+  onAccountUpdated: () => void;
 }
 
 export function EditAccountModal({
   open,
   onOpenChange,
   accountId,
-  initialValues
+  initialValues,
+  onAccountUpdated
 }: EditAccountModalProps) {
   const { showSuccess, showError } = useToast();
   const queryClient = useQueryClient();
@@ -66,15 +70,21 @@ export function EditAccountModal({
     }
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    try {
-      await accountUpdate(accountId, values);
+  const updateAccountMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => accountUpdate(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['accounts'] }); // Correct key
       showSuccess('Account updated successfully!');
-      queryClient.invalidateQueries({ queryKey: ['accounts'] });
       onOpenChange(false);
-    } catch (error: any) {
+      onAccountUpdated();
+    },
+    onError: (error: any) => {
       showError(error.message);
     }
+  });
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    await updateAccountMutation.mutate({ id: accountId, data: values });
   }
 
   const { data: currencies, isLoading: isLoadingCurrencies } = useQuery({
@@ -143,7 +153,9 @@ export function EditAccountModal({
               )}
             />
             <DialogFooter>
-              <Button type='submit'>Update Account</Button>
+              <Button type='submit' disabled={updateAccountMutation.isPending}>
+                Update Account
+              </Button>
             </DialogFooter>
           </form>
         </Form>

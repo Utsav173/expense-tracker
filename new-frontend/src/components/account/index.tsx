@@ -1,11 +1,23 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Trash2, TrendingDown, TrendingUp, Pencil } from 'lucide-react';
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft, Trash2, TrendingDown, TrendingUp, Pencil, AlertCircle } from 'lucide-react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  XAxis,
+  YAxis
+} from 'recharts';
 import { ApiResponse, AccountDetails, CustomAnalytics, ChartDataType } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
 import { accountDelete } from '@/lib/endpoints/accounts';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { ChartLegend, ChartTooltip } from '../ui/chart';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 
 interface AccountHeaderProps {
   account: ApiResponse<AccountDetails> | undefined;
@@ -178,7 +190,26 @@ export const AnalyticsCards: React.FC<AnalyticsCardsProps> = ({ analytics, isLoa
 };
 
 // Chart Component
+interface IncomeExpenseChartProps {
+  data: Array<{
+    date: string;
+    income: number;
+    expense: number;
+    balance: number;
+  }>;
+  isLoading: boolean;
+}
+
 export const IncomeExpenseChart: React.FC<IncomeExpenseChartProps> = ({ data, isLoading }) => {
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(value);
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -192,33 +223,114 @@ export const IncomeExpenseChart: React.FC<IncomeExpenseChartProps> = ({ data, is
     );
   }
 
+  // Check if we have no data to display
+  if (!data || data.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Income vs Expense vs Balance Trend</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert>
+            <AlertCircle className='h-4 w-4' />
+            <AlertTitle>No Data Available</AlertTitle>
+            <AlertDescription>
+              There is no financial data available for the selected period.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Income vs Expense vs Balance Trend</CardTitle>
+        <CardDescription>Tracking your financial trends over time</CardDescription>
       </CardHeader>
+
       <CardContent>
-        <div className='h-[350px]'>
-          <ResponsiveContainer width='100%' height='100%'>
-            <BarChart data={data}>
-              <XAxis dataKey='date' />
-              <YAxis />
-              <Bar dataKey='income' name='Income' fill='rgb(34, 197, 94)' radius={[4, 4, 0, 0]} />
-              <Bar dataKey='expense' name='Expense' fill='rgb(239, 68, 68)' radius={[4, 4, 0, 0]} />
-              <Bar
-                dataKey='balance'
-                name='Balance'
-                fill='rgb(59, 130, 246)'
-                radius={[4, 4, 0, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        <Tabs defaultValue='bar' className='w-full'>
+          <TabsList className='mb-4'>
+            <TabsTrigger value='bar'>Bar Chart</TabsTrigger>
+            <TabsTrigger value='line'>Line Chart</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value='bar' className='h-[350px]'>
+            <ResponsiveContainer width='100%' height='100%'>
+              <BarChart data={data}>
+                <CartesianGrid strokeDasharray='3 3' />
+                <XAxis dataKey='date' />
+                <YAxis />
+                <ChartTooltip
+                  formatter={(value: number) => formatCurrency(value)}
+                  labelFormatter={(label: any) => `Date: ${label}`}
+                />
+                <ChartLegend />
+                <Bar dataKey='income' name='Income' fill='rgb(34, 197, 94)' radius={[4, 4, 0, 0]} />
+                <Bar
+                  dataKey='expense'
+                  name='Expense'
+                  fill='rgb(239, 68, 68)'
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey='balance'
+                  name='Balance'
+                  fill='rgb(59, 130, 246)'
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </TabsContent>
+
+          <TabsContent value='line' className='h-[350px]'>
+            <ResponsiveContainer width='100%' height='100%'>
+              <LineChart data={data}>
+                <CartesianGrid strokeDasharray='3 3' />
+                <XAxis dataKey='date' />
+                <YAxis />
+                <ChartTooltip
+                  formatter={(value: number) => formatCurrency(value)}
+                  labelFormatter={(label: any) => `Date: ${label}`}
+                />
+                <ChartLegend />
+                <Line
+                  type='monotone'
+                  dataKey='income'
+                  name='Income'
+                  stroke='rgb(34, 197, 94)'
+                  strokeWidth={2}
+                  dot={{ r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+                <Line
+                  type='monotone'
+                  dataKey='expense'
+                  name='Expense'
+                  stroke='rgb(239, 68, 68)'
+                  strokeWidth={2}
+                  dot={{ r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+                <Line
+                  type='monotone'
+                  dataKey='balance'
+                  name='Balance'
+                  stroke='rgb(59, 130, 246)'
+                  strokeWidth={2}
+                  dot={{ r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
 };
-
 export default {
   AccountHeader,
   AnalyticsCards,

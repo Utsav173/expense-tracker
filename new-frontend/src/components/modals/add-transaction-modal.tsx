@@ -245,15 +245,6 @@ const AddTransactionModal = ({ onTransactionAdded }: AddTransactionModalProps) =
           />
           {errors.text && <p className='text-sm text-red-500'>{errors.text.message}</p>}
         </div>
-        <div className='space-y-2'>
-          <Label htmlFor='currency'>Currency</Label>
-          <CurrencySelect
-            currencies={currencies}
-            value={watch('currency')}
-            onValueChange={(value) => setValue('currency', value)}
-            isLoading={isLoadingCurrencies}
-          />
-        </div>
 
         <div className='space-y-2'>
           <Label htmlFor='amount'>Amount</Label>

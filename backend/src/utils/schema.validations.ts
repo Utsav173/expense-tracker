@@ -10,7 +10,7 @@ export const userSchema = z.object({
   password: z.string().min(8).max(255),
   token: z.string().optional(),
   isSocial: z.boolean().optional(),
-  profilePic: z.string().url().optional(),
+  profilePic: z.any(),
   role: z.enum(['user', 'admin']).optional(),
   isActive: z.boolean().optional(),
   lastLoginAt: z.date().optional(),
@@ -20,6 +20,7 @@ export const userSchema = z.object({
 export const updateUserSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters long'),
   preferredCurrency: z.string().optional(),
+  profilePic: z.any(),
 });
 
 export const loginSchema = z.object({

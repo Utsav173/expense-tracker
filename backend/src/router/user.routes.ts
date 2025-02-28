@@ -277,23 +277,45 @@ userRouter.post('/reset-password', async (c) => {
 });
 
 // POST /update-user - Update user details
-userRouter.put('/update', authMiddleware, zValidator('json', updateUserSchema), async (c) => {
+userRouter.put('/update', authMiddleware, zValidator('form', updateUserSchema), async (c) => {
   try {
     const userId = await c.get('userId' as any);
-    const { name, preferredCurrency } = await c.req.json();
+    const formData = await c.req.formData();
+    console.log(formData, 'formData');
 
-    await db
-      .update(User)
-      .set({
-        name: name,
-        preferredCurrency: preferredCurrency,
-      })
-      .where(eq(User.id, userId));
+    const name = formData.get('name');
+    const preferredCurrency = formData.get('preferredCurrency');
+    const profilePic = formData.get('profilePic');
+
+    const updateData: any = {};
+
+    if (name) {
+      updateData.name = name;
+    }
+
+    if (preferredCurrency) {
+      updateData.preferredCurrency = preferredCurrency;
+    }
+
+    if (profilePic) {
+      const { error, data } = await compressImage(profilePic);
+
+      if (error) {
+        throw new HTTPException(400, { message: data });
+      }
+
+      updateData.profilePic = data;
+    }
+
+    await db.update(User).set(updateData).where(eq(User.id, userId));
 
     return c.json({
       message: 'User updated successfully',
+      data: updateData,
     });
   } catch (error) {
+    console.log(error);
+    
     throw new HTTPException(500, {
       message: error instanceof Error ? error.message : 'Something went wrong',
     });

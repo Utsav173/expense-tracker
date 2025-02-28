@@ -28,7 +28,7 @@ const AddModal = ({
   isOpen
 }: AddModalProps) => {
   return (
-    <Dialog onOpenChange={onOpenChange} open={isOpen}>
+    <Dialog onOpenChange={onOpenChange} open={isOpen} modal>
       <DialogTrigger asChild>{triggerButton}</DialogTrigger>
       <DialogContent className='sm:max-w-[425px]'>
         <DialogHeader>

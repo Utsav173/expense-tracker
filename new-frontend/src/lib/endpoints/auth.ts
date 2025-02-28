@@ -37,7 +37,14 @@ export const authGetMe = (): Promise<UserApiResponse> =>
   ) as Promise<UserApiResponse>;
 
 export const authUpdateUser = (body: any, successMessage?: string, errorMessage?: string) =>
-  apiFetch('/auth/update', 'PUT', body, undefined, successMessage, errorMessage);
+  apiFetch(
+    '/auth/update',
+    'PUT',
+    body,
+    { headers: { 'Content-Type': 'multipart/form-data' } },
+    successMessage,
+    errorMessage
+  );
 
 export const authUpdateUserPreferences = (
   body: any,

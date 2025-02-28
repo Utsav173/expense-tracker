@@ -21,7 +21,7 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import DateRangePicker from '@/components/date-range-picker';
-import { AccountHeader, AnalyticsCards, IncomeExpenseChart } from '@/components/account';
+import { AnalyticsCards, IncomeExpenseChart } from '@/components/account';
 import {
   Pagination,
   PaginationContent,
@@ -176,22 +176,14 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
 
   return (
     <div className='min-h-screen'>
-      <AccountHeader account={account} isLoading={isAccountLoading} router={router} id={id} />
-
       <div className='mx-auto max-w-7xl space-y-6 p-4'>
         <AnalyticsCards analytics={customAnalytics} isLoading={isAnalyticsLoading} />
 
         {/* Income vs Expense Chart */}
         <section className='rounded-xl bg-white shadow-sm'>
-          <div className='border-b p-6'>
-            <h2 className='text-xl font-semibold'>Income vs Expense</h2>
-          </div>
-          <div className='p-6'>
-            <IncomeExpenseChart data={transformedChartData} isLoading={isChartLoading} />
-          </div>
+          <IncomeExpenseChart data={transformedChartData} isLoading={isChartLoading} />
         </section>
 
-        {/* Transactions Section */}
         <section className='rounded-xl bg-white shadow-sm'>
           <div className='flex items-center justify-between border-b p-6'>
             <h2 className='text-xl font-semibold'>Transactions</h2>

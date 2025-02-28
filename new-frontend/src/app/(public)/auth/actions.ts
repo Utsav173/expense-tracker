@@ -63,7 +63,6 @@ export async function userLogout() {
 
     // Clear the token from local storage (client-side)
     // window.localStorage.removeItem('token'); // This will cause error since it's server action
-
   } catch (error) {
     console.error('Error logging out:', error);
   }

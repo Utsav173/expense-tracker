@@ -24,14 +24,8 @@ type SignUpSchemaType = z.infer<typeof signUpSchema>;
 const SignupPage = () => {
   const [loading, setLoading] = useState(false);
   const { push } = useRouter();
-  const { showSuccess, showError } = useToast();
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    watch
-  } = useForm<SignUpSchemaType>({
+  const { showError } = useToast();
+  const { register, handleSubmit, formState, setValue, watch } = useForm<SignUpSchemaType>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
       profilePic: null
