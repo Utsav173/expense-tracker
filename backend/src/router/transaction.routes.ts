@@ -19,10 +19,16 @@ import {
   sql,
 } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
-import { getDateTruncate, getIntervalValue, increment } from '../utils';
+import {
+  getDateFormatting,
+  getDateTruncate,
+  getIntervalValue,
+  getOrderBy,
+  increment,
+} from '../utils';
 import { transactionSchema } from '../utils/schema.validations';
 import { zValidator } from '@hono/zod-validator';
-import {handleAnalytics} from '../utils/handleAnalytics';
+import { handleAnalytics } from '../utils/handleAnalytics';
 import { z } from 'zod';
 import { Chance } from 'chance';
 import { utils, write } from 'xlsx';
@@ -441,30 +447,30 @@ transactionRouter.get('/by/income/expense/chart', authMiddleware, async (c) => {
     });
   }
 
+  const dateTruncate = getDateTruncate(duration);
+
   // This query generates aggregated income, expense and balance data
   // for a given duration, accountId or userId
-  // The subquery generates daily aggregated data using window functions
-  // and the outer query aggregates the daily data to generate the final result
   const result = await db
     .execute(
       sql.raw(`
       SELECT 
-      json_agg(date) AS "date",
-      json_agg(total_income) AS "income",
-      json_agg(total_expense) AS "expense",
-      json_agg(balance) AS "balance"
-    FROM (
-    SELECT
-      ${getDateTruncate(duration)} AS date,
-      SUM(CASE WHEN "isIncome" THEN amount ELSE 0 END) AS total_income,
-      SUM(CASE WHEN NOT "isIncome" THEN amount ELSE 0 END) AS total_expense,
-      SUM(CASE WHEN "isIncome" THEN amount ELSE -amount END) AS balance
-    FROM "transaction"
-    WHERE "createdAt" BETWEEN '${startDate}' AND '${endDate}'
-      AND ${accountId ? `account = '${accountId}'` : `owner = '${userId}'`}
-    GROUP BY date
-    ORDER BY date
-    ) AS subquery`),
+        json_agg(${getDateFormatting(duration)}) AS "date",
+        json_agg(total_income) AS "income",
+        json_agg(total_expense) AS "expense",
+        json_agg(balance) AS "balance"
+      FROM (
+        SELECT
+          ${dateTruncate} AS date,
+          SUM(CASE WHEN "isIncome" THEN amount ELSE 0 END) AS total_income,
+          SUM(CASE WHEN NOT "isIncome" THEN amount ELSE 0 END) AS total_expense,
+          SUM(CASE WHEN "isIncome" THEN amount ELSE -amount END) AS balance
+        FROM "transaction"
+        WHERE "createdAt" BETWEEN '${startDate}' AND '${endDate}'
+          AND ${accountId ? `account = '${accountId}'` : `owner = '${userId}'`}
+        GROUP BY date
+        ORDER BY ${getOrderBy(dateTruncate)}
+      ) AS subquery`),
     )
     .then((result) => {
       return result.rows[0];

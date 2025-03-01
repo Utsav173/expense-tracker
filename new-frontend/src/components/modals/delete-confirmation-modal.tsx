@@ -1,51 +1,48 @@
 'use client';
-
-import React, { ReactNode } from 'react';
+import * as React from 'react';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from '@/components/ui/alert-dialog';
 
 interface DeleteConfirmationModalProps {
   title: string;
-  description: ReactNode;
+  description: string;
+  triggerButton?: React.ReactNode;
   onConfirm: () => void;
-  triggerButton?: ReactNode;
-  onOpenChange?: (open: boolean) => void;
   open?: boolean;
-  noTriggerButton?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-const DeleteConfirmationModal = ({
+const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
   title,
   description,
-  onConfirm,
   triggerButton,
-  onOpenChange,
+  onConfirm,
   open,
-  noTriggerButton
-}: DeleteConfirmationModalProps) => {
+  onOpenChange
+}) => {
   return (
-    <Dialog onOpenChange={onOpenChange} {...(noTriggerButton && { open })}>
-      {noTriggerButton ? null : <DialogTrigger asChild>{triggerButton}</DialogTrigger>}
-      <DialogContent className='sm:max-w-[425px]'>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button type='button' onClick={onConfirm}>
-            Confirm Delete
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      {triggerButton ? <AlertDialogTrigger asChild>{triggerButton}</AlertDialogTrigger> : null}
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>Continue</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };
 

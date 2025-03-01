@@ -31,6 +31,7 @@ interface AccountHeaderProps {
 interface AnalyticsCardsProps {
   analytics: ApiResponse<CustomAnalytics> | undefined;
   isLoading: boolean;
+  account: ApiResponse<AccountDetails> | undefined;
 }
 
 interface IncomeExpenseChartProps {
@@ -45,6 +46,7 @@ interface AnalyticsCardData {
   currency?: string;
   inverse?: boolean;
   isPercentage?: boolean;
+  totalBalance?: number | null;
 }
 
 // Header Component
@@ -102,7 +104,11 @@ export const AccountHeader: React.FC<AccountHeaderProps> = ({ account, isLoading
 };
 
 // Analytics Cards Component
-export const AnalyticsCards: React.FC<AnalyticsCardsProps> = ({ analytics, isLoading }) => {
+export const AnalyticsCards: React.FC<AnalyticsCardsProps> = ({
+  analytics,
+  isLoading,
+  account
+}) => {
   if (isLoading) {
     return (
       <div className='grid gap-4 md:grid-cols-3'>
@@ -125,26 +131,25 @@ export const AnalyticsCards: React.FC<AnalyticsCardsProps> = ({ analytics, isLoa
       title: 'Income',
       value: analytics?.income || 0,
       change: analytics?.IncomePercentageChange || 0,
-      currency: 'INR'
+      currency: account?.currency || 'INR'
     },
     {
       title: 'Expense',
       value: analytics?.expense || 0,
       change: analytics?.ExpensePercentageChange || 0,
-      currency: 'INR',
+      currency: account?.currency || 'INR',
       inverse: true
     },
     {
       title: 'Balance Change',
-      value: analytics?.BalancePercentageChange || 0,
-      isPercentage: true
+      value: analytics?.balance || 0,
+      change: analytics?.BalancePercentageChange || 0,
+      currency: account?.currency || 'INR',
+      totalBalance: account?.balance
     }
   ];
 
   const formatValue = (card: AnalyticsCardData): string => {
-    if (card.isPercentage) {
-      return `${card.value > 0 ? '+' : ''}${card.value.toFixed(2)}%`;
-    }
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: card.currency
@@ -159,7 +164,18 @@ export const AnalyticsCards: React.FC<AnalyticsCardsProps> = ({ analytics, isLoa
             <CardTitle className='text-sm font-medium'>{card.title}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{formatValue(card)}</div>
+            <div className='flex items-center gap-0 text-2xl font-bold'>
+              {formatValue(card)}
+              {card.totalBalance !== undefined && (
+                <p className='ml-2 text-xs text-muted-foreground'>
+                  Total Balance:{' '}
+                  {new Intl.NumberFormat('en-IN', {
+                    style: 'currency',
+                    currency: card.currency
+                  }).format(card.totalBalance as number)}
+                </p>
+              )}
+            </div>
             {card.change !== undefined && (
               <div className='mt-2 flex items-center space-x-2'>
                 {card.change > 0 ? (

@@ -1,50 +1,80 @@
 'use client';
 
+import React, { use, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { categoryGetAll } from '@/lib/endpoints/category';
-import React, { useState } from 'react';
 import CategoryList from '@/components/category/category-list';
-import AddModal from '@/components/modals/add-modal';
-import { Button } from '@/components/ui/button';
+import { usePagination } from '@/hooks/usePagination';
+import { useRouter } from 'next/navigation';
+import AddCategoryModal from '@/components/modals/add-category-modal';
+import { Input } from '@/components/ui/input';
+import { useDebounce } from 'use-debounce';
+import { useCategoryFilters } from '@/components/category/hooks/useCategoryFilters';
 
-const CategoryPage = () => {
+interface PageProps {
+  searchParams: Promise<{
+    q?: string;
+    page?: string;
+    sortBy?: string;
+    sortOrder?: string;
+  }>;
+}
+
+const CategoryPage = ({ searchParams }: PageProps) => {
+  const unwrappedSearchParams = use(searchParams);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const { refetch } = useQuery({
-    queryKey: ['categories'],
+  const { filters, setSearchQuery, handleSort, updateURL } =
+    useCategoryFilters(unwrappedSearchParams);
+
+  const { page, handlePageChange } = usePagination(
+    Number(unwrappedSearchParams.page) || 1,
+    updateURL
+  );
+
+  const [debouncedSearch] = useDebounce(filters.searchQuery, 300);
+
+  const { data, refetch, isLoading } = useQuery({
+    queryKey: ['categories', debouncedSearch, page, filters.sortBy, filters.sortOrder],
     queryFn: () =>
       categoryGetAll({
-        sortBy: 'createdAt',
-        sortOrder: 'asc',
-        page: 1,
-        limit: 10
+        page: page,
+        limit: 10,
+        q: debouncedSearch,
+        sortBy: filters.sortBy,
+        sortOrder: filters.sortOrder
       }),
     retry: false
   });
-
-  const handleCategoryModal = () => {
-    setIsAddModalOpen(true);
-  };
 
   return (
     <div className='p-4'>
       <div className='flex items-center justify-between'>
         <h1 className='pb-3 text-xl font-bold'>Categories</h1>
-        <AddModal
-          title='Create New Category'
-          triggerButton={<Button onClick={handleCategoryModal}> Create Category </Button>}
-          onOpenChange={setIsAddModalOpen}
+        <AddCategoryModal
           isOpen={isAddModalOpen}
-        >
-          {/* Remove CategoryForm here - we will handle form inside AddModal if needed, or create a new simpler form */}
-          {/* <CategoryForm onCategoryAdded={refetch} isAdd={true} /> */}
-          <div>
-            Category creation form will go here if needed, or remove AddModal if category creation
-            is handled elsewhere. For now, let's leave it empty or remove AddModal if not needed.
-          </div>
-        </AddModal>
+          onOpenChange={setIsAddModalOpen}
+          onCategoryAdded={refetch}
+        />
       </div>
-      <CategoryList />
+      <div className='py-4'>
+        <Input
+          type='text'
+          placeholder='Search categories...'
+          value={filters.searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className='w-full rounded-md border border-gray-300 p-2'
+        />
+      </div>
+      <CategoryList
+        data={data}
+        isLoading={isLoading}
+        onSort={handleSort}
+        sortBy={filters.sortBy}
+        sortOrder={filters.sortOrder}
+        page={page}
+        handlePageChange={handlePageChange}
+      />
     </div>
   );
 };

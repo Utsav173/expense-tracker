@@ -1,197 +1,122 @@
-'use client';
-
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { categoryDelete, categoryGetAll, categoryUpdate } from '@/lib/endpoints/category';
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
 import Loader from '../ui/loader';
-import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
-import { Category as CategoryType } from '@/lib/types';
-import UpdateModal from '../modals/update-modal';
-import { useToast } from '@/lib/hooks/useToast';
-import { Trash2, Pencil } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { z } from 'zod';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { ApiResponse, Category } from '@/lib/types';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious
+} from '../ui/pagination';
+import { Button } from '../ui/button';
+import { ArrowUp, ArrowDown } from 'lucide-react';
+import CategoryRow from './category-row';
+import { useQuery } from '@tanstack/react-query';
+import { categoryGetAll } from '@/lib/endpoints/category';
 
-export const categorySchema = z.object({
-  name: z
-    .string()
-    .min(1, 'Category name must be at least 1 character')
-    .max(64, 'Category name must be no more than 64 characters')
-    .trim()
-});
+interface CategoryListProps {
+  data:
+    | ApiResponse<{
+        categories: Category[];
+        pagination: any;
+      }>
+    | undefined;
+  isLoading: boolean;
+  onSort: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
+  sortBy: string;
+  sortOrder: 'asc' | 'desc';
+  page: number;
+  handlePageChange: (page: number) => void;
+}
 
-const CategoryList = () => {
-  const [page, setPage] = useState<number>(1); // Initialize page state to 1
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['categories', page], // Include page in query key
-    queryFn: () =>
-      categoryGetAll({
-        sortBy: 'createdAt',
-        sortOrder: 'asc',
-        page: page,
-        limit: 10
-      }),
-    retry: false
+const CategoryList = ({
+  data,
+  isLoading,
+  onSort,
+  sortBy,
+  sortOrder,
+  page,
+  handlePageChange
+}: CategoryListProps) => {
+  const { refetch } = useQuery({
+    queryKey: ['categories'],
+    queryFn: categoryGetAll,
+    enabled: false
   });
-
-  const [selectedCategory, setSelectedCategory] = useState<CategoryType | undefined>(undefined); // Type as CategoryType, use undefined
-  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-
-  const { showSuccess, showError } = useToast();
-  const queryClient = useQueryClient();
-
-  const onConformDeleteCategory = async () => {
-    try {
-      await categoryDelete(selectedCategory!.id);
-      setSelectedCategory(undefined); // Use undefined
-      showSuccess('Category removed Successfully!');
-      refetch();
-    } catch (e: any) {
-      showError(e.message);
-    }
-  };
-
-  const updateCategoryMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => categoryUpdate(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
-      showSuccess('Category updated successfully!');
-      setSelectedCategory(undefined); // Use undefined
-      setIsUpdateModalOpen(false);
-    },
-    onError: (error: any) => {
-      showError(error.message);
-    }
-  });
-
-  const handleUpdate = async (data: any): Promise<void> => {
-    if (selectedCategory) {
-      await updateCategoryMutation.mutate({ id: selectedCategory.id, data });
-    }
-  };
-
-  const onHandleChangeModal = (open: boolean, catData?: CategoryType) => {
-    setSelectedCategory(catData);
-    setIsUpdateModalOpen(open);
-  };
-
-  const handlePageChange = (newPage: number) => {
-    // Implement handlePageChange function
-    setPage(newPage);
-  };
-
-  if (isLoading) {
-    return <Loader />;
-  }
-
-  if (error) {
-    return <p>Error: {(error as Error).message}</p>;
-  }
-
   return (
     <>
-      {data && data.categories && data.categories.length > 0 ? (
+      {isLoading ? (
+        <div className='flex items-center justify-center'>
+          <Loader />
+        </div>
+      ) : !data?.categories?.length ? (
+        <div className='py-8 text-center text-gray-500'>No Category found</div>
+      ) : (
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead className='w-[100px]'>
+                <div className='flex items-center gap-2'>
+                  Category
+                  <Button
+                    variant='ghost'
+                    size='icon'
+                    onClick={() =>
+                      onSort('name', sortBy === 'name' && sortOrder === 'asc' ? 'desc' : 'asc')
+                    }
+                  >
+                    {sortBy === 'name' && sortOrder === 'asc' ? (
+                      <ArrowUp className='h-4 w-4' />
+                    ) : (
+                      <ArrowDown className='h-4 w-4' />
+                    )}
+                  </Button>
+                </div>
+              </TableHead>
+              <TableHead className='w-[100px] text-right'>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.categories.map((category) => (
-              <TableRow key={category.id}>
-                <TableCell>{category.name}</TableCell>
-                <TableCell>
-                  <Button
-                    size='sm'
-                    variant='ghost'
-                    onClick={() => onHandleChangeModal(true, category)}
-                  >
-                    <Pencil size={18} />
-                  </Button>
-                  <DeleteConfirmationModal
-                    onOpenChange={(open) => {
-                      if (open) setSelectedCategory(category);
-                    }}
-                    title='Delete Category'
-                    triggerButton={
-                      <Button size='sm' variant='ghost'>
-                        <Trash2 size={18} />
-                      </Button>
-                    }
-                    description='Are you sure you want to delete category, related transaction category data will also affect!'
-                    onConfirm={onConformDeleteCategory}
-                  />
-                </TableCell>
-              </TableRow>
+            {data?.categories?.map((category) => (
+              <CategoryRow category={category} key={category.id} onCategoryDeleted={refetch} />
             ))}
           </TableBody>
         </Table>
-      ) : (
-        <p>No categories added yet.</p>
       )}
-
-      <UpdateModal
-        open={isUpdateModalOpen}
-        onOpenChange={onHandleChangeModal}
-        title='Update Category'
-        triggerButton={<></>}
-        submit={handleUpdate}
-        description='Please fill in the required information to edit your Category.'
-        formSchema={categorySchema}
-        defaultValues={selectedCategory} // defaultValues will handle undefined correctly
-      >
-        <Input type='text' name='name' placeholder='Category Name' className='my-2 w-full' />
-      </UpdateModal>
-
-      {/* Pagination Controls */}
-      <div className='mt-4 flex justify-center'>
-        {data?.pagination && (
-          <>
-            <Button
-              onClick={() => handlePageChange(page - 1)}
-              disabled={page === 1}
-              variant='outline'
-              size='sm'
-              className='mx-1'
-            >
-              Previous
-            </Button>
-            {Array.from({ length: data.pagination.totalPages }, (_, i) => i + 1).map(
-              (pageNumber) => (
-                <Button
-                  key={pageNumber}
-                  onClick={() => handlePageChange(pageNumber)}
-                  variant={pageNumber === page ? 'default' : 'outline'}
-                  size='sm'
-                  className='mx-1'
-                >
-                  {pageNumber}
-                </Button>
-              )
+      {data?.pagination?.totalPages > 1 && (
+        <Pagination className='mt-6'>
+          <PaginationContent>
+            {page > 1 && (
+              <PaginationItem>
+                <PaginationPrevious href='#' onClick={() => handlePageChange(page - 1)} />
+              </PaginationItem>
             )}
-            <Button
-              onClick={() => handlePageChange(page + 1)}
-              disabled={page === data.pagination.totalPages}
-              variant='outline'
-              size='sm'
-              className='mx-1'
-            >
-              Next
-            </Button>
-          </>
-        )}
-      </div>
+
+            {Array.from({ length: data?.pagination?.totalPages }, (_, i) => i + 1)
+              .filter(
+                (p) => p <= 2 || p >= data?.pagination?.totalPages - 1 || Math.abs(p - page) <= 1
+              )
+              .map((p) => (
+                <PaginationItem key={p}>
+                  <PaginationLink
+                    href='#'
+                    isActive={p === page}
+                    onClick={() => handlePageChange(p)}
+                  >
+                    {p}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+
+            {page < data?.pagination?.totalPages && (
+              <PaginationItem>
+                <PaginationNext href='#' onClick={() => handlePageChange(page + 1)} />
+              </PaginationItem>
+            )}
+          </PaginationContent>
+        </Pagination>
+      )}
     </>
   );
 };

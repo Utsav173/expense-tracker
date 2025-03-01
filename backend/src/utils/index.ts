@@ -349,35 +349,81 @@ export const getDateTruncate = (duration: string | undefined) => {
 
     const difference = endDate - startDate;
     const days = difference / (1000 * 3600 * 24);
-    const months = difference / (1000 * 3600 * 24 * 30);
-    const years = difference / (1000 * 3600 * 24 * 30 * 12);
 
-    switch (true) {
-      case days < 30:
-        return `TO_CHAR("createdAt"::timestamp, 'YYYY-MM-DD')`;
-      case months < 12:
-        return `TO_CHAR("createdAt"::timestamp, 'MM-Mon')`;
-      case years >= 1:
-        return `TO_CHAR("createdAt"::timestamp, 'YYYY')`;
-      default:
-        return `TO_CHAR("createdAt"::timestamp, 'YYYY')`;
+    // For ranges less than a month, group by day
+    if (days <= 31) {
+      return `TO_CHAR("createdAt"::timestamp, 'YYYY-MM-DD')`;
+    }
+    // For ranges greater than a month but less than a year, group by month
+    else if (days <= 366) {
+      return `TO_CHAR("createdAt"::timestamp, 'YYYY-MM')`;
+    }
+    // For ranges greater than a year, group by year
+    else {
+      return `TO_CHAR("createdAt"::timestamp, 'YYYY')`;
     }
   } else {
     switch (duration) {
       case 'today':
+        // For today, group by hour
         return `TO_CHAR("createdAt"::timestamp, 'HH12') || TO_CHAR("createdAt"::timestamp, 'AM')`;
       case 'thisWeek':
-        return `TO_CHAR("createdAt"::timestamp,'Day')`;
+        // For the past 7 days, group by day with full date for proper ordering
+        return `TO_CHAR("createdAt"::timestamp, 'YYYY-MM-DD')`;
       case 'thisMonth':
-        return `TO_CHAR("createdAt"::timestamp,'YYYY-MM-DD')`;
+        // For month, group by day
+        return `TO_CHAR("createdAt"::timestamp, 'YYYY-MM-DD')`;
       case 'thisYear':
-        return `TO_CHAR("createdAt"::timestamp,'MM-Mon')`;
+        // For year, group by month
+        return `TO_CHAR("createdAt"::timestamp, 'YYYY-MM')`;
       case 'all':
-        return `TO_CHAR("createdAt"::timestamp,'YYYY')`;
+        // For all time, group by year
+        return `TO_CHAR("createdAt"::timestamp, 'YYYY')`;
       default:
-        return `TO_CHAR("createdAt"::timestamp,'YYYY-MM-DD')`;
+        return `TO_CHAR("createdAt"::timestamp, 'YYYY-MM-DD')`;
     }
   }
+};
+
+export const getOrderBy = (dateTruncate: string) => {
+  // If the date format includes just the day name, we need to order differently
+  if (dateTruncate.includes('Day')) {
+    return `CASE 
+      WHEN date = 'Sunday' THEN 1
+      WHEN date = 'Monday' THEN 2
+      WHEN date = 'Tuesday' THEN 3
+      WHEN date = 'Wednesday' THEN 4
+      WHEN date = 'Thursday' THEN 5
+      WHEN date = 'Friday' THEN 6
+      WHEN date = 'Saturday' THEN 7
+      ELSE 8
+    END`;
+  }
+
+  // For month names, we need custom ordering too
+  if (dateTruncate.includes('Mon')) {
+    return `CASE 
+      WHEN substring(date, 1, 2) = '01' THEN 1
+      WHEN substring(date, 1, 2) = '02' THEN 2
+      WHEN substring(date, 1, 2) = '03' THEN 3
+      WHEN substring(date, 1, 2) = '04' THEN 4
+      WHEN substring(date, 1, 2) = '05' THEN 5
+      WHEN substring(date, 1, 2) = '06' THEN 6
+      WHEN substring(date, 1, 2) = '07' THEN 7
+      WHEN substring(date, 1, 2) = '08' THEN 8
+      WHEN substring(date, 1, 2) = '09' THEN 9
+      WHEN substring(date, 1, 2) = '10' THEN 10
+      WHEN substring(date, 1, 2) = '11' THEN 11
+      WHEN substring(date, 1, 2) = '12' THEN 12
+      ELSE 13
+    END`;
+  }
+
+  return 'date';
+};
+
+export const getDateFormatting = (duration: string | undefined) => {
+  return 'date';
 };
 
 export function calcPercentageChange(array: any[]) {

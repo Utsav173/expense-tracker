@@ -5,7 +5,7 @@ import { accountGetById, accountGetCustomAnalytics } from '@/lib/endpoints/accou
 import { useRouter } from 'next/navigation';
 import { transactionGetAll, transactionGetIncomeExpenseChart } from '@/lib/endpoints/transactions';
 import { categoryGetAll } from '@/lib/endpoints/category';
-import { format } from 'date-fns';
+import { format, startOfWeek, startOfMonth } from 'date-fns';
 import { use, useMemo } from 'react';
 import { useDebounce } from 'use-debounce';
 
@@ -35,7 +35,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 // Custom hooks
 import { useToast } from '@/lib/hooks/useToast';
 import { usePagination } from '@/hooks/usePagination';
-import { useFilterState } from '@/hooks/useFilterState';
+import { useAccountFilterState } from '@/components/account/hooks/useAccountFilterState';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -69,7 +69,7 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
     handleClearDateRange,
     handleSort,
     updateURL
-  } = useFilterState(unwrappedSearchParams, router, id);
+  } = useAccountFilterState(unwrappedSearchParams, router, id);
 
   const { page, handlePageChange } = usePagination(
     Number(unwrappedSearchParams.page) || 1,
@@ -135,7 +135,7 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
         duration:
           filters.dateRange?.from && filters.dateRange.to
             ? `${format(filters.dateRange.from, 'yyyy-MM-dd')},${format(filters.dateRange.to, 'yyyy-MM-dd')}`
-            : '',
+            : 'thisMonth',
         page,
         pageSize: 10,
         q: debouncedSearch,
@@ -168,6 +168,40 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
     return `${format(filters.dateRange.from, 'MMM dd, yyyy')} - ${format(filters.dateRange.to, 'MMM dd, yyyy')}`;
   }, [filters.dateRange]);
 
+  // Preset date range handler
+  const handlePreset = (preset: string) => {
+    let from, to;
+    const today = new Date();
+    switch (preset) {
+      case 'today':
+        from = today;
+        to = today;
+        break;
+      case 'thisWeek':
+        from = startOfWeek(today);
+        to = today;
+        break;
+      case 'thisMonth':
+        from = startOfMonth(today);
+        to = today;
+        break;
+      default:
+        return;
+    }
+    handleDateRangeSelect({ from, to });
+    applyDateRange();
+  };
+
+  // Reset filters handler
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    handleCategoryChange('all');
+    handleIncomeTypeChange('all');
+    handleClearDateRange();
+    handleSort('date');
+    updateURL({});
+  };
+
   // Error handling
   if (!id) {
     showError('Account ID is required');
@@ -177,13 +211,19 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
   return (
     <div className='min-h-screen'>
       <div className='mx-auto max-w-7xl space-y-6 p-4'>
-        <AnalyticsCards analytics={customAnalytics} isLoading={isAnalyticsLoading} />
+        {/* Analytics Cards */}
+        <AnalyticsCards
+          analytics={customAnalytics}
+          isLoading={isAnalyticsLoading}
+          account={account}
+        />
 
         {/* Income vs Expense Chart */}
         <section className='rounded-xl bg-white shadow-sm'>
           <IncomeExpenseChart data={transformedChartData} isLoading={isChartLoading} />
         </section>
 
+        {/* Transactions Section */}
         <section className='rounded-xl bg-white shadow-sm'>
           <div className='flex items-center justify-between border-b p-6'>
             <h2 className='text-xl font-semibold'>Transactions</h2>
@@ -193,7 +233,7 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
           <div className='p-6'>
             {/* Filters */}
             <div className='mb-4 grid gap-4'>
-              {/* First Row: Full-width Search Bar */}
+              {/* Search Bar */}
               <div className='col-span-4'>
                 <Input
                   type='text'
@@ -204,7 +244,7 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
                 />
               </div>
 
-              {/* Second Row: Responsive 4 Columns */}
+              {/* Filter Controls */}
               <div className='col-span-4 grid grid-cols-1 gap-4 sm:grid-cols-4'>
                 {/* Category Filter */}
                 <div>
@@ -240,15 +280,26 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
                   </Select>
                 </div>
 
-                {/* Date Range Filter */}
+                {/* Date Range Filter with Presets */}
                 <div>
                   <DateRangePicker
                     dateRange={filters.tempDateRange}
                     setDateRange={handleDateRangeSelect}
                   />
+                  <div className='mt-2 flex flex-wrap gap-2'>
+                    <Button variant='outline' size='sm' onClick={() => handlePreset('today')}>
+                      Today
+                    </Button>
+                    <Button variant='outline' size='sm' onClick={() => handlePreset('thisWeek')}>
+                      This Week
+                    </Button>
+                    <Button variant='outline' size='sm' onClick={() => handlePreset('thisMonth')}>
+                      This Month
+                    </Button>
+                  </div>
                 </div>
 
-                {/* Apply & Clear Buttons */}
+                {/* Action Buttons */}
                 <div className='flex w-fit justify-end gap-2 sm:justify-start'>
                   <Button
                     variant='outline'
@@ -263,6 +314,9 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
                       Clear
                     </Button>
                   )}
+                  <Button variant='outline' size='sm' onClick={handleResetFilters}>
+                    Reset Filters
+                  </Button>
                 </div>
               </div>
             </div>
@@ -289,7 +343,6 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
                   sortBy={filters.sortBy}
                   sortOrder={filters.sortOrder}
                 />
-
                 {transactionsData.totalPages > 1 && (
                   <Pagination className='mt-6'>
                     <PaginationContent>
@@ -298,7 +351,6 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
                           <PaginationPrevious href='#' onClick={() => handlePageChange(page - 1)} />
                         </PaginationItem>
                       )}
-
                       {Array.from({ length: transactionsData.totalPages }, (_, i) => i + 1)
                         .filter(
                           (p) =>
@@ -317,7 +369,6 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
                             </PaginationLink>
                           </PaginationItem>
                         ))}
-
                       {page < transactionsData.totalPages && (
                         <PaginationItem>
                           <PaginationNext href='#' onClick={() => handlePageChange(page + 1)} />

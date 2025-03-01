@@ -174,14 +174,9 @@ const AccountList = () => {
 
       <DeleteConfirmationModal
         title='Delete Account'
-        description={
-          <>
-            Are you sure you want to delete <b>{selectedItem?.name}</b> account?
-          </>
-        }
+        description={`Are you sure you want to delete <b>{selectedItem?.name}</b> account?`}
         onConfirm={handleDelete}
         open={!!deleteAccountId}
-        noTriggerButton
         onOpenChange={() => setDeleteAccountId(null)}
       />
 

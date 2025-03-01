@@ -13,7 +13,7 @@ interface SearchParams {
   dateTo?: string;
 }
 
-export const useFilterState = (
+export const useAccountFilterState = (
   searchParams: SearchParams,
   router: AppRouterInstance,
   accountId: string

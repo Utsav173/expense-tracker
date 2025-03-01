@@ -21,6 +21,7 @@ import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { COMMON_CURRENCIES, fetchCurrencies } from '@/lib/endpoints/currency';
 import CurrencySelect from '../currency-select';
 import DateTimePicker from '../date-time-picker';
+import AddCategoryModal from './add-category-modal';
 
 const transactionSchema = z.object({
   text: z.string().min(3, 'Transaction description must be at least 3 characters').max(255),
@@ -307,6 +308,12 @@ const AddTransactionModal = ({ onTransactionAdded }: AddTransactionModalProps) =
         </Button>
       </form>
 
+      <AddCategoryModal
+        isOpen={isAddCategoryOpen}
+        onOpenChange={setIsAddCategoryOpen}
+        onCategoryAdded={refetchCategories}
+      />
+      {/* 
       <AddModal
         title='Add Category'
         description='Add a new category'
@@ -332,7 +339,7 @@ const AddTransactionModal = ({ onTransactionAdded }: AddTransactionModalProps) =
             Add Category
           </Button>
         </form>
-      </AddModal>
+      </AddModal> */}
     </AddModal>
   );
 };

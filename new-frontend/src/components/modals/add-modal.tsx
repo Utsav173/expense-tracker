@@ -1,6 +1,7 @@
 'use client';
 
 import React, { ReactNode } from 'react';
+
 import {
   Dialog,
   DialogContent,
@@ -19,21 +20,21 @@ interface AddModalProps {
   isOpen?: boolean;
 }
 
-const AddModal = ({
+const AddModal: React.FC<AddModalProps> = ({
   title,
   description,
   children,
   triggerButton,
   onOpenChange,
   isOpen
-}: AddModalProps) => {
+}) => {
   return (
-    <Dialog onOpenChange={onOpenChange} open={isOpen} modal>
+    <Dialog open={isOpen} onOpenChange={onOpenChange} modal>
       <DialogTrigger asChild>{triggerButton}</DialogTrigger>
       <DialogContent className='sm:max-w-[425px]'>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          {description && <DialogDescription>{description}</DialogDescription>}
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         {children}
       </DialogContent>
