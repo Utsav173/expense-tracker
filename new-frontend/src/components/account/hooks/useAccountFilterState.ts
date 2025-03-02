@@ -1,10 +1,12 @@
+'use client';
+
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { DateRange } from 'react-day-picker';
 import { parseISO, format } from 'date-fns';
 import { useDebounce } from 'use-debounce';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
-interface CategoryFilters {
+interface AccountsFilters {
   searchQuery: string;
   debouncedSearchQuery: string;
   sortBy: string;
@@ -18,10 +20,25 @@ interface CategoryFilters {
 export const useAccountFilterState = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const isInitialMount = useRef(true);
+  const pathname = usePathname();
 
-  const initialSearchParams = {
+  // Track if we're updating from URL to prevent loops
+  const isUpdatingFromUrl = useRef(false);
+
+  // Track last URL update to avoid redundant changes
+  const lastUrlUpdate = useRef({
     q: searchParams.get('q') || '',
+    sortBy: searchParams.get('sortBy') || 'createdAt',
+    sortOrder: searchParams.get('sortOrder') || 'desc',
+    categoryId: searchParams.get('categoryId') || '',
+    isIncome: searchParams.get('isIncome') || '',
+    dateFrom: searchParams.get('dateFrom') || '',
+    dateTo: searchParams.get('dateTo') || ''
+  });
+
+  const [filters, setFilters] = useState<AccountsFilters>({
+    searchQuery: searchParams.get('q') || '',
+    debouncedSearchQuery: searchParams.get('q') || '',
     sortBy: searchParams.get('sortBy') || 'createdAt',
     sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc',
     categoryId: searchParams.get('categoryId') || undefined,
@@ -31,177 +48,265 @@ export const useAccountFilterState = () => {
         : searchParams.get('isIncome') === 'false'
           ? false
           : undefined,
-    dateFrom: searchParams.get('dateFrom') || undefined,
-    dateTo: searchParams.get('dateTo') || undefined
-  };
-
-  const [filters, setFilters] = useState<CategoryFilters>({
-    searchQuery: initialSearchParams.q,
-    debouncedSearchQuery: initialSearchParams.q,
-    sortBy: initialSearchParams.sortBy,
-    sortOrder: initialSearchParams.sortOrder,
-    categoryId: initialSearchParams.categoryId,
-    isIncome: initialSearchParams.isIncome,
     dateRange:
-      initialSearchParams.dateFrom && initialSearchParams.dateTo
-        ? { from: parseISO(initialSearchParams.dateFrom), to: parseISO(initialSearchParams.dateTo) }
+      searchParams.get('dateFrom') && searchParams.get('dateTo')
+        ? {
+            from: parseISO(searchParams.get('dateFrom')!),
+            to: parseISO(searchParams.get('dateTo')!)
+          }
         : undefined,
     tempDateRange:
-      initialSearchParams.dateFrom && initialSearchParams.dateTo
-        ? { from: parseISO(initialSearchParams.dateFrom), to: parseISO(initialSearchParams.dateTo) }
+      searchParams.get('dateFrom') && searchParams.get('dateTo')
+        ? {
+            from: parseISO(searchParams.get('dateFrom')!),
+            to: parseISO(searchParams.get('dateTo')!)
+          }
         : undefined
   });
 
   const [debouncedSearchQuery] = useDebounce(filters.searchQuery, 300);
 
-  // Update the debounced search query in the filters whenever it changes
-  useEffect(() => {
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      debouncedSearchQuery: debouncedSearchQuery
-    }));
-  }, [debouncedSearchQuery]);
-
+  // Safe URL update that prevents cycles
   const updateURL = useCallback(
-    (params: any) => {
-      const currentParams = new URLSearchParams(window.location.search);
-      Object.keys(params).forEach((key) => {
-        const param = key as keyof typeof params;
-        if (params[param] === undefined || params[param] === null || params[param] === '') {
-          currentParams.delete(param.toString());
-        } else {
-          currentParams.set(param.toString(), params[param]);
+    (params: Record<string, string | undefined>) => {
+      // Check if this would actually change anything
+      let hasChanges = false;
+      for (const [key, value] of Object.entries(params)) {
+        const currentValue = searchParams.get(key) || '';
+        const newValue = value || '';
+        if (currentValue !== newValue) {
+          hasChanges = true;
+          break;
+        }
+      }
+
+      if (!hasChanges) return; // Skip if no changes
+
+      // Update tracking ref with new values
+      Object.entries(params).forEach(([key, value]) => {
+        if (key in lastUrlUpdate.current) {
+          (lastUrlUpdate.current as any)[key] = value || '';
         }
       });
 
-      const newUrl = `${window.location.pathname}?${currentParams.toString()}`;
-      router.replace(newUrl, { scroll: false });
+      // Update the URL
+      const newSearchParams = new URLSearchParams(searchParams.toString());
+
+      Object.entries(params).forEach(([key, value]) => {
+        if (!value) {
+          newSearchParams.delete(key);
+        } else {
+          newSearchParams.set(key, value);
+        }
+      });
+
+      const newUrl = `${pathname}?${newSearchParams.toString()}`;
+      router.push(newUrl, { scroll: false });
     },
-    [router]
+    [router, pathname, searchParams]
   );
 
-  // Update URL when debounced search query changes
+  // Handle debounced search query changes
   useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
-    }
-    updateURL({ q: filters.debouncedSearchQuery || undefined, page: undefined });
-  }, [filters.debouncedSearchQuery, updateURL]);
+    if (isUpdatingFromUrl.current) return; // Skip if we're updating from URL
+    if (debouncedSearchQuery === lastUrlUpdate.current.q) return; // Skip if unchanged
 
-  // Update filters when URL changes
+    // Update filters state with debounced value
+    setFilters((prev) => ({
+      ...prev,
+      debouncedSearchQuery
+    }));
+
+    // Update URL
+    updateURL({
+      q: debouncedSearchQuery || undefined,
+      page: undefined
+    });
+  }, [debouncedSearchQuery, updateURL]);
+
+  // Sync from URL changes
   useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
-    }
-    const newQ = searchParams.get('q') || '';
-    const newSortBy = searchParams.get('sortBy') || 'createdAt';
-    const newSortOrder = (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc';
-    const newCategoryId = searchParams.get('categoryId') || undefined;
-    const newIsIncome =
-      searchParams.get('isIncome') === 'true'
-        ? true
-        : searchParams.get('isIncome') === 'false'
-          ? false
-          : undefined;
+    const urlQ = searchParams.get('q') || '';
+    const urlSortBy = searchParams.get('sortBy') || 'createdAt';
+    const urlSortOrder = searchParams.get('sortOrder') || 'desc';
+    const urlCategoryId = searchParams.get('categoryId') || '';
+    const urlIsIncome = searchParams.get('isIncome') || '';
+    const urlDateFrom = searchParams.get('dateFrom') || '';
+    const urlDateTo = searchParams.get('dateTo') || '';
 
-    const newDateFrom = searchParams.get('dateFrom') || undefined;
-    const newDateTo = searchParams.get('dateTo') || undefined;
+    // Check if this is a change we didn't initiate
+    const isSelfUpdate =
+      urlQ === lastUrlUpdate.current.q &&
+      urlSortBy === lastUrlUpdate.current.sortBy &&
+      urlSortOrder === lastUrlUpdate.current.sortOrder &&
+      urlCategoryId === lastUrlUpdate.current.categoryId &&
+      urlIsIncome === lastUrlUpdate.current.isIncome &&
+      urlDateFrom === lastUrlUpdate.current.dateFrom &&
+      urlDateTo === lastUrlUpdate.current.dateTo;
+
+    if (isSelfUpdate) return; // Skip our own updates
+
+    // Update tracking refs
+    lastUrlUpdate.current = {
+      q: urlQ,
+      sortBy: urlSortBy,
+      sortOrder: urlSortOrder,
+      categoryId: urlCategoryId,
+      isIncome: urlIsIncome,
+      dateFrom: urlDateFrom,
+      dateTo: urlDateTo
+    };
+
+    // Flag that we're updating from URL
+    isUpdatingFromUrl.current = true;
+
+    // Parse date range from URL if present
     const newDateRange =
-      newDateFrom && newDateTo
-        ? { from: parseISO(newDateFrom), to: parseISO(newDateTo) }
-        : undefined;
-    const newTempDateRange =
-      newDateFrom && newDateTo
-        ? { from: parseISO(newDateFrom), to: parseISO(newDateTo) }
+      urlDateFrom && urlDateTo
+        ? { from: parseISO(urlDateFrom), to: parseISO(urlDateTo) }
         : undefined;
 
-    // Check if actual changes
-    if (
-      filters.searchQuery !== newQ ||
-      filters.sortBy !== newSortBy ||
-      filters.sortOrder !== newSortOrder ||
-      filters.categoryId !== newCategoryId ||
-      filters.isIncome !== newIsIncome ||
-      !isDateRangesEqual(filters.dateRange, newDateRange)
-    ) {
-      setFilters({
-        searchQuery: newQ,
-        debouncedSearchQuery: newQ,
-        sortBy: newSortBy,
-        sortOrder: newSortOrder,
-        categoryId: newCategoryId,
-        isIncome: newIsIncome,
-        dateRange: newDateRange,
-        tempDateRange: newTempDateRange
-      });
-    }
-  }, [searchParams, filters]);
+    // Update state from URL
+    setFilters({
+      searchQuery: urlQ,
+      debouncedSearchQuery: urlQ,
+      sortBy: urlSortBy,
+      sortOrder: urlSortOrder as 'asc' | 'desc',
+      categoryId: urlCategoryId || undefined,
+      isIncome: urlIsIncome === 'true' ? true : urlIsIncome === 'false' ? false : undefined,
+      dateRange: newDateRange,
+      tempDateRange: newDateRange
+    });
 
-  const setSearchQuery = (value: string) => {
-    setFilters((prevFilters) => ({
-      ...prevFilters,
+    // Reset flag after state update
+    setTimeout(() => {
+      isUpdatingFromUrl.current = false;
+    }, 0);
+  }, [searchParams]);
+
+  // All handlers should check isUpdatingFromUrl
+  const setSearchQuery = useCallback((value: string) => {
+    if (isUpdatingFromUrl.current) return; // Skip if updating from URL
+
+    setFilters((prev) => ({
+      ...prev,
       searchQuery: value
     }));
-  };
+  }, []);
 
-  const handleCategoryChange = (value: string) => {
-    const newCategoryId = value === 'all' ? undefined : value;
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      categoryId: newCategoryId
-    }));
-    updateURL({ categoryId: newCategoryId, page: undefined });
-  };
+  const handleCategoryChange = useCallback(
+    (value: string) => {
+      if (isUpdatingFromUrl.current) return; // Skip if updating from URL
 
-  const handleIncomeTypeChange = (value: string) => {
-    const newIsIncome = value === 'all' ? undefined : value === 'true';
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      isIncome: newIsIncome
-    }));
-    updateURL({
-      isIncome: newIsIncome === undefined ? undefined : String(newIsIncome),
-      page: undefined
-    }); // Reset page
-  };
+      const newCategoryId = value === 'all' ? undefined : value;
+      if (newCategoryId === lastUrlUpdate.current.categoryId) return;
 
-  const handleDateRangeSelect = (range: DateRange | undefined) => {
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      tempDateRange: range
-    }));
-    if (range?.from && range.to) {
-      setFilters((prevFilters) => ({
-        ...prevFilters,
-        dateRange: range
+      setFilters((prev) => ({
+        ...prev,
+        categoryId: newCategoryId
       }));
-      updateURL({
-        dateFrom: format(range.from, 'yyyy-MM-dd'),
-        dateTo: format(range.to, 'yyyy-MM-dd'),
-        page: undefined // Reset page
-      });
-    }
-  };
 
-  const handleClearDateRange = () => {
-    setFilters((prevFilters) => ({
-      ...prevFilters,
+      updateURL({
+        categoryId: newCategoryId,
+        page: undefined
+      });
+    },
+    [updateURL]
+  );
+
+  const handleIncomeTypeChange = useCallback(
+    (value: string) => {
+      if (isUpdatingFromUrl.current) return; // Skip if updating from URL
+
+      const newIsIncome = value === 'all' ? undefined : value === 'true';
+      const newIsIncomeStr = newIsIncome === undefined ? '' : String(newIsIncome);
+      if (newIsIncomeStr === lastUrlUpdate.current.isIncome) return;
+
+      setFilters((prev) => ({
+        ...prev,
+        isIncome: newIsIncome
+      }));
+
+      updateURL({
+        isIncome: newIsIncome === undefined ? undefined : String(newIsIncome),
+        page: undefined
+      });
+    },
+    [updateURL]
+  );
+
+  const handleDateRangeSelect = useCallback(
+    (range: DateRange | undefined) => {
+      if (isUpdatingFromUrl.current) return; // Skip if updating from URL
+
+      // Always update temp range
+      setFilters((prev) => ({
+        ...prev,
+        tempDateRange: range
+      }));
+
+      // Only update URL if range is complete
+      if (range?.from && range.to) {
+        const dateFrom = format(range.from, 'yyyy-MM-dd');
+        const dateTo = format(range.to, 'yyyy-MM-dd');
+
+        if (dateFrom === lastUrlUpdate.current.dateFrom && dateTo === lastUrlUpdate.current.dateTo)
+          return;
+
+        setFilters((prev) => ({
+          ...prev,
+          dateRange: range
+        }));
+
+        updateURL({
+          dateFrom,
+          dateTo,
+          page: undefined
+        });
+      }
+    },
+    [updateURL]
+  );
+
+  const handleClearDateRange = useCallback(() => {
+    if (isUpdatingFromUrl.current) return; // Skip if updating from URL
+
+    if (!lastUrlUpdate.current.dateFrom && !lastUrlUpdate.current.dateTo) return;
+
+    setFilters((prev) => ({
+      ...prev,
       dateRange: undefined,
       tempDateRange: undefined
     }));
-    updateURL({ dateFrom: undefined, dateTo: undefined, page: undefined });
-  };
 
-  const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      sortBy,
-      sortOrder
-    }));
-    updateURL({ sortBy, sortOrder, page: undefined });
-  };
+    updateURL({
+      dateFrom: undefined,
+      dateTo: undefined,
+      page: undefined
+    });
+  }, [updateURL]);
+
+  const handleSort = useCallback(
+    (sortBy: string, sortOrder: 'asc' | 'desc') => {
+      if (isUpdatingFromUrl.current) return; // Skip if updating from URL
+
+      if (sortBy === lastUrlUpdate.current.sortBy && sortOrder === lastUrlUpdate.current.sortOrder)
+        return;
+
+      setFilters((prev) => ({
+        ...prev,
+        sortBy,
+        sortOrder
+      }));
+
+      updateURL({
+        sortBy,
+        sortOrder,
+        page: undefined
+      });
+    },
+    [updateURL]
+  );
 
   return {
     filters,
@@ -214,13 +319,3 @@ export const useAccountFilterState = () => {
     updateURL
   };
 };
-
-// Helper function to check if date ranges are equal
-function isDateRangesEqual(range1: DateRange | undefined, range2: DateRange | undefined) {
-  if (range1 === range2) return true;
-  if (!range1 || !range2) return false;
-  return (
-    range1.from?.getTime() === range2.from?.getTime() &&
-    range1.to?.getTime() === range2.to?.getTime()
-  );
-}

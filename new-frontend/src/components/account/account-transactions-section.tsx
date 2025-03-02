@@ -3,21 +3,11 @@
 import React from 'react';
 import TransactionTable from '../transactions-table';
 import { Skeleton } from '../ui/skeleton';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious
-} from '../ui/pagination';
 import { AccountFilters } from './account-filters';
-import { Category, Transaction } from '@/lib/types';
+import { Category, TransactionsResponse } from '@/lib/types';
 
 interface AccountTransactionsSectionProps {
-  transactionsData:
-    | { transactions: Transaction[]; totalPages: number; currentPage: number }
-    | undefined;
+  transactionsData: TransactionsResponse | undefined;
   isTransactionLoading: boolean;
   refetchTransactions: () => void;
   filters: any;
@@ -80,47 +70,17 @@ export const AccountTransactionsSection: React.FC<AccountTransactionsSectionProp
             No transactions found for the selected filters.
           </div>
         ) : (
-          <>
-            <TransactionTable
-              transactions={transactionsData.transactions}
-              onUpdate={refetchTransactions}
-              onSort={handleSort}
-              sortBy={filters.sortBy}
-              sortOrder={filters.sortOrder}
-            />
-            {transactionsData.totalPages > 1 ? (
-              <Pagination className='mt-6'>
-                <PaginationContent>
-                  {page > 1 && (
-                    <PaginationItem>
-                      <PaginationPrevious href='#' onClick={() => handlePageChange(page - 1)} />
-                    </PaginationItem>
-                  )}
-                  {Array.from({ length: transactionsData.totalPages }, (_, i) => i + 1)
-                    .filter(
-                      (p) =>
-                        p <= 2 || p >= transactionsData.totalPages - 1 || Math.abs(p - page) <= 1
-                    )
-                    .map((p) => (
-                      <PaginationItem key={p}>
-                        <PaginationLink
-                          href='#'
-                          isActive={p === page}
-                          onClick={() => handlePageChange(p)}
-                        >
-                          {p}
-                        </PaginationLink>
-                      </PaginationItem>
-                    ))}
-                  {page < transactionsData.totalPages && (
-                    <PaginationItem>
-                      <PaginationNext href='#' onClick={() => handlePageChange(page + 1)} />
-                    </PaginationItem>
-                  )}
-                </PaginationContent>
-              </Pagination>
-            ) : null}
-          </>
+          <TransactionTable
+            transactions={transactionsData.transactions}
+            onUpdate={refetchTransactions}
+            onSort={handleSort}
+            sortBy={filters.sortBy}
+            sortOrder={filters.sortOrder}
+            loading={isTransactionLoading}
+            totalRecords={transactionsData.totalCount}
+            page={page}
+            handlePageChange={handlePageChange}
+          />
         )}
       </div>
     </section>

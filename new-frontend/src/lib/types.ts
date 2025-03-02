@@ -268,3 +268,11 @@ export type DropdownUser = {
   email: string;
   profilePic: string | null;
 };
+
+export type TransactionsResponse = ApiResponse<{
+  transactions: Transaction[];
+  totalPages: number;
+  totalCount: number;
+  currentPage: number;
+  pageSize: number;
+}>;

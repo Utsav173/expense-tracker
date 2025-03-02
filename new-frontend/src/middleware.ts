@@ -15,10 +15,6 @@ export async function middleware(request: NextRequest) {
   ];
   const isPublicPath = publicRoutes.some((route) => path.startsWith(route));
 
-  if (authCookie && isPublicPath) {
-    return NextResponse.next();
-  }
-
   // If not authenticated and trying to access protected routes
   if (!authCookie && !isPublicPath) {
     // Clear any existing auth cookies

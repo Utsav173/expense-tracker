@@ -11,8 +11,7 @@ import {
   getSortedRowModel,
   SortingState,
   CellContext,
-  HeaderContext,
-  ColumnSort
+  HeaderContext
 } from '@tanstack/react-table';
 import {
   Table,
@@ -22,10 +21,7 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import Loader from './loader';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-mobile'; // Custom hook to detect mobile
 import {
   Pagination,
   PaginationContent,
@@ -34,6 +30,22 @@ import {
   PaginationNext,
   PaginationPrevious
 } from '@/components/ui/pagination';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger
+} from '@/components/ui/accordion';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+
+// Placeholder Loader component (replace with your own)
+const Loader = () => <div>Loading...</div>;
 
 interface CommonTableProps<T extends object> {
   data: T[];
@@ -44,7 +56,7 @@ interface CommonTableProps<T extends object> {
   currentPage: number;
   onPageChange: (page: number) => void;
   onSortChange?: (sorting: SortingState) => void;
-  enablePagination: boolean;
+  enablePagination?: boolean;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }
@@ -65,9 +77,7 @@ const CommonTable = <T extends object>({
   sortOrder
 }: CommonTableProps<T>) => {
   const isMobile = useIsMobile();
-  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [sorting, setSorting] = useState<SortingState>(() => {
-    // Initialize sorting based on sortBy and sortOrder
     if (sortBy && sortOrder) {
       return [{ id: sortBy, desc: sortOrder === 'desc' }];
     }
@@ -80,55 +90,14 @@ const CommonTable = <T extends object>({
     }
   }, [sortBy, sortOrder, onSortChange]);
 
-  const toggleRowExpansion = (id: string) => {
-    setExpandedRows((prev) => ({
-      ...prev,
-      [id]: !prev[id]
-    }));
-  };
-
-  const mobileColumns: ColumnDef<T, any>[] = [
-    columnHelper.display({
-      id: 'expand',
-      cell: ({ row }) => (
-        <Button
-          size='sm'
-          variant='ghost'
-          onClick={() => toggleRowExpansion(row.id)}
-          className='ml-auto'
-        >
-          {expandedRows[row.id] ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-        </Button>
-      )
-    }),
-    ...columns.map((column) => ({
-      ...column,
-      cell: (info: CellContext<T, any>) => {
-        const dataItem: T = info.row.original;
-        const columnId = column.id as keyof T; // Properly type the column id
-        return (
-          <div className='max-w-[150px] truncate font-medium'>
-            {typeof column.cell === 'function'
-              ? column.cell(info)
-              : columnId
-                ? dataItem[columnId]
-                : null}
-          </div>
-        );
-      }
-    }))
-  ];
-
   const table = useReactTable({
     data,
-    columns: isMobile ? mobileColumns : columns,
+    columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     onSortingChange: setSorting,
-    state: {
-      sorting: sorting
-    },
+    state: { sorting },
     manualPagination: true,
     manualSorting: true,
     pageCount: Math.ceil(totalRecords / pageSize)
@@ -149,90 +118,115 @@ const CommonTable = <T extends object>({
   if (isMobile) {
     return (
       <>
-        <div className='w-full rounded-md border'>
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id} className='px-2 py-3'>
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                    </TableHead>
-                  ))}
-                </TableRow>
+        {/* Sorting Dropdown for Mobile */}
+        <div className='mb-4'>
+          <Select
+            onValueChange={(value) => {
+              const [id, desc] = value.split('-');
+              setSorting([{ id, desc: desc === 'desc' }]);
+            }}
+          >
+            <SelectTrigger className='w-full'>
+              <SelectValue placeholder='Sort by' />
+            </SelectTrigger>
+            <SelectContent>
+              {table.getAllColumns().map((column) => (
+                <SelectItem key={`${column.id}-asc`} value={`${column.id}-asc`}>
+                  Sort by {column.columnDef.header?.toString() || column.id} (Asc)
+                </SelectItem>
               ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <React.Fragment key={row.id}>
-                    <TableRow className='cursor-pointer' onClick={() => toggleRowExpansion(row.id)}>
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id} className='px-2 py-3'>
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                    {expandedRows[row.id] && (
-                      <TableRow>
-                        <TableCell colSpan={mobileColumns.length} className='bg-muted/30 p-4'>
-                          {/* Custom rendering for expanded content */}
-                          {row.getVisibleCells().map((cell) => {
-                            const header = cell.column.columnDef.header;
-                            const cellValue = flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext()
-                            );
-                            if (
-                              cell.column.id !== 'expand' &&
-                              header &&
-                              cell.column.columnDef.id !== 'actions'
-                            ) {
-                              const headerString =
-                                typeof header === 'function'
-                                  ? flexRender(header, {
-                                      ...cell.getContext(),
-                                      header: cell.column.columnDef
-                                    } as unknown as HeaderContext<T, unknown>)
-                                  : header;
-                              return (
-                                <div key={cell.id} className='grid grid-cols-2 gap-2'>
-                                  <span className='font-medium'>{headerString} :</span>
-                                  <span>{cellValue}</span>
-                                </div>
-                              );
-                            }
-                            return null;
-                          })}
-                          {/* Pass row.original for rendering custom actions */}
-                          {columns.some((col) => col.id === 'actions') && (
-                            <div className='flex gap-2 pt-2'>
-                              {flexRender(
-                                (columns.find((col) => col.id === 'actions') as ColumnDef<T, any>)
-                                  .cell,
-                                { row: row, column: {} } as CellContext<T, any>
-                              )}
-                            </div>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </React.Fragment>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={mobileColumns.length} className='h-24 text-center'>
-                    No results.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              {table.getAllColumns().map((column) => (
+                <SelectItem key={`${column.id}-desc`} value={`${column.id}-desc`}>
+                  Sort by {column.columnDef.header?.toString() || column.id} (Desc)
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
+
+        {/* Accordion for Mobile */}
+        <Accordion type='single' collapsible className='w-full'>
+          {table.getRowModel().rows.map((row) => (
+            <AccordionItem key={row.id} value={row.id}>
+              <AccordionTrigger className='px-4 py-2 text-left'>
+                <div className='flex w-full justify-between'>
+                  <span className='max-w-[50%] truncate'>
+                    {flexRender(columns[0].cell, { row, column: columns[0] } as CellContext<
+                      T,
+                      any
+                    >)}
+                  </span>
+                  <span>
+                    {flexRender(columns[1].cell, { row, column: columns[1] } as CellContext<
+                      T,
+                      any
+                    >)}
+                  </span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className='px-4 py-2'>
+                {columns.map((column) => {
+                  const header = column.header;
+                  const cellValue = flexRender(column.cell, { row, column } as CellContext<T, any>);
+                  if (column.id !== 'actions') {
+                    const headerString =
+                      typeof header === 'function'
+                        ? flexRender(header, { column } as HeaderContext<T, unknown>)
+                        : header;
+                    return (
+                      <div key={column.id} className='grid grid-cols-2 gap-2'>
+                        <span className='font-medium'>{headerString}:</span>
+                        <span>{cellValue}</span>
+                      </div>
+                    );
+                  }
+                  return null;
+                })}
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+
+        {/* Pagination */}
+        {enablePagination && totalRecords > pageSize && (
+          <Pagination className='mt-6'>
+            <PaginationContent>
+              {currentPage > 1 && (
+                <PaginationItem>
+                  <PaginationPrevious href='#' onClick={() => onPageChange(currentPage - 1)} />
+                </PaginationItem>
+              )}
+              {Array.from({ length: Math.ceil(totalRecords / pageSize) }, (_, i) => i + 1)
+                .filter(
+                  (p) =>
+                    p <= 2 ||
+                    p >= Math.ceil(totalRecords / pageSize) - 1 ||
+                    Math.abs(p - currentPage) <= 1
+                )
+                .map((p) => (
+                  <PaginationItem key={p}>
+                    <PaginationLink
+                      href='#'
+                      isActive={p === currentPage}
+                      onClick={() => onPageChange(p)}
+                    >
+                      {p}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+              {currentPage < Math.ceil(totalRecords / pageSize) && (
+                <PaginationItem>
+                  <PaginationNext href='#' onClick={() => onPageChange(currentPage + 1)} />
+                </PaginationItem>
+              )}
+            </PaginationContent>
+          </Pagination>
+        )}
       </>
     );
   }
 
+  // Desktop View
   return (
     <>
       <div className='w-full overflow-x-auto rounded-md border'>
@@ -241,10 +235,16 @@ const CommonTable = <T extends object>({
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className='px-4 py-3'>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  <TableHead
+                    key={header.id}
+                    className='cursor-pointer px-4 py-3 hover:bg-gray-100'
+                    onClick={header.column.getToggleSortingHandler()}
+                  >
+                    {flexRender(header.column.columnDef.header, header.getContext())}
+                    {{
+                      asc: ' 🔼',
+                      desc: ' 🔽'
+                    }[header.column.getIsSorted() as string] ?? ' ↕️'}
                   </TableHead>
                 ))}
               </TableRow>
@@ -271,6 +271,8 @@ const CommonTable = <T extends object>({
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
       {enablePagination && totalRecords > pageSize && (
         <Pagination className='mt-6'>
           <PaginationContent>
@@ -279,7 +281,6 @@ const CommonTable = <T extends object>({
                 <PaginationPrevious href='#' onClick={() => onPageChange(currentPage - 1)} />
               </PaginationItem>
             )}
-
             {Array.from({ length: Math.ceil(totalRecords / pageSize) }, (_, i) => i + 1)
               .filter(
                 (p) =>
@@ -298,7 +299,6 @@ const CommonTable = <T extends object>({
                   </PaginationLink>
                 </PaginationItem>
               ))}
-
             {currentPage < Math.ceil(totalRecords / pageSize) && (
               <PaginationItem>
                 <PaginationNext href='#' onClick={() => onPageChange(currentPage + 1)} />

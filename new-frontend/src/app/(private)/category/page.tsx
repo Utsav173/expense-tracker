@@ -7,15 +7,36 @@ import { useCategoryFilters } from '@/components/category/hooks/useCategoryFilte
 import { usePagination } from '@/hooks/usePagination';
 import CategoryList from '@/components/category/category-list';
 import AddCategoryModal from '@/components/modals/add-category-modal';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { Input } from '@/components/ui/input';
 
 const CategoryPage = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
 
   const { filters, setSearchQuery, handleSort } = useCategoryFilters();
-  const { page, handlePageChange } = usePagination(1, () => {});
+
+  const { page, handlePageChange } = usePagination(
+    Number(searchParams.get('page')) || 1,
+    (params) => {
+      const currentParams = new URLSearchParams(searchParams.toString());
+      Object.keys(params).forEach((key) => {
+        if (params[key] === undefined || params[key] === null || params[key] === '') {
+          currentParams.delete(key);
+        } else {
+          currentParams.set(key.toString(), params[key]);
+        }
+      });
+      const newUrl = `${pathname}?${currentParams.toString()}`;
+
+      router.push(newUrl, { scroll: false });
+    }
+  );
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['categories'],
+    queryKey: ['categories', page, filters.debouncedSearchQuery, filters.sortBy, filters.sortOrder],
     queryFn: () =>
       categoryGetAll({
         page,
@@ -36,7 +57,7 @@ const CategoryPage = () => {
         />
       </div>
       <div>
-        <input
+        <Input
           type='text'
           placeholder='Search by category name...'
           value={filters.searchQuery}
@@ -48,10 +69,10 @@ const CategoryPage = () => {
         data={data}
         isLoading={isLoading}
         onSort={handleSort}
-        sortBy={filters.sortBy}
-        sortOrder={filters.sortOrder}
-        page={page}
-        handlePageChange={handlePageChange}
+        sortBy={filters.sortBy} // Pass these down
+        sortOrder={filters.sortOrder} // Pass these down.
+        page={page} // Pass page
+        handlePageChange={handlePageChange} // and page handler
         refetch={refetch}
       />
     </div>

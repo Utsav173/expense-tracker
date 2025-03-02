@@ -46,9 +46,10 @@ type CategoryFormSchema = z.infer<typeof categorySchema>; //Created type
 
 interface AddTransactionModalProps {
   onTransactionAdded: () => void;
+  triggerButton?: React.ReactNode;
 }
 
-const AddTransactionModal = ({ onTransactionAdded }: AddTransactionModalProps) => {
+const AddTransactionModal = ({ onTransactionAdded, triggerButton }: AddTransactionModalProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   const [isIncome, setIsIncome] = useState(false);
@@ -179,7 +180,7 @@ const AddTransactionModal = ({ onTransactionAdded }: AddTransactionModalProps) =
     <AddModal
       title='Add Transaction'
       description='Add a new transaction to your expense tracker.'
-      triggerButton={<Button>Add Transaction</Button>}
+      triggerButton={triggerButton ?? <Button>Add Transaction</Button>}
       onOpenChange={handleOpenChange}
       isOpen={isOpen}
     >

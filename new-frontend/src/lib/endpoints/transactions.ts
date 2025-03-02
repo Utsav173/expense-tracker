@@ -1,13 +1,6 @@
 import apiFetch from '../api-client';
-import { Transaction, ApiResponse, IncomeExpenseChartData } from '../types';
+import { Transaction, ApiResponse, IncomeExpenseChartData, TransactionsResponse } from '../types';
 
-type TransactionsResponse = ApiResponse<{
-  transactions: Transaction[];
-  totalPages: number;
-  totalCount: number;
-  currentPage: number;
-  pageSize: number;
-}>;
 export const transactionCreate = (body: any, successMessage?: string, errorMessage?: string) =>
   apiFetch('/transactions', 'POST', body, undefined, successMessage, errorMessage);
 

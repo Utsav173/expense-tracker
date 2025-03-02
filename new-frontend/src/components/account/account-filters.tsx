@@ -35,14 +35,6 @@ export const AccountFilters: React.FC<AccountFiltersProps> = ({
   handleResetFilters,
   categories
 }) => {
-  const selectedDateRangeLabel = React.useMemo(() => {
-    if (!filters.dateRange?.from || !filters.dateRange.to) return 'This Month';
-    return `${format(filters.dateRange.from, 'MMM dd, yyyy')} - ${format(
-      filters.dateRange.to,
-      'MMM dd, yyyy'
-    )}`;
-  }, [filters.dateRange]);
-
   return (
     <div className='mb-4 space-y-4'>
       <div className='w-full'>
@@ -113,7 +105,6 @@ export const AccountFilters: React.FC<AccountFiltersProps> = ({
           </Button>
         </div>
       </div>
-      <span className='text-sm text-gray-500'>{selectedDateRangeLabel}</span>
     </div>
   );
 };

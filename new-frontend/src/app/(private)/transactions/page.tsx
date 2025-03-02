@@ -1,10 +1,16 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { DateRange } from 'react-day-picker';
+import { useDebounce } from 'use-debounce';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+
+// Components
 import TransactionTable from '@/components/transactions-table';
 import Loader from '@/components/ui/loader';
-import { transactionGetAll } from '@/lib/endpoints/transactions';
-import { useQuery } from '@tanstack/react-query';
-import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -15,26 +21,20 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import AddTransactionModal from '@/components/modals/add-transaction-modal';
+import DateRangePicker from '@/components/date-range-picker';
+import { Card, CardContent } from '@/components/ui/card';
+import { PlusCircle, Upload, Filter, X, Calendar, Search, ArrowUpDown } from 'lucide-react';
+
+// API & Hooks
+import { transactionGetAll } from '@/lib/endpoints/transactions';
 import { accountGetDropdown } from '@/lib/endpoints/accounts';
 import { categoryGetAll } from '@/lib/endpoints/category';
-import { AccountDropdown, Category } from '@/lib/types';
-import { format } from 'date-fns';
-import { DateRange } from 'react-day-picker';
-import DateRangePicker from '@/components/date-range-picker';
 import { useToast } from '@/lib/hooks/useToast';
-import { Separator } from '@/components/ui/separator';
-import Link from 'next/link';
 import { usePagination } from '@/hooks/usePagination';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious
-} from '@/components/ui/pagination';
-import { useRouter } from 'next/navigation';
-import { useDebounce } from 'use-debounce';
+
+// Types
+import { AccountDropdown, Category } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 const TransactionsPage = () => {
   const [accountId, setAccountId] = useState<string | undefined>(undefined);
@@ -45,25 +45,39 @@ const TransactionsPage = () => {
   const [isIncome, setIsIncome] = useState<boolean | undefined>(undefined);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [tempDateRange, setTempDateRange] = useState<DateRange | undefined>();
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
+
+  // Hooks
   const router = useRouter();
   const [debouncedSearch] = useDebounce(search, 300);
-
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
   const { showError } = useToast();
+
+  // Active filters count
+  const activeFiltersCount = [
+    accountId !== undefined && accountId !== 'all',
+    categoryId !== undefined && categoryId !== 'all',
+    isIncome !== undefined,
+    dateRange?.from && dateRange.to,
+    debouncedSearch
+  ].filter(Boolean).length;
+
+  // Pagination
   const { page, handlePageChange } = usePagination(1, (params) => {
-    const currentParams = new URLSearchParams(window.location.search);
+    const currentParams = new URLSearchParams(searchParams.toString());
     Object.keys(params).forEach((key) => {
-      const param = key as keyof typeof params;
-      if (params[param] === undefined || params[param] === null || params[param] === '') {
-        currentParams.delete(param.toString());
+      if (params[key] === undefined || params[key] === null || params[key] === '') {
+        currentParams.delete(key);
       } else {
-        currentParams.set(param.toString(), params[param]);
+        currentParams.set(key, String(params[key]));
       }
     });
-
-    const newUrl = `${window.location.pathname}?${currentParams.toString()}`;
-    router.replace(newUrl, { scroll: false });
+    const newUrl = `${pathname}?${currentParams.toString()}`;
+    router.push(newUrl, { scroll: false });
   });
 
+  // Data fetching
   const {
     data: transactions,
     isLoading,
@@ -112,9 +126,11 @@ const TransactionsPage = () => {
     queryFn: categoryGetAll
   });
 
+  // Local state for dropdown data
   const [accounts, setAccounts] = useState<AccountDropdown[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
 
+  // Effects
   useEffect(() => {
     if (accountsData) {
       setAccounts(accountsData);
@@ -127,6 +143,11 @@ const TransactionsPage = () => {
     }
   }, [categoriesData?.categories]);
 
+  useEffect(() => {
+    handlePageChange(1);
+  }, [debouncedSearch]);
+
+  // Event handlers
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
   };
@@ -166,140 +187,219 @@ const TransactionsPage = () => {
     handlePageChange(1);
   };
 
-  useEffect(() => {
+  const resetAllFilters = () => {
+    setAccountId(undefined);
+    setCategoryId(undefined);
+    setIsIncome(undefined);
+    setDateRange(undefined);
+    setTempDateRange(undefined);
+    setSearch('');
     handlePageChange(1);
-  }, [debouncedSearch]);
+  };
 
+  const toggleFilters = () => {
+    setFiltersExpanded(!filtersExpanded);
+  };
+
+  // Error handling
   if (error) {
-    showError(`Failed to get Transaction Details : ${(error as Error).message}`);
+    showError(`Failed to get Transaction Details: ${(error as Error).message}`);
     return null;
   }
 
   return (
-    <div className='p-4'>
-      <h1 className='text-xl font-bold'>Transactions</h1>
-      <Separator className='my-4' />
+    <div className='container mx-auto max-w-7xl p-4'>
+      {/* Header section */}
+      <div className='mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between'>
+        <div>
+          <h1 className='text-2xl font-bold'>Transactions</h1>
+          <p className='mt-1 text-muted-foreground'>
+            {transactions?.totalCount
+              ? `${transactions.totalCount} transactions found`
+              : 'Manage your financial transactions'}
+          </p>
+        </div>
 
-      <div className='mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'>
-        <Select onValueChange={handleAccountIdChange} value={accountId || 'all'}>
-          <SelectTrigger className='w-full'>
-            <SelectValue placeholder='Select Account' />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value='all'>All Accounts</SelectItem>
-            {isLoadingAccounts ? (
-              <SelectItem value='loading-accounts' disabled>
-                Loading accounts...
-              </SelectItem>
-            ) : (
-              accounts.map((account) => (
-                <SelectItem key={account.id} value={account.id}>
-                  {account.name}
-                </SelectItem>
-              ))
-            )}
-          </SelectContent>
-        </Select>
+        <div className='mt-4 flex gap-2 sm:mt-0'>
+          <AddTransactionModal
+            onTransactionAdded={refetch}
+            triggerButton={
+              <Button className='flex items-center gap-2'>
+                <PlusCircle size={16} />
+                <span className='hidden sm:inline'>Add Transaction</span>
+                <span className='sm:hidden'>Add</span>
+              </Button>
+            }
+          />
 
-        <Select onValueChange={handleCategoryIdChange} value={categoryId || 'all'}>
-          <SelectTrigger className='w-full'>
-            <SelectValue placeholder='Select Category' />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value='all'>All Categories</SelectItem>
-            {isLoadingCategories ? (
-              <SelectItem value='loading-categories' disabled>
-                Loading categories...
-              </SelectItem>
-            ) : (
-              categories.map((category) => (
-                <SelectItem key={category.id} value={category.id}>
-                  {category.name}
-                </SelectItem>
-              ))
-            )}
-          </SelectContent>
-        </Select>
-
-        <Select
-          onValueChange={handleIsIncomeChange}
-          value={isIncome === undefined ? 'all' : isIncome ? 'true' : 'false'}
-        >
-          <SelectTrigger className='w-full'>
-            <SelectValue placeholder='Select Type' />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value='all'>All Types</SelectItem>
-            <SelectItem value='true'>Income</SelectItem>
-            <SelectItem value='false'>Expense</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Input type='text' placeholder='Search...' onChange={handleSearch} className='w-full' />
+          <Link href='/transactions/import'>
+            <Button variant='outline' className='flex items-center gap-2'>
+              <Upload size={16} />
+              <span className='hidden sm:inline'>Import</span>
+            </Button>
+          </Link>
+        </div>
       </div>
 
-      <div className='mb-4'>
-        <DateRangePicker dateRange={tempDateRange} setDateRange={handleDateRangeSelect} />
-        {dateRange?.from && (
-          <Button variant='outline' size='sm' className='ml-2' onClick={handleClearDateRange}>
-            Clear Dates
-          </Button>
-        )}
-      </div>
+      <Card className='mb-6'>
+        <CardContent className='pt-6'>
+          {/* Quick search and filter toggle */}
+          <div
+            className={cn(`flex flex-col items-start gap-4 sm:flex-row sm:items-center`, {
+              'mb-4': filtersExpanded
+            })}
+          >
+            <div className='relative flex-1'>
+              <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground' />
+              <Input
+                type='text'
+                placeholder='Search transactions...'
+                value={search}
+                onChange={handleSearch}
+                className='w-full pl-9'
+              />
+            </div>
 
-      <div className='mt-4'>
-        {isLoading ? (
+            <div className='flex gap-2'>
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={toggleFilters}
+                className='flex items-center gap-1'
+              >
+                <Filter size={16} />
+                <span>Filters</span>
+                {activeFiltersCount > 0 && (
+                  <span className='ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground'>
+                    {activeFiltersCount}
+                  </span>
+                )}
+              </Button>
+
+              {activeFiltersCount > 0 && (
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={resetAllFilters}
+                  className='flex items-center gap-1'
+                >
+                  <X size={16} />
+                  <span>Clear all</span>
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Advanced filters section */}
+          {filtersExpanded && (
+            <div className='mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+              <div>
+                <label className='mb-1 block text-sm font-medium'>Account</label>
+                <Select onValueChange={handleAccountIdChange} value={accountId || 'all'}>
+                  <SelectTrigger className='w-full'>
+                    <SelectValue placeholder='All Accounts' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='all'>All Accounts</SelectItem>
+                    {isLoadingAccounts ? (
+                      <SelectItem value='loading-accounts' disabled>
+                        Loading accounts...
+                      </SelectItem>
+                    ) : (
+                      accounts.map((account) => (
+                        <SelectItem key={account.id} value={account.id}>
+                          {account.name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className='mb-1 block text-sm font-medium'>Category</label>
+                <Select onValueChange={handleCategoryIdChange} value={categoryId || 'all'}>
+                  <SelectTrigger className='w-full'>
+                    <SelectValue placeholder='All Categories' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='all'>All Categories</SelectItem>
+                    {isLoadingCategories ? (
+                      <SelectItem value='loading-categories' disabled>
+                        Loading categories...
+                      </SelectItem>
+                    ) : (
+                      categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className='mb-1 block text-sm font-medium'>Type</label>
+                <Select
+                  onValueChange={handleIsIncomeChange}
+                  value={isIncome === undefined ? 'all' : isIncome ? 'true' : 'false'}
+                >
+                  <SelectTrigger className='w-full'>
+                    <SelectValue placeholder='All Types' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='all'>All Types</SelectItem>
+                    <SelectItem value='true'>Income</SelectItem>
+                    <SelectItem value='false'>Expense</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className='mb-1 block text-sm font-medium'>Date Range</label>
+                <div className='flex items-center gap-2'>
+                  <DateRangePicker dateRange={tempDateRange} setDateRange={handleDateRangeSelect} />
+                  {dateRange?.from && (
+                    <Button
+                      variant='ghost'
+                      size='icon'
+                      onClick={handleClearDateRange}
+                      className='h-10 w-10'
+                    >
+                      <X className='h-4 w-4' />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Transactions table */}
+
+      {isLoading ? (
+        <div className='flex items-center justify-center py-12'>
           <Loader />
-        ) : (
-          <>
-            <TransactionTable
-              transactions={transactions?.transactions}
-              onUpdate={refetch}
-              onSort={handleSort}
-              sortBy={sortBy}
-              sortOrder={sortOrder}
-            />
-            {transactions?.totalPages && transactions?.totalPages > 1 ? (
-              <Pagination className='mt-6'>
-                <PaginationContent>
-                  {page > 1 && (
-                    <PaginationItem>
-                      <PaginationPrevious href='#' onClick={() => handlePageChange(page - 1)} />
-                    </PaginationItem>
-                  )}
-                  {Array.from({ length: transactions.totalPages }, (_, i) => i + 1)
-                    .filter(
-                      (p) => p <= 2 || p >= transactions.totalPages - 1 || Math.abs(p - page) <= 1
-                    )
-                    .map((p) => (
-                      <PaginationItem key={p}>
-                        <PaginationLink
-                          href='#'
-                          isActive={p === page}
-                          onClick={() => handlePageChange(p)}
-                        >
-                          {p}
-                        </PaginationLink>
-                      </PaginationItem>
-                    ))}
-                  {page < transactions.totalPages && (
-                    <PaginationItem>
-                      <PaginationNext href='#' onClick={() => handlePageChange(page + 1)} />
-                    </PaginationItem>
-                  )}
-                </PaginationContent>
-              </Pagination>
-            ) : null}
-          </>
-        )}
-      </div>
-
-      <div className='mt-4 flex gap-4'>
-        <AddTransactionModal onTransactionAdded={refetch} />
-        <Link href='/transactions/import'>
-          <Button variant='secondary'>Import Transactions</Button>
-        </Link>
-      </div>
+        </div>
+      ) : transactions?.transactions && transactions.transactions.length > 0 ? (
+        <TransactionTable
+          transactions={transactions.transactions}
+          onUpdate={refetch}
+          onSort={handleSort}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          loading={isLoading}
+          totalRecords={transactions.totalCount}
+          page={page}
+          handlePageChange={handlePageChange}
+        />
+      ) : (
+        <div className='flex items-center justify-center py-12'>
+          <p>No transactions found</p>
+        </div>
+      )}
     </div>
   );
 };

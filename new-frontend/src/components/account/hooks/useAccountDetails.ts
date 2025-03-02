@@ -1,3 +1,5 @@
+'use client';
+
 import { useQuery } from '@tanstack/react-query';
 import { accountGetById, accountGetCustomAnalytics } from '@/lib/endpoints/accounts';
 import { transactionGetIncomeExpenseChart, transactionGetAll } from '@/lib/endpoints/transactions';
@@ -91,7 +93,7 @@ export const useAccountDetails = (id: string, searchParams: SearchParams) => {
       {
         dateRange: filters.dateRange,
         page,
-        q: filters.debouncedSearchQuery, // Use the debounced query
+        q: filters.debouncedSearchQuery,
         sortBy: filters.sortBy,
         sortOrder: filters.sortOrder,
         categoryId: filters.categoryId,
