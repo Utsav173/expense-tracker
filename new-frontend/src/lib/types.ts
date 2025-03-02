@@ -96,12 +96,13 @@ export interface Transaction {
 export interface Account {
   id: string;
   name: string;
-  owner: string;
+  owner: User;
   balance: number;
   createdAt: string;
   updatedAt?: string;
   isDefault: boolean;
   currency: string;
+  analytics?: Analytics;
 }
 
 export interface AccountDetails {
@@ -247,4 +248,23 @@ export type ChartDataType = {
   income: number;
   expense: number;
   balance: number;
+};
+
+export type PreviousShareAccount = {
+  id: string;
+  name: string | null;
+  balance: number | null;
+  User: {
+    id: string;
+    name: string;
+    email: string;
+    profilePic: string | null;
+  } | null;
+};
+
+export type DropdownUser = {
+  id: string;
+  name: string;
+  email: string;
+  profilePic: string | null;
 };

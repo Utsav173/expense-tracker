@@ -14,7 +14,7 @@ import {
 
 interface DeleteConfirmationModalProps {
   title: string;
-  description: string;
+  description: React.ReactNode;
   triggerButton?: React.ReactNode;
   onConfirm: () => void;
   open?: boolean;

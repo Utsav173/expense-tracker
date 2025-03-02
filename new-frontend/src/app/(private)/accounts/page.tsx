@@ -1,7 +1,8 @@
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import React from 'react';
 
-export default function NotFound() {
+const page = () => {
   return (
     <div className='flex min-h-full flex-col items-center justify-center'>
       <h1 className='mb-4 text-5xl font-bold'>404</h1>
@@ -11,4 +12,6 @@ export default function NotFound() {
       </Button>
     </div>
   );
-}
+};
+
+export default page;

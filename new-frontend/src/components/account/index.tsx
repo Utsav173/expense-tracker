@@ -1,42 +1,34 @@
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Trash2, TrendingDown, TrendingUp, Pencil, AlertCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card';
+import { BarChart2, LineChart, TrendingDown, TrendingUp } from 'lucide-react';
 import {
   Bar,
   BarChart,
   CartesianGrid,
   Line,
-  LineChart,
+  LineChart as RechartsLineChart,
   ResponsiveContainer,
+  Tooltip,
   XAxis,
-  YAxis
+  YAxis,
+  Legend
 } from 'recharts';
-import { ApiResponse, AccountDetails, CustomAnalytics, ChartDataType } from '@/lib/types';
+import { ApiResponse, AccountDetails } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
-import { accountDelete } from '@/lib/endpoints/accounts';
-import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { ChartLegend, ChartTooltip } from '../ui/chart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-
-interface AccountHeaderProps {
-  account: ApiResponse<AccountDetails> | undefined;
-  isLoading: boolean;
-  router: {
-    back: () => void;
-  };
-  id: string;
-}
+import { Badge } from '@/components/ui/badge';
 
 interface AnalyticsCardsProps {
   analytics: ApiResponse<CustomAnalytics> | undefined;
   isLoading: boolean;
   account: ApiResponse<AccountDetails> | undefined;
-}
-
-interface IncomeExpenseChartProps {
-  data: ChartDataType[];
-  isLoading: boolean;
 }
 
 interface AnalyticsCardData {
@@ -48,60 +40,6 @@ interface AnalyticsCardData {
   isPercentage?: boolean;
   totalBalance?: number | null;
 }
-
-// Header Component
-export const AccountHeader: React.FC<AccountHeaderProps> = ({ account, isLoading, router }) => {
-  if (isLoading) {
-    return (
-      <div className='sticky top-0 z-10 border-b bg-white'>
-        <div className='container flex h-16 items-center justify-between'>
-          <div className='flex items-center gap-4'>
-            <div className='h-8 w-24 animate-pulse rounded bg-gray-200' />
-          </div>
-          <div className='h-8 w-32 animate-pulse rounded bg-gray-200' />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className='sticky top-0 z-10 border-b bg-white'>
-      <div className='container flex h-16 items-center justify-between'>
-        <div className='flex items-center gap-4'>
-          <button
-            onClick={() => router.back()}
-            className='inline-flex h-9 items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'
-          >
-            <ArrowLeft className='mr-2 h-4 w-4' />
-            Back
-          </button>
-          <h1 className='text-xl font-semibold'>{account?.name}</h1>
-          <DeleteConfirmationModal
-            title='Delete Account'
-            description='Are you sure you want to delete this account? All related transactions will also be deleted.'
-            triggerButton={
-              <Button size='sm' variant='ghost'>
-                <Trash2 size={18} />
-              </Button>
-            }
-            onConfirm={async () => {
-              if (account?.id) {
-                await accountDelete(account.id);
-                router.back();
-              }
-            }}
-          />
-        </div>
-        <div className='text-lg font-medium text-green-600'>
-          {new Intl.NumberFormat('en-IN', {
-            style: 'currency',
-            currency: account?.currency || 'INR'
-          }).format(account?.balance || 0)}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // Analytics Cards Component
 export const AnalyticsCards: React.FC<AnalyticsCardsProps> = ({
@@ -205,7 +143,31 @@ export const AnalyticsCards: React.FC<AnalyticsCardsProps> = ({
   );
 };
 
-// Chart Component
+// Define chart config for styling
+const chartConfig = {
+  income: {
+    label: 'Income',
+    color: 'hsl(142, 76%, 36%)'
+  },
+  expense: {
+    label: 'Expense',
+    color: 'hsl(0, 84%, 60%)'
+  },
+  balance: {
+    label: 'Balance',
+    color: 'hsl(214, 100%, 49%)'
+  }
+};
+
+export interface CustomAnalytics {
+  income: number;
+  expense: number;
+  balance: number;
+  BalancePercentageChange: number;
+  IncomePercentageChange: number;
+  ExpensePercentageChange: number;
+}
+
 interface IncomeExpenseChartProps {
   data: Array<{
     date: string;
@@ -213,142 +175,374 @@ interface IncomeExpenseChartProps {
     expense: number;
     balance: number;
   }>;
-  isLoading: boolean;
+  isLoading?: boolean;
+  customAnalytics?: CustomAnalytics;
+  currency: string;
 }
 
-export const IncomeExpenseChart: React.FC<IncomeExpenseChartProps> = ({ data, isLoading }) => {
+export const IncomeExpenseChart: React.FC<IncomeExpenseChartProps> = ({
+  data,
+  isLoading,
+  currency
+}) => {
+  const [showCharts, setShowCharts] = useState(true);
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency,
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(value);
   };
 
+  const formatPercentage = (value: number) => {
+    const formattedValue = Math.abs(value).toFixed(1);
+    return `${value >= 0 ? '+' : '-'}${formattedValue}%`;
+  };
+
+  // Use the latest data point if customAnalytics is not provided
+  const latestData = data[data.length - 1];
+
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <div className='h-6 w-40 animate-pulse rounded bg-gray-200' />
+      <Card className='border border-border/40 shadow-sm'>
+        <CardHeader className='pb-4'>
+          <div className='h-6 w-48 animate-pulse rounded-md bg-muted' />
+          <div className='h-4 w-72 animate-pulse rounded-md bg-muted opacity-70' />
         </CardHeader>
         <CardContent>
-          <div className='h-[350px] animate-pulse rounded bg-gray-200' />
+          <div className='h-[350px] animate-pulse rounded-md bg-muted' />
         </CardContent>
-      </Card>
-    );
-  }
-
-  // Check if we have no data to display
-  if (!data || data.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Income vs Expense vs Balance Trend</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Alert>
-            <AlertCircle className='h-4 w-4' />
-            <AlertTitle>No Data Available</AlertTitle>
-            <AlertDescription>
-              There is no financial data available for the selected period.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
+        <CardFooter className='border-t border-border/40 bg-muted/5 pt-4'>
+          <div className='flex w-full justify-between'>
+            <div className='h-5 w-24 animate-pulse rounded-md bg-muted' />
+            <div className='h-5 w-24 animate-pulse rounded-md bg-muted' />
+          </div>
+        </CardFooter>
       </Card>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Income vs Expense vs Balance Trend</CardTitle>
-        <CardDescription>Tracking your financial trends over time</CardDescription>
-      </CardHeader>
+    <Card className='overflow-hidden border border-border/40 shadow-sm transition-all duration-200'>
+      {!showCharts ? (
+        <div className='flex h-16 w-full items-center justify-center px-4'>
+          <Button
+            className='flex items-center gap-2 font-medium'
+            onClick={() => setShowCharts(true)}
+          >
+            <BarChart2 className='h-4 w-4' />
+            <span>Show Financial Trends</span>
+          </Button>
+        </div>
+      ) : (
+        <>
+          <CardHeader className='pb-2'>
+            <div className='flex items-center justify-between'>
+              <div>
+                <CardTitle className='text-xl font-semibold tracking-tight'>
+                  Financial Trends
+                </CardTitle>
+                <CardDescription className='mt-1 text-muted-foreground'>
+                  Income vs. Expense trends over time
+                </CardDescription>
+              </div>
+              <Button
+                variant='ghost'
+                size='icon'
+                className='h-8 w-8'
+                onClick={() => setShowCharts(false)}
+              >
+                ×
+              </Button>
+            </div>
+          </CardHeader>
 
-      <CardContent>
-        <Tabs defaultValue='bar' className='w-full'>
-          <TabsList className='mb-4'>
-            <TabsTrigger value='bar'>Bar Chart</TabsTrigger>
-            <TabsTrigger value='line'>Line Chart</TabsTrigger>
-          </TabsList>
+          <CardContent className='px-2 pb-0 pt-0'>
+            <Tabs defaultValue='bar' className='w-full'>
+              <div className='flex items-center justify-between px-4'>
+                <div className='flex gap-2'>
+                  <Badge variant='outline' className='bg-background/80 font-normal'>
+                    Last update: {latestData?.date}
+                  </Badge>
+                </div>
+                <TabsList className='grid w-[180px] grid-cols-2'>
+                  <TabsTrigger value='bar' className='flex items-center gap-1'>
+                    <BarChart2 className='h-3.5 w-3.5' />
+                    <span>Bar</span>
+                  </TabsTrigger>
+                  <TabsTrigger value='line' className='flex items-center gap-1'>
+                    <LineChart className='h-3.5 w-3.5' />
+                    <span>Line</span>
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
-          <TabsContent value='bar' className='h-[350px]'>
-            <ResponsiveContainer width='100%' height='100%'>
-              <BarChart data={data}>
-                <CartesianGrid strokeDasharray='3 3' />
-                <XAxis dataKey='date' />
-                <YAxis />
-                <ChartTooltip
-                  formatter={(value: number) => formatCurrency(value)}
-                  labelFormatter={(label: any) => `Date: ${label}`}
-                />
-                <ChartLegend />
-                <Bar dataKey='income' name='Income' fill='rgb(34, 197, 94)' radius={[4, 4, 0, 0]} />
-                <Bar
-                  dataKey='expense'
-                  name='Expense'
-                  fill='rgb(239, 68, 68)'
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar
-                  dataKey='balance'
-                  name='Balance'
-                  fill='rgb(59, 130, 246)'
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </TabsContent>
+              <TabsContent value='bar' className='mt-2'>
+                <div className='h-[320px] px-1'>
+                  <ResponsiveContainer width='100%' height='100%'>
+                    <BarChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
+                      <defs>
+                        <linearGradient id='incomeGradient' x1='0' y1='0' x2='0' y2='1'>
+                          <stop
+                            offset='5%'
+                            stopColor={chartConfig.income.color}
+                            stopOpacity={0.8}
+                          />
+                          <stop
+                            offset='95%'
+                            stopColor={chartConfig.income.color}
+                            stopOpacity={0.4}
+                          />
+                        </linearGradient>
+                        <linearGradient id='expenseGradient' x1='0' y1='0' x2='0' y2='1'>
+                          <stop
+                            offset='5%'
+                            stopColor={chartConfig.expense.color}
+                            stopOpacity={0.8}
+                          />
+                          <stop
+                            offset='95%'
+                            stopColor={chartConfig.expense.color}
+                            stopOpacity={0.4}
+                          />
+                        </linearGradient>
+                        <linearGradient id='balanceGradient' x1='0' y1='0' x2='0' y2='1'>
+                          <stop
+                            offset='5%'
+                            stopColor={chartConfig.balance.color}
+                            stopOpacity={0.8}
+                          />
+                          <stop
+                            offset='95%'
+                            stopColor={chartConfig.balance.color}
+                            stopOpacity={0.4}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid
+                        strokeDasharray='3 3'
+                        vertical={false}
+                        stroke='hsl(var(--border)/0.5)'
+                      />
+                      <XAxis
+                        dataKey='date'
+                        tick={{ fontSize: 12 }}
+                        tickLine={false}
+                        axisLine={{ stroke: 'hsl(var(--border))' }}
+                      />
+                      <YAxis
+                        tickFormatter={(value) => `$${value / 1000}k`}
+                        tick={{ fontSize: 12 }}
+                        tickLine={false}
+                        axisLine={{ stroke: 'hsl(var(--border))' }}
+                      />
+                      <Tooltip
+                        content={({ active, payload, label }) => {
+                          if (active && payload && payload.length) {
+                            return (
+                              <div className='rounded-lg border border-border/40 bg-background/95 p-3 shadow-md backdrop-blur-sm'>
+                                <p className='mb-1 font-medium'>{label}</p>
+                                {payload.map((entry, index) => (
+                                  <div
+                                    key={`tooltip-item-${index}`}
+                                    className='flex items-center gap-2 py-0.5'
+                                  >
+                                    <div
+                                      className='h-2 w-2 rounded-full'
+                                      style={{ backgroundColor: entry.color }}
+                                    />
+                                    <span className='text-sm text-muted-foreground'>
+                                      {entry.name}:
+                                    </span>
+                                    <span className='text-sm font-medium'>
+                                      {formatCurrency(entry.value as number)}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Legend
+                        verticalAlign='top'
+                        height={36}
+                        formatter={(value) => <span className='text-xs font-medium'>{value}</span>}
+                      />
+                      <Bar
+                        dataKey='income'
+                        name='Income'
+                        fill='url(#incomeGradient)'
+                        stroke={chartConfig.income.color}
+                        strokeWidth={1}
+                        radius={[4, 4, 0, 0]}
+                        barSize={20}
+                      />
+                      <Bar
+                        dataKey='expense'
+                        name='Expense'
+                        fill='url(#expenseGradient)'
+                        stroke={chartConfig.expense.color}
+                        strokeWidth={1}
+                        radius={[4, 4, 0, 0]}
+                        barSize={20}
+                      />
+                      <Bar
+                        dataKey='balance'
+                        name='Balance'
+                        fill='url(#balanceGradient)'
+                        stroke={chartConfig.balance.color}
+                        strokeWidth={1}
+                        radius={[4, 4, 0, 0]}
+                        barSize={20}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </TabsContent>
 
-          <TabsContent value='line' className='h-[350px]'>
-            <ResponsiveContainer width='100%' height='100%'>
-              <LineChart data={data}>
-                <CartesianGrid strokeDasharray='3 3' />
-                <XAxis dataKey='date' />
-                <YAxis />
-                <ChartTooltip
-                  formatter={(value: number) => formatCurrency(value)}
-                  labelFormatter={(label: any) => `Date: ${label}`}
-                />
-                <ChartLegend />
-                <Line
-                  type='monotone'
-                  dataKey='income'
-                  name='Income'
-                  stroke='rgb(34, 197, 94)'
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-                <Line
-                  type='monotone'
-                  dataKey='expense'
-                  name='Expense'
-                  stroke='rgb(239, 68, 68)'
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-                <Line
-                  type='monotone'
-                  dataKey='balance'
-                  name='Balance'
-                  stroke='rgb(59, 130, 246)'
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
+              <TabsContent value='line' className='mt-2'>
+                <div className='h-[320px] px-1'>
+                  <ResponsiveContainer width='100%' height='100%'>
+                    <RechartsLineChart
+                      data={data}
+                      margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
+                    >
+                      <defs>
+                        <linearGradient id='incomeAreaGradient' x1='0' y1='0' x2='0' y2='1'>
+                          <stop
+                            offset='5%'
+                            stopColor={chartConfig.income.color}
+                            stopOpacity={0.1}
+                          />
+                          <stop
+                            offset='95%'
+                            stopColor={chartConfig.income.color}
+                            stopOpacity={0.01}
+                          />
+                        </linearGradient>
+                        <linearGradient id='expenseAreaGradient' x1='0' y1='0' x2='0' y2='1'>
+                          <stop
+                            offset='5%'
+                            stopColor={chartConfig.expense.color}
+                            stopOpacity={0.1}
+                          />
+                          <stop
+                            offset='95%'
+                            stopColor={chartConfig.expense.color}
+                            stopOpacity={0.01}
+                          />
+                        </linearGradient>
+                        <linearGradient id='balanceAreaGradient' x1='0' y1='0' x2='0' y2='1'>
+                          <stop
+                            offset='5%'
+                            stopColor={chartConfig.balance.color}
+                            stopOpacity={0.1}
+                          />
+                          <stop
+                            offset='95%'
+                            stopColor={chartConfig.balance.color}
+                            stopOpacity={0.01}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid
+                        strokeDasharray='3 3'
+                        vertical={false}
+                        stroke='hsl(var(--border)/0.5)'
+                      />
+                      <XAxis
+                        dataKey='date'
+                        tick={{ fontSize: 12 }}
+                        tickLine={false}
+                        axisLine={{ stroke: 'hsl(var(--border))' }}
+                      />
+                      <YAxis
+                        tickFormatter={(value) => `$${value / 1000}k`}
+                        tick={{ fontSize: 12 }}
+                        tickLine={false}
+                        axisLine={{ stroke: 'hsl(var(--border))' }}
+                      />
+                      <Tooltip
+                        content={({ active, payload, label }) => {
+                          if (active && payload && payload.length) {
+                            return (
+                              <div className='rounded-lg border border-border/40 bg-background/95 p-3 shadow-md backdrop-blur-sm'>
+                                <p className='mb-1 font-medium'>{label}</p>
+                                {payload.map((entry, index) => (
+                                  <div
+                                    key={`tooltip-item-${index}`}
+                                    className='flex items-center gap-2 py-0.5'
+                                  >
+                                    <div
+                                      className='h-2 w-2 rounded-full'
+                                      style={{ backgroundColor: entry.color }}
+                                    />
+                                    <span className='text-sm text-muted-foreground'>
+                                      {entry.name}:
+                                    </span>
+                                    <span className='text-sm font-medium'>
+                                      {formatCurrency(entry.value as number)}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Legend
+                        verticalAlign='top'
+                        height={36}
+                        formatter={(value) => <span className='text-xs font-medium'>{value}</span>}
+                      />
+                      <Line
+                        type='monotone'
+                        dataKey='income'
+                        name='Income'
+                        stroke={chartConfig.income.color}
+                        strokeWidth={2}
+                        dot={{ r: 3, strokeWidth: 1, fill: 'white' }}
+                        activeDot={{ r: 5, strokeWidth: 0 }}
+                        animationDuration={1500}
+                      />
+                      <Line
+                        type='monotone'
+                        dataKey='expense'
+                        name='Expense'
+                        stroke={chartConfig.expense.color}
+                        strokeWidth={2}
+                        dot={{ r: 3, strokeWidth: 1, fill: 'white' }}
+                        activeDot={{ r: 5, strokeWidth: 0 }}
+                        animationDuration={1500}
+                      />
+                      <Line
+                        type='monotone'
+                        dataKey='balance'
+                        name='Balance'
+                        stroke={chartConfig.balance.color}
+                        strokeWidth={2}
+                        dot={{ r: 3, strokeWidth: 1, fill: 'white' }}
+                        activeDot={{ r: 5, strokeWidth: 0 }}
+                        animationDuration={1500}
+                      />
+                    </RechartsLineChart>
+                  </ResponsiveContainer>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </>
+      )}
     </Card>
   );
 };
+
 export default {
-  AccountHeader,
   AnalyticsCards,
   IncomeExpenseChart
 };

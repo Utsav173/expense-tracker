@@ -585,6 +585,15 @@ accountRouter.get('/get-shares', authMiddleware, async (c) => {
     searchQuery = and(searchQuery, ilike(Account.name, `%${search}%`));
   }
 
+  const total = await db
+    .select({ tot: count(Account.id) })
+    .from(Account)
+    .where(searchQuery)
+    .then((res) => res[0].tot)
+    .catch((err) => {
+      throw new HTTPException(500, { message: err.message });
+    });
+
   const accountData = await db
     .select({
       id: Account.id,
@@ -610,7 +619,15 @@ accountRouter.get('/get-shares', authMiddleware, async (c) => {
       throw new HTTPException(500, { message: err.message });
     });
 
-  return c.json(accountData);
+  return c.json({
+    data: accountData,
+    pagination: {
+      page: +page,
+      limit: +limit,
+      total,
+      totalPage: Math.ceil(total / +limit),
+    },
+  });
 });
 
 // GET /previous/share/:id - Get previous shares of an account

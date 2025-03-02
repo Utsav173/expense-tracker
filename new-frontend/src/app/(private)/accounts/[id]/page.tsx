@@ -5,7 +5,7 @@ import { accountGetById, accountGetCustomAnalytics } from '@/lib/endpoints/accou
 import { useRouter } from 'next/navigation';
 import { transactionGetAll, transactionGetIncomeExpenseChart } from '@/lib/endpoints/transactions';
 import { categoryGetAll } from '@/lib/endpoints/category';
-import { format, startOfWeek, startOfMonth } from 'date-fns';
+import { format } from 'date-fns';
 import { use, useMemo } from 'react';
 import { useDebounce } from 'use-debounce';
 
@@ -36,6 +36,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/lib/hooks/useToast';
 import { usePagination } from '@/hooks/usePagination';
 import { useAccountFilterState } from '@/components/account/hooks/useAccountFilterState';
+import Link from 'next/link';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -168,30 +169,6 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
     return `${format(filters.dateRange.from, 'MMM dd, yyyy')} - ${format(filters.dateRange.to, 'MMM dd, yyyy')}`;
   }, [filters.dateRange]);
 
-  // Preset date range handler
-  const handlePreset = (preset: string) => {
-    let from, to;
-    const today = new Date();
-    switch (preset) {
-      case 'today':
-        from = today;
-        to = today;
-        break;
-      case 'thisWeek':
-        from = startOfWeek(today);
-        to = today;
-        break;
-      case 'thisMonth':
-        from = startOfMonth(today);
-        to = today;
-        break;
-      default:
-        return;
-    }
-    handleDateRangeSelect({ from, to });
-    applyDateRange();
-  };
-
   // Reset filters handler
   const handleResetFilters = () => {
     setSearchQuery('');
@@ -209,179 +186,189 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
   }
 
   return (
-    <div className='min-h-screen'>
-      <div className='mx-auto max-w-7xl space-y-6 p-4'>
-        {/* Analytics Cards */}
-        <AnalyticsCards
-          analytics={customAnalytics}
-          isLoading={isAnalyticsLoading}
-          account={account}
-        />
+    <div className='mx-auto space-y-6 p-2 max-lg:max-w-7xl max-lg:p-4'>
+      <section className='flex items-center justify-between rounded-xl bg-white p-6 shadow-sm'>
+        <h1 className='mb-4 text-xl font-semibold'>{account?.name}</h1>
+        <Link href={`/accounts/shares/${id}`}>
+          <Button variant='outline'>View Account Sharing</Button>
+        </Link>
+      </section>
 
-        {/* Income vs Expense Chart */}
+      {/* Analytics Cards */}
+      <AnalyticsCards
+        analytics={customAnalytics}
+        isLoading={isAnalyticsLoading}
+        account={account}
+      />
+
+      {/* Income vs Expense Chart */}
+      {chartData?.date && (
         <section className='rounded-xl bg-white shadow-sm'>
-          <IncomeExpenseChart data={transformedChartData} isLoading={isChartLoading} />
+          <IncomeExpenseChart
+            data={transformedChartData}
+            isLoading={isChartLoading}
+            currency={account?.currency ?? 'INR'}
+          />
         </section>
+      )}
 
-        {/* Transactions Section */}
-        <section className='rounded-xl bg-white shadow-sm'>
-          <div className='flex items-center justify-between border-b p-6'>
-            <h2 className='text-xl font-semibold'>Transactions</h2>
-            <span className='text-sm text-gray-500'>{selectedDateRangeLabel}</span>
-          </div>
+      {/* Transactions Section */}
+      <section className='rounded-xl bg-white shadow-sm'>
+        <div className='flex items-center justify-between border-b p-6'>
+          <h2 className='text-xl font-semibold'>Transactions</h2>
+          <span className='text-sm text-gray-500'>{selectedDateRangeLabel}</span>
+        </div>
 
-          <div className='p-6'>
-            {/* Filters */}
-            <div className='mb-4 grid gap-4'>
-              {/* Search Bar */}
-              <div className='col-span-4'>
-                <Input
-                  type='text'
-                  placeholder='Search transactions...'
-                  value={filters.searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className='w-full rounded-md border border-gray-300 p-2'
-                />
-              </div>
-
-              {/* Filter Controls */}
-              <div className='col-span-4 grid grid-cols-1 gap-4 sm:grid-cols-4'>
-                {/* Category Filter */}
-                <div>
-                  <Select value={filters.categoryId || 'all'} onValueChange={handleCategoryChange}>
-                    <SelectTrigger className='w-full'>
-                      <SelectValue placeholder='Select Category' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='all'>All Categories</SelectItem>
-                      {categories?.categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Type Filter */}
-                <div>
-                  <Select
-                    value={filters.isIncome === undefined ? 'all' : String(filters.isIncome)}
-                    onValueChange={handleIncomeTypeChange}
-                  >
-                    <SelectTrigger className='w-full'>
-                      <SelectValue placeholder='Select Type' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='all'>All Types</SelectItem>
-                      <SelectItem value='income'>Income</SelectItem>
-                      <SelectItem value='expense'>Expense</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Date Range Filter with Presets */}
-                <div>
-                  <DateRangePicker
-                    dateRange={filters.tempDateRange}
-                    setDateRange={handleDateRangeSelect}
-                  />
-                  <div className='mt-2 flex flex-wrap gap-2'>
-                    <Button variant='outline' size='sm' onClick={() => handlePreset('today')}>
-                      Today
-                    </Button>
-                    <Button variant='outline' size='sm' onClick={() => handlePreset('thisWeek')}>
-                      This Week
-                    </Button>
-                    <Button variant='outline' size='sm' onClick={() => handlePreset('thisMonth')}>
-                      This Month
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className='flex w-fit justify-end gap-2 sm:justify-start'>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={applyDateRange}
-                    disabled={!filters.tempDateRange?.from || !filters.tempDateRange?.to}
-                  >
-                    Apply
-                  </Button>
-                  {filters.dateRange?.from && (
-                    <Button variant='ghost' size='sm' onClick={handleClearDateRange}>
-                      Clear
-                    </Button>
-                  )}
-                  <Button variant='outline' size='sm' onClick={handleResetFilters}>
-                    Reset Filters
-                  </Button>
-                </div>
-              </div>
+        <div className='p-6'>
+          {/* Filters */}
+          {/* Filters */}
+          <div className='mb-4 space-y-4'>
+            {/* Search Bar - Always Full Width */}
+            <div className='w-full'>
+              <Input
+                type='text'
+                placeholder='Search transactions...'
+                value={filters.searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className='w-full'
+              />
             </div>
 
-            {/* Transactions Table */}
-            {isTransactionLoading ? (
-              <div className='space-y-4'>
-                {Array(3)
-                  .fill(0)
-                  .map((_, i) => (
-                    <Skeleton key={i} className='h-16' />
-                  ))}
+            {/* Filter Controls - Responsive Grid */}
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'>
+              {/* Category Filter */}
+              <div>
+                <Select value={filters.categoryId || 'all'} onValueChange={handleCategoryChange}>
+                  <SelectTrigger className='w-full'>
+                    <SelectValue placeholder='Select Category' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='all'>All Categories</SelectItem>
+                    {categories?.categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            ) : !transactionsData?.transactions?.length ? (
-              <div className='py-8 text-center text-gray-500'>
-                No transactions found for the selected filters.
+
+              {/* Type Filter */}
+              <div>
+                <Select
+                  value={filters.isIncome === undefined ? 'all' : String(filters.isIncome)}
+                  onValueChange={handleIncomeTypeChange}
+                >
+                  <SelectTrigger className='w-full'>
+                    <SelectValue placeholder='Select Type' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='all'>All Types</SelectItem>
+                    <SelectItem value='income'>Income</SelectItem>
+                    <SelectItem value='expense'>Expense</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            ) : (
-              <>
-                <TransactionTable
-                  transactions={transactionsData.transactions}
-                  onUpdate={refetchTransactions}
-                  onSort={handleSort}
-                  sortBy={filters.sortBy}
-                  sortOrder={filters.sortOrder}
+
+              {/* Date Range Filter */}
+              <div className='md:col-span-2 lg:col-span-1'>
+                <DateRangePicker
+                  dateRange={filters.tempDateRange}
+                  setDateRange={handleDateRangeSelect}
                 />
-                {transactionsData.totalPages > 1 && (
-                  <Pagination className='mt-6'>
-                    <PaginationContent>
-                      {page > 1 && (
-                        <PaginationItem>
-                          <PaginationPrevious href='#' onClick={() => handlePageChange(page - 1)} />
-                        </PaginationItem>
-                      )}
-                      {Array.from({ length: transactionsData.totalPages }, (_, i) => i + 1)
-                        .filter(
-                          (p) =>
-                            p <= 2 ||
-                            p >= transactionsData.totalPages - 1 ||
-                            Math.abs(p - page) <= 1
-                        )
-                        .map((p) => (
-                          <PaginationItem key={p}>
-                            <PaginationLink
-                              href='#'
-                              isActive={p === page}
-                              onClick={() => handlePageChange(p)}
-                            >
-                              {p}
-                            </PaginationLink>
-                          </PaginationItem>
-                        ))}
-                      {page < transactionsData.totalPages && (
-                        <PaginationItem>
-                          <PaginationNext href='#' onClick={() => handlePageChange(page + 1)} />
-                        </PaginationItem>
-                      )}
-                    </PaginationContent>
-                  </Pagination>
+              </div>
+
+              {/* Action Buttons - Always Last Item */}
+              <div className='flex flex-wrap items-center gap-2 md:col-span-2 lg:col-span-1'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={applyDateRange}
+                  disabled={!filters.tempDateRange?.from || !filters.tempDateRange?.to}
+                  className='flex-grow sm:flex-grow-0'
+                >
+                  Apply
+                </Button>
+                {filters.dateRange?.from && (
+                  <Button
+                    variant='ghost'
+                    size='sm'
+                    onClick={handleClearDateRange}
+                    className='flex-grow sm:flex-grow-0'
+                  >
+                    Clear
+                  </Button>
                 )}
-              </>
-            )}
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={handleResetFilters}
+                  className='flex-grow sm:flex-grow-0'
+                >
+                  Reset Filters
+                </Button>
+              </div>
+            </div>
           </div>
-        </section>
-      </div>
+
+          {/* Transactions Table */}
+          {isTransactionLoading ? (
+            <div className='space-y-4'>
+              {Array(3)
+                .fill(0)
+                .map((_, i) => (
+                  <Skeleton key={i} className='h-16' />
+                ))}
+            </div>
+          ) : !transactionsData?.transactions?.length ? (
+            <div className='py-8 text-center text-gray-500'>
+              No transactions found for the selected filters.
+            </div>
+          ) : (
+            <>
+              <TransactionTable
+                transactions={transactionsData.transactions}
+                onUpdate={refetchTransactions}
+                onSort={handleSort}
+                sortBy={filters.sortBy}
+                sortOrder={filters.sortOrder}
+              />
+              {transactionsData.totalPages > 1 && (
+                <Pagination className='mt-6'>
+                  <PaginationContent>
+                    {page > 1 && (
+                      <PaginationItem>
+                        <PaginationPrevious href='#' onClick={() => handlePageChange(page - 1)} />
+                      </PaginationItem>
+                    )}
+                    {Array.from({ length: transactionsData.totalPages }, (_, i) => i + 1)
+                      .filter(
+                        (p) =>
+                          p <= 2 || p >= transactionsData.totalPages - 1 || Math.abs(p - page) <= 1
+                      )
+                      .map((p) => (
+                        <PaginationItem key={p}>
+                          <PaginationLink
+                            href='#'
+                            isActive={p === page}
+                            onClick={() => handlePageChange(p)}
+                          >
+                            {p}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                    {page < transactionsData.totalPages && (
+                      <PaginationItem>
+                        <PaginationNext href='#' onClick={() => handlePageChange(page + 1)} />
+                      </PaginationItem>
+                    )}
+                  </PaginationContent>
+                </Pagination>
+              )}
+            </>
+          )}
+        </div>
+      </section>
     </div>
   );
 };

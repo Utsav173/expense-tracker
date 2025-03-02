@@ -81,14 +81,14 @@ const DateRangePicker = ({ dateRange, setDateRange, className }: DateRangePicker
           <CalendarIcon className='mr-2 h-4 w-4' />
           {dateRange?.from ? (
             dateRange.to ? (
-              <>
+              <p className='truncate'>
                 {format(dateRange.from, 'LLL dd, y')} - {format(dateRange.to, 'LLL dd, y')}
-              </>
+              </p>
             ) : (
-              format(dateRange.from, 'LLL dd, y')
+              <p> {format(dateRange.from, 'LLL dd, y')} </p>
             )
           ) : (
-            <span>Pick a date</span>
+            <p>Pick a date</p>
           )}
         </Button>
       </PopoverTrigger>

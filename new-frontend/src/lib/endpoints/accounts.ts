@@ -5,7 +5,9 @@ import {
   AccountDropdown,
   ApiResponse,
   CustomAnalytics,
-  DashboardData
+  DashboardData,
+  DropdownUser,
+  PreviousShareAccount
 } from '../types';
 
 export const accountCreate = (body: any, successMessage?: string, errorMessage?: string) =>
@@ -66,3 +68,27 @@ export const accountGetCustomAnalytics = (
 
 export const accountShare = (body: any, successMessage?: string, errorMessage?: string) =>
   apiFetch('/accounts/share', 'POST', body, undefined, successMessage, errorMessage);
+
+export const accountGetPreviousShares = (
+  id: string,
+  successMessage?: string,
+  errorMessage?: string
+): Promise<ApiResponse<PreviousShareAccount[]>> =>
+  apiFetch(
+    `/accounts/previous/share/${id}`,
+    'GET',
+    undefined,
+    undefined,
+    successMessage,
+    errorMessage
+  );
+
+export const usersGetDropdown = (): Promise<ApiResponse<DropdownUser[]>> =>
+  apiFetch('/accounts/dropdown/user', 'GET', undefined, undefined, '', 'Failed to get users list');
+
+export const accountGetSharedWithMe = (
+  params: any,
+  successMessage?: string,
+  errorMessage?: string
+): Promise<ApiResponse<{ data: Account[]; pagination: any }>> =>
+  apiFetch('/accounts/get-shares', 'GET', undefined, { params }, successMessage, errorMessage);
