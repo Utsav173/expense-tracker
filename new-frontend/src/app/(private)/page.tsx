@@ -93,27 +93,27 @@ const AccountList = () => {
         className='mb-6'
       />
 
-      <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3'>
-        {isLoading ? (
-          <div className='col-span-3 flex items-center justify-center'>
-            <Loader />
-          </div>
-        ) : !data || !data.accounts ? (
-          <div className='col-span-3 flex items-center justify-center'>
-            <h2 className='text-2xl font-bold'>No Accounts Found</h2>
-          </div>
-        ) : (
-          data.accounts.map((account) => (
-            <AccountCard
-              key={account.id}
-              href={`/accounts/${account.id}`}
-              account={account}
-              onEdit={handleEdit}
-              onDelete={handleDeleteClick}
-            />
-          ))
-        )}
-      </div>
+      {isLoading ? (
+        <Loader />
+      ) : (
+        <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3'>
+          {!data || !data.accounts ? (
+            <div className='col-span-3 flex items-center justify-center'>
+              <h2 className='text-2xl font-bold'>No Accounts Found</h2>
+            </div>
+          ) : (
+            data.accounts.map((account) => (
+              <AccountCard
+                key={account.id}
+                href={`/accounts/${account.id}`}
+                account={account}
+                onEdit={handleEdit}
+                onDelete={handleDeleteClick}
+              />
+            ))
+          )}
+        </div>
+      )}
 
       <div className='mt-6 flex justify-center'>
         {data && data.total > 10 && (

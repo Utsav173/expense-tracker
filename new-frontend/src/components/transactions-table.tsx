@@ -23,7 +23,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 interface TransactionTableProps {
   transactions: TransactionType[] | undefined;
   onUpdate: () => void;
-  onSort: (field: string) => void;
+  onSort: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
   sortBy: string;
   sortOrder: 'asc' | 'desc';
 }
@@ -53,7 +53,10 @@ const TransactionTable = ({
   const columns: ColumnDef<TransactionType, any>[] = [
     columnHelper.accessor('text', {
       header: () => (
-        <div className='min-w-[120px] cursor-pointer' onClick={() => onSort('text')}>
+        <div
+          className='min-w-[120px] cursor-pointer'
+          onClick={() => onSort('text', sortOrder === 'asc' ? 'desc' : 'asc')}
+        >
           Text {sortBy === 'text' && (sortOrder === 'asc' ? '▲' : '▼')}
         </div>
       ),
@@ -61,7 +64,10 @@ const TransactionTable = ({
     }),
     columnHelper.accessor('amount', {
       header: () => (
-        <div className='min-w-[100px] cursor-pointer' onClick={() => onSort('amount')}>
+        <div
+          className='min-w-[100px] cursor-pointer'
+          onClick={() => onSort('amount', sortOrder === 'asc' ? 'desc' : 'asc')}
+        >
           Amount {sortBy === 'amount' && (sortOrder === 'asc' ? '▲' : '▼')}
         </div>
       ),
@@ -76,7 +82,10 @@ const TransactionTable = ({
     }),
     columnHelper.accessor('category.name', {
       header: () => (
-        <div className='min-w-[100px] cursor-pointer' onClick={() => onSort('category.name')}>
+        <div
+          className='min-w-[100px] cursor-pointer'
+          onClick={() => onSort('category.name', sortOrder === 'asc' ? 'desc' : 'asc')}
+        >
           Category {sortBy === 'category.name' && (sortOrder === 'asc' ? '▲' : '▼')}
         </div>
       ),
@@ -84,7 +93,10 @@ const TransactionTable = ({
     }),
     columnHelper.accessor('createdAt', {
       header: () => (
-        <div className='min-w-[140px] cursor-pointer' onClick={() => onSort('createdAt')}>
+        <div
+          className='min-w-[140px] cursor-pointer'
+          onClick={() => onSort('createdAt', sortOrder === 'asc' ? 'desc' : 'asc')}
+        >
           Date {sortBy === 'createdAt' && (sortOrder === 'asc' ? '▲' : '▼')}
         </div>
       ),
@@ -127,7 +139,10 @@ const TransactionTable = ({
   const mobileColumns: ColumnDef<TransactionType, any>[] = [
     columnHelper.accessor('text', {
       header: () => (
-        <div className='cursor-pointer' onClick={() => onSort('text')}>
+        <div
+          className='cursor-pointer'
+          onClick={() => onSort('text', sortOrder === 'asc' ? 'desc' : 'asc')}
+        >
           Transaction {sortBy === 'text' && (sortOrder === 'asc' ? '▲' : '▼')}
         </div>
       ),

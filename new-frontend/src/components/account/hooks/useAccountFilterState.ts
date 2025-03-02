@@ -1,126 +1,178 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { DateRange } from 'react-day-picker';
 import { parseISO, format } from 'date-fns';
-import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import { useDebounce } from 'use-debounce';
 
-interface SearchParams {
-  q?: string;
-  sortBy?: string;
-  sortOrder?: string;
+interface CategoryFilters {
+  searchQuery: string;
+  debouncedSearchQuery: string; // Add this
+  sortBy: string;
+  sortOrder: 'asc' | 'desc';
   categoryId?: string;
-  isIncome?: string;
-  dateFrom?: string;
-  dateTo?: string;
+  isIncome?: boolean;
+  dateRange?: DateRange;
+  tempDateRange?: DateRange; // Keep this for the picker's internal state
 }
 
-export const useAccountFilterState = (
-  searchParams: SearchParams,
-  router: AppRouterInstance,
-  accountId: string
-) => {
-  // State
-  const [searchQuery, setSearchQuery] = useState(searchParams.q || '');
-  const [sortBy, setSortBy] = useState(searchParams.sortBy || 'createdAt');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(
-    (searchParams.sortOrder as 'asc' | 'desc') || 'desc'
-  );
-  const [categoryId, setCategoryId] = useState<string | undefined>(searchParams.categoryId);
-  const [isIncome, setIsIncome] = useState<boolean | undefined>(
-    searchParams.isIncome === 'true' ? true : searchParams.isIncome === 'false' ? false : undefined
-  );
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(
-    searchParams.dateFrom && searchParams.dateTo
-      ? { from: parseISO(searchParams.dateFrom), to: parseISO(searchParams.dateTo) }
-      : undefined
-  );
-  const [tempDateRange, setTempDateRange] = useState<DateRange | undefined>(dateRange);
+export const useAccountFilterState = (initialSearchParams: any, router: any, accountId: string) => {
+  const [filters, setFilters] = useState<CategoryFilters>({
+    searchQuery: initialSearchParams.q || '',
+    debouncedSearchQuery: initialSearchParams.q || '', // Initialize
+    sortBy: initialSearchParams.sortBy || 'createdAt',
+    sortOrder: (initialSearchParams.sortOrder as 'asc' | 'desc') || 'desc',
+    categoryId: initialSearchParams.categoryId,
+    isIncome:
+      initialSearchParams.isIncome === 'true'
+        ? true
+        : initialSearchParams.isIncome === 'false'
+          ? false
+          : undefined,
+    dateRange:
+      initialSearchParams.dateFrom && initialSearchParams.dateTo
+        ? { from: parseISO(initialSearchParams.dateFrom), to: parseISO(initialSearchParams.dateTo) }
+        : undefined,
+    tempDateRange:
+      initialSearchParams.dateFrom && initialSearchParams.dateTo
+        ? { from: parseISO(initialSearchParams.dateFrom), to: parseISO(initialSearchParams.dateTo) }
+        : undefined
+  });
 
-  // URL update function
-  const updateURL = (newParams: Partial<SearchParams>) => {
-    const params = new URLSearchParams();
+  const [debouncedSearchQuery] = useDebounce(filters.searchQuery, 300);
 
-    if (newParams.q) params.set('q', newParams.q);
-    if (newParams.sortBy && newParams.sortBy !== 'createdAt')
-      params.set('sortBy', newParams.sortBy);
-    if (newParams.sortOrder && newParams.sortOrder !== 'desc')
-      params.set('sortOrder', newParams.sortOrder);
-    if (newParams.categoryId) params.set('categoryId', newParams.categoryId);
-    if (newParams.isIncome !== undefined) params.set('isIncome', String(newParams.isIncome));
-    if (newParams.dateFrom) params.set('dateFrom', newParams.dateFrom);
-    if (newParams.dateTo) params.set('dateTo', newParams.dateTo);
+  // Update the debounced search query in the filters whenever it changes
+  useEffect(() => {
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      debouncedSearchQuery: debouncedSearchQuery
+    }));
+  }, [debouncedSearchQuery]);
 
-    router.push(`/accounts/${accountId}?${params.toString()}`, { scroll: false });
+  const updateURL = useCallback(
+    (params: any) => {
+      const currentParams = new URLSearchParams(window.location.search);
+      Object.keys(params).forEach((key) => {
+        const param = key as keyof typeof params;
+        if (params[param] === undefined || params[param] === null || params[param] === '') {
+          currentParams.delete(param.toString());
+        } else {
+          currentParams.set(param.toString(), params[param]);
+        }
+      });
+
+      const newUrl = `${window.location.pathname}?${currentParams.toString()}`;
+      router.replace(newUrl, { scroll: false });
+    },
+    [router]
+  );
+
+  // Update filters from URL on initial load and when URL changes
+  useEffect(() => {
+    setFilters((prev) => ({
+      ...prev,
+      searchQuery: initialSearchParams.q || '',
+      debouncedSearchQuery: initialSearchParams.q || '', // Also update debounced
+      sortBy: initialSearchParams.sortBy || 'createdAt',
+      sortOrder: (initialSearchParams.sortOrder as 'asc' | 'desc') || 'desc',
+      categoryId: initialSearchParams.categoryId,
+      isIncome:
+        initialSearchParams.isIncome === 'true'
+          ? true
+          : initialSearchParams.isIncome === 'false'
+            ? false
+            : undefined,
+      dateRange:
+        initialSearchParams.dateFrom && initialSearchParams.dateTo
+          ? {
+              from: parseISO(initialSearchParams.dateFrom),
+              to: parseISO(initialSearchParams.dateTo)
+            }
+          : undefined,
+      tempDateRange:
+        initialSearchParams.dateFrom && initialSearchParams.dateTo
+          ? {
+              from: parseISO(initialSearchParams.dateFrom),
+              to: parseISO(initialSearchParams.dateTo)
+            }
+          : undefined
+    }));
+  }, [initialSearchParams]);
+
+  const setSearchQuery = (value: string) => {
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      searchQuery: value
+    }));
   };
 
-  // Event handlers
+  // Update URL when debounced search query changes
+  useEffect(() => {
+    updateURL({ q: filters.debouncedSearchQuery || undefined, page: undefined }); // Reset page on search
+  }, [filters.debouncedSearchQuery, updateURL]);
+
   const handleCategoryChange = (value: string) => {
     const newCategoryId = value === 'all' ? undefined : value;
-    setCategoryId(newCategoryId);
-    updateURL({ categoryId: newCategoryId });
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      categoryId: newCategoryId
+    }));
+    updateURL({ categoryId: newCategoryId, page: undefined }); // Reset page
   };
 
   const handleIncomeTypeChange = (value: string) => {
     const newIsIncome = value === 'all' ? undefined : value === 'true';
-    setIsIncome(newIsIncome);
-    updateURL({ isIncome: newIsIncome === undefined ? undefined : String(newIsIncome) });
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      isIncome: newIsIncome
+    }));
+    updateURL({
+      isIncome: newIsIncome === undefined ? undefined : String(newIsIncome),
+      page: undefined
+    }); // Reset page
   };
 
   const handleDateRangeSelect = (range: DateRange | undefined) => {
-    setTempDateRange(range);
-  };
-
-  const applyDateRange = () => {
-    if (tempDateRange?.from && tempDateRange.to) {
-      setDateRange(tempDateRange);
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      tempDateRange: range
+    }));
+    // Only update dateRange and URL if both from and to are present
+    if (range?.from && range.to) {
+      setFilters((prevFilters) => ({
+        ...prevFilters,
+        dateRange: range
+      }));
       updateURL({
-        dateFrom: format(tempDateRange.from, 'yyyy-MM-dd'),
-        dateTo: format(tempDateRange.to, 'yyyy-MM-dd')
+        dateFrom: format(range.from, 'yyyy-MM-dd'),
+        dateTo: format(range.to, 'yyyy-MM-dd'),
+        page: undefined // Reset page
       });
     }
   };
 
   const handleClearDateRange = () => {
-    setDateRange(undefined);
-    setTempDateRange(undefined);
-    updateURL({ dateFrom: undefined, dateTo: undefined });
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      dateRange: undefined,
+      tempDateRange: undefined
+    }));
+    updateURL({ dateFrom: undefined, dateTo: undefined, page: undefined });
   };
 
-  const handleSort = (field: string) => {
-    if (field === sortBy) {
-      const newSortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-      setSortOrder(newSortOrder);
-      updateURL({ sortOrder: newSortOrder });
-    } else {
-      setSortBy(field);
-      setSortOrder('asc');
-      updateURL({ sortBy: field, sortOrder: 'asc' });
-    }
+  const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      sortBy,
+      sortOrder
+    }));
+    updateURL({ sortBy, sortOrder, page: undefined });
   };
-
-  // Effect to update URL when search query changes
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      updateURL({ q: searchQuery || undefined });
-    }, 300);
-
-    return () => clearTimeout(timeoutId);
-  }, [searchQuery]);
 
   return {
-    filters: {
-      searchQuery,
-      sortBy,
-      sortOrder,
-      categoryId,
-      isIncome,
-      dateRange,
-      tempDateRange
-    },
+    filters,
     setSearchQuery,
     handleCategoryChange,
     handleIncomeTypeChange,
     handleDateRangeSelect,
-    applyDateRange,
     handleClearDateRange,
     handleSort,
     updateURL

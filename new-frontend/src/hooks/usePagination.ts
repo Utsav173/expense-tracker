@@ -13,7 +13,6 @@ export const usePagination = (initialPage: number, updateURL: (params: any) => v
     [page, updateURL]
   );
 
-  // Reset page when initialPage changes
   useEffect(() => {
     setPage(initialPage);
   }, [initialPage]);

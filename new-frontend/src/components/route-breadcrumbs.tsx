@@ -20,14 +20,22 @@ interface BreadcrumbItemType {
   isCurrentPage: boolean;
 }
 
-const RouteBreadcrumbs = () => {
+const RouteBreadcrumbs: React.FC = () => {
   const pathname = usePathname();
+  const [accountId, setAccountIdState] = useState<string | undefined>('');
   const [accountName, setAccountName] = useState<string | null>(null);
 
   useEffect(() => {
+    const accountIdState =
+      pathname.startsWith('/accounts/') && pathname.split('/').length === 3
+        ? pathname.split('/')[2]
+        : undefined;
+    setAccountIdState(accountIdState);
+  }, []);
+
+  useEffect(() => {
     const fetchAccountName = async () => {
-      if (pathname.startsWith('/accounts/') && pathname.split('/').length === 3) {
-        const accountId = pathname.split('/')[2];
+      if (accountId) {
         try {
           const account = await accountGetById(accountId);
           setAccountName(account?.name || null);
@@ -41,33 +49,33 @@ const RouteBreadcrumbs = () => {
     };
 
     fetchAccountName();
-  }, [pathname]);
+  }, [pathname, accountId]);
 
-  // Build breadcrumb items based on the path
   const buildBreadcrumbs = (): BreadcrumbItemType[] => {
-    const pathSegments = pathname.split('/').filter((segment) => segment !== '');
     const breadcrumbs: BreadcrumbItemType[] = [
-      { href: '/', label: 'Home', isCurrentPage: false } // Always include Home
+      { href: '/', label: 'Home', isCurrentPage: false },
+      { href: '/accounts', label: 'Accounts', isCurrentPage: pathname === '/accounts' }
     ];
 
-    let currentPath = '';
-    for (let i = 0; i < pathSegments.length; i++) {
-      const segment = pathSegments[i];
-      currentPath += `/${segment}`;
-      let label = segment.charAt(0).toUpperCase() + segment.slice(1); // Capitalize
-      const isCurrentPage = i === pathSegments.length - 1;
-
-      // Check if it's the account details page and use the account name
-      if (currentPath.startsWith('/accounts/') && currentPath.split('/').length === 3) {
-        label = accountName || 'Account Details';
-      }
-
+    if (pathname.startsWith('/accounts/shares/')) {
       breadcrumbs.push({
-        href: currentPath,
-        label: label.replace(/-/g, ' '), // Replace hyphens with spaces
-        isCurrentPage
+        href: `/accounts/${accountId}`,
+        label: accountName || 'Account Details',
+        isCurrentPage: false
+      });
+      breadcrumbs.push({
+        href: `/accounts/account-sharing/${accountId}`,
+        label: 'Account Sharing',
+        isCurrentPage: true
+      });
+    } else if (pathname.startsWith('/accounts/') && accountId) {
+      breadcrumbs.push({
+        href: `/accounts/${accountId}`,
+        label: accountName || 'Account Details',
+        isCurrentPage: true
       });
     }
+
     return breadcrumbs;
   };
 
@@ -77,11 +85,9 @@ const RouteBreadcrumbs = () => {
     <Breadcrumb>
       <BreadcrumbList>
         {breadcrumbItems.map((item, index) => (
-          // Use a React Fragment to group the item and separator
           <React.Fragment key={item.href}>
             <BreadcrumbItem className={index === 0 ? 'flex items-center' : ''}>
               {index === 0 && <Home className='mr-1 h-4 w-4' />}
-              {/* Use Link for internal navigation */}
               {item.isCurrentPage ? (
                 <BreadcrumbPage>{item.label}</BreadcrumbPage>
               ) : (
@@ -90,7 +96,6 @@ const RouteBreadcrumbs = () => {
                 </BreadcrumbLink>
               )}
             </BreadcrumbItem>
-            {/* Conditionally render the separator */}
             {index < breadcrumbItems.length - 1 && <BreadcrumbSeparator />}
           </React.Fragment>
         ))}
