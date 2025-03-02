@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import * as React from 'react';
-import { CreditCard, ArrowUp, ArrowDown, Minus, Edit, Trash } from 'lucide-react';
+import { CreditCard, ArrowUp, ArrowDown, Minus, Edit, Trash, Share } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils';
 import Image from 'next/image';
 import { Button } from './button'; // Assuming button.tsx is in the same directory
 import { Account } from '@/lib/types';
+import ShareAccountModal from '../modals/share-account-modal';
 
 interface AccountCardProps extends React.ComponentPropsWithoutRef<'a'> {
   href: string;
@@ -22,8 +23,6 @@ const AccountCard: React.FC<AccountCardProps> = React.forwardRef<
   AccountCardProps
 >(({ className, href, account, onEdit, onDelete, showActions = true }, ref) => {
   const { balance, currency, analytics, owner, name, createdAt } = account;
-
-  // Removed gradientClass, using background colors directly for better control
 
   return (
     <Link
@@ -150,31 +149,30 @@ const AccountCard: React.FC<AccountCardProps> = React.forwardRef<
             </p>
             {showActions && (
               <div className='flex gap-1'>
-                {' '}
                 {/* Reduced gap */}
                 <Button
                   size='sm'
                   variant='outline'
-                  className='h-7 w-7 rounded-full p-0' /* Reduced button size */
+                  className='h-7 w-7 rounded-full p-0'
                   onClick={(e) => {
                     e.preventDefault();
                     onEdit(account);
                   }}
                   aria-label='Edit account'
                 >
-                  <Edit className='h-3.5 w-3.5' /> {/* Reduced icon size */}
+                  <Edit className='h-3.5 w-3.5' />
                 </Button>
                 <Button
                   size='sm'
                   variant='outline'
-                  className='h-7 w-7 rounded-full p-0 text-red-500' /* Reduced button size */
+                  className='h-7 w-7 rounded-full p-0 text-red-500'
                   onClick={(e) => {
                     e.preventDefault();
                     onDelete(account.id);
                   }}
                   aria-label='Delete account'
                 >
-                  <Trash className='h-3.5 w-3.5' /> {/* Reduced icon size */}
+                  <Trash className='h-3.5 w-3.5' />
                 </Button>
               </div>
             )}

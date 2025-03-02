@@ -5,7 +5,6 @@ import { use, useMemo } from 'react';
 // Components
 import { AnalyticsCards, IncomeExpenseChart } from '@/components/account';
 import { useToast } from '@/lib/hooks/useToast';
-import { useRouter } from 'next/navigation';
 import { useAccountDetails } from '@/components/account/hooks/useAccountDetails';
 import { AccountDetailsHeader } from '@/components/account/account-details-header';
 import { AccountTransactionsSection } from '@/components/account/account-transactions-section';
@@ -27,7 +26,6 @@ interface PageProps {
 const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
   const { id } = use(params);
   const parsedSearchParams = use(searchParams);
-  const router = useRouter();
   const { showError } = useToast();
 
   const {
@@ -51,12 +49,11 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
     handleDateRangeSelect,
     handleClearDateRange,
     handleSort,
-    updateURL,
     page,
     handlePageChange,
     categories,
     handleResetFilters
-  } = useAccountDetails(id, parsedSearchParams, router);
+  } = useAccountDetails(id, parsedSearchParams);
 
   const transformedChartData = useMemo(() => {
     if (!chartData?.date) return [];

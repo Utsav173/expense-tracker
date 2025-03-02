@@ -281,8 +281,6 @@ userRouter.put('/update', authMiddleware, zValidator('form', updateUserSchema), 
   try {
     const userId = await c.get('userId' as any);
     const formData = await c.req.formData();
-    console.log(formData, 'formData');
-
     const name = formData.get('name');
     const preferredCurrency = formData.get('preferredCurrency');
     const profilePic = formData.get('profilePic');
@@ -315,7 +313,7 @@ userRouter.put('/update', authMiddleware, zValidator('form', updateUserSchema), 
     });
   } catch (error) {
     console.log(error);
-    
+
     throw new HTTPException(500, {
       message: error instanceof Error ? error.message : 'Something went wrong',
     });

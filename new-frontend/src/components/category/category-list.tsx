@@ -1,19 +1,16 @@
-import Loader from '../ui/loader';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+'use client';
+
+import React, { useMemo, useState } from 'react';
+import CommonTable from '../ui/CommonTable';
 import { ApiResponse, Category } from '@/lib/types';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious
-} from '../ui/pagination';
+import { ColumnDef, SortingState } from '@tanstack/react-table';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { categoryDelete } from '@/lib/endpoints/category';
+import AddCategoryModal from '../modals/add-category-modal';
+import { useToast } from '@/lib/hooks/useToast';
+import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
 import { Button } from '../ui/button';
-import { ArrowUp, ArrowDown } from 'lucide-react';
-import CategoryRow from './category-row';
-import { useQuery } from '@tanstack/react-query';
-import { categoryGetAll } from '@/lib/endpoints/category';
+import { Edit, Trash2 } from 'lucide-react';
 
 interface CategoryListProps {
   data:
@@ -28,6 +25,7 @@ interface CategoryListProps {
   sortOrder: 'asc' | 'desc';
   page: number;
   handlePageChange: (page: number) => void;
+  refetch: () => void;
 }
 
 const CategoryList = ({
@@ -37,86 +35,127 @@ const CategoryList = ({
   sortBy,
   sortOrder,
   page,
-  handlePageChange
+  handlePageChange,
+  refetch
 }: CategoryListProps) => {
-  const { refetch } = useQuery({
-    queryKey: ['categories'],
-    queryFn: categoryGetAll,
-    enabled: false
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<Category | undefined>();
+  const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const { showSuccess, showError } = useToast();
+
+  const deleteCategoryMutation = useMutation({
+    mutationFn: (id: string) => categoryDelete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      showSuccess('Category deleted successfully!');
+      refetch();
+      setDeleteCategoryId(null);
+    },
+    onError: (error: any) => {
+      showError(error.message);
+    }
   });
+
+  const handleDelete = async () => {
+    if (deleteCategoryId) {
+      deleteCategoryMutation.mutate(deleteCategoryId);
+    }
+  };
+
+  const handleEdit = (category: Category) => {
+    setSelectedCategory(category);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDeleteClick = (id: string) => {
+    setDeleteCategoryId(id);
+  };
+
+  const columns: ColumnDef<Category>[] = useMemo(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Category'
+      },
+      {
+        id: 'actions',
+        header: 'Actions',
+        cell: ({ row }) => (
+          <div className='flex justify-end gap-2'>
+            <Button
+              type='button'
+              variant='ghost'
+              className='p-0'
+              onClick={() => handleEdit(row.original)}
+            >
+              <Edit size={18} />
+            </Button>
+            <DeleteConfirmationModal
+              title='Delete Category'
+              description='Are you sure you want to delete this category?'
+              triggerButton={
+                <Button type='button' variant='ghost' className='p-0'>
+                  <Trash2 size={18} />
+                </Button>
+              }
+              onConfirm={() => handleDeleteClick(row.original.id)}
+            />
+          </div>
+        )
+      }
+    ],
+    []
+  );
+
+  const handleSortChange = (sorting: SortingState) => {
+    if (sorting.length > 0) {
+      const sort = sorting[0];
+      onSort(sort.id, sort.desc ? 'desc' : 'asc');
+    }
+  };
+
   return (
     <>
-      {isLoading ? (
-        <div className='flex items-center justify-center'>
-          <Loader />
-        </div>
-      ) : !data?.categories?.length ? (
-        <div className='py-8 text-center text-gray-500'>No Category found</div>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className='w-[100px]'>
-                <div className='flex items-center gap-2'>
-                  Category
-                  <Button
-                    variant='ghost'
-                    size='icon'
-                    onClick={() =>
-                      onSort('name', sortBy === 'name' && sortOrder === 'asc' ? 'desc' : 'asc')
-                    }
-                  >
-                    {sortBy === 'name' && sortOrder === 'asc' ? (
-                      <ArrowUp className='h-4 w-4' />
-                    ) : (
-                      <ArrowDown className='h-4 w-4' />
-                    )}
-                  </Button>
-                </div>
-              </TableHead>
-              <TableHead className='w-[100px] text-right'>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data?.categories?.map((category) => (
-              <CategoryRow category={category} key={category.id} onCategoryDeleted={refetch} />
-            ))}
-          </TableBody>
-        </Table>
-      )}
-      {data?.pagination?.totalPages > 1 && (
-        <Pagination className='mt-6'>
-          <PaginationContent>
-            {page > 1 && (
-              <PaginationItem>
-                <PaginationPrevious href='#' onClick={() => handlePageChange(page - 1)} />
-              </PaginationItem>
-            )}
+      <CommonTable
+        data={data?.categories || []}
+        columns={columns}
+        loading={isLoading}
+        totalRecords={data?.pagination?.total || 0}
+        pageSize={10}
+        currentPage={page}
+        onPageChange={handlePageChange}
+        onSortChange={handleSortChange}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        enablePagination={true}
+      />
 
-            {Array.from({ length: data?.pagination?.totalPages }, (_, i) => i + 1)
-              .filter(
-                (p) => p <= 2 || p >= data?.pagination?.totalPages - 1 || Math.abs(p - page) <= 1
-              )
-              .map((p) => (
-                <PaginationItem key={p}>
-                  <PaginationLink
-                    href='#'
-                    isActive={p === page}
-                    onClick={() => handlePageChange(p)}
-                  >
-                    {p}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
-
-            {page < data?.pagination?.totalPages && (
-              <PaginationItem>
-                <PaginationNext href='#' onClick={() => handlePageChange(page + 1)} />
-              </PaginationItem>
-            )}
-          </PaginationContent>
-        </Pagination>
+      {selectedCategory && (
+        <AddCategoryModal
+          isOpen={isEditModalOpen}
+          onOpenChange={setIsEditModalOpen}
+          onCategoryAdded={refetch}
+          initialValues={{ name: selectedCategory.name }}
+          categoryId={selectedCategory.id}
+        />
       )}
+
+      <DeleteConfirmationModal
+        title='Delete Category'
+        description={
+          selectedCategory ? (
+            <>
+              Are you sure you want to delete <b>{selectedCategory.name}</b> category?
+            </>
+          ) : (
+            ''
+          )
+        }
+        onConfirm={handleDelete}
+        open={!!deleteCategoryId}
+        onOpenChange={() => setDeleteCategoryId(null)}
+      />
     </>
   );
 };

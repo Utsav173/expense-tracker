@@ -5,7 +5,6 @@ import { categoryGetAll } from '@/lib/endpoints/category';
 import { format } from 'date-fns';
 import { useAccountFilterState } from './useAccountFilterState';
 import { usePagination } from '@/hooks/usePagination';
-import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 
 interface SearchParams {
   q?: string;
@@ -18,11 +17,7 @@ interface SearchParams {
   dateTo?: string;
 }
 
-export const useAccountDetails = (
-  id: string,
-  searchParams: SearchParams,
-  router: AppRouterInstance
-) => {
+export const useAccountDetails = (id: string, searchParams: SearchParams) => {
   const {
     filters,
     setSearchQuery,
@@ -32,7 +27,7 @@ export const useAccountDetails = (
     handleClearDateRange,
     handleSort,
     updateURL
-  } = useAccountFilterState(searchParams, router, id);
+  } = useAccountFilterState();
 
   const { page, handlePageChange } = usePagination(Number(searchParams.page) || 1, updateURL);
 

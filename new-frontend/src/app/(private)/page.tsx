@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { accountGetAll, accountDelete } from '@/lib/endpoints/accounts';
 import Loader from '@/components/ui/loader';
 import AddAccountModal from '@/components/modals/add-account-modal';
-import { AccountCard } from '@/components/ui/account-card'; // Removed AccountCardContent import
+import { AccountCard } from '@/components/ui/account-card';
 import { useState } from 'react';
 import { Account } from '@/lib/types';
 import { Input } from '@/components/ui/input';
@@ -14,7 +14,6 @@ import { Button } from '@/components/ui/button';
 import DeleteConfirmationModal from '@/components/modals/delete-confirmation-modal';
 import AddTransactionModal from '@/components/modals/add-transaction-modal';
 import { EditAccountModal } from '@/components/modals/edit-account-modal';
-import { cn } from '@/lib/utils';
 
 const AccountList = () => {
   const [page, setPage] = useState(1);

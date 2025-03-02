@@ -1,20 +1,41 @@
-import { useState, useCallback, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useDebounce } from 'use-debounce';
 
 interface CategoryFilters {
   searchQuery: string;
+  debouncedSearchQuery: string;
   sortBy: string;
   sortOrder: 'asc' | 'desc';
 }
 
-export const useCategoryFilters = (initialSearchParams: any) => {
+export const useCategoryFilters = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isInitialMount = useRef(true);
+
+  const initialSearchParams = {
+    q: searchParams.get('q') || '',
+    sortBy: searchParams.get('sortBy') || 'createdAt',
+    sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'asc'
+  };
 
   const [filters, setFilters] = useState<CategoryFilters>({
-    searchQuery: initialSearchParams.q || '',
-    sortBy: initialSearchParams.sortBy || 'createdAt',
-    sortOrder: (initialSearchParams.sortOrder as 'asc' | 'desc') || 'asc'
+    searchQuery: initialSearchParams.q,
+    debouncedSearchQuery: initialSearchParams.q,
+    sortBy: initialSearchParams.sortBy,
+    sortOrder: initialSearchParams.sortOrder
   });
+
+  const [debouncedSearchQuery] = useDebounce(filters.searchQuery, 300);
+
+  // Update debounced query
+  useEffect(() => {
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      debouncedSearchQuery: debouncedSearchQuery
+    }));
+  }, [debouncedSearchQuery]);
 
   const updateURL = useCallback(
     (params: any) => {
@@ -35,19 +56,49 @@ export const useCategoryFilters = (initialSearchParams: any) => {
   );
 
   useEffect(() => {
-    setFilters((prev) => ({
-      ...prev,
-      searchQuery: initialSearchParams.q || '',
-      sortBy: initialSearchParams.sortBy || 'createdAt',
-      sortOrder: (initialSearchParams.sortOrder as 'asc' | 'desc') || 'asc'
-    }));
-  }, [initialSearchParams]);
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    updateURL({ q: filters.debouncedSearchQuery || undefined });
+  }, [filters.debouncedSearchQuery, updateURL]);
+
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    const newQ = searchParams.get('q') || '';
+    const newSortBy = searchParams.get('sortBy') || 'createdAt';
+    const newSortOrder = (searchParams.get('sortOrder') as 'asc' | 'desc') || 'asc';
+
+    if (
+      filters.searchQuery !== newQ ||
+      filters.sortBy !== newSortBy ||
+      filters.sortOrder !== newSortOrder
+    ) {
+      setFilters({
+        searchQuery: newQ,
+        debouncedSearchQuery: newQ,
+        sortBy: newSortBy,
+        sortOrder: newSortOrder
+      });
+    }
+  }, [searchParams, filters]);
 
   const setSearchQuery = (value: string) => {
-    updateURL({ q: value || undefined });
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      searchQuery: value
+    }));
   };
 
   const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      sortBy,
+      sortOrder
+    }));
     updateURL({ sortBy, sortOrder });
   };
 
