@@ -1,81 +1,128 @@
 'use client';
+
 import { useQuery } from '@tanstack/react-query';
-import { apiFetchDebts, debtsMarkAsPaid } from '@/lib/endpoints/debt';
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { apiFetchDebts } from '@/lib/endpoints/debt';
+import { useState, useEffect } from 'react';
 import Loader from '@/components/ui/loader';
+import CommonTable from '@/components/ui/CommonTable';
+import { usePagination } from '@/hooks/usePagination';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { useToast } from '@/lib/hooks/useToast';
+import { Input } from '@/components/ui/input';
+import { useDebounce } from 'use-debounce';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { PlusCircle } from 'lucide-react';
+import { debtColumns } from '@/components/debt/debt-columns';
+import AddDebtModal from '@/components/modals/add-debt-modal';
 
 const DebtsPage = () => {
-  const [duration, setDuration] = useState('thisMonth');
-  const [page, setPage] = useState(1);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const { showError } = useToast();
+
+  const [search, setSearch] = useState('');
+  const [debouncedSearch] = useDebounce(search, 300);
+  const [type, setType] = useState<string | undefined>(undefined);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  const { page, handlePageChange } = usePagination(
+    Number(searchParams.get('page')) || 1,
+    (params) => {
+      const currentParams = new URLSearchParams(searchParams.toString());
+      Object.keys(params).forEach((key) => {
+        if (params[key] === undefined || params[key] === null || params[key] === '') {
+          currentParams.delete(key);
+        } else {
+          currentParams.set(key.toString(), params[key]);
+        }
+      });
+      const newUrl = `${pathname}?${currentParams.toString()}`;
+      router.push(newUrl, { scroll: false });
+    }
+  );
+
   const {
     data: debts,
     isLoading,
-    error
+    error,
+    refetch
   } = useQuery({
-    queryKey: ['debts', { duration, page }],
-    queryFn: () => apiFetchDebts({ duration, page, pageSize: 10 }),
+    queryKey: ['debts', page, debouncedSearch, type],
+    queryFn: () =>
+      apiFetchDebts({
+        page,
+        pageSize: 10,
+        q: debouncedSearch,
+        type: type === 'all' ? '' : type
+      }),
     retry: false
   });
-  const handlePageChange = (page: number) => {
-    setPage(page);
-  };
 
-  const handlePaid = async (id: string) => {
-    await debtsMarkAsPaid(id);
-  };
+  useEffect(() => {
+    handlePageChange(1);
+  }, [debouncedSearch, type]);
 
   if (isLoading) {
     return <Loader />;
   }
 
   if (error) {
-    return <div>Error fetching debts: {error.message}</div>;
+    showError(`Failed to get Debts Details : ${(error as Error).message}`);
+    return null;
   }
 
   return (
-    <div className='p-4'>
-      <h1 className='text-xl font-bold'>Debts</h1>
-      <div className='mt-4 flex gap-2'>
-        <select onChange={(e) => setDuration(e.target.value)}>
-          <option value='today'>Today</option>
-          <option value='thisWeek'>This Week</option>
-          <option value='thisMonth'>This Month</option>
-          <option value='thisYear'>This Year</option>
-          <option value='all'>All</option>
-        </select>
+    <div className='container space-y-6'>
+      <div className='flex items-center justify-between'>
+        <h1 className='text-3xl font-semibold'>Debts</h1>
+        <Button onClick={() => setIsAddModalOpen(true)}>
+          <PlusCircle className='mr-2 h-4 w-4' /> Add Debt
+        </Button>
       </div>
-      <div className='mt-4'>
-        {debts?.data?.map((debt) => (
-          <div key={debt.id} className='rounded-lg border p-4 shadow-md'>
-            <p className='font-semibold'>{debt.description}</p>
-            <p>Amount : {debt.amount}</p>
-            <p>Premium Amount : {debt.premiumAmount}</p>
-            <p>Due Date: {debt.dueDate}</p>
-            <p>Type: {debt.type}</p>
-            {debt.isPaid ? (
-              <p className='text-green-500'>Paid</p>
-            ) : (
-              <Button size='sm' onClick={() => handlePaid(debt.id)}>
-                {' '}
-                Mark as Paid
-              </Button>
-            )}
-          </div>
-        ))}
-        <div className='mt-4 flex items-center justify-center gap-2'>
-          {debts?.totalPages &&
-            Array.from({ length: debts?.totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                className='rounded-sm border px-2 py-1'
-                key={page}
-                onClick={() => handlePageChange(page)}
-              >
-                {page}
-              </button>
-            ))}
-        </div>
+
+      <div className='flex items-center gap-4'>
+        <Input
+          type='text'
+          placeholder='Search debts...'
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className='max-w-sm'
+        />
+
+        <Select onValueChange={(value) => setType(value)} value={type || 'all'}>
+          <SelectTrigger className='w-[180px]'>
+            <SelectValue placeholder='Select Type' />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value='all'>All Types</SelectItem>
+            <SelectItem value='given'>Given</SelectItem>
+            <SelectItem value='taken'>Taken</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
+      <CommonTable
+        data={debts?.data || []}
+        columns={debtColumns}
+        loading={isLoading}
+        totalRecords={debts?.totalCount || 0}
+        pageSize={10}
+        currentPage={page}
+        onPageChange={handlePageChange}
+      />
+
+      <AddDebtModal
+        isOpen={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+        onDebtAdded={refetch}
+      />
     </div>
   );
 };

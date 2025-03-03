@@ -1,52 +1,86 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { budgetCreate } from '@/lib/endpoints/budget';
 import { useToast } from '@/lib/hooks/useToast';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { Button } from '../ui/button';
 import AddModal from './add-modal';
-import { budgetCreate } from '@/lib/endpoints/budget';
-import { useQueryClient } from '@tanstack/react-query';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { useQuery } from '@tanstack/react-query';
+import { categoryGetAll } from '@/lib/endpoints/category';
 
 export const budgetSchema = z.object({
   amount: z.string().refine((value) => !isNaN(Number(value)), {
     message: 'Amount must be a valid number'
-  })
+  }),
+  categoryId: z.string().uuid('Category is required'),
+  month: z.string(),
+  year: z.string()
 });
 
 type BudgetFormSchema = z.infer<typeof budgetSchema>;
 
-const AddBudgetModal = ({ onBudgetAdded }: { onBudgetAdded: () => void }) => {
-  const [isOpen, setIsOpen] = useState(false);
+const AddBudgetModal = ({
+  onBudgetAdded,
+  isOpen,
+  onOpenChange
+}: {
+  onBudgetAdded: () => void;
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+}) => {
   const { showSuccess, showError } = useToast();
   const queryClient = useQueryClient();
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { isSubmitting, errors }
-  } = useForm<BudgetFormSchema>({
-    // useForm setup
+  const { data: categoriesData, isLoading: isLoadingCategories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: categoryGetAll
+  });
+
+  const form = useForm<BudgetFormSchema>({
     resolver: zodResolver(budgetSchema),
+    defaultValues: {
+      categoryId: '',
+      month: '',
+      year: ''
+    },
     mode: 'onSubmit'
   });
 
-  const handleCreate = async (data: BudgetFormSchema) => {
-    try {
-      await budgetCreate({ ...data, amount: Number(data.amount) });
-      showSuccess('Budget created successfully!');
-      setIsOpen(false);
-      onBudgetAdded();
+  const createBudgetMutation = useMutation({
+    mutationFn: (data: BudgetFormSchema) =>
+      budgetCreate({
+        ...data,
+        amount: Number(data.amount),
+        month: Number(data.month),
+        year: Number(data.year)
+      }),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
-      reset();
-    } catch (error: any) {
+      showSuccess('Budget created successfully!');
+      form.reset();
+      onBudgetAdded();
+      onOpenChange(false);
+    },
+    onError: (error: any) => {
       showError(error.message);
     }
+  });
+
+  const handleCreate = async (data: BudgetFormSchema) => {
+    createBudgetMutation.mutate(data);
   };
 
   return (
@@ -55,26 +89,109 @@ const AddBudgetModal = ({ onBudgetAdded }: { onBudgetAdded: () => void }) => {
       description='Create a new budget for a category.'
       triggerButton={<Button>Add Budget</Button>}
       isOpen={isOpen}
-      onOpenChange={setIsOpen}
+      onOpenChange={onOpenChange}
     >
-      {/* Form fields directly inside AddModal */}
-      <form onSubmit={handleSubmit(handleCreate)} className='space-y-6'>
-        <div className='space-y-2'>
-          <Label htmlFor='amount'>Amount</Label>
-          <Input
-            type='text'
-            placeholder='Budget Amount'
-            {...register('amount')}
-            className='w-full'
-            aria-invalid={!!errors.amount}
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleCreate)} className='space-y-6'>
+          <FormField
+            control={form.control}
+            name='categoryId'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Category</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Select a category' />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {isLoadingCategories ? (
+                      <SelectItem value='loading'>Loading categories...</SelectItem>
+                    ) : (
+                      categoriesData?.categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-          {errors.amount && <p className='text-sm text-red-500'>{errors.amount.message}</p>}
-        </div>
 
-        <Button type='submit' disabled={isSubmitting} className='w-full'>
-          {isSubmitting ? 'Adding...' : 'Add Budget'}
-        </Button>
-      </form>
+          <FormField
+            control={form.control}
+            name='month'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Month</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Select month' />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                      <SelectItem key={month} value={month.toString()}>
+                        {month}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='year'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Year</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Select year' />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(
+                      (year) => (
+                        <SelectItem key={year} value={year.toString()}>
+                          {year}
+                        </SelectItem>
+                      )
+                    )}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='amount'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Amount</FormLabel>
+                <FormControl>
+                  <Input type='text' placeholder='Budget Amount' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <Button type='submit' disabled={createBudgetMutation.isPending} className='w-full'>
+            {createBudgetMutation.isPending ? 'Adding...' : 'Add Budget'}
+          </Button>
+        </form>
+      </Form>
     </AddModal>
   );
 };

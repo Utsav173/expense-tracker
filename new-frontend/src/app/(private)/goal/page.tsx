@@ -1,59 +1,85 @@
 'use client';
+
 import { useQuery } from '@tanstack/react-query';
 import { goalGetAll } from '@/lib/endpoints/goal';
 import { useState } from 'react';
 import Loader from '@/components/ui/loader';
+import CommonTable from '@/components/ui/CommonTable';
+import { goalColumns } from '@/components/goal/goal-columns';
+import { usePagination } from '@/hooks/usePagination';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { useToast } from '@/lib/hooks/useToast';
+import AddGoalModal from '@/components/modals/add-goal-modal';
+import { Button } from '@/components/ui/button';
+import { PlusCircle } from 'lucide-react';
 
 const GoalPage = () => {
-  const [page, setPage] = useState(1);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const { showError } = useToast();
+
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  const { page, handlePageChange } = usePagination(
+    Number(searchParams.get('page')) || 1,
+    (params) => {
+      const currentParams = new URLSearchParams(searchParams.toString());
+      Object.keys(params).forEach((key) => {
+        if (params[key] === undefined || params[key] === null || params[key] === '') {
+          currentParams.delete(key);
+        } else {
+          currentParams.set(key.toString(), params[key]);
+        }
+      });
+      const newUrl = `${pathname}?${currentParams.toString()}`;
+      router.push(newUrl, { scroll: false });
+    }
+  );
 
   const {
     data: goals,
     isLoading,
-    error
+    error,
+    refetch
   } = useQuery({
-    queryKey: ['goals', { page }],
+    queryKey: ['goals', page],
     queryFn: () => goalGetAll({ page, limit: 10 }),
     retry: false
   });
-
-  const handlePageChange = (page: number) => {
-    setPage(page);
-  };
 
   if (isLoading) {
     return <Loader />;
   }
 
   if (error) {
-    return <div>Error fetching goals: {error.message}</div>;
+    showError(`Failed to get Goal Details : ${(error as Error).message}`);
+    return null;
   }
 
   return (
-    <div className='p-4'>
-      <h1 className='text-xl font-bold'>Goals</h1>
-      <div className='mt-4'>
-        {goals?.data?.map((goal) => (
-          <div key={goal.id} className='rounded-lg border p-4 shadow-md'>
-            <p className='font-semibold'>{goal.name}</p>
-            <p>Target Amount : {goal.targetAmount}</p>
-            <p>Saved Amount : {goal.savedAmount}</p>
-            <p>Target Date : {goal.targetDate}</p>
-          </div>
-        ))}
-        <div className='mt-4 flex items-center justify-center gap-2'>
-          {goals?.pagination?.totalPages &&
-            Array.from({ length: goals?.pagination?.totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                className='rounded-sm border px-2 py-1'
-                key={page}
-                onClick={() => handlePageChange(page)}
-              >
-                {page}
-              </button>
-            ))}
-        </div>
+    <div className='container space-y-6'>
+      <div className='flex items-center justify-between'>
+        <h1 className='text-3xl font-semibold'>Goals</h1>
+        <Button onClick={() => setIsAddModalOpen(true)}>
+          <PlusCircle className='mr-2 h-4 w-4' /> Add Goal
+        </Button>
       </div>
+      <CommonTable
+        data={goals?.data || []}
+        columns={goalColumns} // Now correctly used
+        loading={isLoading}
+        totalRecords={goals?.pagination?.total || 0}
+        pageSize={10}
+        currentPage={page}
+        onPageChange={handlePageChange}
+        enablePagination
+      />
+      <AddGoalModal
+        isOpen={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+        onGoalAdded={refetch}
+      />
     </div>
   );
 };
