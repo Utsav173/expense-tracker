@@ -111,6 +111,7 @@ class Pixel {
 }
 
 // Затем определяем веб-компонент
+// @ts-ignore
 class PixelCanvasElement extends HTMLElement {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D | null;
@@ -324,6 +325,7 @@ const PixelCanvas = React.forwardRef<HTMLDivElement, PixelCanvasProps>(
     }, []);
 
     return (
+      // @ts-ignore
       <pixel-canvas
         ref={ref}
         data-gap={gap}

@@ -1,7 +1,12 @@
 'use client';
 
-import { Particles } from '@/components/ui/particles';
+import dynamic from 'next/dynamic';
 import UserProfile from '@/components/user-profile';
+
+// Dynamically import Particles to avoid SSR issues
+const Particles = dynamic(() => import('@/components/ui/particles').then((mod) => mod.Particles), {
+  ssr: false
+});
 
 const ProfilePage = () => {
   return (

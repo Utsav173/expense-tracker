@@ -17,7 +17,11 @@ import { fetchCurrencies, COMMON_CURRENCIES } from '@/lib/endpoints/currency';
 import { useQuery } from '@tanstack/react-query';
 import CurrencySelect from './currency-select';
 import { Camera, Save, X, User as UserIcon } from 'lucide-react';
-import { PixelCanvas } from './ui/pixel-canvas';
+import dynamic from 'next/dynamic';
+
+const PixelCanvas = dynamic(() => import('./ui/pixel-canvas').then((mod) => mod.PixelCanvas), {
+  ssr: false
+});
 
 const UserProfile = () => {
   const { user, refetchUser } = useAuth();
