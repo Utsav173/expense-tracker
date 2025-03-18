@@ -46,6 +46,10 @@ This is the backend service for the Expense Tracker application, built with Bun.
     *   Import transactions from XLSX files.
     *   Generate account statements (PDF, XLSX).
 
+##  Database Data model visulize
+
+![image](public/image.png)
+
 ## Technologies Used
 
 *   **Bun.js:** A fast all-in-one JavaScript runtime.
