@@ -123,7 +123,7 @@ This is the frontend component of the Expense Tracker application.  It provides 
 
     ```bash
     git clone https://github.com/yourusername/expense-tracker.git
-    cd expense-tracker/new-frontend
+    cd expense-tracker/frontend
     ```
 
 2.  **Install dependencies:**
@@ -133,7 +133,7 @@ This is the frontend component of the Expense Tracker application.  It provides 
     ```
 
 3.  **Configure Environment Variables:**
-    Create a `.env.local` file in the `new-frontend` directory and set the following environment variable:
+    Create a `.env.local` file in the `frontend` directory and set the following environment variable:
 
     ```
     NEXT_PUBLIC_API_BASE_URL=http://localhost:1337 # Replace with your backend URL
@@ -153,7 +153,7 @@ This is the frontend component of the Expense Tracker application.  It provides 
 ## Project Structure
 
 ```
-new-frontend/
+frontend/
 ├── src/
 │   ├── app/              # Next.js app directory
 │   │   ├── (private)/   # Protected routes (require login)

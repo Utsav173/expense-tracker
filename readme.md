@@ -1,9 +1,9 @@
 # Expense Tracker: Full-Stack Financial Management
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg?style=flat-square)](https://your-build-pipeline-url) [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE) [![Version](https://img.shields.io/badge/version-0.1.0-orange.svg?style=flat-square)]()  [![Frontend](https://img.shields.io/badge/frontend-Next.js-black.svg?style=flat-square&logo=next.js&logoColor=white)](new-frontend) [![Backend](https://img.shields.io/badge/backend-Bun.js-black.svg?style=flat-square&logo=bun&logoColor=white)](backend) [![Database](https://img.shields.io/badge/database-PostgreSQL-blue.svg?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/) <!-- Add more badges as needed -->
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg?style=flat-square)](https://your-build-pipeline-url) [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE) [![Version](https://img.shields.io/badge/version-0.1.0-orange.svg?style=flat-square)]()  [![Frontend](https://img.shields.io/badge/frontend-Next.js-black.svg?style=flat-square&logo=next.js&logoColor=white)](frontend) [![Backend](https://img.shields.io/badge/backend-Bun.js-black.svg?style=flat-square&logo=bun&logoColor=white)](backend) [![Database](https://img.shields.io/badge/database-PostgreSQL-blue.svg?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/) <!-- Add more badges as needed -->
 
 <!-- Optional: Add a large, visually appealing banner image here.  It should be placed in the `public` folder of your frontend, and the path adjusted accordingly.
-<img src="new-frontend/public/banner.png" alt="Expense Tracker Banner" width="100%">
+<img src="frontend/public/banner.png" alt="Expense Tracker Banner" width="100%">
 -->
 
 > **Track, manage, and understand your finances with ease.** This full-stack web application provides a comprehensive solution for personal expense tracking, budgeting, goal setting, and basic investment and debt management.
@@ -29,7 +29,7 @@
 This project is divided into a backend API and a frontend user interface.  Detailed feature lists, including implementation status (✅ Done, ⏳ In Progress, ❌ Not Implemented), can be found in the respective README files:
 
 *   **[Backend Features](./backend/README.md)**
-*   **[Frontend Features](./new-frontend/README.md)**
+*   **[Frontend Features](./frontend/README.md)**
 
 **Highlights:**
 
@@ -59,7 +59,7 @@ This project is divided into a backend API and a frontend user interface.  Detai
 *   [Lucide React](https://lucide.dev/icons/)
 *   [Recharts](https://recharts.org/en-US/)
 *   [XLSX](https://sheetjs.com/)
-* And more (see `new-frontend/package.json`)
+* And more (see `frontend/package.json`)
 
 ### Backend
 
@@ -85,7 +85,7 @@ This project is divided into a backend API and a frontend user interface.  Detai
 ```
 expense-tracker/
 ├── backend/               # Backend API (Bun.js, Hono, Drizzle ORM, PostgreSQL)
-├── new-frontend/          # Frontend application (Next.js, React, Tailwind CSS)
+├── frontend/              # Frontend application (Next.js, React, Tailwind CSS)
 ├── api-docs/              # API documentation generator (Next.js)
 └── README.md              # This file
 ```
@@ -110,9 +110,9 @@ expense-tracker/
 
 ### 2. Frontend Setup
 
-1.  Navigate to the frontend directory: `cd ../new-frontend`
+1.  Navigate to the frontend directory: `cd ../frontend`
 2.  Install dependencies: `bun install`
-3.  Create a `.env.local` file and configure `NEXT_PUBLIC_API_BASE_URL` (see [frontend README](./new-frontend/README.md) for details).
+3.  Create a `.env.local` file and configure `NEXT_PUBLIC_API_BASE_URL` (see [frontend README](./frontend/README.md) for details).
 4.  Run the frontend development server: `bun dev`
 
 ### 3. API Documentation Setup
@@ -125,7 +125,7 @@ expense-tracker/
 ## Running the Application
 
 1.  **Start the Backend:** (from the `backend` directory): `bun run dev`
-2.  **Start the Frontend:** (from the `new-frontend` directory): `bun dev`
+2.  **Start the Frontend:** (from the `frontend` directory): `bun dev`
 3.  **Start the API Documentation:** (from the `api-docs` directory): `bun dev`
 
 Access the application in your browser at `http://localhost:3000`.
@@ -139,7 +139,7 @@ Detailed API documentation, generated from a Postman collection, is available. Y
 ## Deployment
 
 *   **Backend:**  Refer to the [backend README](./backend/README.md) for deployment instructions.
-*   **Frontend:**  Refer to the [frontend README](./new-frontend/README.md) for deployment instructions.  The frontend is a standard Next.js application and can be deployed to platforms like Vercel, Netlify, or AWS Amplify.
+*   **Frontend:**  Refer to the [frontend README](./frontend/README.md) for deployment instructions.  The frontend is a standard Next.js application and can be deployed to platforms like Vercel, Netlify, or AWS Amplify.
 *  **API Docs:** Refer to the [API Docs README](./api-docs/README.md)
 
 ## Contributing

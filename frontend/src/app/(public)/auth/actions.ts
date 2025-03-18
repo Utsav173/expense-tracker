@@ -2,6 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { z } from 'zod';
+import { API_BASE_URL } from '../../../lib/api-client';
 
 // Function to store the auth token in a server-side cookie
 export async function storeAuthToken(token: string) {
@@ -50,7 +51,7 @@ export async function userLogout() {
 
   // Make an API call to the backend to logout
   try {
-    const response = await fetch('http://localhost:1337/auth/logout', {
+    const response = await fetch(`${API_BASE_URL}/auth/logout`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -94,7 +95,7 @@ export async function userLogin(state: any, formData: FormData) {
   }
 
   try {
-    const response = await fetch('http://localhost:1337/auth/login', {
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

@@ -1,4 +1,3 @@
-// /home/utsav/coding/expense-tracker/new-frontend/src/components/goal/goal-columns.tsx
 import { ColumnDef } from '@tanstack/react-table';
 import { SavingGoal } from '@/lib/types';
 import { Button } from '@/components/ui/button';

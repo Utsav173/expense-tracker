@@ -1,5 +1,3 @@
-// /home/utsav/coding/expense-tracker/new-frontend/src/components/modals/edit-account-modal.tsx
-
 'use client';
 
 import * as React from 'react';
