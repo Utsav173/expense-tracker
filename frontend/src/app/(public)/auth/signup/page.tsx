@@ -60,7 +60,7 @@ const SignupPage = () => {
 
   return (
     <Card className='w-full border-0 shadow-none'>
-      <CardContent className='space-y-6 pt-4'>
+      <CardContent className='space-y-6 p-0 pt-4'>
         <div className='space-y-2 text-center'>
           <h2 className='text-2xl font-semibold text-gray-800'>Create Account</h2>
           <p className='text-sm text-gray-500'>Start your expense tracking journey today</p>
@@ -76,6 +76,7 @@ const SignupPage = () => {
               type='text'
               placeholder='John Doe'
               {...register('name')}
+              disabled={loading}
               className='w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 transition-all duration-200 focus:border-transparent focus:bg-white focus:ring-2 focus:ring-blue-500'
             />
           </div>
@@ -89,6 +90,7 @@ const SignupPage = () => {
               type='email'
               placeholder='you@example.com'
               {...register('email')}
+              disabled={loading}
               className='w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 transition-all duration-200 focus:border-transparent focus:bg-white focus:ring-2 focus:ring-blue-500'
             />
           </div>
@@ -102,6 +104,7 @@ const SignupPage = () => {
               type='password'
               placeholder='••••••••'
               {...register('password')}
+              disabled={loading}
               className='w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 transition-all duration-200 focus:border-transparent focus:bg-white focus:ring-2 focus:ring-blue-500'
             />
           </div>
@@ -132,6 +135,7 @@ const SignupPage = () => {
                       name='file-upload'
                       onChange={handleFileChange}
                       type='file'
+                      disabled={loading}
                       className='sr-only'
                     />
                   </label>

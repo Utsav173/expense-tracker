@@ -11,7 +11,7 @@ import { authForgotPassword } from '@/lib/endpoints/auth';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+
 const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email address')
 });
@@ -47,18 +47,19 @@ const ForgotPasswordPage = () => {
     }
   };
   return (
-    <Card className='w-[400px] rounded-md border-none bg-white shadow-none md:w-[450px]'>
-      <CardHeader className='pb-4'>
+    <Card className='w-full border-0 p-0 shadow-none'>
+      <CardHeader className='py-4'>
         <CardTitle className='text-center text-xl font-bold tracking-wide text-gray-700'>
           Forgot Password
         </CardTitle>
       </CardHeader>
-      <CardContent className='space-y-6 pb-4'>
+      <CardContent className='space-y-6 p-0 pb-4'>
         <form onSubmit={handleSubmit(handleForgotPassword)}>
           <div>
             <Input
               type='email'
               placeholder='Your Email'
+              disabled={isLoading}
               {...register('email')}
               className='w-full'
             />

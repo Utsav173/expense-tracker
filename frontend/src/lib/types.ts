@@ -198,6 +198,9 @@ export interface LoginResponse {
     token: string;
     user: User;
   };
+  error?: {
+    message: string;
+  };
 }
 
 export type ApiResponse<T> = T | null;
