@@ -17,7 +17,7 @@ export const AccountDetailsHeader: React.FC<AccountDetailsHeaderProps> = ({
   isLoading
 }) => {
   return (
-    <section className='flex items-center justify-between rounded-xl p-6 shadow-sm'>
+    <section className='flex flex-col items-center justify-between gap-4 rounded-xl p-6 shadow-sm md:flex-row'>
       {isLoading || !account ? (
         <Skeleton className='h-8 w-full' />
       ) : (

@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { useIsMobile } from '@/hooks/use-mobile'; // Custom hook to detect mobile
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Pagination,
   PaginationContent,
@@ -43,8 +43,8 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
+import { ChevronDown, ChevronsUpDown, ChevronUp } from 'lucide-react';
 
-// Placeholder Loader component (replace with your own)
 const Loader = () => <div>Loading...</div>;
 
 interface CommonTableProps<T extends object> {
@@ -84,6 +84,8 @@ const CommonTable = <T extends object>({
     return [];
   });
 
+  const [sortOptions, setSortOptions] = useState<{ id: string; label: string }[]>([]);
+
   useEffect(() => {
     if (sortBy && sortOrder && onSortChange) {
       onSortChange([{ id: sortBy, desc: sortOrder === 'desc' }]);
@@ -102,6 +104,23 @@ const CommonTable = <T extends object>({
     manualSorting: true,
     pageCount: Math.ceil(totalRecords / pageSize)
   });
+
+  useEffect(() => {
+    const generatedOptions = table
+      .getAllLeafColumns()
+      .filter((column) => column.getCanSort())
+      .flatMap((column) => [
+        {
+          id: `${column.id}-asc`,
+          label: `Sort by ${column.columnDef.header?.toString() || column.id} (Asc)`
+        },
+        {
+          id: `${column.id}-desc`,
+          label: `Sort by ${column.columnDef.header?.toString() || column.id} (Desc)`
+        }
+      ]);
+    setSortOptions(generatedOptions);
+  }, [table]);
 
   if (loading) {
     return (
@@ -130,14 +149,9 @@ const CommonTable = <T extends object>({
               <SelectValue placeholder='Sort by' />
             </SelectTrigger>
             <SelectContent>
-              {table.getAllColumns().map((column) => (
-                <SelectItem key={`${column.id}-asc`} value={`${column.id}-asc`}>
-                  Sort by {column.columnDef.header?.toString() || column.id} (Asc)
-                </SelectItem>
-              ))}
-              {table.getAllColumns().map((column) => (
-                <SelectItem key={`${column.id}-desc`} value={`${column.id}-desc`}>
-                  Sort by {column.columnDef.header?.toString() || column.id} (Desc)
+              {sortOptions.map((option) => (
+                <SelectItem key={option.id} value={option.id}>
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -150,44 +164,41 @@ const CommonTable = <T extends object>({
             <AccordionItem key={row.id} value={row.id}>
               <AccordionTrigger className='px-4 py-2 text-left'>
                 <div className='flex w-full justify-between'>
-                  <span className='max-w-[50%] truncate'>
-                    {flexRender(columns[0].cell, { row, column: columns[0] } as CellContext<
-                      T,
-                      any
-                    >)}
-                  </span>
-                  <span>
-                    {flexRender(columns[1].cell, { row, column: columns[1] } as CellContext<
-                      T,
-                      any
-                    >)}
-                  </span>
+                  {table
+                    .getAllLeafColumns()
+                    .filter((column) => column.getCanSort())
+                    .slice(0, 2)
+                    .map((column) => (
+                      <span key={column.id} className='max-w-[50%] truncate'>
+                        {flexRender(column.columnDef.cell, { row, column } as CellContext<T, any>)}
+                      </span>
+                    ))}
                 </div>
               </AccordionTrigger>
+
               <AccordionContent className='px-4 py-2'>
-                {columns.map((column) => {
-                  const header = column.header;
-                  const cellValue = flexRender(column.cell, { row, column } as CellContext<T, any>);
-                  if (column.id !== 'actions') {
-                    const headerString =
-                      typeof header === 'function'
-                        ? flexRender(header, { column } as HeaderContext<T, unknown>)
-                        : header;
-                    return (
-                      <div key={column.id} className='grid grid-cols-2 gap-2'>
-                        <span className='font-medium'>{headerString}:</span>
-                        <span>{cellValue}</span>
-                      </div>
-                    );
-                  }
-                  return null;
+                {table.getAllLeafColumns().map((column) => {
+                  const header = column.columnDef.header;
+                  const cellValue = flexRender(column.columnDef.cell, {
+                    row,
+                    column
+                  } as CellContext<T, any>);
+                  const headerString =
+                    typeof header === 'function'
+                      ? flexRender(header, { column } as HeaderContext<T, unknown>)
+                      : header;
+                  return (
+                    <div key={column.id} className='grid grid-cols-2 gap-2'>
+                      <span className='font-medium'>{headerString}:</span>
+                      <span>{cellValue}</span>
+                    </div>
+                  );
                 })}
               </AccordionContent>
             </AccordionItem>
           ))}
         </Accordion>
 
-        {/* Pagination */}
         {enablePagination && totalRecords > pageSize && (
           <Pagination className='mt-6'>
             <PaginationContent>
@@ -226,7 +237,6 @@ const CommonTable = <T extends object>({
     );
   }
 
-  // Desktop View
   return (
     <>
       <div className='w-full overflow-x-auto rounded-md border'>
@@ -240,11 +250,15 @@ const CommonTable = <T extends object>({
                     className='cursor-pointer px-4 py-3 hover:bg-gray-100'
                     onClick={header.column.getToggleSortingHandler()}
                   >
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                    {{
-                      asc: ' 🔼',
-                      desc: ' 🔽'
-                    }[header.column.getIsSorted() as string] ?? ' ↕️'}
+                    <div>{flexRender(header.column.columnDef.header, header.getContext())}</div>
+                    <span className='ml-2'>
+                      {{
+                        asc: <ChevronUp className='h-4 w-4' />,
+                        desc: <ChevronDown className='h-4 w-4' />
+                      }[header.column.getIsSorted() as string] ?? (
+                        <ChevronsUpDown className='h-4 w-4' />
+                      )}
+                    </span>
                   </TableHead>
                 ))}
               </TableRow>

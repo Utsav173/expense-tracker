@@ -10,39 +10,40 @@ import { Input } from '../ui/input';
 import { transactionCreate } from '@/lib/endpoints/transactions';
 import AddModal from './add-modal';
 import { useQuery } from '@tanstack/react-query';
-import { categoryGetAll, categoryCreate } from '@/lib/endpoints/category';
+import { categoryGetAll } from '@/lib/endpoints/category';
 import { accountGetDropdown } from '@/lib/endpoints/accounts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { authGetUserPreferences } from '@/lib/endpoints/auth';
-import { PlusCircle } from 'lucide-react';
+import {
+  ArrowDownCircle,
+  ArrowUpCircle,
+  Calendar,
+  CreditCard,
+  PlusCircle,
+  Tag
+} from 'lucide-react';
 import { AccountDropdown, Category } from '@/lib/types';
 import { Label } from '../ui/label';
-import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
-import { COMMON_CURRENCIES, fetchCurrencies } from '@/lib/endpoints/currency';
-import CurrencySelect from '../currency-select';
 import DateTimePicker from '../date-time-picker';
 import AddCategoryModal from './add-category-modal';
+import { Card } from '../ui/card';
 
 const transactionSchema = z.object({
-  text: z.string().min(3, 'Transaction description must be at least 3 characters').max(255),
-  amount: z.string().refine((val) => !isNaN(parseFloat(val)), 'Must be valid number'),
+  text: z.string().min(3, 'Description must be at least 3 characters').max(255),
+  amount: z
+    .string()
+    .refine(
+      (val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0,
+      'Amount must be a positive number'
+    ),
   isIncome: z.boolean(),
   categoryId: z.string().optional(),
-  accountId: z.string(),
-  createdAt: z.date(), // Keep as z.date()
-  currency: z.string()
-});
-
-const categorySchema = z.object({
-  name: z
-    .string()
-    .min(1, 'Category name must be at least 1 character') // Improved error messages
-    .max(64, 'Category name must be no more than 64 characters')
-    .trim()
+  accountId: z.string().min(1, 'Please select an account'),
+  createdAt: z.date().default(() => new Date()),
+  currency: z.string().min(1, 'Currency is required')
 });
 
 type TransactionFormSchema = z.infer<typeof transactionSchema>;
-type CategoryFormSchema = z.infer<typeof categorySchema>; //Created type
 
 interface AddTransactionModalProps {
   onTransactionAdded: () => void;
@@ -53,6 +54,7 @@ const AddTransactionModal = ({ onTransactionAdded, triggerButton }: AddTransacti
   const [isOpen, setIsOpen] = useState(false);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   const [isIncome, setIsIncome] = useState(false);
+  const { showError, showSuccess } = useToast();
 
   const {
     data: categoriesData,
@@ -75,11 +77,7 @@ const AddTransactionModal = ({ onTransactionAdded, triggerButton }: AddTransacti
     queryFn: authGetUserPreferences
   });
 
-  const preferredCurrency = userPreferences?.preferredCurrency || 'INR';
-
-  const categoryForm = useForm<CategoryFormSchema>({
-    resolver: zodResolver(categorySchema)
-  });
+  const preferredCurrency = userPreferences?.preferredCurrency || 'USD';
 
   const {
     register,
@@ -87,16 +85,16 @@ const AddTransactionModal = ({ onTransactionAdded, triggerButton }: AddTransacti
     formState: { errors, isSubmitting },
     reset,
     setValue,
-    watch
+    watch,
+    trigger
   } = useForm<TransactionFormSchema>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       isIncome: false,
-      currency: preferredCurrency
+      currency: preferredCurrency,
+      createdAt: new Date()
     }
   });
-
-  const { showError, showSuccess } = useToast();
 
   useEffect(() => {
     if (categoriesData?.categories) {
@@ -110,68 +108,48 @@ const AddTransactionModal = ({ onTransactionAdded, triggerButton }: AddTransacti
     }
   }, [accountData]);
 
-  //Register once.
   useEffect(() => {
-    register('isIncome', { value: isIncome });
-    register('currency'); //Register currency.
-  }, [register, isIncome]);
+    register('isIncome');
+    register('currency');
+    register('createdAt');
+  }, [register]);
 
-  const { data: currencies, isLoading: isLoadingCurrencies } = useQuery({
-    queryKey: ['currencies'],
-    queryFn: fetchCurrencies,
-    staleTime: 24 * 60 * 60 * 1000,
-    gcTime: 7 * 24 * 60 * 60 * 1000,
-    retry: 2,
-    placeholderData: Object.entries(COMMON_CURRENCIES).map(([code, name]) => ({
-      code,
-      name
-    }))
-  });
+  useEffect(() => {
+    setValue('isIncome', isIncome);
+  }, [isIncome, setValue]);
 
   const handleCreateTransaction = async (data: TransactionFormSchema) => {
     try {
+      const isValid = await trigger();
+      if (!isValid) return;
+
       await transactionCreate({
         ...data,
         amount: Number(data.amount),
         category: data.categoryId,
         account: data.accountId,
-        createdAt: data.createdAt.toISOString() // Convert back to ISO string
+        createdAt: data.createdAt.toISOString()
       });
+
       showSuccess('Transaction created successfully!');
       setIsOpen(false);
       reset();
       onTransactionAdded();
     } catch (error: any) {
-      showError(error.message);
-    }
-  };
-  //Separate handler for the category form:
-
-  const handleAddCategory = async (formData: CategoryFormSchema) => {
-    try {
-      const result = await categoryCreate(formData);
-
-      if (result) {
-        showSuccess('Category created successfully!');
-        refetchCategories();
-        setValue('categoryId', result?.id);
-        setIsAddCategoryOpen(false);
-      }
-    } catch (error: any) {
-      showError(error.message);
+      showError(error.message || 'Failed to create transaction');
     }
   };
 
+  // Handle modal open/close
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
 
     if (open) {
-      reset();
-      //
-      setValue('isIncome', false);
-      const preferredCurrency = userPreferences?.preferredCurrency || 'INR'; // get
-
-      setValue('currency', preferredCurrency); // to avoid race condition.
+      reset({
+        isIncome: false,
+        currency: preferredCurrency,
+        createdAt: new Date()
+      });
       setIsIncome(false);
     }
   };
@@ -180,39 +158,63 @@ const AddTransactionModal = ({ onTransactionAdded, triggerButton }: AddTransacti
     <AddModal
       title='Add Transaction'
       description='Add a new transaction to your expense tracker.'
-      triggerButton={triggerButton ?? <Button>Add Transaction</Button>}
+      triggerButton={
+        triggerButton ?? (
+          <Button className='bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md hover:from-blue-700 hover:to-indigo-700 max-sm:w-full'>
+            Add Transaction
+          </Button>
+        )
+      }
       onOpenChange={handleOpenChange}
       isOpen={isOpen}
     >
       <form onSubmit={handleSubmit(handleCreateTransaction)} className='space-y-6'>
-        <div className='space-y-2'>
-          <Label>Transaction Type</Label>
-          <RadioGroup
-            defaultValue='expense'
-            className='flex gap-4'
-            onValueChange={(value) => {
-              setIsIncome(value === 'income');
-              setValue('isIncome', value === 'income');
+        {/* Transaction Type Selection */}
+        <div className='mb-6 grid grid-cols-2 gap-4'>
+          <Card
+            className={`cursor-pointer border-2 p-4 transition-all ${!isIncome ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:border-red-500 hover:bg-red-50'}`}
+            onClick={() => {
+              setIsIncome(false);
+              setValue('isIncome', false);
             }}
           >
-            <div className='flex items-center space-x-2'>
-              <RadioGroupItem value='expense' id='expense' />
-              <Label htmlFor='expense' className='font-normal'>
+            <div className='flex flex-col items-center justify-center space-y-2'>
+              <ArrowDownCircle
+                className={`h-8 w-8 ${!isIncome ? 'text-red-500' : 'text-gray-400'}`}
+              />
+              <span className={`font-medium ${!isIncome ? 'text-red-500' : 'text-gray-500'}`}>
                 Expense
-              </Label>
+              </span>
             </div>
-            <div className='flex items-center space-x-2'>
-              <RadioGroupItem value='income' id='income' />
-              <Label htmlFor='income' className='font-normal'>
+          </Card>
+
+          <Card
+            className={`cursor-pointer border-2 p-4 transition-all ${isIncome ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-green-500 hover:bg-green-50'}`}
+            onClick={() => {
+              setIsIncome(true);
+              setValue('isIncome', true);
+            }}
+          >
+            <div className='flex flex-col items-center justify-center space-y-2'>
+              <ArrowUpCircle
+                className={`h-8 w-8 ${isIncome ? 'text-green-500' : 'text-gray-400'}`}
+              />
+              <span className={`font-medium ${isIncome ? 'text-green-500' : 'text-gray-500'}`}>
                 Income
-              </Label>
+              </span>
             </div>
-          </RadioGroup>
+          </Card>
         </div>
 
+        {/* Account Selection */}
         <div className='space-y-2'>
-          <Label htmlFor='account'>Account</Label>
-          <Select onValueChange={(value) => setValue('accountId', value)}>
+          <div className='flex items-center gap-2'>
+            <CreditCard className='h-4 w-4 text-gray-500' />
+            <Label htmlFor='account' className='font-medium'>
+              Account
+            </Label>
+          </div>
+          <Select onValueChange={(value) => setValue('accountId', value)} required>
             <SelectTrigger id='account' className='w-full'>
               <SelectValue
                 placeholder={isLoadingAccount ? 'Loading accounts...' : 'Select account'}
@@ -232,48 +234,71 @@ const AddTransactionModal = ({ onTransactionAdded, triggerButton }: AddTransacti
               )}
             </SelectContent>
           </Select>
-          {errors.accountId && <p className='text-sm text-red-500'>Account is required.</p>}
+          {errors.accountId && <p className='text-sm text-red-500'>{errors.accountId.message}</p>}
         </div>
 
+        {/* Description */}
         <div className='space-y-2'>
-          <Label htmlFor='description'>Description</Label>
+          <Label htmlFor='description' className='font-medium'>
+            Description
+          </Label>
           <Input
             id='description'
             type='text'
             placeholder='Enter transaction description'
             {...register('text')}
             className='w-full'
-            aria-invalid={!!errors.text}
           />
           {errors.text && <p className='text-sm text-red-500'>{errors.text.message}</p>}
         </div>
 
+        {/* Amount and Currency */}
         <div className='space-y-2'>
-          <Label htmlFor='amount'>Amount</Label>
-          <Input
-            id='amount'
-            type='text'
-            placeholder='Enter amount'
-            {...register('amount')}
-            className='w-full'
-            aria-invalid={!!errors.amount}
-          />
-          {errors.amount && <p className='text-sm text-red-500'>{errors.amount.message}</p>}
+          <Label htmlFor='amount' className='font-medium'>
+            Amount
+          </Label>
+          <div className='relative'>
+            <span className='pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3'>
+              {accounts.find((acc) => acc.id === watch('accountId'))?.currency || ''}
+            </span>
+            <Input
+              id='amount'
+              type='number'
+              step='0.01'
+              min='0'
+              placeholder='0.00'
+              {...register('amount')}
+              className='w-full pr-10'
+            />
+            {errors.amount && <p className='text-sm text-red-500'>{errors.amount.message}</p>}
+          </div>
         </div>
 
+        {/* Category */}
         <div className='space-y-2'>
           <div className='flex items-center gap-2'>
-            <Label htmlFor='category'>Category</Label>
-            <Button
-              type='button'
-              variant='outline'
-              size='icon'
-              onClick={() => setIsAddCategoryOpen(true)}
-              className='h-6 w-6'
-            >
-              <PlusCircle className='h-4 w-4' />
-              <span className='sr-only'>Add category</span>
-            </Button>
+            <Tag className='h-4 w-4 text-gray-500' />
+            <Label htmlFor='category' className='font-medium'>
+              Category
+            </Label>
+
+            <AddCategoryModal
+              isOpen={isAddCategoryOpen}
+              onOpenChange={setIsAddCategoryOpen}
+              onCategoryAdded={refetchCategories}
+              triggerButton={
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='icon'
+                  onClick={() => setIsAddCategoryOpen(true)}
+                  className='ml-auto h-6 w-6'
+                >
+                  <PlusCircle className='h-4 w-4' />
+                  <span className='sr-only'>Add category</span>
+                </Button>
+              }
+            />
           </div>
           <Select onValueChange={(value) => setValue('categoryId', value)}>
             <SelectTrigger id='category' className='w-full'>
@@ -296,51 +321,31 @@ const AddTransactionModal = ({ onTransactionAdded, triggerButton }: AddTransacti
             </SelectContent>
           </Select>
         </div>
+
+        {/* Date and Time */}
         <div className='space-y-2'>
-          <Label htmlFor='createdAt'>Date and Time</Label>
+          <div className='flex items-center gap-2'>
+            <Calendar className='h-4 w-4 text-gray-500' />
+            <Label htmlFor='createdAt' className='font-medium'>
+              Date and Time
+            </Label>
+          </div>
           <DateTimePicker
-            value={watch('createdAt')}
+            value={watch('createdAt') || new Date()}
             onChange={(date) => setValue('createdAt', date)}
           />
+          {errors.createdAt && <p className='text-sm text-red-500'>{errors.createdAt.message}</p>}
         </div>
 
-        <Button type='submit' className='w-full' disabled={isSubmitting}>
-          {isSubmitting ? 'Adding...' : 'Add Transaction'}
+        {/* Submit Button */}
+        <Button
+          type='submit'
+          className='w-full bg-gradient-to-r from-blue-600 to-indigo-600 py-6 transition-all duration-200 hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg'
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Adding...' : `Add ${isIncome ? 'Income' : 'Expense'}`}
         </Button>
       </form>
-
-      <AddCategoryModal
-        isOpen={isAddCategoryOpen}
-        onOpenChange={setIsAddCategoryOpen}
-        onCategoryAdded={refetchCategories}
-      />
-      {/* 
-      <AddModal
-        title='Add Category'
-        description='Add a new category'
-        triggerButton={<></>}
-        onOpenChange={setIsAddCategoryOpen}
-        isOpen={isAddCategoryOpen}
-      >
-        <form onSubmit={categoryForm.handleSubmit(handleAddCategory)} className='space-y-4'>
-          <div className='space-y-2'>
-            <Label htmlFor='categoryName'>Category Name</Label>
-            <Input
-              id='categoryName'
-              type='text'
-              placeholder='Enter category name'
-              {...categoryForm.register('name')}
-              className='w-full'
-            />
-            {categoryForm.formState.errors.name && (
-              <p className='text-sm text-red-500'>{categoryForm.formState.errors.name.message}</p>
-            )}
-          </div>
-          <Button type='submit' className='w-full'>
-            Add Category
-          </Button>
-        </form>
-      </AddModal> */}
     </AddModal>
   );
 };

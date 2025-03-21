@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ColumnDef, SortingState } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2 } from 'lucide-react';

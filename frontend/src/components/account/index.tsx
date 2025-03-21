@@ -49,7 +49,7 @@ export const AnalyticsCards: React.FC<AnalyticsCardsProps> = ({
 }) => {
   if (isLoading) {
     return (
-      <div className='grid gap-4 md:grid-cols-3'>
+      <div className='grid gap-4 sm:grid-cols-2 md:grid-cols-3'>
         {[1, 2, 3].map((i) => (
           <Card key={i} className='animate-pulse'>
             <CardHeader>
@@ -95,7 +95,8 @@ export const AnalyticsCards: React.FC<AnalyticsCardsProps> = ({
   };
 
   return (
-    <div className='grid gap-4 md:grid-cols-3'>
+    // Added sm:grid-cols-2 for two columns on small screens
+    <div className='grid gap-4 sm:grid-cols-2 md:grid-cols-3'>
       {cards.map((card, i) => (
         <Card key={i}>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
@@ -280,8 +281,9 @@ export const IncomeExpenseChart: React.FC<IncomeExpenseChartProps> = ({
               </div>
 
               <TabsContent value='bar' className='mt-2'>
-                <div className='h-[320px] px-1'>
-                  <ResponsiveContainer width='100%' height='100%'>
+                {/* Removed fixed height, let ResponsiveContainer handle it */}
+                <div className='px-1'>
+                  <ResponsiveContainer width='100%' height={320}>
                     <BarChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
                       <defs>
                         <linearGradient id='incomeGradient' x1='0' y1='0' x2='0' y2='1'>
@@ -405,8 +407,9 @@ export const IncomeExpenseChart: React.FC<IncomeExpenseChartProps> = ({
               </TabsContent>
 
               <TabsContent value='line' className='mt-2'>
-                <div className='h-[320px] px-1'>
-                  <ResponsiveContainer width='100%' height='100%'>
+                {/* Removed fixed height, let ResponsiveContainer handle it */}
+                <div className='px-1'>
+                  <ResponsiveContainer width='100%' height={320}>
                     <RechartsLineChart
                       data={data}
                       margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
