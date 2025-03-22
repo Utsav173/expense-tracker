@@ -94,7 +94,7 @@ const BudgetPage = () => {
   }
 
   return (
-    <div className='container space-y-6'>
+    <div className='mx-auto w-full max-w-7xl space-y-4 p-3 md:space-y-6'>
       <div className='flex items-center justify-between gap-4'>
         <h1 className='text-3xl font-semibold'>Budgets</h1>
         <AddBudgetModal

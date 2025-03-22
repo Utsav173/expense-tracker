@@ -4,12 +4,29 @@ import { Inter } from 'next/font/google';
 import ReactQueryProvider from '@/components/provider';
 import '../../globals.css';
 import Loader from '@/components/ui/loader';
+import { Metadata } from 'next';
 
 const inter = Inter({ subsets: ['latin'] });
 
-export const metadata = {
-  title: 'Authentication',
-  description: 'Authentication for your Expense Manager application'
+export const metadata: Metadata = {
+  title: 'Expense Pro | Authentication',
+  description:
+    'Expense Pro is Efficiently manage income and expense for various accounts. Analyze accounts with insightful dashboards, charts, and reports. Import and share account data, generate statements, and more.',
+  icons: [
+    {
+      rel: 'icon',
+      type: 'image/png',
+      sizes: '96x96',
+      url: '/favicon-96x96.png'
+    },
+    { rel: 'icon', type: 'image/svg+xml', url: '/favicon.svg' },
+    { rel: 'shortcut icon', url: '/favicon.ico' },
+    { rel: 'apple-touch-icon', sizes: '180x180', url: '/apple-touch-icon.png' }
+  ],
+  manifest: '/site.webmanifest',
+  appleWebApp: {
+    title: 'Expense Pro'
+  }
 };
 
 const AuthLayout = ({ children }: { children: React.ReactNode }) => {

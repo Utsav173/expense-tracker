@@ -21,14 +21,6 @@ import {
 } from '@/components/ui/table';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious
-} from '@/components/ui/pagination';
-import {
   Accordion,
   AccordionContent,
   AccordionItem,
@@ -44,6 +36,7 @@ import {
 import { ChevronDown, ChevronsUpDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Loader from './loader';
+import EnhancedPagination from './enhance-pagination';
 
 interface CommonTableProps<T extends object> {
   data: T[];
@@ -63,6 +56,7 @@ interface CommonTableProps<T extends object> {
   mobileTriggerColumns?: string[];
   sortIconSize?: string;
   headerHoverClass?: string;
+  paginationVariant?: 'default' | 'minimalist' | 'pill';
 }
 
 const CommonTable = <T extends object>({
@@ -81,7 +75,7 @@ const CommonTable = <T extends object>({
   headerClassName,
   cellClassName,
   mobileTriggerColumns,
-  sortIconSize = 'h-4 w-4'
+  paginationVariant = 'default'
 }: CommonTableProps<T>) => {
   const isMobile = useIsMobile();
   const [sorting, setSorting] = useState<SortingState>(() => {
@@ -158,7 +152,7 @@ const CommonTable = <T extends object>({
     return <div className='py-8 text-center text-gray-500'>No results.</div>;
   }
 
-  if (isMobile) {
+  if (isMobile && columns.length > 2) {
     const triggerColumns = mobileTriggerColumns
       ? table.getAllLeafColumns().filter((col) => mobileTriggerColumns.includes(col.id))
       : table
@@ -225,38 +219,16 @@ const CommonTable = <T extends object>({
           ))}
         </Accordion>
         {enablePagination && totalRecords > pageSize ? (
-          <Pagination className='mt-6'>
-            <PaginationContent>
-              {currentPage > 1 && (
-                <PaginationItem>
-                  <PaginationPrevious href='#' onClick={() => onPageChange(currentPage - 1)} />
-                </PaginationItem>
-              )}
-              {Array.from({ length: Math.ceil(totalRecords / pageSize) }, (_, i) => i + 1)
-                .filter(
-                  (p) =>
-                    p <= 2 ||
-                    p >= Math.ceil(totalRecords / pageSize) - 1 ||
-                    Math.abs(p - currentPage) <= 1
-                )
-                .map((p) => (
-                  <PaginationItem key={p}>
-                    <PaginationLink
-                      href='#'
-                      isActive={p === currentPage}
-                      onClick={() => onPageChange(p)}
-                    >
-                      {p}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
-              {currentPage < Math.ceil(totalRecords / pageSize) && (
-                <PaginationItem>
-                  <PaginationNext href='#' onClick={() => onPageChange(currentPage + 1)} />
-                </PaginationItem>
-              )}
-            </PaginationContent>
-          </Pagination>
+          <div className='mt-6'>
+            <EnhancedPagination
+              totalRecords={totalRecords}
+              pageSize={pageSize}
+              currentPage={currentPage}
+              onPageChange={onPageChange}
+              variant={paginationVariant}
+              isMobile={isMobile}
+            />
+          </div>
         ) : null}
       </>
     );
@@ -325,38 +297,16 @@ const CommonTable = <T extends object>({
 
       {/* Pagination */}
       {enablePagination && totalRecords > pageSize && (
-        <Pagination className='mt-6'>
-          <PaginationContent>
-            {currentPage > 1 && (
-              <PaginationItem>
-                <PaginationPrevious href='#' onClick={() => onPageChange(currentPage - 1)} />
-              </PaginationItem>
-            )}
-            {Array.from({ length: Math.ceil(totalRecords / pageSize) }, (_, i) => i + 1)
-              .filter(
-                (p) =>
-                  p <= 2 ||
-                  p >= Math.ceil(totalRecords / pageSize) - 1 ||
-                  Math.abs(p - currentPage) <= 1
-              )
-              .map((p) => (
-                <PaginationItem key={p}>
-                  <PaginationLink
-                    href='#'
-                    isActive={p === currentPage}
-                    onClick={() => onPageChange(p)}
-                  >
-                    {p}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
-            {currentPage < Math.ceil(totalRecords / pageSize) && (
-              <PaginationItem>
-                <PaginationNext href='#' onClick={() => onPageChange(currentPage + 1)} />
-              </PaginationItem>
-            )}
-          </PaginationContent>
-        </Pagination>
+        <div className='mt-6'>
+          <EnhancedPagination
+            totalRecords={totalRecords}
+            pageSize={pageSize}
+            currentPage={currentPage}
+            onPageChange={onPageChange}
+            variant={paginationVariant}
+            isMobile={isMobile}
+          />
+        </div>
       )}
     </>
   );
