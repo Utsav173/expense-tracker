@@ -36,12 +36,11 @@ const AccountList = () => {
   const { showError, showSuccess } = useToast();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [deleteAccountId, setDeleteAccountId] = useState<string | null>(null);
-  const queryClient = useQueryClient();
 
   const deleteAccountMutation = useMutation({
     mutationFn: (id: string) => accountDelete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      refetch();
       showSuccess('Account deleted successfully!');
       setDeleteAccountId(null);
     },
@@ -76,11 +75,11 @@ const AccountList = () => {
 
   return (
     <div className='p-4'>
-      <div className='mb-6 flex items-center justify-between'>
+      <div className='mb-6 flex items-center justify-between max-sm:flex-col max-sm:gap-2'>
         <h1 className='text-2xl font-bold'>Accounts</h1>
-        <div className='flex items-center gap-2'>
+        <div className='flex items-center gap-2 max-sm:w-full max-sm:flex-col max-sm:gap-2'>
           <AddAccountModal />
-          <AddTransactionModal onTransactionAdded={() => {}} />
+          <AddTransactionModal onTransactionAdded={refetch} />
         </div>
       </div>
 

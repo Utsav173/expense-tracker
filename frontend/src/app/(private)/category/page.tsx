@@ -31,7 +31,7 @@ const CategoryPage = () => {
       });
       const newUrl = `${pathname}?${currentParams.toString()}`;
 
-      router.push(newUrl, { scroll: false });
+      router.push(newUrl, { scroll: true });
     }
   );
 
@@ -47,7 +47,7 @@ const CategoryPage = () => {
   });
 
   return (
-    <div className='container space-y-6'>
+    <div className='mx-auto w-full max-w-7xl space-y-6 p-4 max-sm:p-0 md:p-6 lg:p-8'>
       <div className='flex items-center justify-between gap-4'>
         <h1 className='text-3xl font-semibold'>Category</h1>
         <AddCategoryModal
@@ -69,10 +69,10 @@ const CategoryPage = () => {
         data={data}
         isLoading={isLoading}
         onSort={handleSort}
-        sortBy={filters.sortBy} // Pass these down
-        sortOrder={filters.sortOrder} // Pass these down.
-        page={page} // Pass page
-        handlePageChange={handlePageChange} // and page handler
+        sortBy={filters.sortBy}
+        sortOrder={filters.sortOrder}
+        page={page}
+        handlePageChange={handlePageChange}
         refetch={refetch}
       />
     </div>

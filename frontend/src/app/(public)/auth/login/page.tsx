@@ -64,8 +64,8 @@ const LoginPage = () => {
   };
 
   return (
-    <Card className='w-full border-0 shadow-none'>
-      <CardContent className='space-y-6 pt-4'>
+    <Card className='w-full border-0 p-0 shadow-none'>
+      <CardContent className='space-y-6 p-0 pt-4'>
         <div className='space-y-2 text-center'>
           <h2 className='text-2xl font-semibold text-gray-800'>Welcome Back</h2>
           <p className='text-sm text-gray-500'>Sign in to continue tracking your expenses</p>
@@ -81,6 +81,7 @@ const LoginPage = () => {
               type='email'
               placeholder='you@example.com'
               {...register('email')}
+              disabled={loginLoading}
               className='w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 transition-all duration-200 focus:border-transparent focus:bg-white focus:ring-2 focus:ring-blue-500'
             />
             {errors.email && <p className='py-1 text-xs text-red-500'> {errors.email.message}</p>}
@@ -95,6 +96,7 @@ const LoginPage = () => {
               type='password'
               placeholder='••••••••'
               {...register('password')}
+              disabled={loginLoading}
               className='w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 transition-all duration-200 focus:border-transparent focus:bg-white focus:ring-2 focus:ring-blue-500'
             />
             {errors.password && (

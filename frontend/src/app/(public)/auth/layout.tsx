@@ -4,12 +4,29 @@ import { Inter } from 'next/font/google';
 import ReactQueryProvider from '@/components/provider';
 import '../../globals.css';
 import Loader from '@/components/ui/loader';
+import { Metadata } from 'next';
 
 const inter = Inter({ subsets: ['latin'] });
 
-export const metadata = {
-  title: 'Authentication',
-  description: 'Authentication for your Expense Manager application'
+export const metadata: Metadata = {
+  title: 'Expense Pro | Authentication',
+  description:
+    'Expense Pro is Efficiently manage income and expense for various accounts. Analyze accounts with insightful dashboards, charts, and reports. Import and share account data, generate statements, and more.',
+  icons: [
+    {
+      rel: 'icon',
+      type: 'image/png',
+      sizes: '96x96',
+      url: '/favicon-96x96.png'
+    },
+    { rel: 'icon', type: 'image/svg+xml', url: '/favicon.svg' },
+    { rel: 'shortcut icon', url: '/favicon.ico' },
+    { rel: 'apple-touch-icon', sizes: '180x180', url: '/apple-touch-icon.png' }
+  ],
+  manifest: '/site.webmanifest',
+  appleWebApp: {
+    title: 'Expense Pro'
+  }
 };
 
 const AuthLayout = ({ children }: { children: React.ReactNode }) => {
@@ -19,7 +36,7 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
         <ReactQueryProvider>
           <Suspense fallback={<Loader />}>
             <div className='flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 px-4 py-16 sm:px-6 lg:px-8'>
-              <div className='w-full max-w-lg space-y-8 rounded-xl border border-gray-100 bg-white p-8 shadow-2xl'>
+              <div className='w-full max-w-lg space-y-2 rounded-xl border border-gray-100 bg-white p-8 shadow-2xl'>
                 <div className='text-center'>
                   <h1 className='bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-3xl font-bold text-transparent'>
                     Expense Tracker

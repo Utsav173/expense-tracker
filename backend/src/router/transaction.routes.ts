@@ -675,9 +675,23 @@ transactionRouter.post('/', zValidator('json', transactionSchema), authMiddlewar
 });
 
 // PUT /:id - Update a transaction
-transactionRouter.put('/:id', authMiddleware, async (c) => {
+transactionRouter.put('/:id', authMiddleware, zValidator('json', transactionSchema), async (c) => {
   const { id } = c.req.param();
-  // get body params
+
+  const userId = await c.get('userId' as any);
+
+  const validTransaction = await db.query.Transaction.findFirst({
+    where: eq(Transaction.id, id),
+  });
+
+  if (!validTransaction) {
+    throw new HTTPException(404, { message: 'Transaction not found' });
+  }
+
+  if (validTransaction.owner !== userId) {
+    throw new HTTPException(403, { message: 'Not authorized to update this transaction' });
+  }
+
   const {
     text,
     amount,
@@ -691,10 +705,6 @@ transactionRouter.put('/:id', authMiddleware, async (c) => {
     currency,
   } = await c.req.json();
 
-  // get userId from token
-  const userId = await c.get('userId' as any);
-
-  // prepare transaction data
   let transactionData: InferInsertModel<typeof Transaction> = {
     text,
     amount,
@@ -703,115 +713,100 @@ transactionRouter.put('/:id', authMiddleware, async (c) => {
     category,
     updatedBy: userId,
     updatedAt: new Date(),
-    account: '',
-    owner: '',
-    createdBy: '',
+    account: validTransaction.account,
+    owner: validTransaction.owner,
+    createdBy: validTransaction.createdBy,
     recurring: recurring,
     recurrenceType: recurring ? recurrenceType : null,
     recurrenceEndDate: recurring ? new Date(recurrenceEndDate) : null,
-    currency: currency,
+    currency: currency || validTransaction.currency,
   };
 
   if (createdAt) {
-    transactionData['createdAt'] = new Date(createdAt);
-  }
-
-  // validate transaction
-  const validTransaction = await db.query.Transaction.findFirst({
-    where: eq(Transaction.id, id),
-  });
-
-  if (!validTransaction) {
-    throw new HTTPException(400, { message: 'Transaction not found' });
+    transactionData.createdAt = new Date(createdAt);
   }
 
   // validate account balance
   const validBalance = await db.query.Account.findFirst({
     where: eq(Account.id, validTransaction.account as string),
+    columns: {
+      id: true,
+      balance: true,
+      currency: true,
+    },
   });
 
+  if (!validBalance) {
+    throw new HTTPException(400, { message: 'Associated account not found' });
+  }
+
+  // Calculate changes for balance updates
   const amountDifference = transactionData.amount - validTransaction.amount;
   const typeChanged = validTransaction.isIncome !== transactionData.isIncome;
-  const amountChanged = amountDifference !== 0;
 
-  let typeChange = 0;
-  let amountChange = 0;
+  let balanceChange = 0;
 
   if (typeChanged) {
-    typeChange = transactionData.isIncome ? transactionData.amount : -transactionData.amount;
-  } else if (amountChanged) {
-    amountChange = transactionData.isIncome ? amountDifference : -amountDifference;
+    if (transactionData.isIncome) {
+      balanceChange = transactionData.amount + validTransaction.amount;
+    } else {
+      balanceChange = -(transactionData.amount + validTransaction.amount);
+    }
+  } else {
+    balanceChange = transactionData.isIncome ? amountDifference : -amountDifference;
   }
 
-  const totalChange = typeChange + amountChange;
-  const updatedBalance = validBalance?.balance! + totalChange;
+  const updatedBalance = validBalance.balance! + balanceChange;
 
-  if (totalChange !== 0 && updatedBalance < 0) {
-    throw new HTTPException(400, { message: 'Insufficient balance' });
+  // Prevent negative balance for non-income transactions
+  if (!transactionData.isIncome && updatedBalance < 0) {
+    throw new HTTPException(400, { message: 'Insufficient account balance' });
   }
 
-  let updateOperation: any = {};
+  // Update analytics
+  const analyticsUpdate: any = {
+    balance: increment('balance', balanceChange),
+  };
 
-  if (typeChange !== 0) {
-    const typeChangeField = transactionData.isIncome ? 'income' : 'expense';
-    const typeChangeValue = Math.max(Math.abs(typeChange), 0);
-
-    updateOperation = {
-      ...updateOperation,
-      [typeChangeField]: increment(typeChangeField, typeChangeValue),
-      balance: increment('balance', typeChange),
-    };
+  if (typeChanged) {
+    if (transactionData.isIncome) {
+      analyticsUpdate.income = increment('income', transactionData.amount);
+      analyticsUpdate.expense = increment('expense', -validTransaction.amount);
+    } else {
+      analyticsUpdate.income = increment('income', -validTransaction.amount);
+      analyticsUpdate.expense = increment('expense', transactionData.amount);
+    }
+  } else if (amountDifference !== 0) {
+    const field = transactionData.isIncome ? 'income' : 'expense';
+    analyticsUpdate[field] = increment(field, amountDifference);
   }
 
-  if (amountChange !== 0) {
-    const amountChangeField = transactionData.isIncome ? 'income' : 'expense';
-    const amountChangeValue = Math.max(Math.abs(amountChange), 0);
-
-    updateOperation = {
-      ...updateOperation,
-      [amountChangeField]: increment(amountChangeField, amountChangeValue),
-      balance: increment('balance', amountChange),
-    };
-  }
-
-  /* The below code is using the `await` keyword to handle asynchronous operations within a
-    database transaction. Here's a breakdown of what the code is doing: */
-  await db
-    .transaction(async (tx) => {
-      if (Object.keys(updateOperation).length > 0) {
-        await tx
-          .update(Analytics)
-          .set(updateOperation)
-          .where(eq(Analytics.account, validTransaction.account as string))
-          .catch((err) => {
-            throw new HTTPException(500, { message: err.message });
-          });
-
-        await tx
-          .update(Account)
-          .set({ balance: sql`${Account.balance} + ${totalChange}` })
-          .where(eq(Account.id, validTransaction.account as string))
-          .catch((err) => {
-            throw new HTTPException(500, { message: err.message });
-          });
-      }
-
+  try {
+    await db.transaction(async (tx) => {
+      // Update analytics
       await tx
-        .update(Transaction)
-        .set(transactionData)
-        .where(eq(Transaction.id, id))
-        .catch((err) => {
-          throw new HTTPException(500, { message: err.message });
-        });
-    })
-    .catch((err) => {
-      throw new HTTPException(500, { message: err.message });
+        .update(Analytics)
+        .set(analyticsUpdate)
+        .where(eq(Analytics.account, validTransaction.account as string));
+
+      // Update account balance
+      await tx
+        .update(Account)
+        .set({ balance: updatedBalance })
+        .where(eq(Account.id, validTransaction.account as string));
+
+      // Update transaction
+      await tx.update(Transaction).set(transactionData).where(eq(Transaction.id, id));
     });
 
-  // return response
-  return c.json({
-    message: 'Transaction updated successfully',
-  });
+    return c.json({
+      message: 'Transaction updated successfully',
+    });
+  } catch (err) {
+    throw new HTTPException(500, {
+      message: err instanceof Error ? err.message : 'Failed to update transaction',
+    });
+  }
 });
 
 // DELETE /:id - Delete a transaction

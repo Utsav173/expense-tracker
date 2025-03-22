@@ -129,6 +129,7 @@ const CategoryList = ({
         sortBy={sortBy}
         sortOrder={sortOrder}
         enablePagination={true}
+        mobileTriggerColumns={['name']}
       />
 
       {selectedCategory && (

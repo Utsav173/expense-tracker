@@ -24,7 +24,7 @@ const SidebarLayout = ({ children }: { children: React.ReactNode }) => {
               <RouteBreadcrumbs />
             </div>
           </header>
-          <main className='relative flex min-h-[calc(100dvh-4rem)] flex-1 flex-col gap-4 p-4 pt-0'>
+          <main className='scrollbar relative flex min-h-[calc(100dvh-4rem)] flex-1 flex-col gap-4 p-4 pt-0'>
             {children}
           </main>
         </SidebarInset>

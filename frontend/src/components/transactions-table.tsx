@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ColumnDef, SortingState } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2 } from 'lucide-react';
@@ -12,6 +12,7 @@ import { Transaction as TransactionType } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
 import CommonTable from './ui/CommonTable';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface TransactionTableProps {
   transactions: TransactionType[] | undefined;
@@ -23,6 +24,7 @@ interface TransactionTableProps {
   totalRecords: number;
   page: number;
   handlePageChange: (page: number) => void;
+  queryKey: any[];
 }
 
 const TransactionTable = ({
@@ -34,20 +36,29 @@ const TransactionTable = ({
   loading,
   totalRecords,
   page,
-  handlePageChange
+  handlePageChange,
+  queryKey
 }: TransactionTableProps) => {
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionType | null>(null);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const { showSuccess, showError } = useToast();
 
-  const handleDelete = async (id: string) => {
-    try {
-      await transactionDelete(id);
+  const queryClient = useQueryClient();
+
+  const deleteMutation = useMutation({
+    mutationFn: transactionDelete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      queryClient.refetchQueries({ queryKey });
       showSuccess('Transaction deleted successfully!');
-      onUpdate();
-    } catch (error: any) {
+    },
+    onError: (error: any) => {
       showError(error.message);
     }
+  });
+
+  const handleDelete = async (id: string) => {
+    deleteMutation.mutate(id);
   };
 
   const columns = useMemo<ColumnDef<TransactionType>[]>(
@@ -80,7 +91,15 @@ const TransactionTable = ({
       {
         accessorKey: 'createdAt',
         header: 'Date',
-        cell: (info) => format(new Date(info.row.original.createdAt), 'yyyy-MM-dd HH:mm:ss')
+        cell: (info) => {
+          const date = new Date(info.row.original.createdAt);
+          return (
+            <div className='whitespace-nowrap'>
+              {format(date, 'MMM d, yyyy')}
+              <span className='ml-2 text-sm text-gray-500'>{format(date, 'h:mm a')}</span>
+            </div>
+          );
+        }
       },
       {
         accessorKey: 'isIncome',
@@ -145,7 +164,10 @@ const TransactionTable = ({
         isOpen={isUpdateModalOpen}
         onOpenChange={setIsUpdateModalOpen}
         transaction={selectedTransaction}
-        onUpdate={onUpdate}
+        onUpdate={() => {
+          queryClient.invalidateQueries({ queryKey });
+          onUpdate();
+        }}
       />
     </>
   );

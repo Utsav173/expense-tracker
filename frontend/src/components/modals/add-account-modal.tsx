@@ -14,29 +14,32 @@ import { Label } from '../ui/label';
 import CurrencySelect from '../currency-select';
 import { useQuery } from '@tanstack/react-query';
 import { fetchCurrencies, COMMON_CURRENCIES } from '@/lib/endpoints/currency';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const accountSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters long').max(64),
-  balance: z.string().refine((value) => !isNaN(Number(value)), 'Must be a valid number'), // number is better if client data types not changed
+  balance: z.string().refine((value) => !isNaN(Number(value)), 'Must be a valid number'),
   currency: z.string()
 });
+
 type Type = z.infer<typeof accountSchema>;
 
 const AddAccountModal = () => {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting }, // Add isSubmitting
+    formState: { errors, isSubmitting },
     reset,
     setValue,
     watch
   } = useForm<Type>({
     resolver: zodResolver(accountSchema),
     defaultValues: {
-      currency: 'INR' // provide a generic data
+      currency: 'INR'
     }
   });
   const { showError, showSuccess } = useToast();
@@ -82,7 +85,7 @@ const AddAccountModal = () => {
       onOpenChange={handleOpenChange}
       title='Add Account'
       description=' Add an new expense tracker  account.'
-      triggerButton={<Button> Create Account</Button>}
+      triggerButton={<Button className='max-sm:w-full'>Create Account</Button>}
       isOpen={isOpen}
     >
       <form onSubmit={handleSubmit(handleCreate)} className='space-y-6'>

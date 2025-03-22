@@ -22,57 +22,100 @@ interface BreadcrumbItemType {
 
 const RouteBreadcrumbs: React.FC = () => {
   const pathname = usePathname();
-  const [accountId, setAccountIdState] = useState<string | undefined>('');
+  const [accountId, setAccountIdState] = useState<string | undefined>(undefined);
   const [accountName, setAccountName] = useState<string | null>(null);
 
+  // Handle accountId extraction from pathname
   useEffect(() => {
+    if (!pathname) return;
+
     const accountIdState =
       pathname.startsWith('/accounts/') && pathname.split('/').length === 3
         ? pathname.split('/')[2]
         : undefined;
     setAccountIdState(accountIdState);
-  }, []);
+  }, [pathname]);
 
+  // Handle account name fetching
   useEffect(() => {
+    let mounted = true;
+
     const fetchAccountName = async () => {
-      if (accountId) {
-        try {
-          const account = await accountGetById(accountId);
+      if (!accountId) {
+        setAccountName(null);
+        return;
+      }
+
+      try {
+        const account = await accountGetById(accountId);
+        if (mounted) {
           setAccountName(account?.name || null);
-        } catch (error) {
-          console.error('Error fetching account:', error);
+        }
+      } catch (error) {
+        console.error('Error fetching account:', error);
+        if (mounted) {
           setAccountName(null);
         }
-      } else {
-        setAccountName(null);
       }
     };
 
     fetchAccountName();
-  }, [pathname, accountId]);
+
+    return () => {
+      mounted = false;
+    };
+  }, [accountId]);
 
   const buildBreadcrumbs = (): BreadcrumbItemType[] => {
     const breadcrumbs: BreadcrumbItemType[] = [
-      { href: '/', label: 'Home', isCurrentPage: false },
-      { href: '/accounts', label: 'Accounts', isCurrentPage: pathname === '/accounts' }
+      { href: '/', label: 'Home', isCurrentPage: pathname === '/' }
     ];
 
-    if (pathname.startsWith('/accounts/shares/')) {
-      breadcrumbs.push({
-        href: `/accounts/${accountId}`,
-        label: accountName || 'Account Details',
-        isCurrentPage: false
-      });
-      breadcrumbs.push({
-        href: `/accounts/account-sharing/${accountId}`,
-        label: 'Account Sharing',
-        isCurrentPage: true
-      });
-    } else if (pathname.startsWith('/accounts/') && accountId) {
-      breadcrumbs.push({
-        href: `/accounts/${accountId}`,
-        label: accountName || 'Account Details',
-        isCurrentPage: true
+    if (!pathname) return breadcrumbs;
+
+    const segments = pathname.split('/').filter(Boolean);
+
+    if (segments.length > 0) {
+      let currentPath = '';
+
+      segments.forEach((segment, index) => {
+        currentPath += `/${segment}`;
+
+        // Handle special case for account details
+        if (
+          segment === 'accounts' &&
+          segments[index + 1] &&
+          !segments[index + 1].startsWith('shares')
+        ) {
+          breadcrumbs.push({
+            href: currentPath,
+            label: 'Accounts',
+            isCurrentPage: pathname === currentPath
+          });
+
+          if (accountId && accountName) {
+            breadcrumbs.push({
+              href: `/accounts/${accountId}`,
+              label: accountName,
+              isCurrentPage: pathname === `/accounts/${accountId}`
+            });
+          }
+          return;
+        }
+
+        // Handle regular routes
+        if (!/^\d+$/.test(segment)) {
+          const label = segment
+            .split('-')
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+
+          breadcrumbs.push({
+            href: currentPath,
+            label,
+            isCurrentPage: pathname === currentPath
+          });
+        }
       });
     }
 

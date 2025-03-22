@@ -47,11 +47,14 @@ export const AccountFilters: React.FC<AccountFiltersProps> = ({
         />
       </div>
 
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'>
-        <div className='md:col-span-2 lg:col-span-1'>
+      {/* Responsive Grid Layout */}
+      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+        {/* Date Range Picker */}
+        <div className='sm:col-span-2 lg:col-span-1'>
           <DateRangePicker dateRange={filters.tempDateRange} setDateRange={handleDateRangeSelect} />
         </div>
 
+        {/* Category Select */}
         <div>
           <Select value={filters.categoryId || 'all'} onValueChange={handleCategoryChange}>
             <SelectTrigger className='w-full'>
@@ -68,6 +71,7 @@ export const AccountFilters: React.FC<AccountFiltersProps> = ({
           </Select>
         </div>
 
+        {/* Income/Expense Type Select */}
         <div>
           <Select
             value={filters.isIncome === undefined ? 'all' : String(filters.isIncome)}
@@ -84,7 +88,8 @@ export const AccountFilters: React.FC<AccountFiltersProps> = ({
           </Select>
         </div>
 
-        <div className='flex flex-wrap items-center gap-2 md:col-span-2 lg:col-span-1'>
+        {/* Clear and Reset Buttons */}
+        <div className='flex flex-wrap items-center gap-2 sm:col-span-2 lg:col-span-1'>
           {filters.dateRange?.from && (
             <Button
               variant='ghost'

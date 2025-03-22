@@ -92,11 +92,11 @@ const DateRangePicker = ({ dateRange, setDateRange, className }: DateRangePicker
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className='w-auto p-0' align='start'>
-        <div className='flex max-sm:flex-col'>
-          <div className='relative border-border py-4 max-sm:order-1 max-sm:border-t sm:w-32'>
-            <div className='sm:border-e'>
-              <div className='flex max-h-80 flex-col overflow-y-auto px-2'>
+      <PopoverContent className='w-auto p-0' align='center' alignOffset={0}>
+        <div>
+          <div className='flex flex-col sm:flex-row'>
+            <div className='shrink-0 border-b border-border py-4 max-sm:hidden sm:w-32 sm:border-b-0 sm:border-r'>
+              <div className='flex flex-col px-2'>
                 {presets.map((preset) => (
                   <Button
                     key={preset.label}
@@ -114,16 +114,18 @@ const DateRangePicker = ({ dateRange, setDateRange, className }: DateRangePicker
                 ))}
               </div>
             </div>
+            <div className='w-full'>
+              <Calendar
+                mode='range'
+                selected={dateRange}
+                onSelect={handleDateSelect}
+                month={month}
+                onMonthChange={setMonth}
+                className='rounded-md border'
+                disabled={[{ after: today }]}
+              />
+            </div>
           </div>
-          <Calendar
-            mode='range'
-            selected={dateRange}
-            onSelect={handleDateSelect}
-            month={month}
-            onMonthChange={setMonth}
-            className='rounded-md border p-2'
-            disabled={[{ after: today }]} // Disable future dates
-          />
         </div>
       </PopoverContent>
     </Popover>

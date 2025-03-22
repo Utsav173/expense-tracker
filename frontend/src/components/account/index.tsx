@@ -49,7 +49,7 @@ export const AnalyticsCards: React.FC<AnalyticsCardsProps> = ({
 }) => {
   if (isLoading) {
     return (
-      <div className='grid gap-4 md:grid-cols-3'>
+      <div className='grid gap-4 sm:grid-cols-2 md:grid-cols-3'>
         {[1, 2, 3].map((i) => (
           <Card key={i} className='animate-pulse'>
             <CardHeader>
@@ -95,7 +95,8 @@ export const AnalyticsCards: React.FC<AnalyticsCardsProps> = ({
   };
 
   return (
-    <div className='grid gap-4 md:grid-cols-3'>
+    // Added sm:grid-cols-2 for two columns on small screens
+    <div className='grid gap-4 sm:grid-cols-2 md:grid-cols-3'>
       {cards.map((card, i) => (
         <Card key={i}>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
@@ -187,18 +188,21 @@ export const IncomeExpenseChart: React.FC<IncomeExpenseChartProps> = ({
 }) => {
   const [showCharts, setShowCharts] = useState(true);
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
+  const formatCurrency = (
+    value: number,
+    notation?: 'compact' | 'standard' | 'scientific' | 'engineering' | undefined
+  ) => {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency,
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
+      notation
     }).format(value);
   };
 
-  const formatPercentage = (value: number) => {
-    const formattedValue = Math.abs(value).toFixed(1);
-    return `${value >= 0 ? '+' : '-'}${formattedValue}%`;
+  const formatYaxis = (value: number) => {
+    return formatCurrency(value, 'compact');
   };
 
   // Use the latest data point if customAnalytics is not provided
@@ -227,15 +231,13 @@ export const IncomeExpenseChart: React.FC<IncomeExpenseChartProps> = ({
   return (
     <Card className='overflow-hidden border border-border/40 shadow-sm transition-all duration-200'>
       {!showCharts ? (
-        <div className='flex h-16 w-full items-center justify-center px-4'>
-          <Button
-            className='flex items-center gap-2 font-medium'
-            onClick={() => setShowCharts(true)}
-          >
-            <BarChart2 className='h-4 w-4' />
-            <span>Show Financial Trends</span>
-          </Button>
-        </div>
+        <Button
+          className='flex w-full items-center gap-2 bg-yellow-300 font-medium text-orange-700 transition-colors hover:bg-yellow-400 hover:text-orange-900'
+          onClick={() => setShowCharts(true)}
+        >
+          <BarChart2 className='h-4 w-4' />
+          <span>Show Financial Trends</span>
+        </Button>
       ) : (
         <>
           <CardHeader className='pb-2'>
@@ -244,7 +246,7 @@ export const IncomeExpenseChart: React.FC<IncomeExpenseChartProps> = ({
                 <CardTitle className='text-xl font-semibold tracking-tight'>
                   Financial Trends
                 </CardTitle>
-                <CardDescription className='mt-1 text-muted-foreground'>
+                <CardDescription className='mt-1 text-muted-foreground max-sm:hidden'>
                   Income vs. Expense trends over time
                 </CardDescription>
               </div>
@@ -262,12 +264,12 @@ export const IncomeExpenseChart: React.FC<IncomeExpenseChartProps> = ({
           <CardContent className='px-2 pb-0 pt-0'>
             <Tabs defaultValue='bar' className='w-full'>
               <div className='flex items-center justify-between px-4'>
-                <div className='flex gap-2'>
+                <div className='flex gap-2 max-sm:hidden'>
                   <Badge variant='outline' className='bg-background/80 font-normal'>
                     Last update: {latestData?.date}
                   </Badge>
                 </div>
-                <TabsList className='grid w-[180px] grid-cols-2'>
+                <TabsList className='grid w-[180px] grid-cols-2 max-sm:w-full'>
                   <TabsTrigger value='bar' className='flex items-center gap-1'>
                     <BarChart2 className='h-3.5 w-3.5' />
                     <span>Bar</span>
@@ -280,8 +282,9 @@ export const IncomeExpenseChart: React.FC<IncomeExpenseChartProps> = ({
               </div>
 
               <TabsContent value='bar' className='mt-2'>
-                <div className='h-[320px] px-1'>
-                  <ResponsiveContainer width='100%' height='100%'>
+                {/* Removed fixed height, let ResponsiveContainer handle it */}
+                <div className='px-1'>
+                  <ResponsiveContainer width='100%' height={320}>
                     <BarChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
                       <defs>
                         <linearGradient id='incomeGradient' x1='0' y1='0' x2='0' y2='1'>
@@ -324,6 +327,7 @@ export const IncomeExpenseChart: React.FC<IncomeExpenseChartProps> = ({
                       <CartesianGrid
                         strokeDasharray='3 3'
                         vertical={false}
+                        horizontal={false}
                         stroke='hsl(var(--border)/0.5)'
                       />
                       <XAxis
@@ -333,7 +337,7 @@ export const IncomeExpenseChart: React.FC<IncomeExpenseChartProps> = ({
                         axisLine={{ stroke: 'hsl(var(--border))' }}
                       />
                       <YAxis
-                        tickFormatter={(value) => `$${value / 1000}k`}
+                        tickFormatter={formatYaxis}
                         tick={{ fontSize: 12 }}
                         tickLine={false}
                         axisLine={{ stroke: 'hsl(var(--border))' }}
@@ -342,31 +346,34 @@ export const IncomeExpenseChart: React.FC<IncomeExpenseChartProps> = ({
                         content={({ active, payload, label }) => {
                           if (active && payload && payload.length) {
                             return (
-                              <div className='rounded-lg border border-border/40 bg-background/95 p-3 shadow-md backdrop-blur-sm'>
-                                <p className='mb-1 font-medium'>{label}</p>
-                                {payload.map((entry, index) => (
-                                  <div
-                                    key={`tooltip-item-${index}`}
-                                    className='flex items-center gap-2 py-0.5'
-                                  >
-                                    <div
-                                      className='h-2 w-2 rounded-full'
-                                      style={{ backgroundColor: entry.color }}
-                                    />
-                                    <span className='text-sm text-muted-foreground'>
-                                      {entry.name}:
-                                    </span>
-                                    <span className='text-sm font-medium'>
-                                      {formatCurrency(entry.value as number)}
-                                    </span>
-                                  </div>
-                                ))}
+                              <div className='rounded-lg border border-border/40 bg-popover p-3 shadow-md backdrop-blur-[2px]'>
+                                <p className='mb-2 font-medium'>{label}</p>
+                                <div className='grid grid-cols-[auto_auto] gap-x-2 gap-y-1'>
+                                  {payload.map((entry, index) => (
+                                    <React.Fragment key={`tooltip-item-${index}`}>
+                                      <div className='flex items-center gap-2'>
+                                        <div
+                                          className='h-2 w-2 rounded-full'
+                                          style={{ backgroundColor: entry.color }}
+                                        />
+                                        <span className='text-sm text-muted-foreground'>
+                                          {entry.name}:
+                                        </span>
+                                      </div>
+                                      <span className='text-right text-sm font-medium'>
+                                        {formatCurrency(entry.value as number)}
+                                      </span>
+                                    </React.Fragment>
+                                  ))}
+                                </div>
                               </div>
                             );
                           }
                           return null;
                         }}
+                        cursor={{ fill: '#f0f0f0' }}
                       />
+
                       <Legend
                         verticalAlign='top'
                         height={36}
@@ -405,8 +412,9 @@ export const IncomeExpenseChart: React.FC<IncomeExpenseChartProps> = ({
               </TabsContent>
 
               <TabsContent value='line' className='mt-2'>
-                <div className='h-[320px] px-1'>
-                  <ResponsiveContainer width='100%' height='100%'>
+                {/* Removed fixed height, let ResponsiveContainer handle it */}
+                <div className='px-1'>
+                  <ResponsiveContainer width='100%' height={320}>
                     <RechartsLineChart
                       data={data}
                       margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
@@ -452,6 +460,7 @@ export const IncomeExpenseChart: React.FC<IncomeExpenseChartProps> = ({
                       <CartesianGrid
                         strokeDasharray='3 3'
                         vertical={false}
+                        horizontal={false}
                         stroke='hsl(var(--border)/0.5)'
                       />
                       <XAxis
@@ -470,31 +479,34 @@ export const IncomeExpenseChart: React.FC<IncomeExpenseChartProps> = ({
                         content={({ active, payload, label }) => {
                           if (active && payload && payload.length) {
                             return (
-                              <div className='rounded-lg border border-border/40 bg-background/95 p-3 shadow-md backdrop-blur-sm'>
-                                <p className='mb-1 font-medium'>{label}</p>
-                                {payload.map((entry, index) => (
-                                  <div
-                                    key={`tooltip-item-${index}`}
-                                    className='flex items-center gap-2 py-0.5'
-                                  >
-                                    <div
-                                      className='h-2 w-2 rounded-full'
-                                      style={{ backgroundColor: entry.color }}
-                                    />
-                                    <span className='text-sm text-muted-foreground'>
-                                      {entry.name}:
-                                    </span>
-                                    <span className='text-sm font-medium'>
-                                      {formatCurrency(entry.value as number)}
-                                    </span>
-                                  </div>
-                                ))}
+                              <div className='rounded-lg border border-border/40 bg-popover p-3 shadow-md backdrop-blur-[2px]'>
+                                <p className='mb-2 font-medium'>{label}</p>
+                                <div className='grid grid-cols-[auto_auto] gap-x-2 gap-y-1'>
+                                  {payload.map((entry, index) => (
+                                    <React.Fragment key={`tooltip-item-${index}`}>
+                                      <div className='flex items-center gap-2'>
+                                        <div
+                                          className='h-2 w-2 rounded-full'
+                                          style={{ backgroundColor: entry.color }}
+                                        />
+                                        <span className='text-sm text-muted-foreground'>
+                                          {entry.name}:
+                                        </span>
+                                      </div>
+                                      <span className='text-right text-sm font-medium'>
+                                        {formatCurrency(entry.value as number)}
+                                      </span>
+                                    </React.Fragment>
+                                  ))}
+                                </div>
                               </div>
                             );
                           }
                           return null;
                         }}
+                        cursor={{ fill: 'none' }}
                       />
+
                       <Legend
                         verticalAlign='top'
                         height={36}

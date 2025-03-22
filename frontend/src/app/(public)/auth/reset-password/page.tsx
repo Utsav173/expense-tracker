@@ -59,14 +59,13 @@ const ResetPasswordPage = () => {
   };
 
   return (
-    <Card className='w-[400px] rounded-md bg-white shadow-md md:w-[450px]'>
-      <CardHeader className='pb-4'>
+    <Card className='w-full border-0 p-0 shadow-none'>
+      <CardHeader className='py-4'>
         <CardTitle className='text-center text-xl font-bold tracking-wide text-gray-700'>
           Reset Password
         </CardTitle>
-        <Separator className='my-2' />
       </CardHeader>
-      <CardContent className='space-y-6 pb-4'>
+      <CardContent className='space-y-6 p-0 pb-4'>
         <form onSubmit={handleSubmit(handleResetPassword)} className='space-y-4'>
           <div>
             <Input
