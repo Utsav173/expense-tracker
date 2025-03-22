@@ -1,8 +1,8 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import { toast } from 'react-hot-toast';
 
-export const API_BASE_URL = 'https://expense-tracker-bun.onrender.com';
-// export const API_BASE_URL = 'http://192.168.0.110:1337';
+// export const API_BASE_URL = 'https://expense-tracker-bun.onrender.com';
+export const API_BASE_URL = 'http://192.168.0.110:1337';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -53,7 +53,7 @@ const apiFetch = async <T>(
 
     if (axios.isAxiosError(error)) {
       message = error?.response?.data?.message || error.message;
-      if (error.response?.status === 403 || error.response?.status === 500) {
+      if (error.response?.status === 403) {
         // Clear the token from localStorage
         localStorage.removeItem('token');
         window.location.href = '/auth/login';

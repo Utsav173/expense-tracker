@@ -66,7 +66,7 @@ export const useCategoryFilters = () => {
       });
 
       const newUrl = `${pathname}?${newSearchParams.toString()}`;
-      router.push(newUrl, { scroll: false });
+      router.push(newUrl, { scroll: true });
     },
     [router, pathname, searchParams]
   );

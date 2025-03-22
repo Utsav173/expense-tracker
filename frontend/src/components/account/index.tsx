@@ -246,7 +246,7 @@ export const IncomeExpenseChart: React.FC<IncomeExpenseChartProps> = ({
                 <CardTitle className='text-xl font-semibold tracking-tight'>
                   Financial Trends
                 </CardTitle>
-                <CardDescription className='mt-1 text-muted-foreground'>
+                <CardDescription className='mt-1 text-muted-foreground max-sm:hidden'>
                   Income vs. Expense trends over time
                 </CardDescription>
               </div>
@@ -264,12 +264,12 @@ export const IncomeExpenseChart: React.FC<IncomeExpenseChartProps> = ({
           <CardContent className='px-2 pb-0 pt-0'>
             <Tabs defaultValue='bar' className='w-full'>
               <div className='flex items-center justify-between px-4'>
-                <div className='flex gap-2'>
+                <div className='flex gap-2 max-sm:hidden'>
                   <Badge variant='outline' className='bg-background/80 font-normal'>
                     Last update: {latestData?.date}
                   </Badge>
                 </div>
-                <TabsList className='grid w-[180px] grid-cols-2'>
+                <TabsList className='grid w-[180px] grid-cols-2 max-sm:w-full'>
                   <TabsTrigger value='bar' className='flex items-center gap-1'>
                     <BarChart2 className='h-3.5 w-3.5' />
                     <span>Bar</span>

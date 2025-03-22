@@ -22,8 +22,7 @@ import {
 } from '@/components/ui/select';
 import AddTransactionModal from '@/components/modals/add-transaction-modal';
 import DateRangePicker from '@/components/date-range-picker';
-import { Card, CardContent } from '@/components/ui/card';
-import { Upload, Filter, X, Search } from 'lucide-react';
+import { Filter, X, Search, Import } from 'lucide-react';
 
 // API & Hooks
 import { transactionGetAll } from '@/lib/endpoints/transactions';
@@ -33,7 +32,7 @@ import { useToast } from '@/lib/hooks/useToast';
 import { usePagination } from '@/hooks/usePagination';
 
 // Types
-import { AccountDropdown, Category, TransactionsResponse } from '@/lib/types';
+import { AccountDropdown, Category } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 const TransactionsPage = () => {
@@ -73,7 +72,7 @@ const TransactionsPage = () => {
         }
       });
       const newUrl = `${pathname}?${currentParams.toString()}`;
-      router.push(newUrl, { scroll: false });
+      router.push(newUrl, { scroll: true });
     }
   );
 
@@ -153,7 +152,7 @@ const TransactionsPage = () => {
   const handleSort = (field: string, order: 'asc' | 'desc') => {
     setSortBy(field);
     setSortOrder(order);
-    handlePageChange(1); // Reset to page 1 on sort change
+    handlePageChange(1);
   };
 
   const handleDateRangeSelect = (range: DateRange | undefined) => {
@@ -192,7 +191,7 @@ const TransactionsPage = () => {
     setDateRange(undefined);
     setTempDateRange(undefined);
     setSearch('');
-    handlePageChange(1); // Reset to first page when clearing filters
+    handlePageChange(1);
   };
 
   const toggleFilters = () => {
@@ -205,185 +204,189 @@ const TransactionsPage = () => {
   }
 
   return (
-    <div className='container mx-auto max-w-7xl p-4'>
-      {/* Header section */}
-      <div className='mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between'>
+    <div className='mx-auto w-full max-w-7xl space-y-4 p-3 md:space-y-6'>
+      <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div>
-          <h1 className='text-2xl font-bold'>Transactions</h1>
-          <p className='mt-1 text-muted-foreground'>
+          <h1 className='text-xl font-bold sm:text-2xl'>Transactions</h1>
+          <p className='mt-1 text-sm text-muted-foreground sm:text-base'>
             {transactions?.totalCount
               ? `${transactions.totalCount} transactions found`
               : 'Manage your financial transactions'}
           </p>
         </div>
 
-        <div className='mt-4 flex gap-2 sm:mt-0'>
+        {/* Action buttons - Fixed position on mobile */}
+        <div className='mt-4 flex gap-2 max-sm:flex-col sm:mt-0'>
           <AddTransactionModal onTransactionAdded={refetch} />
           <Link href='/transactions/import'>
-            <Button variant='outline' className='flex items-center gap-2'>
-              <Upload size={16} />
-              <span className='hidden sm:inline'>Import</span>
+            <Button variant='outline' className='flex w-full items-center gap-2'>
+              <Import />
+              <span>Import</span>
             </Button>
           </Link>
         </div>
       </div>
 
-      <Card className='mb-6'>
-        <CardContent className='pt-6'>
-          {/* Quick search and filter toggle */}
-          <div
-            className={cn(`flex flex-col items-start gap-4 sm:flex-row sm:items-center`, {
-              'mb-4': filtersExpanded
-            })}
-          >
-            <div className='relative flex-1'>
-              <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground' />
-              <Input
-                type='text'
-                placeholder='Search transactions...'
-                value={search}
-                onChange={handleSearch}
-                className='w-full pl-9'
-              />
-            </div>
-
-            <div className='flex gap-2'>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={toggleFilters}
-                className='flex items-center gap-1'
-              >
-                <Filter size={16} />
-                <span>Filters</span>
-                {activeFiltersCount > 0 && (
-                  <span className='ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground'>
-                    {activeFiltersCount}
-                  </span>
-                )}
-              </Button>
-
-              {activeFiltersCount > 0 && (
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  onClick={resetAllFilters}
-                  className='flex items-center gap-1'
-                >
-                  <X size={16} />
-                  <span>Clear all</span>
-                </Button>
-              )}
-            </div>
+      <div className='flex w-full flex-col'>
+        <div
+          className={cn(`flex flex-col gap-3 sm:flex-row sm:items-center`, {
+            'mb-3 sm:mb-4': filtersExpanded
+          })}
+        >
+          <div className='relative flex-1'>
+            <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground' />
+            <Input
+              type='text'
+              placeholder='Search transactions...'
+              value={search}
+              onChange={handleSearch}
+              className='w-full pl-9'
+            />
           </div>
 
-          {/* Advanced filters section */}
-          {filtersExpanded && (
-            <div className='mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-              <div>
-                <label className='mb-1 block text-sm font-medium'>Account</label>
-                <Select onValueChange={handleAccountIdChange} value={accountId || 'all'}>
-                  <SelectTrigger className='w-full'>
-                    <SelectValue placeholder='All Accounts' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='all'>All Accounts</SelectItem>
-                    {isLoadingAccounts ? (
-                      <SelectItem value='loading-accounts' disabled>
-                        Loading accounts...
+          <div className='flex gap-2'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={toggleFilters}
+              className='flex flex-1 items-center justify-center gap-1 sm:flex-auto'
+            >
+              <Filter size={16} />
+              <span>Filters</span>
+              {activeFiltersCount > 0 && (
+                <span className='ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground'>
+                  {activeFiltersCount}
+                </span>
+              )}
+            </Button>
+
+            {activeFiltersCount > 0 && (
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={resetAllFilters}
+                className='flex flex-1 items-center justify-center gap-1 sm:flex-auto'
+              >
+                <X size={16} />
+                <span>Clear</span>
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Advanced filters section - Improved grid layout for mobile */}
+        {filtersExpanded && (
+          <div className='mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4'>
+            <div>
+              <label className='mb-1 block text-xs font-medium sm:text-sm'>Account</label>
+              <Select onValueChange={handleAccountIdChange} value={accountId || 'all'}>
+                <SelectTrigger className='h-9 w-full text-xs sm:h-10 sm:text-sm'>
+                  <SelectValue placeholder='All Accounts' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='all'>All Accounts</SelectItem>
+                  {isLoadingAccounts ? (
+                    <SelectItem value='loading-accounts' disabled>
+                      Loading accounts...
+                    </SelectItem>
+                  ) : (
+                    accounts.map((account) => (
+                      <SelectItem key={account.id} value={account.id}>
+                        {account.name}
                       </SelectItem>
-                    ) : (
-                      accounts.map((account) => (
-                        <SelectItem key={account.id} value={account.id}>
-                          {account.name}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className='mb-1 block text-sm font-medium'>Category</label>
-                <Select onValueChange={handleCategoryIdChange} value={categoryId || 'all'}>
-                  <SelectTrigger className='w-full'>
-                    <SelectValue placeholder='All Categories' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='all'>All Categories</SelectItem>
-                    {isLoadingCategories ? (
-                      <SelectItem value='loading-categories' disabled>
-                        Loading categories...
-                      </SelectItem>
-                    ) : (
-                      categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className='mb-1 block text-sm font-medium'>Type</label>
-                <Select
-                  onValueChange={handleIsIncomeChange}
-                  value={isIncome === undefined ? 'all' : isIncome ? 'true' : 'false'}
-                >
-                  <SelectTrigger className='w-full'>
-                    <SelectValue placeholder='All Types' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='all'>All Types</SelectItem>
-                    <SelectItem value='true'>Income</SelectItem>
-                    <SelectItem value='false'>Expense</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className='mb-1 block text-sm font-medium'>Date Range</label>
-                <div className='flex items-center gap-2'>
-                  <DateRangePicker dateRange={tempDateRange} setDateRange={handleDateRangeSelect} />
-                  {dateRange?.from && (
-                    <Button
-                      variant='ghost'
-                      size='icon'
-                      onClick={handleClearDateRange}
-                      className='h-10 w-10'
-                    >
-                      <X className='h-4 w-4' />
-                    </Button>
+                    ))
                   )}
-                </div>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className='mb-1 block text-xs font-medium sm:text-sm'>Category</label>
+              <Select onValueChange={handleCategoryIdChange} value={categoryId || 'all'}>
+                <SelectTrigger className='h-9 w-full text-xs sm:h-10 sm:text-sm'>
+                  <SelectValue placeholder='All Categories' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='all'>All Categories</SelectItem>
+                  {isLoadingCategories ? (
+                    <SelectItem value='loading-categories' disabled>
+                      Loading categories...
+                    </SelectItem>
+                  ) : (
+                    categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className='mb-1 block text-xs font-medium sm:text-sm'>Type</label>
+              <Select
+                onValueChange={handleIsIncomeChange}
+                value={isIncome === undefined ? 'all' : isIncome ? 'true' : 'false'}
+              >
+                <SelectTrigger className='h-9 w-full text-xs sm:h-10 sm:text-sm'>
+                  <SelectValue placeholder='All Types' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='all'>All Types</SelectItem>
+                  <SelectItem value='true'>Income</SelectItem>
+                  <SelectItem value='false'>Expense</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className='mb-1 block text-xs font-medium sm:text-sm'>Date Range</label>
+              <div className='flex items-center gap-2'>
+                <DateRangePicker
+                  dateRange={tempDateRange}
+                  setDateRange={handleDateRangeSelect}
+                  className='h-9 text-xs sm:h-10 sm:text-sm'
+                />
+                {dateRange?.from && (
+                  <Button
+                    variant='ghost'
+                    size='icon'
+                    onClick={handleClearDateRange}
+                    className='h-9 w-9 sm:h-10 sm:w-10'
+                  >
+                    <X className='h-4 w-4' />
+                  </Button>
+                )}
               </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        )}
+      </div>
 
+      {/* Content area */}
       {isLoading ? (
         <div className='flex items-center justify-center py-12'>
           <Loader />
         </div>
       ) : transactions?.transactions && transactions.transactions.length > 0 ? (
-        <TransactionTable
-          transactions={transactions.transactions}
-          onUpdate={refetch}
-          onSort={handleSort}
-          sortBy={sortBy}
-          sortOrder={sortOrder}
-          loading={isLoading}
-          totalRecords={transactions.totalCount}
-          page={page}
-          handlePageChange={handlePageChange}
-          queryKey={queryKey}
-        />
+        <div className='my-2 mb-16 sm:mb-0'>
+          <TransactionTable
+            transactions={transactions.transactions}
+            onUpdate={refetch}
+            onSort={handleSort}
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            loading={isLoading}
+            totalRecords={transactions.totalCount}
+            page={page}
+            handlePageChange={handlePageChange}
+            queryKey={queryKey}
+          />
+        </div>
       ) : (
         <div className='flex items-center justify-center py-12'>
-          <p>No transactions found</p>
+          <p className='text-muted-foreground'>No transactions found</p>
         </div>
       )}
     </div>

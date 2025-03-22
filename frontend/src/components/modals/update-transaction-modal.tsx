@@ -29,7 +29,7 @@ import { Label } from '../ui/label';
 import { Transaction as TransactionType } from '@/lib/types';
 import DateTimePicker from '../date-time-picker';
 import AddCategoryModal from './add-category-modal';
-import { ArrowDownCircle, ArrowUpCircle, PlusCircle, Tag } from 'lucide-react';
+import { ArrowDownCircle, ArrowUpCircle, PlusCircle } from 'lucide-react';
 import { Card } from '../ui/card';
 
 const transactionSchema = z.object({
@@ -38,7 +38,7 @@ const transactionSchema = z.object({
   isIncome: z.boolean(),
   categoryId: z.string().optional(),
   createdAt: z.date(),
-  transfer: z.string().optional() // Add transfer field validation
+  transfer: z.string().optional()
 });
 
 type TransactionFormSchema = z.infer<typeof transactionSchema>;
@@ -70,8 +70,7 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
     formState: { errors, isSubmitting },
     reset,
     setValue,
-    watch,
-    control
+    watch
   } = useForm<TransactionFormSchema>({
     resolver: zodResolver(transactionSchema)
   });
@@ -97,7 +96,7 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
       setValue('isIncome', transaction.isIncome);
       setValue('categoryId', transaction.category?.id || '');
       setValue('createdAt', new Date(transaction.createdAt));
-      setValue('transfer', transaction.transfer || ''); // Set transfer value
+      setValue('transfer', transaction.transfer || '');
       setIsIncome(transaction.isIncome);
     } else {
       reset();
@@ -125,9 +124,10 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
       id: transaction.id,
       data: {
         ...data,
+        account: transaction.account,
         amount: Number(data.amount),
         category: data.categoryId,
-        transfer: data.transfer || transaction.transfer,
+        transfer: data.transfer || '',
         createdAt: data.createdAt.toISOString(),
         recurring: transaction.recurring,
         recurrenceType: transaction.recurrenceType,
@@ -194,29 +194,17 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
           </div>
           <div className='grid grid-cols-2 gap-4'>
             <div className='space-y-2'>
-              <Label htmlFor='account'>Account</Label>
-              <Input
-                id='account'
-                type='text'
-                value={
-                  transaction
-                    ? accountsData?.find((acc) => acc.id === transaction.account)?.name
-                    : ''
-                }
-                readOnly
-                className='w-full'
-              />
+              <span className='block text-sm font-medium text-gray-700'>Account</span>
+              <span className='block text-base text-gray-900'>
+                {transaction
+                  ? accountsData?.find((acc) => acc.id === transaction.account)?.name
+                  : ''}
+              </span>
             </div>
 
             <div className='space-y-2'>
-              <Label htmlFor='currency'>Currency</Label>
-              <Input
-                id='currency'
-                type='text'
-                value={transaction?.currency || ''}
-                readOnly
-                className='w-full'
-              />
+              <span className='block text-sm font-medium text-gray-700'>Currency</span>
+              <span className='block text-base text-gray-900'>{transaction?.currency || ''}</span>
             </div>
           </div>
           <div className='space-y-2'>
@@ -312,18 +300,6 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
             <DateTimePicker
               value={watch('createdAt')}
               onChange={(date) => setValue('createdAt', date!)}
-              disabled={isSubmitting}
-            />
-          </div>
-
-          <div className='space-y-2'>
-            <Label htmlFor='transfer'>Transfer</Label>
-            <Input
-              id='transfer'
-              type='text'
-              placeholder='Enter transfer details'
-              {...register('transfer')}
-              className='w-full'
               disabled={isSubmitting}
             />
           </div>

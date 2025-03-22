@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  createColumnHelper,
   flexRender,
   getCoreRowModel,
   useReactTable,
@@ -134,7 +133,7 @@ const CommonTable = <T extends object>({
   const sortOptions = useMemo(() => {
     return table
       .getAllLeafColumns()
-      .filter((column) => column.getCanSort() && column.id !== 'actions') // Add this condition
+      .filter((column) => column.getCanSort() && column.id !== 'actions')
       .flatMap((column) => [
         {
           id: `${column.id}-asc`,
@@ -189,11 +188,11 @@ const CommonTable = <T extends object>({
             ))}
           </SelectContent>
         </Select>
-        <Accordion type='single' collapsible className='mt-4 w-full'>
+        <Accordion type='multiple' className='mt-4 w-full'>
           {table.getRowModel().rows.map((row) => (
             <AccordionItem key={row.id} value={row.id}>
-              <AccordionTrigger className='px-4 py-2 text-left'>
-                <div className='flex w-full justify-between'>
+              <AccordionTrigger>
+                <div className='flex w-full justify-between text-left'>
                   {triggerColumns.map((column) => (
                     <span key={column.id} className='max-w-[50%] truncate'>
                       {flexRender(column.columnDef.cell, { row, column } as CellContext<T, any>)}
@@ -201,8 +200,8 @@ const CommonTable = <T extends object>({
                   ))}
                 </div>
               </AccordionTrigger>
-              <AccordionContent className='px-4 py-2'>
-                <div className='space-y-2'>
+              <AccordionContent>
+                <div className='grid w-full grid-cols-[35%_65%] gap-y-2'>
                   {table.getAllLeafColumns().map((column) => {
                     const header = column.columnDef.header;
                     const cellValue = flexRender(column.columnDef.cell, {
@@ -214,10 +213,10 @@ const CommonTable = <T extends object>({
                         ? flexRender(header, { column } as HeaderContext<T, unknown>)
                         : header;
                     return (
-                      <div key={column.id} className='flex items-start gap-2'>
-                        <span className='min-w-[100px] font-medium'>{headerString}:</span>
-                        <span className='flex-1'>{cellValue}</span>
-                      </div>
+                      <React.Fragment key={column.id}>
+                        <span className='truncate pr-2 font-medium'>{headerString}:</span>
+                        <span className='truncate'>{cellValue}</span>
+                      </React.Fragment>
                     );
                   })}
                 </div>

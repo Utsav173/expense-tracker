@@ -49,6 +49,7 @@ const TransactionTable = ({
     mutationFn: transactionDelete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
+      queryClient.refetchQueries({ queryKey });
       showSuccess('Transaction deleted successfully!');
     },
     onError: (error: any) => {

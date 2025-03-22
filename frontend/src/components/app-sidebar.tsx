@@ -5,19 +5,15 @@ import {
   ArrowLeftRight,
   BarChart3,
   BookOpen,
-  Bot,
   Coins,
+  Import,
   LayoutDashboard,
   PiggyBank,
-  Settings2,
-  SquareTerminal,
   Tag,
-  Upload,
   Wallet
 } from 'lucide-react';
 
 import { NavMain } from '@/components/nav-main';
-import { NavProjects } from '@/components/nav-projects';
 import { NavUser } from '@/components/nav-user';
 import { TeamSwitcher } from '@/components/team-switcher';
 import {
@@ -49,7 +45,7 @@ const data: any[] = [
   {
     title: 'Import Transactions',
     url: '/transactions/import',
-    icon: Upload
+    icon: Import
   },
   {
     title: 'Categories',
@@ -82,18 +78,11 @@ const data: any[] = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth();
-  const teams = [
-    {
-      name: user?.name || 'Your Profile ',
-      logo: SquareTerminal,
-      plan: 'user-type'
-    }
-  ];
 
   return (
     <Sidebar collapsible='icon' {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={teams} />
+        <TeamSwitcher />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data} />

@@ -31,7 +31,7 @@ const CategoryPage = () => {
       });
       const newUrl = `${pathname}?${currentParams.toString()}`;
 
-      router.push(newUrl, { scroll: false });
+      router.push(newUrl, { scroll: true });
     }
   );
 

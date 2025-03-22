@@ -169,7 +169,7 @@ const AddTransactionModal = ({
       triggerButton={
         triggerButton ?? (
           <Button
-            className='bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md hover:from-blue-700 hover:to-indigo-700 max-sm:w-full'
+            className='bg-gradient-to-r from-green-600 to-green-600 text-white shadow-md hover:from-green-700 hover:to-green-700 max-sm:w-full'
             disabled={isSubmitting}
           >
             Add Transaction
