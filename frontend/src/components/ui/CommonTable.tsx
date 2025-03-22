@@ -207,7 +207,7 @@ const CommonTable = <T extends object>({
                         ? flexRender(header, { column } as HeaderContext<T, unknown>)
                         : header;
                     return (
-                      <React.Fragment key={column.id}>
+                      <React.Fragment key={column.id + cellValue}>
                         <span className='truncate pr-2 font-medium'>{headerString}:</span>
                         <span className='truncate'>{cellValue}</span>
                       </React.Fragment>

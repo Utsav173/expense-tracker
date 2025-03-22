@@ -83,6 +83,7 @@ export const AccountTransactionsSection: React.FC<AccountTransactionsSectionProp
             page={page}
             handlePageChange={handlePageChange}
             queryKey={queryKey}
+            key={'account-transactions'}
           />
         )}
       </div>

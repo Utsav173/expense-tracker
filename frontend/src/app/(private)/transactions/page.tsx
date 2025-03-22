@@ -141,10 +141,6 @@ const TransactionsPage = () => {
     }
   }, [categoriesData?.categories]);
 
-  useEffect(() => {
-    handlePageChange(1);
-  }, [debouncedSearch, accountId, categoryId, isIncome, dateRange, sortBy, sortOrder]);
-
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
   };
@@ -382,6 +378,7 @@ const TransactionsPage = () => {
             page={page}
             handlePageChange={handlePageChange}
             queryKey={queryKey}
+            key={'transactions-page'}
           />
         </div>
       ) : (
