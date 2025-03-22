@@ -2,7 +2,7 @@ import axios, { AxiosRequestConfig } from 'axios';
 import { toast } from 'react-hot-toast';
 
 export const API_BASE_URL = 'https://expense-tracker-bun.onrender.com';
-// export const API_BASE_URL = 'http://localhost:1337';
+// export const API_BASE_URL = 'http://192.168.0.110:1337';
 
 const api = axios.create({
   baseURL: API_BASE_URL,

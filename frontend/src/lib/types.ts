@@ -90,6 +90,9 @@ export interface Transaction {
   createdAt: string;
   updatedAt?: string;
   currency: string;
+  recurring?: boolean;
+  recurrenceType?: string;
+  recurrenceEndDate?: string;
 }
 
 // Account Interface

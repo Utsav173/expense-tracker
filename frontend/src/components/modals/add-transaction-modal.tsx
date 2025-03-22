@@ -48,9 +48,14 @@ type TransactionFormSchema = z.infer<typeof transactionSchema>;
 interface AddTransactionModalProps {
   onTransactionAdded: () => void;
   triggerButton?: React.ReactNode;
+  accountId?: string;
 }
 
-const AddTransactionModal = ({ onTransactionAdded, triggerButton }: AddTransactionModalProps) => {
+const AddTransactionModal = ({
+  onTransactionAdded,
+  triggerButton,
+  accountId = ''
+}: AddTransactionModalProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   const [isIncome, setIsIncome] = useState(false);
@@ -77,22 +82,19 @@ const AddTransactionModal = ({ onTransactionAdded, triggerButton }: AddTransacti
     queryFn: authGetUserPreferences
   });
 
-  const preferredCurrency = userPreferences?.preferredCurrency || 'USD';
-
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
     setValue,
-    watch,
-    trigger
+    watch
   } = useForm<TransactionFormSchema>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       isIncome: false,
-      currency: preferredCurrency,
-      createdAt: new Date()
+      createdAt: new Date(),
+      ...(accountId && { accountId })
     }
   });
 
@@ -110,25 +112,32 @@ const AddTransactionModal = ({ onTransactionAdded, triggerButton }: AddTransacti
 
   useEffect(() => {
     register('isIncome');
-    register('currency');
-    register('createdAt');
+    register('createdAt', { value: new Date() });
   }, [register]);
 
   useEffect(() => {
     setValue('isIncome', isIncome);
   }, [isIncome, setValue]);
 
+  // Add new effect to update currency when account changes
+  useEffect(() => {
+    const selectedAccountId = accountId || watch('accountId');
+    const selectedAccount = accounts.find((acc) => acc.id === selectedAccountId);
+    if (selectedAccount) {
+      setValue('currency', selectedAccount.currency);
+    }
+  }, [accountId, accounts, setValue, watch]);
+
   const handleCreateTransaction = async (data: TransactionFormSchema) => {
     try {
-      const isValid = await trigger();
-      if (!isValid) return;
-
+      const selectedAccount = accounts.find((acc) => acc.id === data.accountId);
       await transactionCreate({
         ...data,
         amount: Number(data.amount),
         category: data.categoryId,
         account: data.accountId,
-        createdAt: data.createdAt.toISOString()
+        createdAt: data.createdAt.toISOString(),
+        currency: selectedAccount?.currency || data.currency
       });
 
       showSuccess('Transaction created successfully!');
@@ -140,15 +149,14 @@ const AddTransactionModal = ({ onTransactionAdded, triggerButton }: AddTransacti
     }
   };
 
-  // Handle modal open/close
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
 
     if (open) {
       reset({
         isIncome: false,
-        currency: preferredCurrency,
-        createdAt: new Date()
+        createdAt: new Date(),
+        ...(accountId && { accountId })
       });
       setIsIncome(false);
     }
@@ -160,7 +168,10 @@ const AddTransactionModal = ({ onTransactionAdded, triggerButton }: AddTransacti
       description='Add a new transaction to your expense tracker.'
       triggerButton={
         triggerButton ?? (
-          <Button className='bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md hover:from-blue-700 hover:to-indigo-700 max-sm:w-full'>
+          <Button
+            className='bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md hover:from-blue-700 hover:to-indigo-700 max-sm:w-full'
+            disabled={isSubmitting}
+          >
             Add Transaction
           </Button>
         )
@@ -172,10 +183,12 @@ const AddTransactionModal = ({ onTransactionAdded, triggerButton }: AddTransacti
         {/* Transaction Type Selection */}
         <div className='mb-6 grid grid-cols-2 gap-4'>
           <Card
-            className={`cursor-pointer border-2 p-4 transition-all ${!isIncome ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:border-red-500 hover:bg-red-50'}`}
+            className={`cursor-pointer border-2 p-4 transition-all ${!isIncome ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:border-red-500 hover:bg-red-50'} ${isSubmitting ? 'pointer-events-none opacity-50' : ''}`}
             onClick={() => {
-              setIsIncome(false);
-              setValue('isIncome', false);
+              if (!isSubmitting) {
+                setIsIncome(false);
+                setValue('isIncome', false);
+              }
             }}
           >
             <div className='flex flex-col items-center justify-center space-y-2'>
@@ -189,10 +202,12 @@ const AddTransactionModal = ({ onTransactionAdded, triggerButton }: AddTransacti
           </Card>
 
           <Card
-            className={`cursor-pointer border-2 p-4 transition-all ${isIncome ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-green-500 hover:bg-green-50'}`}
+            className={`cursor-pointer border-2 p-4 transition-all ${isIncome ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-green-500 hover:bg-green-50'} ${isSubmitting ? 'pointer-events-none opacity-50' : ''}`}
             onClick={() => {
-              setIsIncome(true);
-              setValue('isIncome', true);
+              if (!isSubmitting) {
+                setIsIncome(true);
+                setValue('isIncome', true);
+              }
             }}
           >
             <div className='flex flex-col items-center justify-center space-y-2'>
@@ -207,35 +222,44 @@ const AddTransactionModal = ({ onTransactionAdded, triggerButton }: AddTransacti
         </div>
 
         {/* Account Selection */}
-        <div className='space-y-2'>
-          <div className='flex items-center gap-2'>
-            <CreditCard className='h-4 w-4 text-gray-500' />
-            <Label htmlFor='account' className='font-medium'>
-              Account
-            </Label>
-          </div>
-          <Select onValueChange={(value) => setValue('accountId', value)} required>
-            <SelectTrigger id='account' className='w-full'>
-              <SelectValue
-                placeholder={isLoadingAccount ? 'Loading accounts...' : 'Select account'}
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {accounts && accounts.length > 0 ? (
-                accounts.map((acc) => (
-                  <SelectItem key={acc.id} value={acc.id}>
-                    {acc.name}
+
+        {accountId ? (
+          <input type='hidden' {...register('accountId')} value={accountId} />
+        ) : (
+          <div className='space-y-2'>
+            <div className='flex items-center gap-2'>
+              <CreditCard className='h-4 w-4 text-gray-500' />
+              <Label htmlFor='account' className='font-medium'>
+                Account
+              </Label>
+            </div>
+            <Select
+              onValueChange={(value) => setValue('accountId', value)}
+              required
+              disabled={isSubmitting}
+            >
+              <SelectTrigger id='account' className='w-full'>
+                <SelectValue
+                  placeholder={isLoadingAccount ? 'Loading accounts...' : 'Select account'}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {accounts && accounts.length > 0 ? (
+                  accounts.map((acc) => (
+                    <SelectItem key={acc.id} value={acc.id}>
+                      {acc.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value='no-account' disabled>
+                    No account added
                   </SelectItem>
-                ))
-              ) : (
-                <SelectItem value='no-account' disabled>
-                  No account added
-                </SelectItem>
-              )}
-            </SelectContent>
-          </Select>
-          {errors.accountId && <p className='text-sm text-red-500'>{errors.accountId.message}</p>}
-        </div>
+                )}
+              </SelectContent>
+            </Select>
+            {errors.accountId && <p className='text-sm text-red-500'>{errors.accountId.message}</p>}
+          </div>
+        )}
 
         {/* Description */}
         <div className='space-y-2'>
@@ -248,6 +272,7 @@ const AddTransactionModal = ({ onTransactionAdded, triggerButton }: AddTransacti
             placeholder='Enter transaction description'
             {...register('text')}
             className='w-full'
+            disabled={isSubmitting}
           />
           {errors.text && <p className='text-sm text-red-500'>{errors.text.message}</p>}
         </div>
@@ -259,7 +284,7 @@ const AddTransactionModal = ({ onTransactionAdded, triggerButton }: AddTransacti
           </Label>
           <div className='relative'>
             <span className='pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3'>
-              {accounts.find((acc) => acc.id === watch('accountId'))?.currency || ''}
+              {accounts.find((acc) => acc.id === (accountId || watch('accountId')))?.currency || ''}
             </span>
             <Input
               id='amount'
@@ -269,10 +294,13 @@ const AddTransactionModal = ({ onTransactionAdded, triggerButton }: AddTransacti
               placeholder='0.00'
               {...register('amount')}
               className='w-full pr-10'
+              disabled={isSubmitting}
             />
             {errors.amount && <p className='text-sm text-red-500'>{errors.amount.message}</p>}
           </div>
         </div>
+
+        <input type='hidden' {...register('currency')} />
 
         {/* Category */}
         <div className='space-y-2'>
@@ -291,8 +319,13 @@ const AddTransactionModal = ({ onTransactionAdded, triggerButton }: AddTransacti
                   type='button'
                   variant='outline'
                   size='icon'
-                  onClick={() => setIsAddCategoryOpen(true)}
-                  className='ml-auto h-6 w-6'
+                  onClick={() => {
+                    if (!isSubmitting) {
+                      setIsAddCategoryOpen(true);
+                    }
+                  }}
+                  className={`ml-auto h-6 w-6 ${isSubmitting ? 'pointer-events-none opacity-50' : ''}`}
+                  disabled={isSubmitting}
                 >
                   <PlusCircle className='h-4 w-4' />
                   <span className='sr-only'>Add category</span>
@@ -300,7 +333,7 @@ const AddTransactionModal = ({ onTransactionAdded, triggerButton }: AddTransacti
               }
             />
           </div>
-          <Select onValueChange={(value) => setValue('categoryId', value)}>
+          <Select onValueChange={(value) => setValue('categoryId', value)} disabled={isSubmitting}>
             <SelectTrigger id='category' className='w-full'>
               <SelectValue
                 placeholder={isLoadingCategory ? 'Loading categories...' : 'Select category'}
@@ -333,16 +366,13 @@ const AddTransactionModal = ({ onTransactionAdded, triggerButton }: AddTransacti
           <DateTimePicker
             value={watch('createdAt') || new Date()}
             onChange={(date) => setValue('createdAt', date)}
+            disabled={isSubmitting}
           />
           {errors.createdAt && <p className='text-sm text-red-500'>{errors.createdAt.message}</p>}
         </div>
 
         {/* Submit Button */}
-        <Button
-          type='submit'
-          className='w-full bg-gradient-to-r from-blue-600 to-indigo-600 py-6 transition-all duration-200 hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg'
-          disabled={isSubmitting}
-        >
+        <Button type='submit' className='w-full disabled:bg-gray-700' disabled={isSubmitting}>
           {isSubmitting ? 'Adding...' : `Add ${isIncome ? 'Income' : 'Expense'}`}
         </Button>
       </form>

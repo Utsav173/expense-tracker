@@ -86,7 +86,7 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
   }
 
   return (
-    <div className='mx-auto w-full max-w-7xl space-y-6 p-4 md:p-6 lg:p-8'>
+    <div className='mx-auto w-full max-w-7xl space-y-6 p-4 max-sm:p-0 md:p-6 lg:p-8'>
       <AccountDetailsHeader account={account} isLoading={isAccountLoading} />
 
       <AnalyticsCards
@@ -120,6 +120,13 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
         handleDateRangeSelect={handleDateRangeSelect}
         handleClearDateRange={handleClearDateRange}
         handleResetFilters={handleResetFilters}
+        queryKey={[
+          'account',
+          'customAnalytics',
+          'incomeExpenseChart',
+          'accountTransactions',
+          'categories'
+        ]}
       />
     </div>
   );

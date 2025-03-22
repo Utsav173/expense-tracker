@@ -15,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { categoryGetAll } from '@/lib/endpoints/category';
 import { accountGetDropdown } from '@/lib/endpoints/accounts';
 import {
@@ -26,20 +26,19 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { Label } from '../ui/label';
-import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Transaction as TransactionType } from '@/lib/types';
-import { COMMON_CURRENCIES, fetchCurrencies } from '@/lib/endpoints/currency';
-import CurrencySelect from '../currency-select';
 import DateTimePicker from '../date-time-picker';
+import AddCategoryModal from './add-category-modal';
+import { ArrowDownCircle, ArrowUpCircle, PlusCircle, Tag } from 'lucide-react';
+import { Card } from '../ui/card';
 
 const transactionSchema = z.object({
-  text: z.string().min(3, 'Transaction description must be at least 3 characters').max(255),
-  amount: z.string().refine((val) => !isNaN(parseFloat(val)), 'Must be valid number'),
+  text: z.string().min(3, 'Description must be at least 3 characters').max(255),
+  amount: z.string().refine((val) => !isNaN(parseFloat(val)), 'Must be a valid number'),
   isIncome: z.boolean(),
   categoryId: z.string().optional(),
-  accountId: z.string(),
-  createdAt: z.date(), // Keep as z.date()
-  currency: z.string()
+  createdAt: z.date(),
+  transfer: z.string().optional() // Add transfer field validation
 });
 
 type TransactionFormSchema = z.infer<typeof transactionSchema>;
@@ -49,16 +48,21 @@ interface UpdateTransactionModalProps {
   onOpenChange: (open: boolean) => void;
   transaction: TransactionType | null;
   onUpdate: () => void;
+  queryKey?: any[];
 }
 
-const UpdateTransactionModal = ({
+const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
   isOpen,
   onOpenChange,
   transaction,
-  onUpdate
-}: UpdateTransactionModalProps) => {
+  onUpdate,
+  queryKey
+}) => {
   const [isIncome, setIsIncome] = useState(false);
-  const [openPopover, setOpenPopover] = useState(false); // Control Popover visibility
+  const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
+
+  const { showError, showSuccess } = useToast();
+  const queryClient = useQueryClient();
 
   const {
     register,
@@ -72,73 +76,66 @@ const UpdateTransactionModal = ({
     resolver: zodResolver(transactionSchema)
   });
 
-  const { showError, showSuccess } = useToast();
-
-  const { data: categoriesData, isLoading: isLoadingCategory } = useQuery({
+  const {
+    data: categoriesData,
+    isLoading: isLoadingCategory,
+    refetch: refetchCategories
+  } = useQuery({
     queryKey: ['categories'],
     queryFn: categoryGetAll
   });
 
-  const { data: accountData, isLoading: isLoadingAccount } = useQuery({
+  const { data: accountsData, isLoading: isLoadingAccount } = useQuery({
     queryKey: ['accountDropdown'],
     queryFn: accountGetDropdown
   });
-
-  //Register once.
-  useEffect(() => {
-    register('isIncome', { value: isIncome });
-    register('currency');
-  }, [register, isIncome]);
 
   useEffect(() => {
     if (transaction) {
       setValue('text', transaction.text);
       setValue('amount', transaction.amount.toFixed(2));
       setValue('isIncome', transaction.isIncome);
-      setValue('categoryId', transaction.category?.id);
-      setValue('accountId', transaction.account);
-      setValue('createdAt', new Date(transaction.createdAt)); // Set as Date object
-      setValue('currency', transaction.currency);
+      setValue('categoryId', transaction.category?.id || '');
+      setValue('createdAt', new Date(transaction.createdAt));
+      setValue('transfer', transaction.transfer || ''); // Set transfer value
       setIsIncome(transaction.isIncome);
+    } else {
+      reset();
     }
-  }, [transaction, setValue]);
+  }, [transaction, setValue, reset]);
 
-  const { data: currencies, isLoading: isLoadingCurrencies } = useQuery({
-    queryKey: ['currencies'],
-    queryFn: fetchCurrencies,
-    staleTime: 24 * 60 * 60 * 1000,
-    gcTime: 7 * 24 * 60 * 60 * 1000,
-    retry: 2,
-    placeholderData: Object.entries(COMMON_CURRENCIES).map(([code, name]) => ({
-      code,
-      name
-    }))
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => transactionUpdate(id, data),
+    onSuccess: () => {
+      showSuccess('Transaction updated successfully!');
+      onOpenChange(false);
+      queryClient.invalidateQueries({ queryKey });
+      onUpdate();
+      reset();
+    },
+    onError: (error: any) => {
+      showError(error.message);
+    }
   });
 
   const handleUpdateTransaction = async (data: TransactionFormSchema) => {
-    try {
-      await transactionUpdate(transaction!.id, {
+    if (!transaction) return;
+
+    await updateMutation.mutateAsync({
+      id: transaction.id,
+      data: {
         ...data,
         amount: Number(data.amount),
         category: data.categoryId,
-        account: data.accountId,
-        createdAt: data.createdAt.toISOString() // Convert back to ISO string
-      });
-      showSuccess('Transaction updated successfully!');
-      onOpenChange(false);
-      onUpdate();
-      reset();
-    } catch (error: any) {
-      showError(error.message);
-    }
+        transfer: data.transfer || transaction.transfer,
+        createdAt: data.createdAt.toISOString(),
+        recurring: transaction.recurring,
+        recurrenceType: transaction.recurrenceType,
+        recurrenceEndDate: transaction.recurrenceEndDate,
+        currency: transaction.currency
+      }
+    });
   };
-
-  // Close popover when dialog closes
-  useEffect(() => {
-    if (!isOpen) {
-      setOpenPopover(false);
-    }
-  }, [isOpen]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -148,59 +145,80 @@ const UpdateTransactionModal = ({
           <DialogDescription>Update your transaction details.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(handleUpdateTransaction)} className='space-y-6'>
-          <div className='space-y-2'>
-            <Label>Transaction Type</Label>
-            <RadioGroup
-              value={isIncome ? 'income' : 'expense'}
-              className='flex gap-4'
-              onValueChange={(value) => {
-                setIsIncome(value === 'income');
-                setValue('isIncome', value === 'income');
+          <div className='mb-6 grid grid-cols-2 gap-4'>
+            <Card
+              className={`cursor-pointer border-2 p-4 transition-all ${
+                !isIncome
+                  ? 'border-red-500 bg-red-50'
+                  : 'border-gray-200 hover:border-red-500 hover:bg-red-50'
+              } ${isSubmitting ? 'pointer-events-none opacity-50' : ''}`}
+              onClick={() => {
+                if (!isSubmitting) {
+                  setIsIncome(false);
+                  setValue('isIncome', false);
+                }
               }}
             >
-              <div className='flex items-center space-x-2'>
-                <RadioGroupItem value='expense' id='expense' />
-                <Label htmlFor='expense' className='font-normal'>
-                  Expense
-                </Label>
-              </div>
-              <div className='flex items-center space-x-2'>
-                <RadioGroupItem value='income' id='income' />
-                <Label htmlFor='income' className='font-normal'>
-                  Income
-                </Label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          <div className='space-y-2'>
-            <Label htmlFor='account'>Account</Label>
-            <Select
-              onValueChange={(value) => setValue('accountId', value)}
-              value={watch('accountId')}
-            >
-              <SelectTrigger id='account' className='w-full'>
-                <SelectValue
-                  placeholder={isLoadingAccount ? 'Loading accounts...' : 'Select account'}
+              <div className='flex flex-col items-center justify-center space-y-2'>
+                <ArrowDownCircle
+                  className={`h-8 w-8 ${!isIncome ? 'text-red-500' : 'text-gray-400'}`}
                 />
-              </SelectTrigger>
-              <SelectContent className='z-[100]'>
-                {accountData && accountData.length > 0 ? (
-                  accountData.map((acc) => (
-                    <SelectItem key={acc.id} value={acc.id}>
-                      {acc.name}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value='no-account' disabled>
-                    No account added
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-            {errors.accountId && <p className='text-sm text-red-500'>Account is required.</p>}
-          </div>
+                <span className={`font-medium ${!isIncome ? 'text-red-500' : 'text-gray-500'}`}>
+                  Expense
+                </span>
+              </div>
+            </Card>
 
+            <Card
+              className={`cursor-pointer border-2 p-4 transition-all ${
+                isIncome
+                  ? 'border-green-500 bg-green-50'
+                  : 'border-gray-200 hover:border-green-500 hover:bg-green-50'
+              } ${isSubmitting ? 'pointer-events-none opacity-50' : ''}`}
+              onClick={() => {
+                if (!isSubmitting) {
+                  setIsIncome(true);
+                  setValue('isIncome', true);
+                }
+              }}
+            >
+              <div className='flex flex-col items-center justify-center space-y-2'>
+                <ArrowUpCircle
+                  className={`h-8 w-8 ${isIncome ? 'text-green-500' : 'text-gray-400'}`}
+                />
+                <span className={`font-medium ${isIncome ? 'text-green-500' : 'text-gray-500'}`}>
+                  Income
+                </span>
+              </div>
+            </Card>
+          </div>
+          <div className='grid grid-cols-2 gap-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='account'>Account</Label>
+              <Input
+                id='account'
+                type='text'
+                value={
+                  transaction
+                    ? accountsData?.find((acc) => acc.id === transaction.account)?.name
+                    : ''
+                }
+                readOnly
+                className='w-full'
+              />
+            </div>
+
+            <div className='space-y-2'>
+              <Label htmlFor='currency'>Currency</Label>
+              <Input
+                id='currency'
+                type='text'
+                value={transaction?.currency || ''}
+                readOnly
+                className='w-full'
+              />
+            </div>
+          </div>
           <div className='space-y-2'>
             <Label htmlFor='description'>Description</Label>
             <Input
@@ -210,37 +228,63 @@ const UpdateTransactionModal = ({
               {...register('text')}
               className='w-full'
               aria-invalid={!!errors.text}
+              disabled={isSubmitting}
             />
             {errors.text && <p className='text-sm text-red-500'>{errors.text.message}</p>}
           </div>
-          <div className='space-y-2'>
-            <Label htmlFor='currency'>Currency</Label>
-            <CurrencySelect
-              currencies={currencies}
-              value={watch('currency')}
-              onValueChange={(value) => setValue('currency', value)}
-              isLoading={isLoadingCurrencies}
-            />
-          </div>
 
           <div className='space-y-2'>
-            <Label htmlFor='amount'>Amount</Label>
-            <Input
-              id='amount'
-              type='text'
-              placeholder='Enter amount'
-              {...register('amount')}
-              className='w-full'
-              aria-invalid={!!errors.amount}
-            />
-            {errors.amount && <p className='text-sm text-red-500'>{errors.amount.message}</p>}
+            <Label htmlFor='amount' className='font-medium'>
+              Amount
+            </Label>
+            <div className='relative'>
+              <span className='pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3'>
+                {transaction?.currency || ''}
+              </span>
+              <Input
+                id='amount'
+                type='number'
+                step='0.01'
+                min='0'
+                placeholder='0.00'
+                {...register('amount')}
+                className='w-full pr-10'
+                disabled={isSubmitting}
+              />
+              {errors.amount && <p className='text-sm text-red-500'>{errors.amount.message}</p>}
+            </div>
           </div>
-
           <div className='space-y-2'>
-            <Label htmlFor='category'>Category</Label>
+            <div className='flex items-center justify-between'>
+              <Label htmlFor='category'>Category</Label>
+              <AddCategoryModal
+                isOpen={isAddCategoryOpen}
+                onOpenChange={setIsAddCategoryOpen}
+                onCategoryAdded={refetchCategories}
+                triggerButton={
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='icon'
+                    onClick={() => {
+                      if (!isSubmitting) {
+                        setIsAddCategoryOpen(true);
+                      }
+                    }}
+                    className='ml-auto h-6 w-6' // Adjusted positioning
+                    disabled={isSubmitting}
+                  >
+                    <PlusCircle className='h-4 w-4' />
+                    <span className='sr-only'>Add category</span>
+                  </Button>
+                }
+              />
+            </div>
+
             <Select
               onValueChange={(value) => setValue('categoryId', value)}
               value={watch('categoryId')}
+              disabled={isSubmitting}
             >
               <SelectTrigger id='category' className='w-full'>
                 <SelectValue
@@ -262,11 +306,25 @@ const UpdateTransactionModal = ({
               </SelectContent>
             </Select>
           </div>
+
           <div className='space-y-2'>
             <Label htmlFor='createdAt'>Date and Time</Label>
             <DateTimePicker
               value={watch('createdAt')}
-              onChange={(date) => setValue('createdAt', date)}
+              onChange={(date) => setValue('createdAt', date!)}
+              disabled={isSubmitting}
+            />
+          </div>
+
+          <div className='space-y-2'>
+            <Label htmlFor='transfer'>Transfer</Label>
+            <Input
+              id='transfer'
+              type='text'
+              placeholder='Enter transfer details'
+              {...register('transfer')}
+              className='w-full'
+              disabled={isSubmitting}
             />
           </div>
 

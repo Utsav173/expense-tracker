@@ -37,7 +37,6 @@ export const useAccountDetails = (id: string, searchParams: SearchParams) => {
   const {
     data: account,
     isLoading: isAccountLoading,
-    isError: isAccountError,
     error: accountError
   } = useQuery({
     queryKey: ['account', id],
@@ -48,7 +47,6 @@ export const useAccountDetails = (id: string, searchParams: SearchParams) => {
   const {
     data: customAnalytics,
     isLoading: isAnalyticsLoading,
-    isError: isAnalyticsError,
     error: analyticsError
   } = useQuery({
     queryKey: ['customAnalytics', id, filters.dateRange],
@@ -65,7 +63,6 @@ export const useAccountDetails = (id: string, searchParams: SearchParams) => {
   const {
     data: chartData,
     isLoading: isChartLoading,
-    isError: isChartError,
     error: chartError
   } = useQuery({
     queryKey: ['incomeExpenseChart', id, filters.dateRange],
@@ -83,7 +80,6 @@ export const useAccountDetails = (id: string, searchParams: SearchParams) => {
   const {
     data: transactionsData,
     isLoading: isTransactionLoading,
-    isError: isTransactionError,
     error: transactionError,
     refetch: refetchTransactions
   } = useQuery({

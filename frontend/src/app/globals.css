@@ -4,6 +4,12 @@
 
 body {
   font-family: Arial, Helvetica, sans-serif;
+  scrollbar-gutter: stable;
+}
+
+html {
+  scroll-behavior: smooth;
+  scrollbar-gutter: stable;
 }
 
 @layer base {
@@ -94,4 +100,12 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+*::selection {
+  background: #dadada;
+}
+
+.scrollbar {
+  scrollbar-gutter: stable;
 }

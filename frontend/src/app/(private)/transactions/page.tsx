@@ -23,7 +23,7 @@ import {
 import AddTransactionModal from '@/components/modals/add-transaction-modal';
 import DateRangePicker from '@/components/date-range-picker';
 import { Card, CardContent } from '@/components/ui/card';
-import { PlusCircle, Upload, Filter, X, Calendar, Search, ArrowUpDown } from 'lucide-react';
+import { Upload, Filter, X, Search } from 'lucide-react';
 
 // API & Hooks
 import { transactionGetAll } from '@/lib/endpoints/transactions';
@@ -33,7 +33,7 @@ import { useToast } from '@/lib/hooks/useToast';
 import { usePagination } from '@/hooks/usePagination';
 
 // Types
-import { AccountDropdown, Category } from '@/lib/types';
+import { AccountDropdown, Category, TransactionsResponse } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 const TransactionsPage = () => {
@@ -47,14 +47,12 @@ const TransactionsPage = () => {
   const [tempDateRange, setTempDateRange] = useState<DateRange | undefined>();
   const [filtersExpanded, setFiltersExpanded] = useState(false);
 
-  // Hooks
   const router = useRouter();
   const [debouncedSearch] = useDebounce(search, 300);
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const { showError } = useToast();
 
-  // Active filters count
   const activeFiltersCount = [
     accountId !== undefined && accountId !== 'all',
     categoryId !== undefined && categoryId !== 'all',
@@ -63,41 +61,44 @@ const TransactionsPage = () => {
     debouncedSearch
   ].filter(Boolean).length;
 
-  // Pagination
-  const { page, handlePageChange } = usePagination(1, (params) => {
-    const currentParams = new URLSearchParams(searchParams.toString());
-    Object.keys(params).forEach((key) => {
-      if (params[key] === undefined || params[key] === null || params[key] === '') {
-        currentParams.delete(key);
-      } else {
-        currentParams.set(key, String(params[key]));
-      }
-    });
-    const newUrl = `${pathname}?${currentParams.toString()}`;
-    router.push(newUrl, { scroll: false });
-  });
+  const { page, handlePageChange } = usePagination(
+    Number(searchParams.get('page')) || 1,
+    (params) => {
+      const currentParams = new URLSearchParams(searchParams.toString());
+      Object.keys(params).forEach((key) => {
+        if (params[key] === undefined || params[key] === null || params[key] === '') {
+          currentParams.delete(key);
+        } else {
+          currentParams.set(key, String(params[key]));
+        }
+      });
+      const newUrl = `${pathname}?${currentParams.toString()}`;
+      router.push(newUrl, { scroll: false });
+    }
+  );
 
-  // Data fetching
+  const queryKey = [
+    'transactions',
+    {
+      accountId,
+      dateRange,
+      page,
+      pageSize: 10,
+      q: debouncedSearch,
+      sortBy,
+      sortOrder,
+      categoryId,
+      isIncome
+    }
+  ];
+
   const {
     data: transactions,
     isLoading,
     error,
     refetch
   } = useQuery({
-    queryKey: [
-      'transactions',
-      {
-        accountId,
-        dateRange,
-        page,
-        pageSize: 10,
-        q: debouncedSearch,
-        sortBy,
-        sortOrder,
-        categoryId,
-        isIncome
-      }
-    ],
+    queryKey,
     queryFn: () =>
       transactionGetAll({
         accountId: accountId === 'all' ? '' : accountId,
@@ -126,11 +127,9 @@ const TransactionsPage = () => {
     queryFn: categoryGetAll
   });
 
-  // Local state for dropdown data
   const [accounts, setAccounts] = useState<AccountDropdown[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
 
-  // Effects
   useEffect(() => {
     if (accountsData) {
       setAccounts(accountsData);
@@ -145,9 +144,8 @@ const TransactionsPage = () => {
 
   useEffect(() => {
     handlePageChange(1);
-  }, [debouncedSearch]);
+  }, [debouncedSearch, accountId, categoryId, isIncome, dateRange, sortBy, sortOrder]);
 
-  // Event handlers
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
   };
@@ -155,7 +153,7 @@ const TransactionsPage = () => {
   const handleSort = (field: string, order: 'asc' | 'desc') => {
     setSortBy(field);
     setSortOrder(order);
-    handlePageChange(1);
+    handlePageChange(1); // Reset to page 1 on sort change
   };
 
   const handleDateRangeSelect = (range: DateRange | undefined) => {
@@ -194,14 +192,13 @@ const TransactionsPage = () => {
     setDateRange(undefined);
     setTempDateRange(undefined);
     setSearch('');
-    handlePageChange(1);
+    handlePageChange(1); // Reset to first page when clearing filters
   };
 
   const toggleFilters = () => {
     setFiltersExpanded(!filtersExpanded);
   };
 
-  // Error handling
   if (error) {
     showError(`Failed to get Transaction Details: ${(error as Error).message}`);
     return null;
@@ -221,17 +218,7 @@ const TransactionsPage = () => {
         </div>
 
         <div className='mt-4 flex gap-2 sm:mt-0'>
-          <AddTransactionModal
-            onTransactionAdded={refetch}
-            triggerButton={
-              <Button className='flex items-center gap-2'>
-                <PlusCircle size={16} />
-                <span className='hidden sm:inline'>Add Transaction</span>
-                <span className='sm:hidden'>Add</span>
-              </Button>
-            }
-          />
-
+          <AddTransactionModal onTransactionAdded={refetch} />
           <Link href='/transactions/import'>
             <Button variant='outline' className='flex items-center gap-2'>
               <Upload size={16} />
@@ -377,8 +364,6 @@ const TransactionsPage = () => {
         </CardContent>
       </Card>
 
-      {/* Transactions table */}
-
       {isLoading ? (
         <div className='flex items-center justify-center py-12'>
           <Loader />
@@ -394,6 +379,7 @@ const TransactionsPage = () => {
           totalRecords={transactions.totalCount}
           page={page}
           handlePageChange={handlePageChange}
+          queryKey={queryKey}
         />
       ) : (
         <div className='flex items-center justify-center py-12'>

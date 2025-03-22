@@ -21,6 +21,7 @@ interface AccountTransactionsSectionProps {
   handleDateRangeSelect: (range: any) => void;
   handleClearDateRange: () => void;
   handleResetFilters: () => void;
+  queryKey: any[];
 }
 
 export const AccountTransactionsSection: React.FC<AccountTransactionsSectionProps> = ({
@@ -37,7 +38,8 @@ export const AccountTransactionsSection: React.FC<AccountTransactionsSectionProp
   handleIncomeTypeChange,
   handleDateRangeSelect,
   handleClearDateRange,
-  handleResetFilters
+  handleResetFilters,
+  queryKey
 }) => {
   return (
     <section className='rounded-xl bg-white shadow-sm'>
@@ -80,6 +82,7 @@ export const AccountTransactionsSection: React.FC<AccountTransactionsSectionProp
             totalRecords={transactionsData.totalCount}
             page={page}
             handlePageChange={handlePageChange}
+            queryKey={queryKey}
           />
         )}
       </div>
