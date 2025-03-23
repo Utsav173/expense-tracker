@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { ColumnDef, SortingState } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2 } from 'lucide-react';
@@ -143,12 +143,15 @@ const TransactionTable = ({
     []
   );
 
-  const handleSortChange = (sorting: SortingState) => {
-    if (sorting.length > 0) {
-      const sort = sorting[0];
-      onSort(sort.id, sort.desc ? 'desc' : 'asc');
-    }
-  };
+  const handleSortChange = useCallback(
+    (sorting: SortingState) => {
+      if (sorting.length > 0) {
+        const sort = sorting[0];
+        onSort(sort.id, sort.desc ? 'desc' : 'asc');
+      }
+    },
+    [onSort]
+  );
 
   return (
     <>

@@ -101,7 +101,7 @@ export const useAccountFilterState = () => {
       });
 
       const newUrl = `${pathname}?${newSearchParams.toString()}`;
-      router.push(newUrl, { scroll: true });
+      router.push(newUrl, { scroll: false });
     },
     [router, pathname, searchParams]
   );

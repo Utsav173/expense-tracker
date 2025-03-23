@@ -37,7 +37,9 @@ export function NavMain({
           return (
             <SidebarMenuItem
               key={item.title}
-              className={cn(isActive && 'bg-green-100 text-green-900 hover:bg-green-200')}
+              className={cn(
+                isActive && 'rounded-md bg-green-100 text-green-900 hover:bg-green-200'
+              )}
             >
               <SidebarMenuButton className={cn(isActive && 'hover:bg-green-200')} asChild>
                 <Link href={item.url}>

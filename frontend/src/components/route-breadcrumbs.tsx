@@ -126,9 +126,9 @@ const RouteBreadcrumbs: React.FC = () => {
   const breadcrumbItems = buildBreadcrumbs();
 
   return (
-    <div className='relative w-full'>
-      <Breadcrumb className='min-w-0'>
-        <BreadcrumbList className='scrollbar-none flex overflow-x-auto whitespace-nowrap px-2 py-1'>
+    <div className='relative max-w-fit overflow-hidden'>
+      <Breadcrumb className='w-full min-w-0'>
+        <BreadcrumbList className='no-scrollbar flex flex-nowrap overflow-x-auto whitespace-nowrap px-2 py-1'>
           {breadcrumbItems.map((item, index) => (
             <React.Fragment key={item.href}>
               <BreadcrumbItem
