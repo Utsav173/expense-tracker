@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -31,6 +31,7 @@ import { apiUpdateDebt } from '@/lib/endpoints/debt'; // You'll need to create t
 import { Debts } from '@/lib/types';
 import DateTimePicker from '../date-time-picker';
 import { format } from 'date-fns';
+import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 
 const debtUpdateSchema = debtSchema.omit({ user: true }); // Exclude user
 
@@ -50,7 +51,7 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
   onDebtUpdated
 }) => {
   const { showSuccess, showError } = useToast();
-  const queryClient = useQueryClient();
+  const invalidate = useInvalidateQueries();
 
   const { data: accountsData, isLoading: isLoadingAccounts } = useQuery({
     queryKey: ['accountsDropdown'],
@@ -76,7 +77,7 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
   const updateDebtMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => apiUpdateDebt(id, data), // Use the new API function
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['debts'] });
+      invalidate(['debts']);
       showSuccess('Debt updated successfully!');
       onOpenChange(false);
       onDebtUpdated();

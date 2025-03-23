@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -22,6 +22,7 @@ import { useQuery } from '@tanstack/react-query';
 import { debtSchema } from '@/lib/utils/schema.validations';
 import { apiCreateDebt } from '@/lib/endpoints/debt'; // You'll need to create this
 import DateTimePicker from '../date-time-picker';
+import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 
 type DebtFormSchema = z.infer<typeof debtSchema>;
 
@@ -35,7 +36,7 @@ const AddDebtModal = ({
   onOpenChange: (open: boolean) => void;
 }) => {
   const { showSuccess, showError } = useToast();
-  const queryClient = useQueryClient();
+  const invalidate = useInvalidateQueries();
 
   const { data: accountsData, isLoading: isLoadingAccounts } = useQuery({
     queryKey: ['accountsDropdown'],
@@ -58,7 +59,7 @@ const AddDebtModal = ({
   const createDebtMutation = useMutation({
     mutationFn: (data: DebtFormSchema) => apiCreateDebt(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['debts'] });
+      invalidate(['debts']);
       showSuccess('Debt created successfully!');
       form.reset();
       onDebtAdded();

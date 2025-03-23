@@ -1,8 +1,9 @@
-import { InvalidateQueryFilters, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
+import { useInvalidateQueries } from './useInvalidateQueries';
 
 interface MutationOptions<TData, TVariables> {
   mutationFn: (variables: TVariables) => Promise<TData>;
-  queryKey: InvalidateQueryFilters['queryKey'];
+  queryKey: any[];
   onSuccess?: (data: TData) => void;
   onError?: (error: any) => void;
 }
@@ -10,11 +11,13 @@ interface MutationOptions<TData, TVariables> {
 export const useMutationWithInvalidate = <TData, TVariables>(
   options: MutationOptions<TData, TVariables>
 ) => {
-  const queryClient = useQueryClient();
+  const invalidate = useInvalidateQueries();
   const mutation = useMutation({
     ...options,
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: options.queryKey });
+      if (options.queryKey) {
+        invalidate(options.queryKey);
+      }
       options.onSuccess?.(data);
     },
     onError: (error) => {

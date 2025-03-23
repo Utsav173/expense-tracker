@@ -4,13 +4,14 @@ import React, { useMemo, useState } from 'react';
 import CommonTable from '../ui/CommonTable';
 import { ApiResponse, Category } from '@/lib/types';
 import { ColumnDef, SortingState } from '@tanstack/react-table';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { categoryDelete } from '@/lib/endpoints/category';
 import AddCategoryModal from '../modals/add-category-modal';
 import { useToast } from '@/lib/hooks/useToast';
 import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
 import { Button } from '../ui/button';
 import { Edit, Trash2 } from 'lucide-react';
+import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 
 interface CategoryListProps {
   data:
@@ -41,13 +42,13 @@ const CategoryList = ({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | undefined>();
   const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null);
-  const queryClient = useQueryClient();
+  const invalidate = useInvalidateQueries();
   const { showSuccess, showError } = useToast();
 
   const deleteCategoryMutation = useMutation({
     mutationFn: (id: string) => categoryDelete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      invalidate(['categories']);
       showSuccess('Category deleted successfully!');
       refetch();
       setDeleteCategoryId(null);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { categoryCreate, categoryUpdate } from '@/lib/endpoints/category';
 import { useToast } from '@/lib/hooks/useToast';
 import { z } from 'zod';
@@ -17,6 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '../ui/button';
 import AddModal from './add-modal';
+import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 
 const categorySchema = z.object({
   name: z.string().min(3, {
@@ -44,7 +45,7 @@ const AddCategoryModal: React.FC<CreateCategoryModalProps> = ({
   triggerButton
 }) => {
   const { showSuccess, showError } = useToast();
-  const queryClient = useQueryClient();
+  const invalidate = useInvalidateQueries();
 
   const form = useForm<CategorySchemaType>({
     resolver: zodResolver(categorySchema),
@@ -57,7 +58,7 @@ const AddCategoryModal: React.FC<CreateCategoryModalProps> = ({
     mutationFn: (data: CategorySchemaType) =>
       categoryId ? categoryUpdate(categoryId, data) : categoryCreate(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      invalidate(['categories']);
       showSuccess(categoryId ? 'Category updated successfully!' : 'Category created successfully!');
       form.reset();
       onCategoryAdded();

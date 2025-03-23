@@ -3,12 +3,13 @@ import { Budget } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2 } from 'lucide-react';
 import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { budgetDelete } from '@/lib/endpoints/budget';
 import { useToast } from '@/lib/hooks/useToast';
 import UpdateBudgetModal from '../modals/update-budget-modal';
 import { useState } from 'react';
 import { formatCurrency } from '@/lib/utils';
+import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 
 export const budgetColumns: ColumnDef<Budget>[] = [
   {
@@ -55,13 +56,13 @@ export const budgetColumns: ColumnDef<Budget>[] = [
     cell: ({ row }) => {
       const budget = row.original;
       const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-      const queryClient = useQueryClient();
+      const invalidate = useInvalidateQueries();
       const { showError, showSuccess } = useToast();
 
       const deleteBudgetMutation = useMutation({
         mutationFn: (id: string) => budgetDelete(id),
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ['budgets'] });
+          invalidate(['budgets']);
           showSuccess('Budget deleted successfully!');
         },
         onError: (error: any) => {
@@ -101,7 +102,7 @@ export const budgetColumns: ColumnDef<Budget>[] = [
             onOpenChange={setIsUpdateModalOpen}
             budget={budget}
             onBudgetUpdated={() => {
-              queryClient.invalidateQueries({ queryKey: ['budgets'] });
+              invalidate(['budgets']);
             }}
           />
         </>

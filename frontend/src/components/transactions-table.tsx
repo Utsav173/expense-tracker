@@ -12,7 +12,8 @@ import { Transaction as TransactionType } from '@/lib/types';
 import { cn, formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
 import CommonTable from './ui/CommonTable';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
+import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 
 interface TransactionTableProps {
   transactions: TransactionType[] | undefined;
@@ -43,13 +44,12 @@ const TransactionTable = ({
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const { showSuccess, showError } = useToast();
 
-  const queryClient = useQueryClient();
+  const invalidate = useInvalidateQueries();
 
   const deleteMutation = useMutation({
     mutationFn: transactionDelete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey });
-      queryClient.refetchQueries({ queryKey });
+      invalidate(queryKey);
       showSuccess('Transaction deleted successfully!');
     },
     onError: (error: any) => {
@@ -170,7 +170,7 @@ const TransactionTable = ({
         onOpenChange={setIsUpdateModalOpen}
         transaction={selectedTransaction}
         onUpdate={() => {
-          queryClient.invalidateQueries({ queryKey });
+          invalidate(queryKey);
           onUpdate();
         }}
       />

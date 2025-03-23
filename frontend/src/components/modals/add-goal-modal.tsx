@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { goalCreate } from '@/lib/endpoints/goal';
 import { useToast } from '@/lib/hooks/useToast';
 import { z } from 'zod';
@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '../ui/button';
 import AddModal from './add-modal';
 import DateTimePicker from '../date-time-picker';
+import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 
 const goalSchema = z.object({
   name: z.string().min(3, 'Goal name must be at least 3 characters'),
@@ -39,7 +40,7 @@ const AddGoalModal = ({
   onOpenChange: (open: boolean) => void;
 }) => {
   const { showSuccess, showError } = useToast();
-  const queryClient = useQueryClient();
+  const invalidate = useInvalidateQueries();
 
   const form = useForm<GoalFormSchema>({
     resolver: zodResolver(goalSchema),
@@ -58,7 +59,7 @@ const AddGoalModal = ({
         targetAmount: Number(data.targetAmount)
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['goals'] });
+      invalidate(['goals']);
       showSuccess('Goal created successfully!');
       form.reset();
       onGoalAdded();

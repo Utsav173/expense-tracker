@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { budgetGetAll, budgetDelete, budgetUpdate } from '@/lib/endpoints/budget';
 import Loader from '../ui/loader';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ import UpdateModal from '../modals/update-modal';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { z } from 'zod';
+import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 
 // Define budgetSchema directly here
 export const budgetSchema = z.object({
@@ -34,7 +35,7 @@ const BudgetList = () => {
   const { showError, showSuccess } = useToast();
   const [selectedBudget, setSelectedBudget] = useState<BudgetType | null>(null);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-  const queryClient = useQueryClient();
+  const invalidate = useInvalidateQueries();
 
   const {
     data: budgets,
@@ -50,7 +51,7 @@ const BudgetList = () => {
   const updateBudgetMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => budgetUpdate(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['budgets'] }); // Correct key
+      invalidate(['budgets']);
       showSuccess('Budget updated successfully!');
       setSelectedBudget(null); // Clear selection
       setIsUpdateModalOpen(false);

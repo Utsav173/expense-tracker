@@ -8,8 +8,8 @@ import React from 'react';
 import ShareAccountModal from '../modals/share-account-modal';
 import { ArrowLeftRight, History, Share } from 'lucide-react';
 import AddTransactionModal from '../modals/add-transaction-modal';
-import { useQueryClient } from '@tanstack/react-query';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 
 interface AccountDetailsHeaderProps {
   account: ApiResponse<AccountDetails> | undefined;
@@ -20,17 +20,15 @@ export const AccountDetailsHeader: React.FC<AccountDetailsHeaderProps> = ({
   isLoading
 }) => {
   const isMobile = useIsMobile();
-  const queryClient = useQueryClient();
-  const refetchData = () => {
-    queryClient.invalidateQueries({
-      queryKey: [
-        'account',
-        'customAnalytics',
-        'incomeExpenseChart',
-        'accountTransactions',
-        'categories'
-      ]
-    });
+  const invalidate = useInvalidateQueries();
+  const refetchData = async () => {
+    await invalidate([
+      'account',
+      'customAnalytics',
+      'incomeExpenseChart',
+      'accountTransactions',
+      'categories'
+    ]);
   };
 
   return (

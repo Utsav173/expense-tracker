@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { budgetCreate } from '@/lib/endpoints/budget';
 import { useToast } from '@/lib/hooks/useToast';
 import { z } from 'zod';
@@ -20,6 +20,7 @@ import AddModal from './add-modal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useQuery } from '@tanstack/react-query';
 import { categoryGetAll } from '@/lib/endpoints/category';
+import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 
 export const budgetSchema = z.object({
   amount: z.string().refine((value) => !isNaN(Number(value)), {
@@ -42,7 +43,7 @@ const AddBudgetModal = ({
   onOpenChange: (open: boolean) => void;
 }) => {
   const { showSuccess, showError } = useToast();
-  const queryClient = useQueryClient();
+  const invalidate = useInvalidateQueries();
 
   const { data: categoriesData, isLoading: isLoadingCategories } = useQuery({
     queryKey: ['categories'],
@@ -68,7 +69,7 @@ const AddBudgetModal = ({
         year: Number(data.year)
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      invalidate(['budgets']);
       showSuccess('Budget created successfully!');
       form.reset();
       onBudgetAdded();

@@ -9,7 +9,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { transactionCreate } from '@/lib/endpoints/transactions';
 import AddModal from './add-modal';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { categoryGetAll } from '@/lib/endpoints/category';
 import { accountGetDropdown } from '@/lib/endpoints/accounts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -64,7 +64,7 @@ const AddTransactionModal = ({
   const [categories, setCategories] = useState<Category[]>([]);
 
   const { showError, showSuccess } = useToast();
-  const queryClient = useQueryClient();
+
   const {
     data: categoriesData,
     isLoading: isLoadingCategory,
@@ -153,11 +153,6 @@ const AddTransactionModal = ({
       };
 
       await transactionCreate(transactionData);
-
-      queryClient.refetchQueries({
-        queryKey: ['account', data.accountId, 'accountTransactions'] // Adjust keys as needed
-      });
-
       showSuccess('Transaction created successfully!');
       setIsOpen(false);
       reset();
