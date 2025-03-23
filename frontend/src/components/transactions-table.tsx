@@ -9,7 +9,7 @@ import DeleteConfirmationModal from './modals/delete-confirmation-modal';
 import { transactionDelete } from '@/lib/endpoints/transactions';
 import { useToast } from '@/lib/hooks/useToast';
 import { Transaction as TransactionType } from '@/lib/types';
-import { formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
 import CommonTable from './ui/CommonTable';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -75,7 +75,12 @@ const TransactionTable = ({
         cell: (info) => {
           const transaction = info.row.original;
           return (
-            <div className='min-w-[80px]'>
+            <div
+              className={cn(
+                'mr-1 min-w-fit',
+                transaction.isIncome ? 'text-green-500' : 'text-red-500'
+              )}
+            >
               {formatCurrency(transaction.amount, transaction.currency)}
             </div>
           );
