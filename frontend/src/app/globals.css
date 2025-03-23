@@ -4,11 +4,17 @@
 
 body {
   font-family: Arial, Helvetica, sans-serif;
+}
+
+body:not([data-scroll-locked]) {
   scrollbar-gutter: stable;
 }
 
 html {
   scroll-behavior: smooth;
+}
+
+html:has(body:not([data-scroll-locked])) {
   scrollbar-gutter: stable;
 }
 

@@ -99,7 +99,7 @@ export function EditAccountModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-[425px]'>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Account</DialogTitle>
           <DialogDescription>Make changes to your account details here.</DialogDescription>

@@ -306,7 +306,7 @@ const ImportTransactions = () => {
       </Card>
 
       <Dialog open={isFirstConfirmationOpen} onOpenChange={setIsFirstConfirmationOpen}>
-        <DialogContent className='max-w-4xl'>
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirm Transactions</DialogTitle>
             <DialogDescription>

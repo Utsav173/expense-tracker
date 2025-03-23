@@ -96,7 +96,7 @@ const UpdateGoalModal: React.FC<UpdateGoalModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-[425px]'>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Goal</DialogTitle>
           <DialogDescription>Update your goal information.</DialogDescription>

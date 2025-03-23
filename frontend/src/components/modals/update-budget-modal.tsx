@@ -99,7 +99,7 @@ const UpdateBudgetModal: React.FC<UpdateBudgetModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-[425px]'>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Budget</DialogTitle>
           <DialogDescription>Update your budget information.</DialogDescription>

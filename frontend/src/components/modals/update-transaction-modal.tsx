@@ -139,7 +139,7 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-[425px]'>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Update Transaction</DialogTitle>
           <DialogDescription>Update your transaction details.</DialogDescription>

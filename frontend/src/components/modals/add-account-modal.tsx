@@ -84,7 +84,6 @@ const AddAccountModal = () => {
     <AddModal
       onOpenChange={handleOpenChange}
       title='Add Account'
-      description=' Add an new expense tracker  account.'
       triggerButton={<Button className='max-sm:w-full'>Create Account</Button>}
       isOpen={isOpen}
     >

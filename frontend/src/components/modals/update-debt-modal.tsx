@@ -101,7 +101,7 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-[425px]'>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Debt</DialogTitle>
           <DialogDescription>Update your debt information.</DialogDescription>

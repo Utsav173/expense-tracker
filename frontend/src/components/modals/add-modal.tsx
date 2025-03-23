@@ -31,7 +31,7 @@ const AddModal: React.FC<AddModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange} modal>
       <DialogTrigger asChild>{triggerButton}</DialogTrigger>
-      <DialogContent className='sm:max-w-[425px]'>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
