@@ -58,8 +58,8 @@ const AddGoalModal = ({
         ...data,
         targetAmount: Number(data.targetAmount)
       }),
-    onSuccess: () => {
-      invalidate(['goals']);
+    onSuccess: async () => {
+      await invalidate(['goals']);
       showSuccess('Goal created successfully!');
       form.reset();
       onGoalAdded();

@@ -60,7 +60,7 @@ const AddAccountModal = () => {
         { ...data, balance: Number(data.balance) },
         'Account created successfully!'
       );
-      invalidate(['accounts']);
+      await invalidate(['accounts']);
       showSuccess('Created successfully!');
 
       setIsOpen(false);

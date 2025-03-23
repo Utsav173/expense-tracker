@@ -75,8 +75,8 @@ const UpdateBudgetModal: React.FC<UpdateBudgetModalProps> = ({
 
   const updateBudgetMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => budgetUpdate(id, data),
-    onSuccess: () => {
-      invalidate(['budgets']);
+    onSuccess: async () => {
+      await invalidate(['budgets']);
       showSuccess('Budget updated successfully!');
       onOpenChange(false);
       onBudgetUpdated();

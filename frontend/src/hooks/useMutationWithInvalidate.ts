@@ -14,9 +14,9 @@ export const useMutationWithInvalidate = <TData, TVariables>(
   const invalidate = useInvalidateQueries();
   const mutation = useMutation({
     ...options,
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       if (options.queryKey) {
-        invalidate(options.queryKey);
+        await invalidate(options.queryKey);
       }
       options.onSuccess?.(data);
     },

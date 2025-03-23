@@ -47,8 +47,8 @@ const CategoryList = ({
 
   const deleteCategoryMutation = useMutation({
     mutationFn: (id: string) => categoryDelete(id),
-    onSuccess: () => {
-      invalidate(['categories']);
+    onSuccess: async () => {
+      await invalidate(['categories']);
       showSuccess('Category deleted successfully!');
       refetch();
       setDeleteCategoryId(null);

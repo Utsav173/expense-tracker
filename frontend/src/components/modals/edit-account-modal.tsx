@@ -71,8 +71,8 @@ export function EditAccountModal({
 
   const updateAccountMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => accountUpdate(id, data),
-    onSuccess: () => {
-      invalidate(['accounts']);
+    onSuccess: async () => {
+      await invalidate(['accounts']);
       showSuccess('Account updated successfully!');
       onOpenChange(false);
       onAccountUpdated();

@@ -76,8 +76,8 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
 
   const updateDebtMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => apiUpdateDebt(id, data), // Use the new API function
-    onSuccess: () => {
-      invalidate(['debts']);
+    onSuccess: async () => {
+      await invalidate(['debts']);
       showSuccess('Debt updated successfully!');
       onOpenChange(false);
       onDebtUpdated();

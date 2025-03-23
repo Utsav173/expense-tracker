@@ -64,8 +64,8 @@ const UserProfile = () => {
         'Profile information Updated!',
         'Could not perform operation, profile update failed'
       ),
-    onSuccess: () => {
-      invalidate(['user']);
+    onSuccess: async () => {
+      await invalidate(['user']);
       refetchUser && refetchUser();
       showSuccess('User profile has been updated!');
       setIsEdit(false);

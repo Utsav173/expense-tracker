@@ -57,8 +57,8 @@ const AddCategoryModal: React.FC<CreateCategoryModalProps> = ({
   const createCategoryMutation = useMutation({
     mutationFn: (data: CategorySchemaType) =>
       categoryId ? categoryUpdate(categoryId, data) : categoryCreate(data),
-    onSuccess: () => {
-      invalidate(['categories']);
+    onSuccess: async () => {
+      await invalidate(['categories']);
       showSuccess(categoryId ? 'Category updated successfully!' : 'Category created successfully!');
       form.reset();
       onCategoryAdded();

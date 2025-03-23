@@ -106,10 +106,10 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => transactionUpdate(id, data),
-    onSuccess: () => {
+    onSuccess: async () => {
       showSuccess('Transaction updated successfully!');
       onOpenChange(false);
-      if (queryKey) invalidate(queryKey);
+      if (queryKey) await invalidate(queryKey);
       onUpdate();
       reset();
     },

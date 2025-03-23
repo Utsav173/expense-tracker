@@ -72,8 +72,8 @@ const UpdateGoalModal: React.FC<UpdateGoalModalProps> = ({
 
   const updateGoalMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => goalUpdate(id, data),
-    onSuccess: () => {
-      invalidate(['goals']);
+    onSuccess: async () => {
+      await invalidate(['goals']);
       showSuccess('Goal updated successfully!');
       onOpenChange(false);
       onGoalUpdated();

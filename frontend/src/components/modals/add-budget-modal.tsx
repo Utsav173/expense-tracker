@@ -68,8 +68,8 @@ const AddBudgetModal = ({
         month: Number(data.month),
         year: Number(data.year)
       }),
-    onSuccess: () => {
-      invalidate(['budgets']);
+    onSuccess: async () => {
+      await invalidate(['budgets']);
       showSuccess('Budget created successfully!');
       form.reset();
       onBudgetAdded();

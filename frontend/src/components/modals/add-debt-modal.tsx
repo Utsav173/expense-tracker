@@ -58,8 +58,8 @@ const AddDebtModal = ({
 
   const createDebtMutation = useMutation({
     mutationFn: (data: DebtFormSchema) => apiCreateDebt(data),
-    onSuccess: () => {
-      invalidate(['debts']);
+    onSuccess: async () => {
+      await invalidate(['debts']);
       showSuccess('Debt created successfully!');
       form.reset();
       onDebtAdded();

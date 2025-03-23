@@ -43,8 +43,8 @@ export const goalColumns: ColumnDef<SavingGoal>[] = [
 
       const deleteGoalMutation = useMutation({
         mutationFn: (id: string) => goalDelete(id),
-        onSuccess: () => {
-          invalidate(['goals']);
+        onSuccess: async () => {
+          await invalidate(['goals']);
           showSuccess('Goal deleted successfully!');
         },
         onError: (error: any) => {
@@ -76,8 +76,8 @@ export const goalColumns: ColumnDef<SavingGoal>[] = [
             isOpen={isUpdateModalOpen}
             onOpenChange={setIsUpdateModalOpen}
             goal={goal}
-            onGoalUpdated={() => {
-              invalidate(['goals']);
+            onGoalUpdated={async () => {
+              await invalidate(['goals']);
             }}
           />
         </div>

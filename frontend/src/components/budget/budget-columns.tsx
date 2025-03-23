@@ -61,8 +61,8 @@ export const budgetColumns: ColumnDef<Budget>[] = [
 
       const deleteBudgetMutation = useMutation({
         mutationFn: (id: string) => budgetDelete(id),
-        onSuccess: () => {
-          invalidate(['budgets']);
+        onSuccess: async () => {
+          await invalidate(['budgets']);
           showSuccess('Budget deleted successfully!');
         },
         onError: (error: any) => {
@@ -101,8 +101,8 @@ export const budgetColumns: ColumnDef<Budget>[] = [
             isOpen={isUpdateModalOpen}
             onOpenChange={setIsUpdateModalOpen}
             budget={budget}
-            onBudgetUpdated={() => {
-              invalidate(['budgets']);
+            onBudgetUpdated={async () => {
+              await invalidate(['budgets']);
             }}
           />
         </>

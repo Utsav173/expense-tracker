@@ -48,8 +48,8 @@ const TransactionTable = ({
 
   const deleteMutation = useMutation({
     mutationFn: transactionDelete,
-    onSuccess: () => {
-      invalidate(queryKey);
+    onSuccess: async () => {
+      await invalidate(queryKey);
       showSuccess('Transaction deleted successfully!');
     },
     onError: (error: any) => {
@@ -172,9 +172,9 @@ const TransactionTable = ({
         isOpen={isUpdateModalOpen}
         onOpenChange={setIsUpdateModalOpen}
         transaction={selectedTransaction}
-        onUpdate={() => {
-          invalidate(queryKey);
-          onUpdate();
+        onUpdate={async () => {
+          await invalidate(queryKey);
+          await onUpdate();
         }}
       />
     </>

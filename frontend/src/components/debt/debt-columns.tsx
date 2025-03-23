@@ -56,8 +56,8 @@ export const debtColumns: ColumnDef<Debts>[] = [
 
       const markAsPaidMutation = useMutation({
         mutationFn: (id: string) => debtsMarkAsPaid(id),
-        onSuccess: () => {
-          invalidate(['debts']);
+        onSuccess: async () => {
+          await invalidate(['debts']);
           showSuccess('Debt marked as paid!');
         },
         onError: (error: any) => {
@@ -94,8 +94,8 @@ export const debtColumns: ColumnDef<Debts>[] = [
             isOpen={isUpdateModalOpen}
             onOpenChange={setIsUpdateModalOpen}
             debt={debt}
-            onDebtUpdated={() => {
-              invalidate(['debts']);
+            onDebtUpdated={async () => {
+              await invalidate(['debts']);
             }}
           />
         </div>

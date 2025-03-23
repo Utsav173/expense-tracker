@@ -50,8 +50,8 @@ const BudgetList = () => {
 
   const updateBudgetMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => budgetUpdate(id, data),
-    onSuccess: () => {
-      invalidate(['budgets']);
+    onSuccess: async () => {
+      await invalidate(['budgets']);
       showSuccess('Budget updated successfully!');
       setSelectedBudget(null); // Clear selection
       setIsUpdateModalOpen(false);
