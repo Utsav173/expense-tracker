@@ -1,12 +1,13 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { accountGetById, accountGetCustomAnalytics } from '@/lib/endpoints/accounts';
 import { transactionGetIncomeExpenseChart, transactionGetAll } from '@/lib/endpoints/transactions';
 import { categoryGetAll } from '@/lib/endpoints/category';
 import { format } from 'date-fns';
 import { useAccountFilterState } from './useAccountFilterState';
 import { usePagination } from '@/hooks/usePagination';
+import { useCallback } from 'react';
 
 interface SearchParams {
   q?: string;
@@ -18,6 +19,46 @@ interface SearchParams {
   dateFrom?: string;
   dateTo?: string;
 }
+
+const createTransactionsQueryKey = (id: string, filters: any, page: number) => {
+  return [
+    'accountTransactions',
+    id,
+    {
+      dateRange: filters.dateRange,
+      page,
+      q: filters.debouncedSearchQuery,
+      sortBy: filters.sortBy,
+      sortOrder: filters.sortOrder,
+      categoryId: filters.categoryId,
+      isIncome: filters.isIncome
+    }
+  ];
+};
+
+const createAccountDetailsQueryKey = (id: string) => {
+  return ['account', id];
+};
+
+const createAnalyticsQueryKey = (id: string, filters: any) => {
+  return [
+    'customAnalytics',
+    id,
+    {
+      dateRange: filters.dateRange
+    }
+  ];
+};
+
+const createIncomeExpenseChartQueryKey = (id: string, filters: any) => {
+  return [
+    'incomeExpenseChart',
+    id,
+    {
+      dateRange: filters.dateRange
+    }
+  ];
+};
 
 export const useAccountDetails = (id: string, searchParams: SearchParams) => {
   const {
@@ -31,7 +72,23 @@ export const useAccountDetails = (id: string, searchParams: SearchParams) => {
     updateURL
   } = useAccountFilterState();
 
+  const queryClient = useQueryClient();
+
   const { page, handlePageChange } = usePagination(Number(searchParams.page) || 1, updateURL);
+
+  const transactionQueryKey = createTransactionsQueryKey(id, filters, page);
+  const accountQueryKey = createAccountDetailsQueryKey(id);
+  const analyticsQueryKey = createAnalyticsQueryKey(id, filters);
+  const chartQueryKey = createIncomeExpenseChartQueryKey(id, filters);
+
+  const refetchData = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: transactionQueryKey, refetchType: 'all' }),
+      queryClient.invalidateQueries({ queryKey: accountQueryKey, refetchType: 'all' }),
+      queryClient.invalidateQueries({ queryKey: analyticsQueryKey, refetchType: 'all' }),
+      queryClient.invalidateQueries({ queryKey: chartQueryKey, refetchType: 'all' })
+    ]);
+  }, [queryClient, transactionQueryKey, accountQueryKey, analyticsQueryKey, chartQueryKey]);
 
   // Queries
   const {
@@ -39,7 +96,7 @@ export const useAccountDetails = (id: string, searchParams: SearchParams) => {
     isLoading: isAccountLoading,
     error: accountError
   } = useQuery({
-    queryKey: ['account', id],
+    queryKey: accountQueryKey,
     queryFn: () => accountGetById(id),
     retry: false
   });
@@ -49,7 +106,7 @@ export const useAccountDetails = (id: string, searchParams: SearchParams) => {
     isLoading: isAnalyticsLoading,
     error: analyticsError
   } = useQuery({
-    queryKey: ['customAnalytics', id, filters.dateRange],
+    queryKey: analyticsQueryKey,
     queryFn: () =>
       accountGetCustomAnalytics(id, {
         duration:
@@ -65,7 +122,7 @@ export const useAccountDetails = (id: string, searchParams: SearchParams) => {
     isLoading: isChartLoading,
     error: chartError
   } = useQuery({
-    queryKey: ['incomeExpenseChart', id, filters.dateRange],
+    queryKey: chartQueryKey,
     queryFn: () =>
       transactionGetIncomeExpenseChart({
         accountId: id,
@@ -83,19 +140,7 @@ export const useAccountDetails = (id: string, searchParams: SearchParams) => {
     error: transactionError,
     refetch: refetchTransactions
   } = useQuery({
-    queryKey: [
-      'accountTransactions',
-      id,
-      {
-        dateRange: filters.dateRange,
-        page,
-        q: filters.debouncedSearchQuery,
-        sortBy: filters.sortBy,
-        sortOrder: filters.sortOrder,
-        categoryId: filters.categoryId,
-        isIncome: filters.isIncome
-      }
-    ],
+    queryKey: transactionQueryKey,
     queryFn: () =>
       transactionGetAll({
         accountId: id,
@@ -153,6 +198,7 @@ export const useAccountDetails = (id: string, searchParams: SearchParams) => {
     page,
     handlePageChange,
     categories,
-    handleResetFilters
+    handleResetFilters,
+    refetchData
   };
 };

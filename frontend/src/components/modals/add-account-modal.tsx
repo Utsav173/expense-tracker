@@ -9,12 +9,11 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import AddModal from './add-modal';
 import { accountCreate } from '@/lib/endpoints/accounts';
-import { useQueryClient } from '@tanstack/react-query';
 import { Label } from '../ui/label';
 import CurrencySelect from '../currency-select';
 import { useQuery } from '@tanstack/react-query';
 import { fetchCurrencies, COMMON_CURRENCIES } from '@/lib/endpoints/currency';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 
 const accountSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters long').max(64),
@@ -25,9 +24,8 @@ const accountSchema = z.object({
 type Type = z.infer<typeof accountSchema>;
 
 const AddAccountModal = () => {
-  const queryClient = useQueryClient();
+  const invalidate = useInvalidateQueries();
   const [isOpen, setIsOpen] = useState(false);
-  const isMobile = useIsMobile();
 
   const {
     register,
@@ -62,7 +60,7 @@ const AddAccountModal = () => {
         { ...data, balance: Number(data.balance) },
         'Account created successfully!'
       );
-      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      await invalidate(['accounts']);
       showSuccess('Created successfully!');
 
       setIsOpen(false);
@@ -84,7 +82,6 @@ const AddAccountModal = () => {
     <AddModal
       onOpenChange={handleOpenChange}
       title='Add Account'
-      description=' Add an new expense tracker  account.'
       triggerButton={<Button className='max-sm:w-full'>Create Account</Button>}
       isOpen={isOpen}
     >

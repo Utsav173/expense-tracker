@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -27,6 +27,7 @@ import { SavingGoal } from '@/lib/types';
 import { goalUpdate } from '@/lib/endpoints/goal';
 import DateTimePicker from '../date-time-picker';
 import { format } from 'date-fns';
+import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 
 const goalSchema = z.object({
   name: z.string().min(3, 'Goal name must be at least 3 characters'),
@@ -56,7 +57,7 @@ const UpdateGoalModal: React.FC<UpdateGoalModalProps> = ({
   onGoalUpdated
 }) => {
   const { showSuccess, showError } = useToast();
-  const queryClient = useQueryClient();
+  const invalidate = useInvalidateQueries();
 
   const form = useForm<GoalFormSchema>({
     resolver: zodResolver(goalSchema),
@@ -71,8 +72,8 @@ const UpdateGoalModal: React.FC<UpdateGoalModalProps> = ({
 
   const updateGoalMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => goalUpdate(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['goals'] });
+    onSuccess: async () => {
+      await invalidate(['goals']);
       showSuccess('Goal updated successfully!');
       onOpenChange(false);
       onGoalUpdated();
@@ -96,7 +97,7 @@ const UpdateGoalModal: React.FC<UpdateGoalModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-[425px]'>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Goal</DialogTitle>
           <DialogDescription>Update your goal information.</DialogDescription>

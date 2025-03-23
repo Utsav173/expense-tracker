@@ -11,7 +11,7 @@ export function TeamSwitcher() {
         <SidebarMenuButton>
           <div className='flex items-center gap-2'>
             <Image src='/favicon.svg' alt='Expense Pro Logo' width={24} height={24} />
-            <h1 className='text-lg font-semibold'>Expense Pro</h1>
+            <h1 className='text-2xl font-semibold'>Expense Pro</h1>
           </div>
         </SidebarMenuButton>
       </SidebarMenuItem>

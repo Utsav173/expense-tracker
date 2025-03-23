@@ -8,7 +8,7 @@ import { useToast } from '@/lib/hooks/useToast';
 import { Button } from '../ui/button';
 import AddModal from './add-modal';
 import { accountShare, usersGetDropdown } from '@/lib/endpoints/accounts';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import {
   Form,
@@ -19,6 +19,7 @@ import {
   FormMessage
 } from '@/components/ui/form';
 import { Input } from '../ui/input';
+import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 
 const shareAccountSchema = z.object({
   accountId: z.string().uuid(),
@@ -35,7 +36,7 @@ const ShareAccountModal = ({
   triggerButton?: React.ReactNode;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const queryClient = useQueryClient();
+  const invalidate = useInvalidateQueries();
 
   const form = useForm<ShareAccountFormSchema>({
     resolver: zodResolver(shareAccountSchema),
@@ -55,8 +56,8 @@ const ShareAccountModal = ({
   const shareAccountMutation = useMutation({
     mutationFn: (data: ShareAccountFormSchema) =>
       accountShare(data, 'Account shared successfully!', 'Failed to share account.'),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+    onSuccess: async () => {
+      await invalidate(['accounts']);
       showSuccess('Account shared successfully!');
       setIsOpen(false);
       form.reset();

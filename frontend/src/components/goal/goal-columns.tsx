@@ -5,10 +5,11 @@ import { format } from 'date-fns';
 import { Pencil, Trash2 } from 'lucide-react';
 import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
 import { useToast } from '@/lib/hooks/useToast';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { goalDelete } from '@/lib/endpoints/goal';
 import UpdateGoalModal from '../modals/update-goal-modal'; // Create this
 import { useState } from 'react';
+import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 
 export const goalColumns: ColumnDef<SavingGoal>[] = [
   {
@@ -37,13 +38,13 @@ export const goalColumns: ColumnDef<SavingGoal>[] = [
     cell: ({ row }) => {
       const goal = row.original;
       const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-      const queryClient = useQueryClient();
+      const invalidate = useInvalidateQueries();
       const { showSuccess, showError } = useToast();
 
       const deleteGoalMutation = useMutation({
         mutationFn: (id: string) => goalDelete(id),
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ['goals'] });
+        onSuccess: async () => {
+          await invalidate(['goals']);
           showSuccess('Goal deleted successfully!');
         },
         onError: (error: any) => {
@@ -75,8 +76,8 @@ export const goalColumns: ColumnDef<SavingGoal>[] = [
             isOpen={isUpdateModalOpen}
             onOpenChange={setIsUpdateModalOpen}
             goal={goal}
-            onGoalUpdated={() => {
-              queryClient.invalidateQueries({ queryKey: ['goals'] });
+            onGoalUpdated={async () => {
+              await invalidate(['goals']);
             }}
           />
         </div>

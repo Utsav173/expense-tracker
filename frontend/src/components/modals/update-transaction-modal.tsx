@@ -15,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { categoryGetAll } from '@/lib/endpoints/category';
 import { accountGetDropdown } from '@/lib/endpoints/accounts';
 import {
@@ -31,6 +31,7 @@ import DateTimePicker from '../date-time-picker';
 import AddCategoryModal from './add-category-modal';
 import { ArrowDownCircle, ArrowUpCircle, PlusCircle } from 'lucide-react';
 import { Card } from '../ui/card';
+import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 
 const transactionSchema = z.object({
   text: z.string().min(3, 'Description must be at least 3 characters').max(255),
@@ -62,7 +63,7 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
 
   const { showError, showSuccess } = useToast();
-  const queryClient = useQueryClient();
+  const invalidate = useInvalidateQueries();
 
   const {
     register,
@@ -105,10 +106,10 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => transactionUpdate(id, data),
-    onSuccess: () => {
+    onSuccess: async () => {
       showSuccess('Transaction updated successfully!');
       onOpenChange(false);
-      queryClient.invalidateQueries({ queryKey });
+      if (queryKey) await invalidate(queryKey);
       onUpdate();
       reset();
     },
@@ -139,7 +140,7 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-[425px]'>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Update Transaction</DialogTitle>
           <DialogDescription>Update your transaction details.</DialogDescription>

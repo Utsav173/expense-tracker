@@ -1,7 +1,7 @@
 // page.tsx
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { accountGetAll, accountDelete } from '@/lib/endpoints/accounts';
 import Loader from '@/components/ui/loader';
 import AddAccountModal from '@/components/modals/add-account-modal';

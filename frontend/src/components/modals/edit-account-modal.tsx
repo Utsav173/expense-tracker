@@ -26,8 +26,9 @@ import {
 import { accountUpdate } from '@/lib/endpoints/accounts';
 import CurrencySelect from '../currency-select';
 import { fetchCurrencies, COMMON_CURRENCIES } from '@/lib/endpoints/currency';
-import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useToast } from '@/lib/hooks/useToast';
+import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -57,7 +58,7 @@ export function EditAccountModal({
   onAccountUpdated
 }: EditAccountModalProps) {
   const { showSuccess, showError } = useToast();
-  const queryClient = useQueryClient();
+  const invalidate = useInvalidateQueries();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -70,8 +71,8 @@ export function EditAccountModal({
 
   const updateAccountMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => accountUpdate(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accounts'] }); // Correct key
+    onSuccess: async () => {
+      await invalidate(['accounts']);
       showSuccess('Account updated successfully!');
       onOpenChange(false);
       onAccountUpdated();
@@ -99,7 +100,7 @@ export function EditAccountModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-[425px]'>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Account</DialogTitle>
           <DialogDescription>Make changes to your account details here.</DialogDescription>

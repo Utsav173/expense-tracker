@@ -2,13 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { DateRange } from 'react-day-picker';
-import { useDebounce } from 'use-debounce';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-
-// Components
 import TransactionTable from '@/components/transactions-table';
 import Loader from '@/components/ui/loader';
 import { Button } from '@/components/ui/button';
@@ -21,100 +15,37 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import AddTransactionModal from '@/components/modals/add-transaction-modal';
-import DateRangePicker from '@/components/date-range-picker';
-import { Filter, X, Search, Import } from 'lucide-react';
-
-// API & Hooks
-import { transactionGetAll } from '@/lib/endpoints/transactions';
+import { Filter, Import, X } from 'lucide-react';
 import { accountGetDropdown } from '@/lib/endpoints/accounts';
 import { categoryGetAll } from '@/lib/endpoints/category';
 import { useToast } from '@/lib/hooks/useToast';
-import { usePagination } from '@/hooks/usePagination';
-
-// Types
 import { AccountDropdown, Category } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import DateRangePicker from '@/components/date-range-picker';
+import { useTransactions } from '@/components/transactions/hooks/useTransactions';
 
 const TransactionsPage = () => {
-  const [accountId, setAccountId] = useState<string | undefined>(undefined);
-  const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState('createdAt');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [categoryId, setCategoryId] = useState<string | undefined>(undefined);
-  const [isIncome, setIsIncome] = useState<boolean | undefined>(undefined);
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-  const [tempDateRange, setTempDateRange] = useState<DateRange | undefined>();
+  const { showError } = useToast();
   const [filtersExpanded, setFiltersExpanded] = useState(false);
 
-  const router = useRouter();
-  const [debouncedSearch] = useDebounce(search, 300);
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
-  const { showError } = useToast();
-
-  const activeFiltersCount = [
-    accountId !== undefined && accountId !== 'all',
-    categoryId !== undefined && categoryId !== 'all',
-    isIncome !== undefined,
-    dateRange?.from && dateRange.to,
-    debouncedSearch
-  ].filter(Boolean).length;
-
-  const { page, handlePageChange } = usePagination(
-    Number(searchParams.get('page')) || 1,
-    (params) => {
-      const currentParams = new URLSearchParams(searchParams.toString());
-      Object.keys(params).forEach((key) => {
-        if (params[key] === undefined || params[key] === null || params[key] === '') {
-          currentParams.delete(key);
-        } else {
-          currentParams.set(key, String(params[key]));
-        }
-      });
-      const newUrl = `${pathname}?${currentParams.toString()}`;
-      router.push(newUrl, { scroll: true });
-    }
-  );
-
-  const queryKey = [
-    'transactions',
-    {
-      accountId,
-      dateRange,
-      page,
-      pageSize: 10,
-      q: debouncedSearch,
-      sortBy,
-      sortOrder,
-      categoryId,
-      isIncome
-    }
-  ];
-
   const {
-    data: transactions,
+    transactionsData,
     isLoading,
+    isError,
     error,
-    refetch
-  } = useQuery({
-    queryKey,
-    queryFn: () =>
-      transactionGetAll({
-        accountId: accountId === 'all' ? '' : accountId,
-        duration:
-          dateRange?.from && dateRange.to
-            ? `${format(dateRange.from, 'yyyy-MM-dd')},${format(dateRange.to, 'yyyy-MM-dd')}`
-            : '',
-        page,
-        pageSize: 10,
-        q: debouncedSearch,
-        sortBy,
-        sortOrder,
-        categoryId: categoryId === 'all' ? '' : categoryId,
-        isIncome
-      }),
-    retry: false
-  });
+    refetch,
+    page,
+    handlePageChange,
+    filters,
+    debouncedSearchQuery,
+    setSearchQuery,
+    handleCategoryChange,
+    handleIncomeTypeChange,
+    handleDateRangeSelect,
+    handleClearDateRange,
+    handleSort,
+    resetFilters
+  } = useTransactions();
 
   const { data: accountsData, isLoading: isLoadingAccounts } = useQuery({
     queryKey: ['accountsDropdown'],
@@ -129,6 +60,14 @@ const TransactionsPage = () => {
   const [accounts, setAccounts] = useState<AccountDropdown[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
 
+  const activeFiltersCount = [
+    filters.accountId !== undefined && filters.accountId !== 'all',
+    filters.categoryId !== undefined && filters.categoryId !== 'all',
+    filters.isIncome !== undefined,
+    filters.dateRange?.from && filters.dateRange.to,
+    debouncedSearchQuery !== ''
+  ].filter(Boolean).length;
+
   useEffect(() => {
     if (accountsData) {
       setAccounts(accountsData);
@@ -141,64 +80,7 @@ const TransactionsPage = () => {
     }
   }, [categoriesData?.categories]);
 
-  useEffect(() => {
-    handlePageChange(1);
-  }, [debouncedSearch, accountId, categoryId, isIncome, dateRange, sortBy, sortOrder]);
-
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-  };
-
-  const handleSort = (field: string, order: 'asc' | 'desc') => {
-    setSortBy(field);
-    setSortOrder(order);
-    handlePageChange(1);
-  };
-
-  const handleDateRangeSelect = (range: DateRange | undefined) => {
-    setTempDateRange(range);
-    if (range?.from && range.to) {
-      setDateRange(range);
-      handlePageChange(1);
-    }
-  };
-
-  const handleClearDateRange = () => {
-    setDateRange(undefined);
-    setTempDateRange(undefined);
-    handlePageChange(1);
-  };
-
-  const handleAccountIdChange = (value: string) => {
-    setAccountId(value);
-    handlePageChange(1);
-  };
-
-  const handleCategoryIdChange = (value: string) => {
-    setCategoryId(value);
-    handlePageChange(1);
-  };
-
-  const handleIsIncomeChange = (value: string) => {
-    setIsIncome(value === 'all' ? undefined : value === 'true');
-    handlePageChange(1);
-  };
-
-  const resetAllFilters = () => {
-    setAccountId(undefined);
-    setCategoryId(undefined);
-    setIsIncome(undefined);
-    setDateRange(undefined);
-    setTempDateRange(undefined);
-    setSearch('');
-    handlePageChange(1);
-  };
-
-  const toggleFilters = () => {
-    setFiltersExpanded(!filtersExpanded);
-  };
-
-  if (error) {
+  if (isError) {
     showError(`Failed to get Transaction Details: ${(error as Error).message}`);
     return null;
   }
@@ -209,13 +91,11 @@ const TransactionsPage = () => {
         <div>
           <h1 className='text-xl font-bold sm:text-2xl'>Transactions</h1>
           <p className='mt-1 text-sm text-muted-foreground sm:text-base'>
-            {transactions?.totalCount
-              ? `${transactions.totalCount} transactions found`
+            {transactionsData?.totalCount
+              ? `${transactionsData.totalCount} transactions found`
               : 'Manage your financial transactions'}
           </p>
         </div>
-
-        {/* Action buttons - Fixed position on mobile */}
         <div className='mt-4 flex gap-2 max-sm:flex-col sm:mt-0'>
           <AddTransactionModal onTransactionAdded={refetch} />
           <Link href='/transactions/import'>
@@ -234,12 +114,11 @@ const TransactionsPage = () => {
           })}
         >
           <div className='relative flex-1'>
-            <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground' />
             <Input
               type='text'
               placeholder='Search transactions...'
-              value={search}
-              onChange={handleSearch}
+              value={filters.searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className='w-full pl-9'
             />
           </div>
@@ -248,7 +127,7 @@ const TransactionsPage = () => {
             <Button
               variant='outline'
               size='sm'
-              onClick={toggleFilters}
+              onClick={() => setFiltersExpanded(!filtersExpanded)}
               className='flex flex-1 items-center justify-center gap-1 sm:flex-auto'
             >
               <Filter size={16} />
@@ -264,7 +143,7 @@ const TransactionsPage = () => {
               <Button
                 variant='ghost'
                 size='sm'
-                onClick={resetAllFilters}
+                onClick={resetFilters}
                 className='flex flex-1 items-center justify-center gap-1 sm:flex-auto'
               >
                 <X size={16} />
@@ -273,13 +152,14 @@ const TransactionsPage = () => {
             )}
           </div>
         </div>
-
-        {/* Advanced filters section - Improved grid layout for mobile */}
         {filtersExpanded && (
           <div className='mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4'>
             <div>
               <label className='mb-1 block text-xs font-medium sm:text-sm'>Account</label>
-              <Select onValueChange={handleAccountIdChange} value={accountId || 'all'}>
+              <Select
+                onValueChange={(value) => handleCategoryChange(value)}
+                value={filters.categoryId || 'all'}
+              >
                 <SelectTrigger className='h-9 w-full text-xs sm:h-10 sm:text-sm'>
                   <SelectValue placeholder='All Accounts' />
                 </SelectTrigger>
@@ -302,7 +182,10 @@ const TransactionsPage = () => {
 
             <div>
               <label className='mb-1 block text-xs font-medium sm:text-sm'>Category</label>
-              <Select onValueChange={handleCategoryIdChange} value={categoryId || 'all'}>
+              <Select
+                onValueChange={(value) => handleCategoryChange(value)}
+                value={filters.categoryId || 'all'}
+              >
                 <SelectTrigger className='h-9 w-full text-xs sm:h-10 sm:text-sm'>
                   <SelectValue placeholder='All Categories' />
                 </SelectTrigger>
@@ -326,8 +209,8 @@ const TransactionsPage = () => {
             <div>
               <label className='mb-1 block text-xs font-medium sm:text-sm'>Type</label>
               <Select
-                onValueChange={handleIsIncomeChange}
-                value={isIncome === undefined ? 'all' : isIncome ? 'true' : 'false'}
+                onValueChange={(value) => handleIncomeTypeChange(value)}
+                value={filters.isIncome === undefined ? 'all' : String(filters.isIncome)}
               >
                 <SelectTrigger className='h-9 w-full text-xs sm:h-10 sm:text-sm'>
                   <SelectValue placeholder='All Types' />
@@ -344,11 +227,11 @@ const TransactionsPage = () => {
               <label className='mb-1 block text-xs font-medium sm:text-sm'>Date Range</label>
               <div className='flex items-center gap-2'>
                 <DateRangePicker
-                  dateRange={tempDateRange}
+                  dateRange={filters.dateRange}
                   setDateRange={handleDateRangeSelect}
                   className='h-9 text-xs sm:h-10 sm:text-sm'
                 />
-                {dateRange?.from && (
+                {filters.dateRange?.from && (
                   <Button
                     variant='ghost'
                     size='icon'
@@ -363,25 +246,23 @@ const TransactionsPage = () => {
           </div>
         )}
       </div>
-
-      {/* Content area */}
       {isLoading ? (
-        <div className='flex items-center justify-center py-12'>
-          <Loader />
-        </div>
-      ) : transactions?.transactions && transactions.transactions.length > 0 ? (
+        <Loader />
+      ) : transactionsData?.transactions && transactionsData.transactions.length > 0 ? (
         <div className='my-2 mb-16 sm:mb-0'>
           <TransactionTable
-            transactions={transactions.transactions}
-            onUpdate={refetch}
+            transactions={transactionsData.transactions}
             onSort={handleSort}
-            sortBy={sortBy}
-            sortOrder={sortOrder}
+            sortBy={filters.sortBy}
+            sortOrder={filters.sortOrder}
             loading={isLoading}
-            totalRecords={transactions.totalCount}
+            totalRecords={transactionsData.totalCount}
             page={page}
             handlePageChange={handlePageChange}
-            queryKey={queryKey}
+            refetchData={async () => {
+              await refetch();
+            }}
+            key={'transactionspage'}
           />
         </div>
       ) : (

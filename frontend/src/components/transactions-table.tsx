@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { ColumnDef, SortingState } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2 } from 'lucide-react';
@@ -9,14 +9,13 @@ import DeleteConfirmationModal from './modals/delete-confirmation-modal';
 import { transactionDelete } from '@/lib/endpoints/transactions';
 import { useToast } from '@/lib/hooks/useToast';
 import { Transaction as TransactionType } from '@/lib/types';
-import { formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
 import CommonTable from './ui/CommonTable';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 
 interface TransactionTableProps {
   transactions: TransactionType[] | undefined;
-  onUpdate: () => void;
   onSort: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
   sortBy: string;
   sortOrder: 'asc' | 'desc';
@@ -24,12 +23,11 @@ interface TransactionTableProps {
   totalRecords: number;
   page: number;
   handlePageChange: (page: number) => void;
-  queryKey: any[];
+  refetchData: () => Promise<void>;
 }
 
 const TransactionTable = ({
   transactions,
-  onUpdate,
   onSort,
   sortBy,
   sortOrder,
@@ -37,19 +35,16 @@ const TransactionTable = ({
   totalRecords,
   page,
   handlePageChange,
-  queryKey
+  refetchData
 }: TransactionTableProps) => {
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionType | null>(null);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const { showSuccess, showError } = useToast();
 
-  const queryClient = useQueryClient();
-
   const deleteMutation = useMutation({
     mutationFn: transactionDelete,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey });
-      queryClient.refetchQueries({ queryKey });
+    onSuccess: async () => {
+      await refetchData();
       showSuccess('Transaction deleted successfully!');
     },
     onError: (error: any) => {
@@ -58,7 +53,7 @@ const TransactionTable = ({
   });
 
   const handleDelete = async (id: string) => {
-    deleteMutation.mutate(id);
+    deleteMutation.mutateAsync(id);
   };
 
   const columns = useMemo<ColumnDef<TransactionType>[]>(
@@ -75,7 +70,12 @@ const TransactionTable = ({
         cell: (info) => {
           const transaction = info.row.original;
           return (
-            <div className='min-w-[80px]'>
+            <div
+              className={cn(
+                'mr-1 min-w-fit',
+                transaction.isIncome ? 'text-green-500' : 'text-red-500'
+              )}
+            >
               {formatCurrency(transaction.amount, transaction.currency)}
             </div>
           );
@@ -138,12 +138,15 @@ const TransactionTable = ({
     []
   );
 
-  const handleSortChange = (sorting: SortingState) => {
-    if (sorting.length > 0) {
-      const sort = sorting[0];
-      onSort(sort.id, sort.desc ? 'desc' : 'asc');
-    }
-  };
+  const handleSortChange = useCallback(
+    (sorting: SortingState) => {
+      if (sorting.length > 0) {
+        const sort = sorting[0];
+        onSort(sort.id, sort.desc ? 'desc' : 'asc');
+      }
+    },
+    [onSort]
+  );
 
   return (
     <>
@@ -164,9 +167,8 @@ const TransactionTable = ({
         isOpen={isUpdateModalOpen}
         onOpenChange={setIsUpdateModalOpen}
         transaction={selectedTransaction}
-        onUpdate={() => {
-          queryClient.invalidateQueries({ queryKey });
-          onUpdate();
+        onUpdate={async () => {
+          await refetchData();
         }}
       />
     </>

@@ -85,27 +85,6 @@ const CommonTable = <T extends object>({
     return [];
   });
 
-  // const [sortOptions, setSortOptions] = useState<{ id: string; label: string }[]>([]);
-
-  // const handleSortingChange = useCallback(
-  //   (updaterOrValue: SortingState | ((old: SortingState) => SortingState)) => {
-  //     const newSorting =
-  //       typeof updaterOrValue === 'function' ? updaterOrValue(sorting) : updaterOrValue;
-
-  //     setSorting(newSorting);
-  //     if (onSortChange && newSorting.length > 0) {
-  //       onSortChange(newSorting);
-  //     }
-  //   },
-  //   [onSortChange, sorting]
-  // );
-
-  // const handleMobileSortChange = (value: string) => {
-  //   const [id, desc] = value.split('-');
-  //   const newSorting: SortingState = [{ id, desc: desc === 'desc' }];
-  //   handleSortingChange(newSorting);
-  // };
-
   const table = useReactTable({
     data,
     columns,
@@ -120,9 +99,19 @@ const CommonTable = <T extends object>({
 
   useEffect(() => {
     if (onSortChange) {
-      onSortChange(sorting);
+      const propSorting: SortingState =
+        sortBy && sortOrder ? [{ id: sortBy, desc: sortOrder === 'desc' }] : [];
+
+      const isDifferent =
+        sorting.length !== propSorting.length ||
+        (sorting.length > 0 &&
+          (sorting[0].id !== propSorting[0]?.id || sorting[0].desc !== propSorting[0]?.desc));
+
+      if (isDifferent) {
+        onSortChange(sorting);
+      }
     }
-  }, [sorting, onSortChange]);
+  }, [sorting, onSortChange, sortBy, sortOrder]);
 
   const sortOptions = useMemo(() => {
     return table
@@ -207,7 +196,7 @@ const CommonTable = <T extends object>({
                         ? flexRender(header, { column } as HeaderContext<T, unknown>)
                         : header;
                     return (
-                      <React.Fragment key={column.id}>
+                      <React.Fragment key={column.id + cellValue}>
                         <span className='truncate pr-2 font-medium'>{headerString}:</span>
                         <span className='truncate'>{cellValue}</span>
                       </React.Fragment>
@@ -295,7 +284,6 @@ const CommonTable = <T extends object>({
         </Table>
       </div>
 
-      {/* Pagination */}
       {enablePagination && totalRecords > pageSize && (
         <div className='mt-6'>
           <EnhancedPagination

@@ -13,7 +13,6 @@ import { useQuery } from '@tanstack/react-query';
 import { categoryGetAll } from '@/lib/endpoints/category';
 import { accountGetDropdown } from '@/lib/endpoints/accounts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { authGetUserPreferences } from '@/lib/endpoints/auth';
 import {
   ArrowDownCircle,
   ArrowUpCircle,
@@ -27,7 +26,9 @@ import { Label } from '../ui/label';
 import DateTimePicker from '../date-time-picker';
 import AddCategoryModal from './add-category-modal';
 import { Card } from '../ui/card';
+import { NumericFormat } from 'react-number-format';
 
+// Define the schema outside of the component
 const transactionSchema = z.object({
   text: z.string().min(3, 'Description must be at least 3 characters').max(255),
   amount: z
@@ -40,7 +41,7 @@ const transactionSchema = z.object({
   categoryId: z.string().optional(),
   accountId: z.string().min(1, 'Please select an account'),
   createdAt: z.date().default(() => new Date()),
-  currency: z.string().min(1, 'Currency is required')
+  currency: z.string().optional().default('')
 });
 
 type TransactionFormSchema = z.infer<typeof transactionSchema>;
@@ -59,6 +60,9 @@ const AddTransactionModal = ({
   const [isOpen, setIsOpen] = useState(false);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   const [isIncome, setIsIncome] = useState(false);
+  const [accounts, setAccounts] = useState<AccountDropdown[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+
   const { showError, showSuccess } = useToast();
 
   const {
@@ -69,17 +73,10 @@ const AddTransactionModal = ({
     queryKey: ['categories'],
     queryFn: categoryGetAll
   });
-  const [categories, setCategories] = useState<Category[]>([]);
 
   const { data: accountData, isLoading: isLoadingAccount } = useQuery({
     queryKey: ['accountDropdown'],
     queryFn: accountGetDropdown
-  });
-  const [accounts, setAccounts] = useState<AccountDropdown[]>([]);
-
-  const { data: userPreferences } = useQuery({
-    queryKey: ['userPreferences'],
-    queryFn: authGetUserPreferences
   });
 
   const {
@@ -94,6 +91,7 @@ const AddTransactionModal = ({
     defaultValues: {
       isIncome: false,
       createdAt: new Date(),
+      currency: '',
       ...(accountId && { accountId })
     }
   });
@@ -113,13 +111,13 @@ const AddTransactionModal = ({
   useEffect(() => {
     register('isIncome');
     register('createdAt', { value: new Date() });
+    register('currency');
   }, [register]);
 
   useEffect(() => {
     setValue('isIncome', isIncome);
   }, [isIncome, setValue]);
 
-  // Add new effect to update currency when account changes
   useEffect(() => {
     const selectedAccountId = accountId || watch('accountId');
     const selectedAccount = accounts.find((acc) => acc.id === selectedAccountId);
@@ -131,15 +129,30 @@ const AddTransactionModal = ({
   const handleCreateTransaction = async (data: TransactionFormSchema) => {
     try {
       const selectedAccount = accounts.find((acc) => acc.id === data.accountId);
-      await transactionCreate({
-        ...data,
+
+      if (!selectedAccount) {
+        console.error('Selected account not found');
+        showError('Account information not found. Please try again.');
+        return;
+      }
+
+      const currency = selectedAccount.currency || data.currency || '';
+      if (!currency) {
+        showError('Currency information is missing. Please select an account with currency.');
+        return;
+      }
+
+      const transactionData = {
+        text: data.text,
         amount: Number(data.amount),
+        isIncome: data.isIncome,
         category: data.categoryId,
         account: data.accountId,
         createdAt: data.createdAt.toISOString(),
-        currency: selectedAccount?.currency || data.currency
-      });
+        currency: currency
+      };
 
+      await transactionCreate(transactionData);
       showSuccess('Transaction created successfully!');
       setIsOpen(false);
       reset();
@@ -156,6 +169,7 @@ const AddTransactionModal = ({
       reset({
         isIncome: false,
         createdAt: new Date(),
+        currency: '',
         ...(accountId && { accountId })
       });
       setIsIncome(false);
@@ -222,7 +236,6 @@ const AddTransactionModal = ({
         </div>
 
         {/* Account Selection */}
-
         {accountId ? (
           <input type='hidden' {...register('accountId')} value={accountId} />
         ) : (
@@ -234,7 +247,13 @@ const AddTransactionModal = ({
               </Label>
             </div>
             <Select
-              onValueChange={(value) => setValue('accountId', value)}
+              onValueChange={(value) => {
+                setValue('accountId', value);
+                const selectedAccount = accounts.find((acc) => acc.id === value);
+                if (selectedAccount) {
+                  setValue('currency', selectedAccount.currency);
+                }
+              }}
               required
               disabled={isSubmitting}
             >
@@ -286,20 +305,26 @@ const AddTransactionModal = ({
             <span className='pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3'>
               {accounts.find((acc) => acc.id === (accountId || watch('accountId')))?.currency || ''}
             </span>
-            <Input
+            <NumericFormat
+              customInput={Input}
               id='amount'
-              type='number'
-              step='0.01'
-              min='0'
+              thousandSeparator=','
+              decimalSeparator='.'
+              allowNegative={false}
+              decimalScale={2}
               placeholder='0.00'
-              {...register('amount')}
+              autoComplete='off'
+              onValueChange={(values) => {
+                setValue('amount', values.value);
+              }}
               className='w-full pr-10'
               disabled={isSubmitting}
             />
-            {errors.amount && <p className='text-sm text-red-500'>{errors.amount.message}</p>}
           </div>
+          {errors.amount && <p className='text-sm text-red-500'>{errors.amount.message}</p>}
         </div>
 
+        {/* Hidden currency field */}
         <input type='hidden' {...register('currency')} />
 
         {/* Category */}
@@ -372,7 +397,11 @@ const AddTransactionModal = ({
         </div>
 
         {/* Submit Button */}
-        <Button type='submit' className='w-full disabled:bg-gray-700' disabled={isSubmitting}>
+        <Button
+          type='submit'
+          className='w-full disabled:cursor-not-allowed disabled:bg-gray-400 disabled:text-black'
+          disabled={isSubmitting}
+        >
           {isSubmitting ? 'Adding...' : `Add ${isIncome ? 'Income' : 'Expense'}`}
         </Button>
       </form>

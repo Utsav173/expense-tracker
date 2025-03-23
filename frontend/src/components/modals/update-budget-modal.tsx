@@ -4,7 +4,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { budgetUpdate } from '@/lib/endpoints/budget';
 import { useToast } from '@/lib/hooks/useToast';
 import { Button } from '../ui/button';
@@ -29,6 +29,7 @@ import { Budget } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useQuery } from '@tanstack/react-query';
 import { categoryGetAll } from '@/lib/endpoints/category';
+import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 
 const budgetSchema = z.object({
   amount: z.string().refine((value) => !isNaN(Number(value)), {
@@ -55,7 +56,7 @@ const UpdateBudgetModal: React.FC<UpdateBudgetModalProps> = ({
   onBudgetUpdated
 }) => {
   const { showSuccess, showError } = useToast();
-  const queryClient = useQueryClient();
+  const invalidate = useInvalidateQueries();
 
   const { data: categoriesData, isLoading: isLoadingCategories } = useQuery({
     queryKey: ['categories'],
@@ -74,8 +75,8 @@ const UpdateBudgetModal: React.FC<UpdateBudgetModalProps> = ({
 
   const updateBudgetMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => budgetUpdate(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['budgets'] });
+    onSuccess: async () => {
+      await invalidate(['budgets']);
       showSuccess('Budget updated successfully!');
       onOpenChange(false);
       onBudgetUpdated();
@@ -99,7 +100,7 @@ const UpdateBudgetModal: React.FC<UpdateBudgetModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-[425px]'>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Budget</DialogTitle>
           <DialogDescription>Update your budget information.</DialogDescription>

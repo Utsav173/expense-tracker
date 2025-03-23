@@ -33,7 +33,7 @@ const GoalPage = () => {
         }
       });
       const newUrl = `${pathname}?${currentParams.toString()}`;
-      router.push(newUrl, { scroll: true });
+      router.push(newUrl, { scroll: false });
     }
   );
 

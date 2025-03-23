@@ -11,13 +11,14 @@ import { authUpdateUser } from '@/lib/endpoints/auth';
 import { Input } from './ui/input';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
 import { fetchCurrencies, COMMON_CURRENCIES } from '@/lib/endpoints/currency';
 import { useQuery } from '@tanstack/react-query';
 import CurrencySelect from './currency-select';
 import { Camera, Save, X, User as UserIcon } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 
 const PixelCanvas = dynamic(() => import('./ui/pixel-canvas').then((mod) => mod.PixelCanvas), {
   ssr: false
@@ -28,7 +29,7 @@ const UserProfile = () => {
   const { showError, showSuccess } = useToast();
   const [isEdit, setIsEdit] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const queryClient = useQueryClient();
+  const invalidate = useInvalidateQueries();
 
   const schema = z.object({
     name: z.string().min(3).max(64),
@@ -63,8 +64,8 @@ const UserProfile = () => {
         'Profile information Updated!',
         'Could not perform operation, profile update failed'
       ),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user'] });
+    onSuccess: async () => {
+      await invalidate(['user']);
       refetchUser && refetchUser();
       showSuccess('User profile has been updated!');
       setIsEdit(false);

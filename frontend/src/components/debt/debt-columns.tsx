@@ -3,12 +3,13 @@ import { Debts } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { debtsMarkAsPaid } from '@/lib/endpoints/debt';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { useToast } from '@/lib/hooks/useToast';
 import { Pencil, Trash2 } from 'lucide-react';
 import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
 import { useState } from 'react';
 import UpdateDebtModal from '../modals/update-debt-modal';
+import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 
 export const debtColumns: ColumnDef<Debts>[] = [
   {
@@ -50,13 +51,13 @@ export const debtColumns: ColumnDef<Debts>[] = [
     cell: ({ row }) => {
       const debt = row.original;
       const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-      const queryClient = useQueryClient();
+      const invalidate = useInvalidateQueries();
       const { showSuccess, showError } = useToast();
 
       const markAsPaidMutation = useMutation({
         mutationFn: (id: string) => debtsMarkAsPaid(id),
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ['debts'] });
+        onSuccess: async () => {
+          await invalidate(['debts']);
           showSuccess('Debt marked as paid!');
         },
         onError: (error: any) => {
@@ -93,8 +94,8 @@ export const debtColumns: ColumnDef<Debts>[] = [
             isOpen={isUpdateModalOpen}
             onOpenChange={setIsUpdateModalOpen}
             debt={debt}
-            onDebtUpdated={() => {
-              queryClient.invalidateQueries({ queryKey: ['debts'] });
+            onDebtUpdated={async () => {
+              await invalidate(['debts']);
             }}
           />
         </div>

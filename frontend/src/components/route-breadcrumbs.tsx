@@ -81,12 +81,13 @@ const RouteBreadcrumbs: React.FC = () => {
       segments.forEach((segment, index) => {
         currentPath += `/${segment}`;
 
+        // Skip UUID-like segments
+        if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment)) {
+          return;
+        }
+
         // Handle special case for account details
-        if (
-          segment === 'accounts' &&
-          segments[index + 1] &&
-          !segments[index + 1].startsWith('shares')
-        ) {
+        if (segment === 'accounts' && segments[index + 1]) {
           breadcrumbs.push({
             href: currentPath,
             label: 'Accounts',
@@ -125,25 +126,33 @@ const RouteBreadcrumbs: React.FC = () => {
   const breadcrumbItems = buildBreadcrumbs();
 
   return (
-    <Breadcrumb>
-      <BreadcrumbList>
-        {breadcrumbItems.map((item, index) => (
-          <React.Fragment key={item.href}>
-            <BreadcrumbItem className={index === 0 ? 'flex items-center' : ''}>
-              {index === 0 && <Home className='mr-1 h-4 w-4' />}
-              {item.isCurrentPage ? (
-                <BreadcrumbPage>{item.label}</BreadcrumbPage>
-              ) : (
-                <BreadcrumbLink asChild>
-                  <Link href={item.href}>{item.label}</Link>
-                </BreadcrumbLink>
+    <div className='relative max-w-fit overflow-hidden'>
+      <Breadcrumb className='w-full min-w-0'>
+        <BreadcrumbList className='no-scrollbar flex flex-nowrap overflow-x-auto whitespace-nowrap px-2 py-1'>
+          {breadcrumbItems.map((item, index) => (
+            <React.Fragment key={item.href}>
+              <BreadcrumbItem
+                className={`${index === 0 ? 'flex shrink-0 items-center' : 'shrink-0'}`}
+              >
+                {index === 0 && <Home className='mr-1 h-4 w-4 flex-shrink-0' />}
+                {item.isCurrentPage ? (
+                  <BreadcrumbPage className='max-w-[150px] truncate'>{item.label}</BreadcrumbPage>
+                ) : (
+                  <BreadcrumbLink asChild>
+                    <Link href={item.href} className='inline-block max-w-[150px] truncate'>
+                      {item.label}
+                    </Link>
+                  </BreadcrumbLink>
+                )}
+              </BreadcrumbItem>
+              {index < breadcrumbItems.length - 1 && (
+                <BreadcrumbSeparator className='flex-shrink-0' />
               )}
-            </BreadcrumbItem>
-            {index < breadcrumbItems.length - 1 && <BreadcrumbSeparator />}
-          </React.Fragment>
-        ))}
-      </BreadcrumbList>
-    </Breadcrumb>
+            </React.Fragment>
+          ))}
+        </BreadcrumbList>
+      </Breadcrumb>
+    </div>
   );
 };
 

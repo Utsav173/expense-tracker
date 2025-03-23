@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -9,6 +9,8 @@ import {
   MoreHorizontal
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 interface EnhancedPaginationProps {
   totalRecords: number;
@@ -35,110 +37,95 @@ const EnhancedPagination: React.FC<EnhancedPaginationProps> = ({
   maxDisplayedPages = 5,
   isMobile
 }) => {
-  const totalPages = Math.ceil(totalRecords / pageSize);
+  const totalPages = useMemo(() => Math.ceil(totalRecords / pageSize), [totalRecords, pageSize]);
   const [inputPage, setInputPage] = useState(currentPage.toString());
   const [isInputFocused, setIsInputFocused] = useState(false);
 
-  // Sync input field with external page changes
   useEffect(() => {
     setInputPage(currentPage.toString());
   }, [currentPage]);
 
-  // Restrict input to numeric values only
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (/^\d*$/.test(value)) {
       setInputPage(value);
     }
-  };
+  }, []);
 
-  // Navigate on Enter key press
-  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      const pageNum = parseInt(inputPage);
-      if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= totalPages) {
+  const handlePageNavigation = useCallback(
+    (pageNum: number) => {
+      if (pageNum >= 1 && pageNum <= totalPages && pageNum !== currentPage) {
         onPageChange(pageNum);
-      } else {
-        setInputPage(currentPage.toString());
       }
-    }
-  };
+    },
+    [currentPage, onPageChange, totalPages]
+  );
 
-  // Navigate on blur (losing focus)
-  const handleInputBlur = () => {
+  const handleInputKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        const pageNum = parseInt(inputPage);
+        if (!isNaN(pageNum)) {
+          handlePageNavigation(pageNum);
+        } else {
+          setInputPage(currentPage.toString());
+        }
+      }
+    },
+    [inputPage, currentPage, handlePageNavigation]
+  );
+
+  const handleInputBlur = useCallback(() => {
     setIsInputFocused(false);
     const pageNum = parseInt(inputPage);
-    if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= totalPages) {
-      onPageChange(pageNum);
+    if (!isNaN(pageNum)) {
+      handlePageNavigation(pageNum);
     } else {
       setInputPage(currentPage.toString());
     }
-  };
+  }, [inputPage, currentPage, handlePageNavigation]);
 
-  const renderPageNumbers = () => {
+  const pagesToShow = useMemo(() => {
     const mobileMaxPages = 3;
     const actualMaxPages = isMobile ? mobileMaxPages : maxDisplayedPages;
-    let pagesToShow: (number | 'ellipsis')[] = [];
+    let pages: (number | 'ellipsis')[] = [];
 
     if (totalPages <= actualMaxPages + 2) {
-      pagesToShow = Array.from({ length: totalPages }, (_, i) => i + 1);
-    } else {
-      pagesToShow = [1];
-      let startPage = Math.max(2, currentPage - Math.floor((actualMaxPages - 2) / 2));
-      let endPage = Math.min(totalPages - 1, startPage + actualMaxPages - 3);
-
-      if (endPage === totalPages - 1) {
-        startPage = Math.max(2, endPage - (actualMaxPages - 3));
-      }
-
-      if (startPage > 2) {
-        pagesToShow.push('ellipsis');
-      }
-
-      for (let i = startPage; i <= endPage; i++) {
-        pagesToShow.push(i);
-      }
-
-      if (endPage < totalPages - 1) {
-        pagesToShow.push('ellipsis');
-      }
-
-      pagesToShow.push(totalPages);
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
     }
 
-    return pagesToShow.map((page, index) => {
-      if (page === 'ellipsis') {
-        return (
-          <div key={`ellipsis-${index}`} className='flex items-center justify-center px-2'>
-            <MoreHorizontal className='h-4 w-4 text-gray-400' />
-          </div>
-        );
-      }
+    pages.push(1);
 
-      return (
-        <button
-          key={page}
-          onClick={() => onPageChange(page)}
-          className={cn(
-            'transition-all duration-200',
-            variant === 'pill' ? 'rounded-full' : 'rounded-md',
-            'flex h-9 min-w-9 items-center justify-center',
-            page === currentPage
-              ? 'scale-105 bg-primary font-medium text-primary-foreground shadow-sm'
-              : 'bg-transparent text-gray-700 hover:bg-gray-100',
-            variant === 'minimalist' &&
-              page === currentPage &&
-              'rounded-none border-b-2 border-primary bg-transparent text-primary',
-            variant === 'minimalist' && 'hover:bg-transparent'
-          )}
-        >
-          {page}
-        </button>
-      );
-    });
-  };
+    let startPage = Math.max(2, currentPage - Math.floor((actualMaxPages - 2) / 2));
+    let endPage = Math.min(totalPages - 1, startPage + actualMaxPages - 3);
+
+    if (endPage === totalPages - 1) {
+      startPage = Math.max(2, endPage - (actualMaxPages - 3));
+    }
+
+    if (startPage > 2) {
+      pages.push('ellipsis');
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    if (endPage < totalPages - 1) {
+      pages.push('ellipsis');
+    }
+
+    pages.push(totalPages);
+
+    return pages;
+  }, [totalPages, maxDisplayedPages, isMobile, currentPage]);
 
   if (totalPages <= 1) return null;
+
+  const isFirstPage = currentPage === 1;
+  const isLastPage = currentPage === totalPages;
+  const currentStart = Math.min((currentPage - 1) * pageSize + 1, totalRecords);
+  const currentEnd = Math.min(currentPage * pageSize, totalRecords);
 
   return (
     <div
@@ -155,8 +142,7 @@ const EnhancedPagination: React.FC<EnhancedPaginationProps> = ({
             </span>
           ) : (
             <span>
-              Showing {Math.min((currentPage - 1) * pageSize + 1, totalRecords)} to{' '}
-              {Math.min(currentPage * pageSize, totalRecords)} of {totalRecords} records
+              Showing {currentStart} to {currentEnd} of {totalRecords} records
             </span>
           )}
         </div>
@@ -170,54 +156,68 @@ const EnhancedPagination: React.FC<EnhancedPaginationProps> = ({
         )}
       >
         {showFirstLast && (
-          <button
-            onClick={() => onPageChange(1)}
-            disabled={currentPage === 1}
-            className={cn(
-              'rounded-md p-2 transition-colors',
-              currentPage === 1
-                ? 'cursor-not-allowed text-gray-300'
-                : 'text-gray-700 hover:bg-gray-100'
-            )}
+          <Button
+            onClick={() => handlePageNavigation(1)}
+            disabled={isFirstPage}
+            size='icon'
+            variant='ghost'
             aria-label='First page'
           >
             <ChevronsLeft className='h-4 w-4' />
-          </button>
+          </Button>
         )}
 
-        <button
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className={cn(
-            'rounded-md p-2 transition-colors',
-            currentPage === 1
-              ? 'cursor-not-allowed text-gray-300'
-              : 'text-gray-700 hover:bg-gray-100'
-          )}
+        <Button
+          onClick={() => handlePageNavigation(currentPage - 1)}
+          disabled={isFirstPage}
+          size='icon'
+          variant='ghost'
           aria-label='Previous page'
         >
           <ChevronLeft className='h-4 w-4' />
-        </button>
+        </Button>
 
         {!isMobile || totalPages <= 5 ? (
-          <div className='flex items-center'>{renderPageNumbers()}</div>
+          <div className='flex items-center'>
+            {pagesToShow.map((page, index) =>
+              page === 'ellipsis' ? (
+                <div key={`ellipsis-${index}`} className='flex items-center justify-center px-2'>
+                  <MoreHorizontal className='h-4 w-4 text-gray-400' />
+                </div>
+              ) : (
+                <Button
+                  key={page}
+                  onClick={() => handlePageNavigation(page)}
+                  variant={page === currentPage ? 'default' : 'ghost'}
+                  className={cn(
+                    'h-9 min-w-9',
+                    variant === 'pill' && 'rounded-full',
+                    variant === 'minimalist' &&
+                      page === currentPage &&
+                      'rounded-none border-b-2 border-primary bg-transparent text-primary hover:bg-transparent'
+                  )}
+                >
+                  {page}
+                </Button>
+              )
+            )}
+          </div>
         ) : (
           <div className='relative flex items-center'>
             <div
               className={cn(
-                'flex items-center rounded-md border px-2 transition-all',
-                isInputFocused ? 'border-primary' : 'border-gray-200',
-                'h-9 min-w-12'
+                'flex h-9 min-w-12 items-center rounded-md border px-2 transition-all',
+                isInputFocused ? 'border-primary' : 'border-gray-200'
               )}
             >
-              <input
+              <Input
                 type='text'
                 value={inputPage}
                 onChange={handleInputChange}
                 onKeyDown={handleInputKeyDown}
                 onFocus={() => setIsInputFocused(true)}
                 onBlur={handleInputBlur}
-                className='w-full bg-transparent text-center outline-none'
+                className='h-7 w-8 min-w-4 border-none bg-transparent p-0 text-center focus-visible:ring-0 focus-visible:ring-offset-0'
                 aria-label='Page number'
                 placeholder='Go to'
               />
@@ -226,38 +226,30 @@ const EnhancedPagination: React.FC<EnhancedPaginationProps> = ({
           </div>
         )}
 
-        <button
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className={cn(
-            'rounded-md p-2 transition-colors',
-            currentPage === totalPages
-              ? 'cursor-not-allowed text-gray-300'
-              : 'text-gray-700 hover:bg-gray-100'
-          )}
+        <Button
+          onClick={() => handlePageNavigation(currentPage + 1)}
+          disabled={isLastPage}
+          size='icon'
+          variant='ghost'
           aria-label='Next page'
         >
           <ChevronRight className='h-4 w-4' />
-        </button>
+        </Button>
 
         {showFirstLast && (
-          <button
-            onClick={() => onPageChange(totalPages)}
-            disabled={currentPage === totalPages}
-            className={cn(
-              'rounded-md p-2 transition-colors',
-              currentPage === totalPages
-                ? 'cursor-not-allowed text-gray-300'
-                : 'text-gray-700 hover:bg-gray-100'
-            )}
+          <Button
+            onClick={() => handlePageNavigation(totalPages)}
+            disabled={isLastPage}
+            size='icon'
+            variant='ghost'
             aria-label='Last page'
           >
             <ChevronsRight className='h-4 w-4' />
-          </button>
+          </Button>
         )}
       </div>
     </div>
   );
 };
 
-export default EnhancedPagination;
+export default React.memo(EnhancedPagination);

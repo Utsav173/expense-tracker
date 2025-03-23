@@ -339,7 +339,8 @@ export const IncomeExpenseChart: React.FC<IncomeExpenseChartProps> = ({
                       <YAxis
                         tickFormatter={formatYaxis}
                         tick={{ fontSize: 12 }}
-                        tickLine={false}
+                        tickLine={true}
+                        dx={-10}
                         axisLine={{ stroke: 'hsl(var(--border))' }}
                       />
                       <Tooltip
@@ -470,9 +471,10 @@ export const IncomeExpenseChart: React.FC<IncomeExpenseChartProps> = ({
                         axisLine={{ stroke: 'hsl(var(--border))' }}
                       />
                       <YAxis
-                        tickFormatter={(value) => `$${value / 1000}k`}
+                        tickFormatter={formatYaxis}
                         tick={{ fontSize: 12 }}
-                        tickLine={false}
+                        tickLine={true}
+                        dx={-10}
                         axisLine={{ stroke: 'hsl(var(--border))' }}
                       />
                       <Tooltip
