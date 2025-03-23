@@ -6,7 +6,8 @@ export const useInvalidateQueries = () => {
   const invalidate = async (queryKeys: any[]) => {
     await queryClient.invalidateQueries({
       queryKey: queryKeys,
-      refetchType: 'all'
+      refetchType: 'all',
+      type: 'all'
     });
   };
 
