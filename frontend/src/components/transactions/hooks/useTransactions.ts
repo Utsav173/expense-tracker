@@ -55,7 +55,7 @@ export const useTransactions = (
     sortOrder: 'desc'
   });
 
-  const [debouncedSearchQuery] = useDebounce(filters.searchQuery, 300);
+  const [debouncedSearchQuery] = useDebounce(filters.searchQuery, 600);
 
   const {
     data: transactionsData,

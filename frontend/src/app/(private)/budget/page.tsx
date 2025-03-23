@@ -25,7 +25,7 @@ const BudgetPage = () => {
   const { showError } = useToast();
 
   const [search, setSearch] = useState('');
-  const [debouncedSearch] = useDebounce(search, 300);
+  const [debouncedSearch] = useDebounce(search, 600);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [tempDateRange, setTempDateRange] = useState<DateRange | undefined>();
 

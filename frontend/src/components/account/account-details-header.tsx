@@ -9,27 +9,18 @@ import ShareAccountModal from '../modals/share-account-modal';
 import { ArrowLeftRight, History, Share } from 'lucide-react';
 import AddTransactionModal from '../modals/add-transaction-modal';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 
 interface AccountDetailsHeaderProps {
   account: ApiResponse<AccountDetails> | undefined;
   isLoading: boolean;
+  refetchData: () => Promise<void>;
 }
 export const AccountDetailsHeader: React.FC<AccountDetailsHeaderProps> = ({
   account,
-  isLoading
+  isLoading,
+  refetchData
 }) => {
   const isMobile = useIsMobile();
-  const invalidate = useInvalidateQueries();
-  const refetchData = async () => {
-    await invalidate([
-      'account',
-      'customAnalytics',
-      'incomeExpenseChart',
-      'accountTransactions',
-      'categories'
-    ]);
-  };
 
   return (
     <section className='flex flex-col items-center justify-between gap-4 rounded-xl bg-gradient-to-r from-background to-muted p-6 shadow-sm md:flex-row'>
@@ -69,7 +60,9 @@ export const AccountDetailsHeader: React.FC<AccountDetailsHeaderProps> = ({
               </Button>
             </Link>
             <AddTransactionModal
-              onTransactionAdded={refetchData}
+              onTransactionAdded={async () => {
+                await refetchData();
+              }}
               accountId={account.id}
               triggerButton={
                 <Button

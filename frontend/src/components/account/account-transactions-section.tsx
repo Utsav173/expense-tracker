@@ -9,7 +9,6 @@ import { Category, TransactionsResponse } from '@/lib/types';
 interface AccountTransactionsSectionProps {
   transactionsData: TransactionsResponse | undefined;
   isTransactionLoading: boolean;
-  refetchTransactions: () => void;
   filters: any;
   handleSort: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
   page: number;
@@ -21,13 +20,12 @@ interface AccountTransactionsSectionProps {
   handleDateRangeSelect: (range: any) => void;
   handleClearDateRange: () => void;
   handleResetFilters: () => void;
-  queryKey: any[];
+  refetchData: () => Promise<void>;
 }
 
 export const AccountTransactionsSection: React.FC<AccountTransactionsSectionProps> = ({
   transactionsData,
   isTransactionLoading,
-  refetchTransactions,
   filters,
   handleSort,
   page,
@@ -39,7 +37,7 @@ export const AccountTransactionsSection: React.FC<AccountTransactionsSectionProp
   handleDateRangeSelect,
   handleClearDateRange,
   handleResetFilters,
-  queryKey
+  refetchData
 }) => {
   return (
     <section className='rounded-xl bg-white shadow-sm'>
@@ -74,7 +72,6 @@ export const AccountTransactionsSection: React.FC<AccountTransactionsSectionProp
         ) : (
           <TransactionTable
             transactions={transactionsData.transactions}
-            onUpdate={refetchTransactions}
             onSort={handleSort}
             sortBy={filters.sortBy}
             sortOrder={filters.sortOrder}
@@ -82,7 +79,7 @@ export const AccountTransactionsSection: React.FC<AccountTransactionsSectionProp
             totalRecords={transactionsData.totalCount}
             page={page}
             handlePageChange={handlePageChange}
-            queryKey={queryKey}
+            refetchData={refetchData}
             key={'account-transactions'}
           />
         )}

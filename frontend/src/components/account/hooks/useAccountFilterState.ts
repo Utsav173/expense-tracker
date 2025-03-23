@@ -64,7 +64,7 @@ export const useAccountFilterState = () => {
         : undefined
   });
 
-  const [debouncedSearchQuery] = useDebounce(filters.searchQuery, 300);
+  const [debouncedSearchQuery] = useDebounce(filters.searchQuery, 600);
 
   // Safe URL update that prevents cycles
   const updateURL = useCallback(

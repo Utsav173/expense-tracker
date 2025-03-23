@@ -41,7 +41,6 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
     transactionsData,
     isTransactionLoading,
     transactionError,
-    refetchTransactions,
     filters,
     setSearchQuery,
     handleCategoryChange,
@@ -52,7 +51,8 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
     page,
     handlePageChange,
     categories,
-    handleResetFilters
+    handleResetFilters,
+    refetchData
   } = useAccountDetails(id, parsedSearchParams);
 
   const transformedChartData = useMemo(() => {
@@ -87,7 +87,11 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
 
   return (
     <div className='mx-auto w-full max-w-7xl space-y-6 p-4 max-sm:p-0 md:p-6 lg:p-8'>
-      <AccountDetailsHeader account={account} isLoading={isAccountLoading} />
+      <AccountDetailsHeader
+        account={account}
+        isLoading={isAccountLoading}
+        refetchData={refetchData}
+      />
 
       <AnalyticsCards
         analytics={customAnalytics}
@@ -108,7 +112,6 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
       <AccountTransactionsSection
         transactionsData={transactionsData ?? undefined}
         isTransactionLoading={isTransactionLoading}
-        refetchTransactions={refetchTransactions}
         filters={filters}
         handleSort={handleSort}
         page={page}
@@ -120,13 +123,7 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
         handleDateRangeSelect={handleDateRangeSelect}
         handleClearDateRange={handleClearDateRange}
         handleResetFilters={handleResetFilters}
-        queryKey={[
-          'account',
-          'customAnalytics',
-          'incomeExpenseChart',
-          'accountTransactions',
-          'categories'
-        ]}
+        refetchData={refetchData}
       />
     </div>
   );

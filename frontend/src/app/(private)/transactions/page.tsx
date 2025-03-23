@@ -19,14 +19,12 @@ import { Filter, Import, X } from 'lucide-react';
 import { accountGetDropdown } from '@/lib/endpoints/accounts';
 import { categoryGetAll } from '@/lib/endpoints/category';
 import { useToast } from '@/lib/hooks/useToast';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { AccountDropdown, Category } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import DateRangePicker from '@/components/date-range-picker';
 import { useTransactions } from '@/components/transactions/hooks/useTransactions';
 
 const TransactionsPage = () => {
-  const isMobile = useIsMobile();
   const { showError } = useToast();
   const [filtersExpanded, setFiltersExpanded] = useState(false);
 
@@ -254,7 +252,6 @@ const TransactionsPage = () => {
         <div className='my-2 mb-16 sm:mb-0'>
           <TransactionTable
             transactions={transactionsData.transactions}
-            onUpdate={refetch}
             onSort={handleSort}
             sortBy={filters.sortBy}
             sortOrder={filters.sortOrder}
@@ -262,7 +259,9 @@ const TransactionsPage = () => {
             totalRecords={transactionsData.totalCount}
             page={page}
             handlePageChange={handlePageChange}
-            queryKey={['transactions']}
+            refetchData={async () => {
+              await refetch();
+            }}
             key={'transactionspage'}
           />
         </div>

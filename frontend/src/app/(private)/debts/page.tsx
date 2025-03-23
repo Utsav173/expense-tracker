@@ -30,7 +30,7 @@ const DebtsPage = () => {
   const { showError } = useToast();
 
   const [search, setSearch] = useState('');
-  const [debouncedSearch] = useDebounce(search, 300);
+  const [debouncedSearch] = useDebounce(search, 600);
   const [type, setType] = useState<string | undefined>(undefined);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 

@@ -31,7 +31,7 @@ export const useCategoryFilters = () => {
     sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'asc'
   });
 
-  const [debouncedSearchQuery] = useDebounce(filters.searchQuery, 300);
+  const [debouncedSearchQuery] = useDebounce(filters.searchQuery, 600);
 
   // Safe URL update that prevents cycles
   const updateURL = useCallback(

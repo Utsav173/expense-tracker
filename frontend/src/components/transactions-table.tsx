@@ -13,11 +13,9 @@ import { cn, formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
 import CommonTable from './ui/CommonTable';
 import { useMutation } from '@tanstack/react-query';
-import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 
 interface TransactionTableProps {
   transactions: TransactionType[] | undefined;
-  onUpdate: () => void;
   onSort: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
   sortBy: string;
   sortOrder: 'asc' | 'desc';
@@ -25,12 +23,11 @@ interface TransactionTableProps {
   totalRecords: number;
   page: number;
   handlePageChange: (page: number) => void;
-  queryKey: any[];
+  refetchData: () => Promise<void>;
 }
 
 const TransactionTable = ({
   transactions,
-  onUpdate,
   onSort,
   sortBy,
   sortOrder,
@@ -38,18 +35,16 @@ const TransactionTable = ({
   totalRecords,
   page,
   handlePageChange,
-  queryKey
+  refetchData
 }: TransactionTableProps) => {
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionType | null>(null);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const { showSuccess, showError } = useToast();
 
-  const invalidate = useInvalidateQueries();
-
   const deleteMutation = useMutation({
     mutationFn: transactionDelete,
     onSuccess: async () => {
-      await invalidate(queryKey);
+      await refetchData();
       showSuccess('Transaction deleted successfully!');
     },
     onError: (error: any) => {
@@ -58,7 +53,7 @@ const TransactionTable = ({
   });
 
   const handleDelete = async (id: string) => {
-    deleteMutation.mutate(id);
+    deleteMutation.mutateAsync(id);
   };
 
   const columns = useMemo<ColumnDef<TransactionType>[]>(
@@ -173,8 +168,7 @@ const TransactionTable = ({
         onOpenChange={setIsUpdateModalOpen}
         transaction={selectedTransaction}
         onUpdate={async () => {
-          await invalidate(queryKey);
-          await onUpdate();
+          await refetchData();
         }}
       />
     </>
