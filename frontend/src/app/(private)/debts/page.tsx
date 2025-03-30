@@ -23,6 +23,8 @@ import { debtColumns } from '@/components/debt/debt-columns';
 import AddDebtModal from '@/components/modals/add-debt-modal';
 import ComingSoon from '@/components/ui/coming-soon';
 
+type DebtType = '' | 'given' | 'taken' | 'all' | undefined;
+
 const DebtsPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -31,7 +33,7 @@ const DebtsPage = () => {
 
   const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebounce(search, 600);
-  const [type, setType] = useState<string | undefined>(undefined);
+  const [type, setType] = useState<DebtType>(undefined);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const { page, handlePageChange } = usePagination(

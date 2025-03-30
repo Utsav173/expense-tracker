@@ -1,5 +1,7 @@
 'use client';
 
+import { ApiResponse } from '@/lib/types';
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +20,11 @@ import { useMutation } from '@tanstack/react-query';
 import { interestCreate } from '@/lib/endpoints/debt';
 import { useToast } from '@/lib/hooks/useToast';
 
+interface InterestResponse {
+  interest: number;
+  totalAmount: number;
+}
+
 const InterestCalculator = () => {
   const [result, setResult] = useState<{ interest: number; totalAmount: number } | null>(null);
   const { showError } = useToast();
@@ -34,12 +41,18 @@ const InterestCalculator = () => {
     }
   });
 
-  const calculateInterestMutation = useMutation({
+  const calculateInterestMutation = useMutation<
+    ApiResponse<InterestResponse>,
+    Error,
+    InterestFormSchema
+  >({
     mutationFn: (data: InterestFormSchema) => interestCreate(data),
     onSuccess: (data) => {
-      setResult({ interest: data.interest, totalAmount: data.totalAmount });
+      if (data) {
+        setResult({ interest: data.interest, totalAmount: data.totalAmount });
+      }
     },
-    onError: (error: any) => {
+    onError: (error) => {
       showError(error.message);
       setResult(null);
     }
