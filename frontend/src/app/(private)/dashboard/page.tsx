@@ -1,41 +1,25 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { accountGetDashboard } from '@/lib/endpoints/accounts';
+import { accountGetDashboard, accountGetDropdown } from '@/lib/endpoints/accounts';
 import { goalGetAll } from '@/lib/endpoints/goal';
 import Loader from '@/components/ui/loader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { DashboardData, SavingGoal, ApiResponse } from '@/lib/types';
+import { DashboardData, SavingGoal, ApiResponse, AccountDropdown } from '@/lib/types';
 import { useToast } from '@/lib/hooks/useToast';
 import { formatCurrency } from '@/lib/utils';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import {
-  ComposedChart,
-  Bar,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
-} from 'recharts';
-import { format } from 'date-fns';
 import { BudgetProgress } from '@/components/dashboard/budget-progress';
 import { GoalProgress } from '@/components/dashboard/goal-progress';
 import { InvestmentSummaryCard } from '@/components/dashboard/investment-summary-card';
 import { DebtSummaryCard } from '@/components/dashboard/debt-summary-card';
+import TrendChart from '@/components/dashboard/trend-chart';
 import NoData from '@/components/ui/no-data';
-import React from 'react';
-
-const chartConfig = {
-  income: { label: 'Income', color: 'hsl(142, 76%, 36%)' },
-  expense: { label: 'Expense', color: 'hsl(0, 84%, 60%)' },
-  balance: { label: 'Balance', color: 'hsl(214, 100%, 49%)' }
-};
+import React, { useMemo } from 'react'; // Removed useState
 
 const DashboardPage = () => {
   const { showError } = useToast();
+  // Removed dateRange state
 
   const {
     data: dashboardApiData,
@@ -59,14 +43,35 @@ const DashboardPage = () => {
     staleTime: 15 * 60 * 1000
   });
 
-  const isLoading = isDashboardLoading || isGoalsLoading;
+  const {
+    data: accountsDropdownData,
+    isLoading: isAccountsDropdownLoading,
+    error: accountsDropdownError
+  } = useQuery<ApiResponse<AccountDropdown[]>>({
+    queryKey: ['accountsDropdownDashboard'],
+    queryFn: () => accountGetDropdown(),
+    retry: false,
+    staleTime: 15 * 60 * 1000
+  });
 
-  if (isLoading && !dashboardApiData) {
+  const accountIdToCurrencyMap = useMemo(() => {
+    const map = new Map<string, string>();
+    (accountsDropdownData || []).forEach((acc) => {
+      map.set(acc.id, acc.currency);
+    });
+    return map;
+  }, [accountsDropdownData]);
+
+  const isLoading = isDashboardLoading || isGoalsLoading || isAccountsDropdownLoading;
+
+  if (isLoading && !dashboardApiData && !accountsDropdownData) {
     return <Loader />;
   }
 
   if (dashboardError) showError(`Dashboard Error: ${(dashboardError as Error).message}`);
   if (goalsError) showError(`Goals Error: ${(goalsError as Error).message}`);
+  if (accountsDropdownError)
+    showError(`Accounts Dropdown Error: ${(accountsDropdownError as Error).message}`);
 
   const dashboardData: DashboardData = dashboardApiData || {
     accountsInfo: [],
@@ -84,37 +89,6 @@ const DashboardPage = () => {
     overallBalance: 0,
     overallIncomeChange: 0,
     overallExpenseChange: 0
-  };
-
-  const formatCombinedChartData = (
-    incomeData: { x: number; y: number }[] = [],
-    expenseData: { x: number; y: number }[] = [],
-    balanceData: { x: number; y: number }[] = []
-  ) => {
-    const combinedMap = new Map<
-      string,
-      { date: string; income?: number; expense?: number; balance?: number }
-    >();
-    const processData = (
-      data: { x: number; y: number }[],
-      key: 'income' | 'expense' | 'balance'
-    ) => {
-      (data || []).forEach((point) => {
-        const date = new Date(point.x * 1000);
-        if (isNaN(date.getTime())) return;
-        const dateStr = format(date, 'MMM dd');
-        if (!combinedMap.has(dateStr)) combinedMap.set(dateStr, { date: dateStr });
-        combinedMap.get(dateStr)![key] = point.y;
-      });
-    };
-    processData(incomeData, 'income');
-    processData(expenseData, 'expense');
-    processData(balanceData, 'balance');
-    return Array.from(combinedMap.values()).sort(
-      (a, b) =>
-        new Date(`2000-${a.date.replace(' ', '-')}`).getTime() -
-        new Date(`2000-${b.date.replace(' ', '-')}`).getTime()
-    );
   };
 
   const renderChangeIndicator = (change: number | undefined | null) => {
@@ -135,14 +109,6 @@ const DashboardPage = () => {
     );
   };
 
-  const combinedChartData = formatCombinedChartData(
-    dashboardData.incomeChartData,
-    dashboardData.expenseChartData,
-    dashboardData.balanceChartData
-  );
-
-  const formatYAxis = (value: number) => formatCurrency(value, 'INR');
-
   return (
     <div className='space-y-6 p-4 md:p-6'>
       <div className='flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center'>
@@ -151,9 +117,19 @@ const DashboardPage = () => {
 
       {isLoading && !dashboardApiData ? (
         <Loader />
+      ) : dashboardData.totalTransaction < 4 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Insufficient Data</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>You do not have enough data to visualize dashboard...</p>
+          </CardContent>
+        </Card>
       ) : (
         <>
           <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+            {/* Summary Cards remain the same */}
             <Card>
               <CardHeader className='pb-2'>
                 <CardTitle className='text-sm font-medium'>Overall Income</CardTitle>
@@ -198,80 +174,13 @@ const DashboardPage = () => {
             </Card>
           </div>
 
+          {/* Render the new TrendChart component */}
           <div className='grid grid-cols-1 gap-6 lg:grid-cols-1'>
-            <Card className='lg:col-span-1'>
-              <CardHeader>
-                <CardTitle>Income, Expense & Balance Trend</CardTitle>
-                <CardDescription>Daily activity overview (all time)</CardDescription>
-              </CardHeader>
-              <CardContent className='pl-2'>
-                {combinedChartData.length > 0 ? (
-                  <ResponsiveContainer width='100%' height={350}>
-                    <ComposedChart
-                      data={combinedChartData}
-                      margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray='3 3' vertical={false} />
-                      <XAxis dataKey='date' fontSize={12} tickLine={false} axisLine={false} />
-                      <YAxis
-                        yAxisId='left'
-                        fontSize={12}
-                        tickLine={false}
-                        axisLine={false}
-                        tickFormatter={formatYAxis}
-                      />
-                      <YAxis
-                        yAxisId='right'
-                        orientation='right'
-                        fontSize={12}
-                        tickLine={false}
-                        axisLine={false}
-                        tickFormatter={formatYAxis}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: 'white',
-                          border: '1px solid #ccc',
-                          borderRadius: '4px',
-                          fontSize: '12px'
-                        }}
-                        formatter={(value: number, name: string) => [formatCurrency(value), name]}
-                      />
-                      <Legend wrapperStyle={{ fontSize: '12px' }} />
-                      <Bar
-                        yAxisId='left'
-                        dataKey='income'
-                        name='Income'
-                        fill={chartConfig.income.color}
-                        radius={[4, 4, 0, 0]}
-                        barSize={15}
-                      />
-                      <Bar
-                        yAxisId='left'
-                        dataKey='expense'
-                        name='Expense'
-                        fill={chartConfig.expense.color}
-                        radius={[4, 4, 0, 0]}
-                        barSize={15}
-                      />
-                      <Line
-                        yAxisId='right'
-                        type='monotone'
-                        dataKey='balance'
-                        name='Balance'
-                        stroke={chartConfig.balance.color}
-                        strokeWidth={2}
-                        dot={false}
-                      />
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className='flex h-[350px] items-center justify-center'>
-                    <NoData message='No transaction data available for chart.' />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <TrendChart
+              incomeData={dashboardData.incomeChartData}
+              expenseData={dashboardData.expenseChartData}
+              balanceData={dashboardData.balanceChartData}
+            />
           </div>
 
           <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
@@ -286,15 +195,34 @@ const DashboardPage = () => {
               </CardHeader>
               <CardContent className='scrollbar h-[250px] overflow-y-auto'>
                 {dashboardData.accountsInfo.length ? (
-                  <ul className='space-y-3'>
-                    {dashboardData.accountsInfo.map((accountInfo: any) => (
-                      <li key={accountInfo.id} className='flex justify-between text-sm'>
-                        <span>{accountInfo.name}</span>
-                        <span className='font-medium'>
-                          {formatCurrency(accountInfo.balance, accountInfo.currency)}
-                        </span>
-                      </li>
-                    ))}
+                  <ul className='space-y-4'>
+                    {dashboardData.accountsInfo.map((accountInfo: any) => {
+                      const currency = accountIdToCurrencyMap.get(accountInfo.id) || 'INR';
+                      return (
+                        <li key={accountInfo.id} className='text-sm'>
+                          <div className='mb-1 flex justify-between'>
+                            <span className='font-semibold'>{accountInfo.name}</span>
+                            <span className='font-bold'>
+                              {formatCurrency(accountInfo.balance, currency)}
+                            </span>
+                          </div>
+                          <div className='flex justify-between text-xs text-muted-foreground'>
+                            <span>
+                              Income:{' '}
+                              <span className='text-green-600'>
+                                {formatCurrency(accountInfo.income ?? 0, currency)}
+                              </span>
+                            </span>
+                            <span>
+                              Expense:{' '}
+                              <span className='text-red-600'>
+                                {formatCurrency(accountInfo.expense ?? 0, currency)}
+                              </span>
+                            </span>
+                          </div>
+                        </li>
+                      );
+                    })}
                   </ul>
                 ) : (
                   <NoData message='No accounts found. Add one!' icon='inbox' />
@@ -310,25 +238,33 @@ const DashboardPage = () => {
                 <div className='flex justify-between'>
                   <span>Highest Income:</span>{' '}
                   <span className='font-medium text-green-600'>
-                    {formatCurrency(dashboardData.mostExpensiveIncome ?? 0)}
+                    {dashboardData.mostExpensiveIncome
+                      ? formatCurrency(dashboardData.mostExpensiveIncome)
+                      : 'N/A'}
                   </span>
                 </div>
                 <div className='flex justify-between'>
                   <span>Lowest Income:</span>{' '}
                   <span className='font-medium text-green-500'>
-                    {formatCurrency(dashboardData.cheapestIncome ?? 0)}
+                    {dashboardData.cheapestIncome
+                      ? formatCurrency(dashboardData.cheapestIncome)
+                      : 'N/A'}
                   </span>
                 </div>
                 <div className='flex justify-between'>
                   <span>Highest Expense:</span>{' '}
                   <span className='font-medium text-red-600'>
-                    {formatCurrency(dashboardData.mostExpensiveExpense ?? 0)}
+                    {dashboardData.mostExpensiveExpense
+                      ? formatCurrency(dashboardData.mostExpensiveExpense)
+                      : 'N/A'}
                   </span>
                 </div>
                 <div className='flex justify-between'>
                   <span>Lowest Expense:</span>{' '}
                   <span className='font-medium text-red-500'>
-                    {formatCurrency(dashboardData.cheapestExpense ?? 0)}
+                    {dashboardData.cheapestExpense
+                      ? formatCurrency(dashboardData.cheapestExpense)
+                      : 'N/A'}
                   </span>
                 </div>
                 {dashboardData?.transactionsCountByAccount &&
