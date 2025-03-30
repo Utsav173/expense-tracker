@@ -129,6 +129,10 @@ body {
     background-color: #484845;
   }
 
+  ::-webkit-scrollbar-button {
+    display: none;
+  }
+
   * {
     scrollbar-width: thin;
     scrollbar-color: #484845 transparent;

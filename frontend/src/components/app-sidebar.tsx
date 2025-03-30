@@ -25,17 +25,16 @@ import {
 } from '@/components/ui/sidebar';
 import { useAuth } from '@/lib/hooks/useAuth';
 
-// This is sample data.
 const data: any[] = [
-  {
-    title: 'Accounts',
-    url: '/',
-    icon: Wallet
-  },
   {
     title: 'Dashboard',
     url: '/dashboard',
     icon: LayoutDashboard
+  },
+  {
+    title: 'Accounts',
+    url: '/',
+    icon: Wallet
   },
   {
     title: 'Transactions',

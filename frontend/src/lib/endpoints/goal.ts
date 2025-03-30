@@ -1,32 +1,47 @@
 import { Pagination, SavingGoal, ApiResponse } from '../types';
 import apiFetch from '../api-client';
 
-export const goalCreate = (body: any, successMessage?: string, errorMessage?: string) =>
+export const goalCreate = (
+  body: { name: string; targetAmount: number; targetDate?: Date },
+  successMessage?: string,
+  errorMessage?: string
+): Promise<ApiResponse<SavingGoal>> =>
   apiFetch('/goal', 'POST', body, undefined, successMessage, errorMessage);
 
 export const goalGetAll = (
-  params: any,
+  params: { page?: number; limit?: number },
   successMessage?: string,
   errorMessage?: string
-): Promise<ApiResponse<{ data: SavingGoal[]; pagination: Pagination }>> => // Added explicit type return here
+): Promise<ApiResponse<{ data: SavingGoal[]; pagination: Pagination }>> =>
   apiFetch('/goal/all', 'GET', undefined, { params }, successMessage, errorMessage);
 
-export const goalUpdate = (id: string, body: any, successMessage?: string, errorMessage?: string) =>
+export const goalUpdate = (
+  id: string,
+  body: { name?: string; targetAmount?: number; savedAmount?: number; targetDate?: Date },
+  successMessage?: string,
+  errorMessage?: string
+): Promise<ApiResponse<{ message: string; id: string }>> =>
   apiFetch(`/goal/${id}`, 'PUT', body, undefined, successMessage, errorMessage);
 
-export const goalDelete = (id: string, successMessage?: string, errorMessage?: string) =>
+export const goalDelete = (
+  id: string,
+  successMessage?: string,
+  errorMessage?: string
+): Promise<ApiResponse<{ message: string }>> =>
   apiFetch(`/goal/${id}`, 'DELETE', undefined, undefined, successMessage, errorMessage);
 
 export const goalAddAmount = (
   id: string,
-  body: any,
+  body: { amount: number },
   successMessage?: string,
   errorMessage?: string
-) => apiFetch(`/goal/${id}/add-amount`, 'PUT', body, undefined, successMessage, errorMessage);
+): Promise<ApiResponse<{ message: string; id: string }>> =>
+  apiFetch(`/goal/${id}/add-amount`, 'PUT', body, undefined, successMessage, errorMessage);
 
 export const goalWithdrawAmount = (
   id: string,
-  body: any,
+  body: { amount: number },
   successMessage?: string,
   errorMessage?: string
-) => apiFetch(`/goal/${id}/withdraw-amount`, 'PUT', body, undefined, successMessage, errorMessage);
+): Promise<ApiResponse<{ message: string; id: string }>> =>
+  apiFetch(`/goal/${id}/withdraw-amount`, 'PUT', body, undefined, successMessage, errorMessage);

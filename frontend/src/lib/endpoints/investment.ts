@@ -1,16 +1,16 @@
 import apiFetch from '../api-client';
-import { Investment, ApiResponse } from '../types';
+import { Investment, ApiResponse, PortfolioItem, PortfolioSummary, Pagination } from '../types';
 
 export const investmentCreate = (body: any, successMessage?: string, errorMessage?: string) =>
   apiFetch('/investment', 'POST', body, undefined, successMessage, errorMessage);
 
 export const investmentGetAll = (
-  id: string,
-  params: any,
+  accountId: string,
+  params: { page?: number; limit?: number },
   successMessage?: string,
   errorMessage?: string
-): Promise<ApiResponse<{ data: Investment[]; pagination: any }>> => // adding response here for inference
-  apiFetch(`/investment/${id}`, 'GET', undefined, { params }, successMessage, errorMessage);
+): Promise<ApiResponse<{ data: Investment[]; pagination: Pagination }>> =>
+  apiFetch(`/investment/${accountId}`, 'GET', undefined, { params }, successMessage, errorMessage);
 
 export const investmentUpdate = (
   id: string,
@@ -26,15 +26,15 @@ export const investmentGetDetails = (
   id: string,
   successMessage?: string,
   errorMessage?: string
-): Promise<ApiResponse<Investment>> => // explicitly set type
+): Promise<ApiResponse<Investment>> =>
   apiFetch(`/investment/details/${id}`, 'GET', undefined, undefined, successMessage, errorMessage);
 
 export const investmentUpdateDividend = (
   id: string,
-  body: any,
+  body: { dividend: number },
   successMessage?: string,
   errorMessage?: string
-) =>
+): Promise<ApiResponse<{ message: string; id: string }>> =>
   apiFetch(
     `/investment/${id}/update-divident`,
     'PUT',
@@ -44,7 +44,10 @@ export const investmentUpdateDividend = (
     errorMessage
   );
 
-export const investmentGetPortfolio = (successMessage?: string, errorMessage?: string) =>
+export const investmentGetPortfolio = (
+  successMessage?: string,
+  errorMessage?: string
+): Promise<ApiResponse<PortfolioItem[]>> =>
   apiFetch('/investment/portfolio', 'GET', undefined, undefined, successMessage, errorMessage);
 
 export const investmentStockSearch = (
@@ -66,4 +69,17 @@ export const investmentStockPrice = (
     undefined,
     successMessage,
     errorMessage
+  );
+
+export const investmentGetPortfolioSummary = (
+  successMessage?: string,
+  errorMessage?: string
+): Promise<ApiResponse<PortfolioSummary>> =>
+  apiFetch(
+    '/investment/portfolio-summary',
+    'GET',
+    undefined,
+    undefined,
+    successMessage,
+    errorMessage || 'Failed to fetch portfolio summary'
   );

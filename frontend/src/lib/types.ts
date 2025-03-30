@@ -213,11 +213,11 @@ export interface DashboardData {
     id: string;
     name: string;
     balance: number;
-    income: number | null; // Make optional, as in initial stage it may contains NULL values.
+    income: number | null;
     expense: number | null;
-    currency: string; //added explicitly.
+    currency: string;
   }[];
-  transactionsCountByAccount: Record<string, number>; // Object with account names as keys, counts as values
+  transactionsCountByAccount: Record<string, number>;
   totalTransaction: number;
   mostExpensiveExpense: number | null;
   cheapestExpense: number | null;
@@ -282,3 +282,56 @@ export type TransactionsResponse = ApiResponse<{
   currentPage: number;
   pageSize: number;
 }>;
+
+export interface CategorySpending {
+  categoryId: string;
+  categoryName: string;
+  totalAmount: number;
+  percentage: number;
+}
+
+export interface BudgetSummaryItem {
+  category: string;
+  categoryName: string;
+  budgetedAmount: number;
+  actualSpend: number;
+}
+
+export interface PortfolioItem {
+  accountName: string;
+  currency: string;
+  totalInvestment: number;
+  totalDividend: number;
+  totalShares: number;
+}
+
+export interface PortfolioSummary {
+  totalInvestedAmount: number;
+  currentMarketValue: number;
+  totalDividends: number;
+  overallGainLoss: number;
+  overallGainLossPercentage: number;
+  numberOfAccounts: number;
+  numberOfHoldings: number;
+  currency: string;
+  valueIsEstimate: boolean;
+}
+
+export interface StockSearchResult {
+  symbol: string;
+  name: string;
+  exchange: string;
+  type: string;
+}
+
+export interface StockPriceResult {
+  symbol: string;
+  price: number | null;
+  change: number | null;
+  changePercent: number | null;
+  exchange: string;
+  currency: string;
+  companyName: string;
+  marketState: string;
+  regularMarketTime: string | null;
+}

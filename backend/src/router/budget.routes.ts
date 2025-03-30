@@ -165,7 +165,7 @@ budgetRouter.get('/summary', authMiddleware, async (c) => {
         JOIN
             category c ON b.category = c.id
         WHERE
-            b.userId = ${userId} AND b.month = ${monthValue} AND b.year = ${yearValue}
+            b."userId" = ${userId} AND b.month = ${monthValue} AND b.year = ${yearValue}
          GROUP BY
               b.category, c.name, b.amount
         ORDER BY

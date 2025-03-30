@@ -48,8 +48,18 @@ export const accountGetStatement = (
 ) =>
   apiFetch(`/accounts/${id}/statement`, 'GET', undefined, { params }, successMessage, errorMessage);
 
-export const accountGetDashboard = (): Promise<ApiResponse<DashboardData>> => // Use the new type!
-  apiFetch('/accounts/dashboard', 'GET', undefined, undefined, '', 'Failed to get dashboard');
+export const accountGetDashboard = (
+  successMessage?: string,
+  errorMessage?: string
+): Promise<ApiResponse<DashboardData>> =>
+  apiFetch(
+    '/accounts/dashboard',
+    'GET',
+    undefined,
+    undefined,
+    successMessage,
+    errorMessage || 'Failed to get dashboard data'
+  );
 
 export const accountGetCustomAnalytics = (
   id: string,
