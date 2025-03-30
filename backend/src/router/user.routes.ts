@@ -366,7 +366,7 @@ userRouter.post('/logout', authMiddleware, async (c) => {
 });
 
 // POST /hc - Health check route (returns a simple message)
-userRouter.post('/hc', (c) => {
+userRouter.get('/hc', (c) => {
   return c.json({
     message: 'Hello Health Chekkers!',
   });
