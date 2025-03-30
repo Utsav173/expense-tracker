@@ -160,7 +160,6 @@ This is the backend service for the Expense Tracker application, built with Bun.
 
 The API documentation is available in a Postman collection: [`expense-backend-api.collection.json`](./expense-backend-api.collection.json).  You can import this file into Postman to explore the API endpoints.
 
-*Also Consider generating the API DOCS using next.js app inside `api-docs` folder*
 
 ## Scripts
 
@@ -187,7 +186,6 @@ The API documentation is available in a Postman collection: [`expense-backend-ap
     * **Rate Limiting:**  Implement rate limiting to prevent abuse (e.g., brute-force login attempts).  *Hono has middleware for this.*
 *   **Testing:**  *Add information about testing.  Do you have unit tests, integration tests, or end-to-end tests?  How can users run them?*
 *   **Deployment:** *Provide instructions or links to documentation on how to deploy the backend to a production environment (e.g., Vercel, Render, AWS, etc.).  Include any specific configuration steps.*
-* **Documentation:** Update `api-docs`
 
 ## Contributing
 

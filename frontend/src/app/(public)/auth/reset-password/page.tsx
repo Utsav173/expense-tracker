@@ -7,15 +7,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/lib/hooks/useToast';
 import { authResetPassword } from '@/lib/endpoints/auth';
-import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
 
 const resetPasswordSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters long').max(255),
-  resetPasswordToken: z.string()
+  resetPasswordToken: z.string().min(1, 'Reset token is missing')
 });
 
 type ResetPasswordSchemaType = z.infer<typeof resetPasswordSchema>;
@@ -30,7 +29,8 @@ const ResetPasswordPage = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors }
+    formState: { errors },
+    setValue
   } = useForm<ResetPasswordSchemaType>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
@@ -39,15 +39,21 @@ const ResetPasswordPage = () => {
   });
 
   useEffect(() => {
-    if (!token) {
+    if (token) {
+      setValue('resetPasswordToken', token);
+    } else if (!token && !isLoading) {
       router.replace('/auth/login');
-      showError('No Token Found, Try Again!');
+      showError('Invalid or missing reset token.');
     }
-  }, [token, router, showError]);
+  }, [token, router, showError, setValue, isLoading]);
 
   const handleResetPassword = async (data: ResetPasswordSchemaType) => {
+    if (!data.resetPasswordToken) {
+      showError('Reset token is missing.');
+      return;
+    }
+    setIsLoading(true);
     try {
-      setIsLoading(true);
       await authResetPassword(data, 'Password updated', 'Failed to reset password');
       showSuccess('Password Reset Successfully');
       router.push('/auth/login');
@@ -57,6 +63,10 @@ const ResetPasswordPage = () => {
       setIsLoading(false);
     }
   };
+
+  if (!token) {
+    return null;
+  }
 
   return (
     <Card className='w-full border-0 p-0 shadow-none'>
@@ -68,15 +78,26 @@ const ResetPasswordPage = () => {
       <CardContent className='space-y-6 p-0 pb-4'>
         <form onSubmit={handleSubmit(handleResetPassword)} className='space-y-4'>
           <div>
-            <Input
-              type='password'
+            <label className='text-sm font-medium text-gray-700' htmlFor='password'>
+              New Password
+            </label>
+            {/* Use PasswordInput here */}
+            <PasswordInput
+              id='password'
               placeholder='New Password'
               {...register('password')}
-              className='w-full'
+              className='mt-1 w-full' // Added margin-top
               disabled={isLoading}
             />
-            {errors.password && <p className='text-sm text-red-500'>{errors.password.message}</p>}
+            {errors.password && (
+              <p className='py-1 text-xs text-red-500'>{errors.password.message}</p>
+            )}
           </div>
+          {/* Hidden input for the token */}
+          <input type='hidden' {...register('resetPasswordToken')} />
+          {errors.resetPasswordToken && (
+            <p className='py-1 text-xs text-red-500'>{errors.resetPasswordToken.message}</p>
+          )}
 
           <Button type='submit' className='w-full' disabled={isLoading} variant={'authButton'}>
             {isLoading ? 'Resetting Password...' : 'Reset Password'}

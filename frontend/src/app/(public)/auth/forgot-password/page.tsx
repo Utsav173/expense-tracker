@@ -19,7 +19,7 @@ const forgotPasswordSchema = z.object({
 type ForgotPasswordSchemaType = z.infer<typeof forgotPasswordSchema>;
 
 const ForgotPasswordPage = () => {
-  const { showError, showSuccess } = useToast();
+  const { showError } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const {
@@ -31,21 +31,16 @@ const ForgotPasswordPage = () => {
   });
 
   const handleForgotPassword = async (data: ForgotPasswordSchemaType) => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      await authForgotPassword(
-        data,
-        'Password Reset Link has sent',
-        'Could Not Sent password link please try again'
-      );
-      showSuccess('Password reset link is sent on you email!');
-      router.push('/auth/login');
+      await authForgotPassword(data, undefined, 'Could not send password link, please try again');
+      router.push('/auth/forgot-password-sent');
     } catch (e: any) {
       showError(e.message);
-    } finally {
       setIsLoading(false);
     }
   };
+
   return (
     <Card className='w-full border-0 p-0 shadow-none'>
       <CardHeader className='py-4'>
@@ -56,14 +51,18 @@ const ForgotPasswordPage = () => {
       <CardContent className='space-y-6 p-0 pb-4'>
         <form onSubmit={handleSubmit(handleForgotPassword)}>
           <div>
+            <label htmlFor='email' className='mb-1 block text-sm font-medium text-gray-700'>
+              Email Address
+            </label>
             <Input
+              id='email'
               type='email'
               placeholder='Your Email'
               disabled={isLoading}
               {...register('email')}
               className='w-full'
             />
-            {errors.email && <p className='text-sm text-red-500'> {errors.email.message} </p>}
+            {errors.email && <p className='py-1 text-xs text-red-500'> {errors.email.message} </p>}
           </div>
           <Button
             disabled={isLoading}
@@ -71,13 +70,13 @@ const ForgotPasswordPage = () => {
             className='mb-2 mt-6 w-full'
             variant={'authButton'}
           >
-            {isLoading ? 'Sending Mail...' : 'Send Mail'}{' '}
+            {isLoading ? 'Sending Mail...' : 'Send Reset Link'}{' '}
           </Button>
         </form>
       </CardContent>
-      <CardFooter className='flex items-center justify-end border-border p-2'>
-        <Link href='/auth/login' className='text-blue-500 hover:underline'>
-          Back to Login?
+      <CardFooter className='flex items-center justify-end border-t p-4'>
+        <Link href='/auth/login' className='text-sm text-blue-500 hover:underline'>
+          Back to Login
         </Link>
       </CardFooter>
     </Card>
