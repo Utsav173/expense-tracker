@@ -11,300 +11,6 @@ import { PromisePool } from '@supercharge/promise-pool';
 
 const investmentRouter = new Hono();
 
-investmentRouter.get('/:id', authMiddleware, async (c) => {
-  try {
-    const accountId = c.req.param('id');
-    const userId = await c.get('userId' as any);
-    const { page = 1, limit = 10 } = c.req.query();
-
-    const investmentAcc = await db.query.InvestmentAccount.findFirst({
-      where: and(eq(InvestmentAccount.id, accountId), eq(InvestmentAccount.userId, userId)),
-      columns: { id: true },
-    }).catch((err) => {
-      throw new HTTPException(500, { message: `DB Error: ${err.message}` });
-    });
-
-    if (!investmentAcc) {
-      throw new HTTPException(404, { message: 'Investment account not found or access denied.' });
-    }
-
-    const totalQuery = await db
-      .select({ tot: count(Investment.id) })
-      .from(Investment)
-      .where(eq(Investment.account, accountId))
-      .then((res) => res[0].tot)
-      .catch((err) => {
-        throw new HTTPException(500, { message: `DB Error: ${err.message}` });
-      });
-
-    const investments = await db.query.Investment.findMany({
-      where: eq(Investment.account, accountId),
-      limit: +limit,
-      offset: +limit * (+page - 1),
-      orderBy: desc(Investment.purchaseDate),
-    }).catch((err) => {
-      throw new HTTPException(500, { message: `DB Error: ${err.message}` });
-    });
-
-    return c.json({
-      data: investments,
-      pagination: {
-        total: totalQuery,
-        totalPages: Math.ceil(totalQuery / +limit),
-        page: +page,
-        limit: +limit,
-      },
-    });
-  } catch (err) {
-    if (err instanceof HTTPException) throw err;
-    console.error('Error fetching investments:', err);
-    throw new HTTPException(500, {
-      message: err instanceof Error ? err.message : 'Something went wrong fetching investments',
-    });
-  }
-});
-
-investmentRouter.post('/', authMiddleware, zValidator('json', investmentSchema), async (c) => {
-  try {
-    const { symbol, shares, purchasePrice, purchaseDate, investmentAccount } = await c.req.json();
-    const userId = await c.get('userId' as any);
-
-    const investmentAcc = await db.query.InvestmentAccount.findFirst({
-      where: and(eq(InvestmentAccount.id, investmentAccount), eq(InvestmentAccount.userId, userId)),
-      columns: { id: true, currency: true },
-    }).catch((err) => {
-      throw new HTTPException(500, { message: `DB Error: ${err.message}` });
-    });
-
-    if (!investmentAcc) {
-      throw new HTTPException(403, { message: 'Cannot add investment to this account.' });
-    }
-
-    const sharesValue = Number(shares);
-    const purchasePriceValue = Number(purchasePrice);
-
-    if (
-      isNaN(sharesValue) ||
-      isNaN(purchasePriceValue) ||
-      sharesValue <= 0 ||
-      purchasePriceValue < 0
-    ) {
-      throw new HTTPException(400, { message: 'Invalid shares or purchase price' });
-    }
-
-    const newInvestment = await db
-      .insert(Investment)
-      .values({
-        symbol: symbol.toUpperCase(),
-        shares: sharesValue,
-        purchasePrice: purchasePriceValue,
-        purchaseDate: new Date(purchaseDate),
-        account: investmentAccount,
-        investedAmount: purchasePriceValue * sharesValue,
-        // currency field is NOT inserted as it's not in the schema based on the error
-      })
-      .returning()
-      .catch((err) => {
-        throw new HTTPException(500, { message: `DB Error: ${err.message}` });
-      });
-
-    return c.json({ message: 'Investment created successfully', data: newInvestment[0] });
-  } catch (err) {
-    if (err instanceof HTTPException) throw err;
-    console.error('Error creating investment:', err);
-    throw new HTTPException(500, {
-      message: err instanceof Error ? err.message : 'Something went wrong creating investment',
-    });
-  }
-});
-
-investmentRouter.put('/:id', authMiddleware, async (c) => {
-  try {
-    const invId = c.req.param('id');
-    const userId = await c.get('userId' as any);
-    const { shares, purchasePrice, purchaseDate } = await c.req.json();
-
-    const existingInvestment = await db.query.Investment.findFirst({
-      where: eq(Investment.id, invId),
-      with: {
-        account: {
-          columns: { userId: true },
-        },
-      },
-    }).catch((err) => {
-      throw new HTTPException(500, { message: `DB Error: ${err.message}` });
-    });
-
-    if (!existingInvestment) {
-      throw new HTTPException(404, { message: 'Investment not found.' });
-    }
-
-    if (existingInvestment.account?.userId !== userId) {
-      throw new HTTPException(403, {
-        message: 'You do not have permission to edit this investment.',
-      });
-    }
-
-    const sharesValue = Number(shares);
-    const purchasePriceValue = Number(purchasePrice);
-
-    if (
-      isNaN(sharesValue) ||
-      isNaN(purchasePriceValue) ||
-      sharesValue <= 0 ||
-      purchasePriceValue < 0
-    ) {
-      throw new HTTPException(400, { message: 'Invalid shares or purchase price' });
-    }
-
-    await db
-      .update(Investment)
-      .set({
-        shares: sharesValue,
-        purchasePrice: purchasePriceValue,
-        purchaseDate: new Date(purchaseDate),
-        investedAmount: sharesValue * purchasePriceValue,
-        updatedAt: new Date(),
-      })
-      .where(eq(Investment.id, invId))
-      .catch((err) => {
-        throw new HTTPException(500, { message: `DB Error: ${err.message}` });
-      });
-
-    return c.json({ message: 'Investment record Updated successfully', id: invId });
-  } catch (err) {
-    if (err instanceof HTTPException) throw err;
-    console.error('Error updating investment:', err);
-    throw new HTTPException(500, {
-      message: err instanceof Error ? err.message : 'Something went wrong updating investment',
-    });
-  }
-});
-
-investmentRouter.delete('/:id', authMiddleware, async (c) => {
-  try {
-    const invId = c.req.param('id');
-    const userId = await c.get('userId' as any);
-
-    const existingInvestment = await db.query.Investment.findFirst({
-      where: eq(Investment.id, invId),
-      with: {
-        account: {
-          columns: { userId: true },
-        },
-      },
-    }).catch((err) => {
-      throw new HTTPException(500, { message: `DB Error: ${err.message}` });
-    });
-
-    if (!existingInvestment) {
-      throw new HTTPException(404, { message: 'Investment not found.' });
-    }
-    if (existingInvestment.account?.userId !== userId) {
-      throw new HTTPException(403, {
-        message: 'You do not have permission to delete this investment.',
-      });
-    }
-
-    await db
-      .delete(Investment)
-      .where(eq(Investment.id, invId))
-      .catch((err) => {
-        throw new HTTPException(500, { message: `DB Error: ${err.message}` });
-      });
-
-    return c.json({ message: 'Investment record Deleted Successfully!' });
-  } catch (err) {
-    if (err instanceof HTTPException) throw err;
-    console.error('Error deleting investment:', err);
-    throw new HTTPException(500, {
-      message: err instanceof Error ? err.message : 'Something went wrong deleting investment',
-    });
-  }
-});
-
-investmentRouter.get('/details/:id', authMiddleware, async (c) => {
-  try {
-    const investmentId = c.req.param('id');
-    const userId = await c.get('userId' as any);
-
-    const investmentData = await db.query.Investment.findFirst({
-      where: eq(Investment.id, investmentId),
-      with: {
-        account: {
-          columns: { userId: true },
-        },
-      },
-    }).catch((err) => {
-      throw new HTTPException(500, { message: `DB Error: ${err.message}` });
-    });
-
-    if (!investmentData) {
-      throw new HTTPException(404, { message: 'Investment data not found' });
-    }
-    if (investmentData.account?.userId !== userId) {
-      // Correct access
-      throw new HTTPException(403, { message: 'Access denied.' });
-    }
-
-    const { account, ...returnData } = investmentData;
-
-    return c.json(returnData);
-  } catch (err) {
-    if (err instanceof HTTPException) throw err;
-    console.error('Error fetching investment details:', err);
-    throw new HTTPException(500, {
-      message:
-        err instanceof Error ? err.message : 'Something went wrong fetching investment details',
-    });
-  }
-});
-
-investmentRouter.put('/:id/update-divident', authMiddleware, async (c) => {
-  try {
-    const invId = c.req.param('id');
-    const userId = await c.get('userId' as any);
-    const { dividend } = await c.req.json();
-
-    const existingInvestment = await db.query.Investment.findFirst({
-      where: eq(Investment.id, invId),
-      with: {
-        account: { columns: { userId: true } }, // Correct relation name
-      },
-    }).catch((err) => {
-      throw new HTTPException(500, { message: `DB Error: ${err.message}` });
-    });
-
-    if (!existingInvestment) throw new HTTPException(404, { message: 'Investment not found.' });
-    if (existingInvestment.account?.userId !== userId)
-      throw new HTTPException(403, { message: 'Permission denied.' }); // Correct access
-
-    const dividendValue = Number(dividend);
-    if (isNaN(dividendValue) || dividendValue < 0) {
-      throw new HTTPException(400, { message: 'Invalid dividend value' });
-    }
-
-    await db
-      .update(Investment)
-      .set({
-        dividend: dividendValue,
-        updatedAt: new Date(),
-      })
-      .where(eq(Investment.id, invId))
-      .catch((err) => {
-        throw new HTTPException(500, { message: `DB Error: ${err.message}` });
-      });
-
-    return c.json({ message: 'Investment dividend updated successfully', id: invId });
-  } catch (err) {
-    if (err instanceof HTTPException) throw err;
-    console.error('Error updating dividend:', err);
-    throw new HTTPException(500, {
-      message: err instanceof Error ? err.message : 'Something went wrong updating dividend',
-    });
-  }
-});
-
 investmentRouter.get('/portfolio', authMiddleware, async (c) => {
   try {
     const userId = await c.get('userId' as any);
@@ -525,7 +231,7 @@ investmentRouter.get('/stocks/search', authMiddleware, async (c) => {
     const response = await fetch(
       `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(
         symbol,
-      )}"&quotesCount=10&lang=en-US`,
+      )}""esCount=10&lang=en-US`,
     );
 
     if (!response.ok) {
@@ -643,6 +349,298 @@ investmentRouter.get('/stocks/price/:symbol', authMiddleware, async (c) => {
     console.error(`Stock Price Internal Error for ${c.req.param('symbol')}:`, err);
     throw new HTTPException(500, {
       message: err instanceof Error ? err.message : 'Something went wrong fetching stock price',
+    });
+  }
+});
+
+investmentRouter.get('/details/:id', authMiddleware, async (c) => {
+  try {
+    const investmentId = c.req.param('id');
+    const userId = await c.get('userId' as any);
+
+    const investmentData = await db.query.Investment.findFirst({
+      where: eq(Investment.id, investmentId),
+      with: {
+        account: {
+          columns: { userId: true },
+        },
+      },
+    }).catch((err) => {
+      throw new HTTPException(500, { message: `DB Error: ${err.message}` });
+    });
+
+    if (!investmentData) {
+      throw new HTTPException(404, { message: 'Investment data not found' });
+    }
+    if (investmentData.account?.userId !== userId) {
+      throw new HTTPException(403, { message: 'Access denied.' });
+    }
+
+    const { account, ...returnData } = investmentData;
+
+    return c.json(returnData);
+  } catch (err) {
+    if (err instanceof HTTPException) throw err;
+    console.error('Error fetching investment details:', err);
+    throw new HTTPException(500, {
+      message:
+        err instanceof Error ? err.message : 'Something went wrong fetching investment details',
+    });
+  }
+});
+
+investmentRouter.put('/:id/update-divident', authMiddleware, async (c) => {
+  try {
+    const invId = c.req.param('id');
+    const userId = await c.get('userId' as any);
+    const { dividend } = await c.req.json();
+
+    const existingInvestment = await db.query.Investment.findFirst({
+      where: eq(Investment.id, invId),
+      with: {
+        account: { columns: { userId: true } },
+      },
+    }).catch((err) => {
+      throw new HTTPException(500, { message: `DB Error: ${err.message}` });
+    });
+
+    if (!existingInvestment) throw new HTTPException(404, { message: 'Investment not found.' });
+    if (existingInvestment.account?.userId !== userId)
+      throw new HTTPException(403, { message: 'Permission denied.' });
+
+    const dividendValue = Number(dividend);
+    if (isNaN(dividendValue) || dividendValue < 0) {
+      throw new HTTPException(400, { message: 'Invalid dividend value' });
+    }
+
+    await db
+      .update(Investment)
+      .set({
+        dividend: dividendValue,
+        updatedAt: new Date(),
+      })
+      .where(eq(Investment.id, invId))
+      .catch((err) => {
+        throw new HTTPException(500, { message: `DB Error: ${err.message}` });
+      });
+
+    return c.json({ message: 'Investment dividend updated successfully', id: invId });
+  } catch (err) {
+    if (err instanceof HTTPException) throw err;
+    console.error('Error updating dividend:', err);
+    throw new HTTPException(500, {
+      message: err instanceof Error ? err.message : 'Something went wrong updating dividend',
+    });
+  }
+});
+
+investmentRouter.get('/:id', authMiddleware, async (c) => {
+  try {
+    const accountId = c.req.param('id');
+    const userId = await c.get('userId' as any);
+    const { page = 1, limit = 10 } = c.req.query();
+
+    const investmentAcc = await db.query.InvestmentAccount.findFirst({
+      where: and(eq(InvestmentAccount.id, accountId), eq(InvestmentAccount.userId, userId)),
+      columns: { id: true },
+    }).catch((err) => {
+      throw new HTTPException(500, { message: `DB Error: ${err.message}` });
+    });
+
+    if (!investmentAcc) {
+      throw new HTTPException(404, { message: 'Investment account not found or access denied.' });
+    }
+
+    const totalQuery = await db
+      .select({ tot: count(Investment.id) })
+      .from(Investment)
+      .where(eq(Investment.account, accountId))
+      .then((res) => res[0].tot)
+      .catch((err) => {
+        throw new HTTPException(500, { message: `DB Error: ${err.message}` });
+      });
+
+    const investments = await db.query.Investment.findMany({
+      where: eq(Investment.account, accountId),
+      limit: +limit,
+      offset: +limit * (+page - 1),
+      orderBy: desc(Investment.purchaseDate),
+    }).catch((err) => {
+      throw new HTTPException(500, { message: `DB Error: ${err.message}` });
+    });
+
+    return c.json({
+      data: investments,
+      pagination: {
+        total: totalQuery,
+        totalPages: Math.ceil(totalQuery / +limit),
+        page: +page,
+        limit: +limit,
+      },
+    });
+  } catch (err) {
+    if (err instanceof HTTPException) throw err;
+    console.error('Error fetching investments:', err);
+    throw new HTTPException(500, {
+      message: err instanceof Error ? err.message : 'Something went wrong fetching investments',
+    });
+  }
+});
+
+investmentRouter.put('/:id', authMiddleware, async (c) => {
+  try {
+    const invId = c.req.param('id');
+    const userId = await c.get('userId' as any);
+    const { shares, purchasePrice, purchaseDate } = await c.req.json();
+
+    const existingInvestment = await db.query.Investment.findFirst({
+      where: eq(Investment.id, invId),
+      with: {
+        account: {
+          columns: { userId: true },
+        },
+      },
+    }).catch((err) => {
+      throw new HTTPException(500, { message: `DB Error: ${err.message}` });
+    });
+
+    if (!existingInvestment) {
+      throw new HTTPException(404, { message: 'Investment not found.' });
+    }
+
+    if (existingInvestment.account?.userId !== userId) {
+      throw new HTTPException(403, {
+        message: 'You do not have permission to edit this investment.',
+      });
+    }
+
+    const sharesValue = Number(shares);
+    const purchasePriceValue = Number(purchasePrice);
+
+    if (
+      isNaN(sharesValue) ||
+      isNaN(purchasePriceValue) ||
+      sharesValue <= 0 ||
+      purchasePriceValue < 0
+    ) {
+      throw new HTTPException(400, { message: 'Invalid shares or purchase price' });
+    }
+
+    await db
+      .update(Investment)
+      .set({
+        shares: sharesValue,
+        purchasePrice: purchasePriceValue,
+        purchaseDate: new Date(purchaseDate),
+        investedAmount: sharesValue * purchasePriceValue,
+        updatedAt: new Date(),
+      })
+      .where(eq(Investment.id, invId))
+      .catch((err) => {
+        throw new HTTPException(500, { message: `DB Error: ${err.message}` });
+      });
+
+    return c.json({ message: 'Investment record Updated successfully', id: invId });
+  } catch (err) {
+    if (err instanceof HTTPException) throw err;
+    console.error('Error updating investment:', err);
+    throw new HTTPException(500, {
+      message: err instanceof Error ? err.message : 'Something went wrong updating investment',
+    });
+  }
+});
+
+investmentRouter.delete('/:id', authMiddleware, async (c) => {
+  try {
+    const invId = c.req.param('id');
+    const userId = await c.get('userId' as any);
+
+    const existingInvestment = await db.query.Investment.findFirst({
+      where: eq(Investment.id, invId),
+      with: {
+        account: {
+          columns: { userId: true },
+        },
+      },
+    }).catch((err) => {
+      throw new HTTPException(500, { message: `DB Error: ${err.message}` });
+    });
+
+    if (!existingInvestment) {
+      throw new HTTPException(404, { message: 'Investment not found.' });
+    }
+    if (existingInvestment.account?.userId !== userId) {
+      throw new HTTPException(403, {
+        message: 'You do not have permission to delete this investment.',
+      });
+    }
+
+    await db
+      .delete(Investment)
+      .where(eq(Investment.id, invId))
+      .catch((err) => {
+        throw new HTTPException(500, { message: `DB Error: ${err.message}` });
+      });
+
+    return c.json({ message: 'Investment record Deleted Successfully!' });
+  } catch (err) {
+    if (err instanceof HTTPException) throw err;
+    console.error('Error deleting investment:', err);
+    throw new HTTPException(500, {
+      message: err instanceof Error ? err.message : 'Something went wrong deleting investment',
+    });
+  }
+});
+
+investmentRouter.post('/', authMiddleware, zValidator('json', investmentSchema), async (c) => {
+  try {
+    const { symbol, shares, purchasePrice, purchaseDate, investmentAccount } = await c.req.json();
+    const userId = await c.get('userId' as any);
+
+    const investmentAcc = await db.query.InvestmentAccount.findFirst({
+      where: and(eq(InvestmentAccount.id, investmentAccount), eq(InvestmentAccount.userId, userId)),
+      columns: { id: true, currency: true },
+    }).catch((err) => {
+      throw new HTTPException(500, { message: `DB Error: ${err.message}` });
+    });
+
+    if (!investmentAcc) {
+      throw new HTTPException(403, { message: 'Cannot add investment to this account.' });
+    }
+
+    const sharesValue = Number(shares);
+    const purchasePriceValue = Number(purchasePrice);
+
+    if (
+      isNaN(sharesValue) ||
+      isNaN(purchasePriceValue) ||
+      sharesValue <= 0 ||
+      purchasePriceValue < 0
+    ) {
+      throw new HTTPException(400, { message: 'Invalid shares or purchase price' });
+    }
+
+    const newInvestment = await db
+      .insert(Investment)
+      .values({
+        symbol: symbol.toUpperCase(),
+        shares: sharesValue,
+        purchasePrice: purchasePriceValue,
+        purchaseDate: new Date(purchaseDate),
+        account: investmentAccount,
+        investedAmount: purchasePriceValue * sharesValue,
+      })
+      .returning()
+      .catch((err) => {
+        throw new HTTPException(500, { message: `DB Error: ${err.message}` });
+      });
+
+    return c.json({ message: 'Investment created successfully', data: newInvestment[0] });
+  } catch (err) {
+    if (err instanceof HTTPException) throw err;
+    console.error('Error creating investment:', err);
+    throw new HTTPException(500, {
+      message: err instanceof Error ? err.message : 'Something went wrong creating investment',
     });
   }
 });
