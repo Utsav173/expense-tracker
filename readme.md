@@ -86,7 +86,6 @@ This project is divided into a backend API and a frontend user interface.  Detai
 expense-tracker/
 ├── backend/               # Backend API (Bun.js, Hono, Drizzle ORM, PostgreSQL)
 ├── frontend/              # Frontend application (Next.js, React, Tailwind CSS)
-├── api-docs/              # API documentation generator (Next.js)
 └── README.md              # This file
 ```
 
@@ -115,32 +114,17 @@ expense-tracker/
 3.  Create a `.env.local` file and configure `NEXT_PUBLIC_API_BASE_URL` (see [frontend README](./frontend/README.md) for details).
 4.  Run the frontend development server: `bun dev`
 
-### 3. API Documentation Setup
-
-1. Navigate to the documentation directory: `cd ../api-docs`.
-2. Install dependencies: `bun install`
-3. Run the Next.js App `bun dev`.
-4. Configure the Postman file link in `page.tsx`
-
 ## Running the Application
 
 1.  **Start the Backend:** (from the `backend` directory): `bun run dev`
 2.  **Start the Frontend:** (from the `frontend` directory): `bun dev`
-3.  **Start the API Documentation:** (from the `api-docs` directory): `bun dev`
 
 Access the application in your browser at `http://localhost:3000`.
-
-## API Documentation
-
-Detailed API documentation, generated from a Postman collection, is available. You can either:
-*   **Run Documentation Locally**: Run api-docs Next.js App to generate Api documentation and node.js SDK.
-*   **Import Postman Collection:** Import the `expense-backend-api.collection.json` file (located in the `backend` directory) into Postman.
 
 ## Deployment
 
 *   **Backend:**  Refer to the [backend README](./backend/README.md) for deployment instructions.
 *   **Frontend:**  Refer to the [frontend README](./frontend/README.md) for deployment instructions.  The frontend is a standard Next.js application and can be deployed to platforms like Vercel, Netlify, or AWS Amplify.
-*  **API Docs:** Refer to the [API Docs README](./api-docs/README.md)
 
 ## Contributing
 
