@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { useToast } from '@/lib/hooks/useToast';
 import { authSignup } from '@/lib/endpoints/auth';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 
@@ -53,6 +54,7 @@ const SignupPage = () => {
       setLoading(false);
     }
   };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) setValue('profilePic', file);
@@ -61,7 +63,7 @@ const SignupPage = () => {
   return (
     <Card className='w-full border-0 shadow-none'>
       <CardContent className='space-y-6 p-0 pt-4'>
-        <div className='space-y-2 text-center'>
+        <div className='select-none space-y-2 text-center'>
           <h2 className='text-2xl font-semibold text-gray-800'>Create Account</h2>
           <p className='text-sm text-gray-500'>Start your expense tracking journey today</p>
         </div>
@@ -79,6 +81,9 @@ const SignupPage = () => {
               disabled={loading}
               className='w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 transition-all duration-200 focus:border-transparent focus:bg-white focus:ring-2 focus:ring-blue-500'
             />
+            {formState.errors.name && (
+              <p className='py-1 text-xs text-red-500'> {formState.errors.name.message}</p>
+            )}
           </div>
 
           <div className='space-y-2'>
@@ -93,20 +98,25 @@ const SignupPage = () => {
               disabled={loading}
               className='w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 transition-all duration-200 focus:border-transparent focus:bg-white focus:ring-2 focus:ring-blue-500'
             />
+            {formState.errors.email && (
+              <p className='py-1 text-xs text-red-500'> {formState.errors.email.message}</p>
+            )}
           </div>
 
           <div className='space-y-2'>
             <label className='text-sm font-medium text-gray-700' htmlFor='password'>
               Password
             </label>
-            <Input
+            <PasswordInput
               id='password'
-              type='password'
               placeholder='••••••••'
               {...register('password')}
               disabled={loading}
               className='w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 transition-all duration-200 focus:border-transparent focus:bg-white focus:ring-2 focus:ring-blue-500'
             />
+            {formState.errors.password && (
+              <p className='py-1 text-xs text-red-500'> {formState.errors.password.message}</p>
+            )}
           </div>
 
           <div className='space-y-2'>
@@ -137,17 +147,21 @@ const SignupPage = () => {
                       type='file'
                       disabled={loading}
                       className='sr-only'
+                      accept='image/png, image/jpeg, image/gif'
                     />
                   </label>
                   <p className='pl-1'>or drag and drop</p>
                 </div>
-                <p className='text-xs text-gray-500'>PNG, JPG, GIF up to 10MB</p>
+                <p className='text-xs text-gray-500'>PNG, JPG, GIF up to 2MB</p>{' '}
               </div>
             </div>
+            {profilePic && profilePic instanceof File && (
+              <p className='mt-1 text-xs text-gray-500'>Selected: {profilePic.name}</p>
+            )}
           </div>
 
           <Button type='submit' disabled={loading} variant={'authButton'}>
-            Create Account
+            {loading ? 'Creating Account...' : 'Create Account'}
           </Button>
         </form>
       </CardContent>

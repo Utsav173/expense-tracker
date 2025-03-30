@@ -5,6 +5,13 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '5mb'
     }
+  },
+  images: {
+    remotePatterns: [
+      {
+        hostname: 'i.stack.imgur.com'
+      }
+    ]
   }
 };
 

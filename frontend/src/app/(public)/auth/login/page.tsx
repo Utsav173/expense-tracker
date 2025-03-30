@@ -11,6 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { PasswordInput } from '@/components/ui/password-input';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -66,7 +67,7 @@ const LoginPage = () => {
   return (
     <Card className='w-full border-0 p-0 shadow-none'>
       <CardContent className='space-y-6 p-0 pt-4'>
-        <div className='space-y-2 text-center'>
+        <div className='select-none space-y-2 text-center'>
           <h2 className='text-2xl font-semibold text-gray-800'>Welcome Back</h2>
           <p className='text-sm text-gray-500'>Sign in to continue tracking your expenses</p>
         </div>
@@ -91,9 +92,8 @@ const LoginPage = () => {
             <label className='text-sm font-medium text-gray-700' htmlFor='password'>
               Password
             </label>
-            <Input
+            <PasswordInput
               id='password'
-              type='password'
               placeholder='••••••••'
               {...register('password')}
               disabled={loginLoading}
@@ -105,7 +105,7 @@ const LoginPage = () => {
           </div>
 
           <Button type='submit' disabled={loginLoading} variant={'authButton'}>
-            {loginLoading ? ' Signing In ..' : 'Sign In'}
+            {loginLoading ? 'Signing In ..' : 'Sign In'}
           </Button>
         </form>
       </CardContent>

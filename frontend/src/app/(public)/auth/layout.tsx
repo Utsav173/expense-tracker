@@ -37,11 +37,9 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
           <Suspense fallback={<Loader />}>
             <div className='flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 px-4 py-16 sm:px-6 lg:px-8'>
               <div className='w-full max-w-lg space-y-2 rounded-xl border border-gray-100 bg-white p-8 shadow-2xl'>
-                <div className='text-center'>
-                  <h1 className='bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-3xl font-bold text-transparent'>
-                    Expense Tracker
-                  </h1>
-                </div>
+                <h1 className='select-none bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-center text-3xl font-bold text-transparent'>
+                  Expense Tracker
+                </h1>
                 {children}
               </div>
             </div>
