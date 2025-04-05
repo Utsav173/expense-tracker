@@ -7,15 +7,16 @@ import { z } from 'zod';
 import { useMutation } from '@tanstack/react-query';
 import { budgetUpdate } from '@/lib/endpoints/budget';
 import { useToast } from '@/lib/hooks/useToast';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
+  DialogClose
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -26,21 +27,20 @@ import {
   FormMessage
 } from '@/components/ui/form';
 import { Budget } from '@/lib/types';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { useQuery } from '@tanstack/react-query';
-import { categoryGetAll } from '@/lib/endpoints/category';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
+import { Loader2, CalendarDays, Tag, Pencil } from 'lucide-react';
+import { NumericFormat } from 'react-number-format';
 
-const budgetSchema = z.object({
-  amount: z.string().refine((value) => !isNaN(Number(value)), {
-    message: 'Amount must be a valid number'
-  }),
-  categoryId: z.string().uuid('Category is required'),
-  month: z.string(),
-  year: z.string()
+export const budgetUpdateSchema = z.object({
+  amount: z
+    .string()
+    .min(1, { message: 'Amount is required' })
+    .refine((value) => !isNaN(Number(value)) && Number(value) >= 0, {
+      message: 'Amount must be a valid non-negative number'
+    })
 });
 
-type BudgetFormSchema = z.infer<typeof budgetSchema>;
+type BudgetUpdateFormSchema = z.infer<typeof budgetUpdateSchema>;
 
 interface UpdateBudgetModalProps {
   isOpen: boolean;
@@ -58,23 +58,21 @@ const UpdateBudgetModal: React.FC<UpdateBudgetModalProps> = ({
   const { showSuccess, showError } = useToast();
   const invalidate = useInvalidateQueries();
 
-  const { data: categoriesData, isLoading: isLoadingCategories } = useQuery({
-    queryKey: ['categories'],
-    queryFn: categoryGetAll
-  });
-
-  const form = useForm<BudgetFormSchema>({
-    resolver: zodResolver(budgetSchema),
+  const form = useForm<BudgetUpdateFormSchema>({
+    resolver: zodResolver(budgetUpdateSchema),
     defaultValues: {
-      amount: budget.amount.toString(),
-      categoryId: budget.category.id,
-      month: budget.month.toString(),
-      year: budget.year.toString()
+      amount: budget?.amount?.toString() ?? ''
     }
   });
 
+  React.useEffect(() => {
+    if (isOpen && budget) {
+      form.reset({ amount: budget.amount.toString() });
+    }
+  }, [isOpen, budget, form]);
+
   const updateBudgetMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => budgetUpdate(id, data),
+    mutationFn: ({ id, data }: { id: string; data: { amount: number } }) => budgetUpdate(id, data),
     onSuccess: async () => {
       await invalidate(['budgets']);
       showSuccess('Budget updated successfully!');
@@ -82,127 +80,97 @@ const UpdateBudgetModal: React.FC<UpdateBudgetModalProps> = ({
       onBudgetUpdated();
     },
     onError: (error: any) => {
-      showError(error.message);
+      showError(error?.message ?? 'Failed to update budget. Please try again.');
     }
   });
 
-  const handleUpdate = async (data: BudgetFormSchema) => {
-    await updateBudgetMutation.mutate({
+  const handleUpdate = (data: BudgetUpdateFormSchema) => {
+    updateBudgetMutation.mutate({
       id: budget.id,
-      data: {
-        amount: Number(data.amount),
-        categoryId: data.categoryId,
-        month: Number(data.month),
-        year: Number(data.year)
-      }
+      data: { amount: Number(data.amount) }
     });
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className='rounded-lg shadow-xl'>
         <DialogHeader>
-          <DialogTitle>Edit Budget</DialogTitle>
-          <DialogDescription>Update your budget information.</DialogDescription>
+          <DialogTitle className='flex items-center gap-2 text-xl font-semibold text-gray-900 dark:text-gray-100'>
+            <Pencil className='h-5 w-5 text-gray-600 dark:text-gray-50' /> Edit Budget
+          </DialogTitle>
+          <DialogDescription className='mt-1 text-gray-600 dark:text-gray-400'>
+            Update the amount for the selected budget period.
+          </DialogDescription>
         </DialogHeader>
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleUpdate)} className='space-y-4'>
-            <FormField
-              control={form.control}
-              name='categoryId'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder='Select a category' />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {isLoadingCategories ? (
-                        <SelectItem value='loading'>Loading categories...</SelectItem>
-                      ) : (
-                        categoriesData?.categories.map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name='month'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Month</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder='Select month' />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
-                        <SelectItem key={month} value={month.toString()}>
-                          {month}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name='year'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Year</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder='Select year' />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(
-                        (year) => (
-                          <SelectItem key={year} value={year.toString()}>
-                            {year}
-                          </SelectItem>
-                        )
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <FormField
               control={form.control}
               name='amount'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Amount</FormLabel>
+                  <FormLabel className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    Amount
+                  </FormLabel>
                   <FormControl>
-                    <Input type='text' placeholder='Budget Amount' {...field} />
+                    <NumericFormat
+                      customInput={Input}
+                      thousandSeparator={true}
+                      decimalScale={2}
+                      fixedDecimalScale={true}
+                      allowNegative={false}
+                      placeholder='e.g., 1,500.50'
+                      className='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'
+                      disabled={updateBudgetMutation.isPending}
+                      {...field}
+                      onValueChange={(values) => {
+                        field.onChange(values.floatValue?.toString() || '');
+                      }}
+                    />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className='mt-1 text-xs text-red-600 dark:text-red-400' />
                 </FormItem>
               )}
             />
-            <DialogFooter>
+
+            <div className='mt-4 space-y-3 border-t border-gray-200 pt-2 dark:border-gray-700'>
+              <div className='flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300'>
+                <Tag className='h-4 w-4 text-gray-500 dark:text-gray-400' />
+                <span className='font-medium'>Category:</span>
+                <span className='text-gray-900 dark:text-gray-100'>
+                  {budget?.category?.name ?? 'N/A'}
+                </span>
+              </div>
+              <div className='flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300'>
+                <CalendarDays className='h-4 w-4 text-gray-500 dark:text-gray-400' />
+                <span className='font-medium'>Period:</span>
+                <span className='text-gray-900 dark:text-gray-100'>
+                  {budget ? `${budget.month}/${budget.year}` : 'N/A'}
+                </span>
+              </div>
+            </div>
+
+            <DialogFooter className='mt-6 flex flex-col sm:flex-row sm:justify-end sm:space-x-2'>
+              <DialogClose asChild>
+                <Button
+                  type='button'
+                  variant='outline'
+                  disabled={updateBudgetMutation.isPending}
+                  className='w-full dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 sm:w-auto'
+                >
+                  Cancel
+                </Button>
+              </DialogClose>
               <Button type='submit' disabled={updateBudgetMutation.isPending}>
-                {updateBudgetMutation.isPending ? 'Updating...' : 'Update Budget'}
+                {updateBudgetMutation.isPending ? (
+                  <>
+                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                    Updating...
+                  </>
+                ) : (
+                  'Update Budget'
+                )}
               </Button>
             </DialogFooter>
           </form>

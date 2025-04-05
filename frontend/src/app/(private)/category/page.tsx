@@ -47,8 +47,8 @@ const CategoryPage = () => {
   });
 
   return (
-    <div className='mx-auto w-full max-w-7xl space-y-6 p-4 max-sm:p-0 md:p-6 lg:p-8'>
-      <div className='flex items-center justify-between gap-4'>
+    <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
+      <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <h1 className='text-3xl font-semibold'>Category</h1>
         <AddCategoryModal
           isOpen={isAddModalOpen}

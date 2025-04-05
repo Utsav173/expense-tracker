@@ -54,8 +54,6 @@ interface CommonTableProps<T extends object> {
   headerClassName?: string;
   cellClassName?: string;
   mobileTriggerColumns?: string[];
-  sortIconSize?: string;
-  headerHoverClass?: string;
   paginationVariant?: 'default' | 'minimalist' | 'pill';
 }
 
@@ -131,39 +129,44 @@ const CommonTable = <T extends object>({
 
   if (loading) {
     return (
-      <div className='flex items-center justify-center'>
+      <div className='flex h-64 items-center justify-center'>
         <Loader />
       </div>
     );
   }
 
-  if (!data.length) {
+  if (!data || data.length === 0) {
     return <div className='py-8 text-center text-gray-500'>No results.</div>;
   }
 
+  // Mobile View Logic
   if (isMobile && columns.length > 2) {
     const triggerColumns = mobileTriggerColumns
       ? table.getAllLeafColumns().filter((col) => mobileTriggerColumns.includes(col.id))
       : table
           .getAllLeafColumns()
-          .filter((column) => column.getCanSort())
+          .filter((column) => column.getCanSort() && column.id !== 'actions')
           .slice(0, 2);
 
     return (
       <>
+        {/* Sort Select Dropdown for Mobile */}
         <Select
-          value={
-            sorting.length ? `${sorting[0].id}-${sorting[0].desc ? 'desc' : 'asc'}` : undefined
-          }
+          value={sorting.length ? `${sorting[0].id}-${sorting[0].desc ? 'desc' : 'asc'}` : 'none'}
           onValueChange={(value) => {
-            const [id, desc] = value.split('-');
-            setSorting([{ id, desc: desc === 'desc' }]);
+            if (value === 'none') {
+              setSorting([]);
+            } else if (value) {
+              const [id, desc] = value.split('-');
+              setSorting([{ id, desc: desc === 'desc' }]);
+            }
           }}
         >
-          <SelectTrigger className='w-full'>
+          <SelectTrigger className='mb-4 w-full'>
             <SelectValue placeholder='Sort by' />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value='none'>No Sorting</SelectItem>
             {sortOptions.map((option) => (
               <SelectItem key={option.id} value={option.id}>
                 {option.label}
@@ -171,14 +174,24 @@ const CommonTable = <T extends object>({
             ))}
           </SelectContent>
         </Select>
-        <Accordion type='multiple' className='mt-4 w-full'>
+
+        {/* Mobile Accordion View */}
+        <Accordion type='multiple' className='w-full'>
           {table.getRowModel().rows.map((row) => (
             <AccordionItem key={row.id} value={row.id}>
-              <AccordionTrigger>
-                <div className='flex w-full justify-between text-left'>
+              <AccordionTrigger className='hover:no-underline'>
+                <div className='flex w-full items-center justify-between text-left'>
                   {triggerColumns.map((column) => (
-                    <span key={column.id} className='max-w-[50%] truncate'>
-                      {flexRender(column.columnDef.cell, { row, column } as CellContext<T, any>)}
+                    <span key={column.id} className='max-w-[50%] truncate px-1 text-sm'>
+                      {column.columnDef.cell
+                        ? flexRender(
+                            column.columnDef.cell,
+                            row
+                              .getVisibleCells()
+                              .find((c) => c.column.id === column.id)!
+                              .getContext()
+                          )
+                        : row.getValue(column.id)}
                     </span>
                   ))}
                 </div>
@@ -187,18 +200,33 @@ const CommonTable = <T extends object>({
                 <div className='grid w-full grid-cols-[35%_65%] gap-y-2'>
                   {table.getAllLeafColumns().map((column) => {
                     const header = column.columnDef.header;
-                    const cellValue = flexRender(column.columnDef.cell, {
-                      row,
-                      column
-                    } as CellContext<T, any>);
+                    const cell = row.getVisibleCells().find((c) => c.column.id === column.id);
+
+                    const cellValue = cell
+                      ? flexRender(cell.column.columnDef.cell, cell.getContext())
+                      : row.getValue(column.id);
+
                     const headerString =
                       typeof header === 'function'
-                        ? flexRender(header, { column } as HeaderContext<T, unknown>)
-                        : header;
+                        ? flexRender(header, cell?.getContext() as any)
+                        : header?.toString() || column.id;
+
+                    const displayValue =
+                      cellValue === null || cellValue === undefined
+                        ? ''
+                        : typeof cellValue === 'string' ||
+                            typeof cellValue === 'number' ||
+                            typeof cellValue === 'boolean' ||
+                            React.isValidElement(cellValue)
+                          ? cellValue
+                          : String(cellValue);
+
                     return (
-                      <React.Fragment key={column.id + cellValue}>
-                        <span className='truncate pr-2 font-medium'>{headerString}:</span>
-                        <span className='truncate'>{cellValue}</span>
+                      <React.Fragment key={`${row.id}-${column.id}`}>
+                        <span className='truncate pr-2 text-xs font-medium text-muted-foreground'>
+                          {headerString}:
+                        </span>
+                        <span className='truncate text-sm'>{displayValue}</span>
                       </React.Fragment>
                     );
                   })}
@@ -207,6 +235,7 @@ const CommonTable = <T extends object>({
             </AccordionItem>
           ))}
         </Accordion>
+        {/* Pagination for Mobile */}
         {enablePagination && totalRecords > pageSize ? (
           <div className='mt-6'>
             <EnhancedPagination
@@ -223,6 +252,7 @@ const CommonTable = <T extends object>({
     );
   }
 
+  // Desktop View Logic
   return (
     <>
       <div className='w-full overflow-x-auto rounded-md border'>
@@ -235,18 +265,16 @@ const CommonTable = <T extends object>({
                     key={header.id}
                     className={cn(
                       'px-4 py-3 transition-colors',
-                      header.id !== 'actions' && 'cursor-pointer hover:bg-gray-100',
+                      header.column.getCanSort() && 'cursor-pointer hover:bg-gray-100',
                       headerClassName
                     )}
-                    onClick={
-                      header.id !== 'actions' ? header.column.getToggleSortingHandler() : undefined
-                    }
+                    onClick={header.column.getToggleSortingHandler()}
                   >
                     <div className='flex items-center justify-between'>
                       <div className='text-sm font-semibold'>
                         {flexRender(header.column.columnDef.header, header.getContext())}
                       </div>
-                      {header.id !== 'actions' && (
+                      {header.column.getCanSort() && (
                         <span className='flex items-center'>
                           {{
                             asc: <ChevronUp className='h-4 w-4 text-gray-600' />,
@@ -284,6 +312,7 @@ const CommonTable = <T extends object>({
         </Table>
       </div>
 
+      {/* Pagination for Desktop */}
       {enablePagination && totalRecords > pageSize && (
         <div className='mt-6'>
           <EnhancedPagination

@@ -108,7 +108,10 @@ export const budgetSchema = z.object({
 export const savingGoalSchema = z.object({
   name: z.string(),
   targetAmount: z.number(),
-  targetDate: z.date(),
+  targetDate: z
+    .string()
+    .transform((val) => new Date(val))
+    .refine((date) => !isNaN(date.getTime()), { message: 'Invalid date format' }),
 });
 
 export const investmentAccountSchema = z.object({

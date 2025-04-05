@@ -23,19 +23,18 @@ import {
   FormLabel,
   FormMessage
 } from '@/components/ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { useQuery } from '@tanstack/react-query';
-import { accountGetDropdown } from '@/lib/endpoints/accounts';
-import { debtSchema } from '@/lib/utils/schema.validations';
-import { apiUpdateDebt } from '@/lib/endpoints/debt'; // You'll need to create this
+import { apiUpdateDebt } from '@/lib/endpoints/debt';
 import { Debts } from '@/lib/types';
-import DateTimePicker from '../date-time-picker';
-import { format } from 'date-fns';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
+import React from 'react';
 
-const debtUpdateSchema = debtSchema.omit({ user: true }); // Exclude user
+const debtUpdateSchema = z.object({
+  description: z.string().min(1, { message: 'Description is required' }),
+  duration: z.string().optional(),
+  frequency: z.string().optional()
+});
 
-type DebtFormSchema = z.infer<typeof debtUpdateSchema>;
+type DebtUpdateFormSchema = z.infer<typeof debtUpdateSchema>;
 
 interface UpdateDebtModalProps {
   isOpen: boolean;
@@ -53,29 +52,29 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
   const { showSuccess, showError } = useToast();
   const invalidate = useInvalidateQueries();
 
-  const { data: accountsData, isLoading: isLoadingAccounts } = useQuery({
-    queryKey: ['accountsDropdown'],
-    queryFn: accountGetDropdown
-  });
-
-  const form = useForm<DebtFormSchema>({
+  const form = useForm<DebtUpdateFormSchema>({
     resolver: zodResolver(debtUpdateSchema),
     defaultValues: {
-      amount: debt.amount.toString(),
-      premiumAmount: debt.premiumAmount?.toString(),
-      description: debt.description,
-      dueDate: debt.dueDate ? format(new Date(debt.dueDate), 'yyyy-MM-dd') : '',
-      type: debt.type as 'given' | 'taken',
-      interestType: debt.interestType as 'simple' | 'compound',
-      account: debt.account,
-      percentage: debt.percentage?.toString(),
-      frequency: debt.frequency
+      description: debt.description || '',
+      duration: debt.duration || '',
+      frequency: debt.frequency || ''
     },
     mode: 'onSubmit'
   });
 
+  React.useEffect(() => {
+    if (isOpen) {
+      form.reset({
+        description: debt.description || '',
+        duration: debt.duration || '',
+        frequency: debt.frequency || ''
+      });
+    }
+  }, [isOpen, debt, form]);
+
   const updateDebtMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => apiUpdateDebt(id, data), // Use the new API function
+    mutationFn: ({ id, data }: { id: string; data: DebtUpdateFormSchema }) =>
+      apiUpdateDebt(id, data),
     onSuccess: async () => {
       await invalidate(['debts']);
       showSuccess('Debt updated successfully!');
@@ -87,17 +86,8 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
     }
   });
 
-  const handleUpdate = async (data: DebtFormSchema) => {
-    await updateDebtMutation.mutate({
-      id: debt.id,
-      data: {
-        ...data,
-        amount: Number(data.amount),
-        premiumAmount: data.premiumAmount ? Number(data.premiumAmount) : undefined,
-        percentage: data.percentage ? Number(data.percentage) : undefined,
-        dueDate: data.dueDate ? new Date(data.dueDate) : undefined
-      }
-    });
+  const handleUpdate = async (data: DebtUpdateFormSchema) => {
+    await updateDebtMutation.mutate({ id: debt.id, data });
   };
 
   return (
@@ -122,115 +112,14 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
-              name='amount'
+              name='duration'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Amount</FormLabel>
+                  <FormLabel>Duration Type</FormLabel>
                   <FormControl>
-                    <Input type='number' placeholder='Debt Amount' {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name='premiumAmount'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Premium Amount</FormLabel>
-                  <FormControl>
-                    <Input type='number' placeholder='premium Amount' {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name='account'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Account</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder='Select account' />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {isLoadingAccounts ? (
-                        <SelectItem value='loading'>Loading accounts...</SelectItem>
-                      ) : (
-                        accountsData?.map((account) => (
-                          <SelectItem key={account.id} value={account.id}>
-                            {account.name}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name='type'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder='Select type' />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value='given'>Given</SelectItem>
-                      <SelectItem value='taken'>Taken</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name='interestType'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Interest Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder='Select interest type' />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value='simple'>Simple</SelectItem>
-                      <SelectItem value='compound'>Compound</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name='percentage'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Interest Percentage</FormLabel>
-                  <FormControl>
-                    <Input type='number' placeholder='Interest Percentage' {...field} />
+                    <Input placeholder='e.g., month, year' {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -241,32 +130,39 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
               name='frequency'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Frequency</FormLabel>
+                  <FormLabel>Frequency (Number)</FormLabel>
                   <FormControl>
-                    <Input type='number' placeholder='Yearly Frequency' {...field} />
+                    <Input type='number' placeholder='e.g., 12' {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <FormField
-              control={form.control}
-              name='dueDate'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Due Date</FormLabel>
-                  <FormControl>
-                    <DateTimePicker
-                      value={field.value ? new Date(field.value) : undefined}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className='pt-2 text-sm'>
+              <p>
+                <span className='font-medium'>Amount:</span> {debt.amount}
+              </p>
+              <p>
+                <span className='font-medium'>Type:</span> {debt.type}
+              </p>
+              <p>
+                <span className='font-medium'>Interest Type:</span> {debt.interestType}
+              </p>
+              <p>
+                <span className='font-medium'>Status:</span> {debt.isPaid ? 'Paid' : 'Unpaid'}
+              </p>
+            </div>
+
             <DialogFooter>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() => onOpenChange(false)}
+                disabled={updateDebtMutation.isPending}
+              >
+                Cancel
+              </Button>
               <Button type='submit' disabled={updateDebtMutation.isPending}>
                 {updateDebtMutation.isPending ? 'Updating...' : 'Update Debt'}
               </Button>

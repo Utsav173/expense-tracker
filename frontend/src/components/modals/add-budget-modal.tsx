@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { budgetCreate } from '@/lib/endpoints/budget';
 import { useToast } from '@/lib/hooks/useToast';
 import { z } from 'zod';
@@ -18,9 +18,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '../ui/button';
 import AddModal from './add-modal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { useQuery } from '@tanstack/react-query';
 import { categoryGetAll } from '@/lib/endpoints/category';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
+import { NumericFormat } from 'react-number-format';
+import { useEffect } from 'react';
+import { monthNames } from '@/lib/utils';
 
 export const budgetSchema = z.object({
   amount: z.string().refine((value) => !isNaN(Number(value)), {
@@ -36,11 +38,13 @@ type BudgetFormSchema = z.infer<typeof budgetSchema>;
 const AddBudgetModal = ({
   onBudgetAdded,
   isOpen,
-  onOpenChange
+  onOpenChange,
+  hideTriggerButton = false
 }: {
   onBudgetAdded: () => void;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  hideTriggerButton?: boolean;
 }) => {
   const { showSuccess, showError } = useToast();
   const invalidate = useInvalidateQueries();
@@ -55,10 +59,19 @@ const AddBudgetModal = ({
     defaultValues: {
       categoryId: '',
       month: '',
-      year: ''
+      year: '',
+      amount: ''
     },
     mode: 'onSubmit'
   });
+
+  // Set default month and year
+  useEffect(() => {
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
+    form.setValue('month', currentMonth.toString());
+    form.setValue('year', currentYear.toString());
+  }, [form.setValue]);
 
   const createBudgetMutation = useMutation({
     mutationFn: (data: BudgetFormSchema) =>
@@ -88,7 +101,7 @@ const AddBudgetModal = ({
     <AddModal
       title='Add Budget'
       description='Create a new budget for a category.'
-      triggerButton={<Button>Add Budget</Button>}
+      triggerButton={hideTriggerButton ? null : <Button>Add Budget</Button>}
       isOpen={isOpen}
       onOpenChange={onOpenChange}
     >
@@ -100,7 +113,11 @@ const AddBudgetModal = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Category</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                  defaultValue={field.value}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder='Select a category' />
@@ -129,16 +146,20 @@ const AddBudgetModal = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Month</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                  defaultValue={field.value}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder='Select month' />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
-                      <SelectItem key={month} value={month.toString()}>
-                        {month}
+                    {monthNames.map((monthName, index) => (
+                      <SelectItem key={index + 1} value={(index + 1).toString()}>
+                        {monthName}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -154,14 +175,18 @@ const AddBudgetModal = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Year</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                  defaultValue={field.value}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder='Select year' />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(
+                    {Array.from({ length: 50 }, (_, i) => new Date().getFullYear() + i).map(
                       (year) => (
                         <SelectItem key={year} value={year.toString()}>
                           {year}
@@ -181,7 +206,20 @@ const AddBudgetModal = ({
               <FormItem>
                 <FormLabel>Amount</FormLabel>
                 <FormControl>
-                  <Input type='text' placeholder='Budget Amount' {...field} />
+                  <NumericFormat
+                    customInput={Input}
+                    thousandSeparator=','
+                    decimalSeparator='.'
+                    allowNegative={false}
+                    decimalScale={2}
+                    fixedDecimalScale
+                    placeholder='Budget Amount'
+                    className='w-full'
+                    onValueChange={(values) => {
+                      field.onChange(values.value);
+                    }}
+                    value={field.value}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

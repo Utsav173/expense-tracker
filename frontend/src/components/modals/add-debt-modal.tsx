@@ -29,11 +29,13 @@ type DebtFormSchema = z.infer<typeof debtSchema>;
 const AddDebtModal = ({
   onDebtAdded,
   isOpen,
-  onOpenChange
+  onOpenChange,
+  hideTriggerButton = false
 }: {
   onDebtAdded: () => void;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  hideTriggerButton?: boolean;
 }) => {
   const { showSuccess, showError } = useToast();
   const invalidate = useInvalidateQueries();
@@ -78,7 +80,7 @@ const AddDebtModal = ({
     <AddModal
       title='Add Debt'
       description='Create a new debt record.'
-      triggerButton={<Button>Add Debt</Button>}
+      triggerButton={hideTriggerButton ? null : <Button>Add Debt</Button>}
       isOpen={isOpen}
       onOpenChange={onOpenChange}
     >

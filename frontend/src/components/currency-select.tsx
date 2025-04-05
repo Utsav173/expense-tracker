@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 export interface Currency {
@@ -19,31 +20,58 @@ export interface Currency {
 interface CurrencySelectProps {
   currencies?: Currency[];
   value?: string;
-  onValueChange: (value: string) => void;
+  onValueChange?: (value: string) => void;
   isLoading?: boolean;
+  disabled?: boolean;
+  className?: string;
+  disabledTooltip?: string;
 }
 
 const CurrencySelect: React.FC<CurrencySelectProps> = ({
   currencies = [],
   value,
-  onValueChange,
-  isLoading = false
+  onValueChange = () => {},
+  isLoading = false,
+  disabled = false,
+  className = '',
+  disabledTooltip
 }) => {
   const selectedCurrency = currencies.find((c) => c.code === value);
 
+  const trigger = (
+    <SelectTrigger
+      disabled={disabled}
+      className={cn(
+        'w-full justify-between bg-background px-3 font-normal outline-offset-0 hover:bg-background focus-visible:border-ring focus-visible:outline-[3px] focus-visible:outline-ring/20',
+        className
+      )}
+    >
+      <SelectValue placeholder='Select currency'>
+        <span className={cn('truncate', !value && 'text-muted-foreground')}>
+          {isLoading
+            ? 'Loading currencies...'
+            : value && selectedCurrency
+              ? `${selectedCurrency.code} - ${selectedCurrency.name}`
+              : 'Select currency'}
+        </span>
+      </SelectValue>
+    </SelectTrigger>
+  );
+
   return (
-    <Select onValueChange={onValueChange} value={value}>
-      <SelectTrigger className='w-full justify-between bg-background px-3 font-normal outline-offset-0 hover:bg-background focus-visible:border-ring focus-visible:outline-[3px] focus-visible:outline-ring/20'>
-        <SelectValue placeholder='Select currency'>
-          <span className={cn('truncate', !value && 'text-muted-foreground')}>
-            {isLoading
-              ? 'Loading currencies...'
-              : value && selectedCurrency
-                ? `${selectedCurrency.code} - ${selectedCurrency.name}`
-                : 'Select currency'}
-          </span>
-        </SelectValue>
-      </SelectTrigger>
+    <Select onValueChange={onValueChange} value={value} disabled={disabled}>
+      {disabled && disabledTooltip ? (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>{trigger}</TooltipTrigger>
+            <TooltipContent>
+              <p>{disabledTooltip}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        trigger
+      )}
       <SelectContent className='w-full border-input p-0'>
         <SelectGroup>
           {currencies.map((currency) => (

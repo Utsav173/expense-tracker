@@ -19,6 +19,7 @@ import { Button } from '../ui/button';
 import AddModal from './add-modal';
 import DateTimePicker from '../date-time-picker';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
+import { NumericFormat } from 'react-number-format';
 
 const goalSchema = z.object({
   name: z.string().min(3, 'Goal name must be at least 3 characters'),
@@ -33,11 +34,13 @@ type GoalFormSchema = z.infer<typeof goalSchema>;
 const AddGoalModal = ({
   onGoalAdded,
   isOpen,
-  onOpenChange
+  onOpenChange,
+  hideTriggerButton
 }: {
   onGoalAdded: () => void;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  hideTriggerButton?: boolean;
 }) => {
   const { showSuccess, showError } = useToast();
   const invalidate = useInvalidateQueries();
@@ -53,11 +56,14 @@ const AddGoalModal = ({
   });
 
   const createGoalMutation = useMutation({
-    mutationFn: (data: GoalFormSchema) =>
-      goalCreate({
+    mutationFn: (data: GoalFormSchema) => {
+      const payload = {
         ...data,
-        targetAmount: Number(data.targetAmount)
-      }),
+        targetAmount: Number(data.targetAmount),
+        targetDate: data.targetDate ? data.targetDate.toISOString() : undefined
+      };
+      return goalCreate(payload);
+    },
     onSuccess: async () => {
       await invalidate(['goals']);
       showSuccess('Goal created successfully!');
@@ -78,7 +84,7 @@ const AddGoalModal = ({
     <AddModal
       title='Add Goal'
       description='Create a new saving goal.'
-      triggerButton={<Button>Add Goal</Button>}
+      triggerButton={hideTriggerButton ? null : <Button>Add Goal</Button>}
       isOpen={isOpen}
       onOpenChange={onOpenChange}
     >
@@ -105,7 +111,20 @@ const AddGoalModal = ({
               <FormItem>
                 <FormLabel>Target Amount</FormLabel>
                 <FormControl>
-                  <Input type='text' placeholder='Target Amount' {...field} />
+                  <NumericFormat
+                    customInput={Input}
+                    thousandSeparator=','
+                    decimalSeparator='.'
+                    allowNegative={false}
+                    decimalScale={2}
+                    fixedDecimalScale
+                    placeholder='Target Amount'
+                    className='w-full'
+                    onValueChange={(values) => {
+                      field.onChange(values.value);
+                    }}
+                    value={field.value}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 import authMiddleware from '../middleware';
-import { Budget, Category } from '../database/schema';
+import { Budget } from '../database/schema';
 import { zValidator } from '@hono/zod-validator';
 import { budgetSchema } from '../utils/schema.validations';
-import { eq, count, asc, desc, sql, and, sum } from 'drizzle-orm';
+import { eq, count, asc, desc, sql, and, sum, InferSelectModel } from 'drizzle-orm';
 import { db } from '../database';
 import { HTTPException } from 'hono/http-exception';
 
@@ -13,51 +13,62 @@ const budgetRouter = new Hono();
 budgetRouter.get('/:id/all', authMiddleware, async (c) => {
   try {
     const id = c.req.param('id');
-    const { page = 1, limit = 10 } = c.req.query();
+    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = c.req.query();
     const userId = await c.get('userId' as any);
 
     if (id !== 'all' && id !== userId) {
       throw new HTTPException(401, { message: 'Unauthorised operation' });
     }
 
-    let totalQuery;
-    let budgetData;
+    const allowedSortFields: (keyof InferSelectModel<typeof Budget>)[] = [
+      'id',
+      'createdAt',
+      'updatedAt',
+      'month',
+      'year',
+      'amount',
+      'category',
+    ];
 
-    if (id === 'all') {
-      totalQuery = await db
-        .select({ tot: count(Budget.id) })
-        .from(Budget)
-        .where(eq(Budget.userId, userId))
-        .then((res) => res[0].tot);
+    const validSortBy = allowedSortFields.includes(sortBy as keyof InferSelectModel<typeof Budget>)
+      ? (sortBy as keyof InferSelectModel<typeof Budget>)
+      : 'createdAt';
 
-      budgetData = await db.query.Budget.findMany({
-        where(fields, ops) {
-          return ops.eq(fields.userId, userId);
-        },
-        limit: +limit,
-        offset: +limit * (+page - 1),
-        with: {
-          category: true,
-        },
-      });
-    } else {
-      totalQuery = await db
-        .select({ tot: count(Budget.id) })
-        .from(Budget)
-        .where(eq(Budget.userId, id))
-        .then((res) => res[0].tot);
-
-      budgetData = await db.query.Budget.findMany({
-        where(fields, ops) {
-          return ops.eq(fields.userId, id);
-        },
-        limit: +limit,
-        offset: +limit * (+page - 1),
-        with: {
-          category: true,
-        },
-      });
+    const sortColumn = Budget[validSortBy];
+    if (!sortColumn) {
+      throw new HTTPException(400, { message: 'Invalid sort field specified for budgets.' });
     }
+
+    const sortDirection = sortOrder.toLowerCase() === 'asc' ? asc : desc;
+    const orderByClause = sortDirection(sortColumn);
+
+    let whereClause = eq(Budget.userId, id === 'all' ? userId : id);
+
+    const totalQuery = await db
+      .select({ tot: count(Budget.id) })
+      .from(Budget)
+      .where(whereClause)
+      .then((res) => res[0]?.tot ?? 0)
+      .catch((err) => {
+        throw new HTTPException(500, { message: `DB Error: ${err.message}` });
+      });
+
+    const budgetData = await db.query.Budget.findMany({
+      where: whereClause,
+      limit: +limit,
+      offset: +limit * (+page - 1),
+      with: {
+        category: {
+          columns: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: [orderByClause],
+    }).catch((err) => {
+      throw new HTTPException(500, { message: `DB Error: ${err.message}` });
+    });
 
     return c.json({
       data: budgetData,
@@ -69,11 +80,14 @@ budgetRouter.get('/:id/all', authMiddleware, async (c) => {
       },
     });
   } catch (err) {
-    throw new HTTPException(400, {
+    if (err instanceof HTTPException) throw err;
+    console.error('Error fetching budgets:', err);
+    throw new HTTPException(500, {
       message: err instanceof Error ? err.message : 'something went wrong',
     });
   }
 });
+
 // POST - create new budget for a month
 budgetRouter.post('/', authMiddleware, zValidator('json', budgetSchema), async (c) => {
   try {
@@ -145,7 +159,7 @@ budgetRouter.get('/summary', authMiddleware, async (c) => {
     const monthValue = Number(month);
     const yearValue = Number(year);
 
-    if (isNaN(monthValue) || isNaN(yearValue)) {
+    if (isNaN(monthValue) || monthValue < 1 || monthValue > 12 || isNaN(yearValue)) {
       throw new HTTPException(400, { message: 'Invalid month or year' });
     }
 
@@ -154,14 +168,18 @@ budgetRouter.get('/summary', authMiddleware, async (c) => {
         sql`
         SELECT
             b.category,
-            c.name as categoryName,
+            c.name as categoryName, -- Renamed to avoid conflict
             b.amount as budgetedAmount,
             COALESCE(SUM(t.amount), 0) as actualSpend
         FROM
            budget b
         LEFT JOIN
           transaction t
-          ON b.category = t.category AND  EXTRACT(MONTH FROM t."createdAt") = ${monthValue} AND EXTRACT(YEAR FROM t."createdAt") = ${yearValue}
+          ON b.category = t.category
+             AND EXTRACT(MONTH FROM t."createdAt") = ${monthValue}
+             AND EXTRACT(YEAR FROM t."createdAt") = ${yearValue}
+             AND t."isIncome" = false -- Only sum expenses for spending
+             AND t.owner = ${userId} -- Ensure transaction owner matches
         JOIN
             category c ON b.category = c.id
         WHERE
@@ -169,16 +187,25 @@ budgetRouter.get('/summary', authMiddleware, async (c) => {
          GROUP BY
               b.category, c.name, b.amount
         ORDER BY
-               b.category
-
+               b.amount DESC
     `,
       )
       .catch((err) => {
-        throw new HTTPException(500, { message: err.message });
+        throw new HTTPException(500, { message: `DB Error: ${err.message}` });
       });
 
-    return c.json(result.rows);
+    // Map to ensure correct types and structure
+    const summaryData = result.rows.map((row: any) => ({
+      category: row.category,
+      categoryName: row.categoryname, // Access lowercase name
+      budgetedAmount: Number(row.budgetedamount || 0),
+      actualSpend: Number(row.actualspend || 0),
+    }));
+
+    return c.json(summaryData);
   } catch (err) {
+    if (err instanceof HTTPException) throw err;
+    console.error('Budget summary error:', err);
     throw new HTTPException(500, {
       message: err instanceof Error ? err.message : 'something went wrong',
     });
@@ -197,29 +224,39 @@ budgetRouter.get('/:id/progress', authMiddleware, async (c) => {
       throw new HTTPException(404, { message: 'Budget not found' });
     }
 
-    const totalSpent = await db
+    const totalSpentResult = await db
       .execute(
         sql`
           SELECT COALESCE(SUM(t.amount), 0) AS total
           FROM transaction t
-          WHERE t.category = ${budget.category} AND EXTRACT(MONTH FROM t."createdAt") = ${budget.month} AND EXTRACT(YEAR FROM t."createdAt") = ${budget.year}
-          AND t.owner = ${userId};
+          WHERE t.category = ${budget.category}
+            AND EXTRACT(MONTH FROM t."createdAt") = ${budget.month}
+            AND EXTRACT(YEAR FROM t."createdAt") = ${budget.year}
+            AND t."isIncome" = false -- Only sum expenses
+            AND t.owner = ${userId}; 
       `,
       )
-      .then((res) => res.rows[0].total);
+      .then((res) => res.rows[0] as { total: number | string })
+      .catch((err) => {
+        throw new HTTPException(500, { message: `DB Error getting spending: ${err.message}` });
+      });
 
-    const totalSpentValue = Number(totalSpent);
-    const remainingAmount = budget.amount - totalSpentValue;
-    const progress = totalSpentValue > 0 ? (totalSpentValue / budget.amount) * 100 : 0;
+    const totalSpentValue = Number(totalSpentResult?.total ?? 0);
+    const budgetedAmount = Number(budget.amount || 0);
+    const remainingAmount = budgetedAmount - totalSpentValue;
+    const progress =
+      budgetedAmount > 0 ? Math.max(0, Math.min((totalSpentValue / budgetedAmount) * 100, 100)) : 0;
 
     return c.json({
       budgetId: budget.id,
-      budgetedAmount: budget.amount,
-      totalSpent: totalSpentValue ?? 0,
+      budgetedAmount: budgetedAmount,
+      totalSpent: totalSpentValue,
       remainingAmount: remainingAmount,
       progress: +progress.toFixed(2),
     });
   } catch (err) {
+    if (err instanceof HTTPException) throw err;
+    console.error('Budget progress error:', err);
     throw new HTTPException(500, {
       message: err instanceof Error ? err.message : 'Something went wrong',
     });

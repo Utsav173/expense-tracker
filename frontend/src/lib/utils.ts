@@ -18,3 +18,18 @@ export function formatCurrency(amount: number, currencyCode: string = 'INR'): st
     return `${currencyCode} ${amount.toFixed(2)}`;
   }
 }
+
+export const monthNames = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December'
+];

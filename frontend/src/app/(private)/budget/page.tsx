@@ -1,88 +1,58 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { budgetGetAll } from '@/lib/endpoints/budget';
-import { usePagination } from '@/hooks/usePagination';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import CommonTable from '@/components/ui/CommonTable';
 import { budgetColumns } from '@/components/budget/budget-columns';
 import AddBudgetModal from '@/components/modals/add-budget-modal';
 import Loader from '@/components/ui/loader';
 import { useToast } from '@/lib/hooks/useToast';
-import { Input } from '@/components/ui/input';
-import { useDebounce } from 'use-debounce';
-import { DateRange } from 'react-day-picker';
-import DateRangePicker from '@/components/date-range-picker';
-import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
+import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
+import { Budget } from '@/lib/types';
+import { useUrlState } from '@/hooks/useUrlState';
+import { SortingState } from '@tanstack/react-table'; // Import SortingState
 
 const BudgetPage = () => {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
   const { showError } = useToast();
+  const invalidate = useInvalidateQueries();
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const [search, setSearch] = useState('');
-  const [debouncedSearch] = useDebounce(search, 600);
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-  const [tempDateRange, setTempDateRange] = useState<DateRange | undefined>();
-
-  const { page, handlePageChange } = usePagination(
-    Number(searchParams.get('page')) || 1,
-    (params) => {
-      const currentParams = new URLSearchParams(searchParams.toString());
-      Object.keys(params).forEach((key) => {
-        if (params[key] === undefined || params[key] === null || params[key] === '') {
-          currentParams.delete(key);
-        } else {
-          currentParams.set(key.toString(), params[key]);
-        }
-      });
-      const newUrl = `${pathname}?${currentParams.toString()}`;
-      router.push(newUrl, { scroll: false });
-    }
-  );
-
-  const handleDateRangeSelect = (range: DateRange | undefined) => {
-    setTempDateRange(range);
-    if (range?.from && range.to) {
-      setDateRange(range);
-      handlePageChange(1);
-    }
-  };
-
-  const handleClearDateRange = () => {
-    setDateRange(undefined);
-    setTempDateRange(undefined);
-    handlePageChange(1);
-  };
+  const { state, setState, handlePageChange } = useUrlState({
+    page: 1,
+    sortBy: 'year', // Default sort
+    sortOrder: 'desc' as 'asc' | 'desc' // Explicitly type sortOrder
+  });
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['budgets', page, debouncedSearch, dateRange], // Include dateRange in queryKey
+    queryKey: ['budgets', state.page, state.sortBy, state.sortOrder],
     queryFn: () =>
       budgetGetAll('all', {
-        page,
+        page: state.page,
         limit: 10,
-        search: debouncedSearch,
-        duration:
-          dateRange?.from && dateRange.to
-            ? `${format(dateRange.from, 'yyyy-MM-dd')},${format(dateRange.to, 'yyyy-MM-dd')}`
-            : ''
+        sortBy: state.sortBy,
+        sortOrder: state.sortOrder
       }),
     retry: false
   });
 
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-
   const handleBudgetAdded = () => {
+    invalidate(['budgets', state.page, state.sortBy, state.sortOrder]);
     refetch();
   };
 
-  useEffect(() => {
-    handlePageChange(1);
-  }, [debouncedSearch]);
+  // Updated handleSort to match CommonTable's expected signature
+  const handleSort = (newSortingState: SortingState) => {
+    if (newSortingState.length > 0) {
+      const { id, desc } = newSortingState[0];
+      setState({ sortBy: id, sortOrder: desc ? 'desc' : 'asc', page: 1 });
+    } else {
+      // Handle case where sorting is cleared (optional)
+      setState({ sortBy: 'year', sortOrder: 'desc', page: 1 }); // Revert to default or clear
+    }
+  };
 
   if (isLoading) {
     return <Loader />;
@@ -94,46 +64,34 @@ const BudgetPage = () => {
   }
 
   return (
-    <div className='mx-auto w-full max-w-7xl space-y-4 p-3 md:space-y-6'>
-      <div className='flex items-center justify-between gap-4'>
+    <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
+      <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <h1 className='text-3xl font-semibold'>Budgets</h1>
-        <AddBudgetModal
-          onBudgetAdded={handleBudgetAdded}
-          isOpen={isAddModalOpen}
-          onOpenChange={() => setIsAddModalOpen(!isAddModalOpen)}
-        />
+        <Button onClick={() => setIsAddModalOpen(true)}>
+          <PlusCircle className='mr-2 h-4 w-4' /> Add Budget
+        </Button>
       </div>
-      <div className='flex gap-x-2'>
-        <Input
-          type='text'
-          placeholder='Search by category name...'
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className='max-w-sm'
-        />
-        <div className='flex items-center gap-2'>
-          <DateRangePicker dateRange={tempDateRange} setDateRange={handleDateRangeSelect} />
-          {dateRange?.from && (
-            <Button
-              variant='ghost'
-              size='icon'
-              onClick={handleClearDateRange}
-              className='h-10 w-10'
-            >
-              <X className='h-4 w-4' />
-            </Button>
-          )}
-        </div>
-      </div>
-      <CommonTable
+
+      <CommonTable<Budget>
         data={data?.data || []}
         columns={budgetColumns}
         loading={isLoading}
         totalRecords={data?.pagination.total || 0}
         pageSize={10}
-        currentPage={page}
+        currentPage={state.page}
         onPageChange={handlePageChange}
+        onSortChange={handleSort} // Pass the correctly typed handler
         enablePagination
+        sortBy={state.sortBy}
+        sortOrder={state.sortOrder} // Pass typed sortOrder
+        mobileTriggerColumns={['category.name', 'amount']}
+      />
+
+      <AddBudgetModal
+        isOpen={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+        onBudgetAdded={handleBudgetAdded}
+        hideTriggerButton
       />
     </div>
   );
