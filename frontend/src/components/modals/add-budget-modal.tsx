@@ -36,11 +36,13 @@ type BudgetFormSchema = z.infer<typeof budgetSchema>;
 const AddBudgetModal = ({
   onBudgetAdded,
   isOpen,
-  onOpenChange
+  onOpenChange,
+  hideTriggerButton = false
 }: {
   onBudgetAdded: () => void;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  hideTriggerButton?: boolean;
 }) => {
   const { showSuccess, showError } = useToast();
   const invalidate = useInvalidateQueries();
@@ -88,7 +90,7 @@ const AddBudgetModal = ({
     <AddModal
       title='Add Budget'
       description='Create a new budget for a category.'
-      triggerButton={<Button>Add Budget</Button>}
+      triggerButton={hideTriggerButton ? null : <Button>Add Budget</Button>}
       isOpen={isOpen}
       onOpenChange={onOpenChange}
     >
