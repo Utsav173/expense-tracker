@@ -3,9 +3,10 @@ import authMiddleware from '../middleware';
 import { SavingGoal } from '../database/schema';
 import { zValidator } from '@hono/zod-validator';
 import { savingGoalSchema } from '../utils/schema.validations';
-import { eq, count, sql } from 'drizzle-orm';
+import { eq, count, sql, asc, desc, InferSelectModel } from 'drizzle-orm';
 import { db } from '../database';
 import { HTTPException } from 'hono/http-exception';
+import { parseISO } from 'date-fns';
 
 const goalRouter = new Hono();
 
@@ -13,12 +14,39 @@ const goalRouter = new Hono();
 goalRouter.get('/all', authMiddleware, async (c) => {
   try {
     const userId = await c.get('userId' as any);
-    const { page = 1, limit = 10 } = c.req.query();
+    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = c.req.query();
+
+    const allowedSortFields: (keyof InferSelectModel<typeof SavingGoal>)[] = [
+      'id',
+      'createdAt',
+      'updatedAt',
+      'name',
+      'targetAmount',
+      'savedAmount',
+      'targetDate',
+    ];
+    const validSortBy = allowedSortFields.includes(
+      sortBy as keyof InferSelectModel<typeof SavingGoal>,
+    )
+      ? (sortBy as keyof InferSelectModel<typeof SavingGoal>)
+      : 'createdAt';
+
+    const sortColumn = SavingGoal[validSortBy];
+    if (!sortColumn) {
+      throw new HTTPException(400, { message: 'Invalid sort field specified.' });
+    }
+
+    const sortDirection = sortOrder.toLowerCase() === 'asc' ? asc : desc;
+    const orderByClause = sortDirection(sortColumn);
+
     const totalQuery = await db
       .select({ tot: count(SavingGoal.id) })
       .from(SavingGoal)
       .where(eq(SavingGoal.userId, userId))
-      .then((res) => res[0].tot);
+      .then((res) => res[0]?.tot ?? 0)
+      .catch((err) => {
+        throw new HTTPException(500, { message: `DB Error: ${err.message}` });
+      });
 
     const savingGoals = await db.query.SavingGoal.findMany({
       where(fields, ops) {
@@ -26,7 +54,11 @@ goalRouter.get('/all', authMiddleware, async (c) => {
       },
       limit: +limit,
       offset: +limit * (+page - 1),
+      orderBy: [orderByClause],
+    }).catch((err) => {
+      throw new HTTPException(500, { message: `DB Error: ${err.message}` });
     });
+
     return c.json({
       data: savingGoals,
       pagination: {
@@ -37,7 +69,9 @@ goalRouter.get('/all', authMiddleware, async (c) => {
       },
     });
   } catch (err) {
-    throw new HTTPException(400, {
+    if (err instanceof HTTPException) throw err;
+    console.error('Error fetching goals:', err);
+    throw new HTTPException(500, {
       message: err instanceof Error ? err.message : 'something went wrong',
     });
   }
@@ -54,7 +88,7 @@ goalRouter.post('/', authMiddleware, zValidator('json', savingGoalSchema), async
         userId: userId,
         targetAmount: targetAmount,
         name: name,
-        targetDate: new Date(targetDate),
+        targetDate: parseISO(targetDate),
       })
       .returning();
 
@@ -74,7 +108,7 @@ goalRouter.put('/:id', authMiddleware, async (c) => {
 
     await db
       .update(SavingGoal)
-      .set({ targetAmount, targetDate: new Date(targetDate), savedAmount: savedAmount })
+      .set({ targetAmount, targetDate: parseISO(targetDate), savedAmount: savedAmount })
       .where(eq(SavingGoal.id, goalId));
     return c.json({ message: 'Goal updated successfully!', id: goalId });
   } catch (err) {

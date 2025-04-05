@@ -3,7 +3,7 @@ import authMiddleware from '../middleware';
 import { Investment, InvestmentAccount, User } from '../database/schema';
 import { zValidator } from '@hono/zod-validator';
 import { investmentSchema } from '../utils/schema.validations';
-import { eq, count, sql, and, inArray, desc } from 'drizzle-orm';
+import { eq, count, sql, and, inArray, desc, InferSelectModel, asc } from 'drizzle-orm';
 import { db } from '../database';
 import { HTTPException } from 'hono/http-exception';
 import { StatusCode } from 'hono/utils/http-status';
@@ -231,7 +231,7 @@ investmentRouter.get('/stocks/search', authMiddleware, async (c) => {
     const response = await fetch(
       `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(
         symbol,
-      )}""esCount=10&lang=en-US`,
+      )}"esCount=10&lang=en-US`,
     );
 
     if (!response.ok) {
@@ -438,35 +438,60 @@ investmentRouter.get('/:id', authMiddleware, async (c) => {
   try {
     const accountId = c.req.param('id');
     const userId = await c.get('userId' as any);
-    const { page = 1, limit = 10 } = c.req.query();
+    const { page = 1, limit = 10, sortBy = 'purchaseDate', sortOrder = 'desc' } = c.req.query();
 
     const investmentAcc = await db.query.InvestmentAccount.findFirst({
       where: and(eq(InvestmentAccount.id, accountId), eq(InvestmentAccount.userId, userId)),
       columns: { id: true },
     }).catch((err) => {
-      throw new HTTPException(500, { message: `DB Error: ${err.message}` });
+      throw new HTTPException(500, { message: `DB Error checking account: ${err.message}` });
     });
 
     if (!investmentAcc) {
       throw new HTTPException(404, { message: 'Investment account not found or access denied.' });
     }
 
+    const allowedSortFields: (keyof InferSelectModel<typeof Investment>)[] = [
+      'id',
+      'createdAt',
+      'updatedAt',
+      'symbol',
+      'shares',
+      'purchasePrice',
+      'purchaseDate',
+      'dividend',
+      'investedAmount',
+    ];
+    const validSortBy = allowedSortFields.includes(
+      sortBy as keyof InferSelectModel<typeof Investment>,
+    )
+      ? (sortBy as keyof InferSelectModel<typeof Investment>)
+      : 'purchaseDate';
+
+    const sortColumn = Investment[validSortBy];
+    if (!sortColumn) {
+      throw new HTTPException(400, { message: 'Invalid sort field specified for investments.' });
+    }
+
+    const sortDirection = sortOrder.toLowerCase() === 'asc' ? asc : desc;
+    const orderByClause = sortDirection(sortColumn);
+
     const totalQuery = await db
       .select({ tot: count(Investment.id) })
       .from(Investment)
       .where(eq(Investment.account, accountId))
-      .then((res) => res[0].tot)
+      .then((res) => res[0]?.tot ?? 0)
       .catch((err) => {
-        throw new HTTPException(500, { message: `DB Error: ${err.message}` });
+        throw new HTTPException(500, { message: `DB Error counting investments: ${err.message}` });
       });
 
     const investments = await db.query.Investment.findMany({
       where: eq(Investment.account, accountId),
       limit: +limit,
       offset: +limit * (+page - 1),
-      orderBy: desc(Investment.purchaseDate),
+      orderBy: [orderByClause],
     }).catch((err) => {
-      throw new HTTPException(500, { message: `DB Error: ${err.message}` });
+      throw new HTTPException(500, { message: `DB Error fetching investments: ${err.message}` });
     });
 
     return c.json({

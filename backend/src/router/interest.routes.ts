@@ -3,15 +3,27 @@ import { debtSchema, interestSchema } from '../utils/schema.validations';
 import { zValidator } from '@hono/zod-validator';
 import authMiddleware from '../middleware';
 import { HTTPException } from 'hono/http-exception';
-import { differenceInDays, differenceInMonths } from 'date-fns';
-import { InferInsertModel, SQL, and, asc, count, desc, eq, gt, like, lt, or } from 'drizzle-orm';
+import { differenceInDays } from 'date-fns';
+import {
+  InferInsertModel,
+  SQL,
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gt,
+  ilike,
+  lt,
+  or,
+  AnyColumn,
+} from 'drizzle-orm';
 import { Account, Debts, User } from '../database/schema';
 import { getIntervalValue } from '../utils';
 import { db } from '../database';
 
 const interestRouter = new Hono();
 
-// POST /interest - Create an interest
 interestRouter.post('/create', zValidator('json', interestSchema), authMiddleware, async (c) => {
   const { amount, percentage, type, duration, compoundingFrequency } = await c.req.json();
   const amountValue = Number(amount);
@@ -21,274 +33,452 @@ interestRouter.post('/create', zValidator('json', interestSchema), authMiddlewar
   if (
     isNaN(amountValue) ||
     isNaN(percentageValue) ||
-    (type === 'compound' && isNaN(compoundingFrequencyValue))
+    (type === 'compound' && !duration.includes(',') && isNaN(compoundingFrequencyValue))
   ) {
     throw new HTTPException(400, {
-      message: 'Invalid amount, percentage, or compounding frequency',
+      message: 'Invalid amount, percentage, or missing compounding frequency for compound interest',
     });
   }
 
   const today = new Date();
-  let endDate: Date; // Declare endDate as a Date
+  let startDateForDiff = today;
+  let endDate: Date;
+  let timeDiffInYears: number;
 
   if (duration && duration.includes(',')) {
     const [startDateString, endDateString] = duration.split(',');
     const startDate = new Date(startDateString);
     endDate = new Date(endDateString);
 
-    // Validate if startDate is before endDate
-    if (startDate >= endDate) {
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime()) || startDate >= endDate) {
       throw new HTTPException(400, {
-        message: 'Start date must be before end date',
+        message: 'Invalid date range. Start date must be before end date.',
       });
     }
+    startDateForDiff = startDate;
+    timeDiffInYears = differenceInDays(endDate, startDate) / 365.25;
   } else {
+    let numUnits = 1;
     switch (duration) {
       case 'year':
-        endDate = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate());
+        endDate = new Date(today.getFullYear() + numUnits, today.getMonth(), today.getDate());
+        timeDiffInYears = numUnits;
         break;
       case 'month':
-        endDate = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate());
+        endDate = new Date(today.getFullYear(), today.getMonth() + numUnits, today.getDate());
+        timeDiffInYears = numUnits / 12;
         break;
       case 'week':
-        endDate = new Date(
-          differenceInDays(today, new Date(today.setDate(today.getDate() - today.getDay()))),
-        );
+        endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 7 * numUnits);
+        timeDiffInYears = (7 * numUnits) / 365.25;
         break;
       case 'day':
-        endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+        endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + numUnits);
+        timeDiffInYears = numUnits / 365.25;
         break;
       default:
-        throw new HTTPException(400, { message: 'Invalid duration' });
+        throw new HTTPException(400, { message: 'Invalid duration unit' });
     }
   }
-
-  let days = differenceInDays(endDate, today) + 1;
 
   let totalAmount, interest;
 
   switch (type) {
     case 'simple':
-      totalAmount = amountValue * (1 + (percentageValue / 100) * (days / 365));
-      interest = totalAmount - amountValue;
+      interest = amountValue * (percentageValue / 100) * timeDiffInYears;
+      totalAmount = amountValue + interest;
       break;
     case 'compound':
-      let n = compoundingFrequencyValue || 365;
-
-      switch (duration) {
-        case 'year':
-          days = 1;
-          break;
-        case 'month':
-          days = 12;
-          break;
-        case 'week':
-          days = 52;
-          break;
-        case 'day':
-          days = 365;
-          break;
-        default:
-          n = days / 365;
-          days = 365;
-      }
-
-      totalAmount = amountValue * Math.pow(1 + percentageValue / (days * 100), n * days);
+      const n = compoundingFrequencyValue || 1;
+      totalAmount = amountValue * Math.pow(1 + percentageValue / 100 / n, n * timeDiffInYears);
       interest = totalAmount - amountValue;
       break;
     default:
       throw new HTTPException(400, { message: 'Invalid interest type' });
   }
 
-  // Rounding to two decimal places
   totalAmount = +totalAmount.toFixed(2);
   interest = +interest.toFixed(2);
 
   return c.json({ interest, totalAmount });
 });
 
-// POST /Debts - Create a new Debts
 interestRouter.post('/debts', zValidator('json', debtSchema), authMiddleware, async (c) => {
-  const {
-    amount,
-    premiumAmount,
-    description,
-    duration,
-    percentage,
-    frequency,
-    user,
-    type,
-    interestType,
-    account,
-  } = await c.req.json();
-  const ownerId = await c.get('userId' as any);
-  const userId = user;
-
-  let dueDate = new Date();
-  const amountValue = Number(amount);
-  const premiumAmountValue = Number(premiumAmount);
-  const percentageValue = Number(percentage);
-
-  if (isNaN(amountValue) || isNaN(premiumAmountValue) || isNaN(percentageValue)) {
-    throw new HTTPException(400, {
-      message: 'Invalid amount, premium amount or percentage',
-    });
-  }
-
-  if (duration.split(',').length > 1) {
-    // by month only
-    const [startDateString, endDateString] = duration.split(',');
-    const startDate = new Date(startDateString);
-    const endDate = new Date(endDateString);
-
-    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-      throw new HTTPException(400, { message: 'Invalid date format' });
-    }
-
-    const monthsDiff = differenceInMonths(endDate, startDate);
-    dueDate = new Date(startDate);
-    dueDate.setMonth(dueDate.getMonth() + monthsDiff);
-  } else {
-    switch (duration) {
-      case 'year':
-        dueDate.setFullYear(dueDate.getFullYear() + 1 * Number(frequency));
-        break;
-      case 'month':
-        dueDate.setMonth(dueDate.getMonth() + 1 * Number(frequency));
-        break;
-      case 'week':
-        dueDate.setDate(dueDate.getDate() + 7 * Number(frequency));
-        break;
-      case 'day':
-        dueDate.setDate(dueDate.getDate() + Number(frequency));
-        break;
-      default:
-        break;
-    }
-  }
-
-  const newDebt = await db
-    .insert(Debts)
-    .values({
+  try {
+    const {
       amount,
-      createdBy: ownerId,
-      percentage,
-      premiumAmount,
-      type,
-      userId,
-      account,
+      premiumAmount = 0,
       description,
-      dueDate: new Date(dueDate).toISOString(),
       duration,
+      percentage = 0,
       frequency,
+      user: involvedUserId,
+      type,
       interestType,
-    })
-    .returning();
+      account,
+    } = await c.req.json();
+    const ownerId = await c.get('userId' as any);
 
-  return c.json({ message: 'Debts created successfully', data: newDebt[0] });
+    const amountValue = Number(amount);
+    const premiumAmountValue = Number(premiumAmount);
+    const percentageValue = Number(percentage);
+
+    if (isNaN(amountValue) || amountValue <= 0) {
+      throw new HTTPException(400, { message: 'Invalid amount. Must be a positive number.' });
+    }
+    if (isNaN(premiumAmountValue) || premiumAmountValue < 0) {
+      throw new HTTPException(400, { message: 'Invalid premium amount. Must be non-negative.' });
+    }
+    if (isNaN(percentageValue) || percentageValue < 0) {
+      throw new HTTPException(400, { message: 'Invalid percentage. Must be non-negative.' });
+    }
+
+    let calculatedDueDate: Date | null = null;
+    let durationValue: string | null = null;
+    let frequencyValue: string | null = null;
+
+    if (duration && typeof duration === 'string' && duration.includes(',')) {
+      const [startDateString, endDateString] = duration.split(',');
+      const startDate = new Date(startDateString);
+      const endDate = new Date(endDateString);
+
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime()) || startDate >= endDate) {
+        throw new HTTPException(400, {
+          message: 'Invalid date range format or start date is not before end date',
+        });
+      }
+      calculatedDueDate = endDate;
+      durationValue = duration;
+      frequencyValue = null;
+    } else if (duration && ['year', 'month', 'week', 'day'].includes(duration)) {
+      const freqNum = Number(frequency);
+      if (isNaN(freqNum) || freqNum <= 0) {
+        throw new HTTPException(400, {
+          message:
+            'Frequency (number of units) is required and must be positive for duration units.',
+        });
+      }
+      frequencyValue = String(freqNum);
+      durationValue = duration;
+
+      const now = new Date();
+      switch (duration) {
+        case 'year':
+          calculatedDueDate = new Date(now.setFullYear(now.getFullYear() + freqNum));
+          break;
+        case 'month':
+          calculatedDueDate = new Date(now.setMonth(now.getMonth() + freqNum));
+          break;
+        case 'week':
+          calculatedDueDate = new Date(now.setDate(now.getDate() + 7 * freqNum));
+          break;
+        case 'day':
+          calculatedDueDate = new Date(now.setDate(now.getDate() + freqNum));
+          break;
+      }
+    } else if (duration) {
+      throw new HTTPException(400, {
+        message:
+          'Invalid duration format. Use "year", "month", "week", "day", or "YYYY-MM-DD,YYYY-MM-DD".',
+      });
+    }
+
+    const involvedUserExists = await db.query.User.findFirst({
+      where: eq(User.id, involvedUserId),
+      columns: { id: true },
+    });
+    if (!involvedUserExists) {
+      throw new HTTPException(404, { message: 'Involved user not found.' });
+    }
+
+    const accountExists = await db.query.Account.findFirst({
+      where: and(eq(Account.id, account), eq(Account.owner, ownerId)),
+      columns: { id: true },
+    });
+    if (!accountExists) {
+      throw new HTTPException(404, {
+        message: 'Associated account not found or does not belong to you.',
+      });
+    }
+
+    const newDebt = await db
+      .insert(Debts)
+      .values({
+        amount: amountValue,
+        createdBy: ownerId,
+        percentage: percentageValue,
+        premiumAmount: premiumAmountValue,
+        type,
+        userId: involvedUserId,
+        account,
+        description,
+        dueDate: calculatedDueDate?.toISOString().split('T')[0],
+        duration: durationValue,
+        frequency: frequencyValue,
+        interestType,
+        isPaid: false,
+        createdAt: new Date(),
+      })
+      .returning()
+      .catch((err) => {
+        console.error('Error creating debt:', err);
+        throw new HTTPException(500, { message: `DB Error: ${err.message}` });
+      });
+
+    if (!newDebt || newDebt.length === 0) {
+      throw new HTTPException(500, { message: 'Failed to create debt record.' });
+    }
+
+    return c.json({ message: 'Debt created successfully', data: newDebt[0] });
+  } catch (err) {
+    if (err instanceof HTTPException) throw err;
+    console.error('Debt creation endpoint error:', err);
+    throw new HTTPException(500, {
+      message: err instanceof Error ? err.message : 'Something went wrong',
+    });
+  }
 });
 
-// GET /debts - Get debts for a user
 interestRouter.get('/debts', authMiddleware, async (c) => {
-  const userId = await c.get('userId' as any);
-  const { duration, page = 1, pageSize = 10, q, type, sortOrder = 'desc' } = c.req.query();
+  try {
+    const userId = await c.get('userId' as any);
+    const { duration, page = 1, pageSize = 10, q, type, sortOrder = 'desc' } = c.req.query();
 
-  const sortBy: keyof InferInsertModel<typeof Debts> =
-    (c.req.query('sortBy') as any) || 'createdAt';
+    const sortByRaw = c.req.query('sortBy') || 'createdAt';
 
-  let query: SQL<unknown> | undefined = eq(Debts.createdBy, userId);
+    const sortColumnMap: Record<string, AnyColumn | SQL> = {
+      amount: Debts.amount,
+      'debts.amount': Debts.amount,
+      premiumAmount: Debts.premiumAmount,
+      'debts.premiumAmount': Debts.premiumAmount,
+      description: Debts.description,
+      'debts.description': Debts.description,
+      createdAt: Debts.createdAt,
+      'debts.createdAt': Debts.createdAt,
+      dueDate: Debts.dueDate,
+      'debts.dueDate': Debts.dueDate,
+      percentage: Debts.percentage,
+      'debts.percentage': Debts.percentage,
+      frequency: Debts.frequency,
+      'debts.frequency': Debts.frequency,
+      isPaid: Debts.isPaid,
+      'debts.isPaid': Debts.isPaid,
+      type: Debts.type,
+      'debts.type': Debts.type,
+      interestType: Debts.interestType,
+      'debts.interestType': Debts.interestType,
+      'account.name': Account.name,
+      'user.name': User.name,
+    };
 
-  if (duration && duration.trim().length > 0) {
-    // duration is one of from this 4 "today", "thisWeek", "thisMonth", "thisYear"
-    const { endDate, startDate } = await getIntervalValue(duration);
+    const sortColumn = sortColumnMap[sortByRaw] || Debts.createdAt;
 
-    // check if start date and end date are provided
-    query = and(
-      query,
-      and(
-        gt(Debts.createdAt, new Date(startDate as any)),
-        lt(Debts.createdAt, new Date(endDate as any)),
-      ),
-    );
-  }
+    if (!sortColumn) {
+      throw new HTTPException(400, { message: `Invalid sort field: ${sortByRaw}` });
+    }
 
-  if (q && q.trim().length > 0) {
-    query = and(
-      query,
-      or(like(Debts.description, `%${q}%`), like(Debts.dueDate, `%${q}%`), eq(Debts.amount, +q)),
-    );
-  }
+    const sortDirection = sortOrder.toLowerCase() === 'asc' ? asc : desc;
+    const orderByClause = sortDirection(sortColumn as AnyColumn | SQL);
 
-  if (type) {
-    query = and(query, eq(Debts.type as any, type));
-  }
+    let query: SQL<unknown> | undefined = eq(Debts.createdBy, userId);
 
-  // get total count
-  const totalCount = await db
-    .select({ count: count(Debts.id) })
-    .from(Debts)
-    .where(query)
-    .catch((err) => {
-      throw new HTTPException(500, { message: err.message });
+    if (duration && duration.trim().length > 0) {
+      try {
+        const { endDate, startDate } = await getIntervalValue(duration);
+        query = and(
+          query,
+          and(
+            gt(Debts.createdAt, new Date(startDate as any)),
+            lt(Debts.createdAt, new Date(endDate as any)),
+          ),
+        );
+      } catch (e) {
+        throw new HTTPException(400, { message: 'Invalid duration format.' });
+      }
+    }
+
+    if (q && q.trim().length > 0) {
+      const searchNum = Number(q);
+      const amountFilter = !isNaN(searchNum) ? eq(Debts.amount, searchNum) : undefined;
+      query = and(
+        query,
+        or(
+          ilike(Debts.description, `%${q}%`),
+          ilike(Debts.dueDate, `%${q}%`),
+          ilike(User.name, `%${q}%`),
+          amountFilter,
+        ),
+      );
+    }
+
+    if (type && (type === 'given' || type === 'taken')) {
+      query = and(query, eq(Debts.type, type));
+    }
+
+    const finalQuery = query;
+
+    const totalCountResult = await db
+      .select({ count: count(Debts.id) })
+      .from(Debts)
+      .leftJoin(User, eq(Debts.userId, User.id))
+      .where(finalQuery)
+      .catch((err) => {
+        console.error('Error counting debts:', err);
+        throw new HTTPException(500, { message: `DB Count Error: ${err.message}` });
+      });
+
+    const totalCount = totalCountResult[0]?.count ?? 0;
+
+    const debts = await db
+      .select({
+        debts: Debts,
+        account: {
+          id: Account.id,
+          name: Account.name,
+          currency: Account.currency,
+        },
+        user: {
+          id: User.id,
+          name: User.name,
+          email: User.email,
+          profilePic: User.profilePic,
+        },
+      })
+      .from(Debts)
+      .leftJoin(Account, eq(Debts.account, Account.id))
+      .leftJoin(User, eq(Debts.userId, User.id))
+      .where(finalQuery)
+      .limit(+pageSize)
+      .offset(+pageSize * (+page - 1))
+      .orderBy(orderByClause)
+      .catch((err) => {
+        console.error('Error fetching debts:', err);
+        throw new HTTPException(500, { message: `DB Fetch Error: ${err.message}` });
+      });
+
+    return c.json({
+      data: debts,
+      totalCount: totalCount,
+      totalPages: Math.ceil(totalCount / +pageSize),
+      currentPage: +page,
+      pageSize: +pageSize,
     });
-
-  const debts = await db
-    .select()
-    .from(Debts)
-    .leftJoin(Account, eq(Debts.account, Account.id))
-    .leftJoin(User, eq(Debts.createdBy, User.id))
-    .where(query)
-    .limit(+pageSize)
-    .offset(+pageSize * (+page - 1))
-    .orderBy(sortOrder === 'asc' ? asc(Debts[sortBy]) : desc(Debts[sortBy]))
-    .catch((err) => {
-      throw new HTTPException(500, { message: err.message });
-    });
-
-  return c.json({
-    data: debts,
-    totalCount: totalCount[0].count,
-    totalPages: Math.ceil(totalCount[0].count / +pageSize),
-    currentPage: +page,
-    pageSize: +pageSize,
-  });
+  } catch (err) {
+    if (err instanceof HTTPException) throw err;
+    console.error('Error in GET /debts:', err);
+    throw new HTTPException(500, { message: 'An unexpected error occurred.' });
+  }
 });
 
-// PUT /Debts/:id - Update a Debts
 interestRouter.put('/debts/:id', authMiddleware, async (c) => {
-  const { id } = c.req.param();
-  const { description, isPaid, duration, frequency } = await c.req.json();
-  const userId = await c.get('userId' as any);
+  try {
+    const { id } = c.req.param();
+    const { description, isPaid, duration, frequency } = await c.req.json();
+    const userId = await c.get('userId' as any);
 
-  await db
-    .update(Debts)
-    .set({ description, isPaid, duration, frequency })
-    .where(and(eq(Debts.id, id), eq(Debts.createdBy, userId)));
+    const updateData: Partial<InferInsertModel<typeof Debts>> = { updatedAt: new Date() };
+    if (description !== undefined) updateData.description = description;
+    if (isPaid !== undefined) updateData.isPaid = Boolean(isPaid);
+    if (duration !== undefined) updateData.duration = duration;
+    if (frequency !== undefined) updateData.frequency = String(frequency);
 
-  return c.json({ message: 'Debts updated successfully' });
+    const existingDebt = await db.query.Debts.findFirst({
+      where: eq(Debts.id, id),
+      columns: { createdBy: true },
+    });
+
+    if (!existingDebt) {
+      throw new HTTPException(404, { message: 'Debt record not found.' });
+    }
+
+    if (existingDebt.createdBy !== userId) {
+      throw new HTTPException(403, { message: 'You do not have permission to update this debt.' });
+    }
+
+    const updated = await db
+      .update(Debts)
+      .set(updateData)
+      .where(eq(Debts.id, id))
+      .returning({ id: Debts.id });
+
+    if (updated.length === 0) {
+      throw new HTTPException(500, { message: 'Failed to update debt record.' });
+    }
+
+    return c.json({ message: 'Debt updated successfully' });
+  } catch (err) {
+    if (err instanceof HTTPException) throw err;
+    console.error('Error updating debt:', err);
+    throw new HTTPException(500, { message: 'An unexpected error occurred during update.' });
+  }
 });
 
-// DELETE /Debts/:id - Delete a Debts
 interestRouter.delete('/debts/:id', authMiddleware, async (c) => {
-  const { id } = c.req.param();
-  const userId = await c.get('userId' as any);
+  try {
+    const { id } = c.req.param();
+    const userId = await c.get('userId' as any);
 
-  await db.delete(Debts).where(and(eq(Debts.id, id), eq(Debts.createdBy, userId)));
+    const existingDebt = await db.query.Debts.findFirst({
+      where: eq(Debts.id, id),
+      columns: { createdBy: true },
+    });
 
-  return c.json({ message: 'Debts deleted successfully' });
+    if (!existingDebt) {
+      throw new HTTPException(404, { message: 'Debt record not found.' });
+    }
+
+    if (existingDebt.createdBy !== userId) {
+      throw new HTTPException(403, { message: 'You do not have permission to delete this debt.' });
+    }
+
+    const deleted = await db.delete(Debts).where(eq(Debts.id, id)).returning({ id: Debts.id });
+
+    if (deleted.length === 0) {
+      throw new HTTPException(500, { message: 'Failed to delete debt record.' });
+    }
+
+    return c.json({ message: 'Debt deleted successfully' });
+  } catch (err) {
+    if (err instanceof HTTPException) throw err;
+    console.error('Error deleting debt:', err);
+    throw new HTTPException(500, { message: 'An unexpected error occurred during deletion.' });
+  }
 });
 
-// PUT /debts/:id/mark-paid - Mark a debt as paid
 interestRouter.put('/debts/:id/mark-paid', authMiddleware, async (c) => {
-  const { id } = c.req.param();
-  const userId = await c.get('userId' as any);
+  try {
+    const { id } = c.req.param();
+    const userId = await c.get('userId' as any);
 
-  await db
-    .update(Debts)
-    .set({ isPaid: true })
-    .where(and(eq(Debts.id, id), eq(Debts.createdBy, userId)));
+    const existingDebt = await db.query.Debts.findFirst({
+      where: eq(Debts.id, id),
+      columns: { createdBy: true },
+    });
 
-  return c.json({ message: 'Debt marked as paid' });
+    if (!existingDebt) {
+      throw new HTTPException(404, { message: 'Debt record not found.' });
+    }
+
+    if (existingDebt.createdBy !== userId) {
+      throw new HTTPException(403, { message: 'You do not have permission to update this debt.' });
+    }
+
+    const updated = await db
+      .update(Debts)
+      .set({ isPaid: true, updatedAt: new Date() })
+      .where(eq(Debts.id, id))
+      .returning({ id: Debts.id });
+
+    if (updated.length === 0) {
+      throw new HTTPException(500, { message: 'Failed to mark debt as paid.' });
+    }
+
+    return c.json({ message: 'Debt marked as paid' });
+  } catch (err) {
+    if (err instanceof HTTPException) throw err;
+    console.error('Error marking debt as paid:', err);
+    throw new HTTPException(500, { message: 'An unexpected error occurred.' });
+  }
 });
 
 export default interestRouter;

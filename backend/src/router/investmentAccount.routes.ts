@@ -3,7 +3,7 @@ import authMiddleware from '../middleware';
 import { InvestmentAccount } from '../database/schema';
 import { zValidator } from '@hono/zod-validator';
 import { investmentAccountSchema } from '../utils/schema.validations';
-import { eq, count, sql, and } from 'drizzle-orm';
+import { eq, count, sql, and, InferSelectModel, asc, desc } from 'drizzle-orm';
 import { db } from '../database';
 import { HTTPException } from 'hono/http-exception';
 
@@ -13,22 +13,55 @@ const investmentAccountRouter = new Hono();
 investmentAccountRouter.get('/all', authMiddleware, async (c) => {
   try {
     const userId = await c.get('userId' as any);
-    const { page = 1, limit = 10 } = c.req.query();
+    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = c.req.query();
+
+    const allowedSortFields: (keyof InferSelectModel<typeof InvestmentAccount>)[] = [
+      'id',
+      'createdAt',
+      'updatedAt',
+      'name',
+      'platform',
+      'balance',
+      'currency',
+    ];
+    const validSortBy = allowedSortFields.includes(
+      sortBy as keyof InferSelectModel<typeof InvestmentAccount>,
+    )
+      ? (sortBy as keyof InferSelectModel<typeof InvestmentAccount>)
+      : 'createdAt';
+
+    const sortColumn = InvestmentAccount[validSortBy];
+    if (!sortColumn) {
+      throw new HTTPException(400, {
+        message: 'Invalid sort field specified for investment accounts.',
+      });
+    }
+
+    const sortDirection = sortOrder.toLowerCase() === 'asc' ? asc : desc;
+    const orderByClause = sortDirection(sortColumn);
+
     const totalQuery = await db
       .select({ tot: count(InvestmentAccount.id) })
       .from(InvestmentAccount)
       .where(eq(InvestmentAccount.userId, userId))
-      .then((res) => res[0].tot);
+      .then((res) => res[0]?.tot ?? 0)
+      .catch((err) => {
+        throw new HTTPException(500, { message: `DB Error: ${err.message}` });
+      });
 
-    const investmentAccount = await db.query.InvestmentAccount.findMany({
+    const investmentAccounts = await db.query.InvestmentAccount.findMany({
       where(fields, ops) {
         return ops.eq(fields.userId, userId);
       },
       limit: +limit,
       offset: +limit * (+page - 1),
+      orderBy: [orderByClause],
+    }).catch((err) => {
+      throw new HTTPException(500, { message: `DB Error: ${err.message}` });
     });
+
     return c.json({
-      data: investmentAccount,
+      data: investmentAccounts,
       pagination: {
         total: totalQuery,
         totalPages: Math.ceil(totalQuery / +limit),
@@ -37,7 +70,9 @@ investmentAccountRouter.get('/all', authMiddleware, async (c) => {
       },
     });
   } catch (err) {
-    throw new HTTPException(400, {
+    if (err instanceof HTTPException) throw err;
+    console.error('Error fetching investment accounts:', err);
+    throw new HTTPException(500, {
       message: err instanceof Error ? err.message : 'something went wrong',
     });
   }
