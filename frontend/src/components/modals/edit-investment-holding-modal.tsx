@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { useMutation } from '@tanstack/react-query';
 import { investmentUpdate, investmentUpdateDividend } from '@/lib/endpoints/investment';
 import { useToast } from '@/lib/hooks/useToast';
@@ -45,22 +44,12 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-
-const investmentHoldingUpdateSchema = z.object({
-  shares: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
-    message: 'Shares must be a positive number'
-  }),
-  purchasePrice: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, {
-    message: 'Purchase price must be a non-negative number'
-  }),
-  purchaseDate: z.date({ required_error: 'Purchase date is required.' })
-});
-
-const dividendUpdateSchema = z.object({
-  dividend: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, {
-    message: 'Dividend must be a non-negative number'
-  })
-});
+import { NumericFormat } from 'react-number-format';
+import {
+  investmentHoldingUpdateSchema,
+  dividendUpdateSchema
+} from '@/lib/utils/schema.validations';
+import { z } from 'zod';
 
 type InvestmentHoldingUpdateFormSchema = z.infer<typeof investmentHoldingUpdateSchema>;
 type DividendUpdateFormSchema = z.infer<typeof dividendUpdateSchema>;
@@ -72,6 +61,31 @@ interface EditInvestmentHoldingModalProps {
   accountCurrency: string;
   onInvestmentUpdated: () => void;
 }
+
+// --- Helper Functions (Moved outside) ---
+const calculateChange = (current: string | undefined, original: number | undefined | null) => {
+  if (original === null || original === undefined || !current || isNaN(parseFloat(current))) {
+    return null;
+  }
+  const currentNum = parseFloat(current);
+  const diff = currentNum - original;
+  const percentage = original !== 0 ? (diff / original) * 100 : currentNum > 0 ? Infinity : 0; // Handle division by zero
+
+  return {
+    diff,
+    percentage: isFinite(percentage) ? percentage : 100 * Math.sign(diff), // Handle Infinity for percentage
+    isPositive: diff >= 0
+  };
+};
+
+const calculateYield = (dividendStr: string | undefined, totalValue: number | null) => {
+  const dividendNum = parseFloat(dividendStr || '0');
+  if (totalValue && !isNaN(dividendNum) && totalValue > 0) {
+    return (dividendNum / totalValue) * 100;
+  }
+  return null;
+};
+// --- End Helper Functions ---
 
 const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
   isOpen,
@@ -92,7 +106,7 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
       purchasePrice: String(investment.purchasePrice || ''),
       purchaseDate: investment.purchaseDate ? new Date(investment.purchaseDate) : new Date()
     },
-    mode: 'onSubmit'
+    mode: 'onChange' // Use onChange for immediate feedback on validation
   });
 
   const dividendForm = useForm<DividendUpdateFormSchema>({
@@ -100,7 +114,7 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
     defaultValues: {
       dividend: String(investment.dividend || '0')
     },
-    mode: 'onSubmit'
+    mode: 'onChange' // Use onChange for immediate feedback on validation
   });
 
   const shares = detailsForm.watch('shares');
@@ -111,12 +125,7 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
   useEffect(() => {
     const sharesNum = parseFloat(shares);
     const priceNum = parseFloat(purchasePrice);
-
-    if (!isNaN(sharesNum) && !isNaN(priceNum)) {
-      setTotalValue(sharesNum * priceNum);
-    } else {
-      setTotalValue(null);
-    }
+    setTotalValue(!isNaN(sharesNum) && !isNaN(priceNum) ? sharesNum * priceNum : null);
   }, [shares, purchasePrice]);
 
   useEffect(() => {
@@ -133,6 +142,7 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
     }
   }, [isOpen, investment, detailsForm, dividendForm]);
 
+  // --- Mutations ---
   const updateInvestmentMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => investmentUpdate(id, data),
     onSuccess: async () => {
@@ -163,6 +173,7 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
       showError(error.message);
     }
   });
+  // --- End Mutations ---
 
   const handleDetailsUpdate = (data: InvestmentHoldingUpdateFormSchema) => {
     updateInvestmentMutation.mutate({
@@ -186,36 +197,21 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
 
   const isPending = updateInvestmentMutation.isPending || updateDividendMutation.isPending;
 
-  // Calculate changes from original values
-  const calculateChange = (current: string, original: number | undefined) => {
-    if (!original || !current || isNaN(parseFloat(current))) return null;
-
-    const currentNum = parseFloat(current);
-    const diff = currentNum - original;
-    const percentage = original !== 0 ? (diff / original) * 100 : 0;
-
-    return {
-      diff,
-      percentage,
-      isPositive: diff >= 0
-    };
-  };
-
-  const sharesChange = calculateChange(shares, investment.shares);
-  const priceChange = calculateChange(purchasePrice, investment.purchasePrice);
-  const dividendChange = calculateChange(dividend, investment.dividend);
-
-  // Calculate yield if we have both dividend and total value
-  const calculateYield = () => {
-    const dividendNum = parseFloat(dividend);
-
-    if (totalValue && !isNaN(dividendNum) && totalValue > 0) {
-      return (dividendNum / totalValue) * 100;
-    }
-    return null;
-  };
-
-  const dividendYield = calculateYield();
+  // --- Memoized Calculations ---
+  const sharesChange = useMemo(
+    () => calculateChange(shares, investment.shares),
+    [shares, investment.shares]
+  );
+  const priceChange = useMemo(
+    () => calculateChange(purchasePrice, investment.purchasePrice),
+    [purchasePrice, investment.purchasePrice]
+  );
+  const dividendChange = useMemo(
+    () => calculateChange(dividend, investment.dividend),
+    [dividend, investment.dividend]
+  );
+  const dividendYield = useMemo(() => calculateYield(dividend, totalValue), [dividend, totalValue]);
+  // --- End Memoized Calculations ---
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -247,6 +243,7 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
             </TabsTrigger>
           </TabsList>
 
+          {/* Details Tab */}
           <TabsContent value='details' className='pt-2'>
             <Form {...detailsForm}>
               <form onSubmit={detailsForm.handleSubmit(handleDetailsUpdate)} className='space-y-5'>
@@ -263,12 +260,15 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
                           </FormLabel>
                           <FormControl>
                             <div className='relative'>
-                              <Input
-                                type='number'
-                                step='any'
+                              <NumericFormat
+                                customInput={Input}
+                                thousandSeparator=','
+                                decimalSeparator='.'
+                                allowNegative={false}
                                 placeholder='e.g., 10.5'
-                                className='pl-3'
-                                {...field}
+                                className='pl-10'
+                                onValueChange={(values) => field.onChange(values.value)}
+                                value={field.value}
                               />
                               {sharesChange && (
                                 <div className='absolute right-3 top-1/2 -translate-y-1/2 transform'>
@@ -302,13 +302,20 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
                           </FormLabel>
                           <FormControl>
                             <div className='relative'>
-                              <Input
-                                type='number'
-                                step='0.01'
+                              <NumericFormat
+                                customInput={Input}
+                                thousandSeparator=','
+                                decimalSeparator='.'
+                                allowNegative={false}
+                                decimalScale={2}
                                 placeholder='e.g., 150.75'
-                                className='pl-3'
-                                {...field}
+                                className='pl-10'
+                                onValueChange={(values) => field.onChange(values.value)}
+                                value={field.value}
                               />
+                              <span className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 transform text-sm text-muted-foreground'>
+                                {accountCurrency}
+                              </span>
                               {priceChange && (
                                 <div className='absolute right-3 top-1/2 -translate-y-1/2 transform'>
                                   <Badge
@@ -361,7 +368,6 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
                       <div className='text-right font-medium'>
                         {formatCurrency(totalValue, accountCurrency)}
                       </div>
-
                       {shares && !isNaN(parseFloat(shares)) && (
                         <>
                           <div className='text-muted-foreground'>Number of Shares:</div>
@@ -370,7 +376,6 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
                           </div>
                         </>
                       )}
-
                       {purchasePrice && !isNaN(parseFloat(purchasePrice)) && (
                         <>
                           <div className='text-muted-foreground'>Price per Share:</div>
@@ -417,6 +422,7 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
             </Form>
           </TabsContent>
 
+          {/* Dividends Tab */}
           <TabsContent value='dividends' className='pt-2'>
             <Form {...dividendForm}>
               <form
@@ -435,13 +441,20 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
                         </FormLabel>
                         <FormControl>
                           <div className='relative'>
-                            <Input
-                              type='number'
-                              step='0.01'
+                            <NumericFormat
+                              customInput={Input}
+                              thousandSeparator=','
+                              decimalSeparator='.'
+                              allowNegative={false}
+                              decimalScale={2}
                               placeholder='e.g., 25.50'
                               className='pl-10'
-                              {...field}
+                              onValueChange={(values) => field.onChange(values.value)}
+                              value={field.value}
                             />
+                            <span className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 transform text-sm text-muted-foreground'>
+                              {accountCurrency}
+                            </span>
                             {dividendChange && (
                               <div className='absolute right-3 top-1/2 -translate-y-1/2 transform'>
                                 <Badge
@@ -465,7 +478,6 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
                   />
                 </div>
 
-                {/* Dividend Summary Card */}
                 {dividend && !isNaN(parseFloat(dividend)) && totalValue !== null && (
                   <Card className='border border-primary/20 bg-muted/30 p-4'>
                     <h3 className='mb-2 flex items-center gap-2 text-sm font-medium'>
@@ -477,14 +489,12 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
                       <div className='text-right font-medium'>
                         {formatCurrency(parseFloat(dividend), accountCurrency)}
                       </div>
-
                       {dividendYield !== null && (
                         <>
                           <div className='text-muted-foreground'>Dividend Yield:</div>
                           <div className='text-right font-medium'>{dividendYield.toFixed(2)}%</div>
                         </>
                       )}
-
                       {totalValue > 0 && (
                         <>
                           <div className='text-muted-foreground'>Investment Value:</div>

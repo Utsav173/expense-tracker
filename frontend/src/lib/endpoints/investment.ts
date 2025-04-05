@@ -6,7 +6,8 @@ import {
   PortfolioSummary,
   Pagination,
   StockSearchResult,
-  StockPriceResult
+  StockPriceResult,
+  HistoricalStockPriceResponse
 } from '../types';
 
 export const investmentCreate = (
@@ -111,9 +112,9 @@ export const investmentStockHistoricalPrice = (
   date: string,
   successMessage?: string,
   errorMessage?: string
-): Promise<ApiResponse<{ price: number | null }>> =>
+): Promise<ApiResponse<HistoricalStockPriceResponse | null>> =>
   apiFetch(
-    `/investment/stocks/historical/${symbol}?date=${date}`,
+    `/investment/stocks/historical-price/${symbol}?date=${date}`,
     'GET',
     undefined,
     undefined,

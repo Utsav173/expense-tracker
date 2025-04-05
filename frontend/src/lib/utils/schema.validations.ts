@@ -24,3 +24,19 @@ export const debtSchema = z.object({
 
 export type InterestFormSchema = z.infer<typeof interestSchema>;
 export type DebtFormSchema = z.infer<typeof debtSchema>;
+
+export const investmentHoldingUpdateSchema = z.object({
+  shares: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
+    message: 'Shares must be a positive number'
+  }),
+  purchasePrice: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, {
+    message: 'Purchase price must be a non-negative number'
+  }),
+  purchaseDate: z.date({ required_error: 'Purchase date is required.' })
+});
+
+export const dividendUpdateSchema = z.object({
+  dividend: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, {
+    message: 'Dividend must be a non-negative number'
+  })
+});
