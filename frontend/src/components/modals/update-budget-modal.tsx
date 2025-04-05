@@ -29,6 +29,7 @@ import {
 import { Budget } from '@/lib/types';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { Loader2, CalendarDays, Tag, Pencil } from 'lucide-react';
+import { NumericFormat } from 'react-number-format';
 
 export const budgetUpdateSchema = z.object({
   amount: z
@@ -113,13 +114,19 @@ const UpdateBudgetModal: React.FC<UpdateBudgetModalProps> = ({
                     Amount
                   </FormLabel>
                   <FormControl>
-                    <Input
-                      type='number'
-                      step='0.01'
-                      placeholder='e.g., 1500.50'
-                      {...field}
+                    <NumericFormat
+                      customInput={Input}
+                      thousandSeparator={true}
+                      decimalScale={2}
+                      fixedDecimalScale={true}
+                      allowNegative={false}
+                      placeholder='e.g., 1,500.50'
                       className='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'
                       disabled={updateBudgetMutation.isPending}
+                      {...field}
+                      onValueChange={(values) => {
+                        field.onChange(values.floatValue?.toString() || '');
+                      }}
                     />
                   </FormControl>
                   <FormMessage className='mt-1 text-xs text-red-600 dark:text-red-400' />

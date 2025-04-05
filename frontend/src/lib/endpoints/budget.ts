@@ -6,7 +6,12 @@ export const budgetCreate = (body: any, successMessage?: string, errorMessage?: 
 
 export const budgetGetAll = (
   id: string,
-  params: any,
+  params: {
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  },
   successMessage?: string,
   errorMessage?: string
 ): Promise<ApiResponse<{ data: Budget[]; pagination: Pagination }>> =>

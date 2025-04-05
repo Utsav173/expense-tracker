@@ -37,7 +37,7 @@ export const investmentHoldingsColumns = ({
     accessorKey: 'purchaseDate',
     header: 'Purchase Date',
     cell: ({ row }) => {
-      const date = row.getValue('purchaseDate') as string;
+      const date = row.original.purchaseDate;
       return date ? format(new Date(date), 'MMM d, yyyy') : 'N/A';
     }
   },

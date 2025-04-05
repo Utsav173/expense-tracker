@@ -1,3 +1,4 @@
+// /home/utsav/coding/expense-tracker/frontend/src/lib/endpoints/investment.ts
 import apiFetch from '../api-client';
 import {
   Investment,
@@ -18,7 +19,12 @@ export const investmentCreate = (
 
 export const investmentGetAll = (
   accountId: string,
-  params: { page?: number; limit?: number },
+  params: {
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  },
   successMessage?: string,
   errorMessage?: string
 ): Promise<ApiResponse<{ data: Investment[]; pagination: Pagination }>> =>

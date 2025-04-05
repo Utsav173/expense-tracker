@@ -2,11 +2,9 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { apiFetchDebts } from '@/lib/endpoints/debt';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Loader from '@/components/ui/loader';
 import CommonTable from '@/components/ui/CommonTable';
-import { usePagination } from '@/hooks/usePagination';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useToast } from '@/lib/hooks/useToast';
 import { Input } from '@/components/ui/input';
 import { useDebounce } from 'use-debounce';
@@ -23,36 +21,46 @@ import { debtColumns } from '@/components/debt/debt-columns';
 import AddDebtModal from '@/components/modals/add-debt-modal';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { DebtWithDetails } from '@/lib/types';
+import { useUrlState } from '@/hooks/useUrlState';
+import { SortingState } from '@tanstack/react-table'; // Import SortingState
 
 type DebtTypeFilter = '' | 'given' | 'taken' | 'all' | undefined;
 
 const DebtsPage = () => {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
   const { showError } = useToast();
   const invalidate = useInvalidateQueries();
-
-  const [search, setSearch] = useState('');
-  const [debouncedSearch] = useDebounce(search, 600);
-  const [type, setType] = useState<DebtTypeFilter>('all');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const { page, handlePageChange } = usePagination(
-    Number(searchParams.get('page')) || 1,
-    (params) => {
-      const currentParams = new URLSearchParams(searchParams.toString());
-      Object.keys(params).forEach((key) => {
-        if (params[key] === undefined || params[key] === null || params[key] === '') {
-          currentParams.delete(key);
-        } else {
-          currentParams.set(key.toString(), params[key]);
-        }
-      });
-      const newUrl = `${pathname}?${currentParams.toString()}`;
-      router.push(newUrl, { scroll: false });
+  const { state, setState, handlePageChange } = useUrlState<{
+    page: number;
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
+    type: DebtTypeFilter;
+    q: string;
+  }>({
+    page: 1,
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+    type: 'all',
+    q: ''
+  });
+
+  const [search, setSearch] = useState(state.q); // Initialize search with state.q
+  const [debouncedSearch] = useDebounce(search, 600);
+
+  // Update local search when state.q changes (e.g., from URL)
+  useEffect(() => {
+    if (state.q !== search) {
+      setSearch(state.q);
     }
-  );
+  }, [state.q]); // Removed dependency on 'search' to avoid loop
+
+  // Update state when debounced search changes
+  useEffect(() => {
+    if (debouncedSearch !== state.q) {
+      setState({ q: debouncedSearch, page: 1 });
+    }
+  }, [debouncedSearch, state.q, setState]);
 
   const {
     data: debtsData,
@@ -60,25 +68,46 @@ const DebtsPage = () => {
     error,
     refetch
   } = useQuery({
-    queryKey: ['debts', page, debouncedSearch, type],
+    queryKey: ['debts', state.page, state.sortBy, state.sortOrder, state.type, state.q],
     queryFn: () =>
       apiFetchDebts({
-        page,
+        page: state.page,
         pageSize: 10,
-        q: debouncedSearch,
-        type: type === 'all' ? undefined : type
+        q: state.q, // Use state.q for the query
+        type: state.type === 'all' ? undefined : state.type,
+        sortBy: state.sortBy,
+        sortOrder: state.sortOrder
       }),
     retry: false
   });
 
-  useEffect(() => {
-    handlePageChange(1);
-  }, [debouncedSearch, type]);
-
   const handleDebtAdded = () => {
-    invalidate(['debts']); // Invalidate base query key
+    invalidate(['debts', state.page, state.sortBy, state.sortOrder, state.type, state.q]);
+    invalidate(['outstandingDebtsDashboard']);
     refetch();
   };
+
+  // Updated handleSort to match CommonTable's expected signature
+  const handleSort = useCallback(
+    (newSortingState: SortingState) => {
+      if (newSortingState.length > 0) {
+        const { id, desc } = newSortingState[0];
+        setState({ sortBy: id, sortOrder: desc ? 'desc' : 'asc', page: 1 });
+      } else {
+        setState({ sortBy: 'createdAt', sortOrder: 'desc', page: 1 }); // Revert to default or clear
+      }
+    },
+    [setState]
+  );
+
+  // Updated handleTypeChange to accept string and cast
+  const handleTypeChange = useCallback(
+    (value: string) => {
+      const newType = value as DebtTypeFilter;
+      setState({ type: newType, page: 1 });
+    },
+    [setState]
+  );
 
   if (isLoading) {
     return <Loader />;
@@ -90,8 +119,8 @@ const DebtsPage = () => {
   }
 
   return (
-    <div className='container space-y-6 p-4 md:p-6 lg:p-8'>
-      <div className='flex items-center justify-between'>
+    <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
+      <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <h1 className='text-3xl font-semibold'>Debts</h1>
         <Button onClick={() => setIsAddModalOpen(true)}>
           <PlusCircle className='mr-2 h-4 w-4' /> Add Debt
@@ -107,7 +136,7 @@ const DebtsPage = () => {
           className='max-w-sm'
         />
 
-        <Select onValueChange={(value) => setType(value as DebtTypeFilter)} value={type || 'all'}>
+        <Select onValueChange={handleTypeChange} value={state.type || 'all'}>
           <SelectTrigger className='w-full sm:w-[180px]'>
             <SelectValue placeholder='Select Type' />
           </SelectTrigger>
@@ -118,15 +147,19 @@ const DebtsPage = () => {
           </SelectContent>
         </Select>
       </div>
-      <CommonTable<DebtWithDetails> // Specify the correct type here
+      <CommonTable<DebtWithDetails>
         data={debtsData?.data || []}
         columns={debtColumns}
         loading={isLoading}
         totalRecords={debtsData?.totalCount || 0}
         pageSize={10}
-        currentPage={page}
+        currentPage={state.page}
         onPageChange={handlePageChange}
+        onSortChange={handleSort} // Pass the correctly typed handler
         enablePagination
+        sortBy={state.sortBy}
+        sortOrder={state.sortOrder} // Pass typed sortOrder
+        mobileTriggerColumns={['debts.description', 'debts.amount']}
       />
 
       <AddDebtModal

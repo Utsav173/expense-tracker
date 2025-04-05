@@ -26,8 +26,9 @@ import {
 import { SavingGoal } from '@/lib/types';
 import { goalUpdate } from '@/lib/endpoints/goal';
 import DateTimePicker from '../date-time-picker';
-import { format } from 'date-fns';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
+import React, { useEffect } from 'react';
+import { NumericFormat } from 'react-number-format';
 
 const goalSchema = z.object({
   name: z.string().min(3, 'Goal name must be at least 3 characters'),
@@ -62,13 +63,24 @@ const UpdateGoalModal: React.FC<UpdateGoalModalProps> = ({
   const form = useForm<GoalFormSchema>({
     resolver: zodResolver(goalSchema),
     defaultValues: {
-      name: goal.name,
-      targetAmount: goal.targetAmount.toString(),
-      savedAmount: goal.savedAmount ? goal.savedAmount.toString() : undefined,
-      targetDate: goal.targetDate ? new Date(goal.targetDate) : undefined
+      name: '',
+      targetAmount: '',
+      savedAmount: undefined,
+      targetDate: undefined
     },
     mode: 'onSubmit'
   });
+
+  useEffect(() => {
+    if (isOpen && goal) {
+      form.reset({
+        name: goal.name,
+        targetAmount: goal.targetAmount.toString(),
+        savedAmount: goal.savedAmount ? goal.savedAmount.toString() : undefined,
+        targetDate: goal.targetDate ? new Date(goal.targetDate) : undefined
+      });
+    }
+  }, [isOpen, goal, form.reset]);
 
   const updateGoalMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => goalUpdate(id, data),
@@ -125,7 +137,20 @@ const UpdateGoalModal: React.FC<UpdateGoalModalProps> = ({
                 <FormItem>
                   <FormLabel>Target Amount</FormLabel>
                   <FormControl>
-                    <Input type='text' placeholder='Target Amount' {...field} />
+                    <NumericFormat
+                      customInput={Input}
+                      thousandSeparator=','
+                      decimalSeparator='.'
+                      allowNegative={false}
+                      decimalScale={2}
+                      fixedDecimalScale
+                      placeholder='Target Amount'
+                      className='w-full'
+                      onValueChange={(values) => {
+                        field.onChange(values.value);
+                      }}
+                      value={field.value}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -139,7 +164,20 @@ const UpdateGoalModal: React.FC<UpdateGoalModalProps> = ({
                 <FormItem>
                   <FormLabel>Saved Amount</FormLabel>
                   <FormControl>
-                    <Input type='text' placeholder='Saved Amount' {...field} />
+                    <NumericFormat
+                      customInput={Input}
+                      thousandSeparator=','
+                      decimalSeparator='.'
+                      allowNegative={false}
+                      decimalScale={2}
+                      fixedDecimalScale
+                      placeholder='Saved Amount'
+                      className='w-full'
+                      onValueChange={(values) => {
+                        field.onChange(values.value);
+                      }}
+                      value={field.value}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

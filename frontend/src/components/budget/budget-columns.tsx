@@ -12,6 +12,7 @@ import UpdateBudgetModal from '../modals/update-budget-modal';
 import { useState } from 'react';
 import { formatCurrency } from '@/lib/utils';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
+import React from 'react';
 
 export const budgetColumns: ColumnDef<Budget>[] = [
   {
@@ -22,7 +23,7 @@ export const budgetColumns: ColumnDef<Budget>[] = [
     accessorKey: 'month',
     header: 'Month',
     cell: ({ row }) => {
-      const month = row.getValue('month') as number;
+      const month = row.original.month;
       const monthNames = [
         'January',
         'February',
@@ -82,38 +83,36 @@ export const budgetColumns: ColumnDef<Budget>[] = [
       };
 
       return (
-        <>
-          <div className='flex justify-end gap-2'>
-            <Button
-              size='sm'
-              variant='ghost'
-              onClick={() => {
-                setIsUpdateModalOpen(true);
-              }}
-              aria-label='Edit Budget'
-            >
-              <Pencil size={18} />
-            </Button>
-            <DeleteConfirmationModal
-              title='Delete Budget'
-              description='Are you sure you want to delete this budget?'
-              onConfirm={handleDelete}
-              open={!!deleteBudgetId}
-              onOpenChange={(open) => {
-                if (!open) setDeleteBudgetId(null);
-              }}
-              triggerButton={
-                <Button
-                  size='sm'
-                  variant='ghost'
-                  onClick={() => setDeleteBudgetId(budget.id)}
-                  aria-label='Delete Budget'
-                >
-                  <Trash2 size={18} />
-                </Button>
-              }
-            />
-          </div>
+        <div className='flex justify-end gap-2'>
+          <Button
+            size='sm'
+            variant='ghost'
+            onClick={() => {
+              setIsUpdateModalOpen(true);
+            }}
+            aria-label='Edit Budget'
+          >
+            <Pencil size={18} />
+          </Button>
+          <DeleteConfirmationModal
+            title='Delete Budget'
+            description='Are you sure you want to delete this budget?'
+            onConfirm={handleDelete}
+            open={!!deleteBudgetId}
+            onOpenChange={(open) => {
+              if (!open) setDeleteBudgetId(null);
+            }}
+            triggerButton={
+              <Button
+                size='sm'
+                variant='ghost'
+                onClick={() => setDeleteBudgetId(budget.id)}
+                aria-label='Delete Budget'
+              >
+                <Trash2 size={18} />
+              </Button>
+            }
+          />
           <UpdateBudgetModal
             isOpen={isUpdateModalOpen}
             onOpenChange={setIsUpdateModalOpen}
@@ -122,7 +121,7 @@ export const budgetColumns: ColumnDef<Budget>[] = [
               await invalidate(['budgets']);
             }}
           />
-        </>
+        </div>
       );
     }
   }

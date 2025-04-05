@@ -15,6 +15,7 @@ import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { formatCurrency } from '@/lib/utils';
 import { Progress } from '../ui/progress';
 import AddWithdrawGoalAmountModal from '../modals/add-withdraw-goal-amount-modal';
+import React from 'react';
 
 export const goalColumns: ColumnDef<SavingGoal>[] = [
   {

@@ -1,3 +1,5 @@
+'use client';
+
 import { ColumnDef } from '@tanstack/react-table';
 import { DebtWithDetails } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -12,6 +14,7 @@ import UpdateDebtModal from '../modals/update-debt-modal';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { formatCurrency } from '@/lib/utils';
 import { Badge } from '../ui/badge';
+import React from 'react';
 
 export const debtColumns: ColumnDef<DebtWithDetails>[] = [
   {
@@ -93,21 +96,21 @@ export const debtColumns: ColumnDef<DebtWithDetails>[] = [
           await invalidate(['debts']);
           await invalidate(['outstandingDebtsDashboard']);
           showSuccess('Debt deleted successfully!');
-          setDeleteDebtId(null); // Close modal on success
+          setDeleteDebtId(null);
         },
         onError: (error: any) => {
           showError(error.message);
         }
       });
 
-      const handlePaid = () => {
-        markAsPaidMutation.mutate(debtItem.debts.id);
-      };
-
       const handleDeleteConfirm = () => {
         if (deleteDebtId) {
           deleteDebtMutation.mutate(deleteDebtId);
         }
+      };
+
+      const handlePaid = () => {
+        markAsPaidMutation.mutate(debtItem.debts.id);
       };
 
       return (

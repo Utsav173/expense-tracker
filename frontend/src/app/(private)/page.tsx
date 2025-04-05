@@ -74,8 +74,8 @@ const AccountList = () => {
   };
 
   return (
-    <div className='p-4'>
-      <div className='mb-6 flex items-center justify-between max-sm:flex-col max-sm:gap-2'>
+    <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
+      <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <h1 className='text-2xl font-bold'>Accounts</h1>
         <div className='flex items-center gap-2 max-sm:w-full max-sm:flex-col max-sm:gap-2'>
           <AddAccountModal />

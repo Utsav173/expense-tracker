@@ -1,15 +1,21 @@
+// /home/utsav/coding/expense-tracker/frontend/src/lib/endpoints/goal.ts
 import { Pagination, SavingGoal, ApiResponse } from '../types';
 import apiFetch from '../api-client';
 
 export const goalCreate = (
-  body: { name: string; targetAmount: number; targetDate?: Date },
+  body: { name: string; targetAmount: number; targetDate?: string },
   successMessage?: string,
   errorMessage?: string
 ): Promise<ApiResponse<SavingGoal>> =>
   apiFetch('/goal', 'POST', body, undefined, successMessage, errorMessage);
 
 export const goalGetAll = (
-  params: { page?: number; limit?: number },
+  params: {
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  },
   successMessage?: string,
   errorMessage?: string
 ): Promise<ApiResponse<{ data: SavingGoal[]; pagination: Pagination }>> =>

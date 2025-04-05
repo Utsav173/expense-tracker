@@ -15,7 +15,6 @@ import {
 import { useState } from 'react';
 import Loader from '@/components/ui/loader';
 import { Button } from '@/components/ui/button';
-import { usePagination } from '@/hooks/usePagination';
 import { useToast } from '@/lib/hooks/useToast';
 import { ArrowLeft, PlusCircle, Edit, Trash, BarChart3, Banknote, DollarSign } from 'lucide-react';
 import {
@@ -33,6 +32,8 @@ import { formatCurrency } from '@/lib/utils';
 import CommonTable from '@/components/ui/CommonTable';
 import { investmentHoldingsColumns } from '@/components/investment/investment-holdings-columns';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
+import { useUrlState } from '@/hooks/useUrlState';
+import { SortingState } from '@tanstack/react-table'; // Import SortingState
 
 const InvestmentAccountDetailPage = () => {
   const params = useParams();
@@ -46,14 +47,10 @@ const InvestmentAccountDetailPage = () => {
   const [deleteInvestmentId, setDeleteInvestmentId] = useState<string | null>(null);
   const [selectedInvestment, setSelectedInvestment] = useState<Investment | null>(null);
 
-  const { page, handlePageChange } = usePagination(1, (params) => {
-    const currentParams = new URLSearchParams(window.location.search);
-    if (params.page && params.page > 1) {
-      currentParams.set('page', String(params.page));
-    } else {
-      currentParams.delete('page');
-    }
-    router.push(`${window.location.pathname}?${currentParams.toString()}`, { scroll: false });
+  const { state, setState, handlePageChange } = useUrlState({
+    page: 1,
+    sortBy: 'purchaseDate',
+    sortOrder: 'desc' as 'asc' | 'desc' // Explicitly type sortOrder
   });
 
   const {
@@ -84,8 +81,14 @@ const InvestmentAccountDetailPage = () => {
     error: investmentsError,
     refetch: refetchInvestments
   } = useQuery({
-    queryKey: ['investments', accountId, page],
-    queryFn: () => investmentGetAll(accountId, { page, limit: 10 }),
+    queryKey: ['investments', accountId, state.page, state.sortBy, state.sortOrder],
+    queryFn: () =>
+      investmentGetAll(accountId, {
+        page: state.page,
+        limit: 10,
+        sortBy: state.sortBy,
+        sortOrder: state.sortOrder // Pass typed sortOrder
+      }),
     enabled: !!accountId,
     retry: false
   });
@@ -93,7 +96,7 @@ const InvestmentAccountDetailPage = () => {
   const deleteInvestmentMutation = useMutation({
     mutationFn: (id: string) => investmentDelete(id),
     onSuccess: async () => {
-      await invalidate(['investments', accountId, page]);
+      await invalidate(['investments', accountId, state.page, state.sortBy, state.sortOrder]);
       await invalidate(['investmentAccountSummary', accountId]);
       await invalidate(['investmentPortfolioSummaryDashboard']);
       showSuccess('Investment deleted successfully!');
@@ -128,6 +131,16 @@ const InvestmentAccountDetailPage = () => {
     return investmentStockPrice(symbol);
   };
 
+  // Updated handleSort to match CommonTable's expected signature
+  const handleSort = (newSortingState: SortingState) => {
+    if (newSortingState.length > 0) {
+      const { id, desc } = newSortingState[0];
+      setState({ sortBy: id, sortOrder: desc ? 'desc' : 'asc', page: 1 });
+    } else {
+      setState({ sortBy: 'purchaseDate', sortOrder: 'desc', page: 1 }); // Revert to default or clear
+    }
+  };
+
   if (isLoadingAccount) {
     return <Loader />;
   }
@@ -142,8 +155,8 @@ const InvestmentAccountDetailPage = () => {
   }
 
   return (
-    <div className='container space-y-6 p-4 md:p-6 lg:p-8'>
-      <div className='flex items-center justify-between'>
+    <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
+      <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <Button variant='ghost' onClick={() => router.back()} className='flex items-center gap-2'>
           <ArrowLeft size={16} /> Back to Accounts
         </Button>
@@ -215,15 +228,19 @@ const InvestmentAccountDetailPage = () => {
           <CardDescription>Investments within this account.</CardDescription>
         </CardHeader>
         <CardContent>
-          <CommonTable
+          <CommonTable<Investment>
             data={investments?.data || []}
             columns={investmentHoldingsColumns({ handleEdit, handleDeleteClick })}
             loading={isLoadingInvestments}
             totalRecords={investments?.pagination?.total || 0}
             pageSize={10}
-            currentPage={page}
+            currentPage={state.page}
             onPageChange={handlePageChange}
+            onSortChange={handleSort} // Pass the correctly typed handler
             enablePagination
+            sortBy={state.sortBy}
+            sortOrder={state.sortOrder} // Pass typed sortOrder
+            mobileTriggerColumns={['symbol', 'shares']}
           />
         </CardContent>
       </Card>
@@ -234,7 +251,7 @@ const InvestmentAccountDetailPage = () => {
         accountId={accountId}
         accountCurrency={account.currency}
         onInvestmentAdded={() => {
-          invalidate(['investments', accountId]);
+          invalidate(['investments', accountId, state.page, state.sortBy, state.sortOrder]);
           invalidate(['investmentAccountSummary', accountId]);
           invalidate(['investmentPortfolioSummaryDashboard']);
           refetchInvestments();
@@ -251,7 +268,7 @@ const InvestmentAccountDetailPage = () => {
           investment={selectedInvestment}
           accountCurrency={account.currency}
           onInvestmentUpdated={() => {
-            invalidate(['investments', accountId]);
+            invalidate(['investments', accountId, state.page, state.sortBy, state.sortOrder]);
             invalidate(['investmentAccountSummary', accountId]);
             invalidate(['investmentPortfolioSummaryDashboard']);
             refetchInvestments();

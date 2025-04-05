@@ -86,7 +86,7 @@ const TransactionsPage = () => {
   }
 
   return (
-    <div className='mx-auto w-full max-w-7xl space-y-4 p-3 md:space-y-6'>
+    <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
       <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div>
           <h1 className='text-xl font-bold sm:text-2xl'>Transactions</h1>

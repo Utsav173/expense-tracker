@@ -110,7 +110,7 @@ const DashboardPage = () => {
   };
 
   return (
-    <div className='space-y-6 p-4 md:p-6'>
+    <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
       <div className='flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center'>
         <h1 className='text-2xl font-bold md:text-3xl'>Dashboard</h1>
       </div>
