@@ -95,7 +95,10 @@ export const importDataSchema = z.object({
   account: z.string().uuid(),
   user: z.string().uuid(),
   data: z.any(),
-  updatedAt: z.date(),
+  updatedAt: z
+    .string()
+    .transform((val) => new Date(val))
+    .refine((date) => !isNaN(date.getTime()), { message: 'Invalid date format' }),
 });
 
 export const budgetSchema = z.object({
@@ -123,5 +126,8 @@ export const investmentSchema = z.object({
   symbol: z.string(),
   shares: z.number(),
   purchasePrice: z.number(),
-  purchaseDate: z.date(),
+  purchaseDate: z
+    .string()
+    .transform((val) => new Date(val))
+    .refine((date) => !isNaN(date.getTime()), { message: 'Invalid date format' }),
 });
