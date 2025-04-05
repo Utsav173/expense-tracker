@@ -2,7 +2,7 @@ import * as React from 'react';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-import RouteBreadcrumbs from './route-breadcrumbs'; // Import the new component
+import PageHeader from './page-header';
 import Loader from './ui/loader';
 
 const SidebarLayout = ({ children }: { children: React.ReactNode }) => {
@@ -21,10 +21,10 @@ const SidebarLayout = ({ children }: { children: React.ReactNode }) => {
             <div className='flex items-center gap-2 px-4'>
               <SidebarTrigger className='-ml-1' />
               <Separator orientation='vertical' className='mr-2 h-4' />
-              <RouteBreadcrumbs />
+              <PageHeader />
             </div>
           </header>
-          <main className='scrollbar relative flex min-h-[calc(100dvh-4rem)] flex-1 flex-col gap-4 p-4 pt-0'>
+          <main className='scrollbar relative flex min-h-[calc(100dvh-4rem)] flex-1 flex-col gap-4 bg-muted/40 p-4 pt-4 md:pt-6 lg:p-6'>
             {children}
           </main>
         </SidebarInset>

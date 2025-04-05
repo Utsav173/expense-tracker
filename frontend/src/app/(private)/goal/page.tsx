@@ -2,29 +2,42 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { goalGetAll } from '@/lib/endpoints/goal';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Loader from '@/components/ui/loader';
 import CommonTable from '@/components/ui/CommonTable';
-import { goalColumns } from '@/components/goal/goal-columns';
+import { createGoalColumns } from '@/components/goal/goal-columns';
+import { usePagination } from '@/hooks/usePagination';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useToast } from '@/lib/hooks/useToast';
 import AddGoalModal from '@/components/modals/add-goal-modal';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
-import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
-import { SavingGoal } from '@/lib/types';
-import { useUrlState } from '@/hooks/useUrlState';
-import { SortingState } from '@tanstack/react-table';
+import { useAuth } from '@/lib/hooks/useAuth';
 
 const GoalPage = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
   const { showError } = useToast();
-  const invalidate = useInvalidateQueries();
+  const { user } = useAuth();
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const { state, setState, handlePageChange } = useUrlState({
-    page: 1,
-    sortBy: 'targetDate',
-    sortOrder: 'asc' as 'asc' | 'desc'
-  });
+  const { page, handlePageChange } = usePagination(
+    Number(searchParams.get('page')) || 1,
+    (params) => {
+      const currentParams = new URLSearchParams(searchParams.toString());
+      Object.keys(params).forEach((key) => {
+        if (params[key] === undefined || params[key] === null || params[key] === '') {
+          currentParams.delete(key);
+        } else {
+          currentParams.set(key.toString(), params[key]);
+        }
+      });
+      const newUrl = `${pathname}?${currentParams.toString()}`;
+      router.push(newUrl, { scroll: false });
+    }
+  );
 
   const {
     data: goals,
@@ -32,32 +45,15 @@ const GoalPage = () => {
     error,
     refetch
   } = useQuery({
-    queryKey: ['goals', state.page, state.sortBy, state.sortOrder],
-    queryFn: () =>
-      goalGetAll({
-        page: state.page,
-        limit: 10,
-        sortBy: state.sortBy,
-        sortOrder: state.sortOrder
-      }),
-    retry: false
+    queryKey: ['goals', page],
+    queryFn: () => goalGetAll({ page, limit: 10 }),
+    retry: false,
+    enabled: !!user
   });
 
-  const handleGoalAdded = () => {
-    invalidate(['goals', state.page, state.sortBy, state.sortOrder]);
-    refetch();
-  };
+  const goalColumns = createGoalColumns({ user, refetchGoals: refetch });
 
-  const handleSort = (newSortingState: SortingState) => {
-    if (newSortingState.length > 0) {
-      const { id, desc } = newSortingState[0];
-      setState({ sortBy: id, sortOrder: desc ? 'desc' : 'asc', page: 1 });
-    } else {
-      setState({ sortBy: 'targetDate', sortOrder: 'asc', page: 1 });
-    }
-  };
-
-  if (isLoading) {
+  if (isLoading || !user) {
     return <Loader />;
   }
 
@@ -67,31 +63,30 @@ const GoalPage = () => {
   }
 
   return (
-    <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
-      <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
-        <h1 className='text-3xl font-semibold'>Goals</h1>
-        <Button onClick={() => setIsAddModalOpen(true)}>
+    <div className='container mx-auto space-y-6 p-4 md:p-6 lg:p-8'>
+      <div className='flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center'>
+        <h1 className='text-2xl font-semibold md:text-3xl'>Goals</h1>
+        <Button onClick={() => setIsAddModalOpen(true)} size='sm'>
           <PlusCircle className='mr-2 h-4 w-4' /> Add Goal
         </Button>
       </div>
-      <CommonTable<SavingGoal>
+
+      <CommonTable
         data={goals?.data || []}
         columns={goalColumns}
         loading={isLoading}
         totalRecords={goals?.pagination?.total || 0}
         pageSize={10}
-        currentPage={state.page}
+        currentPage={page}
         onPageChange={handlePageChange}
-        onSortChange={handleSort}
         enablePagination
-        sortBy={state.sortBy}
-        sortOrder={state.sortOrder}
-        mobileTriggerColumns={['name', 'progress']}
+        mobileTriggerColumns={['savedAmount', 'targetDate']}
       />
+
       <AddGoalModal
         isOpen={isAddModalOpen}
         onOpenChange={setIsAddModalOpen}
-        onGoalAdded={handleGoalAdded}
+        onGoalAdded={refetch}
         hideTriggerButton
       />
     </div>

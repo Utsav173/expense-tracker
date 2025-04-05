@@ -16,7 +16,7 @@ import { useState } from 'react';
 import Loader from '@/components/ui/loader';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/lib/hooks/useToast';
-import { ArrowLeft, PlusCircle, Edit, Trash, BarChart3, Banknote, DollarSign } from 'lucide-react';
+import { ArrowLeft, PlusCircle, BarChart3, Banknote } from 'lucide-react';
 import {
   Investment,
   StockSearchResult,
@@ -34,6 +34,7 @@ import { investmentHoldingsColumns } from '@/components/investment/investment-ho
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { useUrlState } from '@/hooks/useUrlState';
 import { SortingState } from '@tanstack/react-table';
+import { DynamicEllipsis, SingleLineEllipsis } from '@/components/ui/ellipsis-components';
 
 const InvestmentAccountDetailPage = () => {
   const params = useParams();
@@ -50,7 +51,7 @@ const InvestmentAccountDetailPage = () => {
   const { state, setState, handlePageChange } = useUrlState({
     page: 1,
     sortBy: 'purchaseDate',
-    sortOrder: 'desc' as 'asc' | 'desc' // Explicitly type sortOrder
+    sortOrder: 'desc' as 'asc' | 'desc'
   });
 
   const {
@@ -160,9 +161,9 @@ const InvestmentAccountDetailPage = () => {
         <Button variant='ghost' onClick={() => router.back()} className='flex items-center gap-2'>
           <ArrowLeft size={16} /> Back to Accounts
         </Button>
-        <h1 className='overflow-hidden text-ellipsis whitespace-nowrap text-xl font-semibold md:text-2xl'>
+        <DynamicEllipsis className='text-xl font-semibold md:text-2xl'>
           {account.name} ({account.platform || 'N/A'})
-        </h1>
+        </DynamicEllipsis>
         <Button onClick={() => setIsAddModalOpen(true)}>
           <PlusCircle className='mr-2 h-4 w-4' /> Add Investment
         </Button>
@@ -172,7 +173,7 @@ const InvestmentAccountDetailPage = () => {
         <Card>
           <CardHeader className='pb-2'>
             <CardTitle className='flex items-center gap-2 text-sm font-medium'>
-              <DollarSign size={16} /> Total Invested
+              Total Invested
             </CardTitle>
             <CardDescription>Initial investment amount</CardDescription>
           </CardHeader>

@@ -112,8 +112,10 @@ body {
 }
 
 @layer utilities {
-  .dialog-overlay-open {
-    @apply bg-black/80;
+  @media (min-width: 1024px) {
+    .dialog-overlay-open {
+      @apply bg-black/80;
+    }
   }
   ::-webkit-scrollbar {
     width: 0.5rem;

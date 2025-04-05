@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation } from '@tanstack/react-query';
-import { investmentCreate } from '@/lib/endpoints/investment';
+import { investmentCreate, investmentStockHistoricalPrice } from '@/lib/endpoints/investment';
 import { useToast } from '@/lib/hooks/useToast';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -22,11 +22,15 @@ import DateTimePicker from '../date-time-picker';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { StockPriceResult, StockSearchResult } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
-import { Loader2, TrendingUp, Calendar, DollarSign, Layers } from 'lucide-react';
-import { Combobox } from '../ui/combobox';
+import { Loader2, TrendingUp, Calendar, Layers } from 'lucide-react';
+import { Combobox, ComboboxOption } from '../ui/combobox';
 import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Separator } from '../ui/separator';
+import { format as formatDate, isValid as isDateValid } from 'date-fns';
+import { useDebounce } from 'use-debounce';
+import { NumericFormat } from 'react-number-format';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 const investmentHoldingSchema = z.object({
   symbol: z
@@ -34,7 +38,8 @@ const investmentHoldingSchema = z.object({
       value: z.string().min(1, 'Symbol is required.'),
       label: z.string()
     })
-    .refine((data) => data.value, { message: 'Symbol is required.' }),
+    .nullable() // Allow null initially
+    .refine((data) => !!data?.value, { message: 'Symbol is required.' }),
   shares: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
     message: 'Shares must be a positive number'
   }),
@@ -71,61 +76,135 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
   const invalidate = useInvalidateQueries();
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
   const [isPriceLoading, setIsPriceLoading] = useState(false);
+  const [isHistoricalPriceLoading, setIsHistoricalPriceLoading] = useState(false);
   const [totalValue, setTotalValue] = useState<number | null>(null);
+  const [shouldFetchHistorical, setShouldFetchHistorical] = useState(false);
 
   const form = useForm<InvestmentHoldingFormSchema>({
     resolver: zodResolver(investmentHoldingSchema),
     defaultValues: {
-      symbol: { value: '', label: '' },
+      symbol: null,
       shares: '',
       purchasePrice: '',
       purchaseDate: new Date()
     },
-    mode: 'onSubmit'
+    mode: 'onChange'
   });
 
   const selectedSymbol = form.watch('symbol');
+  const purchaseDate = form.watch('purchaseDate');
   const shares = form.watch('shares');
   const purchasePrice = form.watch('purchasePrice');
+
+  const selectedSymbolValue = selectedSymbol?.value;
+  const purchaseDateISO = purchaseDate instanceof Date ? purchaseDate.toISOString() : null;
+
+  const [debouncedSymbolValue] = useDebounce(selectedSymbolValue, 1000);
 
   useEffect(() => {
     const sharesNum = parseFloat(shares);
     const priceNum = parseFloat(purchasePrice);
-
-    if (!isNaN(sharesNum) && !isNaN(priceNum)) {
-      setTotalValue(sharesNum * priceNum);
-    } else {
-      setTotalValue(null);
-    }
+    setTotalValue(!isNaN(sharesNum) && !isNaN(priceNum) ? sharesNum * priceNum : null);
   }, [shares, purchasePrice]);
 
-  // Fetch current price when symbol changes
   useEffect(() => {
+    let isMounted = true;
+
     const fetchPrice = async () => {
-      if (selectedSymbol?.value) {
-        setIsPriceLoading(true);
+      if (!debouncedSymbolValue) {
         setCurrentPrice(null);
-        try {
-          const priceData = await getStockPriceFn(selectedSymbol.value);
-          if (priceData?.price !== null && priceData?.price !== undefined) {
-            setCurrentPrice(priceData.price);
-          }
-        } catch (error) {
-          console.error('Error fetching stock price:', error);
-        } finally {
+        return;
+      }
+
+      setIsPriceLoading(true);
+      try {
+        const priceData = await getStockPriceFn(debouncedSymbolValue);
+        if (isMounted) {
+          setCurrentPrice(priceData?.price ?? null);
+        }
+      } catch (error) {
+        console.error('Error fetching current stock price:', error);
+        if (isMounted) {
+          setCurrentPrice(null);
+        }
+      } finally {
+        if (isMounted) {
           setIsPriceLoading(false);
         }
-      } else {
-        setCurrentPrice(null);
       }
     };
+
     fetchPrice();
-  }, [selectedSymbol, getStockPriceFn]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [debouncedSymbolValue, getStockPriceFn]);
+
+  useEffect(() => {
+    if (debouncedSymbolValue && purchaseDateISO) {
+      setShouldFetchHistorical(true);
+    }
+  }, [debouncedSymbolValue, purchaseDateISO]);
+
+  useEffect(() => {
+    if (!shouldFetchHistorical || !debouncedSymbolValue || !purchaseDateISO) {
+      return;
+    }
+
+    let isMounted = true;
+    const purchaseDateObj = new Date(purchaseDateISO);
+
+    if (!isDateValid(purchaseDateObj)) {
+      setShouldFetchHistorical(false);
+      return;
+    }
+
+    const formattedDate = formatDate(purchaseDateObj, 'yyyy-MM-dd');
+
+    const fetchHistoricalPrice = async () => {
+      setIsHistoricalPriceLoading(true);
+      try {
+        const historicalPriceData = await investmentStockHistoricalPrice(
+          debouncedSymbolValue,
+          formattedDate
+        );
+
+        if (isMounted) {
+          if (historicalPriceData?.price !== null && historicalPriceData?.price !== undefined) {
+            form.setValue('purchasePrice', historicalPriceData.price.toString(), {
+              shouldValidate: true,
+              shouldDirty: true
+            });
+          } else {
+            showError(
+              `Could not auto-fetch price for ${debouncedSymbolValue} on ${formattedDate}. Please enter manually.`
+            );
+          }
+        }
+      } catch (error: any) {
+        if (isMounted) {
+          showError(`Error fetching historical price: ${error.message}`);
+        }
+      } finally {
+        if (isMounted) {
+          setIsHistoricalPriceLoading(false);
+          setShouldFetchHistorical(false);
+        }
+      }
+    };
+
+    fetchHistoricalPrice();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [debouncedSymbolValue, purchaseDateISO, shouldFetchHistorical, form, showError]);
 
   const createInvestmentMutation = useMutation({
     mutationFn: (data: InvestmentHoldingFormSchema) =>
       investmentCreate({
-        symbol: data.symbol.value,
+        symbol: data.symbol!.value,
         shares: Number(data.shares),
         purchasePrice: Number(data.purchasePrice),
         purchaseDate: data.purchaseDate.toISOString(),
@@ -136,21 +215,30 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
       await invalidate(['investmentAccountSummary', accountId]);
       await invalidate(['investmentPortfolioSummaryDashboard']);
       showSuccess('Investment added successfully!');
-      form.reset();
+      form.reset({
+        symbol: null,
+        shares: '',
+        purchasePrice: '',
+        purchaseDate: new Date()
+      });
       onInvestmentAdded();
       onOpenChange(false);
     },
     onError: (error: any) => {
-      showError(error.message);
+      showError(error.message || 'Failed to add investment');
     }
   });
 
   const handleCreate = async (data: InvestmentHoldingFormSchema) => {
+    if (!data.symbol?.value) {
+      form.setError('symbol', { type: 'manual', message: 'Symbol is required.' });
+      return;
+    }
     createInvestmentMutation.mutate(data);
   };
 
   const fetchStocks = useCallback(
-    async (query: string) => {
+    async (query: string): Promise<ComboboxOption[]> => {
       if (!query || query.length < 2) return [];
       try {
         const results = await searchStocksFn(query);
@@ -169,7 +257,12 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
   );
 
   const calculateComparison = () => {
-    if (currentPrice && purchasePrice && !isNaN(parseFloat(purchasePrice))) {
+    if (
+      currentPrice !== null &&
+      purchasePrice &&
+      !isNaN(parseFloat(purchasePrice)) &&
+      parseFloat(purchasePrice) !== 0 // Avoid division by zero
+    ) {
       const purchasePriceNum = parseFloat(purchasePrice);
       const diff = currentPrice - purchasePriceNum;
       const percentage = (diff / purchasePriceNum) * 100;
@@ -184,6 +277,13 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
   };
 
   const priceComparison = calculateComparison();
+
+  // Reset historical fetch state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setShouldFetchHistorical(false);
+    }
+  }, [isOpen]);
 
   return (
     <AddModal
@@ -202,7 +302,6 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleCreate)} className='space-y-6'>
-          {/* Symbol Search */}
           <div className='space-y-2'>
             <FormField
               control={form.control}
@@ -216,7 +315,14 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                   <FormControl>
                     <Combobox
                       value={field.value}
-                      onChange={field.onChange}
+                      onChange={(option) => {
+                        field.onChange(option);
+                        // Reset prices when symbol changes
+                        setCurrentPrice(null);
+                        form.setValue('purchasePrice', '', {
+                          shouldValidate: true
+                        });
+                      }}
                       fetchOptions={fetchStocks}
                       placeholder='Search for stock (e.g., AAPL, MSFT, GOOGL)...'
                       loadingPlaceholder='Searching stocks...'
@@ -228,17 +334,14 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                 </FormItem>
               )}
             />
-
-            {/* Current price information */}
             {selectedSymbol?.value && (
               <Card className='bg-muted/40 p-3'>
                 <div className='flex items-center justify-between'>
-                  <div className='text-sm font-medium'>{selectedSymbol.label}</div>
+                  <div className='truncate pr-2 text-sm font-medium'>{selectedSymbol.label}</div>
                   <Badge variant={isPriceLoading ? 'outline' : 'secondary'} className='ml-auto'>
                     {selectedSymbol.value}
                   </Badge>
                 </div>
-
                 <div className='mt-2 text-sm'>
                   {isPriceLoading ? (
                     <span className='flex items-center gap-1 text-muted-foreground'>
@@ -252,7 +355,6 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                           {formatCurrency(currentPrice, accountCurrency)}
                         </span>
                       </div>
-
                       {priceComparison && purchasePrice && !isNaN(parseFloat(purchasePrice)) && (
                         <div className='mt-1 flex items-center justify-between'>
                           <span className='text-muted-foreground'>Compared to Purchase:</span>
@@ -272,16 +374,11 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
               </Card>
             )}
           </div>
-
           <Separator />
-
-          {/* Purchase Information */}
           <div>
             <h3 className='mb-3 flex items-center gap-1 text-sm font-medium'>
-              <DollarSign className='h-4 w-4 text-primary' />
               Purchase Information
             </h3>
-
             <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
               <FormField
                 control={form.control}
@@ -292,12 +389,15 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                     <FormControl>
                       <div className='relative'>
                         <Layers className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground' />
-                        <Input
-                          type='number'
-                          step='any'
+                        <NumericFormat
+                          customInput={Input}
+                          thousandSeparator=','
+                          decimalSeparator='.'
+                          allowNegative={false}
                           placeholder='e.g., 10.5'
                           className='pl-10'
-                          {...field}
+                          onValueChange={(values) => field.onChange(values.value)}
+                          value={field.value}
                         />
                       </div>
                     </FormControl>
@@ -305,23 +405,43 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name='purchasePrice'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className='text-sm'>Purchase Price per Share</FormLabel>
+                    <FormLabel className='flex items-center gap-1.5 text-sm'>
+                      Purchase Price per Share
+                      {isHistoricalPriceLoading && (
+                        <TooltipProvider delayDuration={100}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Loader2 className='h-3 w-3 animate-spin text-primary' />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Fetching price for selected date...</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </FormLabel>
                     <FormControl>
                       <div className='relative'>
-                        <DollarSign className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground' />
-                        <Input
-                          type='number'
-                          step='0.01'
+                        <NumericFormat
+                          customInput={Input}
+                          thousandSeparator=','
+                          decimalSeparator='.'
+                          allowNegative={false}
+                          decimalScale={2} // Allow more precision if needed
                           placeholder='e.g., 150.75'
                           className='pl-10'
-                          {...field}
+                          onValueChange={(values) => field.onChange(values.value)}
+                          value={field.value}
+                          prefix='$' // This adds the currency symbol within the input
                         />
+                        <span className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 transform text-xs text-muted-foreground'>
+                          {accountCurrency}
+                        </span>
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -329,7 +449,6 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                 )}
               />
             </div>
-
             <FormField
               control={form.control}
               name='purchaseDate'
@@ -340,15 +459,22 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                     Purchase Date
                   </FormLabel>
                   <FormControl>
-                    <DateTimePicker value={field.value} onChange={field.onChange} />
+                    <DateTimePicker
+                      value={field.value}
+                      onChange={(newDate) => {
+                        field.onChange(newDate);
+                        // Trigger historical price fetch if symbol is already selected
+                        if (selectedSymbolValue) {
+                          setShouldFetchHistorical(true);
+                        }
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
-
-          {/* Summary Card */}
           {totalValue !== null && (
             <Card className='border-primary/20 bg-muted/30 p-4'>
               <h3 className='mb-2 text-sm font-medium'>Investment Summary</h3>
@@ -357,7 +483,6 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                 <div className='text-right font-medium'>
                   {formatCurrency(totalValue, accountCurrency)}
                 </div>
-
                 {shares && !isNaN(parseFloat(shares)) && (
                   <>
                     <div className='text-muted-foreground'>Number of Shares:</div>
@@ -366,7 +491,6 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                     </div>
                   </>
                 )}
-
                 {purchasePrice && !isNaN(parseFloat(purchasePrice)) && (
                   <>
                     <div className='text-muted-foreground'>Price per Share:</div>
@@ -378,11 +502,10 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
               </div>
             </Card>
           )}
-
           <div className='space-y-3 pt-2'>
             <Button
               type='submit'
-              disabled={createInvestmentMutation.isPending}
+              disabled={createInvestmentMutation.isPending || isHistoricalPriceLoading}
               className='h-11 w-full font-medium'
             >
               {createInvestmentMutation.isPending ? (
@@ -397,7 +520,6 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                 </>
               )}
             </Button>
-
             <Button
               type='button'
               variant='outline'
