@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import * as React from 'react';
-import { CreditCard, ArrowUp, ArrowDown, Minus, Edit, Trash, Share } from 'lucide-react';
+import { CreditCard, ArrowUp, ArrowDown, Minus, Edit, Trash } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils';
 import Image from 'next/image';
-import { Button } from './button'; // Assuming button.tsx is in the same directory
+import { Button } from './button';
 import { Account } from '@/lib/types';
 import ShareAccountModal from '../modals/share-account-modal';
+import { SingleLineEllipsis } from './ellipsis-components';
 
 interface AccountCardProps extends React.ComponentPropsWithoutRef<'a'> {
   href: string;
@@ -62,10 +63,9 @@ const AccountCard: React.FC<AccountCardProps> = React.forwardRef<
                 />
               </div>
             )}
-            <div>
-              <h2 className='line-clamp-1 truncate text-base font-semibold'>{name}</h2>{' '}
-              {/* Reduced text size */}
-              <p className='text-xs text-gray-500'>{owner.name}</p> {/* Reduced text size */}
+            <div className='mr-4 flex w-full flex-col items-start'>
+              <SingleLineEllipsis className='text-base font-semibold'>{name}</SingleLineEllipsis>
+              <p className='text-xs text-gray-500'>{owner.name}</p>
             </div>
           </div>
 

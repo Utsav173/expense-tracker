@@ -35,7 +35,6 @@ import {
   Loader2,
   TrendingUp,
   Calendar,
-  DollarSign,
   Layers,
   BarChart4,
   PiggyBank,
@@ -299,7 +298,6 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className='flex items-center gap-1.5'>
-                            <DollarSign className='h-4 w-4 text-muted-foreground' />
                             Purchase Price
                           </FormLabel>
                           <FormControl>
@@ -437,7 +435,6 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
                         </FormLabel>
                         <FormControl>
                           <div className='relative'>
-                            <DollarSign className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground' />
                             <Input
                               type='number'
                               step='0.01'

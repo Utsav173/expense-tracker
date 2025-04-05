@@ -22,7 +22,7 @@ import DateTimePicker from '../date-time-picker';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { StockPriceResult, StockSearchResult } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
-import { Loader2, TrendingUp, Calendar, DollarSign, Layers } from 'lucide-react';
+import { Loader2, TrendingUp, Calendar, Layers } from 'lucide-react';
 import { Combobox } from '../ui/combobox';
 import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
@@ -278,7 +278,6 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
           {/* Purchase Information */}
           <div>
             <h3 className='mb-3 flex items-center gap-1 text-sm font-medium'>
-              <DollarSign className='h-4 w-4 text-primary' />
               Purchase Information
             </h3>
 
@@ -314,7 +313,6 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                     <FormLabel className='text-sm'>Purchase Price per Share</FormLabel>
                     <FormControl>
                       <div className='relative'>
-                        <DollarSign className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground' />
                         <Input
                           type='number'
                           step='0.01'

@@ -1,39 +1,55 @@
-'use client';
-
 import { ColumnDef } from '@tanstack/react-table';
-import { DebtWithDetails } from '@/lib/types';
+import { DebtWithDetails, User } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { debtsMarkAsPaid, apiDeleteDebt } from '@/lib/endpoints/debt';
 import { useMutation } from '@tanstack/react-query';
 import { useToast } from '@/lib/hooks/useToast';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Check, Pencil, Trash2 } from 'lucide-react';
 import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
 import { useState } from 'react';
 import UpdateDebtModal from '../modals/update-debt-modal';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { formatCurrency } from '@/lib/utils';
-import { Badge } from '../ui/badge';
-import React from 'react';
+import { Badge } from '@/components/ui/badge';
 
-export const debtColumns: ColumnDef<DebtWithDetails>[] = [
+interface DebtColumnsProps {
+  user: User | undefined;
+  refetchDebts: () => void;
+}
+
+export const createDebtColumns = ({
+  user,
+  refetchDebts
+}: DebtColumnsProps): ColumnDef<DebtWithDetails>[] => [
   {
-    accessorKey: 'debts.description',
+    accessorKey: 'description',
     header: 'Description',
-    cell: ({ row }) => <span className='truncate'>{row.original.debts.description}</span>
+    cell: ({ row }) => (
+      <span className='max-w-[200px] truncate font-medium'>
+        {row.original.debts.description || 'N/A'}
+      </span>
+    )
   },
   {
-    accessorKey: 'debts.amount',
+    accessorKey: 'amount',
     header: 'Amount',
-    cell: ({ row }) => formatCurrency(row.original.debts.amount, 'INR')
+    cell: ({ row }) => (
+      <span className='font-semibold'>
+        {formatCurrency(row.original.debts.amount, user?.preferredCurrency || 'INR')}
+      </span>
+    )
   },
   {
-    accessorKey: 'debts.premiumAmount',
+    accessorKey: 'premiumAmount',
     header: 'Premium',
-    cell: ({ row }) => formatCurrency(row.original.debts.premiumAmount || 0, 'INR')
+    cell: ({ row }) =>
+      row.original.debts.premiumAmount
+        ? formatCurrency(row.original.debts.premiumAmount, user?.preferredCurrency || 'INR')
+        : 'N/A'
   },
   {
-    accessorKey: 'debts.dueDate',
+    accessorKey: 'dueDate',
     header: 'Due Date',
     cell: ({ row }) => {
       const date = row.original.debts.dueDate;
@@ -41,40 +57,35 @@ export const debtColumns: ColumnDef<DebtWithDetails>[] = [
     }
   },
   {
-    accessorKey: 'debts.type',
+    accessorKey: 'type',
     header: 'Type',
     cell: ({ row }) => (
-      <Badge variant={row.original.debts.type === 'given' ? 'secondary' : 'destructive'}>
-        {row.original.debts.type === 'given' ? 'Given' : 'Taken'}
+      <Badge variant={row.original.debts.type === 'given' ? 'secondary' : 'outline'}>
+        {row.original.debts.type}
       </Badge>
     )
   },
   {
-    accessorKey: 'debts.interestType',
+    accessorKey: 'interestType',
     header: 'Interest',
+    cell: ({ row }) => <span className='text-xs capitalize'>{row.original.debts.interestType}</span>
+  },
+  {
+    accessorKey: 'isPaid',
+    header: 'Status',
     cell: ({ row }) => (
-      <span className='capitalize'>{row.original.debts.interestType || 'N/A'}</span>
+      <Badge variant={row.original.debts.isPaid ? 'default' : 'destructive'}>
+        {row.original.debts.isPaid ? 'Paid' : 'Unpaid'}
+      </Badge>
     )
   },
   {
-    accessorKey: 'debts.isPaid',
-    header: 'Status',
-    cell: ({ row }) =>
-      row.original.debts.isPaid ? (
-        <Badge variant='default' className='bg-green-500 hover:bg-green-600'>
-          Paid
-        </Badge>
-      ) : (
-        <Badge variant='outline'>Unpaid</Badge>
-      )
-  },
-  {
     id: 'actions',
-    header: 'Actions',
+    header: () => <div className='text-right'>Actions</div>,
     cell: ({ row }) => {
-      const debtItem = row.original;
+      const debt = row.original;
       const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-      const [deleteDebtId, setDeleteDebtId] = useState<string | null>(null);
+      const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
       const invalidate = useInvalidateQueries();
       const { showSuccess, showError } = useToast();
 
@@ -82,8 +93,8 @@ export const debtColumns: ColumnDef<DebtWithDetails>[] = [
         mutationFn: (id: string) => debtsMarkAsPaid(id),
         onSuccess: async () => {
           await invalidate(['debts']);
-          await invalidate(['outstandingDebtsDashboard']);
           showSuccess('Debt marked as paid!');
+          refetchDebts();
         },
         onError: (error: any) => {
           showError(error.message);
@@ -91,78 +102,76 @@ export const debtColumns: ColumnDef<DebtWithDetails>[] = [
       });
 
       const deleteDebtMutation = useMutation({
-        mutationFn: (id: string) => apiDeleteDebt(id),
+        mutationFn: (id: string) => apiDeleteDebt(id), // Use the delete function
         onSuccess: async () => {
           await invalidate(['debts']);
-          await invalidate(['outstandingDebtsDashboard']);
           showSuccess('Debt deleted successfully!');
-          setDeleteDebtId(null);
+          setIsDeleteModalOpen(false);
+          refetchDebts();
         },
         onError: (error: any) => {
           showError(error.message);
         }
       });
 
-      const handleDeleteConfirm = () => {
-        if (deleteDebtId) {
-          deleteDebtMutation.mutate(deleteDebtId);
-        }
+      const handlePaid = () => {
+        markAsPaidMutation.mutate(debt.debts.id);
       };
 
-      const handlePaid = () => {
-        markAsPaidMutation.mutate(debtItem.debts.id);
+      const handleDelete = () => {
+        deleteDebtMutation.mutate(debt.debts.id);
       };
 
       return (
-        <div className='flex gap-1'>
-          <Button
-            size='icon'
-            variant='ghost'
-            onClick={() => setIsUpdateModalOpen(true)}
-            aria-label='Edit Debt'
-          >
-            <Pencil size={16} />
+        <div className='flex justify-end gap-1'>
+          {!debt.debts.isPaid && (
+            <Button
+              size='icon'
+              variant='ghost'
+              onClick={handlePaid}
+              disabled={markAsPaidMutation.isPending}
+              className='text-green-600 hover:text-green-700'
+            >
+              <Check size={18} />
+              <span className='sr-only'>Mark as Paid</span>
+            </Button>
+          )}
+          <Button size='icon' variant='ghost' onClick={() => setIsUpdateModalOpen(true)}>
+            <Pencil size={18} />
+            <span className='sr-only'>Edit Debt</span>
           </Button>
           <DeleteConfirmationModal
             title='Delete Debt'
-            description='Are you sure you want to delete this debt?'
-            onConfirm={handleDeleteConfirm}
-            open={!!deleteDebtId}
-            onOpenChange={(open) => {
-              if (!open) setDeleteDebtId(null);
-            }}
+            description={
+              <>
+                Are you sure you want to delete the debt "<b>{debt.debts.description}</b>"? This
+                action cannot be undone.
+              </>
+            }
+            onConfirm={handleDelete}
+            open={isDeleteModalOpen}
+            onOpenChange={setIsDeleteModalOpen}
             triggerButton={
               <Button
                 size='icon'
                 variant='ghost'
                 className='text-destructive hover:text-destructive'
-                onClick={() => setDeleteDebtId(debtItem.debts.id)}
-                aria-label='Delete Debt'
+                onClick={() => setIsDeleteModalOpen(true)}
               >
-                <Trash2 size={16} />
+                <Trash2 size={18} />
+                <span className='sr-only'>Delete Debt</span>
               </Button>
             }
           />
-          {!debtItem.debts.isPaid && (
-            <Button
-              size='sm'
-              onClick={handlePaid}
-              disabled={markAsPaidMutation.isPending}
-              className='h-8 px-2 text-xs'
-            >
-              {markAsPaidMutation.isPending ? 'Marking...' : 'Mark Paid'}
-            </Button>
-          )}
 
-          <UpdateDebtModal
-            isOpen={isUpdateModalOpen}
-            onOpenChange={setIsUpdateModalOpen}
-            debt={debtItem.debts}
-            onDebtUpdated={async () => {
-              await invalidate(['debts']);
-              await invalidate(['outstandingDebtsDashboard']);
-            }}
-          />
+          {isUpdateModalOpen && (
+            <UpdateDebtModal
+              isOpen={isUpdateModalOpen}
+              onOpenChange={setIsUpdateModalOpen}
+              debt={debt.debts}
+              onDebtUpdated={refetchDebts}
+            />
+          )}
         </div>
       );
     }

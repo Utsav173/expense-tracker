@@ -105,3 +105,18 @@ export const investmentGetPortfolioSummary = (
     successMessage,
     errorMessage || 'Failed to fetch portfolio summary'
   );
+
+export const investmentStockHistoricalPrice = (
+  symbol: string,
+  date: string,
+  successMessage?: string,
+  errorMessage?: string
+): Promise<ApiResponse<{ price: number | null }>> =>
+  apiFetch(
+    `/investment/stocks/historical/${symbol}?date=${date}`,
+    'GET',
+    undefined,
+    undefined,
+    successMessage,
+    errorMessage || 'Failed to fetch historical price'
+  );

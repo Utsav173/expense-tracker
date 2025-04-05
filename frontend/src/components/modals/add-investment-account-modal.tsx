@@ -46,8 +46,8 @@ const AddInvestmentAccountModal = ({
   const { data: currencies, isLoading: isLoadingCurrencies } = useQuery({
     queryKey: ['currencies'],
     queryFn: fetchCurrencies,
-    staleTime: 24 * 60 * 60 * 1000, // 24 hours
-    gcTime: 7 * 24 * 60 * 60 * 1000, // 7 days
+    staleTime: 24 * 60 * 60 * 1000,
+    gcTime: 7 * 24 * 60 * 60 * 1000,
     retry: 2,
     placeholderData: Object.entries(COMMON_CURRENCIES).map(([code, name]) => ({
       code,

@@ -84,7 +84,7 @@ export interface Transaction {
   transfer?: string;
   category?: Category;
   account: string;
-  createdBy: string;
+  createdBy: User;
   updatedBy?: string;
   owner: string;
   createdAt: string;
