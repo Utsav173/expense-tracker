@@ -33,7 +33,7 @@ import CommonTable from '@/components/ui/CommonTable';
 import { investmentHoldingsColumns } from '@/components/investment/investment-holdings-columns';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { useUrlState } from '@/hooks/useUrlState';
-import { SortingState } from '@tanstack/react-table'; // Import SortingState
+import { SortingState } from '@tanstack/react-table';
 
 const InvestmentAccountDetailPage = () => {
   const params = useParams();
@@ -156,11 +156,11 @@ const InvestmentAccountDetailPage = () => {
 
   return (
     <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
-      <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+      <div className='flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <Button variant='ghost' onClick={() => router.back()} className='flex items-center gap-2'>
           <ArrowLeft size={16} /> Back to Accounts
         </Button>
-        <h1 className='text-xl font-semibold md:text-2xl'>
+        <h1 className='overflow-hidden text-ellipsis whitespace-nowrap text-xl font-semibold md:text-2xl'>
           {account.name} ({account.platform || 'N/A'})
         </h1>
         <Button onClick={() => setIsAddModalOpen(true)}>

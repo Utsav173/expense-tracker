@@ -350,3 +350,16 @@ export interface DebtWithDetails {
   account: Account | null;
   user: User | null;
 }
+
+export interface HistoricalStockPriceResponse {
+  symbol: string;
+  date: string;
+  price: number;
+  currency: string;
+  exchange: string;
+  companyName: string;
+  open?: number;
+  high?: number;
+  low?: number;
+  volume?: number;
+}

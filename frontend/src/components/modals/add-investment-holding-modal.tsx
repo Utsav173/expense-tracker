@@ -22,8 +22,11 @@ import DateTimePicker from '../date-time-picker';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { StockPriceResult, StockSearchResult } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
-import { Loader2 } from 'lucide-react';
+import { Loader2, TrendingUp, Calendar, DollarSign, Layers } from 'lucide-react';
 import { Combobox } from '../ui/combobox';
+import { Card } from '../ui/card';
+import { Badge } from '../ui/badge';
+import { Separator } from '../ui/separator';
 
 const investmentHoldingSchema = z.object({
   symbol: z
@@ -68,6 +71,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
   const invalidate = useInvalidateQueries();
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
   const [isPriceLoading, setIsPriceLoading] = useState(false);
+  const [totalValue, setTotalValue] = useState<number | null>(null);
 
   const form = useForm<InvestmentHoldingFormSchema>({
     resolver: zodResolver(investmentHoldingSchema),
@@ -81,7 +85,21 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
   });
 
   const selectedSymbol = form.watch('symbol');
+  const shares = form.watch('shares');
+  const purchasePrice = form.watch('purchasePrice');
 
+  useEffect(() => {
+    const sharesNum = parseFloat(shares);
+    const priceNum = parseFloat(purchasePrice);
+
+    if (!isNaN(sharesNum) && !isNaN(priceNum)) {
+      setTotalValue(sharesNum * priceNum);
+    } else {
+      setTotalValue(null);
+    }
+  }, [shares, purchasePrice]);
+
+  // Fetch current price when symbol changes
   useEffect(() => {
     const fetchPrice = async () => {
       if (selectedSymbol?.value) {
@@ -150,72 +168,179 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
     [searchStocksFn]
   );
 
+  const calculateComparison = () => {
+    if (currentPrice && purchasePrice && !isNaN(parseFloat(purchasePrice))) {
+      const purchasePriceNum = parseFloat(purchasePrice);
+      const diff = currentPrice - purchasePriceNum;
+      const percentage = (diff / purchasePriceNum) * 100;
+
+      return {
+        diff,
+        percentage,
+        isPositive: diff >= 0
+      };
+    }
+    return null;
+  };
+
+  const priceComparison = calculateComparison();
+
   return (
     <AddModal
       title='Add Investment Holding'
       description='Add a new stock or asset to this investment account.'
-      triggerButton={hideTriggerButton ? null : <Button>Add Investment</Button>}
+      triggerButton={
+        hideTriggerButton ? null : (
+          <Button className='flex items-center gap-2'>
+            <TrendingUp className='h-4 w-4' />
+            <span>Add Investment</span>
+          </Button>
+        )
+      }
       isOpen={isOpen}
       onOpenChange={onOpenChange}
     >
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleCreate)} className='space-y-4'>
-          <FormField
-            control={form.control}
-            name='symbol'
-            render={({ field }) => (
-              <FormItem className='flex flex-col'>
-                <FormLabel>Stock Symbol / Ticker</FormLabel>
-                <Combobox
-                  value={field.value}
-                  onChange={field.onChange}
-                  fetchOptions={fetchStocks}
-                  placeholder='Search for stock...'
-                  loadingPlaceholder='Searching stocks...'
-                  noOptionsMessage='No stocks found.'
-                />
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {selectedSymbol?.value && (
-            <div className='text-xs text-muted-foreground'>
-              {isPriceLoading ? (
-                <span className='flex items-center gap-1'>
-                  <Loader2 className='h-3 w-3 animate-spin' /> Fetching current price...
-                </span>
-              ) : currentPrice !== null ? (
-                <span>Current Price: {formatCurrency(currentPrice, accountCurrency)}</span>
-              ) : (
-                <span>Could not fetch current price.</span>
-              )}
-            </div>
-          )}
-
-          <div className='grid grid-cols-2 gap-4'>
+        <form onSubmit={form.handleSubmit(handleCreate)} className='space-y-6'>
+          {/* Symbol Search */}
+          <div className='space-y-2'>
             <FormField
               control={form.control}
-              name='shares'
+              name='symbol'
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Number of Shares</FormLabel>
+                <FormItem className='flex flex-col'>
+                  <FormLabel className='flex items-center gap-2 font-medium'>
+                    <TrendingUp className='h-4 w-4 text-primary' />
+                    Stock Symbol / Ticker
+                  </FormLabel>
                   <FormControl>
-                    <Input type='number' step='any' placeholder='e.g., 10.5' {...field} />
+                    <Combobox
+                      value={field.value}
+                      onChange={field.onChange}
+                      fetchOptions={fetchStocks}
+                      placeholder='Search for stock (e.g., AAPL, MSFT, GOOGL)...'
+                      loadingPlaceholder='Searching stocks...'
+                      noOptionsMessage='No stocks found. Try a different search term.'
+                      className='w-full'
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
+            {/* Current price information */}
+            {selectedSymbol?.value && (
+              <Card className='bg-muted/40 p-3'>
+                <div className='flex items-center justify-between'>
+                  <div className='text-sm font-medium'>{selectedSymbol.label}</div>
+                  <Badge variant={isPriceLoading ? 'outline' : 'secondary'} className='ml-auto'>
+                    {selectedSymbol.value}
+                  </Badge>
+                </div>
+
+                <div className='mt-2 text-sm'>
+                  {isPriceLoading ? (
+                    <span className='flex items-center gap-1 text-muted-foreground'>
+                      <Loader2 className='h-3 w-3 animate-spin' /> Fetching current price...
+                    </span>
+                  ) : currentPrice !== null ? (
+                    <div className='flex flex-col gap-1'>
+                      <div className='flex items-center justify-between'>
+                        <span className='text-muted-foreground'>Current Market Price:</span>
+                        <span className='font-medium'>
+                          {formatCurrency(currentPrice, accountCurrency)}
+                        </span>
+                      </div>
+
+                      {priceComparison && purchasePrice && !isNaN(parseFloat(purchasePrice)) && (
+                        <div className='mt-1 flex items-center justify-between'>
+                          <span className='text-muted-foreground'>Compared to Purchase:</span>
+                          <span
+                            className={`font-medium ${priceComparison.isPositive ? 'text-green-500' : 'text-red-500'}`}
+                          >
+                            {priceComparison.isPositive ? '+' : ''}
+                            {priceComparison.percentage.toFixed(2)}%
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <span className='text-muted-foreground'>Could not fetch current price</span>
+                  )}
+                </div>
+              </Card>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Purchase Information */}
+          <div>
+            <h3 className='mb-3 flex items-center gap-1 text-sm font-medium'>
+              <DollarSign className='h-4 w-4 text-primary' />
+              Purchase Information
+            </h3>
+
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+              <FormField
+                control={form.control}
+                name='shares'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className='text-sm'>Number of Shares</FormLabel>
+                    <FormControl>
+                      <div className='relative'>
+                        <Layers className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground' />
+                        <Input
+                          type='number'
+                          step='any'
+                          placeholder='e.g., 10.5'
+                          className='pl-10'
+                          {...field}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='purchasePrice'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className='text-sm'>Purchase Price per Share</FormLabel>
+                    <FormControl>
+                      <div className='relative'>
+                        <DollarSign className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground' />
+                        <Input
+                          type='number'
+                          step='0.01'
+                          placeholder='e.g., 150.75'
+                          className='pl-10'
+                          {...field}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <FormField
               control={form.control}
-              name='purchasePrice'
+              name='purchaseDate'
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Purchase Price per Share</FormLabel>
+                <FormItem className='mt-4 flex flex-col'>
+                  <FormLabel className='flex items-center gap-1 text-sm'>
+                    <Calendar className='h-4 w-4 text-muted-foreground' />
+                    Purchase Date
+                  </FormLabel>
                   <FormControl>
-                    <Input type='number' step='0.01' placeholder='e.g., 150.75' {...field} />
+                    <DateTimePicker value={field.value} onChange={field.onChange} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -223,23 +348,65 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
             />
           </div>
 
-          <FormField
-            control={form.control}
-            name='purchaseDate'
-            render={({ field }) => (
-              <FormItem className='flex flex-col'>
-                <FormLabel>Purchase Date</FormLabel>
-                <FormControl>
-                  <DateTimePicker value={field.value} onChange={field.onChange} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {/* Summary Card */}
+          {totalValue !== null && (
+            <Card className='border-primary/20 bg-muted/30 p-4'>
+              <h3 className='mb-2 text-sm font-medium'>Investment Summary</h3>
+              <div className='grid grid-cols-2 gap-2 text-sm'>
+                <div className='text-muted-foreground'>Total Investment Value:</div>
+                <div className='text-right font-medium'>
+                  {formatCurrency(totalValue, accountCurrency)}
+                </div>
 
-          <Button type='submit' disabled={createInvestmentMutation.isPending} className='w-full'>
-            {createInvestmentMutation.isPending ? 'Adding...' : 'Add Holding'}
-          </Button>
+                {shares && !isNaN(parseFloat(shares)) && (
+                  <>
+                    <div className='text-muted-foreground'>Number of Shares:</div>
+                    <div className='text-right font-medium'>
+                      {parseFloat(shares).toLocaleString()}
+                    </div>
+                  </>
+                )}
+
+                {purchasePrice && !isNaN(parseFloat(purchasePrice)) && (
+                  <>
+                    <div className='text-muted-foreground'>Price per Share:</div>
+                    <div className='text-right font-medium'>
+                      {formatCurrency(parseFloat(purchasePrice), accountCurrency)}
+                    </div>
+                  </>
+                )}
+              </div>
+            </Card>
+          )}
+
+          <div className='space-y-3 pt-2'>
+            <Button
+              type='submit'
+              disabled={createInvestmentMutation.isPending}
+              className='h-11 w-full font-medium'
+            >
+              {createInvestmentMutation.isPending ? (
+                <>
+                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  Adding Investment...
+                </>
+              ) : (
+                <>
+                  <TrendingUp className='mr-2 h-4 w-4' />
+                  Add Investment Holding
+                </>
+              )}
+            </Button>
+
+            <Button
+              type='button'
+              variant='outline'
+              onClick={() => onOpenChange(false)}
+              className='w-full'
+            >
+              Cancel
+            </Button>
+          </div>
         </form>
       </Form>
     </AddModal>
