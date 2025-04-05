@@ -33,11 +33,13 @@ type GoalFormSchema = z.infer<typeof goalSchema>;
 const AddGoalModal = ({
   onGoalAdded,
   isOpen,
-  onOpenChange
+  onOpenChange,
+  hideTriggerButton
 }: {
   onGoalAdded: () => void;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  hideTriggerButton?: boolean;
 }) => {
   const { showSuccess, showError } = useToast();
   const invalidate = useInvalidateQueries();
@@ -78,7 +80,7 @@ const AddGoalModal = ({
     <AddModal
       title='Add Goal'
       description='Create a new saving goal.'
-      triggerButton={<Button>Add Goal</Button>}
+      triggerButton={hideTriggerButton ? null : <Button>Add Goal</Button>}
       isOpen={isOpen}
       onOpenChange={onOpenChange}
     >

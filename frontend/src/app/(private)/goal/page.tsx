@@ -12,12 +12,14 @@ import { useToast } from '@/lib/hooks/useToast';
 import AddGoalModal from '@/components/modals/add-goal-modal';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
+import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 
 const GoalPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const { showError } = useToast();
+  const invalidate = useInvalidateQueries();
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
@@ -48,6 +50,11 @@ const GoalPage = () => {
     retry: false
   });
 
+  const handleGoalAdded = () => {
+    invalidate(['goals', page]);
+    refetch();
+  };
+
   if (isLoading) {
     return <Loader />;
   }
@@ -58,7 +65,7 @@ const GoalPage = () => {
   }
 
   return (
-    <div className='container space-y-6'>
+    <div className='container space-y-6 p-4 md:p-6 lg:p-8'>
       <div className='flex items-center justify-between'>
         <h1 className='text-3xl font-semibold'>Goals</h1>
         <Button onClick={() => setIsAddModalOpen(true)}>
@@ -67,7 +74,7 @@ const GoalPage = () => {
       </div>
       <CommonTable
         data={goals?.data || []}
-        columns={goalColumns} // Now correctly used
+        columns={goalColumns}
         loading={isLoading}
         totalRecords={goals?.pagination?.total || 0}
         pageSize={10}
@@ -78,7 +85,8 @@ const GoalPage = () => {
       <AddGoalModal
         isOpen={isAddModalOpen}
         onOpenChange={setIsAddModalOpen}
-        onGoalAdded={refetch}
+        onGoalAdded={handleGoalAdded}
+        hideTriggerButton
       />
     </div>
   );
