@@ -23,12 +23,15 @@ import {
   FormLabel,
   FormMessage
 } from '@/components/ui/form';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { accountUpdate } from '@/lib/endpoints/accounts';
 import CurrencySelect from '../currency-select';
 import { fetchCurrencies, COMMON_CURRENCIES } from '@/lib/endpoints/currency';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useToast } from '@/lib/hooks/useToast';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
+import { NumericFormat } from 'react-number-format';
+import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -37,6 +40,8 @@ const formSchema = z.object({
   balance: z.number().optional(),
   currency: z.string().optional()
 });
+
+type AccountUpdatePayload = Pick<z.infer<typeof formSchema>, 'name'>;
 
 interface EditAccountModalProps {
   open: boolean;
@@ -69,8 +74,19 @@ export function EditAccountModal({
     }
   });
 
+  React.useEffect(() => {
+    if (open) {
+      form.reset({
+        name: initialValues.name,
+        balance: initialValues.balance,
+        currency: initialValues.currency
+      });
+    }
+  }, [initialValues, open, form.reset]);
+
   const updateAccountMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => accountUpdate(id, data),
+    mutationFn: ({ id, data }: { id: string; data: AccountUpdatePayload }) =>
+      accountUpdate(id, data),
     onSuccess: async () => {
       await invalidate(['accounts']);
       showSuccess('Account updated successfully!');
@@ -78,12 +94,17 @@ export function EditAccountModal({
       onAccountUpdated();
     },
     onError: (error: any) => {
-      showError(error.message);
+      showError(error.message || 'Failed to update account.');
     }
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    await updateAccountMutation.mutate({ id: accountId, data: values });
+    const updateData = {
+      name: values.name,
+      balance: initialValues.balance,
+      currency: initialValues.currency
+    };
+    await updateAccountMutation.mutate({ id: accountId, data: updateData });
   }
 
   const { data: currencies, isLoading: isLoadingCurrencies } = useQuery({
@@ -102,62 +123,101 @@ export function EditAccountModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Account</DialogTitle>
-          <DialogDescription>Make changes to your account details here.</DialogDescription>
+          <DialogTitle>Edit Account Name</DialogTitle>
+          <DialogDescription>
+            Update the name for this account. Balance and currency cannot be changed here.
+          </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-            <FormField
-              control={form.control}
-              name='name'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Account Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder='Account name' {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name='balance'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Balance</FormLabel>
-                  <FormControl>
-                    <Input placeholder='Balance' type='number' {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name='currency'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Currency</FormLabel>
-                  <FormControl>
-                    <CurrencySelect
-                      currencies={currencies}
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      isLoading={isLoadingCurrencies}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
-              <Button type='submit' disabled={updateAccountMutation.isPending}>
-                Update Account
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+        <TooltipProvider>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+              <FormField
+                control={form.control}
+                name='name'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Account Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder='Account name' {...field} autoFocus />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='balance'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Current Balance</FormLabel>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span tabIndex={0} className={cn('inline-block w-full')}>
+                          <FormControl>
+                            <NumericFormat
+                              customInput={Input}
+                              thousandSeparator=','
+                              decimalSeparator='.'
+                              allowNegative={false}
+                              decimalScale={2}
+                              fixedDecimalScale
+                              value={field.value ?? 0}
+                              readOnly
+                              disabled
+                              className='w-full disabled:cursor-not-allowed disabled:opacity-70'
+                              onValueChange={() => {}}
+                            />
+                          </FormControl>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Balance cannot be edited.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='currency'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Currency</FormLabel>
+                    <FormControl>
+                      <CurrencySelect
+                        currencies={currencies}
+                        value={field.value}
+                        isLoading={isLoadingCurrencies}
+                        disabled
+                        disabledTooltip='Currency cannot be edited.'
+                        className='w-full disabled:cursor-not-allowed disabled:opacity-70'
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter>
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={() => onOpenChange(false)}
+                  disabled={updateAccountMutation.isPending}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type='submit'
+                  disabled={updateAccountMutation.isPending || !form.formState.isDirty}
+                >
+                  {updateAccountMutation.isPending ? 'Updating...' : 'Update Name'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </TooltipProvider>
       </DialogContent>
     </Dialog>
   );
