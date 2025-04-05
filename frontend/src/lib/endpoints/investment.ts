@@ -1,7 +1,19 @@
 import apiFetch from '../api-client';
-import { Investment, ApiResponse, PortfolioItem, PortfolioSummary, Pagination } from '../types';
+import {
+  Investment,
+  ApiResponse,
+  PortfolioItem,
+  PortfolioSummary,
+  Pagination,
+  StockSearchResult,
+  StockPriceResult
+} from '../types';
 
-export const investmentCreate = (body: any, successMessage?: string, errorMessage?: string) =>
+export const investmentCreate = (
+  body: any,
+  successMessage?: string,
+  errorMessage?: string
+): Promise<ApiResponse<{ message: string; data: Investment }>> =>
   apiFetch('/investment', 'POST', body, undefined, successMessage, errorMessage);
 
 export const investmentGetAll = (
@@ -17,9 +29,14 @@ export const investmentUpdate = (
   body: any,
   successMessage?: string,
   errorMessage?: string
-) => apiFetch(`/investment/${id}`, 'PUT', body, undefined, successMessage, errorMessage);
+): Promise<ApiResponse<{ message: string; id: string }>> =>
+  apiFetch(`/investment/${id}`, 'PUT', body, undefined, successMessage, errorMessage);
 
-export const investmentDelete = (id: string, successMessage?: string, errorMessage?: string) =>
+export const investmentDelete = (
+  id: string,
+  successMessage?: string,
+  errorMessage?: string
+): Promise<ApiResponse<{ message: string }>> =>
   apiFetch(`/investment/${id}`, 'DELETE', undefined, undefined, successMessage, errorMessage);
 
 export const investmentGetDetails = (
@@ -51,17 +68,17 @@ export const investmentGetPortfolio = (
   apiFetch('/investment/portfolio', 'GET', undefined, undefined, successMessage, errorMessage);
 
 export const investmentStockSearch = (
-  params: any,
+  params: { q: string },
   successMessage?: string,
   errorMessage?: string
-) =>
+): Promise<ApiResponse<StockSearchResult[]>> =>
   apiFetch('/investment/stocks/search', 'GET', undefined, { params }, successMessage, errorMessage);
 
 export const investmentStockPrice = (
   symbol: string,
   successMessage?: string,
   errorMessage?: string
-) =>
+): Promise<ApiResponse<StockPriceResult>> =>
   apiFetch(
     `/investment/stocks/price/${symbol}`,
     'GET',
