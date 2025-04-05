@@ -1,8 +1,8 @@
 import apiFetch from '../api-client';
-import { Debts, ApiResponse } from '../types';
+import { Debts, ApiResponse, DebtWithDetails } from '../types';
 
 type DebtsPaginatedResponse = ApiResponse<{
-  data: Debts[];
+  data: DebtWithDetails[];
   totalCount: number;
   totalPages: number;
   currentPage: number;
@@ -10,7 +10,7 @@ type DebtsPaginatedResponse = ApiResponse<{
 }>;
 
 type OutstandingDebtsResponse = ApiResponse<{
-  data: Debts[];
+  data: DebtWithDetails[];
   totalCount?: number;
   totalPages?: number;
   currentPage?: number;
@@ -65,15 +65,23 @@ export const apiUpdateDebt = (
   body: any,
   successMessage?: string,
   errorMessage?: string
-): Promise<ApiResponse<{ message: string }>> =>
-  apiFetch(
+): Promise<ApiResponse<{ message: string }>> => {
+  const payload = {
+    description: body.description,
+    duration: body.duration,
+    frequency: body.frequency,
+    isPaid: body.isPaid
+  };
+
+  return apiFetch(
     `/interest/debts/${id}`,
     'PUT',
-    body,
+    payload,
     undefined,
     successMessage || 'Debt updated successfully',
     errorMessage
   );
+};
 
 export const apiDeleteDebt = (
   id: string,

@@ -3,7 +3,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Debts, ApiResponse } from '@/lib/types';
+import { DebtWithDetails, ApiResponse } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import NoData from '../ui/no-data';
 import { Scale } from 'lucide-react';
@@ -11,10 +11,18 @@ import { getOutstandingDebts } from '@/lib/endpoints/debt';
 import { Skeleton } from '../ui/skeleton';
 import { useToast } from '@/lib/hooks/useToast';
 
+type OutstandingDebtsResponse = ApiResponse<{
+  data: DebtWithDetails[];
+  totalCount?: number;
+  totalPages?: number;
+  currentPage?: number;
+  pageSize?: number;
+}>;
+
 export const DebtSummaryCard: React.FC = () => {
   const { showError } = useToast();
 
-  const { data, isLoading, error } = useQuery<ApiResponse<{ data: Debts[] }>>({
+  const { data, isLoading, error } = useQuery<OutstandingDebtsResponse>({
     queryKey: ['outstandingDebtsDashboard'],
     queryFn: () => getOutstandingDebts(),
     retry: false,
@@ -23,12 +31,15 @@ export const DebtSummaryCard: React.FC = () => {
 
   React.useEffect(() => {
     if (error) {
-      showError(`Debt Error: ${(error as Error).message}`);
+      showError(`Debt Summary Error: ${(error as Error).message}`);
     }
   }, [error, showError]);
 
   const outstandingDebtAmount = data?.data
-    ? data.data.reduce((sum, debt) => sum + (debt.amount || 0), 0)
+    ? data.data.reduce(
+        (sum: number, debtItem: DebtWithDetails) => sum + (debtItem.debts?.amount || 0),
+        0
+      )
     : 0;
 
   const numberOfDebts = data?.data?.length ?? 0;
@@ -51,7 +62,8 @@ export const DebtSummaryCard: React.FC = () => {
     );
   }
 
-  if (error || numberOfDebts === 0) {
+  // Show error state only if not loading and an error exists
+  if (!isLoading && error) {
     return (
       <Card>
         <CardHeader>
@@ -62,10 +74,25 @@ export const DebtSummaryCard: React.FC = () => {
           <CardDescription>Overview of your outstanding debts.</CardDescription>
         </CardHeader>
         <CardContent className='h-[200px]'>
-          <NoData
-            message={error ? 'Could not load debt data.' : 'No outstanding debts found.'}
-            icon='inbox'
-          />
+          <NoData message={'Could not load debt data.'} icon='x-circle' />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show "No Data" only if not loading, no error, and zero debts
+  if (!isLoading && !error && numberOfDebts === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className='flex items-center gap-2'>
+            <Scale className='h-5 w-5 text-red-500' />
+            Debt Summary
+          </CardTitle>
+          <CardDescription>Overview of your outstanding debts.</CardDescription>
+        </CardHeader>
+        <CardContent className='h-[200px]'>
+          <NoData message={'No outstanding debts found.'} icon='inbox' />
         </CardContent>
       </Card>
     );

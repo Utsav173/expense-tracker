@@ -335,3 +335,18 @@ export interface StockPriceResult {
   marketState: string;
   regularMarketTime: string | null;
 }
+
+export interface InvestmentAccountSummary {
+  accountname: string;
+  currency: string;
+  platform: string | null;
+  totalinvestment: number;
+  totaldividend: number;
+  totalvalue: number;
+}
+
+export interface DebtWithDetails {
+  debts: Debts;
+  account: Account | null;
+  user: User | null;
+}
