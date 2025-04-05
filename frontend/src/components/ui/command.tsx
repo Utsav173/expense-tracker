@@ -30,7 +30,20 @@ const CommandDialog = ({ children, ...props }: CommandDialogProps) => {
     <Dialog {...props}>
       <DialogContent className='overflow-hidden p-0 shadow-lg'>
         <Command className='[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5'>
-          {children}
+          {/*
+           * ============================================================
+           *  WORKAROUND FOR REACT 19 TYPE MISMATCH (cmdk dependency)
+           * ============================================================
+           * Casting 'children' to 'any' to bypass the incompatible
+           * ReactNode type definition between React 19 (used by this project)
+           * and React 18 (expected by cmdk@1.0.0 and its Radix dependencies).
+           *
+           * WARNING: This only fixes the build-time type error. Runtime
+           *          issues may still occur. Remove this cast and update
+           *          dependencies once cmdk/shadcn officially support React 19.
+           *          Alternatively, use '// @ts-expect-error ...' on the line above.
+           */}
+          {children as any}
         </Command>
       </DialogContent>
     </Dialog>
@@ -46,7 +59,7 @@ const CommandInput = React.forwardRef<
     <CommandPrimitive.Input
       ref={ref}
       className={cn(
-        'flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
+        'flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
         className
       )}
       {...props}
