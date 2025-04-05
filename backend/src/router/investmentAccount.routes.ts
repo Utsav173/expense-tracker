@@ -3,7 +3,7 @@ import authMiddleware from '../middleware';
 import { InvestmentAccount } from '../database/schema';
 import { zValidator } from '@hono/zod-validator';
 import { investmentAccountSchema } from '../utils/schema.validations';
-import { eq, count, sql } from 'drizzle-orm';
+import { eq, count, sql, and } from 'drizzle-orm';
 import { db } from '../database';
 import { HTTPException } from 'hono/http-exception';
 
@@ -47,26 +47,62 @@ investmentAccountRouter.get('/all', authMiddleware, async (c) => {
 investmentAccountRouter.get('/:id/summary', authMiddleware, async (c) => {
   try {
     const accountId = c.req.param('id');
+    const userId = await c.get('userId' as any);
 
-    const investmentAccountSummary = await db.execute(sql`
+    const accountCheck = await db.query.InvestmentAccount.findFirst({
+      where: and(eq(InvestmentAccount.id, accountId), eq(InvestmentAccount.userId, userId)),
+      columns: { id: true, name: true, currency: true, platform: true },
+    });
+
+    if (!accountCheck) {
+      throw new HTTPException(404, { message: 'Investment account not found or access denied.' });
+    }
+
+    const investmentAccountSummaryResult = await db.execute(sql`
       SELECT
-      ia.name as accountName,
-      ia.currency,
-      ia.platform,
-        COALESCE(SUM(i.investedAmount), 0) as totalInvestment,
-       COALESCE(SUM(i.dividend), 0) as totalDividend,
-      (COALESCE(SUM(i.investedAmount), 0) + COALESCE(SUM(i.dividend), 0)) AS totalValue
-        FROM investment_account ia
-       JOIN investment i
-       ON ia.id = i.account
-       WHERE ia.id = ${accountId}
-        GROUP BY ia.id
-      `);
+          ia.name as accountname,
+          ia.currency,
+          ia.platform,
+          COALESCE(SUM(i."investedAmount"), 0) as totalinvestment, 
+          COALESCE(SUM(i.dividend), 0) as totaldividend, 
+          -- Calculate total value based on actual investment amount + dividend
+          (COALESCE(SUM(i."investedAmount"), 0) + COALESCE(SUM(i.dividend), 0)) AS totalvalue 
+      FROM investment_account ia
+      LEFT JOIN investment i ON ia.id = i.account
+      WHERE ia.id = ${accountId}
+      GROUP BY ia.id, ia.name, ia.currency, ia.platform
+    `);
 
-    return c.json(investmentAccountSummary.rows[0]);
+    const summaryData = investmentAccountSummaryResult.rows[0];
+
+    if (!summaryData) {
+      return c.json({
+        accountname: accountCheck.name,
+        currency: accountCheck.currency,
+        platform: accountCheck.platform,
+        totalinvestment: 0,
+        totaldividend: 0,
+        totalvalue: 0,
+      });
+    }
+
+    return c.json({
+      accountname: summaryData.accountname,
+      currency: summaryData.currency,
+      platform: summaryData.platform,
+      totalinvestment: Number(summaryData.totalinvestment || 0),
+      totaldividend: Number(summaryData.totaldividend || 0),
+      totalvalue: Number(summaryData.totalvalue || 0),
+    });
   } catch (err) {
-    throw new HTTPException(400, {
-      message: err instanceof Error ? err.message : 'something went wrong',
+    console.error('Error fetching investment summary:', err);
+
+    if (err instanceof HTTPException) {
+      throw err;
+    }
+
+    throw new HTTPException(500, {
+      message: 'Something went wrong fetching the investment summary.',
     });
   }
 });
