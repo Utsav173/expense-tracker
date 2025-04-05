@@ -1,4 +1,3 @@
-// /home/utsav/coding/expense-tracker/frontend/src/lib/endpoints/debt.ts
 import apiFetch from '../api-client';
 import { Debts, ApiResponse, DebtWithDetails } from '../types';
 

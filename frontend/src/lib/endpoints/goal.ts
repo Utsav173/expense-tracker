@@ -1,4 +1,3 @@
-// /home/utsav/coding/expense-tracker/frontend/src/lib/endpoints/goal.ts
 import { Pagination, SavingGoal, ApiResponse } from '../types';
 import apiFetch from '../api-client';
 

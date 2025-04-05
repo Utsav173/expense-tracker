@@ -1,4 +1,3 @@
-// /home/utsav/coding/expense-tracker/frontend/src/lib/endpoints/investment.ts
 import apiFetch from '../api-client';
 import {
   Investment,
