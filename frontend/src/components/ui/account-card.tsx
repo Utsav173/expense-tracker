@@ -63,7 +63,8 @@ const AccountCard: React.FC<AccountCardProps> = React.forwardRef<
               </div>
             )}
             <div>
-              <h2 className='text-base font-semibold'>{name}</h2> {/* Reduced text size */}
+              <h2 className='line-clamp-1 truncate text-base font-semibold'>{name}</h2>{' '}
+              {/* Reduced text size */}
               <p className='text-xs text-gray-500'>{owner.name}</p> {/* Reduced text size */}
             </div>
           </div>

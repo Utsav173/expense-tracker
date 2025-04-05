@@ -11,15 +11,16 @@ import { Button } from '@/components/ui/button';
 import { usePagination } from '@/hooks/usePagination';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useToast } from '@/lib/hooks/useToast';
-import { PlusCircle, Edit, Trash } from 'lucide-react';
+import { PlusCircle, Edit, Trash, TrendingUp, ArrowUpRight } from 'lucide-react';
 import { InvestmentAccount } from '@/lib/types';
 import AddInvestmentAccountModal from '@/components/modals/add-investment-account-modal';
 import EditInvestmentAccountModal from '@/components/modals/edit-investment-account-modal';
 import DeleteConfirmationModal from '@/components/modals/delete-confirmation-modal';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
 import Link from 'next/link';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
+import { Badge } from '@/components/ui/badge';
 
 const InvestmentPage = () => {
   const router = useRouter();
@@ -99,68 +100,110 @@ const InvestmentPage = () => {
   }
 
   return (
-    <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
+    <div className='mx-auto w-full max-w-7xl space-y-6 p-4 pt-6'>
       <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
-        <h1 className='text-3xl font-semibold'>Investment Accounts</h1>
-        <Button onClick={() => setIsAddModalOpen(true)}>
-          <PlusCircle className='mr-2 h-4 w-4' /> Add Account
+        <div>
+          <h1 className='text-3xl font-bold'>Investment Accounts</h1>
+          <p className='mt-1 text-muted-foreground'>Manage your investment portfolios</p>
+        </div>
+        <Button
+          onClick={() => setIsAddModalOpen(true)}
+          size='lg'
+          className='shadow-sm hover:shadow'
+        >
+          <PlusCircle className='mr-2 h-5 w-5' /> Add New Account
         </Button>
       </div>
 
-      <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3'>
-        {accounts?.data && accounts.data.length > 0 ? (
-          accounts.data.map((account) => (
-            <Card key={account.id} className='relative flex flex-col'>
-              <CardHeader>
-                <CardTitle className='truncate'>{account.name}</CardTitle>
-                <CardDescription>
-                  {account.platform} - {account.currency}
-                </CardDescription>
+      {accounts?.data && accounts.data.length > 0 ? (
+        <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3'>
+          {accounts.data.map((account) => (
+            <Card
+              key={account.id}
+              className='group relative flex h-full flex-col overflow-hidden transition-all duration-300 hover:shadow-md'
+            >
+              <CardHeader className='pb-2'>
+                <div className='flex items-start justify-between'>
+                  <div className='flex-1 pr-8'>
+                    <CardTitle className='line-clamp-1 text-xl font-bold'>{account.name}</CardTitle>
+                    <div className='mt-1.5 flex items-center gap-2'>
+                      <Badge
+                        variant='outline'
+                        className='bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary'
+                      >
+                        {account.platform}
+                      </Badge>
+                      <span className='text-xs font-medium text-muted-foreground'>
+                        {account.currency}
+                      </span>
+                    </div>
+                  </div>
+                  <div className='absolute right-3 top-3 flex gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100'>
+                    <Button
+                      size='icon'
+                      variant='ghost'
+                      className='h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background'
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        handleEdit(account);
+                      }}
+                    >
+                      <Edit size={15} />
+                    </Button>
+                    <Button
+                      size='icon'
+                      variant='ghost'
+                      className='h-8 w-8 rounded-full bg-background/80 text-destructive backdrop-blur-sm hover:bg-destructive/10'
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        handleDeleteClick(account.id);
+                      }}
+                    >
+                      <Trash size={15} />
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent className='flex-grow'>
-                <p className='text-2xl font-bold'>
-                  {formatCurrency(account.balance || 0, account.currency)}
-                </p>
-                <p className='text-xs text-muted-foreground'>Current Balance</p>
+
+              <CardContent className='flex-grow pb-4 pt-2'>
+                <div className='flex items-center gap-1.5'>
+                  <TrendingUp className='h-5 w-5 text-primary' />
+                  <p className='text-2xl font-bold tracking-tight text-foreground'>
+                    {formatCurrency(account.balance || 0, account.currency)}
+                  </p>
+                </div>
+                <p className='mt-0.5 text-xs text-muted-foreground'>Current Balance</p>
               </CardContent>
-              <div className='absolute right-2 top-2 flex gap-1'>
-                <Button
-                  size='icon'
-                  variant='ghost'
-                  className='h-7 w-7'
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleEdit(account);
-                  }}
+
+              <CardFooter className='mt-auto block p-0'>
+                <Link
+                  href={`/investment/${account.id}`}
+                  className='flex w-full items-center justify-center gap-1.5 rounded-b-lg bg-primary/10 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/20'
                 >
-                  <Edit size={16} />
-                </Button>
-                <Button
-                  size='icon'
-                  variant='ghost'
-                  className='h-7 w-7 text-destructive hover:text-destructive'
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteClick(account.id);
-                  }}
-                >
-                  <Trash size={16} />
-                </Button>
-              </div>
-              <Link
-                href={`/investment/${account.id}`}
-                className='mt-auto block border-t bg-muted/50 px-6 py-3 text-center text-sm font-medium text-primary transition-colors hover:bg-muted'
-              >
-                View Details & Holdings
-              </Link>
+                  View Details & Holdings
+                  <ArrowUpRight size={14} />
+                </Link>
+              </CardFooter>
             </Card>
-          ))
-        ) : (
-          <p className='col-span-full text-center text-muted-foreground'>
-            No investment accounts found.
+          ))}
+        </div>
+      ) : (
+        <Card className='flex flex-col items-center justify-center p-10 text-center'>
+          <div className='rounded-full bg-muted p-6'>
+            <TrendingUp className='h-10 w-10 text-muted-foreground' />
+          </div>
+          <h3 className='mt-4 text-xl font-semibold'>No investment accounts yet</h3>
+          <p className='mt-2 max-w-md text-muted-foreground'>
+            Add your first investment account to start tracking your portfolio performance in one
+            place.
           </p>
-        )}
-      </div>
+          <Button onClick={() => setIsAddModalOpen(true)} className='mt-6'>
+            <PlusCircle className='mr-2 h-4 w-4' /> Add Your First Account
+          </Button>
+        </Card>
+      )}
 
       <AddInvestmentAccountModal
         isOpen={isAddModalOpen}

@@ -1,8 +1,6 @@
 'use client';
 
 import { use, useMemo } from 'react';
-
-// Components
 import { AnalyticsCards, IncomeExpenseChart } from '@/components/account';
 import { useToast } from '@/lib/hooks/useToast';
 import { useAccountDetails } from '@/components/account/hooks/useAccountDetails';

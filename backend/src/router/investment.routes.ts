@@ -8,6 +8,7 @@ import { db } from '../database';
 import { HTTPException } from 'hono/http-exception';
 import { StatusCode } from 'hono/utils/http-status';
 import { PromisePool } from '@supercharge/promise-pool';
+import { parseISO } from 'date-fns';
 
 const investmentRouter = new Hono();
 
@@ -231,7 +232,7 @@ investmentRouter.get('/stocks/search', authMiddleware, async (c) => {
     const response = await fetch(
       `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(
         symbol,
-      )}"esCount=10&lang=en-US`,
+      )}&quotesCount=10&lang=en-US`,
     );
 
     if (!response.ok) {
@@ -249,6 +250,10 @@ investmentRouter.get('/stocks/search', authMiddleware, async (c) => {
 
     if (!data.quotes || !Array.isArray(data.quotes)) {
       console.warn('Yahoo Search API returned unexpected format:', data);
+      return c.json([]);
+    }
+
+    if (data.quotes.length === 0) {
       return c.json([]);
     }
 
@@ -290,9 +295,16 @@ investmentRouter.get('/stocks/price/:symbol', authMiddleware, async (c) => {
         errorBody = await response.text();
       } catch (_) {}
       console.error(`Yahoo Chart API Error (${response.status}) for ${symbol}: ${errorBody}`);
-      throw new HTTPException(response.status as StatusCode, {
-        message: `Failed to fetch stock price for ${symbol}. Provider returned status ${response.status}.`,
-      });
+
+      if (response.status === 404) {
+        throw new HTTPException(404, {
+          message: `Stock symbol '${symbol}' not found on Yahoo Finance.`,
+        });
+      } else {
+        throw new HTTPException(502, {
+          message: `Failed to fetch stock price for ${symbol} from provider. Provider returned status ${response.status}.`,
+        });
+      }
     }
 
     const data = await response.json();
@@ -303,21 +315,22 @@ investmentRouter.get('/stocks/price/:symbol', authMiddleware, async (c) => {
         JSON.stringify(data).substring(0, 500),
       );
       throw new HTTPException(404, {
-        message: `Stock symbol '${symbol}' not found or data unavailable.`,
+        message: `Stock symbol '${symbol}' data unavailable from provider.`,
       });
     }
 
     const result = data.chart.result[0];
     const meta = result.meta;
     const lastPrice = meta?.regularMarketPrice;
-    const previousClose = meta?.previousClose;
 
     if (typeof lastPrice !== 'number') {
+      console.warn(`regularMarketPrice is not a number for ${symbol}:`, data);
       throw new HTTPException(404, {
-        message: `Current market price not available for ${symbol}.`,
+        message: `Current market price not available for '${symbol}' from provider.`,
       });
     }
 
+    const previousClose = meta?.previousClose;
     let change = null;
     let changePercent = null;
 
@@ -349,6 +362,141 @@ investmentRouter.get('/stocks/price/:symbol', authMiddleware, async (c) => {
     console.error(`Stock Price Internal Error for ${c.req.param('symbol')}:`, err);
     throw new HTTPException(500, {
       message: err instanceof Error ? err.message : 'Something went wrong fetching stock price',
+    });
+  }
+});
+
+investmentRouter.get('/stocks/historical-price/:symbol', authMiddleware, async (c) => {
+  try {
+    const { symbol } = c.req.param();
+    const dateParam = c.req.query('date');
+    if (!symbol) {
+      throw new HTTPException(400, { message: 'Stock symbol is required' });
+    }
+    if (!dateParam) {
+      throw new HTTPException(400, {
+        message: 'Date is required in YYYY-MM-DD format (e.g., ?date=2023-10-26)',
+      });
+    }
+
+    const requestedDate = new Date(dateParam);
+    if (isNaN(requestedDate.getTime())) {
+      throw new HTTPException(400, { message: 'Invalid date format. Use YYYY-MM-DD.' });
+    }
+
+    const period1 = Math.floor(
+      new Date(
+        requestedDate.getFullYear(),
+        requestedDate.getMonth(),
+        requestedDate.getDate(),
+        0,
+        0,
+        0,
+      ).getTime() / 1000,
+    );
+    const period2 = Math.floor(
+      new Date(
+        requestedDate.getFullYear(),
+        requestedDate.getMonth(),
+        requestedDate.getDate(),
+        23,
+        59,
+        59,
+      ).getTime() / 1000,
+    );
+    const interval = '1d';
+
+    const historicalResponse = await fetch(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
+        symbol,
+      )}?period1=${period1}&period2=${period2}&interval=${interval}`,
+    );
+
+    if (!historicalResponse.ok) {
+      let errorBody = 'Could not fetch historical stock data from provider.';
+      try {
+        errorBody = await historicalResponse.text();
+      } catch (_) {}
+      console.error(
+        `Yahoo Historical Chart API Error (${historicalResponse.status}) for ${symbol} on ${dateParam}: ${errorBody}`,
+      );
+
+      if (historicalResponse.status === 404) {
+        throw new HTTPException(404, {
+          message: `Stock symbol '${symbol}' not found on Yahoo Finance or no data for ${dateParam}.`,
+        });
+      } else {
+        throw new HTTPException(502, {
+          message: `Failed to fetch historical stock price for ${symbol} on ${dateParam}. Provider returned status ${historicalResponse.status}.`,
+        });
+      }
+    }
+
+    const historicalData = await historicalResponse.json();
+
+    if (!historicalData.chart?.result?.[0]) {
+      console.warn(
+        `No chart result found for ${symbol} on ${dateParam} or unexpected data structure from Yahoo:`,
+        JSON.stringify(historicalData).substring(0, 500),
+      );
+      throw new HTTPException(404, {
+        message: `No historical data available for '${symbol}' on ${dateParam}.`,
+      });
+    }
+
+    const result = historicalData.chart.result[0];
+
+    if (
+      !result.timestamp ||
+      result.timestamp.length === 0 ||
+      !result.indicators?.quote?.[0]?.close ||
+      result.indicators.quote[0].close.length === 0
+    ) {
+      console.warn(
+        `No timestamp or price data in response for ${symbol} on ${dateParam}:`,
+        historicalData,
+      );
+      throw new HTTPException(404, {
+        message: `No price data available for '${symbol}' on ${dateParam}. Market might have been closed or data missing.`,
+      });
+    }
+
+    const meta = result.meta;
+    const timestamps = result.timestamp;
+    const quotes = result.indicators.quote[0];
+
+    const historicalTimestamp = timestamps[0];
+    const historicalPrice = quotes.close[0];
+    const historicalOpen = quotes.open?.[0];
+    const historicalHigh = quotes.high?.[0];
+    const historicalLow = quotes.low?.[0];
+    const historicalVolume = quotes.volume?.[0];
+
+    const formattedDate = new Date(historicalTimestamp * 1000).toISOString().split('T')[0];
+
+    return c.json({
+      symbol: symbol.toUpperCase(),
+      date: formattedDate,
+      price: historicalPrice,
+      currency: meta?.currency || 'N/A',
+      exchange: meta?.exchangeName || 'N/A',
+      companyName: meta?.longName || meta?.shortName || 'N/A',
+      ...(historicalOpen !== undefined && { open: historicalOpen }),
+      ...(historicalHigh !== undefined && { high: historicalHigh }),
+      ...(historicalLow !== undefined && { low: historicalLow }),
+      ...(historicalVolume !== undefined && { volume: historicalVolume }),
+    });
+  } catch (err) {
+    if (err instanceof HTTPException) throw err;
+    console.error(
+      `Stock Historical Price Internal Error for ${c.req.param('symbol')} on date ${c.req.query(
+        'date',
+      )}:`,
+      err,
+    );
+    throw new HTTPException(500, {
+      message:
+        err instanceof Error ? err.message : 'Something went wrong fetching historical stock price',
     });
   }
 });
@@ -651,7 +799,7 @@ investmentRouter.post('/', authMiddleware, zValidator('json', investmentSchema),
         symbol: symbol.toUpperCase(),
         shares: sharesValue,
         purchasePrice: purchasePriceValue,
-        purchaseDate: new Date(purchaseDate),
+        purchaseDate: parseISO(purchaseDate),
         account: investmentAccount,
         investedAmount: purchasePriceValue * sharesValue,
       })

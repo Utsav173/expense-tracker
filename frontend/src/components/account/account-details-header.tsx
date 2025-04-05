@@ -28,7 +28,7 @@ export const AccountDetailsHeader: React.FC<AccountDetailsHeaderProps> = ({
         <Skeleton className='h-8 w-full' />
       ) : (
         <>
-          <h1 className='text-xl font-semibold text-foreground'>{account?.name}</h1>
+          <h1 className='truncate text-xl font-semibold text-foreground'>{account?.name}</h1>
           <div className='flex flex-row items-center gap-4 max-md:flex-wrap max-md:justify-center'>
             <ShareAccountModal
               accountId={account.id}
