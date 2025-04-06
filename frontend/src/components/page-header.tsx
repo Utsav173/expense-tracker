@@ -3,7 +3,7 @@
 import React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Home, ArrowLeft } from 'lucide-react';
+import { Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -15,6 +15,7 @@ const getPageTitle = (pathname: string | null): string => {
   if (pathname.startsWith('/accounts/')) return 'Account Details';
   if (pathname.startsWith('/shared-accounts')) return 'Shared Accounts';
   if (pathname.startsWith('/transactions/import')) return 'Import Transactions';
+  if (pathname.startsWith('/investment/')) return 'Investment Details';
 
   // Fallback logic for other top-level routes
   const segments = pathname.split('/').filter(Boolean);
@@ -35,21 +36,7 @@ const PageHeader: React.FC = () => {
   const isHomePage = pathname === '/';
 
   return (
-    <div className='flex h-full w-full items-center gap-2 px-4'>
-      {!isHomePage && (
-        <>
-          <Button
-            variant='ghost'
-            size='icon'
-            className='h-7 w-7'
-            onClick={() => router.back()}
-            aria-label='Go back'
-          >
-            <ArrowLeft className='h-4 w-4' />
-          </Button>
-          <span className='text-sm text-muted-foreground'>/</span>
-        </>
-      )}
+    <div className='flex h-full w-full items-center gap-2'>
       <Link href='/' aria-label='Go to Home'>
         <Button variant='ghost' size='icon' className='h-7 w-7'>
           <Home className={cn('h-4 w-4', isHomePage ? 'text-primary' : 'text-muted-foreground')} />

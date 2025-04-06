@@ -100,7 +100,7 @@ const InvestmentPage = () => {
   }
 
   return (
-    <div className='mx-auto w-full max-w-7xl space-y-6 p-4 pt-6'>
+    <div className='mx-auto w-full min-w-0 max-w-7xl space-y-6 p-4 pt-6'>
       <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div>
           <h1 className='text-3xl font-bold'>Investment Accounts</h1>

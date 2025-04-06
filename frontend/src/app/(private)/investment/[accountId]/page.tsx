@@ -157,13 +157,13 @@ const InvestmentAccountDetailPage = () => {
 
   return (
     <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
-      <div className='flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+      <div className='flex w-full min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <Button variant='ghost' onClick={() => router.back()} className='flex items-center gap-2'>
           <ArrowLeft size={16} /> Back to Accounts
         </Button>
-        <DynamicEllipsis className='text-xl font-semibold md:text-2xl'>
+        <SingleLineEllipsis className='min-w-0 text-xl font-semibold md:text-2xl'>
           {account.name} ({account.platform || 'N/A'})
-        </DynamicEllipsis>
+        </SingleLineEllipsis>
         <Button onClick={() => setIsAddModalOpen(true)}>
           <PlusCircle className='mr-2 h-4 w-4' /> Add Investment
         </Button>

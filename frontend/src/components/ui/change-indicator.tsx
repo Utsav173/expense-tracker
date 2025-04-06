@@ -31,7 +31,13 @@ export const ChangeIndicator: React.FC<ChangeIndicatorProps> = ({
       : 'text-gray-500';
 
   return (
-    <span className={cn('flex items-center text-xs', colorClass, className)}>
+    <span
+      className={cn(
+        'flex w-full items-center justify-center text-center text-xs',
+        colorClass,
+        className
+      )}
+    >
       <Icon className='mr-1 h-3 w-3 flex-shrink-0' />
       {change.toFixed(1)}%
     </span>

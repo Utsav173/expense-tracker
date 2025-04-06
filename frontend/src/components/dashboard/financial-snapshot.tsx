@@ -60,12 +60,12 @@ export const FinancialSnapshot: React.FC<FinancialSnapshotProps> = ({
           {formatCurrency(primaryMetric, 'INR')}
         </h2>
         <div className='grid w-full max-w-lg grid-cols-1 gap-6 pt-2 sm:grid-cols-2'>
-          <div className='border-r border-border pr-6 text-center sm:border-l sm:border-r-0 sm:pl-6 sm:pr-0'>
+          <div className='pr-6 text-center sm:pl-6 sm:pr-0'>
             <p className='text-xs text-muted-foreground'>Total Income (Avg. Change)</p>
             <p className='text-xl font-semibold text-green-600'>{formatCurrency(income, 'INR')}</p>
             <ChangeIndicator change={incomeChange} />
           </div>
-          <div className='border-l border-border pl-6 text-center sm:border-l-0 sm:pl-0'>
+          <div className='pl-6 text-center sm:pl-0'>
             <p className='text-xs text-muted-foreground'>Total Expense (Avg. Change)</p>
             <p className='text-xl font-semibold text-red-600'>{formatCurrency(expense, 'INR')}</p>
             <ChangeIndicator change={expenseChange} inverse={true} />

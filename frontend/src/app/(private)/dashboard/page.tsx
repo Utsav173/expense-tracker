@@ -204,12 +204,9 @@ const DashboardPage = () => {
     isLoading: isDashboardLoading,
     error: dashboardError,
     isFetching: isDashboardFetching
-  } = useQuery<ApiResponse<DashboardData>>({
+  } = useQuery({
     queryKey: ['dashboardData', queryParams],
-    queryFn: () => {
-      if (!queryParams) return Promise.reject(new Error('Query params not ready'));
-      return accountGetDashboard(queryParams);
-    },
+    queryFn: () => accountGetDashboard(queryParams),
     retry: 1,
     staleTime: 5 * 60 * 1000,
     refetchInterval: refreshInterval > 0 ? refreshInterval : false,
@@ -217,10 +214,10 @@ const DashboardPage = () => {
   });
 
   const {
-    data: goalsApiResponse,
+    data: goalsData,
     isLoading: isGoalsLoading,
     error: goalsError
-  } = useQuery<{ data: SavingGoal[]; pagination: any } | null>({
+  } = useQuery({
     queryKey: ['goalsDashboard'],
     queryFn: () => goalGetAll({ page: 1, limit: 5 }),
     retry: 1,
@@ -229,10 +226,10 @@ const DashboardPage = () => {
   });
 
   const {
-    data: accountsDropdownApiResponse,
+    data: accountsDropdownData,
     isLoading: isAccountsDropdownLoading,
     error: accountsDropdownError
-  } = useQuery<ApiResponse<AccountDropdown[]>>({
+  } = useQuery({
     queryKey: ['accountsDropdownDashboard'],
     queryFn: accountGetDropdown,
     retry: 1,
@@ -240,12 +237,9 @@ const DashboardPage = () => {
     enabled: true
   });
 
-  const isLoading = useMemo(
-    () => isDashboardLoading || isAccountsDropdownLoading || isGoalsLoading,
-    [isDashboardLoading, isAccountsDropdownLoading, isGoalsLoading]
-  );
+  const isLoading = isDashboardLoading || isAccountsDropdownLoading || isGoalsLoading;
 
-  const isRefreshing = useMemo(() => isDashboardFetching, [isDashboardFetching]);
+  const isRefreshing = isDashboardFetching;
 
   const hasError = useMemo(
     () => !!dashboardError || !!accountsDropdownError || !!goalsError,
@@ -255,12 +249,6 @@ const DashboardPage = () => {
   const combinedError = useMemo(
     () => dashboardError || accountsDropdownError || goalsError,
     [dashboardError, accountsDropdownError, goalsError]
-  );
-
-  const goalsData = useMemo(() => goalsApiResponse?.data ?? [], [goalsApiResponse]);
-  const accountsDropdownData = useMemo(
-    () => accountsDropdownApiResponse ?? [],
-    [accountsDropdownApiResponse]
   );
 
   const accountIdToCurrencyMap = useMemo(() => {
@@ -273,10 +261,8 @@ const DashboardPage = () => {
     return map;
   }, [accountsDropdownData]);
 
-  const currentLayoutConfig = useMemo(
-    () => DASHBOARD_CARD_CONFIG[currentPreset] || DASHBOARD_CARD_CONFIG['default'],
-    [currentPreset]
-  );
+  const currentLayoutConfig =
+    DASHBOARD_CARD_CONFIG[currentPreset] || DASHBOARD_CARD_CONFIG['default'];
 
   const cardMap: Record<string, React.ReactNode> = useMemo(
     () => ({
@@ -284,7 +270,7 @@ const DashboardPage = () => {
       financialSnapshot: dashboardData ? (
         <FinancialSnapshot data={dashboardData} isLoading={isDashboardLoading} />
       ) : null,
-      trendChart: (
+      trendChart: dashboardData ? (
         <TrendChartWrapper
           data={dashboardData}
           chartType={chartType}
@@ -292,10 +278,12 @@ const DashboardPage = () => {
           expanded={expandedCard === 'trendChart'}
           setChartType={setChartType}
         />
+      ) : (
+        <NoData />
       ),
       spendingBreakdown: <SpendingBreakdown className='h-full' />,
       budgetProgress: <BudgetProgress />,
-      goals: <GoalHighlights data={goalsData} isLoading={isGoalsLoading} />,
+      goals: <GoalHighlights data={goalsData?.data} isLoading={isGoalsLoading} />,
       investments: <InvestmentSummaryCard />,
       debtSummary: <DebtSummaryCard />,
       accounts: (
@@ -385,7 +373,7 @@ const DashboardPage = () => {
 
   if (!isLoading && !hasError && dashboardData && dashboardData.totalTransaction < 2) {
     return (
-      <div className='mx-auto w-full max-w-7xl space-y-4 p-4 pt-6 md:space-y-6 lg:p-8 lg:pt-8'>
+      <div className='mx-auto w-full min-w-0 max-w-7xl space-y-4 p-4 pt-6 max-sm:max-w-full md:space-y-6 lg:p-8 lg:pt-8'>
         <DashboardControls
           currentPreset={currentPreset}
           timeRangeOption={timeRangeOption}
@@ -418,7 +406,7 @@ const DashboardPage = () => {
   return (
     <div
       className={cn(
-        'mx-auto w-full max-w-7xl space-y-4 p-4 pt-6 transition-all duration-200 md:space-y-6 lg:p-8 lg:pt-8',
+        'min-w-o mx-auto w-full max-w-7xl space-y-4 pt-6 transition-all duration-200 max-sm:max-w-full md:space-y-6 lg:p-8 lg:pt-8',
         compactView ? 'space-y-3' : ''
       )}
     >

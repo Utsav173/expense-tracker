@@ -84,7 +84,7 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
   }
 
   return (
-    <div className='mx-auto w-full max-w-7xl space-y-6 p-4 max-sm:p-0 md:p-6 lg:p-8'>
+    <div className='mx-auto w-full min-w-0 max-w-7xl space-y-6 p-4 max-sm:p-0 md:p-6 lg:p-8'>
       <AccountDetailsHeader
         account={account}
         isLoading={isAccountLoading}

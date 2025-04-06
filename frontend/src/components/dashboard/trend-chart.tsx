@@ -187,7 +187,7 @@ function isVisibilityKey(key: any): key is VisibilityKey {
   return typeof key === 'string' && ['income', 'expense', 'balance'].includes(key);
 }
 
-const TrendChart: React.FC<TrendChartProps> = ({
+export const TrendChart: React.FC<TrendChartProps> = ({
   incomeData,
   expenseData,
   balanceData,
@@ -440,5 +440,3 @@ const TrendChart: React.FC<TrendChartProps> = ({
     </div>
   );
 };
-
-export default React.memo(TrendChart);

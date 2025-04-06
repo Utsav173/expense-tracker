@@ -34,7 +34,7 @@ const NoData: React.FC<NoDataProps> = ({
 
   return (
     <div
-      className={`flex flex-col items-center justify-center p-4 text-muted-foreground ${
+      className={`flex min-h-full flex-col items-center justify-center p-4 text-muted-foreground ${
         className || ''
       }`}
     >

@@ -1,15 +1,15 @@
 'use client';
 
 import React from 'react';
-import TrendChart from './trend-chart';
 import { DashboardData } from '@/lib/types';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, LineChart, AreaChart } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 import NoData from '../ui/no-data';
+import { TrendChart } from './trend-chart';
 
 interface TrendChartWrapperProps {
-  data: DashboardData | null | undefined;
+  data: DashboardData;
   chartType: 'line' | 'bar' | 'area';
   isLoading: boolean;
   expanded: boolean;
@@ -28,10 +28,11 @@ const TrendChartWrapper: React.FC<TrendChartWrapperProps> = ({
   const handleTabChange = (value: string) => {
     setChartType(value as 'line' | 'bar' | 'area');
   };
+  console.log(data);
 
-  const incomeChartData = data?.incomeChartData ?? [];
-  const expenseChartData = data?.expenseChartData ?? [];
-  const balanceChartData = data?.balanceChartData ?? [];
+  const incomeChartData = data.incomeChartData ?? [];
+  const expenseChartData = data.expenseChartData ?? [];
+  const balanceChartData = data.balanceChartData ?? [];
   const currency = data?.accountsInfo?.[0]?.currency ?? 'INR';
 
   const renderContent = () => {
@@ -53,7 +54,7 @@ const TrendChartWrapper: React.FC<TrendChartWrapperProps> = ({
         balanceData={balanceChartData}
         chartType={chartType}
         currency={currency}
-        className='h-full w-full pt-4'
+        className='h-full w-full p-2 pt-4'
       />
     );
   };
