@@ -6,7 +6,7 @@ import { FileQuestion, Inbox, XCircle } from 'lucide-react';
 interface NoDataProps {
   message?: string;
   className?: string;
-  icon?: 'file-question' | 'inbox' | 'x-circle' | 'none';
+  icon?: 'file-question' | 'inbox' | 'x-circle' | 'none' | React.ComponentType;
 }
 
 const NoData: React.FC<NoDataProps> = ({
@@ -14,7 +14,8 @@ const NoData: React.FC<NoDataProps> = ({
   className,
   icon = 'file-question'
 }) => {
-  let IconComponent: React.FC<{ className?: string }> | null = null;
+  let IconComponent: React.ComponentType<{ className?: string }> | null =
+    typeof icon === 'function' ? icon : null;
 
   switch (icon) {
     case 'file-question':

@@ -1,10 +1,8 @@
-'use client';
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { BudgetSummaryItem } from '@/lib/types';
-import { formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import Loader from '../ui/loader';
 import { Progress } from '../ui/progress';
 import NoData from '../ui/no-data';
@@ -17,8 +15,11 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { useToast } from '@/lib/hooks/useToast';
+import { CalendarRange } from 'lucide-react';
+import Link from 'next/link';
+import { Button } from '../ui/button';
 
-export const BudgetProgress: React.FC = () => {
+export const BudgetProgress: React.FC<{ className?: string }> = ({ className }) => {
   const currentMonth = new Date().getMonth() + 1;
   const currentYear = new Date().getFullYear();
   const { showError } = useToast();
@@ -27,10 +28,10 @@ export const BudgetProgress: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
 
   const { data, isLoading, error, isFetching } = useQuery<BudgetSummaryItem[] | null>({
-    queryKey: ['budgetSummary', selectedMonth, selectedYear],
+    queryKey: ['budgetSummaryDashboard', selectedMonth, selectedYear],
     queryFn: () => budgetGetSummary(selectedMonth, selectedYear),
     enabled: true,
-    retry: false,
+    retry: 1,
     staleTime: 5 * 60 * 1000
   });
 
@@ -47,9 +48,12 @@ export const BudgetProgress: React.FC = () => {
   const years = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
 
   return (
-    <Card>
+    <Card className={cn('flex flex-col', className)}>
       <CardHeader>
-        <CardTitle>Budget Progress</CardTitle>
+        <CardTitle className='flex items-center gap-2'>
+          <CalendarRange className='h-5 w-5 text-lime-600' />
+          Budget Progress
+        </CardTitle>
         <div className='mt-2 flex flex-col items-center gap-2 sm:flex-row'>
           <Select
             value={String(selectedMonth)}
@@ -85,13 +89,17 @@ export const BudgetProgress: React.FC = () => {
           </Select>
         </div>
         <CardDescription className='mt-1 text-xs'>
-          Tracking for the selected period.
+          Spending vs. budget for the selected period.
         </CardDescription>
       </CardHeader>
-      <CardContent className='scrollbar h-[250px] space-y-4 overflow-y-auto'>
+      <CardContent className='scrollbar h-[250px] flex-grow space-y-4 overflow-y-auto'>
         {isLoading || isFetching ? (
           <div className='flex h-full items-center justify-center'>
             <Loader />
+          </div>
+        ) : error ? (
+          <div className='flex h-full items-center justify-center'>
+            <NoData message={'Could not load budget data.'} icon='x-circle' />
           </div>
         ) : !data || data.length === 0 ? (
           <div className='flex h-full items-center justify-center'>
@@ -111,31 +119,36 @@ export const BudgetProgress: React.FC = () => {
             return (
               <div key={item.category || item.categoryName}>
                 <div className='mb-1 flex justify-between text-sm'>
-                  <span className='font-medium'>{item.categoryName}</span>
+                  <span className='truncate pr-2 font-medium'>{item.categoryName}</span>
                   <span
-                    className={
-                      isOverBudget ? 'font-semibold text-red-600' : 'text-muted-foreground'
-                    }
+                    className={`text-xs font-medium ${isOverBudget ? 'text-red-600' : 'text-muted-foreground'}`}
                   >
                     {formatCurrency(spent)} / {formatCurrency(budgeted)}
                   </span>
                 </div>
                 <Progress
                   value={progress}
-                  className={`h-2 ${isOverBudget ? '[&>div]:bg-red-500' : ''}`}
+                  className={`h-2 ${isOverBudget ? '[&>div]:bg-destructive' : '[&>div]:bg-lime-600'}`} // Use lime color
                 />
                 <p
-                  className={`mt-1 text-xs ${isOverBudget ? 'text-red-500' : 'text-muted-foreground'}`}
+                  className={`mt-1 text-right text-xs ${isOverBudget ? 'text-destructive' : 'text-muted-foreground'}`}
                 >
                   {isOverBudget
-                    ? `${formatCurrency(Math.abs(remaining))} over budget`
-                    : `${formatCurrency(remaining)} remaining`}
+                    ? `${formatCurrency(Math.abs(remaining))} over`
+                    : `${formatCurrency(remaining)} left`}
                 </p>
               </div>
             );
           })
         )}
       </CardContent>
+      {!isLoading && !error && data && data.length > 0 && (
+        <div className='border-t p-3 text-center'>
+          <Button variant='link' size='sm' asChild className='text-xs'>
+            <Link href='/budget'>Manage Budgets</Link>
+          </Button>
+        </div>
+      )}
     </Card>
   );
 };

@@ -8,14 +8,14 @@ export const transactionGetAll = (
   params: any,
   successMessage?: string,
   errorMessage?: string
-): Promise<TransactionsResponse> => // explicitly set generic types to data from axios
+): Promise<TransactionsResponse> =>
   apiFetch(`/transactions`, 'GET', undefined, { params }, successMessage, errorMessage);
 
 export const transactionGetById = (
   id: string,
   successMessage?: string,
   errorMessage?: string
-): Promise<ApiResponse<Transaction>> => // explicitly type
+): Promise<ApiResponse<Transaction>> =>
   apiFetch(`/transactions/${id}`, 'GET', undefined, undefined, successMessage, errorMessage);
 
 export const transactionGetRecurringAll = (
@@ -86,7 +86,7 @@ export const transactionDelete = (id: string, successMessage?: string, errorMess
   apiFetch(`/transactions/${id}`, 'DELETE', undefined, undefined, successMessage, errorMessage);
 
 export const transactionGetIncomeExpenseChart = (params: {
-  accountId: string;
+  accountId?: string; // Made optional
   duration: string;
 }): Promise<ApiResponse<IncomeExpenseChartData>> =>
   apiFetch(
@@ -96,4 +96,18 @@ export const transactionGetIncomeExpenseChart = (params: {
     { params },
     undefined,
     undefined
+  );
+
+export const transactionGetCategoryChart = (
+  params: { duration: string; accountId?: string },
+  successMessage?: string,
+  errorMessage?: string
+): Promise<ApiResponse<{ name: string[]; totalIncome: number[]; totalExpense: number[] }>> =>
+  apiFetch(
+    '/transactions/by/category/chart',
+    'GET',
+    undefined,
+    { params },
+    successMessage,
+    errorMessage || 'Failed to get category chart data'
   );

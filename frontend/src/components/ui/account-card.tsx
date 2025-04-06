@@ -9,7 +9,7 @@ import Image from 'next/image';
 import { Button } from './button';
 import { Account } from '@/lib/types';
 import ShareAccountModal from '../modals/share-account-modal';
-import { SingleLineEllipsis } from './ellipsis-components';
+import { ResponsiveEllipsis, SingleLineEllipsis } from './ellipsis-components';
 
 interface AccountCardProps extends React.ComponentPropsWithoutRef<'a'> {
   href: string;
@@ -48,7 +48,7 @@ const AccountCard: React.FC<AccountCardProps> = React.forwardRef<
           <CreditCard className='h-6 w-6' /> {/* Reduced icon size */}
         </div>
         <div className='relative z-10'>
-          <div className='flex items-start gap-3'>
+          <div className='flex min-w-0 items-start gap-3'>
             {' '}
             {/* Reduced gap */}
             {owner.profilePic && (
@@ -63,8 +63,10 @@ const AccountCard: React.FC<AccountCardProps> = React.forwardRef<
                 />
               </div>
             )}
-            <div className='mr-4 flex w-full flex-col items-start'>
-              <SingleLineEllipsis className='text-base font-semibold'>{name}</SingleLineEllipsis>
+            <div className='mr-4 flex min-w-0 flex-col items-start'>
+              <SingleLineEllipsis showTooltip className='text-base font-semibold'>
+                {name}
+              </SingleLineEllipsis>
               <p className='text-xs text-gray-500'>{owner.name}</p>
             </div>
           </div>

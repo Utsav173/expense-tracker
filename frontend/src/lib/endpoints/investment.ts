@@ -59,7 +59,7 @@ export const investmentUpdateDividend = (
   errorMessage?: string
 ): Promise<ApiResponse<{ message: string; id: string }>> =>
   apiFetch(
-    `/investment/${id}/update-divident`,
+    `/investment/${id}/update-dividend`,
     'PUT',
     body,
     undefined,
@@ -94,19 +94,6 @@ export const investmentStockPrice = (
     errorMessage
   );
 
-export const investmentGetPortfolioSummary = (
-  successMessage?: string,
-  errorMessage?: string
-): Promise<ApiResponse<PortfolioSummary>> =>
-  apiFetch(
-    '/investment/portfolio-summary',
-    'GET',
-    undefined,
-    undefined,
-    successMessage,
-    errorMessage || 'Failed to fetch portfolio summary'
-  );
-
 export const investmentStockHistoricalPrice = (
   symbol: string,
   date: string,
@@ -120,4 +107,37 @@ export const investmentStockHistoricalPrice = (
     undefined,
     successMessage,
     errorMessage || 'Failed to fetch historical price'
+  );
+
+export const investmentGetPortfolioSummary = (
+  successMessage?: string,
+  errorMessage?: string
+): Promise<ApiResponse<PortfolioSummary>> =>
+  apiFetch(
+    '/investment/portfolio-summary',
+    'GET',
+    undefined,
+    undefined,
+    successMessage,
+    errorMessage || 'Failed to fetch portfolio summary'
+  );
+
+export const investmentGetPortfolioHistorical = (
+  params: { period?: '7d' | '30d' | '90d' | '1y' } = { period: '30d' },
+  successMessage?: string,
+  errorMessage?: string
+): Promise<
+  ApiResponse<{
+    data: { date: string; value: number }[];
+    currency: string;
+    valueIsEstimate: boolean;
+  }>
+> =>
+  apiFetch(
+    '/investment/portfolio-historical',
+    'GET',
+    undefined,
+    { params },
+    successMessage,
+    errorMessage || 'Failed to fetch historical portfolio data'
   );

@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, ReactNode, HTMLAttributes } from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
-import { TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 interface BaseEllipsisProps extends HTMLAttributes<HTMLDivElement> {
@@ -40,19 +40,14 @@ export const SingleLineEllipsis: React.FC<BaseEllipsisProps> = ({
   const content = text || (children as string);
 
   return (
-    <TooltipProvider delayDuration={300}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div
-            className={cn('overflow-hidden text-ellipsis whitespace-nowrap', className)}
-            {...props}
-          >
-            {content}
-          </div>
-        </TooltipTrigger>
-        {showTooltip && <TooltipContent>{content}</TooltipContent>}
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className={cn('max-w-full truncate sm:w-auto', className)} {...props}>
+          {content}
+        </div>
+      </TooltipTrigger>
+      {showTooltip && <TooltipContent>{content}</TooltipContent>}
+    </Tooltip>
   );
 };
 
@@ -70,25 +65,23 @@ export const MultiLineEllipsis: React.FC<MultiLineEllipsisProps> = ({
   const content = text || (children as string);
 
   return (
-    <TooltipProvider delayDuration={300}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div
-            className={cn('overflow-hidden', className)}
-            style={{
-              display: '-webkit-box',
-              WebkitLineClamp: lines,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden'
-            }}
-            {...props}
-          >
-            {content}
-          </div>
-        </TooltipTrigger>
-        {showTooltip && <TooltipContent>{content}</TooltipContent>}
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div
+          className={cn('overflow-hidden', className)}
+          style={{
+            display: '-webkit-box',
+            WebkitLineClamp: lines,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden'
+          }}
+          {...props}
+        >
+          {content}
+        </div>
+      </TooltipTrigger>
+      {showTooltip && <TooltipContent>{content}</TooltipContent>}
+    </Tooltip>
   );
 };
 
@@ -111,16 +104,14 @@ export const EllipsisMiddle: React.FC<EllipsisMiddleProps> = ({
     : text;
 
   return (
-    <TooltipProvider delayDuration={300}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className={cn('overflow-hidden', className)} {...props}>
-            {displayText}
-          </div>
-        </TooltipTrigger>
-        {showTooltip && shouldTruncate && <TooltipContent>{text}</TooltipContent>}
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className={cn('overflow-hidden', className)} {...props}>
+          {displayText}
+        </div>
+      </TooltipTrigger>
+      {showTooltip && shouldTruncate && <TooltipContent>{text}</TooltipContent>}
+    </Tooltip>
   );
 };
 
@@ -158,31 +149,23 @@ export const ResponsiveEllipsis: React.FC<ResponsiveEllipsisProps> = ({
 
   return (
     <>
-      {/* Full text on larger screens */}
-      <div className={cn(responsiveClasses[breakpoint], className)} {...props}>
-        {content}
-      </div>
-
-      {/* Truncated text on smaller screens */}
-      <TooltipProvider delayDuration={300}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div
-              className={cn(mobileClasses[breakpoint], className)}
-              style={{
-                display: '-webkit-box',
-                WebkitLineClamp: lines,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden'
-              }}
-              {...props}
-            >
-              {content}
-            </div>
-          </TooltipTrigger>
-          {showTooltip && <TooltipContent>{content}</TooltipContent>}
-        </Tooltip>
-      </TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div
+            className={cn(mobileClasses[breakpoint], className)}
+            style={{
+              display: '-webkit-box',
+              WebkitLineClamp: lines,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden'
+            }}
+            {...props}
+          >
+            {content}
+          </div>
+        </TooltipTrigger>
+        {showTooltip && <TooltipContent>{content}</TooltipContent>}
+      </Tooltip>
     </>
   );
 };
@@ -220,19 +203,17 @@ export const DynamicEllipsis: React.FC<BaseEllipsisProps> = ({
   }, [content]);
 
   return (
-    <TooltipProvider delayDuration={300}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div
-            ref={containerRef}
-            className={cn('overflow-hidden whitespace-nowrap', className)}
-            {...props}
-          >
-            <span ref={textRef}>{content}</span>
-          </div>
-        </TooltipTrigger>
-        {showTooltip && isOverflowing && <TooltipContent>{content}</TooltipContent>}
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div
+          ref={containerRef}
+          className={cn('overflow-hidden whitespace-nowrap', className)}
+          {...props}
+        >
+          <span ref={textRef}>{content}</span>
+        </div>
+      </TooltipTrigger>
+      {showTooltip && isOverflowing && <TooltipContent>{content}</TooltipContent>}
+    </Tooltip>
   );
 };

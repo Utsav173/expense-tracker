@@ -22,9 +22,10 @@ interface DateRangePickerProps {
   dateRange: DateRange | undefined;
   setDateRange: (range: DateRange | undefined) => void;
   className?: string;
+  trigger?: React.ReactNode;
 }
 
-const DateRangePicker = ({ dateRange, setDateRange, className }: DateRangePickerProps) => {
+const DateRangePicker = ({ dateRange, setDateRange, className, trigger }: DateRangePickerProps) => {
   const [open, setOpen] = useState(false);
   const [month, setMonth] = useState(dateRange?.from || new Date()); // Month for calendar display
 
@@ -69,28 +70,30 @@ const DateRangePicker = ({ dateRange, setDateRange, className }: DateRangePicker
   return (
     <Popover open={open} onOpenChange={setOpen} modal>
       <PopoverTrigger asChild>
-        <Button
-          id='date'
-          variant='outline'
-          className={cn(
-            'w-full justify-start text-left font-normal',
-            !dateRange && 'text-muted-foreground',
-            className
-          )}
-        >
-          <CalendarIcon className='mr-2 h-4 w-4' />
-          {dateRange?.from ? (
-            dateRange.to ? (
-              <p className='truncate'>
-                {format(dateRange.from, 'LLL dd, y')} - {format(dateRange.to, 'LLL dd, y')}
-              </p>
+        {trigger ?? (
+          <Button
+            id='date'
+            variant='outline'
+            className={cn(
+              'w-full justify-start text-left font-normal',
+              !dateRange && 'text-muted-foreground',
+              className
+            )}
+          >
+            <CalendarIcon className='mr-2 h-4 w-4' />
+            {dateRange?.from ? (
+              dateRange.to ? (
+                <p className='truncate'>
+                  {format(dateRange.from, 'LLL dd, y')} - {format(dateRange.to, 'LLL dd, y')}
+                </p>
+              ) : (
+                <p> {format(dateRange.from, 'LLL dd, y')} </p>
+              )
             ) : (
-              <p> {format(dateRange.from, 'LLL dd, y')} </p>
-            )
-          ) : (
-            <p>Pick a date</p>
-          )}
-        </Button>
+              <p>Pick a date</p>
+            )}
+          </Button>
+        )}
       </PopoverTrigger>
       <PopoverContent className='w-auto p-0' align='center' alignOffset={0}>
         <div>
