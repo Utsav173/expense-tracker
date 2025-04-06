@@ -6,6 +6,17 @@ export const fetchHistoricalPricesForSymbol = async (
   endDate: Date,
 ): Promise<Map<string, number | null>> => {
   const priceMap = new Map<string, number | null>();
+  const now = new Date();
+
+  if (endDate > now) {
+    console.warn(
+      `Skipping historical fetch for ${symbol}: End date ${formatDateFn(
+        endDate,
+        'yyyy-MM-dd',
+      )} is in the future relative to system time ${formatDateFn(now, 'yyyy-MM-dd HH:mm:ss')}.`,
+    );
+    return priceMap;
+  }
 
   try {
     const period1 = Math.floor(startDate.getTime() / 1000);
