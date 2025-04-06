@@ -131,3 +131,7 @@ export const investmentSchema = z.object({
     .transform((val) => new Date(val))
     .refine((date) => !isNaN(date.getTime()), { message: 'Invalid date format' }),
 });
+
+export const historicalPortfolioQuerySchema = z.object({
+  period: z.enum(['7d', '30d', '90d', '1y']).default('30d'),
+});

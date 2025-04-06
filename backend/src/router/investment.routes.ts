@@ -2,13 +2,14 @@ import { Hono } from 'hono';
 import authMiddleware from '../middleware';
 import { Investment, InvestmentAccount, User } from '../database/schema';
 import { zValidator } from '@hono/zod-validator';
-import { investmentSchema } from '../utils/schema.validations';
+import { historicalPortfolioQuerySchema, investmentSchema } from '../utils/schema.validations';
 import { eq, count, sql, and, inArray, desc, InferSelectModel, asc } from 'drizzle-orm';
 import { db } from '../database';
 import { HTTPException } from 'hono/http-exception';
 import { StatusCode } from 'hono/utils/http-status';
 import { PromisePool } from '@supercharge/promise-pool';
-import { parseISO } from 'date-fns';
+import { parseISO, format as formatDateFn, subDays, eachDayOfInterval } from 'date-fns';
+import { fetchHistoricalPricesForSymbol } from '../utils/finance';
 
 const investmentRouter = new Hono();
 
@@ -52,7 +53,7 @@ investmentRouter.get('/portfolio-summary', authMiddleware, async (c) => {
     }).catch((err) => {
       throw new HTTPException(500, { message: `DB Error: ${err.message}` });
     });
-    const preferredCurrency = userPrefs?.preferredCurrency || 'USD';
+    const preferredCurrency = userPrefs?.preferredCurrency || 'INR';
 
     const accounts = await db.query.InvestmentAccount.findMany({
       where: eq(InvestmentAccount.userId, userId),
@@ -501,6 +502,149 @@ investmentRouter.get('/stocks/historical-price/:symbol', authMiddleware, async (
   }
 });
 
+investmentRouter.get(
+  '/portfolio-historical',
+  authMiddleware,
+  zValidator('query', historicalPortfolioQuerySchema),
+  async (c) => {
+    try {
+      const userId = c.get('userId' as any);
+      const { period } = c.req.valid('query');
+
+      // 1. Get User's Preferred Currency
+      const userPrefs = await db.query.User.findFirst({
+        where: eq(User.id, userId),
+        columns: { preferredCurrency: true },
+      }).catch((err) => {
+        throw new HTTPException(500, { message: `DB Error: ${err.message}` });
+      });
+      const preferredCurrency = userPrefs?.preferredCurrency || 'INR'; // Default if not set
+
+      // 2. Fetch Current Investments for the user
+      const accounts = await db.query.InvestmentAccount.findMany({
+        where: eq(InvestmentAccount.userId, userId),
+        columns: { id: true, currency: true },
+      });
+      const accountIds = accounts.map((acc) => acc.id);
+
+      if (accountIds.length === 0) {
+        return c.json({ data: [], currency: preferredCurrency, valueIsEstimate: false });
+      }
+
+      const investments = await db.query.Investment.findMany({
+        where: inArray(Investment.account, accountIds),
+        columns: { symbol: true, shares: true, investedAmount: true, account: true },
+      });
+
+      if (investments.length === 0) {
+        return c.json({ data: [], currency: preferredCurrency, valueIsEstimate: false });
+      }
+
+      // 3. Determine Date Range
+      const endDate = new Date();
+      let startDate: Date;
+      switch (period) {
+        case '7d':
+          startDate = subDays(endDate, 7);
+          break;
+        case '90d':
+          startDate = subDays(endDate, 90);
+          break;
+        case '1y':
+          startDate = subDays(endDate, 365);
+          break;
+        case '30d':
+        default:
+          startDate = subDays(endDate, 30);
+          break;
+      }
+      startDate.setHours(0, 0, 0, 0); // Start of the day
+      endDate.setHours(23, 59, 59, 999); // End of today
+
+      const datesInRange = eachDayOfInterval({ start: startDate, end: endDate });
+      const uniqueSymbols = Array.from(new Set(investments.map((inv) => inv.symbol)));
+
+      // 4. Fetch Historical Prices Concurrently (Per Symbol for the whole range)
+      console.log(`Fetching historical data for ${uniqueSymbols.length} symbols...`);
+      const allPricesMap = new Map<string, Map<string, number | null>>(); // symbol -> (dateString -> price)
+
+      const { results, errors: poolErrors } = await PromisePool.for(uniqueSymbols)
+        .withConcurrency(5) // Limit concurrent API calls
+        .handleError(async (error, symbol) => {
+          console.error(
+            `Portfolio Historical Pool: Failed to fetch price range for ${symbol}:`,
+            error,
+          );
+        })
+        .process(async (symbol) => {
+          const prices = await fetchHistoricalPricesForSymbol(symbol, startDate, endDate);
+          return { symbol, prices };
+        });
+
+      results.forEach((result) => {
+        if (result) {
+          allPricesMap.set(result.symbol, result.prices);
+        }
+      });
+
+      if (poolErrors.length > 0) {
+        console.warn(
+          `Portfolio Historical: Encountered ${poolErrors.length} errors fetching price ranges.`,
+        );
+      }
+      console.log('Finished fetching historical data.');
+
+      // 5. Calculate Daily Portfolio Value
+      let valueIsEstimate = false; // Flag for potential inaccuracies
+      const accountCurrencies = new Set(accounts.map((a) => a.currency));
+      if (accountCurrencies.size > 1) valueIsEstimate = true; // Check if accounts have mixed currencies
+
+      const historicalValues = datesInRange.map((date) => {
+        const dateString = formatDateFn(date, 'yyyy-MM-dd');
+        let dailyTotalValue = 0;
+
+        investments.forEach((inv) => {
+          const pricesForSymbol = allPricesMap.get(inv.symbol);
+          const priceOnDate = pricesForSymbol?.get(dateString);
+
+          if (priceOnDate !== undefined && priceOnDate !== null && inv.shares) {
+            dailyTotalValue += inv.shares * priceOnDate;
+            // Note: Currency check skipped here for simplicity. A real implementation
+            // would need conversion rates if the stock currency differs from preferredCurrency.
+          } else {
+            // Fallback: Use invested amount if price is missing. Mark as estimate.
+            dailyTotalValue += inv.investedAmount || 0;
+            if (priceOnDate === undefined) {
+              // Only flag if data was truly missing, not just null/0
+              valueIsEstimate = true;
+            }
+          }
+        });
+
+        return {
+          date: dateString,
+          value: parseFloat(dailyTotalValue.toFixed(2)),
+        };
+      });
+
+      return c.json({
+        data: historicalValues,
+        currency: preferredCurrency,
+        valueIsEstimate: valueIsEstimate,
+      });
+    } catch (err) {
+      if (err instanceof HTTPException) throw err;
+      console.error('Portfolio Historical Data Error:', err);
+      throw new HTTPException(500, {
+        message:
+          err instanceof Error
+            ? err.message
+            : 'Something went wrong calculating historical portfolio value',
+      });
+    }
+  },
+);
+
 investmentRouter.get('/details/:id', authMiddleware, async (c) => {
   try {
     const investmentId = c.req.param('id');
@@ -537,7 +681,7 @@ investmentRouter.get('/details/:id', authMiddleware, async (c) => {
   }
 });
 
-investmentRouter.put('/:id/update-divident', authMiddleware, async (c) => {
+investmentRouter.put('/:id/update-dividend', authMiddleware, async (c) => {
   try {
     const invId = c.req.param('id');
     const userId = await c.get('userId' as any);
