@@ -1,4 +1,3 @@
-// src/components/dashboard/trend-chart.tsx
 'use client';
 
 import React, { useMemo, useState, useCallback } from 'react';
@@ -11,43 +10,39 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   ReferenceLine
 } from 'recharts';
-import { format, isValid, startOfDay } from 'date-fns';
+import { format as formatDate, isValid, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Skeleton } from '../ui/skeleton';
-import NoData from '../ui/no-data';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-interface ChartDataPoint {
+interface ApiChartDataPoint {
   x: number;
   y: number | null;
 }
 
-interface CombinedDataPoint {
-  date: string;
-  income: number;
-  expense: number;
-  balance: number;
+interface ProcessedChartDataPoint {
+  dateLabel: string;
+  preciseDateLabel: string;
   timestamp: number;
+  income: number | null;
+  expense: number | null;
+  balance: number | null;
 }
 
 interface TrendChartProps {
-  incomeData?: ChartDataPoint[];
-  expenseData?: ChartDataPoint[];
-  balanceData?: ChartDataPoint[];
+  incomeData: ApiChartDataPoint[];
+  expenseData: ApiChartDataPoint[];
+  balanceData: ApiChartDataPoint[];
   className?: string;
   currency?: string;
-  isLoading?: boolean;
-  expanded?: boolean;
   chartType?: 'line' | 'bar' | 'area';
 }
 
 type VisibilityKey = 'income' | 'expense' | 'balance';
 
-const chartConfig = {
+const chartConfig: Record<VisibilityKey, { label: string; color: string }> = {
   income: { label: 'Income', color: 'hsl(var(--chart-2))' },
   expense: { label: 'Expense', color: 'hsl(var(--chart-1))' },
   balance: { label: 'Balance', color: 'hsl(var(--chart-4))' }
@@ -62,6 +57,7 @@ const formatCurrencyCompact = (value: number | undefined | null, currency: strin
     maximumFractionDigits: 1
   }).format(value);
 };
+
 const formatCurrencyTooltip = (value: number | undefined | null, currency: string): string => {
   if (value === null || value === undefined || isNaN(value)) return `${currency}0.00`;
   return new Intl.NumberFormat('en-IN', {
@@ -72,76 +68,57 @@ const formatCurrencyTooltip = (value: number | undefined | null, currency: strin
   }).format(value);
 };
 
-const formatCombinedChartData = (
-  incomeData: ChartDataPoint[] = [],
-  expenseData: ChartDataPoint[] = [],
-  balanceData: ChartDataPoint[] = []
-): CombinedDataPoint[] => {
-  const combinedMap = new Map<number, CombinedDataPoint>();
+const processChartData = (
+  incomeData: ApiChartDataPoint[],
+  expenseData: ApiChartDataPoint[],
+  balanceData: ApiChartDataPoint[]
+): ProcessedChartDataPoint[] => {
+  const combinedMap = new Map<number, Partial<ProcessedChartDataPoint> & { timestamp: number }>();
 
-  const processData = (data: ChartDataPoint[], key: VisibilityKey) => {
-    data.forEach((point) => {
-      if (!point || typeof point.x !== 'number' || isNaN(point.x)) return;
-
+  const processSourceData = (sourceData: ApiChartDataPoint[] | undefined, key: VisibilityKey) => {
+    (sourceData || []).forEach((point) => {
+      if (point?.x === undefined || point.x === null) return;
       const date = new Date(point.x * 1000);
       if (!isValid(date)) return;
 
-      const timestampKey = startOfDay(date).getTime() / 1000;
-      const displayDateStr = format(date, 'MMM d');
-      const value = typeof point.y === 'number' && !isNaN(point.y) ? point.y : 0;
+      const dayTimestamp = startOfDay(date).getTime() / 1000;
+      const value = typeof point.y === 'number' && !isNaN(point.y) ? point.y : null;
 
-      const entry = combinedMap.get(timestampKey) || {
-        date: displayDateStr,
-        income: 0,
-        expense: 0,
-        balance: 0,
-        timestamp: timestampKey
-      };
-
+      const entry = combinedMap.get(dayTimestamp) || { timestamp: dayTimestamp };
       entry[key] = value;
-      combinedMap.set(timestampKey, entry);
+      combinedMap.set(dayTimestamp, entry);
     });
   };
 
-  processData(incomeData, 'income');
-  processData(expenseData, 'expense');
+  processSourceData(incomeData, 'income');
+  processSourceData(expenseData, 'expense');
+  processSourceData(balanceData, 'balance');
 
-  combinedMap.forEach((entry) => {
-    entry.balance = entry.income - entry.expense;
-  });
+  return Array.from(combinedMap.values())
+    .sort((a, b) => (a.timestamp ?? 0) - (b.timestamp ?? 0))
+    .map((entry) => {
+      const dateObj = new Date((entry.timestamp ?? 0) * 1000);
+      const calculatedBalance =
+        entry.balance === undefined || entry.balance === null
+          ? (entry.income ?? 0) - (entry.expense ?? 0)
+          : entry.balance;
 
-  if (balanceData && balanceData.length > 0 && balanceData.some((p) => typeof p?.x === 'number')) {
-    balanceData.forEach((point) => {
-      if (!point || typeof point.x !== 'number' || isNaN(point.x)) return;
-      const date = new Date(point.x * 1000);
-      if (!isValid(date)) return;
-      const timestampKey = startOfDay(date).getTime() / 1000;
-      const value = typeof point.y === 'number' && !isNaN(point.y) ? point.y : 0;
-
-      const entry = combinedMap.get(timestampKey);
-      if (entry) {
-        entry.balance = value;
-      } else {
-        const displayDateStr = format(date, 'MMM d');
-        combinedMap.set(timestampKey, {
-          date: displayDateStr,
-          income: 0,
-          expense: 0,
-          balance: value,
-          timestamp: timestampKey
-        });
-      }
+      return {
+        dateLabel: formatDate(dateObj, 'MMM d'),
+        preciseDateLabel: formatDate(dateObj, 'PPP'),
+        timestamp: entry.timestamp ?? 0,
+        income: entry.income ?? null,
+        expense: entry.expense ?? null,
+        balance: calculatedBalance
+      };
     });
-  }
-
-  return Array.from(combinedMap.values()).sort((a, b) => a.timestamp - b.timestamp);
 };
 
 const CustomTooltip = React.memo(({ active, payload, label, currency }: any) => {
   if (!active || !payload || !payload.length) return null;
 
-  const timestamp = payload[0]?.payload?.timestamp;
-  const preciseDateLabel = timestamp ? format(new Date(timestamp * 1000), 'PPP') : label;
+  const dataPoint = payload[0]?.payload as ProcessedChartDataPoint | undefined;
+  const preciseDateLabel = dataPoint?.preciseDateLabel || label;
 
   return (
     <div className='rounded-lg border bg-background/95 p-2 text-xs shadow-lg backdrop-blur-sm'>
@@ -211,20 +188,22 @@ function isVisibilityKey(key: any): key is VisibilityKey {
 }
 
 const TrendChart: React.FC<TrendChartProps> = ({
-  incomeData = [],
-  expenseData = [],
-  balanceData = [],
+  incomeData,
+  expenseData,
+  balanceData,
   className,
   currency = 'INR',
-  isLoading = false,
-  expanded = false,
   chartType = 'line'
 }) => {
-  const [visibility, setVisibility] = useState({ income: true, expense: true, balance: false });
+  const [visibility, setVisibility] = useState<Record<VisibilityKey, boolean>>({
+    income: true,
+    expense: true,
+    balance: true
+  });
   const isMobile = useIsMobile();
 
-  const combinedChartData = useMemo(
-    () => formatCombinedChartData(incomeData, expenseData, balanceData),
+  const processedChartData = useMemo(
+    () => processChartData(incomeData, expenseData, balanceData),
     [incomeData, expenseData, balanceData]
   );
 
@@ -233,44 +212,43 @@ const TrendChart: React.FC<TrendChartProps> = ({
   }, []);
 
   const yAxisDomain = useMemo(() => {
-    if (combinedChartData.length === 0) return ['auto', 'auto'];
-    let minVal = 0,
-      maxVal = 0;
+    if (processedChartData.length === 0) return [0, 100];
+    let minVal = Infinity,
+      maxVal = -Infinity;
+    let hasVisibleData = false;
 
-    combinedChartData.forEach((d) => {
-      if (visibility.income && d.income !== null) maxVal = Math.max(maxVal, d.income);
-      if (visibility.expense && d.expense !== null) maxVal = Math.max(maxVal, d.expense);
+    processedChartData.forEach((d) => {
+      if (visibility.income && d.income !== null) {
+        maxVal = Math.max(maxVal, d.income);
+        minVal = Math.min(minVal, d.income);
+        hasVisibleData = true;
+      }
+      if (visibility.expense && d.expense !== null) {
+        maxVal = Math.max(maxVal, d.expense);
+        minVal = Math.min(minVal, d.expense);
+        hasVisibleData = true;
+      }
       if (visibility.balance && d.balance !== null) {
         maxVal = Math.max(maxVal, d.balance);
         minVal = Math.min(minVal, d.balance);
+        hasVisibleData = true;
       }
     });
 
+    if (!hasVisibleData) return [0, 100];
+
+    minVal = isFinite(minVal) ? minVal : 0;
+    maxVal = isFinite(maxVal) ? maxVal : 100;
     minVal = Math.min(minVal, 0);
     maxVal = Math.max(maxVal, 0);
 
-    const padding = Math.max(Math.abs(maxVal) * 0.1, Math.abs(minVal) * 0.1, 50);
+    const dataRange = maxVal - minVal;
+    const padding = Math.max(dataRange * 0.1, maxVal === 0 && minVal === 0 ? 10 : 50);
     const finalMin = Math.floor(minVal - padding);
     const finalMax = Math.ceil(maxVal + padding);
 
     return finalMin >= finalMax ? [finalMin, finalMin + 100] : [finalMin, finalMax];
-  }, [combinedChartData, visibility]);
-
-  if (isLoading) {
-    return (
-      <div className={cn('h-[400px] w-full', className)}>
-        <Skeleton className='h-full w-full' />
-      </div>
-    );
-  }
-
-  if (combinedChartData.length === 0) {
-    return (
-      <div className={cn('flex h-[400px] items-center justify-center', className)}>
-        <NoData message='No trend data available.' icon='inbox' />
-      </div>
-    );
-  }
+  }, [processedChartData, visibility]);
 
   return (
     <div className={cn('h-full w-full', className)}>
@@ -283,16 +261,16 @@ const TrendChart: React.FC<TrendChartProps> = ({
         visibility={visibility}
         onToggle={handleLegendToggle}
       />
-      <ResponsiveContainer width='100%' height='100%'>
+      <ResponsiveContainer width='100%' height='80%'>
         <ComposedChart
-          data={combinedChartData}
+          data={processedChartData}
           margin={{ top: 5, right: 10, left: isMobile ? -25 : -15, bottom: 0 }}
           barGap={isMobile ? 1 : 2}
           barCategoryGap={isMobile ? '15%' : '20%'}
         >
           <CartesianGrid strokeDasharray='3 3' vertical={false} stroke='hsl(var(--border)/0.5)' />
           <XAxis
-            dataKey='date'
+            dataKey='dateLabel'
             fontSize={10}
             tickLine={false}
             axisLine={false}
