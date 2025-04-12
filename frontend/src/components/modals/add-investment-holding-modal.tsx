@@ -18,7 +18,7 @@ import {
   FormLabel,
   FormMessage
 } from '@/components/ui/form';
-import DateTimePicker from '../date-time-picker';
+import DatePicker from '../date-picker';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { StockPriceResult, StockSearchResult } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
@@ -27,7 +27,14 @@ import { Combobox, ComboboxOption } from '../ui/combobox';
 import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Separator } from '../ui/separator';
-import { format as formatDate, isValid as isDateValid } from 'date-fns';
+import {
+  format as formatDate,
+  isValid as isDateValid,
+  isWeekend,
+  subDays,
+  isFuture,
+  startOfDay
+} from 'date-fns';
 import { useDebounce } from 'use-debounce';
 import { NumericFormat } from 'react-number-format';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
@@ -38,7 +45,7 @@ const investmentHoldingSchema = z.object({
       value: z.string().min(1, 'Symbol is required.'),
       label: z.string()
     })
-    .nullable() // Allow null initially
+    .nullable()
     .refine((data) => !!data?.value, { message: 'Symbol is required.' }),
   shares: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
     message: 'Shares must be a positive number'
@@ -61,6 +68,29 @@ interface AddInvestmentHoldingModalProps {
   getStockPriceFn: (symbol: string) => Promise<StockPriceResult | null>;
   hideTriggerButton?: boolean;
 }
+
+const getMostRecentValidDate = (initialDate: Date = new Date()): Date => {
+  let candidateDate = new Date(initialDate);
+  const todayStart = startOfDay(new Date());
+
+  if (startOfDay(candidateDate) > todayStart) {
+    const now = new Date();
+    candidateDate.setFullYear(now.getFullYear(), now.getMonth(), now.getDate());
+  }
+
+  while (isWeekend(candidateDate) || startOfDay(candidateDate) > todayStart) {
+    candidateDate = subDays(candidateDate, 1);
+  }
+
+  const referenceTime = initialDate || new Date();
+  candidateDate.setHours(
+    referenceTime.getHours(),
+    referenceTime.getMinutes(),
+    referenceTime.getSeconds()
+  );
+
+  return candidateDate;
+};
 
 const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
   isOpen,
@@ -86,7 +116,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
       symbol: null,
       shares: '',
       purchasePrice: '',
-      purchaseDate: new Date()
+      purchaseDate: getMostRecentValidDate()
     },
     mode: 'onChange'
   });
@@ -97,6 +127,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
   const purchasePrice = form.watch('purchasePrice');
 
   const selectedSymbolValue = selectedSymbol?.value;
+  // Ensure purchaseDate is always a Date object before calling methods
   const purchaseDateISO = purchaseDate instanceof Date ? purchaseDate.toISOString() : null;
 
   const [debouncedSymbolValue] = useDebounce(selectedSymbolValue, 1000);
@@ -143,7 +174,11 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
 
   useEffect(() => {
     if (debouncedSymbolValue && purchaseDateISO) {
-      setShouldFetchHistorical(true);
+      // Check if the date is valid and not a weekend before triggering fetch
+      const dateObj = new Date(purchaseDateISO);
+      if (isDateValid(dateObj) && !isWeekend(dateObj)) {
+        setShouldFetchHistorical(true);
+      }
     }
   }, [debouncedSymbolValue, purchaseDateISO]);
 
@@ -155,7 +190,9 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
     let isMounted = true;
     const purchaseDateObj = new Date(purchaseDateISO);
 
-    if (!isDateValid(purchaseDateObj)) {
+    // Redundant check, but safe
+    if (!isDateValid(purchaseDateObj) || isWeekend(purchaseDateObj) || isFuture(purchaseDateObj)) {
+      setIsHistoricalPriceLoading(false);
       setShouldFetchHistorical(false);
       return;
     }
@@ -180,11 +217,15 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
             showError(
               `Could not auto-fetch price for ${debouncedSymbolValue} on ${formattedDate}. Please enter manually.`
             );
+            // Optionally clear the price field if fetch fails:
+            // form.setValue('purchasePrice', '', { shouldValidate: true });
           }
         }
       } catch (error: any) {
         if (isMounted) {
           showError(`Error fetching historical price: ${error.message}`);
+          // Optionally clear the price field on error:
+          // form.setValue('purchasePrice', '', { shouldValidate: true });
         }
       } finally {
         if (isMounted) {
@@ -261,7 +302,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
       currentPrice !== null &&
       purchasePrice &&
       !isNaN(parseFloat(purchasePrice)) &&
-      parseFloat(purchasePrice) !== 0 // Avoid division by zero
+      parseFloat(purchasePrice) !== 0
     ) {
       const purchasePriceNum = parseFloat(purchasePrice);
       const diff = currentPrice - purchasePriceNum;
@@ -278,12 +319,30 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
 
   const priceComparison = calculateComparison();
 
-  // Reset historical fetch state when modal closes
   useEffect(() => {
     if (!isOpen) {
       setShouldFetchHistorical(false);
+      form.reset({
+        symbol: null,
+        shares: '',
+        purchasePrice: '',
+        purchaseDate: getMostRecentValidDate()
+      });
     }
-  }, [isOpen]);
+  }, [isOpen, form]);
+
+  const disabledWeekends = (date: Date) => {
+    const today = new Date();
+    const isToday =
+      date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear();
+
+    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+
+    return isWeekend && !isToday;
+  };
+  const disableFutureDates = { after: new Date() };
 
   return (
     <AddModal
@@ -317,7 +376,6 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                       value={field.value}
                       onChange={(option) => {
                         field.onChange(option);
-                        // Reset prices when symbol changes
                         setCurrentPrice(null);
                         form.setValue('purchasePrice', '', {
                           shouldValidate: true
@@ -379,6 +437,37 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
             <h3 className='mb-3 flex items-center gap-1 text-sm font-medium'>
               Purchase Information
             </h3>
+            <FormField
+              control={form.control}
+              name='purchaseDate'
+              render={({ field }) => (
+                <FormItem className='mb-4 flex flex-col'>
+                  <FormLabel className='flex items-center gap-1 text-sm'>
+                    <Calendar className='h-4 w-4 text-muted-foreground' />
+                    Purchase Date
+                  </FormLabel>
+                  <FormControl>
+                    <DatePicker
+                      value={field.value}
+                      onChange={(newDate) => {
+                        if (newDate) {
+                          // We don't need getMostRecentValidDate here on change
+                          // because the DateTimePicker's internal Calendar
+                          // already prevents selecting disabled dates.
+                          field.onChange(newDate);
+                          if (selectedSymbolValue) {
+                            setShouldFetchHistorical(true);
+                          }
+                        }
+                      }}
+                      disabled={[disabledWeekends, disableFutureDates]}
+                      buttonDisabled={new Date(field.value) > new Date()}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
               <FormField
                 control={form.control}
@@ -432,12 +521,11 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                           thousandSeparator=','
                           decimalSeparator='.'
                           allowNegative={false}
-                          decimalScale={2} // Allow more precision if needed
+                          decimalScale={2}
                           placeholder='e.g., 150.75'
-                          className='pl-10'
+                          className='pr-10'
                           onValueChange={(values) => field.onChange(values.value)}
                           value={field.value}
-                          prefix='$' // This adds the currency symbol within the input
                         />
                         <span className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 transform text-xs text-muted-foreground'>
                           {accountCurrency}
@@ -449,31 +537,6 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                 )}
               />
             </div>
-            <FormField
-              control={form.control}
-              name='purchaseDate'
-              render={({ field }) => (
-                <FormItem className='mt-4 flex flex-col'>
-                  <FormLabel className='flex items-center gap-1 text-sm'>
-                    <Calendar className='h-4 w-4 text-muted-foreground' />
-                    Purchase Date
-                  </FormLabel>
-                  <FormControl>
-                    <DateTimePicker
-                      value={field.value}
-                      onChange={(newDate) => {
-                        field.onChange(newDate);
-                        // Trigger historical price fetch if symbol is already selected
-                        if (selectedSymbolValue) {
-                          setShouldFetchHistorical(true);
-                        }
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
           </div>
           {totalValue !== null && (
             <Card className='border-primary/20 bg-muted/30 p-4'>

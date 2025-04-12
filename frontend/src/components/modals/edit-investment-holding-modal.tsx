@@ -266,7 +266,6 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
                                 decimalSeparator='.'
                                 allowNegative={false}
                                 placeholder='e.g., 10.5'
-                                className='pl-10'
                                 onValueChange={(values) => field.onChange(values.value)}
                                 value={field.value}
                               />
