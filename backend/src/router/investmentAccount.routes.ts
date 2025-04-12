@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import authMiddleware from '../middleware';
-import { InvestmentAccount } from '../database/schema';
+import { Investment, InvestmentAccount } from '../database/schema';
 import { zValidator } from '@hono/zod-validator';
 import { investmentAccountSchema } from '../utils/schema.validations';
 import { eq, count, sql, and, InferSelectModel, asc, desc } from 'drizzle-orm';
@@ -187,6 +187,8 @@ investmentAccountRouter.put('/:id', authMiddleware, async (c) => {
 investmentAccountRouter.delete('/:id', authMiddleware, async (c) => {
   try {
     const accId = c.req.param('id');
+    // first delete all investment of this account
+    await db.delete(Investment).where(eq(Investment.account, accId));
     await db.delete(InvestmentAccount).where(eq(InvestmentAccount.id, accId));
     return c.json({ message: 'Investment Account deleted successfully!' });
   } catch (err) {

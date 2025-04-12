@@ -511,16 +511,14 @@ investmentRouter.get(
       const userId = c.get('userId' as any);
       const { period } = c.req.valid('query');
 
-      // 1. Get User's Preferred Currency
       const userPrefs = await db.query.User.findFirst({
         where: eq(User.id, userId),
         columns: { preferredCurrency: true },
       }).catch((err) => {
         throw new HTTPException(500, { message: `DB Error: ${err.message}` });
       });
-      const preferredCurrency = userPrefs?.preferredCurrency || 'INR'; // Default if not set
+      const preferredCurrency = userPrefs?.preferredCurrency || 'INR';
 
-      // 2. Fetch Current Investments for the user
       const accounts = await db.query.InvestmentAccount.findMany({
         where: eq(InvestmentAccount.userId, userId),
         columns: { id: true, currency: true },
@@ -540,7 +538,6 @@ investmentRouter.get(
         return c.json({ data: [], currency: preferredCurrency, valueIsEstimate: false });
       }
 
-      // 3. Determine Date Range
       const endDate = new Date();
       let startDate: Date;
       switch (period) {
@@ -558,18 +555,17 @@ investmentRouter.get(
           startDate = subDays(endDate, 30);
           break;
       }
-      startDate.setHours(0, 0, 0, 0); // Start of the day
-      endDate.setHours(23, 59, 59, 999); // End of today
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999);
 
       const datesInRange = eachDayOfInterval({ start: startDate, end: endDate });
       const uniqueSymbols = Array.from(new Set(investments.map((inv) => inv.symbol)));
 
-      // 4. Fetch Historical Prices Concurrently (Per Symbol for the whole range)
       console.log(`Fetching historical data for ${uniqueSymbols.length} symbols...`);
-      const allPricesMap = new Map<string, Map<string, number | null>>(); // symbol -> (dateString -> price)
+      const allPricesMap = new Map<string, Map<string, number | null>>();
 
       const { results, errors: poolErrors } = await PromisePool.for(uniqueSymbols)
-        .withConcurrency(5) // Limit concurrent API calls
+        .withConcurrency(5)
         .handleError(async (error, symbol) => {
           console.error(
             `Portfolio Historical Pool: Failed to fetch price range for ${symbol}:`,
@@ -594,10 +590,9 @@ investmentRouter.get(
       }
       console.log('Finished fetching historical data.');
 
-      // 5. Calculate Daily Portfolio Value
-      let valueIsEstimate = false; // Flag for potential inaccuracies
+      let valueIsEstimate = false;
       const accountCurrencies = new Set(accounts.map((a) => a.currency));
-      if (accountCurrencies.size > 1) valueIsEstimate = true; // Check if accounts have mixed currencies
+      if (accountCurrencies.size > 1) valueIsEstimate = true;
 
       const historicalValues = datesInRange.map((date) => {
         const dateString = formatDateFn(date, 'yyyy-MM-dd');
@@ -609,13 +604,9 @@ investmentRouter.get(
 
           if (priceOnDate !== undefined && priceOnDate !== null && inv.shares) {
             dailyTotalValue += inv.shares * priceOnDate;
-            // Note: Currency check skipped here for simplicity. A real implementation
-            // would need conversion rates if the stock currency differs from preferredCurrency.
           } else {
-            // Fallback: Use invested amount if price is missing. Mark as estimate.
             dailyTotalValue += inv.investedAmount || 0;
             if (priceOnDate === undefined) {
-              // Only flag if data was truly missing, not just null/0
               valueIsEstimate = true;
             }
           }
@@ -810,27 +801,6 @@ investmentRouter.put('/:id', authMiddleware, async (c) => {
     const userId = await c.get('userId' as any);
     const { shares, purchasePrice, purchaseDate } = await c.req.json();
 
-    const existingInvestment = await db.query.Investment.findFirst({
-      where: eq(Investment.id, invId),
-      with: {
-        account: {
-          columns: { userId: true },
-        },
-      },
-    }).catch((err) => {
-      throw new HTTPException(500, { message: `DB Error: ${err.message}` });
-    });
-
-    if (!existingInvestment) {
-      throw new HTTPException(404, { message: 'Investment not found.' });
-    }
-
-    if (existingInvestment.account?.userId !== userId) {
-      throw new HTTPException(403, {
-        message: 'You do not have permission to edit this investment.',
-      });
-    }
-
     const sharesValue = Number(shares);
     const purchasePriceValue = Number(purchasePrice);
 
@@ -843,21 +813,54 @@ investmentRouter.put('/:id', authMiddleware, async (c) => {
       throw new HTTPException(400, { message: 'Invalid shares or purchase price' });
     }
 
-    await db
-      .update(Investment)
-      .set({
-        shares: sharesValue,
-        purchasePrice: purchasePriceValue,
-        purchaseDate: new Date(purchaseDate),
-        investedAmount: sharesValue * purchasePriceValue,
-        updatedAt: new Date(),
-      })
-      .where(eq(Investment.id, invId))
-      .catch((err) => {
-        throw new HTTPException(500, { message: `DB Error: ${err.message}` });
+    const newInvestedAmount = sharesValue * purchasePriceValue;
+
+    const result = await db.transaction(async (tx) => {
+      const existingInvestment = await tx.query.Investment.findFirst({
+        where: eq(Investment.id, invId),
+        with: {
+          account: {
+            columns: { userId: true },
+          },
+        },
       });
 
-    return c.json({ message: 'Investment record Updated successfully', id: invId });
+      if (!existingInvestment) {
+        throw new HTTPException(404, { message: 'Investment not found.' });
+      }
+
+      if (existingInvestment.account?.userId !== userId) {
+        throw new HTTPException(403, {
+          message: 'You do not have permission to edit this investment.',
+        });
+      }
+
+      const oldInvestedAmount = existingInvestment.investedAmount || 0;
+      const balanceChange = newInvestedAmount - oldInvestedAmount;
+
+      await tx
+        .update(InvestmentAccount)
+        .set({
+          balance: sql`${InvestmentAccount.balance} + ${balanceChange}`,
+          updatedAt: new Date(),
+        })
+        .where(eq(InvestmentAccount.id, existingInvestment.account as string));
+
+      await tx
+        .update(Investment)
+        .set({
+          shares: sharesValue,
+          purchasePrice: purchasePriceValue,
+          purchaseDate: new Date(purchaseDate),
+          investedAmount: newInvestedAmount,
+          updatedAt: new Date(),
+        })
+        .where(eq(Investment.id, invId));
+
+      return { id: invId };
+    });
+
+    return c.json({ message: 'Investment record Updated successfully', id: result.id });
   } catch (err) {
     if (err instanceof HTTPException) throw err;
     console.error('Error updating investment:', err);
@@ -872,32 +875,39 @@ investmentRouter.delete('/:id', authMiddleware, async (c) => {
     const invId = c.req.param('id');
     const userId = await c.get('userId' as any);
 
-    const existingInvestment = await db.query.Investment.findFirst({
-      where: eq(Investment.id, invId),
-      with: {
-        account: {
-          columns: { userId: true },
+    const result = await db.transaction(async (tx) => {
+      const existingInvestment = await tx.query.Investment.findFirst({
+        where: eq(Investment.id, invId),
+        with: {
+          account: {
+            columns: { userId: true },
+          },
         },
-      },
-    }).catch((err) => {
-      throw new HTTPException(500, { message: `DB Error: ${err.message}` });
+      });
+
+      if (!existingInvestment) {
+        throw new HTTPException(404, { message: 'Investment not found.' });
+      }
+      if (existingInvestment.account?.userId !== userId) {
+        throw new HTTPException(403, {
+          message: 'You do not have permission to delete this investment.',
+        });
+      }
+
+      const investedAmount = existingInvestment.investedAmount || 0;
+
+      await tx
+        .update(InvestmentAccount)
+        .set({
+          balance: sql`${InvestmentAccount.balance} - ${investedAmount}`,
+          updatedAt: new Date(),
+        })
+        .where(eq(InvestmentAccount.id, existingInvestment.account as string));
+
+      await tx.delete(Investment).where(eq(Investment.id, invId));
+
+      return { id: invId };
     });
-
-    if (!existingInvestment) {
-      throw new HTTPException(404, { message: 'Investment not found.' });
-    }
-    if (existingInvestment.account?.userId !== userId) {
-      throw new HTTPException(403, {
-        message: 'You do not have permission to delete this investment.',
-      });
-    }
-
-    await db
-      .delete(Investment)
-      .where(eq(Investment.id, invId))
-      .catch((err) => {
-        throw new HTTPException(500, { message: `DB Error: ${err.message}` });
-      });
 
     return c.json({ message: 'Investment record Deleted Successfully!' });
   } catch (err) {
@@ -914,17 +924,6 @@ investmentRouter.post('/', authMiddleware, zValidator('json', investmentSchema),
     const { symbol, shares, purchasePrice, purchaseDate, investmentAccount } = await c.req.json();
     const userId = await c.get('userId' as any);
 
-    const investmentAcc = await db.query.InvestmentAccount.findFirst({
-      where: and(eq(InvestmentAccount.id, investmentAccount), eq(InvestmentAccount.userId, userId)),
-      columns: { id: true, currency: true },
-    }).catch((err) => {
-      throw new HTTPException(500, { message: `DB Error: ${err.message}` });
-    });
-
-    if (!investmentAcc) {
-      throw new HTTPException(403, { message: 'Cannot add investment to this account.' });
-    }
-
     const sharesValue = Number(shares);
     const purchasePriceValue = Number(purchasePrice);
 
@@ -937,25 +936,65 @@ investmentRouter.post('/', authMiddleware, zValidator('json', investmentSchema),
       throw new HTTPException(400, { message: 'Invalid shares or purchase price' });
     }
 
-    const newInvestment = await db
-      .insert(Investment)
-      .values({
-        symbol: symbol.toUpperCase(),
-        shares: sharesValue,
-        purchasePrice: purchasePriceValue,
-        purchaseDate: parseISO(purchaseDate),
-        account: investmentAccount,
-        investedAmount: purchasePriceValue * sharesValue,
-      })
-      .returning()
-      .catch((err) => {
-        throw new HTTPException(500, { message: `DB Error: ${err.message}` });
+    const investedAmountValue = purchasePriceValue * sharesValue;
+
+    const result = await db.transaction(async (tx) => {
+      const investmentAcc = await tx.query.InvestmentAccount.findFirst({
+        where: and(
+          eq(InvestmentAccount.id, investmentAccount),
+          eq(InvestmentAccount.userId, userId),
+        ),
+        columns: { id: true },
+      }).catch((err) => {
+        throw new HTTPException(500, { message: `DB Error checking account: ${err.message}` });
       });
 
-    return c.json({ message: 'Investment created successfully', data: newInvestment[0] });
+      if (!investmentAcc) {
+        throw new HTTPException(403, { message: 'Cannot add investment to this account.' });
+      }
+
+      await tx
+        .update(InvestmentAccount)
+        .set({
+          balance: sql`${InvestmentAccount.balance} + ${investedAmountValue}`,
+          updatedAt: new Date(),
+        })
+        .where(eq(InvestmentAccount.id, investmentAccount))
+        .catch((err) => {
+          throw new HTTPException(500, {
+            message: `DB Error updating account balance: ${err.message}`,
+          });
+        });
+
+      const newInvestment = await tx
+        .insert(Investment)
+        .values({
+          symbol: symbol.toUpperCase(),
+          shares: sharesValue,
+          purchasePrice: purchasePriceValue,
+          purchaseDate: parseISO(purchaseDate),
+          account: investmentAccount,
+          investedAmount: investedAmountValue,
+        })
+        .returning()
+        .catch((err) => {
+          throw new HTTPException(500, { message: `DB Error creating investment: ${err.message}` });
+        });
+
+      if (!newInvestment || newInvestment.length === 0) {
+        throw new HTTPException(500, { message: 'Failed to create investment record.' });
+      }
+
+      return newInvestment[0];
+    });
+
+    return c.json({
+      message: 'Investment created and account balance updated successfully',
+      data: result,
+    });
   } catch (err) {
     if (err instanceof HTTPException) throw err;
-    console.error('Error creating investment:', err);
+    console.error('Error creating investment and updating balance:', err);
     throw new HTTPException(500, {
       message: err instanceof Error ? err.message : 'Something went wrong creating investment',
     });

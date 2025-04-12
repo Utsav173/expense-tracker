@@ -1,4 +1,4 @@
-import { Category } from './../database/schema';
+import { Category, Transaction } from './../database/schema';
 import { Hono } from 'hono';
 import authMiddleware from '../middleware';
 import { db } from '../database';
@@ -15,7 +15,7 @@ categoryRouter.get('/', authMiddleware, async (c) => {
     (c.req.query('sortBy') as any) || 'createdAt';
   const userId = await c.get('userId' as any);
 
-  let whereQuery = or(isNull(Category.owner), eq(Category.owner, userId));
+  let whereQuery = and(eq(Category.owner, userId));
 
   if (search && search.length > 0) {
     whereQuery = and(whereQuery, ilike(Category.name, `%${search}%`))!;
@@ -76,6 +76,39 @@ categoryRouter.post('/', authMiddleware, zValidator('json', categorySchema), asy
 categoryRouter.delete('/:id', authMiddleware, async (c) => {
   try {
     const id = c.req.param('id');
+
+    const hasTransactions = await db
+      .select({
+        count: Transaction.id,
+      })
+      .from(Transaction)
+      .where(eq(Transaction.category, id))
+      .catch((err) => {
+        throw new HTTPException(500, { message: err.message });
+      });
+
+    if (hasTransactions && Number(hasTransactions[0].count) > 0) {
+      throw new HTTPException(400, {
+        message: 'Cannot delete category with transactions',
+      });
+    }
+
+    const category = await db
+      .select({
+        owner: Category.owner,
+      })
+      .from(Category)
+      .where(eq(Category.id, id))
+      .catch((err) => {
+        throw new HTTPException(500, { message: err.message });
+      });
+
+    if (category && category[0].owner !== (await c.get('userId' as any))) {
+      throw new HTTPException(403, {
+        message: 'You are not authorized to delete this category',
+      });
+    }
+
     await db.delete(Category).where(eq(Category.id, id));
     return c.json({ message: 'Category deleted successfully' });
   } catch (err) {
