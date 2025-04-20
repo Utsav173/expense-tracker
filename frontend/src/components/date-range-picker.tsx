@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -66,9 +66,9 @@ const DateRangePicker = ({
     }
   }, [dateRange]);
 
-  const handleDateSelect = (date: DateRange | undefined) => {
-    setDateRange(date);
-    if (date?.from && date.to) {
+  const handleDateSelect = (range: DateRange | undefined) => {
+    setDateRange(range);
+    if (range?.from && range.to) {
       setOpen(false);
     }
   };
@@ -131,7 +131,7 @@ const DateRangePicker = ({
                 month={month}
                 onMonthChange={setMonth}
                 className='rounded-md border'
-                disabled={disabled ?? [{ after: today }]}
+                disabled={typeof disabled !== 'boolean' ? disabled : [{ after: today }]}
                 autoFocus
               />
             </div>
