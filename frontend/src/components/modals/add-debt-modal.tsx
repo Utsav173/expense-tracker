@@ -402,7 +402,7 @@ const AddDebtModal = ({
                   <DateRangePicker
                     dateRange={field.value}
                     setDateRange={field.onChange}
-                    disabled={{ before: new Date() }}
+                    disabled={[{ before: new Date() }]}
                   />
                   <FormMessage />
                 </FormItem>

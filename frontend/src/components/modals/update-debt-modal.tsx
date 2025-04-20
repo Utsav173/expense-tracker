@@ -27,11 +27,28 @@ import { apiUpdateDebt } from '@/lib/endpoints/debt';
 import { Debts } from '@/lib/types';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import React from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import DateRangePicker from '../date-range-picker';
 
 const debtUpdateSchema = z.object({
   description: z.string().min(1, { message: 'Description is required' }),
-  duration: z.string().optional(),
-  frequency: z.string().optional()
+  durationType: z.enum(['year', 'month', 'week', 'day', 'custom']),
+  durationValue: z.preprocess(
+    (val) => (val === '' ? undefined : Number(val)),
+    z
+      .number({ invalid_type_error: 'Duration value must be a number' })
+      .positive('Duration value must be positive')
+      .optional()
+  ),
+  customDateRange: z.object({ from: z.date(), to: z.date() }).optional(),
+  frequency: z.preprocess(
+    (val) => (val === '' ? undefined : Number(val)),
+    z
+      .number({ invalid_type_error: 'Frequency must be a number' })
+      .int('Frequency must be a whole number')
+      .positive('Frequency must be positive')
+      .optional()
+  )
 });
 
 type DebtUpdateFormSchema = z.infer<typeof debtUpdateSchema>;
@@ -56,8 +73,18 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
     resolver: zodResolver(debtUpdateSchema),
     defaultValues: {
       description: debt.description || '',
-      duration: debt.duration || '',
-      frequency: debt.frequency || ''
+      durationType: ['year', 'month', 'week', 'day'].includes(debt.duration || '')
+        ? (debt.duration as any)
+        : 'year',
+      durationValue: debt.frequency ? Number(debt.frequency) : 1,
+      customDateRange:
+        debt.duration && debt.duration.includes(',')
+          ? (() => {
+              const [from, to] = debt.duration.split(',');
+              return { from: new Date(from), to: new Date(to) };
+            })()
+          : undefined,
+      frequency: debt.frequency ? Number(debt.frequency) : undefined
     },
     mode: 'onSubmit'
   });
@@ -66,15 +93,40 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
     if (isOpen) {
       form.reset({
         description: debt.description || '',
-        duration: debt.duration || '',
-        frequency: debt.frequency || ''
+        durationType: ['year', 'month', 'week', 'day'].includes(debt.duration || '')
+          ? (debt.duration as any)
+          : 'year',
+        durationValue: debt.frequency ? Number(debt.frequency) : 1,
+        customDateRange:
+          debt.duration && debt.duration.includes(',')
+            ? (() => {
+                const [from, to] = debt.duration.split(',');
+                return { from: new Date(from), to: new Date(to) };
+              })()
+            : undefined,
+        frequency: debt.frequency ? Number(debt.frequency) : undefined
       });
     }
   }, [isOpen, debt, form]);
 
   const updateDebtMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: DebtUpdateFormSchema }) =>
-      apiUpdateDebt(id, data),
+    mutationFn: async ({ id, data }: { id: string; data: DebtUpdateFormSchema }) => {
+      let duration: string | undefined = data.durationType;
+      if (data.durationType === 'custom' && data.customDateRange) {
+        const { from, to } = data.customDateRange;
+        if (!from || !to || from >= to) {
+          showError('Invalid custom date range.');
+          return;
+        }
+        duration = `${from.toISOString().split('T')[0]},${to.toISOString().split('T')[0]}`;
+      }
+      const payload: any = {
+        description: data.description,
+        duration: duration,
+        frequency: data.durationType === 'custom' ? undefined : data.durationValue
+      };
+      return apiUpdateDebt(id, payload);
+    },
     onSuccess: async () => {
       await invalidate(['debts']);
       showSuccess('Debt updated successfully!');
@@ -114,30 +166,59 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
             />
             <FormField
               control={form.control}
-              name='duration'
+              name='durationType'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Duration Type</FormLabel>
-                  <FormControl>
-                    <Input placeholder='e.g., month, year' {...field} />
-                  </FormControl>
+                  <FormLabel>Duration*</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder='Select duration' />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value='year'>Year</SelectItem>
+                      <SelectItem value='month'>Month</SelectItem>
+                      <SelectItem value='week'>Week</SelectItem>
+                      <SelectItem value='day'>Day</SelectItem>
+                      <SelectItem value='custom'>Custom Date Range</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name='frequency'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Frequency (Number)</FormLabel>
-                  <FormControl>
-                    <Input type='number' placeholder='e.g., 12' {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {form.watch('durationType') === 'custom' ? (
+              <FormField
+                control={form.control}
+                name='customDateRange'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Custom Date Range*</FormLabel>
+                    <DateRangePicker
+                      dateRange={field.value}
+                      setDateRange={field.onChange}
+                      disabled={[{ before: new Date() }]}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ) : (
+              <FormField
+                control={form.control}
+                name='durationValue'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Duration Value*</FormLabel>
+                    <FormControl>
+                      <Input type='number' placeholder='e.g., 1' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <div className='pt-2 text-sm'>
               <p>
