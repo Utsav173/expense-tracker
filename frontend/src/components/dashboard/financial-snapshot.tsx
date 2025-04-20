@@ -65,9 +65,6 @@ export const FinancialSnapshot: React.FC<FinancialSnapshotProps> = ({
     <Card
       className={cn('col-span-1 overflow-hidden shadow-md sm:col-span-2 lg:col-span-4', className)}
     >
-      <CardHeader className='bg-gradient-to-r from-indigo-600 to-blue-500 p-4 text-primary-foreground'>
-        <CardTitle className='text-lg font-semibold'>Financial Snapshot</CardTitle>
-      </CardHeader>
       <CardContent className='flex flex-col items-center justify-center space-y-6 py-10 text-center'>
         <p className='text-sm font-medium text-muted-foreground'>Overall Net Balance</p>
         <h2

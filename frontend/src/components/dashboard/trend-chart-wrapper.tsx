@@ -12,7 +12,6 @@ interface TrendChartWrapperProps {
   data: DashboardData | null | undefined;
   chartType: 'line' | 'bar' | 'area';
   isLoading: boolean;
-  expanded: boolean;
   setChartType: (type: 'line' | 'bar' | 'area') => void;
   className?: string;
 }
@@ -21,7 +20,6 @@ const TrendChartWrapper: React.FC<TrendChartWrapperProps> = ({
   data,
   chartType,
   isLoading,
-  expanded,
   setChartType,
   className
 }) => {
@@ -74,7 +72,7 @@ const TrendChartWrapper: React.FC<TrendChartWrapperProps> = ({
           </TabsList>
         </Tabs>
       </div>
-      <div className={expanded ? 'h-[600px]' : 'h-[350px] md:h-[400px]'}>{renderContent()}</div>
+      <div className={'h-[350px] md:h-[400px]'}>{renderContent()}</div>
     </div>
   );
 };

@@ -17,19 +17,19 @@ import { AccountListSummary } from '@/components/dashboard/account-list-summary'
 import { QuickStats } from '@/components/dashboard/quick-stats';
 import { SpendingBreakdown } from '@/components/dashboard/spending-breakdown';
 import { DashboardCardWrapper } from '@/components/dashboard/dashboard-card-wrapper';
-import FinancialHealth from '@/components/dashboard/financial-health'; // Corrected import
+import FinancialHealth from '@/components/dashboard/financial-health';
 import { DASHBOARD_PRESETS, DASHBOARD_CARD_CONFIG } from '@/config/dashboard-config';
 import { cn } from '@/lib/utils';
 import { DashboardControls } from '@/components/dashboard/dashboard-controls';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { useAuth } from '@/lib/hooks/useAuth';
+import Loader from '@/components/ui/loader';
 
 interface DashboardSettings {
   preset: string;
   timeRangeOption: string;
   customDateRange?: DateRange;
   darkMode: boolean;
-  compactView: boolean;
   hiddenSections: string[];
   refreshInterval: number;
 }
@@ -39,7 +39,6 @@ const initialDashboardSettings: DashboardSettings = {
   timeRangeOption: 'thisMonth',
   customDateRange: undefined,
   darkMode: false,
-  compactView: false,
   hiddenSections: [],
   refreshInterval: 0
 };
@@ -51,7 +50,6 @@ const DashboardPage = () => {
   const [dashboardSettings, setDashboardSettings] =
     useState<DashboardSettings>(initialDashboardSettings);
 
-  const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const [chartType, setChartType] = useState<'line' | 'bar' | 'area'>('line');
 
   const currentPreset = dashboardSettings.preset;
@@ -95,20 +93,15 @@ const DashboardPage = () => {
         newHiddenSections.delete(sectionId);
       } else {
         newHiddenSections.add(sectionId);
-        if (expandedCard === sectionId) setExpandedCard(null);
       }
       updateSettings({ hiddenSections: Array.from(newHiddenSections) });
     },
-    [dashboardSettings.hiddenSections, expandedCard, updateSettings]
+    [dashboardSettings.hiddenSections, updateSettings]
   );
 
   const toggleDarkMode = useCallback(() => {
     updateSettings({ darkMode: !dashboardSettings.darkMode });
   }, [dashboardSettings.darkMode, updateSettings]);
-
-  const toggleCompactView = useCallback(() => {
-    updateSettings({ compactView: !dashboardSettings.compactView });
-  }, [dashboardSettings.compactView, updateSettings]);
 
   const refetchAll = useCallback(async () => {
     try {
@@ -127,7 +120,6 @@ const DashboardPage = () => {
         .filter(([, value]) => !value.visible)
         .map(([key]) => key);
       updateSettings({ preset: presetKey, hiddenSections: sectionsToHide });
-      setExpandedCard(null);
       showSuccess(`Switched to "${DASHBOARD_PRESETS[presetKey]}" layout`);
       refetchAll();
     },
@@ -152,19 +144,6 @@ const DashboardPage = () => {
       });
     },
     [dashboardSettings.timeRangeOption, updateSettings]
-  );
-
-  const toggleCardExpansion = useCallback(
-    (cardId: string) => {
-      const currentHidden = new Set(dashboardSettings.hiddenSections);
-      if (currentHidden.has(cardId)) {
-        toggleSectionVisibility(cardId);
-        setTimeout(() => setExpandedCard(cardId), 50);
-      } else {
-        setExpandedCard((prev) => (prev === cardId ? null : cardId));
-      }
-    },
-    [dashboardSettings.hiddenSections, toggleSectionVisibility]
   );
 
   const handleSetRefreshInterval = useCallback(
@@ -196,13 +175,12 @@ const DashboardPage = () => {
           data={dashboardPageData.dashboardSummary}
           chartType={chartType}
           isLoading={isLoading && !dashboardPageData?.dashboardSummary}
-          expanded={expandedCard === 'trendChart'}
           setChartType={setChartType}
         />
       ) : null,
       spendingBreakdown: <SpendingBreakdown className='h-full' />,
       budgetProgress: <BudgetProgress />,
-      goals: <GoalHighlights data={dashboardPageData?.goals ?? undefined} isLoading={isLoading} />, // Fixed: Handle null with ??
+      goals: <GoalHighlights data={dashboardPageData?.goals ?? undefined} isLoading={isLoading} />,
       investments: <InvestmentSummaryCard />,
       debtSummary: <DebtSummaryCard />,
       accounts: (
@@ -216,7 +194,7 @@ const DashboardPage = () => {
         <QuickStats data={dashboardPageData.dashboardSummary} isLoading={isLoading} />
       ) : null
     }),
-    [dashboardPageData, isLoading, chartType, expandedCard]
+    [dashboardPageData, isLoading, chartType]
   );
 
   const renderSkeleton = () => (
@@ -247,7 +225,6 @@ const DashboardPage = () => {
         hiddenSections={hiddenSections}
         refreshInterval={dashboardSettings.refreshInterval}
         isDarkMode={dashboardSettings.darkMode}
-        compactView={dashboardSettings.compactView}
         isRefreshing={isFetching}
         isLoading={isLoading}
         onChangePreset={changePreset}
@@ -256,7 +233,6 @@ const DashboardPage = () => {
         onToggleSectionVisibility={toggleSectionVisibility}
         onSetRefreshInterval={handleSetRefreshInterval}
         onToggleDarkMode={toggleDarkMode}
-        onToggleCompactView={toggleCompactView}
         onRefetchAll={refetchAll}
       />
       <Alert variant='destructive' className='mt-6'>
@@ -297,7 +273,6 @@ const DashboardPage = () => {
           hiddenSections={hiddenSections}
           refreshInterval={dashboardSettings.refreshInterval}
           isDarkMode={dashboardSettings.darkMode}
-          compactView={dashboardSettings.compactView}
           isRefreshing={isFetching}
           isLoading={isLoading}
           onChangePreset={changePreset}
@@ -306,7 +281,6 @@ const DashboardPage = () => {
           onToggleSectionVisibility={toggleSectionVisibility}
           onSetRefreshInterval={handleSetRefreshInterval}
           onToggleDarkMode={toggleDarkMode}
-          onToggleCompactView={toggleCompactView}
           onRefetchAll={refetchAll}
         />
         <NoData
@@ -321,8 +295,7 @@ const DashboardPage = () => {
   return (
     <div
       className={cn(
-        'min-w-o mx-auto w-full max-w-7xl space-y-4 pt-6 transition-all duration-200 max-sm:max-w-full md:space-y-6 lg:p-8 lg:pt-8',
-        dashboardSettings.compactView ? 'space-y-3' : ''
+        'min-w-o mx-auto w-full max-w-7xl space-y-4 transition-all duration-200 max-sm:max-w-full md:space-y-6 lg:p-8 lg:pt-8'
       )}
     >
       <DashboardControls
@@ -333,7 +306,6 @@ const DashboardPage = () => {
         hiddenSections={hiddenSections}
         refreshInterval={dashboardSettings.refreshInterval}
         isDarkMode={dashboardSettings.darkMode}
-        compactView={dashboardSettings.compactView}
         isRefreshing={isFetching}
         isLoading={isLoading}
         onChangePreset={changePreset}
@@ -342,7 +314,6 @@ const DashboardPage = () => {
         onToggleSectionVisibility={toggleSectionVisibility}
         onSetRefreshInterval={handleSetRefreshInterval}
         onToggleDarkMode={toggleDarkMode}
-        onToggleCompactView={toggleCompactView}
         onRefetchAll={refetchAll}
       />
 
@@ -359,7 +330,7 @@ const DashboardPage = () => {
 
       <div className='grid grid-cols-12 gap-4'>
         {Object.entries(currentLayoutConfig)
-          .filter(([id]) => !hiddenSections.has(id) || expandedCard === id)
+          .filter(([id]) => !hiddenSections.has(id))
           .map(([id, config]) => (
             <DashboardCardWrapper
               key={id}
@@ -367,13 +338,11 @@ const DashboardPage = () => {
               title={config.title}
               description={config.description}
               gridSpanClass={config.gridSpan}
-              isExpanded={expandedCard === id}
               isHidden={hiddenSections.has(id)}
-              onExpandToggle={toggleCardExpansion}
               onVisibilityToggle={toggleSectionVisibility}
-              noPadding={config.noPadding}
+              icon={config.icon}
             >
-              {cardMap[id] || <div>Content for {id}</div>}
+              {cardMap[id] ?? <Loader className='my-2' />}
             </DashboardCardWrapper>
           ))}
       </div>

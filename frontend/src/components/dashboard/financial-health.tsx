@@ -67,9 +67,7 @@ const FinancialHealth: React.FC<FinancialHealthProps> = ({ data }) => {
   const healthScoreMeta = getHealthScoreMeta(financialHealthScore);
 
   return (
-    <Card
-      className={`border-l-4 ${healthScoreMeta.color.replace('bg-', 'border-l-').replace('text-.*', '')}`}
-    >
+    <Card>
       <CardContent className='p-4'>
         <div className='flex flex-col justify-between gap-4 md:flex-row md:items-center'>
           <div className='flex flex-col items-center gap-4 sm:flex-row'>

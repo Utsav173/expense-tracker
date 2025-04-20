@@ -1,6 +1,4 @@
-'use client';
-
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -17,14 +15,62 @@ import {
   FormMessage
 } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { accountGetDropdown } from '@/lib/endpoints/accounts';
-import { useQuery } from '@tanstack/react-query';
-import { debtSchema } from '@/lib/utils/schema.validations';
-import { apiCreateDebt } from '@/lib/endpoints/debt'; // You'll need to create this
-import DateTimePicker from '../date-time-picker';
+import { accountGetDropdown, usersGetDropdown } from '@/lib/endpoints/accounts';
+import { apiCreateDebt } from '@/lib/endpoints/debt';
+import DateRangePicker from '../date-range-picker';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
+import { useAuth } from '@/lib/hooks/useAuth';
 
-type DebtFormSchema = z.infer<typeof debtSchema>;
+const debtFormSchema = z.object({
+  description: z.string().min(1, 'Description is required'),
+  amount: z.preprocess(
+    (val) => (val === '' ? undefined : Number(val)),
+    z.number({ invalid_type_error: 'Amount must be a number' }).positive('Amount must be positive')
+  ),
+  premiumAmount: z.preprocess(
+    (val) => (val === '' ? undefined : Number(val)),
+    z
+      .number({ invalid_type_error: 'Premium amount must be a number' })
+      .positive('Premium amount must be positive')
+      .optional()
+  ),
+  account: z.string().min(1, 'Account selection is required'),
+  counterparty: z.string().min(1, 'Counterparty selection is required'),
+  type: z.enum(['given', 'taken']),
+  interestType: z.enum(['simple', 'compound']),
+  percentage: z.preprocess(
+    (val) => (val === '' ? undefined : Number(val)),
+    z
+      .number({ invalid_type_error: 'Interest percentage must be a number' })
+      .min(0, 'Percentage cannot be negative')
+      .optional()
+  ),
+  frequency: z.preprocess(
+    (val) => (val === '' ? undefined : Number(val)),
+    z
+      .number({ invalid_type_error: 'Frequency must be a number' })
+      .int('Frequency must be a whole number')
+      .positive('Frequency must be positive')
+      .optional()
+  ),
+  durationType: z.enum(['year', 'month', 'week', 'day', 'custom']),
+  customDateRange: z.object({ from: z.date(), to: z.date() }).optional()
+});
+
+type DebtFormValues = z.infer<typeof debtFormSchema>;
+
+type DebtApiPayload = {
+  amount: number;
+  premiumAmount?: number;
+  description: string;
+  duration: string;
+  percentage?: number;
+  frequency?: string;
+  user: string;
+  type: 'given' | 'taken';
+  interestType: 'simple' | 'compound';
+  account: string;
+};
 
 const AddDebtModal = ({
   onDebtAdded,
@@ -39,41 +85,86 @@ const AddDebtModal = ({
 }) => {
   const { showSuccess, showError } = useToast();
   const invalidate = useInvalidateQueries();
+  const { user } = useAuth();
 
   const { data: accountsData, isLoading: isLoadingAccounts } = useQuery({
     queryKey: ['accountsDropdown'],
-    queryFn: accountGetDropdown
+    queryFn: accountGetDropdown,
+    staleTime: 5 * 60 * 1000
   });
 
-  const form = useForm<DebtFormSchema>({
-    resolver: zodResolver(debtSchema),
+  const { data: usersData, isLoading: isLoadingUsers } = useQuery({
+    queryKey: ['usersDropdown'],
+    queryFn: usersGetDropdown,
+    staleTime: 5 * 60 * 1000
+  });
+
+  const form = useForm<DebtFormValues>({
+    resolver: zodResolver(debtFormSchema),
     defaultValues: {
       type: 'taken',
       interestType: 'simple',
-      user: '',
       description: '',
-      amount: '',
-      account: ''
+      amount: undefined,
+      premiumAmount: undefined,
+      percentage: undefined,
+      frequency: undefined,
+      account: '',
+      counterparty: '',
+      durationType: 'year',
+      customDateRange: undefined
     },
     mode: 'onSubmit'
   });
 
   const createDebtMutation = useMutation({
-    mutationFn: (data: DebtFormSchema) => apiCreateDebt(data),
+    mutationFn: (data: DebtApiPayload) => apiCreateDebt(data),
     onSuccess: async () => {
-      await invalidate(['debts']);
+      await invalidate(['debts', 'accounts']);
       showSuccess('Debt created successfully!');
       form.reset();
       onDebtAdded();
       onOpenChange(false);
     },
     onError: (error: any) => {
-      showError(error.message);
+      const message =
+        error?.response?.data?.error?.message || error.message || 'Failed to create debt.';
+      showError(message);
+      console.error('Debt creation failed:', error);
     }
   });
 
-  const handleCreate = async (data: DebtFormSchema) => {
-    createDebtMutation.mutate(data);
+  const handleCreate = async (formData: DebtFormValues) => {
+    if (!user?.id) {
+      showError('User information not found. Cannot create debt.');
+      return;
+    }
+    if (!formData.counterparty) {
+      showError('Please select a counterparty.');
+      return;
+    }
+    let duration: string = formData.durationType;
+    if (formData.durationType === 'custom' && formData.customDateRange) {
+      const { from, to } = formData.customDateRange;
+      if (!from || !to || from >= to) {
+        showError('Invalid custom date range.');
+        return;
+      }
+      duration = `${from.toISOString().split('T')[0]},${to.toISOString().split('T')[0]}`;
+    }
+    const apiPayload: DebtApiPayload = {
+      amount: formData.amount,
+      premiumAmount: formData.premiumAmount,
+      description: formData.description,
+      duration,
+      percentage: formData.percentage,
+      frequency: formData.frequency ? String(formData.frequency) : undefined,
+      user: formData.counterparty,
+      type: formData.type,
+      interestType: formData.interestType,
+      account: formData.account
+    };
+    createDebtMutation.mutate(apiPayload);
   };
 
   return (
@@ -85,15 +176,15 @@ const AddDebtModal = ({
       onOpenChange={onOpenChange}
     >
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleCreate)} className='space-y-6'>
+        <form onSubmit={form.handleSubmit(handleCreate)} className='space-y-4'>
           <FormField
             control={form.control}
             name='description'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Description</FormLabel>
+                <FormLabel>Description*</FormLabel>
                 <FormControl>
-                  <Input placeholder='Debt description' {...field} />
+                  <Input placeholder='E.g., Loan from John Doe' {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -105,22 +196,23 @@ const AddDebtModal = ({
             name='amount'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Amount</FormLabel>
+                <FormLabel>Amount*</FormLabel>
                 <FormControl>
-                  <Input type='number' placeholder='Debt Amount' {...field} />
+                  <Input type='number' placeholder='E.g., 1000.00' {...field} step='any' />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
+
           <FormField
             control={form.control}
             name='premiumAmount'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Premium Amount</FormLabel>
+                <FormLabel>Premium Amount (Optional)</FormLabel>
                 <FormControl>
-                  <Input type='number' placeholder='premium Amount' {...field} />
+                  <Input type='number' placeholder='E.g., 50.00' {...field} step='any' />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -132,22 +224,65 @@ const AddDebtModal = ({
             name='account'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Account</FormLabel>
+                <FormLabel>Associated Account*</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder='Select account' />
+                    <SelectTrigger disabled={isLoadingAccounts}>
+                      <SelectValue placeholder='Select account...' />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     {isLoadingAccounts ? (
-                      <SelectItem value='loading'>Loading accounts...</SelectItem>
-                    ) : (
-                      accountsData?.map((account) => (
+                      <SelectItem value='loading' disabled>
+                        Loading accounts...
+                      </SelectItem>
+                    ) : accountsData && accountsData.length > 0 ? (
+                      accountsData.map((account) => (
                         <SelectItem key={account.id} value={account.id}>
-                          {account.name}
+                          {account.name} ({account.currency})
                         </SelectItem>
                       ))
+                    ) : (
+                      <SelectItem value='no-accounts' disabled>
+                        No accounts found
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='counterparty'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Counterparty*</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger disabled={isLoadingUsers}>
+                      <SelectValue placeholder='Select user...' />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {isLoadingUsers ? (
+                      <SelectItem value='loading' disabled>
+                        Loading users...
+                      </SelectItem>
+                    ) : usersData && usersData.length > 0 ? (
+                      usersData
+                        .filter((u) => u.id !== user?.id)
+                        .map((u) => (
+                          <SelectItem key={u.id} value={u.id}>
+                            {u.name} ({u.email})
+                          </SelectItem>
+                        ))
+                    ) : (
+                      <SelectItem value='no-users' disabled>
+                        No users found
+                      </SelectItem>
                     )}
                   </SelectContent>
                 </Select>
@@ -161,16 +296,16 @@ const AddDebtModal = ({
             name='type'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Type</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormLabel>Type*</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder='Select type' />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value='given'>Given</SelectItem>
-                    <SelectItem value='taken'>Taken</SelectItem>
+                    <SelectItem value='given'>Given (I lent money)</SelectItem>
+                    <SelectItem value='taken'>Taken (I borrowed money)</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -183,8 +318,8 @@ const AddDebtModal = ({
             name='interestType'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Interest Type</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormLabel>Interest Type*</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder='Select interest type' />
@@ -205,22 +340,9 @@ const AddDebtModal = ({
             name='percentage'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Interest Percentage</FormLabel>
+                <FormLabel>Interest Percentage (Optional)</FormLabel>
                 <FormControl>
-                  <Input type='number' placeholder='Interest Percentage' {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name='frequency'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Frequency</FormLabel>
-                <FormControl>
-                  <Input type='number' placeholder='Yearly Frequency' {...field} />
+                  <Input type='number' placeholder='E.g., 5.5 (for 5.5%)' {...field} step='any' />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -229,14 +351,16 @@ const AddDebtModal = ({
 
           <FormField
             control={form.control}
-            name='dueDate'
+            name='frequency'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Due Date</FormLabel>
+                <FormLabel>Interest Frequency (per year, Optional)</FormLabel>
                 <FormControl>
-                  <DateTimePicker
-                    value={field.value ? new Date(field.value) : undefined}
-                    onChange={(date) => field.onChange(date?.toISOString() || '')}
+                  <Input
+                    type='number'
+                    placeholder='E.g., 1 (Yearly), 12 (Monthly)'
+                    {...field}
+                    step='1'
                   />
                 </FormControl>
                 <FormMessage />
@@ -244,9 +368,56 @@ const AddDebtModal = ({
             )}
           />
 
-          <Button type='submit' disabled={createDebtMutation.isPending} className='w-full'>
+          <FormField
+            control={form.control}
+            name='durationType'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Duration*</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Select duration' />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value='year'>Year</SelectItem>
+                    <SelectItem value='month'>Month</SelectItem>
+                    <SelectItem value='week'>Week</SelectItem>
+                    <SelectItem value='day'>Day</SelectItem>
+                    <SelectItem value='custom'>Custom Date Range</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          {form.watch('durationType') === 'custom' && (
+            <FormField
+              control={form.control}
+              name='customDateRange'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Custom Date Range*</FormLabel>
+                  <DateRangePicker
+                    dateRange={field.value}
+                    setDateRange={field.onChange}
+                    disabled={{ before: new Date() }}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
+          <Button
+            type='submit'
+            disabled={createDebtMutation.isPending || isLoadingAccounts || !user?.id}
+            className='w-full'
+          >
             {createDebtMutation.isPending ? 'Creating...' : 'Create Debt'}
           </Button>
+          {!user && <p className='text-center text-sm text-red-600'>User ID not available.</p>}
         </form>
       </Form>
     </AddModal>

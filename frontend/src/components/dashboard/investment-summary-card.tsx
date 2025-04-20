@@ -4,7 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { PortfolioSummary } from '@/lib/types';
 import { cn, formatCurrency } from '@/lib/utils';
 import NoData from '../ui/no-data';
-import { WalletCards, TrendingUp, TrendingDown, Minus, Package, AlertTriangle } from 'lucide-react';
+import {
+  WalletCards,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  AlertTriangle,
+  InfoIcon
+} from 'lucide-react';
 import {
   investmentGetPortfolioSummary,
   investmentGetPortfolioHistorical
@@ -16,6 +23,7 @@ import { LineChart, Line, ResponsiveContainer, Tooltip as RechartsTooltip } from
 import { parseISO, format } from 'date-fns';
 import Link from 'next/link';
 import { Button } from '../ui/button';
+import TooltipElement from '../ui/tooltip-element';
 
 export const InvestmentSummaryCard: React.FC<{
   className?: string;
@@ -138,26 +146,17 @@ export const InvestmentSummaryCard: React.FC<{
     <TooltipProvider>
       <Card className={cn('col-span-1 flex flex-col md:col-span-1', className)}>
         <CardHeader>
-          <CardTitle className='flex items-center justify-between'>
-            <span className='flex items-center gap-2'>
-              <WalletCards className='h-5 w-5 text-blue-500' />
-              Investment Summary
-            </span>
-            {valueIsEstimate && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <AlertTriangle className='h-4 w-4 cursor-help text-amber-500' />
-                </TooltipTrigger>
-                <TooltipContent className='max-w-[200px]'>
-                  <p className='text-xs'>
-                    Values are estimated due to mixed currencies or missing price data.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-          </CardTitle>
-          <CardDescription>
+          <CardDescription className='flex flex-row items-center gap-2'>
             {numberOfHoldings} holding(s) across {numberOfAccounts} account(s).
+            <TooltipElement
+              tooltipContent={
+                valueIsEstimate
+                  ? 'Values are estimated due to mixed currencies or missing price data.'
+                  : 'Values are Actual based on currencies and market prices.'
+              }
+            >
+              <InfoIcon className='h-4 w-4' />
+            </TooltipElement>
           </CardDescription>
         </CardHeader>
         <CardContent className='flex-grow space-y-3 text-sm'>

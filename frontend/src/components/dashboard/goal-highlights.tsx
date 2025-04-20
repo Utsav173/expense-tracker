@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { SavingGoal } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import NoData from '../ui/no-data';
@@ -21,14 +21,7 @@ export const GoalHighlights: React.FC<GoalHighlightsProps> = ({ data, isLoading,
 
   return (
     <Card className={cn('flex flex-col', className)}>
-      <CardHeader>
-        <CardTitle className='flex items-center gap-2'>
-          <Target className='h-5 w-5 text-amber-500' />
-          Saving Goals
-        </CardTitle>
-        <CardDescription>Top active saving goals.</CardDescription>
-      </CardHeader>
-      <CardContent className='scrollbar h-[250px] flex-grow space-y-4 overflow-y-auto'>
+      <CardContent className='scrollbar h-[350px] flex-grow space-y-4 overflow-y-auto py-4'>
         {isLoading ? (
           <div className='space-y-4'>
             {[...Array(3)].map((_, i) => (

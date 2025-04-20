@@ -74,9 +74,12 @@ export const debtSchema = z.object({
     .string()
     .max(255)
     .transform((value) => value.trim()),
-  duration: z.number().optional(),
+  duration: z.union([z.string(), z.number()]).optional(),
   percentage: z.number().optional(),
-  frequency: z.number().optional(),
+  frequency: z
+    .union([z.string(), z.number()])
+    .optional()
+    .transform((val) => (val === '' ? undefined : Number(val))),
   user: z.string().uuid(),
   type: z.enum(['given', 'taken']),
   interestType: z.enum(['simple', 'compound']),

@@ -11,15 +11,18 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  ReferenceLine
+  ReferenceLine,
+  Legend
 } from 'recharts';
 import { format as formatDate, isValid, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import NoData from '../ui/no-data';
 
+// --- Types ---
+
 interface ApiChartDataPoint {
-  x: number;
+  x: number; // Unix timestamp (seconds)
   y: number | null;
 }
 
@@ -43,6 +46,8 @@ interface TrendChartProps {
 
 type VisibilityKey = 'income' | 'expense' | 'balance';
 
+// --- Constants ---
+
 const chartConfig: Record<VisibilityKey, { label: string; color: string }> = {
   income: { label: 'Income', color: 'hsl(var(--chart-2))' },
   expense: { label: 'Expense', color: 'hsl(var(--chart-1))' },
@@ -50,9 +55,10 @@ const chartConfig: Record<VisibilityKey, { label: string; color: string }> = {
 };
 const DEFAULT_CURRENCY = 'INR';
 
+// --- Helper Functions ---
+
 const formatCurrencyCompact = (value: number | undefined | null, currency: string): string => {
   if (value === null || value === undefined || isNaN(value)) return `${currency}0`;
-
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: currency,
@@ -63,7 +69,6 @@ const formatCurrencyCompact = (value: number | undefined | null, currency: strin
 
 const formatCurrencyTooltip = (value: number | undefined | null, currency: string): string => {
   if (value === null || value === undefined || isNaN(value)) return `${currency}0.00`;
-
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: currency,
@@ -73,24 +78,24 @@ const formatCurrencyTooltip = (value: number | undefined | null, currency: strin
 };
 
 const processChartData = (
-  incomeData: ApiChartDataPoint[],
-  expenseData: ApiChartDataPoint[],
-  balanceData: ApiChartDataPoint[]
+  incomeData: ApiChartDataPoint[] = [],
+  expenseData: ApiChartDataPoint[] = [],
+  balanceData: ApiChartDataPoint[] = []
 ): ProcessedChartDataPoint[] => {
   const combinedMap = new Map<number, Partial<ProcessedChartDataPoint> & { timestamp: number }>();
 
-  const processDataSeries = (data: ApiChartDataPoint[] | undefined, key: VisibilityKey) => {
-    if (!data || !Array.isArray(data)) return;
+  const processDataSeries = (data: ApiChartDataPoint[], key: VisibilityKey) => {
+    if (!Array.isArray(data)) return; // Ensure data is an array
 
     data.forEach((point) => {
+      // Basic validation for point structure
       if (point?.x === undefined || point.x === null) return;
 
       const date = new Date(point.x * 1000);
       if (!isValid(date)) return;
 
       const dayTimestamp = startOfDay(date).getTime() / 1000;
-
-      const value = typeof point.y === 'number' && !isNaN(point.y) ? point.y : null;
+      const value = typeof point.y === 'number' && isFinite(point.y) ? point.y : null; // Ensure finite number
 
       const existingEntry = combinedMap.get(dayTimestamp);
       const entry = existingEntry || { timestamp: dayTimestamp };
@@ -106,21 +111,21 @@ const processChartData = (
   processDataSeries(balanceData, 'balance');
 
   return Array.from(combinedMap.values())
-    .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))
+    .sort((a, b) => a.timestamp - b.timestamp)
     .map((entry) => {
-      const dateObj = new Date((entry.timestamp || 0) * 1000);
+      const dateObj = new Date(entry.timestamp * 1000);
 
       let calculatedBalance = entry.balance;
       if (calculatedBalance === undefined || calculatedBalance === null) {
-        const income = entry.income || 0;
-        const expense = entry.expense || 0;
+        const income = entry.income ?? 0;
+        const expense = entry.expense ?? 0;
         calculatedBalance = income - expense;
       }
 
       return {
         dateLabel: formatDate(dateObj, 'MMM d'),
         preciseDateLabel: formatDate(dateObj, 'PPP'),
-        timestamp: entry.timestamp || 0,
+        timestamp: entry.timestamp,
         income: entry.income ?? null,
         expense: entry.expense ?? null,
         balance: calculatedBalance
@@ -132,11 +137,13 @@ function isVisibilityKey(key: any): key is VisibilityKey {
   return typeof key === 'string' && ['income', 'expense', 'balance'].includes(key);
 }
 
+// --- Custom Components for Recharts ---
+
 const CustomTooltip = React.memo(({ active, payload, label, currency }: any) => {
   if (!active || !payload || !payload.length) return null;
 
   const dataPoint = payload[0]?.payload as ProcessedChartDataPoint | undefined;
-  const preciseDateLabel = dataPoint?.preciseDateLabel || label;
+  const preciseDateLabel = dataPoint?.preciseDateLabel || label; // Fallback just in case
 
   return (
     <div className='rounded-lg border bg-background/95 p-2 text-xs shadow-lg backdrop-blur-sm'>
@@ -207,9 +214,9 @@ const CustomLegend = React.memo(({ payload, visibility, onToggle }: any) => {
 CustomLegend.displayName = 'CustomLegend';
 
 export const TrendChart: React.FC<TrendChartProps> = ({
-  incomeData,
-  expenseData,
-  balanceData,
+  incomeData = [], // Provide default empty arrays
+  expenseData = [],
+  balanceData = [],
   className,
   currency = DEFAULT_CURRENCY,
   chartType = 'line'
@@ -234,17 +241,16 @@ export const TrendChart: React.FC<TrendChartProps> = ({
   const yAxisDomain = useMemo((): [number, number] => {
     if (!processedChartData || processedChartData.length === 0) return [0, 100];
 
-    let minVal = Number.MAX_SAFE_INTEGER;
-    let maxVal = Number.MIN_SAFE_INTEGER;
+    let minVal = Infinity;
+    let maxVal = -Infinity;
     let hasValidValue = false;
 
     processedChartData.forEach((dataPoint) => {
-      ['income', 'expense', 'balance'].forEach((key) => {
-        const typedKey = key as VisibilityKey;
-        if (!visibility[typedKey]) return;
+      (Object.keys(visibility) as VisibilityKey[]).forEach((key) => {
+        if (!visibility[key]) return; // Skip hidden series
 
-        const value = dataPoint[typedKey];
-        if (value !== null && value !== undefined && Number.isFinite(value)) {
+        const value = dataPoint[key];
+        if (value !== null && typeof value === 'number' && isFinite(value)) {
           minVal = Math.min(minVal, value);
           maxVal = Math.max(maxVal, value);
           hasValidValue = true;
@@ -252,19 +258,23 @@ export const TrendChart: React.FC<TrendChartProps> = ({
       });
     });
 
-    if (
-      !hasValidValue ||
-      minVal === Number.MAX_SAFE_INTEGER ||
-      maxVal === Number.MIN_SAFE_INTEGER
-    ) {
-      return [0, 100];
+    if (!hasValidValue) return [0, 100];
+    if (minVal === Infinity || maxVal === -Infinity) {
+      minVal = Math.min(0, minVal);
+      maxVal = Math.max(0, maxVal);
+    }
+    if (minVal === maxVal) {
+      const buffer = Math.abs(minVal * 0.1) || 100;
+      return [minVal - buffer, maxVal + buffer];
     }
 
-    const range = Math.max(maxVal - minVal, 1);
-    const padding = Math.max(range * 0.1, 1000);
+    const range = maxVal - minVal;
+    const padding = Math.max(range * 0.15, 20);
 
     const finalMin = Math.floor(minVal - padding);
     const finalMax = Math.ceil(maxVal + padding);
+
+    if (finalMin >= finalMax) return [finalMin, finalMin + 100];
 
     return [finalMin, finalMax];
   }, [processedChartData, visibility]);
@@ -299,12 +309,17 @@ export const TrendChart: React.FC<TrendChartProps> = ({
           <CartesianGrid strokeDasharray='3 3' vertical={false} stroke='hsl(var(--border)/0.5)' />
 
           <XAxis
-            dataKey='dateLabel'
+            dataKey='timestamp'
+            type='number'
+            scale='time'
+            domain={['dataMin', 'dataMax']}
+            tickFormatter={(unixTime) => formatDate(new Date(unixTime * 1000), 'MMM d')}
             fontSize={10}
             tickLine={false}
             axisLine={false}
             dy={10}
             interval='preserveStartEnd'
+            tickCount={isMobile ? 4 : 8}
           />
 
           <YAxis
@@ -333,7 +348,8 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               value: '0',
               fill: 'hsl(var(--muted-foreground))',
               fontSize: 10,
-              dy: -5
+              dy: -5,
+              dx: isMobile ? 5 : 10
             }}
           />
 

@@ -1,10 +1,10 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import NoData from '../ui/no-data';
 import { DashboardData } from '@/lib/types';
 import { cn, formatCurrency } from '@/lib/utils';
-import { BarChart4, ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowUp, ArrowDown } from 'lucide-react';
 
 interface QuickStatsProps {
   data: DashboardData | null | undefined;
@@ -14,14 +14,7 @@ interface QuickStatsProps {
 
 export const QuickStats: React.FC<QuickStatsProps> = ({ data, isLoading, className }) => {
   return (
-    <Card className={cn('flex flex-col', className)}>
-      <CardHeader>
-        <CardTitle className='flex items-center gap-2'>
-          <BarChart4 className='h-5 w-5 text-purple-500' />
-          Quick Stats
-        </CardTitle>
-        <CardDescription>Key transaction figures.</CardDescription>
-      </CardHeader>
+    <Card className={cn('flex flex-col py-4', className)}>
       <CardContent className='scrollbar h-[250px] flex-grow space-y-3 overflow-y-auto text-sm'>
         {isLoading || !data ? (
           <>

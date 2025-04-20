@@ -1,12 +1,11 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import NoData from '../ui/no-data';
-import { DashboardData, AccountDropdown } from '@/lib/types';
+import { DashboardData } from '@/lib/types';
 import { cn, formatCurrency } from '@/lib/utils';
 import Link from 'next/link';
 import { Button } from '../ui/button';
-import { CreditCard } from 'lucide-react';
 
 interface AccountListSummaryProps {
   accountsInfo: DashboardData['accountsInfo'] | undefined;
@@ -24,17 +23,10 @@ export const AccountListSummary: React.FC<AccountListSummaryProps> = ({
   const sortedAccounts = accountsInfo
     ?.slice()
     .sort((a, b) => (b.balance ?? 0) - (a.balance ?? 0))
-    .slice(0, 5); // Limit display
+    .slice(0, 5);
 
   return (
-    <Card className={cn('flex flex-col', className)}>
-      <CardHeader>
-        <CardTitle className='flex items-center gap-2'>
-          <CreditCard className='h-5 w-5 text-cyan-500' />
-          Account Summary
-        </CardTitle>
-        <CardDescription>Top 5 accounts by balance.</CardDescription>
-      </CardHeader>
+    <Card className={cn('flex flex-col py-4', className)}>
       <CardContent className='scrollbar h-[200px] flex-grow overflow-y-auto'>
         {isLoading ? (
           <div className='space-y-4'>

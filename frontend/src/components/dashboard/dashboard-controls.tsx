@@ -23,9 +23,7 @@ import {
   Calendar,
   SlidersHorizontal,
   Sun,
-  Moon,
-  Maximize2,
-  Minimize2
+  Moon
 } from 'lucide-react';
 import { DASHBOARD_PRESETS, PresetConfig, TIME_RANGES } from '@/config/dashboard-config';
 
@@ -37,7 +35,6 @@ interface DashboardControlsProps {
   hiddenSections: Set<string>;
   refreshInterval: number;
   isDarkMode: boolean;
-  compactView: boolean;
   isRefreshing: boolean;
   isLoading: boolean;
   onChangePreset: (preset: string) => void;
@@ -46,7 +43,6 @@ interface DashboardControlsProps {
   onToggleSectionVisibility: (sectionId: string) => void;
   onSetRefreshInterval: (intervalMs: number) => void;
   onToggleDarkMode: () => void;
-  onToggleCompactView: () => void;
   onRefetchAll: () => void;
 }
 
@@ -58,7 +54,6 @@ export const DashboardControls: React.FC<DashboardControlsProps> = ({
   hiddenSections,
   refreshInterval,
   isDarkMode,
-  compactView,
   isRefreshing,
   isLoading,
   onChangePreset,
@@ -67,7 +62,6 @@ export const DashboardControls: React.FC<DashboardControlsProps> = ({
   onToggleSectionVisibility,
   onSetRefreshInterval,
   onToggleDarkMode,
-  onToggleCompactView,
   onRefetchAll
 }) => {
   return (
@@ -170,16 +164,6 @@ export const DashboardControls: React.FC<DashboardControlsProps> = ({
               <div className='flex w-full items-center justify-between'>
                 <span>{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
                 {isDarkMode ? <Sun className='h-4 w-4' /> : <Moon className='h-4 w-4' />}
-              </div>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={onToggleCompactView}>
-              <div className='flex w-full items-center justify-between'>
-                <span>{compactView ? 'Normal View' : 'Compact View'}</span>
-                {compactView ? (
-                  <Maximize2 className='h-4 w-4' />
-                ) : (
-                  <Minimize2 className='h-4 w-4' />
-                )}
               </div>
             </DropdownMenuItem>
           </DropdownMenuContent>

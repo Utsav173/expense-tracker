@@ -1,13 +1,12 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card';
 import { transactionGetCategoryChart } from '@/lib/endpoints/transactions';
 import { Skeleton } from '@/components/ui/skeleton';
 import NoData from '../ui/no-data';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, Sector } from 'recharts';
 import { formatCurrency } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Tag } from 'lucide-react';
 import { useToast } from '@/lib/hooks/useToast';
 import { cn } from '@/lib/utils';
 
@@ -17,10 +16,13 @@ const COLORS = [
   'hsl(var(--chart-3))',
   'hsl(var(--chart-4))',
   'hsl(var(--chart-5))',
-  '#a0aec0', // Gray for 'Other'
-  '#f6ad55', // Orange fallback
-  '#4fd1c5' // Teal fallback
+  '#a0aec0',
+  '#f6ad55',
+  '#4fd1c5'
 ];
+
+const truncateLabel = (label: string, max: number) =>
+  label.length > max ? label.slice(0, max - 1) + '…' : label;
 
 interface SpendingBreakdownProps {
   className?: string;
@@ -64,7 +66,7 @@ const renderActiveShape = (props: any) => {
         fill={fill}
         className='text-base font-semibold'
       >
-        {payload.name}
+        {truncateLabel(payload.name, 15)}
       </text>
       <Sector
         cx={cx}
@@ -173,24 +175,20 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({ className 
 
   return (
     <Card className={cn('flex flex-col', className)}>
-      <CardHeader className='pb-2'>
-        <div className='flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between'>
-          <CardTitle className='flex items-center gap-2 text-lg font-semibold'>
-            <Tag className='h-5 w-5 text-orange-500' />
-            Spending Breakdown
-          </CardTitle>
-          <Select value={duration} onValueChange={(v) => setDuration(v as DurationOption)}>
-            <SelectTrigger className='h-8 w-full text-xs sm:w-[150px]'>
-              <SelectValue placeholder='Select Period' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='thisMonth'>This Month</SelectItem>
-              <SelectItem value='thisYear'>This Year</SelectItem>
-              <SelectItem value='all'>All Time</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <CardDescription>Expenses by category for {durationLabels[duration]}.</CardDescription>
+      <CardHeader className='flex gap-2 pb-2'>
+        <Select value={duration} onValueChange={(v) => setDuration(v as DurationOption)}>
+          <SelectTrigger className='mx-auto h-8 w-full text-xs sm:w-[150px]'>
+            <SelectValue placeholder='Select Period' />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value='thisMonth'>This Month</SelectItem>
+            <SelectItem value='thisYear'>This Year</SelectItem>
+            <SelectItem value='all'>All Time</SelectItem>
+          </SelectContent>
+        </Select>
+        <CardDescription className='mx-auto text-center'>
+          Expenses by category for {durationLabels[duration]}.
+        </CardDescription>
       </CardHeader>
       <CardContent className='flex flex-1 items-center justify-center pb-4 pt-0'>
         {isLoading || isFetching ? (

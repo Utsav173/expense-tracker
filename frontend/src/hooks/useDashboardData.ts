@@ -13,7 +13,6 @@ import {
 import { transactionGetCategoryChart } from '@/lib/endpoints/transactions';
 import {
   AccountDropdown,
-  ApiResponse,
   BudgetSummaryItem,
   DashboardData,
   DebtWithDetails,

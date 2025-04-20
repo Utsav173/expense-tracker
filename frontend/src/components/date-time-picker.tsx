@@ -14,6 +14,7 @@ interface DateTimePickerProps {
   value?: Date;
   onChange?: (date: Date) => void;
   disabled?: boolean | DayPickerProps['disabled'];
+  buttonDisabled?: boolean;
   captionLayout?: DayPickerProps['captionLayout'];
 }
 
@@ -23,6 +24,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   value,
   onChange,
   disabled = false,
+  buttonDisabled = false,
   captionLayout
 }) => {
   const [openPopover, setOpenPopover] = useState<boolean>(false);
@@ -69,7 +71,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
             'w-full pl-3 text-left font-normal',
             !selectedDate && 'text-muted-foreground'
           )}
-          disabled={!!disabled}
+          disabled={!!buttonDisabled}
         >
           {selectedDate ? format(selectedDate, 'MM/dd/yyyy hh:mm aa') : 'MM/DD/YYYY hh:mm aa'}
           <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
@@ -83,7 +85,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
             onSelect={handleDateSelect}
             disabled={disabled}
             captionLayout={captionLayout}
-            initialFocus
+            autoFocus
           />
           <div className='flex flex-col divide-y sm:h-[300px] sm:flex-row sm:divide-x sm:divide-y-0'>
             <ScrollArea className='w-64 sm:w-auto'>

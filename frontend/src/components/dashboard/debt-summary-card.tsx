@@ -76,13 +76,6 @@ export const DebtSummaryCard: React.FC<{
   if (error || numberOfDebts === 0) {
     return (
       <Card className='col-span-1 flex flex-col md:col-span-1'>
-        <CardHeader>
-          <CardTitle className='flex items-center gap-2'>
-            <Scale className='h-5 w-5 text-red-500' />
-            Debt Summary
-          </CardTitle>
-          <CardDescription>Overview of your outstanding debts.</CardDescription>
-        </CardHeader>
         <CardContent className='h-[250px] flex-grow'>
           <NoData
             message={error ? 'Could not load debt data.' : 'No outstanding debts! 🎉'}
@@ -101,19 +94,13 @@ export const DebtSummaryCard: React.FC<{
   }
 
   return (
-    <Card className='col-span-1 flex flex-col md:col-span-1'>
-      <CardHeader>
-        <CardTitle className='flex items-center gap-2'>
-          <Scale className='h-5 w-5 text-red-500' />
-          Debt Summary
-        </CardTitle>
-        <CardDescription>Total amount currently owed.</CardDescription>
-      </CardHeader>
+    <Card className='col-span-1 flex flex-col py-4 md:col-span-1'>
       <CardContent className='scrollbar h-[250px] flex-grow space-y-3 overflow-y-auto text-sm'>
         <div>
-          <p className='text-xs text-muted-foreground'>Total Outstanding Debt</p>
           <p className='text-xl font-bold text-red-600'>{formatCurrency(outstandingDebtAmount)}</p>
-          <p className='pt-1 text-xs text-muted-foreground'>Across {numberOfDebts} item(s).</p>
+          <p className='pt-1 text-xs text-muted-foreground'>
+            Total Outstanding debts Across {numberOfDebts} item(s).
+          </p>
         </div>
         {nextDueDebt && (
           <div className='mt-3 border-t pt-3'>

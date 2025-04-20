@@ -13,7 +13,7 @@ import {
   subYears,
   format
 } from 'date-fns';
-import { DateRange } from 'react-day-picker';
+import { DateRange, DayPickerProps } from 'react-day-picker';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
@@ -23,11 +23,18 @@ interface DateRangePickerProps {
   setDateRange: (range: DateRange | undefined) => void;
   className?: string;
   trigger?: React.ReactNode;
+  disabled?: DayPickerProps['disabled'];
 }
 
-const DateRangePicker = ({ dateRange, setDateRange, className, trigger }: DateRangePickerProps) => {
+const DateRangePicker = ({
+  dateRange,
+  setDateRange,
+  className,
+  disabled = false,
+  trigger
+}: DateRangePickerProps) => {
   const [open, setOpen] = useState(false);
-  const [month, setMonth] = useState(dateRange?.from || new Date()); // Month for calendar display
+  const [month, setMonth] = useState(dateRange?.from || new Date());
 
   const today = new Date();
   const presets = [
@@ -53,7 +60,6 @@ const DateRangePicker = ({ dateRange, setDateRange, className, trigger }: DateRa
     }
   ];
 
-  // for display current selected range.
   useEffect(() => {
     if (dateRange?.from) {
       setMonth(dateRange.from);
@@ -125,7 +131,8 @@ const DateRangePicker = ({ dateRange, setDateRange, className, trigger }: DateRa
                 month={month}
                 onMonthChange={setMonth}
                 className='rounded-md border'
-                disabled={[{ after: today }]}
+                disabled={disabled ?? [{ after: today }]}
+                autoFocus
               />
             </div>
           </div>

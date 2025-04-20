@@ -50,10 +50,6 @@ export const BudgetProgress: React.FC<{ className?: string }> = ({ className }) 
   return (
     <Card className={cn('flex flex-col', className)}>
       <CardHeader>
-        <CardTitle className='flex items-center gap-2'>
-          <CalendarRange className='h-5 w-5 text-lime-600' />
-          Budget Progress
-        </CardTitle>
         <div className='mt-2 flex flex-col items-center gap-2 sm:flex-row'>
           <Select
             value={String(selectedMonth)}

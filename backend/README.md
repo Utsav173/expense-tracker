@@ -4,74 +4,43 @@ This is the backend service for the Expense Tracker application, built with Bun.
 
 ## Features
 
-*   **User Authentication:**
-    *   Sign up, login, logout.
-    *   Password reset (forgot password flow).
-    *   JWT-based authentication.
-    *   Social login (currently disabled, but the foundation exists).
-*   **Account Management:**
-    *   Create, read, update, and delete user accounts.
-    *   Account sharing with other users.
-    *   View account balances and transaction history.
-    *   Set a default account.
-    *   Multi-currency support (with a preferred currency per user).
-*   **Transaction Management:**
-    *   Create, read, update, and delete transactions.
-    *   Categorize transactions.
-    *   Mark transactions as income or expense.
-    *   Import transactions from XLSX files.
-    *   Support for recurring transactions.
-*   **Category Management:**
-    *   Create, read, update, and delete custom transaction categories.
-    *   Predefined categories for common expenses.
-*   **Budgeting:**
-    *   Create, read, update, and delete budgets for specific categories and time periods (month/year).
-    *   Track budget progress and view summaries.
-*   **Saving Goals:**
-    *   Create, read, update, and delete saving goals.
-    *   Track progress towards goals.
-*   **Investment Tracking:**
-    *   Manage investment accounts (e.g., brokerage accounts).
-    *   Track individual investments (stocks, etc.) with purchase price, shares, and dividends.
-    *   Calculate investment portfolio performance.
-    *   Integrate with Yahoo Finance API for stock data (search and price).  *This is a key feature. Make sure it's working reliably!*
-*   **Debt Management:**
-    *   Track debts (loans, credit cards, etc.).
-    *   Calculate interest (simple and compound).
-    *   Mark debts as paid.
-*   **Analytics:**
-    *   Generate analytics reports for accounts, including income, expenses, and balance.
-    *   Calculate percentage changes in income and expenses.
-*   **Data Import/Export:**
-    *   Import transactions from XLSX files.
-    *   Generate account statements (PDF, XLSX).
+- **User Authentication:** Sign up, login, logout, password reset (forgot password flow), JWT-based authentication, profile updates (name, currency, picture).
+- **Account Management:** CRUD operations, account sharing, view balances and transaction history, set default account, multi-currency support (preferred currency per user).
+- **Transaction Management:** CRUD operations, categorization, income/expense marking, recurring transaction support, bulk import from XLSX.
+- **Category Management:** CRUD operations for custom categories, access to predefined categories.
+- **Budgeting:** CRUD operations for category-specific budgets (month/year), budget progress tracking, and summary views.
+- **Saving Goals:** CRUD operations, track progress, add/withdraw contributions.
+- **Investment Tracking:** Manage investment accounts, track individual holdings (stocks, shares, purchase info, dividends), calculate portfolio summaries. Integration with Yahoo Finance API for stock search and live price data.
+- **Debt Management:** Track debts (loans, etc.), calculate simple/compound interest, mark debts as paid.
+- **Analytics:** Generate analytics reports for accounts (income, expense, balance, percentage changes), dashboard summaries, category spending breakdowns, income vs. expense totals and charts.
+- **Data Import/Export:** Import transactions from XLSX, generate account statements (PDF, XLSX), provide sample import file.
 
-##  Database Data model visulize
+## Database Data model visualize
 
 ![image](public/image.png)
 
 ## Technologies Used
 
-*   **Bun.js:** A fast all-in-one JavaScript runtime.
-*   **Hono:** A small, fast, and flexible web framework for Bun.
-*   **Drizzle ORM:** A TypeScript ORM for SQL databases.
-*   **PostgreSQL:**  The relational database.
-*   **@neondatabase/serverless:**  Neon serverless driver for PostgreSQL.
-*   **bcrypt:**  For password hashing.
-*   **nodemailer:** For sending emails (forgot password, account sharing).
-*   **jsonwebtoken (JWT):** For user authentication and authorization.
-*   **sharp:** For image processing (profile picture compression).
-*   **xlsx:** For reading and writing Excel files.
-*   **puppeteer:**  For PDF generation.
-*   **date-fns:**  For date and time manipulation.
-*   **zod:**  For schema validation.
-*   **Other Libraries:**  `chalk`, `chance`, `cli-progress`, `@supercharge/promise-pool`, etc. (see `package.json` for the full list).
+- **Bun.js:** Fast JavaScript runtime.
+- **Hono:** Web framework for Bun.
+- **Drizzle ORM:** TypeScript ORM for SQL.
+- **PostgreSQL:** Relational database.
+- **@neondatabase/serverless:** Neon serverless driver for PostgreSQL.
+- **bcrypt:** Password hashing.
+- **nodemailer:** Sending emails (forgot password, account sharing).
+- **hono/jwt:** JWT authentication.
+- **Sharp:** Image processing (profile picture compression).
+- **XLSX:** Reading/writing Excel files.
+- **Puppeteer:** PDF generation.
+- **date-fns:** Date/time manipulation.
+- **Zod:** Schema validation.
+- **Other Libraries:** `chalk`, `chance`, `cli-progress`, `@supercharge/promise-pool`, etc. (see `package.json`).
 
 ## Prerequisites
 
-*   **Bun:** Install the latest version of Bun ([https://bun.sh/](https://bun.sh/)).
-*   **PostgreSQL:**  You'll need a PostgreSQL database.  You're using Neon (serverless), so you'll need a Neon account and database set up.  *Provide clear instructions for users on how to set this up, or link to your setup guide.*
-    * **DATABASE_URL:** You'll need the connection string for your PostgreSQL database, stored in the `DATABASE_URL` environment variable.
+- **Bun:** Latest version ([https://bun.sh/](https://bun.sh/)).
+- **PostgreSQL:** A PostgreSQL database connection string (`DATABASE_URL` env variable). Neon is recommended.
+- **Email Provider (Optional):** For password reset and sharing emails (e.g., Gmail with App Password).
 
 ## Installation
 
@@ -89,110 +58,97 @@ This is the backend service for the Expense Tracker application, built with Bun.
     ```
 
 3.  **Set up environment variables:**
+    Create a `.env` file in the `backend` directory. Refer to `.env.example` (if available) or add the following:
 
-    Create a `.env` file in the `backend` directory and add the following variables.  *Replace the placeholders with your actual values:*
+    ```dotenv
+    # Database (Required)
+    DATABASE_URL=postgres://user:password@host:port/database # Your PostgreSQL connection string
 
-    ```
-    DATABASE_URL=postgres://user:password@host:port/database  # Your Neon database connection string.
-
-    # Email Configuration (for forgot password and account sharing)
-    GMAIL_USERNAME=your_email@gmail.com      # Your Gmail address (or other SMTP provider)
-    GMAIL_PASS=your_gmail_app_password    # Your Gmail app password (or SMTP password)
-
-    # JWT Secret (should be a long, random string)
+    # JWT (Required - generate a strong, random secret!)
     JWT_SECRET=your_very_long_and_random_secret_key
 
-    # Frontend URL (for password reset links, etc.)
-    FRONTEND_URL=http://localhost:3000   # Or your frontend's deployment URL.
+    # Frontend (Required for email links)
+    FRONTEND_URL=http://localhost:3000 # Your frontend URL
 
-    # Optional: for using your custom SMTP server:
-    SMTP_HOST=your_smtp_host
-    SMTP_PORT=your_smtp_port
-    SMTP_USER=your_smtp_user
-    SMTP_PASS=your_smtp_password
+    # Email Configuration (Optional - for password reset/sharing)
+    GMAIL_USERNAME=your_email@gmail.com # Your Gmail (or other SMTP) username
+    GMAIL_PASS=your_gmail_app_password # Your Gmail App Password (or SMTP password)
+    # SMTP_HOST=your_smtp_host # Optional: Custom SMTP
+    # SMTP_PORT=your_smtp_port # Optional: Custom SMTP
+    # SMTP_USER=your_smtp_user # Optional: Custom SMTP
+    # SMTP_PASS=your_smtp_password # Optional: Custom SMTP
 
-    # Optional: Other environment variables, such as those for Yahoo Finance API.
-
+    # Note: Add other variables as needed (e.g., specific API keys)
     ```
 
-    **Important Security Notes:**
-    *   **`.env` file:**  *Never* commit your `.env` file to version control.  It contains sensitive credentials.  Add `.env` to your `.gitignore` file.
-    *   **`JWT_SECRET`:**  This *must* be a strong, randomly generated secret.  It's crucial for the security of your application.  Do *not* use the example value above in production.
-    * **Gmail App Passwords:**  If using Gmail, you'll likely need to generate an "App Password" in your Google account settings, as Google often blocks login attempts from unfamiliar applications.
+    **Security Notes:**
+
+    - **NEVER** commit your `.env` file. Add it to `.gitignore`.
+    - Use a **strong, unique** `JWT_SECRET`.
+    - Use **Gmail App Passwords** if using Gmail, as regular passwords may be blocked.
 
 4.  **Database Setup:**
-
-    *   **Migrations:** Run database migrations to create the necessary tables:
-        ```bash
-        bun run db:migrate
-        ```
-
-    *   **Seeding (Optional):**  You have a `seed.ts` file.  You can run this to populate the database with initial data (like default categories and a test user):
-        ```bash
-        bun run seed
-        ```
-        *Be very careful with seeding in production.*
+    - **Migrations:** Create database tables:
+      ```bash
+      bun run db:migrate
+      ```
+    - **Seeding (Optional):** Populate with initial data (default categories, test user):
+      ```bash
+      bun run seed
+      ```
+      _(Use caution when seeding production databases)._
 
 ## Running the Application
 
-*   **Development:**
+- **Development (with hot-reloading):**
 
-    ```bash
-    bun run dev
-    ```
+  ```bash
+  bun run dev
+  ```
 
-    This will start the development server, typically on `http://localhost:1337`.
+  (Server typically starts on `http://localhost:1337`)
 
-*   **Production:**
-
-    1.  **Build:**
-        ```bash
-        bun run generate:build
-        ```
-    2.  **Start:**
-        ```bash
-        bun run start
-        ```
-
-    *Make sure you have your environment variables (especially `DATABASE_URL` and `NODE_ENV`) set correctly in your production environment.*
+- **Production:**
+  1.  **Build:**
+      ```bash
+      bun run generate:build
+      ```
+  2.  **Start:**
+      `bash
+    bun run start
+    `
+      (Ensure production environment variables are set).
 
 ## API Documentation
 
-The API documentation is available in a Postman collection: [`expense-backend-api.collection.json`](./expense-backend-api.collection.json).  You can import this file into Postman to explore the API endpoints.
-
+The API documentation is available via the Postman collection: [`expense-backend-api.collection.json`](./expense-backend-api.collection.json). Import this file into Postman to explore endpoints.
 
 ## Scripts
 
-*   `dev`: Starts the development server with hot reloading.
-*   `start`: Starts the production server (after building).
-*   `generate:build`: Builds the application for production.
-*   `db:pull`: Pull the current database schema for local development.
-*   `db:push`: Push schema for create tables and schema inside postgres database.
-*   `db:generate`: Generates the Drizzle ORM schema files.
-*   `db:migrate`: Runs database migrations.
-*   `db:studio`: Opens the Drizzle Studio GUI for database management.
-*   `db:check`: Checks the database schema for errors.
-*   `seed`: Seeds the database with initial data.
-*   `format`: Formats the code using Prettier.
+- `dev`: Start development server with hot-reloading.
+- `start`: Start production server (requires build).
+- `generate:build`: Build the application for production.
+- `db:pull`: Pull current DB schema (for drizzle-kit).
+- `db:push`: Push schema changes to DB (alternative to migrations, use carefully).
+- `db:generate`: Generate Drizzle ORM migration files based on schema changes.
+- `db:migrate`: Apply pending database migrations.
+- `db:studio`: Open Drizzle Studio GUI.
+- `db:check`: Check schema against the database.
+- `seed`: Run the database seeding script.
+- `format`: Format code using Prettier.
 
 ## Important Considerations
 
-*   **Error Handling:** The API includes error handling, returning appropriate HTTP status codes and error messages.  *Expand on this.  What are the common error codes, and what do they mean?*
-*   **Validation:**  Input validation is performed using Zod schemas. *Consider adding examples of common validation errors.*
-*   **Security:**
-    *   **Password Hashing:**  Passwords are hashed using bcrypt.
-    *   **JWT Authentication:**  JSON Web Tokens are used for authentication. *Mention token expiration and refresh mechanisms if you have them.*
-    *   **Input Sanitization:** Sanitize all user inputs to prevent XSS and SQL injection attacks.  *Drizzle helps with SQL injection, but you should explicitly mention XSS prevention strategies.*
-    * **Rate Limiting:**  Implement rate limiting to prevent abuse (e.g., brute-force login attempts).  *Hono has middleware for this.*
-*   **Testing:**  *Add information about testing.  Do you have unit tests, integration tests, or end-to-end tests?  How can users run them?*
-*   **Deployment:** *Provide instructions or links to documentation on how to deploy the backend to a production environment (e.g., Vercel, Render, AWS, etc.).  Include any specific configuration steps.*
+- **Error Handling:** Uses Hono's `HTTPException` for standard HTTP errors. Custom errors are caught and returned as 500.
+- **Validation:** Input validation is enforced using Zod schemas via `@hono/zod-validator`.
+- **Security:**
+  - Passwords hashed with bcrypt.
+  - JWT for authentication.
+  - Drizzle ORM helps prevent SQL injection.
+  - Consider adding rate limiting middleware (e.g., `hono/ratelimiter`) for production.
+- **Testing:** (Requires Setup) Information on running tests should be added here. Currently, no test setup is detailed in the provided files.
+- **Deployment:** Ensure `DATABASE_URL`, `JWT_SECRET`, `FRONTEND_URL`, and other necessary environment variables are configured in your deployment environment (e.g., Vercel, Render, AWS).
 
 ## Contributing
 
-*Describe how others can contribute to your project.  Include information about:*
-
-*   Forking and cloning the repository.
-*   Creating feature branches.
-*   Submitting pull requests.
-*   Coding style guidelines.
-*   Issue reporting.
+Please refer to the main project `CONTRIBUTING.md` file (if available) or open an issue/pull request.
