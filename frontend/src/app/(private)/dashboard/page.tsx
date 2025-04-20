@@ -176,6 +176,8 @@ const DashboardPage = () => {
           chartType={chartType}
           isLoading={isLoading && !dashboardPageData?.dashboardSummary}
           setChartType={setChartType}
+          timeRangeOption={dashboardSettings.timeRangeOption}
+          customDateRange={dashboardSettings.customDateRange}
         />
       ) : null,
       spendingBreakdown: <SpendingBreakdown className='h-full' />,

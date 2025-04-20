@@ -49,7 +49,7 @@ export const accountGetStatement = (
   apiFetch(`/accounts/${id}/statement`, 'GET', undefined, { params }, successMessage, errorMessage);
 
 export const accountGetDashboard = (
-  params: { timeRange?: string; startDate?: string; endDate?: string } = {},
+  params: { duration?: string; startDate?: string; endDate?: string } = {},
   successMessage?: string,
   errorMessage?: string
 ): Promise<ApiResponse<DashboardData>> =>

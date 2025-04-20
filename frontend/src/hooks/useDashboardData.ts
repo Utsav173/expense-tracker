@@ -1,3 +1,5 @@
+'use client';
+
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 import { DateRange } from 'react-day-picker';
@@ -39,38 +41,62 @@ interface CombinedDashboardData {
   accountIdToCurrencyMap: Map<string, string>;
 }
 
+const mapTimeRangeToPeriod = (timeRangeOption: string): '7d' | '30d' | '90d' | '1y' => {
+  switch (timeRangeOption) {
+    case 'thisWeek':
+      return '7d';
+    case 'thisMonth':
+    case '30d':
+      return '30d';
+    case '3m':
+    case '90d':
+      return '90d';
+    case 'ytd':
+    case '12m':
+    case 'thisYear':
+    case 'all':
+    case 'custom':
+      return '1y';
+    default:
+      return '30d';
+  }
+};
+
 export const useDashboardData = ({
   timeRangeOption,
   customDateRange,
   user
-}: UseDashboardDataOptions) => {
+}: UseDashboardDataOptions): {
+  data: CombinedDashboardData | null;
+  isLoading: boolean;
+  isFetching: boolean;
+  isError: boolean;
+  error: Error | null;
+  refetch: () => Promise<void>;
+} => {
   const queryClient = useQueryClient();
 
-  const queryParams = useMemo(() => {
-    const params: { timeRange?: string; startDate?: string; endDate?: string } = {};
-    if (timeRangeOption === 'custom' && customDateRange?.from && customDateRange?.to) {
-      params.timeRange = 'custom';
-      params.startDate = format(customDateRange.from, 'yyyy-MM-dd');
-      params.endDate = format(customDateRange.to, 'yyyy-MM-dd');
-    } else if (timeRangeOption !== 'custom' && timeRangeOption !== 'all') {
-      params.timeRange = timeRangeOption;
-    } else {
-      // No timeRange param needed for 'all' or default case for the dashboard endpoint
-    }
-
-    return params;
-  }, [timeRangeOption, customDateRange]);
-
   const durationParamForSpecificEndpoints = useMemo(() => {
-    if (timeRangeOption === 'custom' && queryParams.startDate && queryParams.endDate) {
-      return `${queryParams.startDate},${queryParams.endDate}`;
+    if (timeRangeOption === 'custom' && customDateRange?.from && customDateRange?.to) {
+      return `${format(customDateRange.from, 'yyyy-MM-dd')},${format(
+        customDateRange.to,
+        'yyyy-MM-dd'
+      )}`;
     }
     return timeRangeOption === 'custom' ? 'all' : timeRangeOption;
-  }, [timeRangeOption, queryParams]);
+  }, [timeRangeOption, customDateRange]);
+
+  const investmentHistoryPeriod = useMemo(
+    () => mapTimeRangeToPeriod(timeRangeOption),
+    [timeRangeOption]
+  );
+
+  const currentMonth = useMemo(() => new Date().getMonth() + 1, []);
+  const currentYear = useMemo(() => new Date().getFullYear(), []);
 
   const dashboardSummaryQuery = useQuery({
-    queryKey: ['dashboardData', queryParams.timeRange, queryParams.startDate, queryParams.endDate],
-    queryFn: () => accountGetDashboard(queryParams), // Pass the correct object
+    queryKey: ['dashboardData'],
+    queryFn: () => accountGetDashboard(),
     enabled: !!user,
     staleTime: 5 * 60 * 1000
   });
@@ -90,22 +116,8 @@ export const useDashboardData = ({
   });
 
   const budgetSummaryQuery = useQuery({
-    queryKey: ['budgetSummaryDashboard', durationParamForSpecificEndpoints],
-    queryFn: () => {
-      let month = new Date().getMonth() + 1;
-      let year = new Date().getFullYear();
-      if (timeRangeOption === 'custom' && customDateRange?.from) {
-        month = customDateRange.from.getMonth() + 1;
-        year = customDateRange.from.getFullYear();
-      } else if (timeRangeOption === 'thisYear') {
-        month = new Date().getMonth() + 1;
-        year = new Date().getFullYear();
-      } else if (timeRangeOption === 'thisMonth') {
-        month = new Date().getMonth() + 1;
-        year = new Date().getFullYear();
-      }
-      return budgetGetSummary(month, year);
-    },
+    queryKey: ['budgetSummaryDashboard', currentMonth, currentYear],
+    queryFn: () => budgetGetSummary(currentMonth, currentYear),
     enabled: !!user,
     staleTime: 10 * 60 * 1000
   });
@@ -125,9 +137,8 @@ export const useDashboardData = ({
   });
 
   const investmentHistoryQuery = useQuery({
-    queryKey: ['investmentPortfolioHistoricalDashboard', '30d'],
-    queryFn: () => investmentGetPortfolioHistorical({ period: '30d' }),
-    // Use optional chaining AND nullish coalescing for safety
+    queryKey: ['investmentPortfolioHistoricalDashboard', investmentHistoryPeriod],
+    queryFn: () => investmentGetPortfolioHistorical({ period: investmentHistoryPeriod }),
     enabled: !!user && (investmentSummaryQuery.data?.numberOfHoldings ?? 0) > 0,
     staleTime: 60 * 60 * 1000
   });
@@ -146,7 +157,6 @@ export const useDashboardData = ({
     budgetSummaryQuery.isLoading ||
     outstandingDebtsQuery.isLoading ||
     investmentSummaryQuery.isLoading ||
-    // Use optional chaining AND nullish coalescing for safety here too
     ((investmentSummaryQuery.data?.numberOfHoldings ?? 0) > 0 &&
       investmentHistoryQuery.isLoading) ||
     spendingBreakdownQuery.isLoading;
@@ -182,7 +192,12 @@ export const useDashboardData = ({
   }, [accountsDropdownQuery.data]);
 
   const combinedData = useMemo((): CombinedDashboardData | null => {
-    if (!dashboardSummaryQuery.data || !accountsDropdownQuery.data || !goalsQuery.data) {
+    if (
+      isLoading ||
+      !dashboardSummaryQuery.data ||
+      !accountsDropdownQuery.data ||
+      !goalsQuery.data
+    ) {
       return null;
     }
     return {
@@ -197,6 +212,7 @@ export const useDashboardData = ({
       accountIdToCurrencyMap: accountIdToCurrencyMap
     };
   }, [
+    isLoading,
     dashboardSummaryQuery.data,
     goalsQuery.data,
     accountsDropdownQuery.data,
@@ -212,12 +228,24 @@ export const useDashboardData = ({
     await queryClient.invalidateQueries({ queryKey: ['dashboardData'] });
     await queryClient.invalidateQueries({ queryKey: ['goalsDashboard'] });
     await queryClient.invalidateQueries({ queryKey: ['accountsDropdownDashboard'] });
-    await queryClient.invalidateQueries({ queryKey: ['budgetSummaryDashboard'] });
+    await queryClient.invalidateQueries({
+      queryKey: ['budgetSummaryDashboard', currentMonth, currentYear]
+    });
     await queryClient.invalidateQueries({ queryKey: ['outstandingDebtsDashboard'] });
     await queryClient.invalidateQueries({ queryKey: ['investmentPortfolioSummaryDashboard'] });
-    await queryClient.invalidateQueries({ queryKey: ['investmentPortfolioHistoricalDashboard'] });
-    await queryClient.invalidateQueries({ queryKey: ['spendingBreakdown'] });
-  }, [queryClient]);
+    await queryClient.invalidateQueries({
+      queryKey: ['investmentPortfolioHistoricalDashboard', investmentHistoryPeriod]
+    });
+    await queryClient.invalidateQueries({
+      queryKey: ['spendingBreakdown', durationParamForSpecificEndpoints]
+    });
+  }, [
+    queryClient,
+    currentMonth,
+    currentYear,
+    investmentHistoryPeriod,
+    durationParamForSpecificEndpoints
+  ]);
 
   return {
     data: combinedData,

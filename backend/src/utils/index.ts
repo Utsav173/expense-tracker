@@ -342,6 +342,47 @@ export function forgotPasswordTemp(username: any, resetPasswordLink: any, email:
 </html>`;
 }
 
+export function getPreviousInterval(
+  startDateStr: string,
+  endDateStr: string,
+): { prevStartDate: Date; prevEndDate: Date } | null {
+  const startDate = new Date(startDateStr);
+  const endDate = new Date(endDateStr);
+
+  if (!isValid(startDate) || !isValid(endDate)) {
+    console.error('Invalid dates passed to getPreviousInterval');
+    return null;
+  }
+
+  const daysDiff = differenceInDays(endDate, startDate);
+
+  let prevStartDate: Date;
+  let prevEndDate: Date;
+
+  if (daysDiff <= 1) {
+    prevStartDate = sub(startDate, { days: 1 });
+    prevEndDate = endOfDay(prevStartDate);
+  } else if (daysDiff <= 7) {
+    prevStartDate = sub(startDate, { weeks: 1 });
+    prevEndDate = endOfDay(sub(endDate, { weeks: 1 }));
+  } else if (daysDiff >= 28 && daysDiff <= 31) {
+    prevStartDate = sub(startDate, { months: 1 });
+    prevEndDate = endOfDay(sub(endDate, { months: 1 }));
+  } else if (daysDiff >= 365 && daysDiff <= 366) {
+    prevStartDate = sub(startDate, { years: 1 });
+    prevEndDate = endOfDay(sub(endDate, { years: 1 }));
+  } else {
+    const intervalDays = daysDiff + 1;
+    prevStartDate = sub(startDate, { days: intervalDays });
+    prevEndDate = sub(endDate, { days: intervalDays });
+    prevEndDate = endOfDay(prevEndDate);
+  }
+
+  prevStartDate = startOfDay(prevStartDate);
+
+  return { prevStartDate, prevEndDate };
+}
+
 export async function getIntervalValue(interval: string | undefined): Promise<{
   startDate: string;
   endDate: string;
