@@ -538,30 +538,43 @@ investmentRouter.get(
         return c.json({ data: [], currency: preferredCurrency, valueIsEstimate: false });
       }
 
-      const endDate = new Date();
+      const today = new Date();
+      const endDate = subDays(today, 1); // End date is yesterday
+      endDate.setHours(23, 59, 59, 999); // End of yesterday
+
       let startDate: Date;
       switch (period) {
         case '7d':
-          startDate = subDays(endDate, 7);
+          startDate = subDays(endDate, 6); // 6 days before yesterday = 7 days total
           break;
         case '90d':
-          startDate = subDays(endDate, 90);
+          startDate = subDays(endDate, 89);
           break;
         case '1y':
-          startDate = subDays(endDate, 365);
+          startDate = subDays(endDate, 364);
           break;
         case '30d':
         default:
-          startDate = subDays(endDate, 30);
+          startDate = subDays(endDate, 29);
           break;
       }
-      startDate.setHours(0, 0, 0, 0);
-      endDate.setHours(23, 59, 59, 999);
+      startDate.setHours(0, 0, 0, 0); // Start of the calculated start day
+
+      // Ensure endDate is not before startDate (edge case for very short periods if added later)
+      if (endDate < startDate) {
+        startDate = new Date(endDate); // Set start date to end date if range is invalid
+        startDate.setHours(0, 0, 0, 0);
+      }
 
       const datesInRange = eachDayOfInterval({ start: startDate, end: endDate });
       const uniqueSymbols = Array.from(new Set(investments.map((inv) => inv.symbol)));
 
-      console.log(`Fetching historical data for ${uniqueSymbols.length} symbols...`);
+      console.log(
+        `Fetching historical data for ${uniqueSymbols.length} symbols from ${formatDateFn(
+          startDate,
+          'yyyy-MM-dd',
+        )} to ${formatDateFn(endDate, 'yyyy-MM-dd')}...`,
+      );
       const allPricesMap = new Map<string, Map<string, number | null>>();
 
       const { results, errors: poolErrors } = await PromisePool.for(uniqueSymbols)
@@ -597,6 +610,7 @@ investmentRouter.get(
       const historicalValues = datesInRange.map((date) => {
         const dateString = formatDateFn(date, 'yyyy-MM-dd');
         let dailyTotalValue = 0;
+        let dateHasMissingPrice = false;
 
         investments.forEach((inv) => {
           const pricesForSymbol = allPricesMap.get(inv.symbol);
@@ -605,18 +619,31 @@ investmentRouter.get(
           if (priceOnDate !== undefined && priceOnDate !== null && inv.shares) {
             dailyTotalValue += inv.shares * priceOnDate;
           } else {
+            // Use invested amount as fallback ONLY if price is missing for that specific date
             dailyTotalValue += inv.investedAmount || 0;
-            if (priceOnDate === undefined) {
-              valueIsEstimate = true;
+            if (priceOnDate === undefined || priceOnDate === null) {
+              // Check if the map exists but the date is missing, or if the whole symbol map is missing
+              if (!pricesForSymbol || !pricesForSymbol.has(dateString)) {
+                dateHasMissingPrice = true;
+              }
             }
           }
         });
+
+        if (dateHasMissingPrice) {
+          valueIsEstimate = true;
+        }
 
         return {
           date: dateString,
           value: parseFloat(dailyTotalValue.toFixed(2)),
         };
       });
+
+      // Final check: if any pool error occurred, mark as estimate
+      if (poolErrors.length > 0) {
+        valueIsEstimate = true;
+      }
 
       return c.json({
         data: historicalValues,

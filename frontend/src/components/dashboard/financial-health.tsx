@@ -8,7 +8,7 @@ interface FinancialHealthProps {
   data: DashboardData | null | undefined;
 }
 
-export const FinancialHealth: React.FC<FinancialHealthProps> = ({ data }) => {
+const FinancialHealth: React.FC<FinancialHealthProps> = ({ data }) => {
   const calculateFinancialHealthScore = () => {
     if (!data) return 0;
     const income = data.overallIncome ?? 0;
@@ -99,3 +99,5 @@ export const FinancialHealth: React.FC<FinancialHealthProps> = ({ data }) => {
     </Card>
   );
 };
+
+export default FinancialHealth;

@@ -39,7 +39,7 @@ interface DashboardControlsProps {
   isDarkMode: boolean;
   compactView: boolean;
   isRefreshing: boolean;
-  isLoading: boolean; // Pass loading state to disable refresh appropriately
+  isLoading: boolean;
   onChangePreset: (preset: string) => void;
   onTimeRangeChange: (rangeValue: string) => void;
   onCustomDateSelect: (range: DateRange | undefined) => void;
@@ -71,7 +71,7 @@ export const DashboardControls: React.FC<DashboardControlsProps> = ({
   onRefetchAll
 }) => {
   return (
-    <div className='sticky top-0 z-10 flex flex-col gap-4 bg-background/95 pb-3 pt-1 backdrop-blur dark:bg-background/90 sm:flex-row sm:items-center sm:justify-between'>
+    <div className='sticky top-0 z-20 flex w-full flex-col gap-4 border-b border-white/20 bg-white/10 py-4 shadow-md backdrop-blur-xl dark:border-white/10 dark:bg-white/5 sm:flex-row sm:items-center sm:justify-between'>
       <h1 className='text-3xl font-bold'>Dashboard</h1>
 
       <div className='flex flex-wrap items-center gap-2'>
@@ -189,7 +189,7 @@ export const DashboardControls: React.FC<DashboardControlsProps> = ({
           variant={isRefreshing ? 'outline' : 'default'}
           size='sm'
           onClick={onRefetchAll}
-          disabled={isRefreshing || isLoading} // Disable if initial load or refresh is happening
+          disabled={isRefreshing || isLoading}
           className='min-w-[110px]'
         >
           <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />

@@ -39,7 +39,7 @@ export const DashboardCardWrapper: React.FC<DashboardCardWrapperProps> = ({
     <Card
       className={cn(
         'flex flex-col transition-all duration-300 ease-in-out',
-        isExpanded ? 'col-span-12 !h-auto' : gridSpanClass,
+        isExpanded ? 'col-span-12 !h-auto min-h-[300px]' : gridSpanClass,
         isHidden ? 'border-dashed opacity-50' : '',
         className
       )}
@@ -51,7 +51,7 @@ export const DashboardCardWrapper: React.FC<DashboardCardWrapperProps> = ({
             <CardDescription className='text-xs md:text-sm'>{description}</CardDescription>
           )}
         </div>
-        <div className='flex items-center space-x-1'>
+        <div className='flex flex-shrink-0 items-center space-x-1'>
           <Button
             variant='ghost'
             size='icon'
@@ -76,7 +76,7 @@ export const DashboardCardWrapper: React.FC<DashboardCardWrapperProps> = ({
       <CardContent
         className={cn('flex flex-1 flex-col', noPadding ? 'p-0' : isExpanded ? 'p-4' : 'p-4 pt-0')}
       >
-        {children}
+        {!isHidden ? children : null}
       </CardContent>
     </Card>
   );

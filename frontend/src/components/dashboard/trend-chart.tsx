@@ -16,6 +16,7 @@ import {
 import { format as formatDate, isValid, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import NoData from '../ui/no-data';
 
 interface ApiChartDataPoint {
   x: number;
@@ -47,9 +48,11 @@ const chartConfig: Record<VisibilityKey, { label: string; color: string }> = {
   expense: { label: 'Expense', color: 'hsl(var(--chart-1))' },
   balance: { label: 'Balance', color: 'hsl(var(--chart-4))' }
 };
+const DEFAULT_CURRENCY = 'INR';
 
 const formatCurrencyCompact = (value: number | undefined | null, currency: string): string => {
   if (value === null || value === undefined || isNaN(value)) return `${currency}0`;
+
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: currency,
@@ -60,6 +63,7 @@ const formatCurrencyCompact = (value: number | undefined | null, currency: strin
 
 const formatCurrencyTooltip = (value: number | undefined | null, currency: string): string => {
   if (value === null || value === undefined || isNaN(value)) return `${currency}0.00`;
+
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: currency,
@@ -75,44 +79,58 @@ const processChartData = (
 ): ProcessedChartDataPoint[] => {
   const combinedMap = new Map<number, Partial<ProcessedChartDataPoint> & { timestamp: number }>();
 
-  const processSourceData = (sourceData: ApiChartDataPoint[] | undefined, key: VisibilityKey) => {
-    (sourceData || []).forEach((point) => {
+  const processDataSeries = (data: ApiChartDataPoint[] | undefined, key: VisibilityKey) => {
+    if (!data || !Array.isArray(data)) return;
+
+    data.forEach((point) => {
       if (point?.x === undefined || point.x === null) return;
+
       const date = new Date(point.x * 1000);
       if (!isValid(date)) return;
 
       const dayTimestamp = startOfDay(date).getTime() / 1000;
+
       const value = typeof point.y === 'number' && !isNaN(point.y) ? point.y : null;
 
-      const entry = combinedMap.get(dayTimestamp) || { timestamp: dayTimestamp };
+      const existingEntry = combinedMap.get(dayTimestamp);
+      const entry = existingEntry || { timestamp: dayTimestamp };
+
       entry[key] = value;
+
       combinedMap.set(dayTimestamp, entry);
     });
   };
 
-  processSourceData(incomeData, 'income');
-  processSourceData(expenseData, 'expense');
-  processSourceData(balanceData, 'balance');
+  processDataSeries(incomeData, 'income');
+  processDataSeries(expenseData, 'expense');
+  processDataSeries(balanceData, 'balance');
 
   return Array.from(combinedMap.values())
-    .sort((a, b) => (a.timestamp ?? 0) - (b.timestamp ?? 0))
+    .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))
     .map((entry) => {
-      const dateObj = new Date((entry.timestamp ?? 0) * 1000);
-      const calculatedBalance =
-        entry.balance === undefined || entry.balance === null
-          ? (entry.income ?? 0) - (entry.expense ?? 0)
-          : entry.balance;
+      const dateObj = new Date((entry.timestamp || 0) * 1000);
+
+      let calculatedBalance = entry.balance;
+      if (calculatedBalance === undefined || calculatedBalance === null) {
+        const income = entry.income || 0;
+        const expense = entry.expense || 0;
+        calculatedBalance = income - expense;
+      }
 
       return {
         dateLabel: formatDate(dateObj, 'MMM d'),
         preciseDateLabel: formatDate(dateObj, 'PPP'),
-        timestamp: entry.timestamp ?? 0,
+        timestamp: entry.timestamp || 0,
         income: entry.income ?? null,
         expense: entry.expense ?? null,
         balance: calculatedBalance
       };
     });
 };
+
+function isVisibilityKey(key: any): key is VisibilityKey {
+  return typeof key === 'string' && ['income', 'expense', 'balance'].includes(key);
+}
 
 const CustomTooltip = React.memo(({ active, payload, label, currency }: any) => {
   if (!active || !payload || !payload.length) return null;
@@ -125,7 +143,9 @@ const CustomTooltip = React.memo(({ active, payload, label, currency }: any) => 
       <p className='mb-1 font-medium'>{preciseDateLabel}</p>
       <div className='grid grid-cols-[auto_auto] gap-x-2 gap-y-0.5'>
         {payload
-          .filter((entry: any) => entry.value !== null && entry.value !== 0)
+          .filter(
+            (entry: any) => entry.value !== null && entry.dataKey && entry.value !== undefined
+          )
           .map((entry: any, index: number) => (
             <React.Fragment key={`tooltip-${index}`}>
               <div className='flex items-center gap-1.5'>
@@ -148,12 +168,15 @@ CustomTooltip.displayName = 'CustomTooltip';
 
 const CustomLegend = React.memo(({ payload, visibility, onToggle }: any) => {
   if (!payload) return null;
+
   return (
     <div className='mb-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 px-4'>
       {payload.map((entry: any, index: number) => {
         const dataKey = entry.dataKey;
         if (!dataKey || !isVisibilityKey(dataKey)) return null;
+
         const isActive = visibility[dataKey];
+
         return (
           <button
             key={`legend-${index}`}
@@ -183,16 +206,12 @@ const CustomLegend = React.memo(({ payload, visibility, onToggle }: any) => {
 });
 CustomLegend.displayName = 'CustomLegend';
 
-function isVisibilityKey(key: any): key is VisibilityKey {
-  return typeof key === 'string' && ['income', 'expense', 'balance'].includes(key);
-}
-
 export const TrendChart: React.FC<TrendChartProps> = ({
   incomeData,
   expenseData,
   balanceData,
   className,
-  currency = 'INR',
+  currency = DEFAULT_CURRENCY,
   chartType = 'line'
 }) => {
   const [visibility, setVisibility] = useState<Record<VisibilityKey, boolean>>({
@@ -200,6 +219,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
     expense: true,
     balance: true
   });
+
   const isMobile = useIsMobile();
 
   const processedChartData = useMemo(
@@ -211,44 +231,51 @@ export const TrendChart: React.FC<TrendChartProps> = ({
     setVisibility((prev) => ({ ...prev, [dataKey]: !prev[dataKey] }));
   }, []);
 
-  const yAxisDomain = useMemo(() => {
-    if (processedChartData.length === 0) return [0, 100];
-    let minVal = Infinity,
-      maxVal = -Infinity;
-    let hasVisibleData = false;
+  const yAxisDomain = useMemo((): [number, number] => {
+    if (!processedChartData || processedChartData.length === 0) return [0, 100];
 
-    processedChartData.forEach((d) => {
-      if (visibility.income && d.income !== null) {
-        maxVal = Math.max(maxVal, d.income);
-        minVal = Math.min(minVal, d.income);
-        hasVisibleData = true;
-      }
-      if (visibility.expense && d.expense !== null) {
-        maxVal = Math.max(maxVal, d.expense);
-        minVal = Math.min(minVal, d.expense);
-        hasVisibleData = true;
-      }
-      if (visibility.balance && d.balance !== null) {
-        maxVal = Math.max(maxVal, d.balance);
-        minVal = Math.min(minVal, d.balance);
-        hasVisibleData = true;
-      }
+    let minVal = Number.MAX_SAFE_INTEGER;
+    let maxVal = Number.MIN_SAFE_INTEGER;
+    let hasValidValue = false;
+
+    processedChartData.forEach((dataPoint) => {
+      ['income', 'expense', 'balance'].forEach((key) => {
+        const typedKey = key as VisibilityKey;
+        if (!visibility[typedKey]) return;
+
+        const value = dataPoint[typedKey];
+        if (value !== null && value !== undefined && Number.isFinite(value)) {
+          minVal = Math.min(minVal, value);
+          maxVal = Math.max(maxVal, value);
+          hasValidValue = true;
+        }
+      });
     });
 
-    if (!hasVisibleData) return [0, 100];
+    if (
+      !hasValidValue ||
+      minVal === Number.MAX_SAFE_INTEGER ||
+      maxVal === Number.MIN_SAFE_INTEGER
+    ) {
+      return [0, 100];
+    }
 
-    minVal = isFinite(minVal) ? minVal : 0;
-    maxVal = isFinite(maxVal) ? maxVal : 100;
-    minVal = Math.min(minVal, 0);
-    maxVal = Math.max(maxVal, 0);
+    const range = Math.max(maxVal - minVal, 1);
+    const padding = Math.max(range * 0.1, 1000);
 
-    const dataRange = maxVal - minVal;
-    const padding = Math.max(dataRange * 0.1, maxVal === 0 && minVal === 0 ? 10 : 50);
     const finalMin = Math.floor(minVal - padding);
     const finalMax = Math.ceil(maxVal + padding);
 
-    return finalMin >= finalMax ? [finalMin, finalMin + 100] : [finalMin, finalMax];
+    return [finalMin, finalMax];
   }, [processedChartData, visibility]);
+
+  if (!processedChartData || processedChartData.length === 0) {
+    return (
+      <div className={cn('flex h-full w-full items-center justify-center', className)}>
+        <NoData message='Not enough data for trends.' icon='inbox' />
+      </div>
+    );
+  }
 
   return (
     <div className={cn('h-full w-full', className)}>
@@ -261,6 +288,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
         visibility={visibility}
         onToggle={handleLegendToggle}
       />
+
       <ResponsiveContainer width='100%' height='80%'>
         <ComposedChart
           data={processedChartData}
@@ -269,6 +297,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
           barCategoryGap={isMobile ? '15%' : '20%'}
         >
           <CartesianGrid strokeDasharray='3 3' vertical={false} stroke='hsl(var(--border)/0.5)' />
+
           <XAxis
             dataKey='dateLabel'
             fontSize={10}
@@ -276,8 +305,8 @@ export const TrendChart: React.FC<TrendChartProps> = ({
             axisLine={false}
             dy={10}
             interval='preserveStartEnd'
-            tickFormatter={(value) => value}
           />
+
           <YAxis
             yAxisId='left'
             fontSize={10}
@@ -285,13 +314,15 @@ export const TrendChart: React.FC<TrendChartProps> = ({
             axisLine={false}
             tickFormatter={(value) => formatCurrencyCompact(value, currency)}
             width={isMobile ? 45 : 55}
-            domain={yAxisDomain as [number | string, number | string]}
-            allowDataOverflow={true}
+            domain={yAxisDomain}
+            allowDataOverflow={false}
           />
+
           <Tooltip
             content={<CustomTooltip currency={currency} />}
             cursor={{ fill: 'hsl(var(--accent)/0.3)' }}
           />
+
           <ReferenceLine
             yAxisId='left'
             y={0}
@@ -342,7 +373,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
                   strokeWidth={2}
                   dot={false}
                   activeDot={{ r: 4, strokeWidth: 0 }}
-                  connectNulls={false}
+                  connectNulls={true}
                 />
               )}
             </>

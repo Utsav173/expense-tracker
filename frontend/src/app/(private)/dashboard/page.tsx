@@ -1,11 +1,7 @@
 'use client';
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { accountGetDashboard, accountGetDropdown } from '@/lib/endpoints/accounts';
-import { goalGetAll } from '@/lib/endpoints/goal';
-import { DashboardData, SavingGoal, ApiResponse, AccountDropdown } from '@/lib/types';
 import { useToast } from '@/lib/hooks/useToast';
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { DateRange } from 'react-day-picker';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -21,10 +17,12 @@ import { AccountListSummary } from '@/components/dashboard/account-list-summary'
 import { QuickStats } from '@/components/dashboard/quick-stats';
 import { SpendingBreakdown } from '@/components/dashboard/spending-breakdown';
 import { DashboardCardWrapper } from '@/components/dashboard/dashboard-card-wrapper';
-import { FinancialHealth } from '@/components/dashboard/financial-health';
+import FinancialHealth from '@/components/dashboard/financial-health'; // Corrected import
 import { DASHBOARD_PRESETS, DASHBOARD_CARD_CONFIG } from '@/config/dashboard-config';
 import { cn } from '@/lib/utils';
 import { DashboardControls } from '@/components/dashboard/dashboard-controls';
+import { useDashboardData } from '@/hooks/useDashboardData';
+import { useAuth } from '@/lib/hooks/useAuth';
 
 interface DashboardSettings {
   preset: string;
@@ -38,7 +36,7 @@ interface DashboardSettings {
 
 const initialDashboardSettings: DashboardSettings = {
   preset: 'default',
-  timeRangeOption: 'month',
+  timeRangeOption: 'thisMonth',
   customDateRange: undefined,
   darkMode: false,
   compactView: false,
@@ -48,7 +46,7 @@ const initialDashboardSettings: DashboardSettings = {
 
 const DashboardPage = () => {
   const { showSuccess, showError } = useToast();
-  const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const [dashboardSettings, setDashboardSettings] =
     useState<DashboardSettings>(initialDashboardSettings);
@@ -57,19 +55,38 @@ const DashboardPage = () => {
   const [chartType, setChartType] = useState<'line' | 'bar' | 'area'>('line');
 
   const currentPreset = dashboardSettings.preset;
-  const timeRangeOption = dashboardSettings.timeRangeOption;
-  const customDateRange = dashboardSettings.customDateRange;
-  const isDarkMode = dashboardSettings.darkMode;
-  const compactView = dashboardSettings.compactView;
   const hiddenSections = useMemo(
     () => new Set(dashboardSettings.hiddenSections || []),
     [dashboardSettings.hiddenSections]
   );
-  const refreshInterval = dashboardSettings.refreshInterval;
 
-  const updateSettings = useCallback((updates: Partial<DashboardSettings>) => {
-    setDashboardSettings((prev) => ({ ...prev, ...updates }));
-  }, []);
+  const {
+    data: dashboardPageData,
+    isLoading,
+    isFetching,
+    isError,
+    error,
+    refetch
+  } = useDashboardData({
+    timeRangeOption: dashboardSettings.timeRangeOption,
+    customDateRange: dashboardSettings.customDateRange,
+    user: user
+  });
+
+  const updateSettings = useCallback(
+    (updates: Partial<DashboardSettings>) => {
+      setDashboardSettings((prev) => ({ ...prev, ...updates }));
+      if (
+        (updates.timeRangeOption && updates.timeRangeOption !== 'custom') ||
+        (updates.timeRangeOption === 'custom' &&
+          updates.customDateRange?.from &&
+          updates.customDateRange?.to)
+      ) {
+        setTimeout(() => refetch(), 0);
+      }
+    },
+    [refetch]
+  );
 
   const toggleSectionVisibility = useCallback(
     (sectionId: string) => {
@@ -95,22 +112,13 @@ const DashboardPage = () => {
 
   const refetchAll = useCallback(async () => {
     try {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['dashboardData'] }),
-        queryClient.invalidateQueries({ queryKey: ['goalsDashboard'] }),
-        queryClient.invalidateQueries({ queryKey: ['accountsDropdownDashboard'] }),
-        queryClient.invalidateQueries({ queryKey: ['budgetSummaryDashboard'] }),
-        queryClient.invalidateQueries({ queryKey: ['outstandingDebtsDashboard'] }),
-        queryClient.invalidateQueries({ queryKey: ['investmentPortfolioSummaryDashboard'] }),
-        queryClient.invalidateQueries({ queryKey: ['investmentPortfolioHistoricalDashboard'] }),
-        queryClient.invalidateQueries({ queryKey: ['spendingBreakdown'] })
-      ]);
+      await refetch();
       showSuccess('Dashboard data refreshed.');
-    } catch (error) {
-      console.error('Error invalidating queries:', error);
-      showError('Failed to initiate dashboard refresh.');
+    } catch (fetchError) {
+      console.error('Error refreshing dashboard:', fetchError);
+      showError('Failed to refresh dashboard data.');
     }
-  }, [queryClient, showSuccess, showError]);
+  }, [refetch, showSuccess, showError]);
 
   const changePreset = useCallback(
     (presetKey: string) => {
@@ -132,11 +140,8 @@ const DashboardPage = () => {
         timeRangeOption: rangeValue,
         customDateRange: rangeValue !== 'custom' ? undefined : dashboardSettings.customDateRange
       });
-      if (rangeValue !== 'custom') {
-        setTimeout(() => refetchAll(), 0);
-      }
     },
-    [dashboardSettings.customDateRange, refetchAll, updateSettings]
+    [dashboardSettings.customDateRange, updateSettings]
   );
 
   const handleCustomDateSelect = useCallback(
@@ -145,11 +150,8 @@ const DashboardPage = () => {
         customDateRange: range,
         timeRangeOption: range?.from && range?.to ? 'custom' : dashboardSettings.timeRangeOption
       });
-      if (range?.from && range?.to) {
-        setTimeout(() => refetchAll(), 0);
-      }
     },
-    [dashboardSettings.timeRangeOption, refetchAll, updateSettings]
+    [dashboardSettings.timeRangeOption, updateSettings]
   );
 
   const toggleCardExpansion = useCallback(
@@ -178,135 +180,43 @@ const DashboardPage = () => {
     [showSuccess, refetchAll, updateSettings]
   );
 
-  const queryParams = useMemo(() => {
-    const params: { timeRange?: string; startDate?: string; endDate?: string } = {};
-    if (
-      timeRangeOption === 'custom' &&
-      customDateRange?.from instanceof Date &&
-      customDateRange?.to instanceof Date
-    ) {
-      params.timeRange = 'custom';
-      try {
-        params.startDate = customDateRange.from.toISOString().split('T')[0];
-        params.endDate = customDateRange.to.toISOString().split('T')[0];
-      } catch (e) {
-        console.error('Error converting custom dates to ISO string:', e);
-        return undefined;
-      }
-    } else if (timeRangeOption !== 'custom') {
-      params.timeRange = timeRangeOption;
-    }
-    return params.timeRange ? params : undefined;
-  }, [timeRangeOption, customDateRange]);
-
-  const {
-    data: dashboardData,
-    isLoading: isDashboardLoading,
-    error: dashboardError,
-    isFetching: isDashboardFetching
-  } = useQuery({
-    queryKey: ['dashboardData', queryParams],
-    queryFn: () => accountGetDashboard(queryParams),
-    retry: 1,
-    staleTime: 5 * 60 * 1000,
-    refetchInterval: refreshInterval > 0 ? refreshInterval : false,
-    enabled: !!queryParams
-  });
-
-  const {
-    data: goalsData,
-    isLoading: isGoalsLoading,
-    error: goalsError
-  } = useQuery({
-    queryKey: ['goalsDashboard'],
-    queryFn: () => goalGetAll({ page: 1, limit: 5 }),
-    retry: 1,
-    staleTime: 15 * 60 * 1000,
-    enabled: true
-  });
-
-  const {
-    data: accountsDropdownData,
-    isLoading: isAccountsDropdownLoading,
-    error: accountsDropdownError
-  } = useQuery({
-    queryKey: ['accountsDropdownDashboard'],
-    queryFn: accountGetDropdown,
-    retry: 1,
-    staleTime: 30 * 60 * 1000,
-    enabled: true
-  });
-
-  const isLoading = isDashboardLoading || isAccountsDropdownLoading || isGoalsLoading;
-
-  const isRefreshing = isDashboardFetching;
-
-  const hasError = useMemo(
-    () => !!dashboardError || !!accountsDropdownError || !!goalsError,
-    [dashboardError, accountsDropdownError, goalsError]
-  );
-
-  const combinedError = useMemo(
-    () => dashboardError || accountsDropdownError || goalsError,
-    [dashboardError, accountsDropdownError, goalsError]
-  );
-
-  const accountIdToCurrencyMap = useMemo(() => {
-    const map = new Map<string, string>();
-    accountsDropdownData?.forEach((acc: AccountDropdown) => {
-      if (acc?.id && acc.currency) {
-        map.set(acc.id, acc.currency);
-      }
-    });
-    return map;
-  }, [accountsDropdownData]);
-
   const currentLayoutConfig =
     DASHBOARD_CARD_CONFIG[currentPreset] || DASHBOARD_CARD_CONFIG['default'];
 
   const cardMap: Record<string, React.ReactNode> = useMemo(
     () => ({
-      financialHealth: dashboardData ? <FinancialHealth data={dashboardData} /> : null,
-      financialSnapshot: dashboardData ? (
-        <FinancialSnapshot data={dashboardData} isLoading={isDashboardLoading} />
+      financialHealth: dashboardPageData?.dashboardSummary ? (
+        <FinancialHealth data={dashboardPageData.dashboardSummary} />
       ) : null,
-      trendChart: dashboardData ? (
+      financialSnapshot: dashboardPageData?.dashboardSummary ? (
+        <FinancialSnapshot data={dashboardPageData.dashboardSummary} isLoading={isLoading} />
+      ) : null,
+      trendChart: dashboardPageData?.dashboardSummary ? (
         <TrendChartWrapper
-          data={dashboardData}
+          data={dashboardPageData.dashboardSummary}
           chartType={chartType}
-          isLoading={isDashboardLoading && !dashboardData}
+          isLoading={isLoading && !dashboardPageData?.dashboardSummary}
           expanded={expandedCard === 'trendChart'}
           setChartType={setChartType}
         />
-      ) : (
-        <NoData />
-      ),
+      ) : null,
       spendingBreakdown: <SpendingBreakdown className='h-full' />,
       budgetProgress: <BudgetProgress />,
-      goals: <GoalHighlights data={goalsData?.data} isLoading={isGoalsLoading} />,
+      goals: <GoalHighlights data={dashboardPageData?.goals ?? undefined} isLoading={isLoading} />, // Fixed: Handle null with ??
       investments: <InvestmentSummaryCard />,
       debtSummary: <DebtSummaryCard />,
       accounts: (
         <AccountListSummary
-          accountsInfo={dashboardData?.accountsInfo}
-          accountIdToCurrencyMap={accountIdToCurrencyMap}
-          isLoading={isDashboardLoading || isAccountsDropdownLoading}
+          accountsInfo={dashboardPageData?.dashboardSummary?.accountsInfo}
+          accountIdToCurrencyMap={dashboardPageData?.accountIdToCurrencyMap ?? new Map()}
+          isLoading={isLoading}
         />
       ),
-      quickStats: dashboardData ? (
-        <QuickStats data={dashboardData} isLoading={isDashboardLoading} />
+      quickStats: dashboardPageData?.dashboardSummary ? (
+        <QuickStats data={dashboardPageData.dashboardSummary} isLoading={isLoading} />
       ) : null
     }),
-    [
-      dashboardData,
-      isDashboardLoading,
-      isAccountsDropdownLoading,
-      isGoalsLoading,
-      goalsData,
-      chartType,
-      expandedCard,
-      accountIdToCurrencyMap
-    ]
+    [dashboardPageData, isLoading, chartType, expandedCard]
   );
 
   const renderSkeleton = () => (
@@ -314,48 +224,49 @@ const DashboardPage = () => {
       <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <Skeleton className='h-9 w-48 rounded-md' />
         <div className='flex flex-wrap items-center gap-2'>
-          <Skeleton className='h-9 w-32 rounded-md' />
-          <Skeleton className='h-9 w-32 rounded-md' />
-          <Skeleton className='h-9 w-32 rounded-md' />
-          <Skeleton className='h-9 w-28 rounded-md' />
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className='h-9 w-28 rounded-md' />
+          ))}
         </div>
       </div>
       <Skeleton className='h-28 w-full rounded-lg' />
-      <Skeleton className='h-40 w-full rounded-lg' />
       <div className='grid grid-cols-12 gap-6'>
         <Skeleton className='col-span-12 h-[400px] w-full rounded-lg lg:col-span-8' />
         <Skeleton className='col-span-12 h-[400px] w-full rounded-lg lg:col-span-4' />
-      </div>
-      <div className='grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4'>
-        {[...Array(4)].map((_, i) => (
-          <Skeleton key={`sk-small-${i}`} className='h-[280px] w-full rounded-lg' />
-        ))}
-      </div>
-      <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-        <Skeleton className='h-[280px] w-full rounded-lg' />
-        <Skeleton className='h-[280px] w-full rounded-lg' />
       </div>
     </div>
   );
 
   const renderErrorState = () => (
     <div className='mx-auto w-full max-w-7xl p-6 lg:p-8'>
-      <div className='sticky top-0 z-10 mb-6 flex flex-col gap-4 bg-background/95 pb-3 pt-1 backdrop-blur dark:bg-background/90 sm:flex-row sm:items-center sm:justify-between'>
-        <h1 className='text-3xl font-bold'>Dashboard</h1>
-        <div className='flex flex-wrap items-center gap-2'>
-          <button className='' onClick={refetchAll}>
-            Retry
-          </button>
-        </div>
-      </div>
+      <DashboardControls
+        currentPreset={dashboardSettings.preset}
+        timeRangeOption={dashboardSettings.timeRangeOption}
+        customDateRange={dashboardSettings.customDateRange}
+        layoutConfig={currentLayoutConfig}
+        hiddenSections={hiddenSections}
+        refreshInterval={dashboardSettings.refreshInterval}
+        isDarkMode={dashboardSettings.darkMode}
+        compactView={dashboardSettings.compactView}
+        isRefreshing={isFetching}
+        isLoading={isLoading}
+        onChangePreset={changePreset}
+        onTimeRangeChange={handleTimeRangeChange}
+        onCustomDateSelect={handleCustomDateSelect}
+        onToggleSectionVisibility={toggleSectionVisibility}
+        onSetRefreshInterval={handleSetRefreshInterval}
+        onToggleDarkMode={toggleDarkMode}
+        onToggleCompactView={toggleCompactView}
+        onRefetchAll={refetchAll}
+      />
       <Alert variant='destructive' className='mt-6'>
         <Frown className='h-4 w-4' />
         <AlertTitle>Oops! Something went wrong.</AlertTitle>
         <AlertDescription>
           We couldn't load your dashboard data. Please check your connection and try refreshing.
-          {combinedError && (
+          {error && (
             <div className='mt-2 text-xs text-muted-foreground'>
-              Error: {(combinedError as Error).message}
+              Error: {(error as Error).message}
             </div>
           )}
         </AlertDescription>
@@ -363,27 +274,31 @@ const DashboardPage = () => {
     </div>
   );
 
-  if (isLoading && !isRefreshing && !dashboardData) {
+  if (isLoading && !isFetching) {
     return renderSkeleton();
   }
 
-  if (hasError && !dashboardData) {
+  if (isError && !dashboardPageData) {
     return renderErrorState();
   }
 
-  if (!isLoading && !hasError && dashboardData && dashboardData.totalTransaction < 2) {
+  if (
+    !isLoading &&
+    dashboardPageData &&
+    (dashboardPageData.dashboardSummary?.totalTransaction ?? 0) < 1
+  ) {
     return (
       <div className='mx-auto w-full min-w-0 max-w-7xl space-y-4 p-4 pt-6 max-sm:max-w-full md:space-y-6 lg:p-8 lg:pt-8'>
         <DashboardControls
-          currentPreset={currentPreset}
-          timeRangeOption={timeRangeOption}
-          customDateRange={customDateRange}
+          currentPreset={dashboardSettings.preset}
+          timeRangeOption={dashboardSettings.timeRangeOption}
+          customDateRange={dashboardSettings.customDateRange}
           layoutConfig={currentLayoutConfig}
           hiddenSections={hiddenSections}
-          refreshInterval={refreshInterval}
-          isDarkMode={isDarkMode}
-          compactView={compactView}
-          isRefreshing={isRefreshing}
+          refreshInterval={dashboardSettings.refreshInterval}
+          isDarkMode={dashboardSettings.darkMode}
+          compactView={dashboardSettings.compactView}
+          isRefreshing={isFetching}
           isLoading={isLoading}
           onChangePreset={changePreset}
           onTimeRangeChange={handleTimeRangeChange}
@@ -395,7 +310,7 @@ const DashboardPage = () => {
           onRefetchAll={refetchAll}
         />
         <NoData
-          message='Your Dashboard is Ready! Add some transactions to see your trends.'
+          message='Your Dashboard is Ready! Add some accounts and transactions to see your trends.'
           icon={LayoutGrid}
           className='h-[calc(100vh-250px)]'
         />
@@ -407,19 +322,19 @@ const DashboardPage = () => {
     <div
       className={cn(
         'min-w-o mx-auto w-full max-w-7xl space-y-4 pt-6 transition-all duration-200 max-sm:max-w-full md:space-y-6 lg:p-8 lg:pt-8',
-        compactView ? 'space-y-3' : ''
+        dashboardSettings.compactView ? 'space-y-3' : ''
       )}
     >
       <DashboardControls
-        currentPreset={currentPreset}
-        timeRangeOption={timeRangeOption}
-        customDateRange={customDateRange}
+        currentPreset={dashboardSettings.preset}
+        timeRangeOption={dashboardSettings.timeRangeOption}
+        customDateRange={dashboardSettings.customDateRange}
         layoutConfig={currentLayoutConfig}
         hiddenSections={hiddenSections}
-        refreshInterval={refreshInterval}
-        isDarkMode={isDarkMode}
-        compactView={compactView}
-        isRefreshing={isRefreshing}
+        refreshInterval={dashboardSettings.refreshInterval}
+        isDarkMode={dashboardSettings.darkMode}
+        compactView={dashboardSettings.compactView}
+        isRefreshing={isFetching}
         isLoading={isLoading}
         onChangePreset={changePreset}
         onTimeRangeChange={handleTimeRangeChange}
@@ -430,6 +345,17 @@ const DashboardPage = () => {
         onToggleCompactView={toggleCompactView}
         onRefetchAll={refetchAll}
       />
+
+      {isError && dashboardPageData && (
+        <Alert variant='destructive' className='mt-4'>
+          <Frown className='h-4 w-4' />
+          <AlertTitle>Data Update Issue</AlertTitle>
+          <AlertDescription>
+            Could not update all dashboard sections. Some data might be stale.
+            {error && <div className='mt-1 text-xs'>Details: {(error as Error).message}</div>}
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className='grid grid-cols-12 gap-4'>
         {Object.entries(currentLayoutConfig)

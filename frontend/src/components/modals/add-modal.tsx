@@ -18,6 +18,7 @@ interface AddModalProps {
   triggerButton: ReactNode;
   onOpenChange?: (open: boolean) => void;
   isOpen?: boolean;
+  hideClose?: boolean;
 }
 
 const AddModal: React.FC<AddModalProps> = ({
@@ -26,12 +27,13 @@ const AddModal: React.FC<AddModalProps> = ({
   children,
   triggerButton,
   onOpenChange,
-  isOpen
+  isOpen,
+  hideClose = false
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange} modal>
       <DialogTrigger asChild>{triggerButton}</DialogTrigger>
-      <DialogContent>
+      <DialogContent hideClose={hideClose}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>

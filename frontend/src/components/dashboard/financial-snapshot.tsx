@@ -4,6 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn, formatCurrency } from '@/lib/utils';
 import { DashboardData } from '@/lib/types';
 import { ChangeIndicator } from '@/components/ui/change-indicator';
+import NoData from '../ui/no-data';
 
 interface FinancialSnapshotProps {
   data: DashboardData | null | undefined;
@@ -16,7 +17,7 @@ export const FinancialSnapshot: React.FC<FinancialSnapshotProps> = ({
   isLoading,
   className
 }) => {
-  if (isLoading || !data) {
+  if (isLoading) {
     return (
       <Card className={cn('col-span-1 sm:col-span-2 lg:col-span-4', className)}>
         <CardHeader className='p-4'>
@@ -41,6 +42,19 @@ export const FinancialSnapshot: React.FC<FinancialSnapshotProps> = ({
     );
   }
 
+  if (!data) {
+    return (
+      <Card className={cn('col-span-1 sm:col-span-2 lg:col-span-4', className)}>
+        <CardHeader className='bg-gradient-to-r from-indigo-600 to-blue-500 p-4 text-primary-foreground'>
+          <CardTitle className='text-lg font-semibold'>Financial Snapshot</CardTitle>
+        </CardHeader>
+        <CardContent className='py-10'>
+          <NoData message='Snapshot data unavailable.' icon='x-circle' />
+        </CardContent>
+      </Card>
+    );
+  }
+
   const primaryMetric = data.overallBalance;
   const income = data.overallIncome;
   const expense = data.overallExpense;
@@ -48,7 +62,9 @@ export const FinancialSnapshot: React.FC<FinancialSnapshotProps> = ({
   const expenseChange = data.overallExpenseChange;
 
   return (
-    <Card className='col-span-1 overflow-hidden shadow-md sm:col-span-2 lg:col-span-4'>
+    <Card
+      className={cn('col-span-1 overflow-hidden shadow-md sm:col-span-2 lg:col-span-4', className)}
+    >
       <CardHeader className='bg-gradient-to-r from-indigo-600 to-blue-500 p-4 text-primary-foreground'>
         <CardTitle className='text-lg font-semibold'>Financial Snapshot</CardTitle>
       </CardHeader>

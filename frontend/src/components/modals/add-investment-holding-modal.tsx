@@ -358,6 +358,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
       }
       isOpen={isOpen}
       onOpenChange={onOpenChange}
+      hideClose
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleCreate)} className='space-y-6'>

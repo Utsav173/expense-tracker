@@ -9,7 +9,7 @@ import NoData from '../ui/no-data';
 import { TrendChart } from './trend-chart';
 
 interface TrendChartWrapperProps {
-  data: DashboardData;
+  data: DashboardData | null | undefined;
   chartType: 'line' | 'bar' | 'area';
   isLoading: boolean;
   expanded: boolean;
@@ -28,22 +28,20 @@ const TrendChartWrapper: React.FC<TrendChartWrapperProps> = ({
   const handleTabChange = (value: string) => {
     setChartType(value as 'line' | 'bar' | 'area');
   };
-  console.log(data);
 
-  const incomeChartData = data.incomeChartData ?? [];
-  const expenseChartData = data.expenseChartData ?? [];
-  const balanceChartData = data.balanceChartData ?? [];
+  const incomeChartData = data?.incomeChartData ?? [];
+  const expenseChartData = data?.expenseChartData ?? [];
+  const balanceChartData = data?.balanceChartData ?? [];
   const currency = data?.accountsInfo?.[0]?.currency ?? 'INR';
 
   const renderContent = () => {
     if (isLoading) {
       return <Skeleton className='h-full w-full' />;
     }
-    if (
-      incomeChartData.length === 0 &&
-      expenseChartData.length === 0 &&
-      balanceChartData.length === 0
-    ) {
+    const hasData =
+      incomeChartData.length > 0 || expenseChartData.length > 0 || balanceChartData.length > 0;
+
+    if (!hasData) {
       return <NoData message='No trend data available for the selected period.' icon='inbox' />;
     }
 
