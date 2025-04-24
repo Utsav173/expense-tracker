@@ -511,23 +511,23 @@ export const getDateTruncate = (duration: string | undefined): string => {
 
   if (startDate && endDate) {
     const days = differenceInDays(endDate, startDate);
-    if (days <= 31) return `TO_CHAR("createdAt"::timestamp, 'YYYY-MM-DD')`;
-    if (days <= 366) return `TO_CHAR("createdAt"::timestamp, 'YYYY-MM')`;
-    return `TO_CHAR("createdAt"::timestamp, 'YYYY')`;
+    if (days <= 31) return `date_trunc('day', "createdAt"::timestamp)::date`;
+    if (days <= 366) return `date_trunc('month', "createdAt"::timestamp)::date`;
+    return `date_trunc('year', "createdAt"::timestamp)::date`;
   }
 
   switch (duration) {
     case 'today':
-      return `TO_CHAR("createdAt"::timestamp, 'YYYY-MM-DD HH24')`;
+      return `date_trunc('hour', "createdAt"::timestamp)::timestamp`;
     case 'thisWeek':
     case 'thisMonth':
-      return `TO_CHAR("createdAt"::timestamp, 'YYYY-MM-DD')`;
+      return `date_trunc('day', "createdAt"::timestamp)::date`;
     case 'thisYear':
-      return `TO_CHAR("createdAt"::timestamp, 'YYYY-MM')`;
+      return `date_trunc('month', "createdAt"::timestamp)::date`;
     case 'all':
-      return `TO_CHAR("createdAt"::timestamp, 'YYYY')`;
+      return `date_trunc('year', "createdAt"::timestamp)::date`;
     default:
-      return `TO_CHAR("createdAt"::timestamp, 'YYYY-MM-DD')`;
+      return `date_trunc('day', "createdAt"::timestamp)::date`;
   }
 };
 
@@ -556,7 +556,7 @@ export const getDateFormatting = (duration: string | undefined): string => {
       const days = differenceInDays(endDate, startDate);
       if (days <= 31) return `TO_CHAR(date::date, 'Mon DD')`;
       if (days <= 366) return `TO_CHAR(date::date, 'Mon YYYY')`;
-      return `date`;
+      return `TO_CHAR(date::date, 'YYYY')`;
     }
   }
 
@@ -569,7 +569,7 @@ export const getDateFormatting = (duration: string | undefined): string => {
     case 'thisYear':
       return `TO_CHAR(date::date, 'Mon YYYY')`;
     case 'all':
-      return `date`;
+      return `TO_CHAR(date::date, 'YYYY')`;
     default:
       return `TO_CHAR(date::date, 'Mon DD')`;
   }
