@@ -75,16 +75,14 @@ export const useTransactions = (
       filters.sortBy,
       filters.sortOrder
     ],
-    queryFn: () =>
-      transactionGetAll({
+    queryFn: () => {
+      const duration = filters.dateRange?.from && filters.dateRange.to
+        ? `${format(filters.dateRange.from, 'yyyy-MM-dd')},${format(filters.dateRange.to, 'yyyy-MM-dd')}`
+        : undefined;
+
+      return transactionGetAll({
         accountId: filters.accountId === 'all' ? '' : filters.accountId,
-        duration:
-          filters.dateRange?.from && filters.dateRange.to
-            ? `${format(filters.dateRange.from, 'yyyy-MM-dd')},${format(
-                filters.dateRange.to,
-                'yyyy-MM-dd'
-              )}`
-            : undefined,
+        duration,
         page,
         pageSize: 10,
         q: debouncedSearchQuery,
@@ -92,9 +90,11 @@ export const useTransactions = (
         sortOrder: filters.sortOrder,
         categoryId: filters.categoryId === 'all' ? '' : filters.categoryId,
         isIncome: filters.isIncome
-      }),
+      });
+    },
     staleTime: 5 * 60 * 1000,
-    retry: false
+    retry: false,
+    enabled: !filters.dateRange || (!!filters.dateRange.from && !!filters.dateRange.to)
   });
 
   const updateURL = useCallback(
@@ -139,13 +139,26 @@ export const useTransactions = (
   };
 
   const handleDateRangeSelect = (range: DateRange | undefined) => {
-    setFilters((prevFilters) => ({ ...prevFilters, dateRange: range }));
-    if (range?.from && range.to) {
-      updateURL({
-        dateFrom: format(range.from, 'yyyy-MM-dd'),
-        dateTo: format(range.to, 'yyyy-MM-dd'),
-        page: undefined
-      });
+    if ((range?.from && range.to) || !range) {
+      if (range?.from && range.to) {
+        const startDate = new Date(range.from);
+        const endDate = new Date(range.to);
+        
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(0, 0, 0, 0);
+        
+        if (startDate <= endDate) {
+          setFilters((prevFilters) => ({ ...prevFilters, dateRange: { from: startDate, to: endDate } }));
+          updateURL({
+            dateFrom: format(startDate, 'yyyy-MM-dd'),
+            dateTo: format(endDate, 'yyyy-MM-dd'),
+            page: undefined
+          });
+        }
+      } else {
+        setFilters((prevFilters) => ({ ...prevFilters, dateRange: undefined }));
+        updateURL({ dateFrom: undefined, dateTo: undefined, page: undefined });
+      }
     }
   };
 

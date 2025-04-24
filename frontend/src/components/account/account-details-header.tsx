@@ -16,24 +16,29 @@ interface AccountDetailsHeaderProps {
   isLoading: boolean;
   refetchData: () => Promise<void>;
 }
+
 export const AccountDetailsHeader: React.FC<AccountDetailsHeaderProps> = ({
   account,
   isLoading,
   refetchData
 }) => {
+  const isMobile = useIsMobile();
+
   return (
     <section className='flex min-w-0 flex-col items-center justify-between gap-4 rounded-xl bg-gradient-to-r from-background to-muted p-4 shadow-sm md:flex-row md:gap-6 md:p-6'>
       {isLoading || !account ? (
         <Skeleton className='h-8 w-full md:w-1/2' />
       ) : (
         <>
-          <SingleLineEllipsis
-            showTooltip
-            className='text-center text-xl font-semibold text-foreground md:min-w-0 md:text-left'
-          >
-            {account?.name}
-          </SingleLineEllipsis>
-          <div className='flex flex-shrink-0 flex-row items-center gap-2 max-md:flex-wrap max-md:justify-center md:gap-4'>
+          <div className='flex min-w-0 flex-1 items-center justify-center md:justify-start'>
+            <SingleLineEllipsis
+              showTooltip
+              className='text-center text-xl font-semibold text-foreground md:text-left'
+            >
+              {account?.name}
+            </SingleLineEllipsis>
+          </div>
+          <div className='flex flex-shrink-0 flex-row items-center gap-2 max-md:w-full max-md:justify-center md:gap-4'>
             <ShareAccountModal
               accountId={account.id}
               triggerButton={
@@ -48,7 +53,7 @@ export const AccountDetailsHeader: React.FC<AccountDetailsHeaderProps> = ({
                 </Button>
               }
             />
-            <Link href={`/accounts/shares/${account?.id}`}>
+            <Link href={`/accounts/shares/${account?.id}`} className='flex-shrink-0'>
               <Button
                 variant='outline'
                 size='sm'

@@ -15,6 +15,7 @@ import CommonTable from './ui/CommonTable';
 import { useMutation } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { SingleLineEllipsis } from './ui/ellipsis-components';
 
 interface TransactionTableProps {
   transactions: TransactionType[] | undefined;
@@ -78,12 +79,20 @@ const TransactionTable = ({
         accessorKey: 'text',
         header: 'Description / Transfer',
         cell: ({ row }) => (
-          <div className='flex flex-col'>
-            <span className='max-w-[200px] truncate font-medium'>{row.original.text}</span>
+          <div className='flex flex-col space-y-1'>
+            <SingleLineEllipsis
+              showTooltip
+              className='font-medium max-md:max-w-[150px] md:max-w-[200px]'
+            >
+              {row.original.text}
+            </SingleLineEllipsis>
             {row.original.transfer && (
-              <span className='max-w-[200px] truncate text-xs text-muted-foreground'>
+              <SingleLineEllipsis
+                showTooltip
+                className='text-xs text-muted-foreground max-md:max-w-[150px] md:max-w-[200px]'
+              >
                 via {row.original.transfer}
-              </span>
+              </SingleLineEllipsis>
             )}
           </div>
         ),
@@ -96,14 +105,23 @@ const TransactionTable = ({
           const transaction = row.original;
           const sign = transaction.isIncome ? '+' : '-';
           return (
-            <div
-              className={cn(
-                'min-w-fit font-medium',
-                transaction.isIncome ? 'text-green-600' : 'text-red-600'
-              )}
-            >
-              {sign}
-              {formatCurrency(transaction.amount, transaction.currency)}
+            <div className='flex items-center gap-2'>
+              <div
+                className={cn(
+                  'whitespace-nowrap font-medium',
+                  transaction.isIncome ? 'text-green-600' : 'text-red-600'
+                )}
+              >
+                {sign}
+                {formatCurrency(transaction.amount, transaction.currency)}
+              </div>
+              <div className='flex items-center md:hidden'>
+                {transaction.isIncome ? (
+                  <ArrowUpCircle className='h-4 w-4 text-green-500' />
+                ) : (
+                  <ArrowDownCircle className='h-4 w-4 text-red-500' />
+                )}
+              </div>
             </div>
           );
         },
@@ -113,8 +131,16 @@ const TransactionTable = ({
         accessorKey: 'category.name',
         header: 'Category',
         cell: ({ row }) => (
-          <Badge variant='outline' className='max-w-[150px] truncate whitespace-nowrap'>
-            {row.original.category?.name ?? 'Uncategorized'}
+          <Badge
+            variant='outline'
+            className='max-w-[120px] md:max-w-[150px] truncate whitespace-nowrap'
+          >
+            <SingleLineEllipsis
+              showTooltip
+              className='max-w-[100px] md:max-w-[130px] truncate'
+            >
+              {row.original.category?.name ?? 'Uncategorized'}
+            </SingleLineEllipsis>
           </Badge>
         ),
         enableSorting: true
@@ -125,9 +151,13 @@ const TransactionTable = ({
         cell: ({ row }) => {
           const date = new Date(row.original.createdAt);
           return (
-            <div className='whitespace-nowrap text-sm'>
-              {format(date, 'MMM d, yyyy')}
-              <span className='ml-2 text-xs text-muted-foreground'>{format(date, 'h:mm a')}</span>
+            <div className='flex flex-col text-sm max-md:items-end'>
+              <span className='whitespace-nowrap font-medium'>
+                {format(date, 'MMM d, yyyy')}
+              </span>
+              <span className='text-xs text-muted-foreground'>
+                {format(date, 'h:mm a')}
+              </span>
             </div>
           );
         },
@@ -137,7 +167,7 @@ const TransactionTable = ({
         accessorKey: 'isIncome',
         header: 'Type',
         cell: ({ row }) => (
-          <div className='flex items-center gap-1'>
+          <div className='hidden md:flex items-center gap-1'>
             {row.original.isIncome ? (
               <ArrowUpCircle className='h-4 w-4 text-green-500' />
             ) : (
@@ -155,17 +185,21 @@ const TransactionTable = ({
           const transaction = row.original;
           if (!transaction.recurring) return null;
 
-          const tooltipContent = `Type: ${transaction.recurrenceType || 'N/A'} ${
-            transaction.recurrenceEndDate
-              ? ` | Ends: ${format(new Date(transaction.recurrenceEndDate), 'MMM d, yyyy')}`
-              : ''
-          }`;
+          const tooltipContent = `Type: ${transaction.recurrenceType || 'N/A'} ${transaction.recurrenceEndDate
+            ? ` | Ends: ${format(new Date(transaction.recurrenceEndDate), 'MMM d, yyyy')}`
+            : ''
+            }`;
 
           return (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Repeat className='h-4 w-4 text-blue-500' />
+                  <div className='flex items-center'>
+                    <Repeat className='h-4 w-4 text-blue-500' />
+                    <span className='ml-1 text-xs text-muted-foreground md:hidden'>
+                      {transaction.recurrenceType}
+                    </span>
+                  </div>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>{tooltipContent}</p>
@@ -180,19 +214,28 @@ const TransactionTable = ({
         accessorKey: 'createdBy.name',
         header: 'Created By',
         cell: ({ row }) => (
-          <div className='max-w-[120px] truncate text-sm'>
+          <SingleLineEllipsis
+            showTooltip
+            className='text-sm max-w-[80px] md:max-w-[120px]'
+          >
             {row.original.createdBy?.name ?? 'N/A'}
-          </div>
+          </SingleLineEllipsis>
         ),
         enableSorting: false
       },
       {
         id: 'actions',
-        header: () => <div className='text-right'>Actions</div>,
+        header: () => 'Actions',
+        headerAlign: 'right',
         cell: ({ row }) => (
           <div className='flex justify-end gap-1'>
-            <Button size='icon' variant='ghost' onClick={() => handleEditClick(row.original)}>
-              <Pencil className='h-4 w-4' />
+            <Button
+              size='icon'
+              variant='ghost'
+              onClick={() => handleEditClick(row.original)}
+              className='h-8 w-8'
+            >
+              <Pencil className='h-3.5 w-3.5' />
               <span className='sr-only'>Edit</span>
             </Button>
             <DeleteConfirmationModal
@@ -220,10 +263,10 @@ const TransactionTable = ({
                 <Button
                   size='icon'
                   variant='ghost'
-                  className='text-destructive hover:text-destructive'
+                  className='h-8 w-8 text-destructive hover:text-destructive'
                   onClick={() => handleDeleteClick(row.original.id)}
                 >
-                  <Trash2 className='h-4 w-4' />
+                  <Trash2 className='h-3.5 w-3.5' />
                   <span className='sr-only'>Delete</span>
                 </Button>
               }
@@ -261,7 +304,7 @@ const TransactionTable = ({
         enablePagination={true}
         sortBy={sortBy}
         sortOrder={sortOrder}
-        mobileTriggerColumns={['text', 'amount']}
+        mobileTriggerColumns={['text', 'amount', 'category.name']}
       />
       <UpdateTransactionModal
         isOpen={isUpdateModalOpen}

@@ -26,6 +26,7 @@ import {
   Moon
 } from 'lucide-react';
 import { DASHBOARD_PRESETS, PresetConfig, TIME_RANGES } from '@/config/dashboard-config';
+import TooltipElement from '../ui/tooltip-element';
 
 interface DashboardControlsProps {
   currentPreset: string;
@@ -90,9 +91,11 @@ export const DashboardControls: React.FC<DashboardControlsProps> = ({
             <DropdownMenuSeparator />
             <DatePickerWithRange
               trigger={
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                  Custom Range...
-                </DropdownMenuItem>
+                <TooltipElement tooltipContent='Custom Range comming soon'>
+                  <DropdownMenuItem className='cursor-progress' onSelect={(e) => e.preventDefault()}>
+                    Custom Range...
+                  </DropdownMenuItem>
+                </TooltipElement>
               }
               onDateChange={onCustomDateSelect}
               initialDate={customDateRange}
