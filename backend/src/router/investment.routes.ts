@@ -502,6 +502,12 @@ investmentRouter.get('/stocks/historical-price/:symbol', authMiddleware, async (
   }
 });
 
+// Helper function to check if date is a weekend
+function isWeekend(date: Date): boolean {
+  const day = date.getDay();
+  return day === 0 || day === 6; // 0 is Sunday, 6 is Saturday
+}
+
 investmentRouter.get(
   '/portfolio-historical',
   authMiddleware,
@@ -538,35 +544,32 @@ investmentRouter.get(
         return c.json({ data: [], currency: preferredCurrency, valueIsEstimate: false });
       }
 
-      const today = new Date();
-      const endDate = subDays(today, 1); // End date is yesterday
-      endDate.setHours(23, 59, 59, 999); // End of yesterday
-
+      // Use current time as end date to avoid future date issues with Yahoo Finance
+      const endDate = new Date();
       let startDate: Date;
+
       switch (period) {
         case '7d':
-          startDate = subDays(endDate, 6); // 6 days before yesterday = 7 days total
+          startDate = subDays(endDate, 7);
           break;
         case '90d':
-          startDate = subDays(endDate, 89);
+          startDate = subDays(endDate, 90);
           break;
         case '1y':
-          startDate = subDays(endDate, 364);
+          startDate = subDays(endDate, 365);
           break;
         case '30d':
         default:
-          startDate = subDays(endDate, 29);
+          startDate = subDays(endDate, 30);
           break;
       }
-      startDate.setHours(0, 0, 0, 0); // Start of the calculated start day
+      startDate.setHours(0, 0, 0, 0); // Start of the day
 
-      // Ensure endDate is not before startDate (edge case for very short periods if added later)
-      if (endDate < startDate) {
-        startDate = new Date(endDate); // Set start date to end date if range is invalid
-        startDate.setHours(0, 0, 0, 0);
-      }
+      // Get all dates in range
+      const allDatesInRange = eachDayOfInterval({ start: startDate, end: endDate });
+      // Filter out weekends
+      const marketDays = allDatesInRange.filter((date) => !isWeekend(date));
 
-      const datesInRange = eachDayOfInterval({ start: startDate, end: endDate });
       const uniqueSymbols = Array.from(new Set(investments.map((inv) => inv.symbol)));
 
       console.log(
@@ -575,6 +578,7 @@ investmentRouter.get(
           'yyyy-MM-dd',
         )} to ${formatDateFn(endDate, 'yyyy-MM-dd')}...`,
       );
+
       const allPricesMap = new Map<string, Map<string, number | null>>();
 
       const { results, errors: poolErrors } = await PromisePool.for(uniqueSymbols)
@@ -586,8 +590,13 @@ investmentRouter.get(
           );
         })
         .process(async (symbol) => {
-          const prices = await fetchHistoricalPricesForSymbol(symbol, startDate, endDate);
-          return { symbol, prices };
+          try {
+            const prices = await fetchHistoricalPricesForSymbol(symbol, startDate, endDate);
+            return { symbol, prices };
+          } catch (error) {
+            console.error(`Failed to fetch historical prices for ${symbol}:`, error);
+            return { symbol, prices: new Map() };
+          }
         });
 
       results.forEach((result) => {
@@ -601,16 +610,16 @@ investmentRouter.get(
           `Portfolio Historical: Encountered ${poolErrors.length} errors fetching price ranges.`,
         );
       }
-      console.log('Finished fetching historical data.');
 
       let valueIsEstimate = false;
       const accountCurrencies = new Set(accounts.map((a) => a.currency));
       if (accountCurrencies.size > 1) valueIsEstimate = true;
 
-      const historicalValues = datesInRange.map((date) => {
+      // Calculate values for market days only
+      const marketDayValues = marketDays.map((date) => {
         const dateString = formatDateFn(date, 'yyyy-MM-dd');
         let dailyTotalValue = 0;
-        let dateHasMissingPrice = false;
+        let hasValidPrices = false;
 
         investments.forEach((inv) => {
           const pricesForSymbol = allPricesMap.get(inv.symbol);
@@ -618,20 +627,12 @@ investmentRouter.get(
 
           if (priceOnDate !== undefined && priceOnDate !== null && inv.shares) {
             dailyTotalValue += inv.shares * priceOnDate;
-          } else {
-            // Use invested amount as fallback ONLY if price is missing for that specific date
-            dailyTotalValue += inv.investedAmount || 0;
-            if (priceOnDate === undefined || priceOnDate === null) {
-              // Check if the map exists but the date is missing, or if the whole symbol map is missing
-              if (!pricesForSymbol || !pricesForSymbol.has(dateString)) {
-                dateHasMissingPrice = true;
-              }
-            }
+            hasValidPrices = true;
           }
         });
 
-        if (dateHasMissingPrice) {
-          valueIsEstimate = true;
+        if (!hasValidPrices) {
+          return null;
         }
 
         return {
@@ -640,13 +641,20 @@ investmentRouter.get(
         };
       });
 
-      // Final check: if any pool error occurred, mark as estimate
-      if (poolErrors.length > 0) {
+      // Filter out null values and sort by date
+      const validMarketDayValues = marketDayValues
+        .filter(
+          (point): point is { date: string; value: number } => point !== null && point.value > 0,
+        )
+        .sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime());
+
+      // If we have too few points, mark as estimate
+      if (validMarketDayValues.length < marketDays.length * 0.5) {
         valueIsEstimate = true;
       }
 
       return c.json({
-        data: historicalValues,
+        data: validMarketDayValues,
         currency: preferredCurrency,
         valueIsEstimate: valueIsEstimate,
       });
