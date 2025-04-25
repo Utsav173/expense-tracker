@@ -236,7 +236,7 @@ const UserProfile = () => {
                 size='sm'
                 type='submit'
                 disabled={isSubmitting}
-                className='flex items-center gap-1 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-300'
+                className='flex items-center gap-1 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-300'
               >
                 <Save size={16} />
                 {isSubmitting ? 'Saving...' : 'Save Changes'}
@@ -246,7 +246,7 @@ const UserProfile = () => {
                 type='button'
                 size='sm'
                 onClick={handleCancel}
-                className='flex items-center gap-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+                className='flex items-center gap-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
               >
                 <X size={16} />
                 Cancel
@@ -259,7 +259,7 @@ const UserProfile = () => {
               variant='outline'
               onClick={() => setIsEdit(true)}
               size='sm'
-              className='flex items-center gap-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+              className='flex items-center gap-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
             >
               <UserIcon size={16} />
               Edit Profile

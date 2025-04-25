@@ -78,7 +78,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
         </Button>
       </PopoverTrigger>
       <PopoverContent className='w-auto p-0'>
-        <div className='relative z-[120] sm:flex'>
+        <div className='relative z-120 sm:flex'>
           <Calendar
             mode='single'
             selected={selectedDate}

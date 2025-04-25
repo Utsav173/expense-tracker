@@ -63,7 +63,7 @@ export const DebtSummaryCard: React.FC<{
           </CardTitle>
           <Skeleton className='h-4 w-3/5' />
         </CardHeader>
-        <CardContent className='h-[250px] space-y-4 pt-2'>
+        <CardContent className='h-full space-y-4 pt-2'>
           <Skeleton className='h-5 w-1/2' />
           <Skeleton className='h-8 w-3/4' />
           <Skeleton className='h-4 w-1/3' />
@@ -76,7 +76,7 @@ export const DebtSummaryCard: React.FC<{
   if (error || numberOfDebts === 0) {
     return (
       <Card className='col-span-1 flex flex-col md:col-span-1'>
-        <CardContent className='h-[250px] flex-grow'>
+        <CardContent className='h-full grow'>
           <NoData
             message={error ? 'Could not load debt data.' : 'No outstanding debts! 🎉'}
             icon={error ? 'x-circle' : 'inbox'}
@@ -95,23 +95,23 @@ export const DebtSummaryCard: React.FC<{
 
   return (
     <Card className='col-span-1 flex flex-col py-4 md:col-span-1'>
-      <CardContent className='scrollbar h-[250px] flex-grow space-y-3 overflow-y-auto text-sm'>
+      <CardContent className='scrollbar h-full grow space-y-3 overflow-y-auto text-sm'>
         <div>
           <p className='text-xl font-bold text-red-600'>{formatCurrency(outstandingDebtAmount)}</p>
-          <p className='pt-1 text-xs text-muted-foreground'>
+          <p className='text-muted-foreground pt-1 text-xs'>
             Total Outstanding debts Across {numberOfDebts} item(s).
           </p>
         </div>
         {nextDueDebt && (
           <div className='mt-3 border-t pt-3'>
-            <p className='mb-1 text-xs text-muted-foreground'>Next Payment Due</p>
+            <p className='text-muted-foreground mb-1 text-xs'>Next Payment Due</p>
             <div className='flex items-baseline justify-between'>
               <span className='truncate pr-2 font-medium'>{nextDueDebt.debts.description}</span>
               <span className='text-sm font-semibold'>
                 {formatCurrency(nextDueDebt.debts.amount)}
               </span>
             </div>
-            <p className='text-right text-xs text-muted-foreground'>
+            <p className='text-muted-foreground text-right text-xs'>
               {getDueDateInfo(nextDueDebt.debts.dueDate)}
             </p>
           </div>

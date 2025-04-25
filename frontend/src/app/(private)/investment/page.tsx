@@ -109,7 +109,7 @@ const InvestmentPage = () => {
         <Button
           onClick={() => setIsAddModalOpen(true)}
           size='lg'
-          className='shadow-sm hover:shadow'
+          className='shadow-xs hover:shadow-sm'
         >
           <PlusCircle className='mr-2 h-5 w-5' /> Add New Account
         </Button>
@@ -142,7 +142,7 @@ const InvestmentPage = () => {
                     <Button
                       size='icon'
                       variant='ghost'
-                      className='h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background'
+                      className='h-8 w-8 rounded-full bg-background/80 backdrop-blur-xs hover:bg-background'
                       onClick={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
@@ -154,7 +154,7 @@ const InvestmentPage = () => {
                     <Button
                       size='icon'
                       variant='ghost'
-                      className='h-8 w-8 rounded-full bg-background/80 text-destructive backdrop-blur-sm hover:bg-destructive/10'
+                      className='h-8 w-8 rounded-full bg-background/80 text-destructive backdrop-blur-xs hover:bg-destructive/10'
                       onClick={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
@@ -167,7 +167,7 @@ const InvestmentPage = () => {
                 </div>
               </CardHeader>
 
-              <CardContent className='flex-grow pb-4 pt-2'>
+              <CardContent className='grow pb-4 pt-2'>
                 <div className='flex items-center gap-1.5'>
                   <TrendingUp className='h-5 w-5 text-primary' />
                   <p className='text-2xl font-bold tracking-tight text-foreground'>

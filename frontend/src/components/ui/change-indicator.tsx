@@ -38,7 +38,7 @@ export const ChangeIndicator: React.FC<ChangeIndicatorProps> = ({
         className
       )}
     >
-      <Icon className='mr-1 h-3 w-3 flex-shrink-0' />
+      <Icon className='mr-1 h-3 w-3 shrink-0' />
       {change.toFixed(1)}%
     </span>
   );

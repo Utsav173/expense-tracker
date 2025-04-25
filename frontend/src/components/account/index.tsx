@@ -210,7 +210,7 @@ export const IncomeExpenseChart: React.FC<IncomeExpenseChartProps> = ({
 
   if (isLoading) {
     return (
-      <Card className='border border-border/40 shadow-sm'>
+      <Card className='border border-border/40 shadow-xs'>
         <CardHeader className='pb-4'>
           <div className='h-6 w-48 animate-pulse rounded-md bg-muted' />
           <div className='h-4 w-72 animate-pulse rounded-md bg-muted opacity-70' />
@@ -229,7 +229,7 @@ export const IncomeExpenseChart: React.FC<IncomeExpenseChartProps> = ({
   }
 
   return (
-    <Card className='overflow-hidden border border-border/40 shadow-sm transition-all duration-200'>
+    <Card className='overflow-hidden border border-border/40 shadow-xs transition-all duration-200'>
       {!showCharts ? (
         <Button
           className='flex w-full items-center gap-2 bg-yellow-300 font-medium text-orange-700 transition-colors hover:bg-yellow-400 hover:text-orange-900'

@@ -2,7 +2,6 @@
 
 import { useToast } from '@/lib/hooks/useToast';
 import React, { useState, useMemo, useCallback } from 'react';
-import { DateRange } from 'react-day-picker';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import NoData from '@/components/ui/no-data';
@@ -19,7 +18,6 @@ import { SpendingBreakdown } from '@/components/dashboard/spending-breakdown';
 import { DashboardCardWrapper } from '@/components/dashboard/dashboard-card-wrapper';
 import FinancialHealth from '@/components/dashboard/financial-health';
 import { DASHBOARD_PRESETS, DASHBOARD_CARD_CONFIG } from '@/config/dashboard-config';
-import { cn } from '@/lib/utils';
 import { DashboardControls } from '@/components/dashboard/dashboard-controls';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { useAuth } from '@/lib/hooks/useAuth';
@@ -27,8 +25,6 @@ import Loader from '@/components/ui/loader';
 
 interface DashboardSettings {
   preset: string;
-  timeRangeOption: string;
-  customDateRange?: DateRange;
   darkMode: boolean;
   hiddenSections: string[];
   refreshInterval: number;
@@ -36,8 +32,6 @@ interface DashboardSettings {
 
 const initialDashboardSettings: DashboardSettings = {
   preset: 'default',
-  timeRangeOption: 'thisMonth',
-  customDateRange: undefined,
   darkMode: false,
   hiddenSections: [],
   refreshInterval: 0
@@ -66,25 +60,14 @@ const DashboardPage = () => {
     error,
     refetch
   } = useDashboardData({
-    timeRangeOption: dashboardSettings.timeRangeOption,
-    customDateRange: dashboardSettings.customDateRange,
-    user: user
+    user: user,
+    timeRangeOption: 'thisMonth',
+    customDateRange: undefined
   });
 
-  const updateSettings = useCallback(
-    (updates: Partial<DashboardSettings>) => {
-      setDashboardSettings((prev) => ({ ...prev, ...updates }));
-      if (
-        (updates.timeRangeOption && updates.timeRangeOption !== 'custom') ||
-        (updates.timeRangeOption === 'custom' &&
-          updates.customDateRange?.from &&
-          updates.customDateRange?.to)
-      ) {
-        setTimeout(() => refetch(), 0);
-      }
-    },
-    [refetch]
-  );
+  const updateSettings = useCallback((updates: Partial<DashboardSettings>) => {
+    setDashboardSettings((prev) => ({ ...prev, ...updates }));
+  }, []);
 
   const toggleSectionVisibility = useCallback(
     (sectionId: string) => {
@@ -126,26 +109,6 @@ const DashboardPage = () => {
     [showSuccess, refetchAll, updateSettings]
   );
 
-  const handleTimeRangeChange = useCallback(
-    (rangeValue: string) => {
-      updateSettings({
-        timeRangeOption: rangeValue,
-        customDateRange: rangeValue !== 'custom' ? undefined : dashboardSettings.customDateRange
-      });
-    },
-    [dashboardSettings.customDateRange, updateSettings]
-  );
-
-  const handleCustomDateSelect = useCallback(
-    (range: DateRange | undefined) => {
-      updateSettings({
-        customDateRange: range,
-        timeRangeOption: range?.from && range?.to ? 'custom' : dashboardSettings.timeRangeOption
-      });
-    },
-    [dashboardSettings.timeRangeOption, updateSettings]
-  );
-
   const handleSetRefreshInterval = useCallback(
     (intervalMs: number) => {
       updateSettings({ refreshInterval: intervalMs });
@@ -174,10 +137,8 @@ const DashboardPage = () => {
         <TrendChartWrapper
           data={dashboardPageData.dashboardSummary}
           chartType={chartType}
-          isLoading={isLoading && !dashboardPageData?.dashboardSummary}
+          isLoading={isLoading}
           setChartType={setChartType}
-          timeRangeOption={dashboardSettings.timeRangeOption}
-          customDateRange={dashboardSettings.customDateRange}
         />
       ) : null,
       spendingBreakdown: <SpendingBreakdown className='h-full' />,
@@ -221,8 +182,6 @@ const DashboardPage = () => {
     <div className='mx-auto w-full max-w-7xl p-6 lg:p-8'>
       <DashboardControls
         currentPreset={dashboardSettings.preset}
-        timeRangeOption={dashboardSettings.timeRangeOption}
-        customDateRange={dashboardSettings.customDateRange}
         layoutConfig={currentLayoutConfig}
         hiddenSections={hiddenSections}
         refreshInterval={dashboardSettings.refreshInterval}
@@ -230,8 +189,6 @@ const DashboardPage = () => {
         isRefreshing={isFetching}
         isLoading={isLoading}
         onChangePreset={changePreset}
-        onTimeRangeChange={handleTimeRangeChange}
-        onCustomDateSelect={handleCustomDateSelect}
         onToggleSectionVisibility={toggleSectionVisibility}
         onSetRefreshInterval={handleSetRefreshInterval}
         onToggleDarkMode={toggleDarkMode}
@@ -243,7 +200,7 @@ const DashboardPage = () => {
         <AlertDescription>
           We couldn't load your dashboard data. Please check your connection and try refreshing.
           {error && (
-            <div className='mt-2 text-xs text-muted-foreground'>
+            <div className='text-muted-foreground mt-2 text-xs'>
               Error: {(error as Error).message}
             </div>
           )}
@@ -266,11 +223,9 @@ const DashboardPage = () => {
     (dashboardPageData.dashboardSummary?.totalTransaction ?? 0) < 1
   ) {
     return (
-      <div className='mx-auto w-full min-w-0 max-w-7xl space-y-4 p-4 pt-6 max-sm:max-w-full md:space-y-6 lg:p-8 lg:pt-8'>
+      <div className='mx-auto w-full max-w-7xl min-w-0 space-y-4 p-4 pt-6 select-none max-sm:max-w-full md:space-y-6 lg:p-8 lg:pt-8'>
         <DashboardControls
           currentPreset={dashboardSettings.preset}
-          timeRangeOption={dashboardSettings.timeRangeOption}
-          customDateRange={dashboardSettings.customDateRange}
           layoutConfig={currentLayoutConfig}
           hiddenSections={hiddenSections}
           refreshInterval={dashboardSettings.refreshInterval}
@@ -278,8 +233,6 @@ const DashboardPage = () => {
           isRefreshing={isFetching}
           isLoading={isLoading}
           onChangePreset={changePreset}
-          onTimeRangeChange={handleTimeRangeChange}
-          onCustomDateSelect={handleCustomDateSelect}
           onToggleSectionVisibility={toggleSectionVisibility}
           onSetRefreshInterval={handleSetRefreshInterval}
           onToggleDarkMode={toggleDarkMode}
@@ -295,15 +248,9 @@ const DashboardPage = () => {
   }
 
   return (
-    <div
-      className={cn(
-        'min-w-o mx-auto w-full max-w-7xl space-y-4 transition-all duration-200 max-sm:max-w-full md:space-y-6 lg:p-8 lg:pt-8'
-      )}
-    >
+    <div className='mx-auto w-full max-w-7xl min-w-0 space-y-4 p-4 pt-6 select-none max-sm:max-w-full md:space-y-6 lg:p-8 lg:pt-8'>
       <DashboardControls
         currentPreset={dashboardSettings.preset}
-        timeRangeOption={dashboardSettings.timeRangeOption}
-        customDateRange={dashboardSettings.customDateRange}
         layoutConfig={currentLayoutConfig}
         hiddenSections={hiddenSections}
         refreshInterval={dashboardSettings.refreshInterval}
@@ -311,8 +258,6 @@ const DashboardPage = () => {
         isRefreshing={isFetching}
         isLoading={isLoading}
         onChangePreset={changePreset}
-        onTimeRangeChange={handleTimeRangeChange}
-        onCustomDateSelect={handleCustomDateSelect}
         onToggleSectionVisibility={toggleSectionVisibility}
         onSetRefreshInterval={handleSetRefreshInterval}
         onToggleDarkMode={toggleDarkMode}

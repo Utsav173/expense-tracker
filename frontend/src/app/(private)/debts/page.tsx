@@ -100,7 +100,7 @@ const DebtsPage = () => {
           placeholder='Search description, due date, amount...'
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className='max-w-xs flex-grow'
+          className='max-w-xs grow'
         />
 
         <Select onValueChange={(value) => setType(value as DebtTypeFilter)} value={type || 'all'}>

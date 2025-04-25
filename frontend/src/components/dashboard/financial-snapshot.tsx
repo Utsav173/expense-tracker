@@ -45,7 +45,7 @@ export const FinancialSnapshot: React.FC<FinancialSnapshotProps> = ({
   if (!data) {
     return (
       <Card className={cn('col-span-1 sm:col-span-2 lg:col-span-4', className)}>
-        <CardHeader className='bg-gradient-to-r from-indigo-600 to-blue-500 p-4 text-primary-foreground'>
+        <CardHeader className='bg-linear-to-r from-indigo-600 to-blue-500 p-4 text-primary-foreground'>
           <CardTitle className='text-lg font-semibold'>Financial Snapshot</CardTitle>
         </CardHeader>
         <CardContent className='py-10'>

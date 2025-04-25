@@ -95,7 +95,7 @@ export const AccountFilters: React.FC<AccountFiltersProps> = ({
               variant='ghost'
               size='sm'
               onClick={handleClearDateRange}
-              className='flex-grow sm:flex-grow-0'
+              className='grow sm:grow-0'
             >
               Clear
             </Button>
@@ -104,7 +104,7 @@ export const AccountFilters: React.FC<AccountFiltersProps> = ({
             variant='outline'
             size='sm'
             onClick={handleResetFilters}
-            className='flex-grow sm:flex-grow-0'
+            className='grow sm:grow-0'
           >
             Reset Filters
           </Button>

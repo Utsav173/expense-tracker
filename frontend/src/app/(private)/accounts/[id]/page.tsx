@@ -6,6 +6,7 @@ import { useToast } from '@/lib/hooks/useToast';
 import { useAccountDetails } from '@/components/account/hooks/useAccountDetails';
 import { AccountDetailsHeader } from '@/components/account/account-details-header';
 import { AccountTransactionsSection } from '@/components/account/account-transactions-section';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -25,6 +26,7 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
   const { id } = use(params);
   const parsedSearchParams = use(searchParams);
   const { showError } = useToast();
+  const isMobile = useIsMobile();
 
   const {
     account,
@@ -84,11 +86,12 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
   }
 
   return (
-    <div className='mx-auto w-full min-w-0 max-w-7xl space-y-6 p-4 max-sm:p-0 md:p-6 lg:p-8'>
+    <div className='mx-auto w-full max-w-7xl min-w-0 space-y-6 py-4 sm:px-4 md:px-2 lg:px-8'>
       <AccountDetailsHeader
         account={account}
         isLoading={isAccountLoading}
         refetchData={refetchData}
+        isMobile={isMobile}
       />
 
       <AnalyticsCards
@@ -98,7 +101,7 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
       />
 
       {chartData?.date && (
-        <section className='rounded-xl bg-white shadow-sm'>
+        <section className='rounded-xl bg-white shadow-xs'>
           <IncomeExpenseChart
             data={transformedChartData}
             isLoading={isChartLoading}

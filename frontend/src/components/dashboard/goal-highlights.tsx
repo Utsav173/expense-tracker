@@ -21,7 +21,7 @@ export const GoalHighlights: React.FC<GoalHighlightsProps> = ({ data, isLoading,
 
   return (
     <Card className={cn('flex flex-col', className)}>
-      <CardContent className='scrollbar h-[350px] flex-grow space-y-4 overflow-y-auto py-4'>
+      <CardContent className='scrollbar grow space-y-4 overflow-y-auto py-4'>
         {isLoading ? (
           <div className='space-y-4'>
             {[...Array(3)].map((_, i) => (
@@ -54,12 +54,10 @@ export const GoalHighlights: React.FC<GoalHighlightsProps> = ({ data, isLoading,
               <div key={goal.id}>
                 <div className='mb-1 flex items-start justify-between text-sm'>
                   <span className='truncate pr-2 font-medium'>{goal.name}</span>
-                  <span className='flex-shrink-0 text-muted-foreground'>
-                    {progress.toFixed(0)}%
-                  </span>
+                  <span className='text-muted-foreground shrink-0'>{progress.toFixed(0)}%</span>
                 </div>
                 <Progress value={progress} className='h-2' />
-                <div className='mt-1 flex justify-between text-xs text-muted-foreground'>
+                <div className='text-muted-foreground mt-1 flex justify-between text-xs'>
                   <span>
                     {formatCurrency(saved)} / {formatCurrency(target)}
                   </span>

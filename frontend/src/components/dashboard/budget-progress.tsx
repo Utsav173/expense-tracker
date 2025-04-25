@@ -15,7 +15,6 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { useToast } from '@/lib/hooks/useToast';
-import { CalendarRange } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '../ui/button';
 
@@ -88,7 +87,7 @@ export const BudgetProgress: React.FC<{ className?: string }> = ({ className }) 
           Spending vs. budget for the selected period.
         </CardDescription>
       </CardHeader>
-      <CardContent className='scrollbar h-[250px] flex-grow space-y-4 overflow-y-auto'>
+      <CardContent className='scrollbar h-full grow space-y-4 overflow-y-auto'>
         {isLoading || isFetching ? (
           <div className='flex h-full items-center justify-center'>
             <Loader />

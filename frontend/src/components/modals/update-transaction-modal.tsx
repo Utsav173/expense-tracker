@@ -280,7 +280,7 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
                   placeholder={isLoadingCategory ? 'Loading categories...' : 'Select category'}
                 />
               </SelectTrigger>
-              <SelectContent className='z-[100]'>
+              <SelectContent className='z-100'>
                 {categoriesData?.categories && categoriesData.categories.length > 0 ? (
                   categoriesData.categories.map((cat) => (
                     <SelectItem key={cat.id} value={cat.id}>

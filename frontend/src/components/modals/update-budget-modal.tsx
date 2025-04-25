@@ -121,7 +121,7 @@ const UpdateBudgetModal: React.FC<UpdateBudgetModalProps> = ({
                       fixedDecimalScale={true}
                       allowNegative={false}
                       placeholder='e.g., 1,500.50'
-                      className='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'
+                      className='mt-1 block w-full rounded-md border-gray-300 shadow-xs focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'
                       disabled={updateBudgetMutation.isPending}
                       {...field}
                       onValueChange={(values) => {

@@ -27,7 +27,7 @@ export const AccountListSummary: React.FC<AccountListSummaryProps> = ({
 
   return (
     <Card className={cn('flex flex-col py-4', className)}>
-      <CardContent className='scrollbar h-[200px] flex-grow overflow-y-auto'>
+      <CardContent className='scrollbar h-[200px] grow overflow-y-auto'>
         {isLoading ? (
           <div className='space-y-4'>
             {[...Array(3)].map((_, i) => (
@@ -56,7 +56,7 @@ export const AccountListSummary: React.FC<AccountListSummaryProps> = ({
                   >
                     <div className='mb-1 flex justify-between'>
                       <span className='mr-2 truncate font-semibold'>{accountInfo.name}</span>
-                      <span className='flex-shrink-0 font-bold'>
+                      <span className='shrink-0 font-bold'>
                         {formatCurrency(accountInfo.balance ?? 0, currency)}
                       </span>
                     </div>

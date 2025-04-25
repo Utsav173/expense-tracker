@@ -40,7 +40,7 @@ export const AccountTransactionsSection: React.FC<AccountTransactionsSectionProp
   refetchData
 }) => {
   return (
-    <section className='rounded-xl bg-white shadow-sm'>
+    <section className='rounded-xl bg-white shadow-xs'>
       <div className='flex items-center justify-between border-b p-6'>
         <h2 className='text-xl font-semibold'>Transactions</h2>
       </div>

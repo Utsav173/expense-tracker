@@ -71,9 +71,9 @@ const FinancialHealth: React.FC<FinancialHealthProps> = ({ data }) => {
       <CardContent className='p-4'>
         <div className='flex flex-col justify-between gap-4 md:flex-row md:items-center'>
           <div className='flex flex-col items-center gap-4 sm:flex-row'>
-            <div className='relative flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-4 border-primary sm:h-24 sm:w-24'>
+            <div className='border-primary relative flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-4 sm:h-24 sm:w-24'>
               <span className='text-2xl font-bold sm:text-3xl'>{financialHealthScore}</span>
-              <span className='absolute bottom-1 text-[10px] text-muted-foreground sm:bottom-2'>
+              <span className='text-muted-foreground absolute bottom-1 text-[10px] sm:bottom-2'>
                 / 100
               </span>
             </div>

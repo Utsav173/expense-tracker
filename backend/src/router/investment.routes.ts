@@ -572,13 +572,6 @@ investmentRouter.get(
 
       const uniqueSymbols = Array.from(new Set(investments.map((inv) => inv.symbol)));
 
-      console.log(
-        `Fetching historical data for ${uniqueSymbols.length} symbols from ${formatDateFn(
-          startDate,
-          'yyyy-MM-dd',
-        )} to ${formatDateFn(endDate, 'yyyy-MM-dd')}...`,
-      );
-
       const allPricesMap = new Map<string, Map<string, number | null>>();
 
       const { results, errors: poolErrors } = await PromisePool.for(uniqueSymbols)

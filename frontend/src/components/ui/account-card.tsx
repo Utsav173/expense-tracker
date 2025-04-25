@@ -30,7 +30,7 @@ const AccountCard: React.FC<AccountCardProps> = React.forwardRef<
       ref={ref}
       href={href}
       className={cn(
-        'rounded-lg border border-gray-200 bg-white shadow-md transition-shadow duration-200 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2', // Removed h-[350px]
+        'rounded-lg border border-gray-200 bg-white shadow-md transition-shadow duration-200 hover:shadow-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2', // Removed h-[350px]
         className
       )}
     >
@@ -52,7 +52,7 @@ const AccountCard: React.FC<AccountCardProps> = React.forwardRef<
             {' '}
             {/* Reduced gap */}
             {owner.profilePic && (
-              <div className='relative h-10 w-10 flex-shrink-0'>
+              <div className='relative h-10 w-10 shrink-0'>
                 {' '}
                 {/* Reduced image size */}
                 <Image

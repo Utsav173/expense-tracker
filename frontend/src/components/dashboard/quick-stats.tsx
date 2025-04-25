@@ -15,7 +15,7 @@ interface QuickStatsProps {
 export const QuickStats: React.FC<QuickStatsProps> = ({ data, isLoading, className }) => {
   return (
     <Card className={cn('flex flex-col py-4', className)}>
-      <CardContent className='scrollbar h-[250px] flex-grow space-y-3 overflow-y-auto text-sm'>
+      <CardContent className='scrollbar h-full grow space-y-3 overflow-y-auto text-sm'>
         {isLoading || !data ? (
           <>
             {[...Array(4)].map((_, i) => (
@@ -35,7 +35,7 @@ export const QuickStats: React.FC<QuickStatsProps> = ({ data, isLoading, classNa
         ) : (
           <>
             <div className='flex justify-between'>
-              <span className='flex items-center gap-1 text-muted-foreground'>
+              <span className='text-muted-foreground flex items-center gap-1'>
                 <ArrowUp className='h-4 w-4 text-green-500' />
                 Highest Income
               </span>
@@ -44,7 +44,7 @@ export const QuickStats: React.FC<QuickStatsProps> = ({ data, isLoading, classNa
               </span>
             </div>
             <div className='flex justify-between'>
-              <span className='flex items-center gap-1 text-muted-foreground'>
+              <span className='text-muted-foreground flex items-center gap-1'>
                 <ArrowUp className='h-4 w-4 text-green-500/70' />
                 Lowest Income
               </span>
@@ -53,7 +53,7 @@ export const QuickStats: React.FC<QuickStatsProps> = ({ data, isLoading, classNa
               </span>
             </div>
             <div className='flex justify-between'>
-              <span className='flex items-center gap-1 text-muted-foreground'>
+              <span className='text-muted-foreground flex items-center gap-1'>
                 <ArrowDown className='h-4 w-4 text-red-500' />
                 Highest Expense
               </span>
@@ -64,7 +64,7 @@ export const QuickStats: React.FC<QuickStatsProps> = ({ data, isLoading, classNa
               </span>
             </div>
             <div className='flex justify-between'>
-              <span className='flex items-center gap-1 text-muted-foreground'>
+              <span className='text-muted-foreground flex items-center gap-1'>
                 <ArrowDown className='h-4 w-4 text-red-500/70' />
                 Lowest Expense
               </span>
@@ -75,14 +75,14 @@ export const QuickStats: React.FC<QuickStatsProps> = ({ data, isLoading, classNa
             {data?.transactionsCountByAccount &&
               Object.keys(data.transactionsCountByAccount).length > 0 && (
                 <div className='pt-2'>
-                  <p className='mb-1 font-medium text-muted-foreground'>Transactions / Account:</p>
-                  <ul className='space-y-1 text-xs text-muted-foreground'>
+                  <p className='text-muted-foreground mb-1 font-medium'>Transactions / Account:</p>
+                  <ul className='text-muted-foreground space-y-1 text-xs'>
                     {Object.entries(data.transactionsCountByAccount)
                       .slice(0, 4)
                       .map(([accountName, count]) => (
                         <li key={accountName} className='flex justify-between'>
                           <span className='truncate pr-2'>{accountName}:</span>
-                          <span className='flex-shrink-0 font-medium'>{count}</span>
+                          <span className='shrink-0 font-medium'>{count}</span>
                         </li>
                       ))}
                     {Object.keys(data.transactionsCountByAccount).length > 4 && (

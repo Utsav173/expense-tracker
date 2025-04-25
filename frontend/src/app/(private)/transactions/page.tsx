@@ -21,7 +21,7 @@ import { categoryGetAll } from '@/lib/endpoints/category';
 import { useToast } from '@/lib/hooks/useToast';
 import { AccountDropdown, Category } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import DateRangePicker from '@/components/date-range-picker';
+import DateRangePickerV2 from '@/components/date-range-picker-v2';
 import { useTransactions } from '@/components/transactions/hooks/useTransactions';
 
 const TransactionsPage = () => {
@@ -39,6 +39,7 @@ const TransactionsPage = () => {
     filters,
     debouncedSearchQuery,
     setSearchQuery,
+    handleAccountChange,
     handleCategoryChange,
     handleIncomeTypeChange,
     handleDateRangeSelect,
@@ -90,7 +91,7 @@ const TransactionsPage = () => {
       <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div>
           <h1 className='text-xl font-bold sm:text-2xl'>Transactions</h1>
-          <p className='mt-1 text-sm text-muted-foreground sm:text-base'>
+          <p className='text-muted-foreground mt-1 text-sm sm:text-base'>
             {transactionsData?.totalCount
               ? `${transactionsData.totalCount} transactions found`
               : 'Manage your financial transactions'}
@@ -133,7 +134,7 @@ const TransactionsPage = () => {
               <Filter size={16} />
               <span>Filters</span>
               {activeFiltersCount > 0 && (
-                <span className='ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground'>
+                <span className='bg-primary text-primary-foreground ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full text-xs font-medium'>
                   {activeFiltersCount}
                 </span>
               )}
@@ -156,10 +157,7 @@ const TransactionsPage = () => {
           <div className='mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4'>
             <div>
               <label className='mb-1 block text-xs font-medium sm:text-sm'>Account</label>
-              <Select
-                onValueChange={(value) => handleCategoryChange(value)}
-                value={filters.categoryId || 'all'}
-              >
+              <Select onValueChange={handleAccountChange} value={filters.accountId || 'all'}>
                 <SelectTrigger className='h-9 w-full text-xs sm:h-10 sm:text-sm'>
                   <SelectValue placeholder='All Accounts' />
                 </SelectTrigger>
@@ -182,10 +180,7 @@ const TransactionsPage = () => {
 
             <div>
               <label className='mb-1 block text-xs font-medium sm:text-sm'>Category</label>
-              <Select
-                onValueChange={(value) => handleCategoryChange(value)}
-                value={filters.categoryId || 'all'}
-              >
+              <Select onValueChange={handleCategoryChange} value={filters.categoryId || 'all'}>
                 <SelectTrigger className='h-9 w-full text-xs sm:h-10 sm:text-sm'>
                   <SelectValue placeholder='All Categories' />
                 </SelectTrigger>
@@ -209,7 +204,7 @@ const TransactionsPage = () => {
             <div>
               <label className='mb-1 block text-xs font-medium sm:text-sm'>Type</label>
               <Select
-                onValueChange={(value) => handleIncomeTypeChange(value)}
+                onValueChange={handleIncomeTypeChange}
                 value={filters.isIncome === undefined ? 'all' : String(filters.isIncome)}
               >
                 <SelectTrigger className='h-9 w-full text-xs sm:h-10 sm:text-sm'>
@@ -225,23 +220,16 @@ const TransactionsPage = () => {
 
             <div>
               <label className='mb-1 block text-xs font-medium sm:text-sm'>Date Range</label>
-              <div className='flex items-center gap-2'>
-                <DateRangePicker
-                  dateRange={filters.dateRange}
-                  setDateRange={handleDateRangeSelect}
-                  className='h-9 text-xs sm:h-10 sm:text-sm'
-                />
-                {filters.dateRange?.from && (
-                  <Button
-                    variant='ghost'
-                    size='icon'
-                    onClick={handleClearDateRange}
-                    className='h-9 w-9 sm:h-10 sm:w-10'
-                  >
-                    <X className='h-4 w-4' />
-                  </Button>
-                )}
-              </div>
+              <DateRangePickerV2
+                date={filters.dateRange}
+                onDateChange={handleDateRangeSelect}
+                onClear={handleClearDateRange}
+                className='h-9 text-xs sm:h-10 sm:text-sm'
+                placeholder='Select date range'
+                closeOnComplete={true}
+                buttonClassName='h-full'
+                noLabel
+              />
             </div>
           </div>
         )}

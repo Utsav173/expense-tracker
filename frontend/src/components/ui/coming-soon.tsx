@@ -20,7 +20,7 @@ const ComingSoon: React.FC<ComingSoonProps> = ({
     <div
       className={`flex h-full w-full flex-col items-center justify-center bg-white dark:bg-gray-900 ${className}`}
     >
-      <div className='relative flex w-full max-w-lg flex-col items-center justify-center rounded-lg border border-gray-100 bg-white p-8 shadow-sm dark:border-gray-800 dark:bg-gray-900'>
+      <div className='relative flex w-full max-w-lg flex-col items-center justify-center rounded-lg border border-gray-100 bg-white p-8 shadow-xs dark:border-gray-800 dark:bg-gray-900'>
         {/* Small decorative sparkles like in the screenshot */}
         <div className='absolute -right-2 -top-2 text-gray-200 dark:text-gray-700'>
           <svg

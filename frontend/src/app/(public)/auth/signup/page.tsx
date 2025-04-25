@@ -138,7 +138,7 @@ const SignupPage = () => {
                   />
                 </svg>
                 <div className='flex text-sm text-gray-600'>
-                  <label className='relative cursor-pointer rounded-md bg-white font-medium text-blue-600 focus-within:outline-none hover:text-blue-500'>
+                  <label className='relative cursor-pointer rounded-md bg-white font-medium text-blue-600 focus-within:outline-hidden hover:text-blue-500'>
                     <span>Upload a file</span>
                     <input
                       id='file-upload'

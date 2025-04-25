@@ -395,7 +395,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
     return (
       <div className='absolute right-2 top-2 z-20 md:hidden'>
         <div
-          className='flex cursor-pointer items-center rounded-md border border-gray-200 bg-white p-1 shadow-sm'
+          className='flex cursor-pointer items-center rounded-md border border-gray-200 bg-white p-1 shadow-xs'
           onClick={toggleMobileChartSelector}
         >
           {chartType === 'line' && <LineChart className='h-4 w-4 text-blue-500' />}

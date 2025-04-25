@@ -4,11 +4,24 @@ import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/
 import { transactionGetCategoryChart } from '@/lib/endpoints/transactions';
 import { Skeleton } from '@/components/ui/skeleton';
 import NoData from '../ui/no-data';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, Sector } from 'recharts';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  Legend,
+  Sector,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis
+} from 'recharts';
 import { formatCurrency } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useToast } from '@/lib/hooks/useToast';
 import { cn } from '@/lib/utils';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const COLORS = [
   'hsl(var(--chart-1))',
@@ -29,9 +42,28 @@ interface SpendingBreakdownProps {
 }
 
 type DurationOption = 'thisMonth' | 'thisYear' | 'all';
+type ChartType = 'pie' | 'donut' | 'column';
+
+interface ActiveShapeProps {
+  cx: number;
+  cy: number;
+  midAngle: number;
+  innerRadius: number;
+  outerRadius: number;
+  startAngle: number;
+  endAngle: number;
+  fill: string;
+  payload: {
+    name: string;
+    value: number;
+  };
+  percent: number;
+  value: number;
+  chartType: ChartType;
+}
 
 // Active shape component for the pie chart
-const renderActiveShape = (props: any) => {
+const renderActiveShape = (props: ActiveShapeProps) => {
   const RADIAN = Math.PI / 180;
   const {
     cx,
@@ -44,7 +76,8 @@ const renderActiveShape = (props: any) => {
     fill,
     payload,
     percent,
-    value
+    value,
+    chartType
   } = props;
   const sin = Math.sin(-RADIAN * midAngle);
   const cos = Math.cos(-RADIAN * midAngle);
@@ -58,16 +91,18 @@ const renderActiveShape = (props: any) => {
 
   return (
     <g>
-      <text
-        x={cx}
-        y={cy}
-        dy={8}
-        textAnchor='middle'
-        fill={fill}
-        className='text-base font-semibold'
-      >
-        {truncateLabel(payload.name, 15)}
-      </text>
+      {chartType === 'donut' && (
+        <text
+          x={cx}
+          y={cy}
+          dy={8}
+          textAnchor='middle'
+          fill={fill}
+          className='text-base font-semibold'
+        >
+          {truncateLabel(payload.name, 15)}
+        </text>
+      )}
       <Sector
         cx={cx}
         cy={cy}
@@ -76,6 +111,7 @@ const renderActiveShape = (props: any) => {
         startAngle={startAngle}
         endAngle={endAngle}
         fill={fill}
+        className='opacity-100'
       />
       <Sector
         cx={cx}
@@ -85,6 +121,7 @@ const renderActiveShape = (props: any) => {
         innerRadius={outerRadius + 6}
         outerRadius={outerRadius + 10}
         fill={fill}
+        className='opacity-90'
       />
       <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill='none' />
       <circle cx={ex} cy={ey} r={2} fill={fill} stroke='none' />
@@ -103,7 +140,7 @@ const renderActiveShape = (props: any) => {
         fill='hsl(var(--muted-foreground))'
         className='text-xs'
       >
-        {`(Rate ${(percent * 100).toFixed(1)}%)`}
+        {`(${(percent * 100).toFixed(1)}%)`}
       </text>
     </g>
   );
@@ -112,6 +149,7 @@ const renderActiveShape = (props: any) => {
 export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({ className }) => {
   const [duration, setDuration] = useState<DurationOption>('thisMonth');
   const [activeIndex, setActiveIndex] = useState(0);
+  const [chartType, setChartType] = useState<ChartType>('pie');
   const { showError } = useToast();
 
   const {
@@ -173,85 +211,160 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({ className 
     setActiveIndex(index);
   };
 
+  const renderChart = () => {
+    if (chartType === 'column') {
+      return (
+        <ResponsiveContainer width='100%' height='100%'>
+          <BarChart
+            data={formattedData}
+            margin={{ top: 20, right: 20, left: 20, bottom: 60 }}
+            barSize={40}
+          >
+            <XAxis
+              dataKey='name'
+              angle={-45}
+              textAnchor='end'
+              height={60}
+              interval={0}
+              tick={{ fontSize: 12 }}
+              tickFormatter={(value) => truncateLabel(value, 12)}
+            />
+            <YAxis width={80} tickFormatter={(value) => formatCurrency(value).split('.')[0]} />
+            <Tooltip
+              content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                  const data = payload[0].payload;
+                  const percentage = totalExpense > 0 ? (data.value / totalExpense) * 100 : 0;
+                  return (
+                    <div className='bg-background/80 rounded-lg border p-3 shadow-md backdrop-blur-sm'>
+                      <p className='mb-1 text-sm font-semibold'>{data.name}</p>
+                      <p className='text-muted-foreground text-xs'>
+                        {formatCurrency(data.value)}
+                        <span className='ml-1 font-medium'>({percentage.toFixed(1)}%)</span>
+                      </p>
+                    </div>
+                  );
+                }
+                return null;
+              }}
+            />
+            <Bar dataKey='value' radius={[4, 4, 0, 0]}>
+              {formattedData.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={entry.fill}
+                  className='opacity-90 transition-opacity hover:opacity-100'
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      );
+    }
+
+    // For Pie and Donut charts
+    return (
+      <ResponsiveContainer width='100%' height='100%'>
+        <PieChart>
+          <Tooltip
+            content={({ active, payload }) => {
+              if (active && payload && payload.length) {
+                const data = payload[0].payload;
+                const percentage = totalExpense > 0 ? (data.value / totalExpense) * 100 : 0;
+                return (
+                  <div className='bg-background/80 rounded-lg border p-3 shadow-md backdrop-blur-sm'>
+                    <p className='mb-1 text-sm font-semibold'>{data.name}</p>
+                    <p className='text-muted-foreground text-xs'>
+                      {formatCurrency(data.value)}
+                      <span className='ml-1 font-medium'>({percentage.toFixed(1)}%)</span>
+                    </p>
+                  </div>
+                );
+              }
+              return null;
+            }}
+          />
+          <Pie
+            activeIndex={activeIndex}
+            activeShape={(props: any) =>
+              renderActiveShape({ ...props, chartType } as ActiveShapeProps)
+            }
+            data={formattedData}
+            cx='50%'
+            cy='50%'
+            innerRadius={chartType === 'donut' ? '60%' : '0%'}
+            outerRadius='80%'
+            paddingAngle={2}
+            fill='#8884d8'
+            dataKey='value'
+            onMouseEnter={onPieEnter}
+            className='outline-none focus:outline-none'
+          >
+            {formattedData.map((entry, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={entry.fill}
+                className='opacity-90 transition-opacity outline-none hover:opacity-100 hover:outline-none focus:outline-none active:outline-none'
+                style={{ outline: 'none', stroke: 'none' }}
+              />
+            ))}
+          </Pie>
+        </PieChart>
+      </ResponsiveContainer>
+    );
+  };
+
   return (
-    <Card className={cn('flex flex-col', className)}>
-      <CardHeader className='flex gap-2 pb-2'>
-        <Select value={duration} onValueChange={(v) => setDuration(v as DurationOption)}>
-          <SelectTrigger className='mx-auto h-8 w-full text-xs sm:w-[150px]'>
-            <SelectValue placeholder='Select Period' />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value='thisMonth'>This Month</SelectItem>
-            <SelectItem value='thisYear'>This Year</SelectItem>
-            <SelectItem value='all'>All Time</SelectItem>
-          </SelectContent>
-        </Select>
-        <CardDescription className='mx-auto text-center'>
+    <Card className={cn('flex h-[600px] flex-col', className)}>
+      <CardHeader className='flex flex-none gap-2 pb-2'>
+        <div className='flex flex-col items-center justify-between gap-4 sm:flex-row'>
+          <Select value={duration} onValueChange={(v) => setDuration(v as DurationOption)}>
+            <SelectTrigger className='h-8 w-[150px] text-xs'>
+              <SelectValue placeholder='Select Period' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='thisMonth'>This Month</SelectItem>
+              <SelectItem value='thisYear'>This Year</SelectItem>
+              <SelectItem value='all'>All Time</SelectItem>
+            </SelectContent>
+          </Select>
+          <Tabs
+            defaultValue={chartType}
+            onValueChange={(v) => setChartType(v as ChartType)}
+            className='w-full sm:w-[300px]'
+          >
+            <TabsList className='grid w-full grid-cols-3'>
+              <TabsTrigger value='pie'>Pie</TabsTrigger>
+              <TabsTrigger value='column'>Column</TabsTrigger>
+              <TabsTrigger value='donut'>Donut</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+        <CardDescription className='mx-auto mt-2 text-center'>
           Expenses by category for {durationLabels[duration]}.
         </CardDescription>
       </CardHeader>
-      <CardContent className='flex flex-1 items-center justify-center pb-4 pt-0'>
+      <CardContent className='min-h-0 flex-1 pt-4'>
         {isLoading || isFetching ? (
-          <div className='flex h-full min-h-[250px] items-center justify-center'>
+          <div className='flex h-full items-center justify-center'>
             <Skeleton className='h-[200px] w-[200px] rounded-full' />
           </div>
         ) : error ? (
-          <div className='flex h-full min-h-[250px] items-center justify-center'>
+          <div className='flex h-full items-center justify-center'>
             <NoData message='Could not load spending data.' icon='x-circle' />
           </div>
         ) : formattedData.length === 0 ? (
-          <div className='flex h-full min-h-[250px] items-center justify-center'>
+          <div className='flex h-full items-center justify-center'>
             <NoData message={`No expense data for ${durationLabels[duration]}.`} icon='inbox' />
           </div>
         ) : (
-          <ResponsiveContainer width='100%' height={250}>
-            <PieChart>
-              <Tooltip
-                content={({ active, payload }) => {
-                  if (active && payload && payload.length) {
-                    const data = payload[0].payload;
-                    const percentage = totalExpense > 0 ? (data.value / totalExpense) * 100 : 0;
-                    return (
-                      <div className='rounded-md border bg-background/80 p-2 shadow-sm backdrop-blur-sm'>
-                        <p className='text-sm font-medium'>{data.name}</p>
-                        <p className='text-xs text-muted-foreground'>
-                          {formatCurrency(data.value)}
-                          <span className='font-semibold'> ({percentage.toFixed(1)}%)</span>
-                        </p>
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-              />
-              <Pie
-                activeIndex={activeIndex}
-                activeShape={renderActiveShape}
-                data={formattedData}
-                cx='50%'
-                cy='50%'
-                innerRadius={60}
-                outerRadius={80}
-                fill='#8884d8'
-                dataKey='value'
-                onMouseEnter={onPieEnter}
-              >
-                {formattedData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={entry.fill}
-                    className='outline-none ring-0 focus:outline-none focus:ring-0'
-                  />
-                ))}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
+          <div className='h-full w-full'>{renderChart()}</div>
         )}
       </CardContent>
       {!isLoading && !error && formattedData.length > 0 && (
-        <div className='border-t p-3 text-center text-xs text-muted-foreground'>
+        <div className='text-muted-foreground flex-none border-t p-3 text-center text-xs'>
           Total Expense:{' '}
-          <span className='font-medium text-foreground'>{formatCurrency(totalExpense)}</span>
+          <span className='text-foreground font-medium'>{formatCurrency(totalExpense)}</span>
         </div>
       )}
     </Card>

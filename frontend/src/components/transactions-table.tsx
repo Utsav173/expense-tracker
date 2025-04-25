@@ -82,14 +82,14 @@ const TransactionTable = ({
           <div className='flex flex-col space-y-1'>
             <SingleLineEllipsis
               showTooltip
-              className='font-medium max-md:max-w-[150px] md:max-w-[200px]'
+              className='text-sm font-medium max-md:max-w-[200px] md:max-w-[250px] md:text-base'
             >
               {row.original.text}
             </SingleLineEllipsis>
             {row.original.transfer && (
               <SingleLineEllipsis
                 showTooltip
-                className='text-xs text-muted-foreground max-md:max-w-[150px] md:max-w-[200px]'
+                className='text-muted-foreground text-xs max-md:max-w-[200px] md:max-w-[250px]'
               >
                 via {row.original.transfer}
               </SingleLineEllipsis>
@@ -108,14 +108,14 @@ const TransactionTable = ({
             <div className='flex items-center gap-2'>
               <div
                 className={cn(
-                  'whitespace-nowrap font-medium',
+                  'text-sm font-medium whitespace-nowrap md:text-base',
                   transaction.isIncome ? 'text-green-600' : 'text-red-600'
                 )}
               >
                 {sign}
                 {formatCurrency(transaction.amount, transaction.currency)}
               </div>
-              <div className='flex items-center md:hidden'>
+              <div className='flex items-center'>
                 {transaction.isIncome ? (
                   <ArrowUpCircle className='h-4 w-4 text-green-500' />
                 ) : (
@@ -133,11 +133,11 @@ const TransactionTable = ({
         cell: ({ row }) => (
           <Badge
             variant='outline'
-            className='max-w-[120px] md:max-w-[150px] truncate whitespace-nowrap'
+            className='bg-muted/30 max-w-[120px] truncate whitespace-nowrap md:max-w-[150px]'
           >
             <SingleLineEllipsis
               showTooltip
-              className='max-w-[100px] md:max-w-[130px] truncate'
+              className='max-w-[100px] truncate text-xs md:max-w-[130px]'
             >
               {row.original.category?.name ?? 'Uncategorized'}
             </SingleLineEllipsis>
@@ -151,13 +151,9 @@ const TransactionTable = ({
         cell: ({ row }) => {
           const date = new Date(row.original.createdAt);
           return (
-            <div className='flex flex-col text-sm max-md:items-end'>
-              <span className='whitespace-nowrap font-medium'>
-                {format(date, 'MMM d, yyyy')}
-              </span>
-              <span className='text-xs text-muted-foreground'>
-                {format(date, 'h:mm a')}
-              </span>
+            <div className='flex flex-col text-sm max-md:items-start'>
+              <span className='font-medium whitespace-nowrap'>{format(date, 'MMM d, yyyy')}</span>
+              <span className='text-muted-foreground text-xs'>{format(date, 'h:mm a')}</span>
             </div>
           );
         },
@@ -167,13 +163,15 @@ const TransactionTable = ({
         accessorKey: 'isIncome',
         header: 'Type',
         cell: ({ row }) => (
-          <div className='hidden md:flex items-center gap-1'>
+          <div className='flex items-center gap-1.5'>
             {row.original.isIncome ? (
               <ArrowUpCircle className='h-4 w-4 text-green-500' />
             ) : (
               <ArrowDownCircle className='h-4 w-4 text-red-500' />
             )}
-            <span className='text-sm'>{row.original.isIncome ? 'Income' : 'Expense'}</span>
+            <span className='text-muted-foreground text-sm'>
+              {row.original.isIncome ? 'Income' : 'Expense'}
+            </span>
           </div>
         ),
         enableSorting: true
@@ -185,24 +183,25 @@ const TransactionTable = ({
           const transaction = row.original;
           if (!transaction.recurring) return null;
 
-          const tooltipContent = `Type: ${transaction.recurrenceType || 'N/A'} ${transaction.recurrenceEndDate
-            ? ` | Ends: ${format(new Date(transaction.recurrenceEndDate), 'MMM d, yyyy')}`
-            : ''
-            }`;
+          const tooltipContent = `Type: ${transaction.recurrenceType || 'N/A'} ${
+            transaction.recurrenceEndDate
+              ? ` | Ends: ${format(new Date(transaction.recurrenceEndDate), 'MMM d, yyyy')}`
+              : ''
+          }`;
 
           return (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className='flex items-center'>
+                  <div className='flex items-center gap-1'>
                     <Repeat className='h-4 w-4 text-blue-500' />
-                    <span className='ml-1 text-xs text-muted-foreground md:hidden'>
+                    <span className='text-muted-foreground text-xs'>
                       {transaction.recurrenceType}
                     </span>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{tooltipContent}</p>
+                  <p className='text-xs'>{tooltipContent}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -216,7 +215,7 @@ const TransactionTable = ({
         cell: ({ row }) => (
           <SingleLineEllipsis
             showTooltip
-            className='text-sm max-w-[80px] md:max-w-[120px]'
+            className='text-muted-foreground max-w-[80px] text-sm md:max-w-[120px]'
           >
             {row.original.createdBy?.name ?? 'N/A'}
           </SingleLineEllipsis>
@@ -228,14 +227,14 @@ const TransactionTable = ({
         header: () => 'Actions',
         headerAlign: 'right',
         cell: ({ row }) => (
-          <div className='flex justify-end gap-1'>
+          <div className='flex justify-end gap-2'>
             <Button
               size='icon'
               variant='ghost'
               onClick={() => handleEditClick(row.original)}
-              className='h-8 w-8'
+              className='hover:bg-muted h-8 w-8'
             >
-              <Pencil className='h-3.5 w-3.5' />
+              <Pencil className='text-muted-foreground h-3.5 w-3.5' />
               <span className='sr-only'>Edit</span>
             </Button>
             <DeleteConfirmationModal
@@ -263,7 +262,7 @@ const TransactionTable = ({
                 <Button
                   size='icon'
                   variant='ghost'
-                  className='h-8 w-8 text-destructive hover:text-destructive'
+                  className='text-destructive hover:bg-destructive/10 h-8 w-8'
                   onClick={() => handleDeleteClick(row.original.id)}
                 >
                   <Trash2 className='h-3.5 w-3.5' />
@@ -304,7 +303,10 @@ const TransactionTable = ({
         enablePagination={true}
         sortBy={sortBy}
         sortOrder={sortOrder}
-        mobileTriggerColumns={['text', 'amount', 'category.name']}
+        mobileTriggerColumns={['text', 'amount']}
+        tableClassName='bg-white'
+        cellClassName='px-4 py-3'
+        headerClassName='bg-gray-50'
       />
       <UpdateTransactionModal
         isOpen={isUpdateModalOpen}

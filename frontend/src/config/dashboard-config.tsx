@@ -58,27 +58,27 @@ export const DASHBOARD_CARD_CONFIG: Record<string, PresetConfig> = {
       title: 'Budget Progress',
       icon: <CalendarRange className='h-5 w-5 text-lime-600' />,
       description: 'Spending vs budget',
-      gridSpan: 'col-span-12 md:col-span-6 xl:col-span-3',
+      gridSpan: 'col-span-12 lg:col-span-6',
       visible: true
     },
     goals: {
       title: 'Goal Highlights',
       icon: <Target className='h-5 w-5 text-amber-500' />,
       description: 'Top active saving goals',
-      gridSpan: 'col-span-12 md:col-span-6 xl:col-span-3',
+      gridSpan: 'col-span-12 lg:col-span-6',
       visible: true
     },
     investments: {
       title: 'Investment Summary',
       description: 'Portfolio overview',
-      gridSpan: 'col-span-12 lg:col-span-6',
+      gridSpan: 'col-span-12 lg:col-span-8',
       visible: true
     },
     debtSummary: {
       title: 'Debt Summary',
       icon: <Scale className='h-5 w-5 text-red-500' />,
       description: 'Outstanding debts',
-      gridSpan: 'col-span-12 lg:col-span-6',
+      gridSpan: 'col-span-12 lg:col-span-4',
       visible: true
     },
     accounts: {
@@ -164,14 +164,14 @@ export const DASHBOARD_CARD_CONFIG: Record<string, PresetConfig> = {
     investments: {
       title: 'Investment Summary',
       description: 'Portfolio overview',
-      gridSpan: 'col-span-12 lg:col-span-6',
+      gridSpan: 'col-span-12 lg:col-span-8',
       visible: true
     },
     debtSummary: {
       title: 'Debt Summary',
       icon: <Scale className='h-5 w-5 text-red-500' />,
       description: 'Outstanding debts',
-      gridSpan: 'col-span-12 lg:col-span-6',
+      gridSpan: 'col-span-12 lg:col-span-4',
       visible: true
     },
     accounts: {
