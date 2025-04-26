@@ -7,10 +7,9 @@ import { accountGetPreviousShares, accountRevokeShare } from '@/lib/endpoints/ac
 import { useToast } from '@/lib/hooks/useToast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, Share2, User, Mail, Trash2 } from 'lucide-react';
+import { AlertCircle, Share2, Mail, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
-import { cn } from '@/lib/utils';
 import ShareAccountModal from '@/components/modals/share-account-modal';
 import {
   DropdownMenu,
