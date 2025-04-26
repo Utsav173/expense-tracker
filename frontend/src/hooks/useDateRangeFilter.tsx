@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { DateRange } from 'react-day-picker';
 import { useSearchParams, useRouter } from 'next/navigation';
-import DateRangePickerV2 from '@/components/date-range-picker-v2';
+import DateRangePickerV2 from '@/components/date/date-range-picker-v2';
 
 interface UseDateRangeFilterProps {
   defaultRange?: DateRange;

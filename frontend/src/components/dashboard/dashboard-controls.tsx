@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { RefreshCw, LayoutGrid, ChevronDown, SlidersHorizontal, Sun, Moon } from 'lucide-react';
 import { DASHBOARD_PRESETS, PresetConfig } from '@/config/dashboard-config';
+import { ModeToggle } from '../theme-toggle';
 
 interface DashboardControlsProps {
   currentPreset: string;
@@ -46,7 +47,7 @@ export const DashboardControls: React.FC<DashboardControlsProps> = ({
   onRefetchAll
 }) => {
   return (
-    <div className='sticky top-0 z-20 flex w-full flex-col gap-4 border-b border-white/20 bg-white/10 px-2 py-4 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between dark:border-white/10 dark:bg-white/5'>
+    <div className='sticky top-5 z-20 flex w-full flex-col gap-4 rounded-lg border border-white/20 bg-white/10 px-4 py-4 backdrop-blur-xl max-sm:px-1 sm:flex-row sm:items-center sm:justify-between dark:border-white/10 dark:bg-white/5'>
       <h1 className='text-3xl font-bold'>{DASHBOARD_PRESETS[currentPreset]} Dashboard</h1>
 
       <div className='flex flex-wrap items-center gap-2'>
@@ -118,6 +119,8 @@ export const DashboardControls: React.FC<DashboardControlsProps> = ({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <ModeToggle />
 
         <Button
           variant={isRefreshing ? 'outline' : 'default'}

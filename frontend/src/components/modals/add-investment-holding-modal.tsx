@@ -18,7 +18,6 @@ import {
   FormLabel,
   FormMessage
 } from '@/components/ui/form';
-import DatePicker from '../date-picker';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { StockPriceResult, StockSearchResult } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
@@ -38,6 +37,7 @@ import {
 import { useDebounce } from 'use-debounce';
 import { NumericFormat } from 'react-number-format';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import DatePicker from '../date/date-picker';
 
 const investmentHoldingSchema = z.object({
   symbol: z
@@ -369,7 +369,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
               render={({ field }) => (
                 <FormItem className='flex flex-col'>
                   <FormLabel className='flex items-center gap-2 font-medium'>
-                    <TrendingUp className='h-4 w-4 text-primary' />
+                    <TrendingUp className='text-primary h-4 w-4' />
                     Stock Symbol / Ticker
                   </FormLabel>
                   <FormControl>
@@ -403,7 +403,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                 </div>
                 <div className='mt-2 text-sm'>
                   {isPriceLoading ? (
-                    <span className='flex items-center gap-1 text-muted-foreground'>
+                    <span className='text-muted-foreground flex items-center gap-1'>
                       <Loader2 className='h-3 w-3 animate-spin' /> Fetching current price...
                     </span>
                   ) : currentPrice !== null ? (
@@ -418,7 +418,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                         <div className='mt-1 flex items-center justify-between'>
                           <span className='text-muted-foreground'>Compared to Purchase:</span>
                           <span
-                            className={`font-medium ${priceComparison.isPositive ? 'text-green-500' : 'text-red-500'}`}
+                            className={`font-medium ${priceComparison.isPositive ? 'text-success' : 'text-destructive'}`}
                           >
                             {priceComparison.isPositive ? '+' : ''}
                             {priceComparison.percentage.toFixed(2)}%
@@ -444,7 +444,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
               render={({ field }) => (
                 <FormItem className='mb-4 flex flex-col'>
                   <FormLabel className='flex items-center gap-1 text-sm'>
-                    <Calendar className='h-4 w-4 text-muted-foreground' />
+                    <Calendar className='text-muted-foreground h-4 w-4' />
                     Purchase Date
                   </FormLabel>
                   <FormControl>
@@ -478,7 +478,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                     <FormLabel className='text-sm'>Number of Shares</FormLabel>
                     <FormControl>
                       <div className='relative'>
-                        <Layers className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground' />
+                        <Layers className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
                         <NumericFormat
                           customInput={Input}
                           thousandSeparator=','
@@ -506,7 +506,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                         <TooltipProvider delayDuration={100}>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Loader2 className='h-3 w-3 animate-spin text-primary' />
+                              <Loader2 className='text-primary h-3 w-3 animate-spin' />
                             </TooltipTrigger>
                             <TooltipContent>
                               <p>Fetching price for selected date...</p>
@@ -528,7 +528,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                           onValueChange={(values) => field.onChange(values.value)}
                           value={field.value}
                         />
-                        <span className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 transform text-xs text-muted-foreground'>
+                        <span className='text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 transform text-xs'>
                           {accountCurrency}
                         </span>
                       </div>

@@ -28,7 +28,7 @@ import { Debts } from '@/lib/types';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import DateRangePicker from '../date-range-picker';
+import DateRangePicker from '../date/date-range-picker';
 
 const debtUpdateSchema = z.object({
   description: z.string().min(1, { message: 'Description is required' }),

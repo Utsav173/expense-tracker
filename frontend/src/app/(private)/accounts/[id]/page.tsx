@@ -9,6 +9,11 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { AnalyticsCards } from '@/components/account/analytics-cards';
 import { FinancialTrendsSection } from '@/components/account/financial-trends-section';
 import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
+import { useAuth } from '@/lib/hooks/useAuth';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -29,6 +34,7 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
   const parsedSearchParams = use(searchParams);
   const { showError } = useToast();
   const isMobile = useIsMobile();
+  const { user } = useAuth();
 
   const {
     account,
@@ -36,13 +42,10 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
     accountError,
     customAnalytics,
     isAnalyticsLoading,
-    analyticsError,
     chartData,
     isChartLoading,
-    chartError,
     transactionsData,
     isTransactionLoading,
-    transactionError,
     filters,
     setSearchQuery,
     handleCategoryChange,
@@ -69,14 +72,43 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
     }));
   }, [chartData]);
 
+  const hasTransactions = useMemo(() => {
+    return transactionsData?.transactions && transactionsData.transactions.length > 0;
+  }, [transactionsData]);
+
+  const isOwner = useMemo(() => {
+    return account?.owner?.id === user?.id;
+  }, [account?.owner?.id, user?.id]);
+
   if (!id) {
-    showError('Account ID is required');
-    return <div className='p-4'>Invalid account ID</div>;
+    return (
+      <Alert variant='destructive' className='m-4'>
+        <AlertCircle className='h-4 w-4' />
+        <AlertDescription>Account ID is required</AlertDescription>
+      </Alert>
+    );
   }
 
   if (accountError) {
-    showError(`Failed to load account details: ${accountError.message}`);
-    return <div className='p-4'>Error loading account details.</div>;
+    return (
+      <Alert variant='destructive' className='m-4'>
+        <AlertCircle className='h-4 w-4' />
+        <AlertDescription>Failed to load account details: {accountError.message}</AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (isAccountLoading) {
+    return (
+      <div className='mx-auto h-full w-full space-y-6 p-4 md:p-6'>
+        <Skeleton className='h-24 w-full' />
+        <div className='grid gap-6 lg:grid-cols-[1fr_1.5fr]'>
+          <Skeleton className='h-48 w-full' />
+          <Skeleton className='h-48 w-full' />
+        </div>
+        <Skeleton className='h-96 w-full' />
+      </div>
+    );
   }
 
   return (
@@ -87,28 +119,33 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
         isLoading={isAccountLoading}
         refetchData={refetchData}
         isMobile={isMobile}
+        isOwner={isOwner}
       />
 
       {/* Analytics Cards + Chart Section */}
-      <div className='grid gap-6 lg:grid-cols-[1fr_1.5fr]'>
-        {/* Analytics Cards */}
-        <AnalyticsCards
-          analytics={customAnalytics}
-          isLoading={isAnalyticsLoading}
-          account={account}
-        />
-
-        {/* Chart Section */}
-        <Card className='overflow-hidden'>
-          <FinancialTrendsSection
-            chartData={transformedChartData}
-            isChartLoading={isChartLoading}
-            currency={account?.currency ?? 'INR'}
-            accountId={id}
-            duration={duration}
+      {isOwner && (
+        <div className={cn('grid gap-6', hasTransactions && 'lg:grid-cols-[1fr_1.5fr]')}>
+          {/* Analytics Cards */}
+          <AnalyticsCards
+            analytics={customAnalytics}
+            isLoading={isAnalyticsLoading}
+            account={account}
           />
-        </Card>
-      </div>
+
+          {/* Chart Section */}
+          {hasTransactions && (
+            <Card className='overflow-hidden'>
+              <FinancialTrendsSection
+                chartData={transformedChartData}
+                isChartLoading={isChartLoading}
+                currency={account?.currency ?? 'INR'}
+                accountId={id}
+                duration={duration}
+              />
+            </Card>
+          )}
+        </div>
+      )}
 
       {/* Transactions Section */}
       <Card className='overflow-hidden pb-3'>
@@ -127,6 +164,7 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
           handleClearDateRange={handleClearDateRange}
           handleResetFilters={handleResetFilters}
           refetchData={refetchData}
+          isOwner={isOwner}
         />
       </Card>
     </div>

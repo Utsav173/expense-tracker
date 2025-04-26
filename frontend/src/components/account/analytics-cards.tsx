@@ -30,7 +30,7 @@ const CurrentBalanceCard = ({ account, isLoading }: { account: any; isLoading?: 
   if (isLoading) {
     return (
       <Card className='h-full overflow-hidden border-none shadow-md'>
-        <div className='bg-gradient-to-br from-blue-50 to-indigo-50 p-6 dark:from-blue-900/20 dark:to-indigo-900/30'>
+        <div className='from-primary/10 to-primary/20 bg-gradient-to-br p-6'>
           <div className='space-y-3'>
             <Skeleton className='h-5 w-32' />
             <Skeleton className='h-12 w-64' />
@@ -44,8 +44,8 @@ const CurrentBalanceCard = ({ account, isLoading }: { account: any; isLoading?: 
   const isPositive = account?.balance && account?.balance > 0;
   const bgColorClass =
     account?.balance && account?.balance > 0
-      ? 'from-blue-50/50 to-indigo-50/50 dark:from-blue-900/50 dark:to-indigo-900/50'
-      : 'from-red-50/50 to-rose-50/50 dark:from-red-900/50 dark:to-rose-900/50';
+      ? 'from-primary/10 to-primary/20'
+      : 'from-destructive/10 to-destructive/20';
 
   return (
     <Card className='group relative h-full overflow-hidden border-none shadow-md transition-all duration-300 hover:shadow-lg'>
@@ -76,12 +76,12 @@ const CurrentBalanceCard = ({ account, isLoading }: { account: any; isLoading?: 
           </div>
           <div className='z-10 hidden sm:block'>
             {isPositive ? (
-              <div className='rounded-full bg-emerald-100/80 p-3 backdrop-blur-sm transition-colors duration-300 group-hover:bg-emerald-100 dark:bg-emerald-900/40'>
-                <TrendingUp className='h-6 w-6 text-emerald-600 transition-colors duration-300 group-hover:text-emerald-500 dark:text-emerald-400' />
+              <div className='bg-success/20 group-hover:bg-success/30 rounded-full p-3 backdrop-blur-sm transition-colors duration-300'>
+                <TrendingUp className='text-success h-6 w-6' />
               </div>
             ) : (
-              <div className='rounded-full bg-red-100/80 p-3 backdrop-blur-sm transition-colors duration-300 group-hover:bg-red-100 dark:bg-red-900/40'>
-                <TrendingDown className='h-6 w-6 text-red-600 transition-colors duration-300 group-hover:text-red-500 dark:text-red-400' />
+              <div className='bg-destructive/20 group-hover:bg-destructive/30 rounded-full p-3 backdrop-blur-sm transition-colors duration-300'>
+                <TrendingDown className='text-destructive h-6 w-6' />
               </div>
             )}
           </div>
@@ -126,25 +126,25 @@ const StatCard = ({
 
   const cardConfig = {
     income: {
-      icon: <ArrowUpCircle className='h-5 w-5 text-emerald-500' />,
-      iconBg: 'bg-emerald-100 dark:bg-emerald-900/30',
-      color: 'text-emerald-700 dark:text-emerald-400',
-      gradientFrom: 'from-emerald-50 dark:from-emerald-900/10',
-      gradientTo: 'to-green-50 dark:to-green-900/20'
+      icon: <ArrowUpCircle className='text-success h-5 w-5' />,
+      iconBg: 'bg-success/20',
+      color: 'text-success',
+      gradientFrom: 'from-success/10',
+      gradientTo: 'to-success/20'
     },
     expense: {
-      icon: <ArrowDownCircle className='h-5 w-5 text-rose-500' />,
-      iconBg: 'bg-rose-100 dark:bg-rose-900/30',
-      color: 'text-rose-700 dark:text-rose-400',
-      gradientFrom: 'from-rose-50 dark:from-rose-900/10',
-      gradientTo: 'to-red-50 dark:to-red-900/20'
+      icon: <ArrowDownCircle className='text-destructive h-5 w-5' />,
+      iconBg: 'bg-destructive/20',
+      color: 'text-destructive',
+      gradientFrom: 'from-destructive/10',
+      gradientTo: 'to-destructive/20'
     },
     balance: {
-      icon: <BarChart3 className='h-5 w-5 text-violet-500' />,
-      iconBg: 'bg-violet-100 dark:bg-violet-900/30',
-      color: 'text-violet-700 dark:text-violet-400',
-      gradientFrom: 'from-violet-50 dark:from-violet-900/10',
-      gradientTo: 'to-purple-50 dark:to-purple-900/20'
+      icon: <BarChart3 className='text-primary h-5 w-5' />,
+      iconBg: 'bg-primary/20',
+      color: 'text-primary',
+      gradientFrom: 'from-primary/10',
+      gradientTo: 'to-primary/20'
     }
   };
 
@@ -159,17 +159,17 @@ const StatCard = ({
   };
 
   const getTrendIcon = () => {
-    if (change === 0) return <Minus className='h-4 w-4 text-gray-500' />;
+    if (change === 0) return <Minus className='text-muted-foreground h-4 w-4' />;
     return change > 0 ? (
-      <TrendingUp className='h-4 w-4 text-emerald-500' />
+      <TrendingUp className='text-success h-4 w-4' />
     ) : (
-      <TrendingDown className='h-4 w-4 text-rose-500' />
+      <TrendingDown className='text-destructive h-4 w-4' />
     );
   };
 
   const getChangeColor = () => {
-    if (change === 0) return 'text-gray-500';
-    return isPositiveChange() ? 'text-emerald-500' : 'text-rose-500';
+    if (change === 0) return 'text-muted-foreground';
+    return isPositiveChange() ? 'text-success' : 'text-destructive';
   };
 
   return (
@@ -189,7 +189,7 @@ const StatCard = ({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className='inline-flex items-center gap-1.5 rounded-md bg-gray-50 px-2 py-1 dark:bg-gray-800/60'>
+              <div className='bg-muted inline-flex items-center gap-1.5 rounded-md px-2 py-1'>
                 {getTrendIcon()}
                 <span className={cn('text-xs font-medium sm:text-sm', getChangeColor())}>
                   {change > 0 ? '+' : ''}

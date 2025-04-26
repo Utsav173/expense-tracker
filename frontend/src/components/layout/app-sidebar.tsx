@@ -10,12 +10,13 @@ import {
   LayoutDashboard,
   PiggyBank,
   Tag,
-  Wallet
+  Wallet,
+  Users
 } from 'lucide-react';
 
-import { NavMain } from '@/components/nav-main';
-import { NavUser } from '@/components/nav-user';
-import { TeamSwitcher } from '@/components/team-switcher';
+import { NavMain } from '@/components/layout/nav/nav-main';
+import { NavUser } from '@/components/layout/nav/nav-user';
+import { TeamSwitcher } from '@/components/ui/team-switcher';
 import {
   Sidebar,
   SidebarContent,
@@ -35,6 +36,11 @@ const data: any[] = [
     title: 'Accounts',
     url: '/',
     icon: Wallet
+  },
+  {
+    title: 'Shared Accounts',
+    url: '/shared-accounts',
+    icon: Users
   },
   {
     title: 'Transactions',

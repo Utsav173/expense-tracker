@@ -21,8 +21,8 @@ import { categoryGetAll } from '@/lib/endpoints/category';
 import { useToast } from '@/lib/hooks/useToast';
 import { AccountDropdown, Category } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import DateRangePickerV2 from '@/components/date-range-picker-v2';
 import { useTransactions } from '@/components/transactions/hooks/useTransactions';
+import DateRangePickerV2 from '@/components/date/date-range-picker-v2';
 
 const TransactionsPage = () => {
   const { showError } = useToast();
@@ -229,6 +229,16 @@ const TransactionsPage = () => {
                 closeOnComplete={true}
                 buttonClassName='h-full'
                 noLabel
+                minDate={
+                  transactionsData?.dateRange?.minDate
+                    ? new Date(transactionsData.dateRange.minDate)
+                    : undefined
+                }
+                maxDate={
+                  transactionsData?.dateRange?.maxDate
+                    ? new Date(transactionsData.dateRange.maxDate)
+                    : undefined
+                }
               />
             </div>
           </div>

@@ -136,7 +136,7 @@ const CommonTable = <T extends object>({
   }
 
   if (!data || data.length === 0) {
-    return <div className='py-8 text-center text-gray-500'>No results.</div>;
+    return <div className='text-muted-foreground py-8 text-center'>No results.</div>;
   }
 
   // Mobile View Logic
@@ -183,7 +183,7 @@ const CommonTable = <T extends object>({
               value={row.id}
               className='overflow-hidden rounded-lg border px-4'
             >
-              <AccordionTrigger className='hover:no-underline [&[data-state=open]]:bg-gray-50'>
+              <AccordionTrigger className='[&[data-state=open]]:bg-muted hover:no-underline'>
                 <div className='flex w-full items-center justify-between'>
                   {triggerColumns.map((column) => (
                     <span key={column.id} className='max-w-[50%] truncate px-1 text-sm'>

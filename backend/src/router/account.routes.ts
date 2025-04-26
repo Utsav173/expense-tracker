@@ -974,6 +974,40 @@ accountRouter.post('/', authMiddleware, zValidator('json', accountSchema), async
   });
 });
 
+// POST /revoke-share - Revoke access to an account from a user
+accountRouter.post('/revoke-share', authMiddleware, async (c) => {
+  const { accountId, userId } = await c.req.json();
+
+  if (!accountId || !userId) {
+    throw new HTTPException(400, {
+      message: 'Account id and user id are required',
+    });
+  }
+
+  const currentUserId = await c.get('userId' as any);
+
+  // Verify that the current user owns the account
+  const account = await db.query.Account.findFirst({
+    where(fields, operators) {
+      return operators.and(eq(fields.id, accountId), eq(fields.owner, currentUserId));
+    },
+  });
+
+  if (!account) {
+    throw new HTTPException(401, { message: 'Unauthorized' });
+  }
+
+  // Delete the user account relationship
+  await db
+    .delete(UserAccount)
+    .where(and(eq(UserAccount.accountId, accountId), eq(UserAccount.userId, userId)))
+    .catch((err) => {
+      throw new HTTPException(400, { message: err.message });
+    });
+
+  return c.json({ message: 'Access revoked successfully' });
+});
+
 // GET /account/:id - Get an account
 accountRouter.get('/:id', authMiddleware, async (c) => {
   const { id } = c.req.param();

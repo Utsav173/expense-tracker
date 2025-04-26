@@ -73,17 +73,11 @@ export const TrendChart: React.FC<TrendChartProps> = ({
     balance: true,
     showAll: true
   });
-  const [showMobileChartSelector, setShowMobileChartSelector] = useState(false);
-
-  const toggleMobileChartSelector = () => {
-    setShowMobileChartSelector(!showMobileChartSelector);
-  };
 
   const handleChartTypeChange = (type: 'line' | 'bar' | 'area') => {
     if (setChartType) {
       setChartType(type);
     }
-    setShowMobileChartSelector(false);
   };
 
   const selectSeries = useCallback(
@@ -264,7 +258,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
       if (!hasAnyData) return null;
 
       return (
-        <div className='max-w-xs rounded-lg border border-border bg-background p-3 shadow-lg'>
+        <div className='border-border bg-background max-w-xs rounded-lg border p-3 shadow-lg'>
           <p className='mb-2 text-sm font-semibold md:text-base'>{label}</p>
           <div className='space-y-1 md:space-y-2'>
             {payload.map((entry: any, index: number) => {
@@ -313,7 +307,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
             })}
           </div>
           {insights.length > 0 && (
-            <div className='mt-2 border-t border-border pt-2 md:mt-3 md:pt-3'>
+            <div className='border-border mt-2 border-t pt-2 md:mt-3 md:pt-3'>
               <div className='mb-1 flex items-center gap-1 text-xs font-medium'>
                 <Activity size={12} className='text-blue-500' />
                 <span>INSIGHTS</span>
@@ -341,7 +335,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
           key='show-all-button'
           className={`flex cursor-pointer items-center rounded-full border px-2 py-1 text-xs transition-all md:px-3 md:text-sm ${
             visibleSeries.showAll
-              ? `border-blue-300 bg-blue-100 bg-opacity-10 text-blue-600`
+              ? `bg-opacity-10 border-blue-300 bg-blue-100 text-blue-600`
               : 'border-gray-200 bg-gray-100 text-gray-500'
           }`}
           onClick={() => selectSeries('showAll')}
@@ -367,7 +361,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
             <div
               key={`item-${index}`}
               className={`flex cursor-pointer items-center rounded-full border px-2 py-1 text-xs transition-all md:px-3 md:text-sm ${
-                isActive ? `border-2 bg-opacity-10` : 'border-gray-200 bg-gray-100 text-gray-400'
+                isActive ? `bg-opacity-10 border-2` : 'border-gray-200 bg-gray-100 text-gray-400'
               }`}
               style={{
                 backgroundColor: isActive ? `${entry.color}20` : undefined,
@@ -387,50 +381,6 @@ export const TrendChart: React.FC<TrendChartProps> = ({
             </div>
           );
         })}
-      </div>
-    );
-  };
-
-  const MobileChartTypeSelector = () => {
-    return (
-      <div className='absolute right-2 top-2 z-20 md:hidden'>
-        <div
-          className='flex cursor-pointer items-center rounded-md border border-gray-200 bg-white p-1 shadow-xs'
-          onClick={toggleMobileChartSelector}
-        >
-          {chartType === 'line' && <LineChart className='h-4 w-4 text-blue-500' />}
-          {chartType === 'bar' && <BarChart className='h-4 w-4 text-blue-500' />}
-          {chartType === 'area' && <AreaChart className='h-4 w-4 text-blue-500' />}
-        </div>
-
-        {showMobileChartSelector && (
-          <div className='absolute right-0 top-8 z-30 rounded-md border border-gray-200 bg-white p-1 shadow-md'>
-            <div
-              className={`cursor-pointer rounded-md p-2 ${
-                chartType === 'line' ? 'bg-blue-50 text-blue-500' : 'hover:bg-gray-50'
-              }`}
-              onClick={() => handleChartTypeChange('line')}
-            >
-              <LineChart className='h-4 w-4' />
-            </div>
-            <div
-              className={`cursor-pointer rounded-md p-2 ${
-                chartType === 'bar' ? 'bg-blue-50 text-blue-500' : 'hover:bg-gray-50'
-              }`}
-              onClick={() => handleChartTypeChange('bar')}
-            >
-              <BarChart className='h-4 w-4' />
-            </div>
-            <div
-              className={`cursor-pointer rounded-md p-2 ${
-                chartType === 'area' ? 'bg-blue-50 text-blue-500' : 'hover:bg-gray-50'
-              }`}
-              onClick={() => handleChartTypeChange('area')}
-            >
-              <AreaChart className='h-4 w-4' />
-            </div>
-          </div>
-        )}
       </div>
     );
   };
@@ -682,7 +632,6 @@ export const TrendChart: React.FC<TrendChartProps> = ({
 
   return (
     <div className={`relative h-full w-full ${className}`}>
-      <MobileChartTypeSelector />
       <ResponsiveContainer width='100%' height='100%'>
         {renderChart()}
       </ResponsiveContainer>

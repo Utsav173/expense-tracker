@@ -179,34 +179,18 @@ const DashboardPage = () => {
   );
 
   const renderErrorState = () => (
-    <div className='mx-auto w-full max-w-7xl p-6 lg:p-8'>
-      <DashboardControls
-        currentPreset={dashboardSettings.preset}
-        layoutConfig={currentLayoutConfig}
-        hiddenSections={hiddenSections}
-        refreshInterval={dashboardSettings.refreshInterval}
-        isDarkMode={dashboardSettings.darkMode}
-        isRefreshing={isFetching}
-        isLoading={isLoading}
-        onChangePreset={changePreset}
-        onToggleSectionVisibility={toggleSectionVisibility}
-        onSetRefreshInterval={handleSetRefreshInterval}
-        onToggleDarkMode={toggleDarkMode}
-        onRefetchAll={refetchAll}
-      />
-      <Alert variant='destructive' className='mt-6'>
-        <Frown className='h-4 w-4' />
-        <AlertTitle>Oops! Something went wrong.</AlertTitle>
-        <AlertDescription>
-          We couldn't load your dashboard data. Please check your connection and try refreshing.
-          {error && (
-            <div className='text-muted-foreground mt-2 text-xs'>
-              Error: {(error as Error).message}
-            </div>
-          )}
-        </AlertDescription>
-      </Alert>
-    </div>
+    <Alert variant='destructive' className='max-auto mt-6'>
+      <Frown className='h-4 w-4' />
+      <AlertTitle>Oops! Something went wrong.</AlertTitle>
+      <AlertDescription>
+        We couldn't load your dashboard data. Please check your connection and try refreshing.
+        {error && (
+          <div className='text-muted-foreground mt-2 text-xs'>
+            Error: {(error as Error).message}
+          </div>
+        )}
+      </AlertDescription>
+    </Alert>
   );
 
   if (isLoading && !isFetching) {
@@ -224,20 +208,6 @@ const DashboardPage = () => {
   ) {
     return (
       <div className='mx-auto w-full max-w-7xl min-w-0 space-y-4 p-4 pt-6 select-none max-sm:max-w-full md:space-y-6 lg:p-8 lg:pt-8'>
-        <DashboardControls
-          currentPreset={dashboardSettings.preset}
-          layoutConfig={currentLayoutConfig}
-          hiddenSections={hiddenSections}
-          refreshInterval={dashboardSettings.refreshInterval}
-          isDarkMode={dashboardSettings.darkMode}
-          isRefreshing={isFetching}
-          isLoading={isLoading}
-          onChangePreset={changePreset}
-          onToggleSectionVisibility={toggleSectionVisibility}
-          onSetRefreshInterval={handleSetRefreshInterval}
-          onToggleDarkMode={toggleDarkMode}
-          onRefetchAll={refetchAll}
-        />
         <NoData
           message='Your Dashboard is Ready! Add some accounts and transactions to see your trends.'
           icon={LayoutGrid}
@@ -248,7 +218,7 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className='mx-auto w-full max-w-7xl min-w-0 space-y-4 p-4 pt-6 select-none max-sm:max-w-full md:space-y-6 lg:p-8 lg:pt-8'>
+    <div className='space-y-4 select-none'>
       <DashboardControls
         currentPreset={dashboardSettings.preset}
         layoutConfig={currentLayoutConfig}
@@ -275,23 +245,25 @@ const DashboardPage = () => {
         </Alert>
       )}
 
-      <div className='grid grid-cols-12 gap-4'>
-        {Object.entries(currentLayoutConfig)
-          .filter(([id]) => !hiddenSections.has(id))
-          .map(([id, config]) => (
-            <DashboardCardWrapper
-              key={id}
-              id={id}
-              title={config.title}
-              description={config.description}
-              gridSpanClass={config.gridSpan}
-              isHidden={hiddenSections.has(id)}
-              onVisibilityToggle={toggleSectionVisibility}
-              icon={config.icon}
-            >
-              {cardMap[id] ?? <Loader className='my-2' />}
-            </DashboardCardWrapper>
-          ))}
+      <div className='mx-auto w-full max-w-7xl p-2 max-sm:max-w-full max-sm:p-0'>
+        <div className='grid max-w-7xl grid-cols-12 gap-4'>
+          {Object.entries(currentLayoutConfig)
+            .filter(([id]) => !hiddenSections.has(id))
+            .map(([id, config]) => (
+              <DashboardCardWrapper
+                key={id}
+                id={id}
+                title={config.title}
+                description={config.description}
+                gridSpanClass={config.gridSpan}
+                isHidden={hiddenSections.has(id)}
+                onVisibilityToggle={toggleSectionVisibility}
+                icon={config.icon}
+              >
+                {cardMap[id] ?? <Loader className='my-2' />}
+              </DashboardCardWrapper>
+            ))}
+        </div>
       </div>
     </div>
   );

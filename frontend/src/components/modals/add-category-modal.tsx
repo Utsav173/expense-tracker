@@ -34,6 +34,7 @@ interface CreateCategoryModalProps {
   initialValues?: { name: string };
   categoryId?: string;
   triggerButton?: React.ReactNode;
+  noTriggerButton?: boolean;
 }
 
 const AddCategoryModal: React.FC<CreateCategoryModalProps> = ({
@@ -42,7 +43,8 @@ const AddCategoryModal: React.FC<CreateCategoryModalProps> = ({
   onCategoryAdded,
   initialValues,
   categoryId,
-  triggerButton
+  triggerButton,
+  noTriggerButton
 }) => {
   const { showSuccess, showError } = useToast();
   const invalidate = useInvalidateQueries();
@@ -82,14 +84,7 @@ const AddCategoryModal: React.FC<CreateCategoryModalProps> = ({
         categoryId ? 'Edit your transaction category.' : 'Add an new transaction category.'
       }
       triggerButton={
-        triggerButton ||
-        (categoryId ? (
-          <Button type='button' variant='ghost' className='p-0'>
-            Edit
-          </Button>
-        ) : (
-          <Button type='button'>Create Category</Button>
-        ))
+        noTriggerButton ? null : triggerButton || <Button type='button'>Create Category</Button>
       }
     >
       <Form {...form}>

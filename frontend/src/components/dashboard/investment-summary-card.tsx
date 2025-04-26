@@ -31,7 +31,7 @@ import TooltipElement from '../ui/tooltip-element';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DateRange } from 'react-day-picker';
 import { format as formatDate, startOfToday, subDays } from 'date-fns';
-import DateRangePickerV2 from '../date-range-picker-v2';
+import DateRangePickerV2 from '../date/date-range-picker-v2';
 
 type PeriodOption = '7d' | '30d' | '90d' | '1y' | 'custom';
 

@@ -103,3 +103,9 @@ export const accountGetSharedWithMe = (
   errorMessage?: string
 ): Promise<ApiResponse<{ data: Account[]; pagination: any }>> =>
   apiFetch('/accounts/get-shares', 'GET', undefined, { params }, successMessage, errorMessage);
+
+export const accountRevokeShare = (
+  body: { accountId: string; userId: string },
+  successMessage?: string,
+  errorMessage?: string
+) => apiFetch('/accounts/revoke-share', 'POST', body, undefined, successMessage, errorMessage);

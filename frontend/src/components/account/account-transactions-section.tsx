@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import TransactionTable from '@/components/transactions-table';
-import DateRangePickerV2 from '@/components/date-range-picker-v2';
+import DateRangePickerV2 from '@/components/date/date-range-picker-v2';
 import {
   Select,
   SelectContent,
@@ -26,6 +26,10 @@ interface AccountTransactionsSectionProps {
     totalCount: number;
     currentPage: number;
     pageSize: number;
+    dateRange?: {
+      minDate: string;
+      maxDate: string;
+    };
   };
   isTransactionLoading?: boolean;
   filters: {
@@ -49,6 +53,7 @@ interface AccountTransactionsSectionProps {
   handleClearDateRange: () => void;
   handleResetFilters: () => void;
   refetchData: () => Promise<void>;
+  isOwner?: boolean;
 }
 
 export const AccountTransactionsSection = ({
@@ -65,7 +70,8 @@ export const AccountTransactionsSection = ({
   handleDateRangeSelect,
   handleClearDateRange,
   handleResetFilters,
-  refetchData
+  refetchData,
+  isOwner = true
 }: AccountTransactionsSectionProps) => {
   const [showFilters, setShowFilters] = useState(false);
 
@@ -93,51 +99,78 @@ export const AccountTransactionsSection = ({
         </div>
 
         {showFilters && (
-          <div className='mt-4 grid gap-4 border-t pt-4 sm:grid-cols-3'>
-            <Select value={filters.categoryId} onValueChange={handleCategoryChange}>
-              <SelectTrigger>
-                <SelectValue placeholder='All Categories' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='all'>All Categories</SelectItem>
-                {categories?.categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className='mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4'>
+            {isOwner && (
+              <>
+                <div>
+                  <label className='mb-1 block text-xs font-medium sm:text-sm'>Category</label>
+                  <Select onValueChange={handleCategoryChange} value={filters.categoryId || 'all'}>
+                    <SelectTrigger className='h-9 w-full text-xs sm:h-10 sm:text-sm'>
+                      <SelectValue placeholder='All Categories' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='all'>All Categories</SelectItem>
+                      {categories?.categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <Select
-              value={filters.isIncome?.toString() ?? 'all'}
-              onValueChange={handleIncomeTypeChange}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder='All Types' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='all'>All Types</SelectItem>
-                <SelectItem value='true'>Income</SelectItem>
-                <SelectItem value='false'>Expense</SelectItem>
-              </SelectContent>
-            </Select>
+                <div>
+                  <label className='mb-1 block text-xs font-medium sm:text-sm'>Type</label>
+                  <Select
+                    onValueChange={handleIncomeTypeChange}
+                    value={filters.isIncome ? 'income' : 'expense'}
+                  >
+                    <SelectTrigger className='h-9 w-full text-xs sm:h-10 sm:text-sm'>
+                      <SelectValue placeholder='All Types' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='all'>All Types</SelectItem>
+                      <SelectItem value='income'>Income</SelectItem>
+                      <SelectItem value='expense'>Expense</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
 
-            <DateRangePickerV2
-              date={filters.dateRange}
-              onDateChange={handleDateRangeSelect}
-              onClear={handleClearDateRange}
-              noLabel
-            />
+            <div>
+              <label className='mb-1 block text-xs font-medium sm:text-sm'>Date Range</label>
+              <DateRangePickerV2
+                onDateChange={handleDateRangeSelect}
+                onClear={handleClearDateRange}
+                date={filters.dateRange}
+                closeOnComplete={true}
+                buttonClassName='h-full'
+                noLabel
+                minDate={
+                  transactionsData?.dateRange?.minDate
+                    ? new Date(transactionsData.dateRange.minDate)
+                    : undefined
+                }
+                maxDate={
+                  transactionsData?.dateRange?.maxDate
+                    ? new Date(transactionsData.dateRange.maxDate)
+                    : undefined
+                }
+              />
+            </div>
 
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={handleResetFilters}
-              className='flex items-center gap-2 sm:col-span-3'
-            >
-              <X className='h-4 w-4' />
-              Reset Filters
-            </Button>
+            {isOwner && (
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={handleResetFilters}
+                className='flex items-center gap-2 sm:col-span-3'
+              >
+                <X className='h-4 w-4' />
+                Reset Filters
+              </Button>
+            )}
           </div>
         )}
       </div>
@@ -158,7 +191,7 @@ export const AccountTransactionsSection = ({
         ) : transactionsData?.transactions.length === 0 ? (
           <div className='text-muted-foreground flex h-full items-center justify-center p-8 text-center'>
             No transactions found.
-            {Object.keys(filters).length > 0 && (
+            {Object.keys(filters).length > 0 && isOwner && (
               <Button variant='link' className='ml-1' onClick={handleResetFilters}>
                 Clear filters
               </Button>
@@ -177,6 +210,7 @@ export const AccountTransactionsSection = ({
             refetchData={async () => {
               await refetchData();
             }}
+            isOwner={isOwner}
           />
         )}
       </ScrollArea>

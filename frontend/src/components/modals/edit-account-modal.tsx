@@ -25,13 +25,13 @@ import {
 } from '@/components/ui/form';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { accountUpdate } from '@/lib/endpoints/accounts';
-import CurrencySelect from '../currency-select';
 import { fetchCurrencies, COMMON_CURRENCIES } from '@/lib/endpoints/currency';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useToast } from '@/lib/hooks/useToast';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { NumericFormat } from 'react-number-format';
 import { cn } from '@/lib/utils';
+import CurrencySelect from '../ui/currency-select';
 
 const formSchema = z.object({
   name: z.string().min(2, {

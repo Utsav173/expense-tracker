@@ -25,10 +25,10 @@ import {
 } from '@/components/ui/form';
 import { SavingGoal } from '@/lib/types';
 import { goalUpdate } from '@/lib/endpoints/goal';
-import DateTimePicker from '../date-time-picker';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import React, { useEffect } from 'react';
 import { NumericFormat } from 'react-number-format';
+import DateTimePicker from '../date/date-time-picker';
 
 const goalSchema = z.object({
   name: z.string().min(3, 'Goal name must be at least 3 characters'),

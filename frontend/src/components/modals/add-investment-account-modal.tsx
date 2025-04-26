@@ -18,8 +18,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '../ui/button';
 import AddModal from './add-modal';
 import { fetchCurrencies, COMMON_CURRENCIES } from '@/lib/endpoints/currency';
-import CurrencySelect from '../currency-select';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
+import CurrencySelect from '../ui/currency-select';
 
 export const investmentAccountSchema = z.object({
   name: z.string().min(2, 'Account name must be at least 2 characters.'),

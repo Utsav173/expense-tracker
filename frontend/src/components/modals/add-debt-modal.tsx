@@ -17,9 +17,9 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { accountGetDropdown, usersGetDropdown } from '@/lib/endpoints/accounts';
 import { apiCreateDebt } from '@/lib/endpoints/debt';
-import DateRangePicker from '../date-range-picker';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { useAuth } from '@/lib/hooks/useAuth';
+import DateRangePicker from '../date/date-range-picker';
 
 const debtFormSchema = z.object({
   description: z.string().min(1, 'Description is required'),
@@ -417,7 +417,7 @@ const AddDebtModal = ({
           >
             {createDebtMutation.isPending ? 'Creating...' : 'Create Debt'}
           </Button>
-          {!user && <p className='text-center text-sm text-red-600'>User ID not available.</p>}
+          {!user && <p className='text-destructive text-center text-sm'>User ID not available.</p>}
         </form>
       </Form>
     </AddModal>

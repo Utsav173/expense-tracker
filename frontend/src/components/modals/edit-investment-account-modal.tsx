@@ -26,9 +26,9 @@ import {
   FormMessage
 } from '@/components/ui/form';
 import { InvestmentAccount } from '@/lib/types';
-import CurrencySelect from '../currency-select';
 import { fetchCurrencies, COMMON_CURRENCIES } from '@/lib/endpoints/currency';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
+import CurrencySelect from '../ui/currency-select';
 
 const investmentAccountUpdateSchema = z.object({
   name: z.string().min(2, 'Account name must be at least 2 characters.'),
