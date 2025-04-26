@@ -39,9 +39,13 @@ const truncateLabel = (label: string, max: number) =>
 
 interface SpendingBreakdownProps {
   className?: string;
+  accountId?: string;
+  defaultDuration?: DurationOption;
+  showDurationSelector?: boolean;
+  chartTypes?: ChartType[];
 }
 
-type DurationOption = 'thisMonth' | 'thisYear' | 'all';
+type DurationOption = string | 'thisMonth' | 'thisYear' | 'all';
 type ChartType = 'pie' | 'donut' | 'column';
 
 interface ActiveShapeProps {
@@ -146,10 +150,16 @@ const renderActiveShape = (props: ActiveShapeProps) => {
   );
 };
 
-export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({ className }) => {
-  const [duration, setDuration] = useState<DurationOption>('thisMonth');
+export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
+  className,
+  accountId,
+  defaultDuration = 'thisMonth',
+  showDurationSelector = true,
+  chartTypes = ['pie', 'column', 'donut']
+}) => {
+  const [duration, setDuration] = useState<DurationOption>(defaultDuration);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [chartType, setChartType] = useState<ChartType>('pie');
+  const [chartType, setChartType] = useState<ChartType>(chartTypes[0]);
   const { showError } = useToast();
 
   const {
@@ -158,8 +168,8 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({ className 
     error,
     isFetching
   } = useQuery({
-    queryKey: ['spendingBreakdown', duration],
-    queryFn: () => transactionGetCategoryChart({ duration }),
+    queryKey: ['spendingBreakdown', duration, accountId],
+    queryFn: () => transactionGetCategoryChart({ duration, accountId }),
     staleTime: 5 * 60 * 1000,
     retry: 1
   });
@@ -318,30 +328,34 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({ className 
     <Card className={cn('flex h-[600px] flex-col', className)}>
       <CardHeader className='flex flex-none gap-2 pb-2'>
         <div className='flex flex-col items-center justify-between gap-4 sm:flex-row'>
-          <Select value={duration} onValueChange={(v) => setDuration(v as DurationOption)}>
-            <SelectTrigger className='h-8 w-[150px] text-xs'>
-              <SelectValue placeholder='Select Period' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='thisMonth'>This Month</SelectItem>
-              <SelectItem value='thisYear'>This Year</SelectItem>
-              <SelectItem value='all'>All Time</SelectItem>
-            </SelectContent>
-          </Select>
+          {showDurationSelector && (
+            <Select value={duration} onValueChange={(v) => setDuration(v as DurationOption)}>
+              <SelectTrigger className='h-8 w-[150px] text-xs'>
+                <SelectValue placeholder='Select Period' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='thisMonth'>This Month</SelectItem>
+                <SelectItem value='thisYear'>This Year</SelectItem>
+                <SelectItem value='all'>All Time</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
           <Tabs
             defaultValue={chartType}
             onValueChange={(v) => setChartType(v as ChartType)}
-            className='w-full sm:w-[300px]'
+            className='w-full'
           >
-            <TabsList className='grid w-full grid-cols-3'>
-              <TabsTrigger value='pie'>Pie</TabsTrigger>
-              <TabsTrigger value='column'>Column</TabsTrigger>
-              <TabsTrigger value='donut'>Donut</TabsTrigger>
+            <TabsList className={`grid w-full grid-cols-${chartTypes.length}`}>
+              {chartTypes.map((type: string) => (
+                <TabsTrigger key={type} value={type}>
+                  {type}
+                </TabsTrigger>
+              ))}
             </TabsList>
           </Tabs>
         </div>
         <CardDescription className='mx-auto mt-2 text-center'>
-          Expenses by category for {durationLabels[duration]}.
+          Expenses by category for {durationLabels[duration]}.{accountId && ' (Account specific)'}
         </CardDescription>
       </CardHeader>
       <CardContent className='min-h-0 flex-1 pt-4'>

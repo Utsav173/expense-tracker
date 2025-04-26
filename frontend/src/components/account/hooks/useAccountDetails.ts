@@ -195,6 +195,7 @@ export const useAccountDetails = (id: string, searchParams: SearchParams) => {
     handlePageChange,
     categories,
     handleResetFilters,
-    refetchData
+    refetchData,
+    duration
   };
 };

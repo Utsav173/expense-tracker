@@ -1,0 +1,242 @@
+import { AccountDetails, CustomAnalytics } from '@/lib/types';
+import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { formatCurrency } from '@/lib/utils';
+import {
+  TrendingDown,
+  TrendingUp,
+  Minus,
+  ArrowUpCircle,
+  ArrowDownCircle,
+  CreditCard,
+  BarChart3
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { ApiResponse } from '@/lib/types';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { SingleLineEllipsis } from '../ui/ellipsis-components';
+
+interface AnalyticsCardsProps {
+  analytics?: ApiResponse<CustomAnalytics>;
+  isLoading?: boolean;
+  account?: ApiResponse<AccountDetails>;
+}
+
+const CurrentBalanceCard = ({ account, isLoading }: { account: any; isLoading?: boolean }) => {
+  if (isLoading) {
+    return (
+      <Card className='overflow-hidden border-none shadow-md'>
+        <div className='bg-gradient-to-br from-blue-50 to-indigo-50 p-6 dark:from-blue-900/20 dark:to-indigo-900/30'>
+          <div className='space-y-3'>
+            <Skeleton className='h-5 w-32' />
+            <Skeleton className='h-12 w-64' />
+            <Skeleton className='h-4 w-40' />
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  // Dynamic card background color based on balance
+  const bgColorClass =
+    account?.balance && account?.balance > 0
+      ? 'from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/30'
+      : 'from-red-50 to-rose-50 dark:from-red-900/20 dark:to-rose-900/30';
+
+  return (
+    <Card className='h-full overflow-hidden border-none shadow-md transition-all duration-300 hover:shadow-lg'>
+      <div
+        className={`flex h-full flex-col justify-between bg-gradient-to-br ${bgColorClass} p-6 sm:p-8`}
+      >
+        <div className='flex items-start justify-between gap-4'>
+          <div className='flex flex-col gap-2'>
+            <div className='mb-2 flex items-center gap-2'>
+              <CreditCard className='h-5 w-5 text-blue-600 dark:text-blue-400' />
+              <h3 className='text-lg font-semibold text-blue-800 dark:text-blue-300'>
+                Current Balance
+              </h3>
+            </div>
+            <div className='flex min-w-0 flex-wrap items-center gap-3'>
+              <SingleLineEllipsis className='text-3xl font-bold tracking-tight sm:text-4xl xl:text-5xl'>
+                {formatCurrency(account?.balance ?? 0, account?.currency)}
+              </SingleLineEllipsis>
+              <Badge
+                variant={account?.balance && account?.balance > 0 ? 'default' : 'destructive'}
+                className='h-fit w-fit font-medium'
+              >
+                {account?.balance && account?.balance > 0 ? 'Positive' : 'Negative'}
+              </Badge>
+            </div>
+          </div>
+          <div className='hidden sm:block'>
+            {account?.balance && account?.balance > 0 ? (
+              <div className='rounded-full bg-blue-100 p-3 dark:bg-blue-900/40'>
+                <TrendingUp className='h-6 w-6 text-blue-600 dark:text-blue-400' />
+              </div>
+            ) : (
+              <div className='rounded-full bg-red-100 p-3 dark:bg-red-900/40'>
+                <TrendingDown className='h-6 w-6 text-red-600 dark:text-red-400' />
+              </div>
+            )}
+          </div>
+        </div>
+        <p className='text-muted-foreground mt-4 text-sm'>
+          Last updated{' '}
+          {account?.updatedAt ? new Date(account.updatedAt).toLocaleDateString() : 'Never'}
+        </p>
+      </div>
+    </Card>
+  );
+};
+
+const StatCard = ({
+  title,
+  value,
+  change,
+  type,
+  currency,
+  isLoading
+}: {
+  title: string;
+  value: number;
+  change: number;
+  type: 'income' | 'expense' | 'balance';
+  currency: string;
+  isLoading?: boolean;
+}) => {
+  if (isLoading) {
+    return (
+      <Card className='overflow-hidden border-none shadow-md'>
+        <div className='p-6'>
+          <div className='space-y-3'>
+            <Skeleton className='h-5 w-20' />
+            <Skeleton className='h-10 w-32' />
+            <Skeleton className='h-4 w-24' />
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  const cardConfig = {
+    income: {
+      icon: <ArrowUpCircle className='h-5 w-5 text-emerald-500' />,
+      iconBg: 'bg-emerald-100 dark:bg-emerald-900/30',
+      color: 'text-emerald-700 dark:text-emerald-400',
+      gradientFrom: 'from-emerald-50 dark:from-emerald-900/10',
+      gradientTo: 'to-green-50 dark:to-green-900/20'
+    },
+    expense: {
+      icon: <ArrowDownCircle className='h-5 w-5 text-rose-500' />,
+      iconBg: 'bg-rose-100 dark:bg-rose-900/30',
+      color: 'text-rose-700 dark:text-rose-400',
+      gradientFrom: 'from-rose-50 dark:from-rose-900/10',
+      gradientTo: 'to-red-50 dark:to-red-900/20'
+    },
+    balance: {
+      icon: <BarChart3 className='h-5 w-5 text-violet-500' />,
+      iconBg: 'bg-violet-100 dark:bg-violet-900/30',
+      color: 'text-violet-700 dark:text-violet-400',
+      gradientFrom: 'from-violet-50 dark:from-violet-900/10',
+      gradientTo: 'to-purple-50 dark:to-purple-900/20'
+    }
+  };
+
+  const config = cardConfig[type];
+
+  // Function to determine if a change is considered "good" based on card type
+  const isPositiveChange = () => {
+    // For expenses, negative change is good
+    if (type === 'expense') return change < 0;
+    // For income and balance, positive change is good
+    return change > 0;
+  };
+
+  const getTrendIcon = () => {
+    if (change === 0) return <Minus className='h-4 w-4 text-gray-500' />;
+    return change > 0 ? (
+      <TrendingUp className='h-4 w-4 text-emerald-500' />
+    ) : (
+      <TrendingDown className='h-4 w-4 text-rose-500' />
+    );
+  };
+
+  const getChangeColor = () => {
+    if (change === 0) return 'text-gray-500';
+    return isPositiveChange() ? 'text-emerald-500' : 'text-rose-500';
+  };
+
+  return (
+    <Card className='h-full overflow-hidden border-none shadow-md transition-all duration-300 hover:shadow-lg'>
+      <div className={`bg-gradient-to-br ${config.gradientFrom} ${config.gradientTo} h-full p-6`}>
+        <div className='mb-4 flex items-center justify-between'>
+          <span className={`${config.color} text-sm font-medium sm:text-base`}>{title}</span>
+          <div className={`rounded-full p-2 ${config.iconBg}`}>{config.icon}</div>
+        </div>
+
+        <div className='mb-4 min-w-0'>
+          <SingleLineEllipsis className='block text-xl font-bold tracking-tight sm:text-3xl'>
+            {formatCurrency(value, currency)}
+          </SingleLineEllipsis>
+        </div>
+
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className='inline-flex items-center gap-1.5 rounded-md bg-gray-50 px-2 py-1 dark:bg-gray-800/60'>
+                {getTrendIcon()}
+                <span className={cn('text-xs font-medium sm:text-sm', getChangeColor())}>
+                  {change > 0 ? '+' : ''}
+                  {Math.abs(change).toFixed(2)}%
+                </span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Change from last period</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+    </Card>
+  );
+};
+
+export const AnalyticsCards = ({ analytics, isLoading, account }: AnalyticsCardsProps) => {
+  if (!analytics && !isLoading) return null;
+
+  return (
+    <TooltipProvider>
+      <div className='flex flex-col gap-4 select-none'>
+        <CurrentBalanceCard account={account} isLoading={isLoading} />
+
+        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5'>
+          <StatCard
+            title='Income'
+            value={analytics?.income ?? 0}
+            change={analytics?.IncomePercentageChange ?? 0}
+            type='income'
+            currency={account?.currency ?? 'INR'}
+            isLoading={isLoading}
+          />
+          <StatCard
+            title='Expenses'
+            value={analytics?.expense ?? 0}
+            change={analytics?.ExpensePercentageChange ?? 0}
+            type='expense'
+            currency={account?.currency ?? 'INR'}
+            isLoading={isLoading}
+          />
+          <StatCard
+            title='Net Balance'
+            value={analytics?.balance ?? 0}
+            change={analytics?.BalancePercentageChange ?? 0}
+            type='balance'
+            currency={account?.currency ?? 'INR'}
+            isLoading={isLoading}
+          />
+        </div>
+      </div>
+    </TooltipProvider>
+  );
+};

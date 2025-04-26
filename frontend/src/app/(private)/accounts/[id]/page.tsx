@@ -1,12 +1,14 @@
 'use client';
 
 import { use, useMemo } from 'react';
-import { AnalyticsCards, IncomeExpenseChart } from '@/components/account';
 import { useToast } from '@/lib/hooks/useToast';
 import { useAccountDetails } from '@/components/account/hooks/useAccountDetails';
 import { AccountDetailsHeader } from '@/components/account/account-details-header';
 import { AccountTransactionsSection } from '@/components/account/account-transactions-section';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { AnalyticsCards } from '@/components/account/analytics-cards';
+import { FinancialTrendsSection } from '@/components/account/financial-trends-section';
+import { Card } from '@/components/ui/card';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -52,7 +54,8 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
     handlePageChange,
     categories,
     handleResetFilters,
-    refetchData
+    refetchData,
+    duration
   } = useAccountDetails(id, parsedSearchParams);
 
   const transformedChartData = useMemo(() => {
@@ -75,57 +78,57 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
     showError(`Failed to load account details: ${accountError.message}`);
     return <div className='p-4'>Error loading account details.</div>;
   }
-  if (analyticsError) {
-    showError(`Failed to load analytics: ${analyticsError.message}`);
-  }
-  if (chartError) {
-    showError(`Failed to load chart data: ${chartError.message}`);
-  }
-  if (transactionError) {
-    showError(`Failed to load transactions: ${transactionError.message}`);
-  }
 
   return (
-    <div className='mx-auto w-full max-w-7xl min-w-0 space-y-6 py-4 sm:px-4 md:px-2 lg:px-8'>
+    <div className='mx-auto h-full w-full space-y-6 p-4 md:p-6'>
+      {/* Header Section */}
       <AccountDetailsHeader
-        account={account}
+        account={account!}
         isLoading={isAccountLoading}
         refetchData={refetchData}
         isMobile={isMobile}
       />
 
-      <AnalyticsCards
-        analytics={customAnalytics}
-        isLoading={isAnalyticsLoading}
-        account={account}
-      />
+      {/* Analytics Cards + Chart Section */}
+      <div className='grid gap-6 lg:grid-cols-[1fr_1.5fr]'>
+        {/* Analytics Cards */}
+        <AnalyticsCards
+          analytics={customAnalytics}
+          isLoading={isAnalyticsLoading}
+          account={account}
+        />
 
-      {chartData?.date && (
-        <section className='rounded-xl bg-white shadow-xs'>
-          <IncomeExpenseChart
-            data={transformedChartData}
-            isLoading={isChartLoading}
+        {/* Chart Section */}
+        <Card className='overflow-hidden'>
+          <FinancialTrendsSection
+            chartData={transformedChartData}
+            isChartLoading={isChartLoading}
             currency={account?.currency ?? 'INR'}
+            accountId={id}
+            duration={duration}
           />
-        </section>
-      )}
+        </Card>
+      </div>
 
-      <AccountTransactionsSection
-        transactionsData={transactionsData ?? undefined}
-        isTransactionLoading={isTransactionLoading}
-        filters={filters}
-        handleSort={handleSort}
-        page={page}
-        handlePageChange={handlePageChange}
-        categories={categories ?? undefined}
-        setSearchQuery={setSearchQuery}
-        handleCategoryChange={handleCategoryChange}
-        handleIncomeTypeChange={handleIncomeTypeChange}
-        handleDateRangeSelect={handleDateRangeSelect}
-        handleClearDateRange={handleClearDateRange}
-        handleResetFilters={handleResetFilters}
-        refetchData={refetchData}
-      />
+      {/* Transactions Section */}
+      <Card className='overflow-hidden pb-3'>
+        <AccountTransactionsSection
+          transactionsData={transactionsData ?? undefined}
+          isTransactionLoading={isTransactionLoading}
+          filters={filters}
+          handleSort={handleSort}
+          page={page}
+          handlePageChange={handlePageChange}
+          categories={categories ?? undefined}
+          setSearchQuery={setSearchQuery}
+          handleCategoryChange={handleCategoryChange}
+          handleIncomeTypeChange={handleIncomeTypeChange}
+          handleDateRangeSelect={handleDateRangeSelect}
+          handleClearDateRange={handleClearDateRange}
+          handleResetFilters={handleResetFilters}
+          refetchData={refetchData}
+        />
+      </Card>
     </div>
   );
 };
