@@ -6,44 +6,41 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { PortfolioSummary } from '@/lib/types';
 import { cn, formatCurrency } from '@/lib/utils';
 import NoData from '../ui/no-data';
-import {
-  WalletCards,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  AlertTriangle,
-  InfoIcon,
-  Maximize2,
-  Copy
-} from 'lucide-react';
+import { WalletCards, TrendingUp, TrendingDown, Minus, AlertTriangle } from 'lucide-react';
 import {
   investmentGetPortfolioSummary,
-  investmentGetPortfolioHistorical
+  investmentGetPortfolioHistorical,
+  investmentGetOldestDate
 } from '@/lib/endpoints/investment';
 import { Skeleton } from '../ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { useToast } from '@/lib/hooks/useToast';
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   ResponsiveContainer,
   Tooltip as RechartsTooltip,
   YAxis,
-  XAxis
+  XAxis,
+  CartesianGrid
 } from 'recharts';
 import { parseISO, format } from 'date-fns';
 import Link from 'next/link';
 import { Button } from '../ui/button';
 import TooltipElement from '../ui/tooltip-element';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DateRange } from 'react-day-picker';
+import { format as formatDate, startOfToday, subDays } from 'date-fns';
+import DateRangePickerV2 from '../date-range-picker-v2';
 
-type PeriodOption = '7d' | '30d' | '90d' | '1y';
+type PeriodOption = '7d' | '30d' | '90d' | '1y' | 'custom';
 
 const PERIOD_OPTIONS: { value: PeriodOption; label: string }[] = [
   { value: '7d', label: '7D' },
   { value: '30d', label: '30D' },
   { value: '90d', label: '90D' },
-  { value: '1y', label: '1Y' }
+  { value: '1y', label: '1Y' },
+  { value: 'custom', label: 'Custom' }
 ];
 
 export const InvestmentSummaryCard: React.FC<{
@@ -51,6 +48,23 @@ export const InvestmentSummaryCard: React.FC<{
 }> = ({ className }) => {
   const { showError } = useToast();
   const [selectedPeriod, setSelectedPeriod] = React.useState<PeriodOption>('30d');
+  const [dateRange, setDateRange] = React.useState<DateRange | undefined>(undefined);
+  const [oldestDate, setOldestDate] = React.useState<Date | undefined>(undefined);
+
+  const handlePeriodChange = (value: string) => {
+    const period = value as PeriodOption;
+    setSelectedPeriod(period);
+    if (period !== 'custom') {
+      setDateRange(undefined);
+    } else if (!dateRange) {
+      // Set default date range for custom period (last 30 days)
+      const today = startOfToday();
+      setDateRange({
+        from: subDays(today, 30),
+        to: today
+      });
+    }
+  };
 
   const {
     data: summaryData,
@@ -68,9 +82,22 @@ export const InvestmentSummaryCard: React.FC<{
     isLoading: isHistoricalLoading,
     error: historicalError
   } = useQuery({
-    queryKey: ['investmentPortfolioHistoricalDashboard', selectedPeriod],
-    queryFn: () => investmentGetPortfolioHistorical({ period: selectedPeriod }),
-    enabled: !!summaryData && summaryData.numberOfHoldings > 0,
+    queryKey: ['investmentPortfolioHistoricalDashboard', selectedPeriod, dateRange],
+    queryFn: () => {
+      if (selectedPeriod === 'custom' && dateRange?.from && dateRange?.to) {
+        return investmentGetPortfolioHistorical({
+          startDate: formatDate(dateRange.from, 'yyyy-MM-dd'),
+          endDate: formatDate(dateRange.to, 'yyyy-MM-dd')
+        });
+      }
+      return investmentGetPortfolioHistorical({
+        period: selectedPeriod === 'custom' ? '30d' : selectedPeriod
+      });
+    },
+    enabled:
+      !!summaryData &&
+      summaryData.numberOfHoldings > 0 &&
+      (selectedPeriod !== 'custom' || (!!dateRange?.from && !!dateRange?.to)),
     retry: 1,
     staleTime: 60 * 60 * 1000
   });
@@ -80,6 +107,16 @@ export const InvestmentSummaryCard: React.FC<{
     if (historicalError)
       showError(`Investment History Error: ${(historicalError as Error).message}`);
   }, [summaryError, historicalError, showError]);
+
+  React.useEffect(() => {
+    investmentGetOldestDate()
+      .then((res) => {
+        if (res?.oldestDate) {
+          setOldestDate(new Date(res.oldestDate));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const isLoading = isSummaryLoading;
   const hasData = summaryData && summaryData.numberOfHoldings > 0;
@@ -157,7 +194,10 @@ export const InvestmentSummaryCard: React.FC<{
       }))
       .sort((a, b) => a.date.getTime() - b.date.getTime()) || [];
 
-  const sparklineColor = overallGainLoss >= 0 ? 'hsl(var(--chart-2))' : 'hsl(var(--chart-5))';
+  const sparklineColor =
+    overallGainLoss >= 0
+      ? 'hsl(213, 94%, 68%)' // Bright blue
+      : 'hsl(0, 84%, 60%)'; // Keep red for negative
 
   return (
     <TooltipProvider>
@@ -173,31 +213,60 @@ export const InvestmentSummaryCard: React.FC<{
           </CardDescription>
         </CardHeader>
         <CardContent className='space-y-4'>
-          <Tabs
-            value={selectedPeriod}
-            onValueChange={(value) => setSelectedPeriod(value as PeriodOption)}
-            className='w-fit'
-          >
-            <TabsList className='h-7 p-1'>
-              {PERIOD_OPTIONS.map((option) => (
-                <TabsTrigger
-                  key={option.value}
-                  value={option.value}
-                  className='px-2 py-0.5 text-xs'
-                >
-                  {option.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+          <div className='flex items-center gap-2'>
+            <Tabs value={selectedPeriod} onValueChange={handlePeriodChange} className='w-fit'>
+              <TabsList className='h-7 p-1'>
+                {PERIOD_OPTIONS.map((option) => (
+                  <TabsTrigger
+                    key={option.value}
+                    value={option.value}
+                    className='px-2 py-0.5 text-xs'
+                  >
+                    {option.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+            {selectedPeriod === 'custom' && (
+              <DateRangePickerV2
+                date={dateRange}
+                onDateChange={setDateRange}
+                className='w-[260px]'
+                placeholder='Select dates'
+                noLabel
+                minDate={oldestDate}
+                maxDate={new Date()}
+              />
+            )}
+          </div>
 
           {isHistoricalLoading ? (
             <Skeleton className='h-[180px] w-full' />
           ) : sparklineData.length > 1 ? (
             <div className='h-[180px] w-full'>
               <ResponsiveContainer width='100%' height='100%'>
-                <LineChart data={sparklineData}>
-                  <YAxis domain={['dataMin', 'dataMax']} hide padding={{ top: 10, bottom: 10 }} />
+                <AreaChart data={sparklineData}>
+                  <defs>
+                    <linearGradient id='colorValue' x1='0' y1='0' x2='0' y2='1'>
+                      <stop offset='0%' stopColor={sparklineColor} stopOpacity={0.4} />
+                      <stop offset='50%' stopColor={sparklineColor} stopOpacity={0.1} />
+                      <stop offset='100%' stopColor={sparklineColor} stopOpacity={0} />
+                    </linearGradient>
+                    <filter id='glow'>
+                      <feGaussianBlur stdDeviation='3' result='coloredBlur' />
+                      <feMerge>
+                        <feMergeNode in='coloredBlur' />
+                        <feMergeNode in='SourceGraphic' />
+                      </feMerge>
+                    </filter>
+                  </defs>
+                  <CartesianGrid
+                    strokeDasharray='3 3'
+                    vertical={false}
+                    stroke='hsl(var(--border))'
+                    opacity={0.3}
+                  />
+                  <YAxis domain={['dataMin', 'dataMax']} hide padding={{ top: 20, bottom: 20 }} />
                   <XAxis
                     dataKey='date'
                     tickFormatter={(date) => format(date, 'MMM d')}
@@ -206,13 +275,14 @@ export const InvestmentSummaryCard: React.FC<{
                     tick={{ fontSize: 10 }}
                     axisLine={false}
                     tickLine={false}
+                    stroke='hsl(var(--muted-foreground))'
                   />
                   <RechartsTooltip
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
                         const data = payload[0].payload;
                         return (
-                          <div className='bg-background rounded-lg border px-3 py-2 text-sm shadow-md'>
+                          <div className='bg-background/95 rounded-lg border px-3 py-2 text-sm shadow-lg backdrop-blur-sm'>
                             <div className='font-medium'>{format(data.date, 'MMM d, yyyy')}</div>
                             <div className='text-muted-foreground'>
                               {formatCurrency(data.value, currency)}
@@ -223,15 +293,16 @@ export const InvestmentSummaryCard: React.FC<{
                       return null;
                     }}
                   />
-                  <Line
+                  <Area
                     type='monotone'
                     dataKey='value'
                     stroke={sparklineColor}
-                    strokeWidth={2}
-                    dot={false}
-                    activeDot={{ r: 4, strokeWidth: 0 }}
+                    strokeWidth={2.5}
+                    fillOpacity={1}
+                    fill='url(#colorValue)'
+                    filter='url(#glow)'
                   />
-                </LineChart>
+                </AreaChart>
               </ResponsiveContainer>
             </div>
           ) : (

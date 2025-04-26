@@ -123,7 +123,11 @@ export const investmentGetPortfolioSummary = (
   );
 
 export const investmentGetPortfolioHistorical = (
-  params: { period?: '7d' | '30d' | '90d' | '1y' } = { period: '30d' },
+  params: {
+    period?: '7d' | '30d' | '90d' | '1y';
+    startDate?: string;
+    endDate?: string;
+  } = { period: '30d' },
   successMessage?: string,
   errorMessage?: string
 ): Promise<
@@ -140,4 +144,17 @@ export const investmentGetPortfolioHistorical = (
     { params },
     successMessage,
     errorMessage || 'Failed to fetch historical portfolio data'
+  );
+
+export const investmentGetOldestDate = (
+  successMessage?: string,
+  errorMessage?: string
+): Promise<ApiResponse<{ oldestDate: string | null }>> =>
+  apiFetch(
+    '/investment/oldest-date',
+    'GET',
+    undefined,
+    undefined,
+    successMessage,
+    errorMessage || 'Failed to fetch oldest investment date'
   );

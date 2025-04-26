@@ -6,6 +6,7 @@ import { DashboardData } from '@/lib/types';
 import { cn, formatCurrency } from '@/lib/utils';
 import Link from 'next/link';
 import { Button } from '../ui/button';
+import { SingleLineEllipsis } from '../ui/ellipsis-components';
 
 interface AccountListSummaryProps {
   accountsInfo: DashboardData['accountsInfo'] | undefined;
@@ -52,15 +53,19 @@ export const AccountListSummary: React.FC<AccountListSummaryProps> = ({
                 <li key={accountInfo.id} className='text-sm'>
                   <Link
                     href={`/accounts/${accountInfo.id}`}
-                    className='block rounded-md p-2 transition-colors hover:bg-muted/50'
+                    className='hover:bg-muted/50 block rounded-md p-2 transition-colors'
                   >
-                    <div className='mb-1 flex justify-between'>
-                      <span className='mr-2 truncate font-semibold'>{accountInfo.name}</span>
+                    <div className='mb-1 flex w-full justify-between'>
+                      <div className='min-w-0'>
+                        <SingleLineEllipsis className='mr-2 truncate font-semibold'>
+                          {accountInfo.name}
+                        </SingleLineEllipsis>
+                      </div>
                       <span className='shrink-0 font-bold'>
                         {formatCurrency(accountInfo.balance ?? 0, currency)}
                       </span>
                     </div>
-                    <div className='flex justify-between text-xs text-muted-foreground'>
+                    <div className='text-muted-foreground flex justify-between text-xs'>
                       <span>
                         In:{' '}
                         <span className='text-green-600'>

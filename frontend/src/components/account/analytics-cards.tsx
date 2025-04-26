@@ -1,3 +1,5 @@
+'use client';
+
 import { AccountDetails, CustomAnalytics } from '@/lib/types';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,6 +18,7 @@ import { ApiResponse } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { SingleLineEllipsis } from '../ui/ellipsis-components';
+import { PixelCanvas } from '../ui/pixel-canvas';
 
 interface AnalyticsCardsProps {
   analytics?: ApiResponse<CustomAnalytics>;
@@ -26,7 +29,7 @@ interface AnalyticsCardsProps {
 const CurrentBalanceCard = ({ account, isLoading }: { account: any; isLoading?: boolean }) => {
   if (isLoading) {
     return (
-      <Card className='overflow-hidden border-none shadow-md'>
+      <Card className='h-full overflow-hidden border-none shadow-md'>
         <div className='bg-gradient-to-br from-blue-50 to-indigo-50 p-6 dark:from-blue-900/20 dark:to-indigo-900/30'>
           <div className='space-y-3'>
             <Skeleton className='h-5 w-32' />
@@ -38,45 +41,47 @@ const CurrentBalanceCard = ({ account, isLoading }: { account: any; isLoading?: 
     );
   }
 
-  // Dynamic card background color based on balance
+  const isPositive = account?.balance && account?.balance > 0;
   const bgColorClass =
     account?.balance && account?.balance > 0
-      ? 'from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/30'
-      : 'from-red-50 to-rose-50 dark:from-red-900/20 dark:to-rose-900/30';
+      ? 'from-blue-50/50 to-indigo-50/50 dark:from-blue-900/50 dark:to-indigo-900/50'
+      : 'from-red-50/50 to-rose-50/50 dark:from-red-900/50 dark:to-rose-900/50';
 
   return (
-    <Card className='h-full overflow-hidden border-none shadow-md transition-all duration-300 hover:shadow-lg'>
+    <Card className='group relative h-full overflow-hidden border-none shadow-md transition-all duration-300 hover:shadow-lg'>
+      <PixelCanvas gap={10} speed={25} colors={['#e0f2fe', '#7dd3fc', '#0ea5e9']} />
+
       <div
-        className={`flex h-full flex-col justify-between bg-gradient-to-br ${bgColorClass} p-6 sm:p-8`}
+        className={`flex h-full w-full flex-col justify-between bg-gradient-to-br ${bgColorClass} p-6 sm:p-8`}
       >
         <div className='flex items-start justify-between gap-4'>
           <div className='flex flex-col gap-2'>
             <div className='mb-2 flex items-center gap-2'>
-              <CreditCard className='h-5 w-5 text-blue-600 dark:text-blue-400' />
-              <h3 className='text-lg font-semibold text-blue-800 dark:text-blue-300'>
+              <CreditCard className='z-10 h-5 w-5 transition-colors duration-300 group-hover:text-[var(--active-color)]' />
+              <h3 className='z-10 text-lg font-semibold transition-colors duration-300 group-hover:text-[var(--active-color)]'>
                 Current Balance
               </h3>
             </div>
             <div className='flex min-w-0 flex-wrap items-center gap-3'>
-              <SingleLineEllipsis className='text-3xl font-bold tracking-tight sm:text-4xl xl:text-5xl'>
+              <SingleLineEllipsis className='z-10 text-3xl font-bold tracking-tight transition-colors duration-300 group-hover:text-[var(--active-color)] sm:text-4xl xl:text-5xl'>
                 {formatCurrency(account?.balance ?? 0, account?.currency)}
               </SingleLineEllipsis>
               <Badge
-                variant={account?.balance && account?.balance > 0 ? 'default' : 'destructive'}
-                className='h-fit w-fit font-medium'
+                variant={isPositive ? 'default' : 'destructive'}
+                className='z-10 h-fit w-fit font-medium'
               >
-                {account?.balance && account?.balance > 0 ? 'Positive' : 'Negative'}
+                {isPositive ? 'Positive' : 'Negative'}
               </Badge>
             </div>
           </div>
-          <div className='hidden sm:block'>
-            {account?.balance && account?.balance > 0 ? (
-              <div className='rounded-full bg-blue-100 p-3 dark:bg-blue-900/40'>
-                <TrendingUp className='h-6 w-6 text-blue-600 dark:text-blue-400' />
+          <div className='z-10 hidden sm:block'>
+            {isPositive ? (
+              <div className='rounded-full bg-emerald-100/80 p-3 backdrop-blur-sm transition-colors duration-300 group-hover:bg-emerald-100 dark:bg-emerald-900/40'>
+                <TrendingUp className='h-6 w-6 text-emerald-600 transition-colors duration-300 group-hover:text-emerald-500 dark:text-emerald-400' />
               </div>
             ) : (
-              <div className='rounded-full bg-red-100 p-3 dark:bg-red-900/40'>
-                <TrendingDown className='h-6 w-6 text-red-600 dark:text-red-400' />
+              <div className='rounded-full bg-red-100/80 p-3 backdrop-blur-sm transition-colors duration-300 group-hover:bg-red-100 dark:bg-red-900/40'>
+                <TrendingDown className='h-6 w-6 text-red-600 transition-colors duration-300 group-hover:text-red-500 dark:text-red-400' />
               </div>
             )}
           </div>

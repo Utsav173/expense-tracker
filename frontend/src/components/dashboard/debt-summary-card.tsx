@@ -1,16 +1,17 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { DebtWithDetails, ApiResponse } from '@/lib/types';
 import { cn, formatCurrency } from '@/lib/utils';
 import NoData from '../ui/no-data';
-import { Scale } from 'lucide-react';
 import { getOutstandingDebts } from '@/lib/endpoints/debt';
 import { Skeleton } from '../ui/skeleton';
 import { useToast } from '@/lib/hooks/useToast';
 import { Button } from '../ui/button';
 import Link from 'next/link';
 import { formatDistanceToNowStrict, parseISO, isValid } from 'date-fns';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 type OutstandingDebtsResponse = ApiResponse<{
   data: DebtWithDetails[];
@@ -48,80 +49,101 @@ export const DebtSummaryCard: React.FC<{
 
   const getDueDateInfo = (dueDateStr?: string): string | null => {
     if (!dueDateStr) return null;
-    const dueDate = parseISO(dueDateStr); // Handles 'YYYY-MM-DD' correctly
+    const dueDate = parseISO(dueDateStr);
     if (!isValid(dueDate)) return null;
     return formatDistanceToNowStrict(dueDate, { addSuffix: true });
   };
 
-  if (isLoading) {
-    return (
-      <Card className={cn('col-span-1 md:col-span-1', className)}>
-        <CardHeader>
-          <CardTitle className='flex items-center gap-2'>
-            <Scale className='h-5 w-5 text-red-500' />
-            Debt Summary
-          </CardTitle>
-          <Skeleton className='h-4 w-3/5' />
-        </CardHeader>
-        <CardContent className='h-full space-y-4 pt-2'>
-          <Skeleton className='h-5 w-1/2' />
-          <Skeleton className='h-8 w-3/4' />
-          <Skeleton className='h-4 w-1/3' />
-          <Skeleton className='h-4 w-1/2' />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (error || numberOfDebts === 0) {
-    return (
-      <Card className='col-span-1 flex flex-col md:col-span-1'>
-        <CardContent className='h-full grow'>
-          <NoData
-            message={error ? 'Could not load debt data.' : 'No outstanding debts! 🎉'}
-            icon={error ? 'x-circle' : 'inbox'}
-          />
-        </CardContent>
-        {!error && numberOfDebts === 0 && (
-          <div className='border-t p-3 text-center'>
-            <Button variant='link' size='sm' asChild className='text-xs'>
-              <Link href='/debts'>Add Debts</Link>
-            </Button>
-          </div>
-        )}
-      </Card>
-    );
-  }
-
   return (
-    <Card className='col-span-1 flex flex-col py-4 md:col-span-1'>
-      <CardContent className='scrollbar h-full grow space-y-3 overflow-y-auto text-sm'>
-        <div>
-          <p className='text-xl font-bold text-red-600'>{formatCurrency(outstandingDebtAmount)}</p>
-          <p className='text-muted-foreground pt-1 text-xs'>
-            Total Outstanding debts Across {numberOfDebts} item(s).
-          </p>
-        </div>
-        {nextDueDebt && (
-          <div className='mt-3 border-t pt-3'>
-            <p className='text-muted-foreground mb-1 text-xs'>Next Payment Due</p>
-            <div className='flex items-baseline justify-between'>
-              <span className='truncate pr-2 font-medium'>{nextDueDebt.debts.description}</span>
-              <span className='text-sm font-semibold'>
-                {formatCurrency(nextDueDebt.debts.amount)}
-              </span>
-            </div>
-            <p className='text-muted-foreground text-right text-xs'>
-              {getDueDateInfo(nextDueDebt.debts.dueDate)}
-            </p>
-          </div>
-        )}
+    <Card className={cn('flex h-full flex-col', className)}>
+      <CardContent className='flex h-full flex-col p-0'>
+        <ScrollArea className='flex-1 px-4 py-4'>
+          <AnimatePresence mode='wait'>
+            {isLoading ? (
+              <motion.div
+                key='loading'
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className='space-y-4'
+              >
+                <Skeleton className='h-5 w-1/2' />
+                <Skeleton className='h-8 w-3/4' />
+                <Skeleton className='h-4 w-1/3' />
+                <Skeleton className='h-4 w-1/2' />
+              </motion.div>
+            ) : error || numberOfDebts === 0 ? (
+              <motion.div
+                key='empty'
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className='flex h-full items-center justify-center'
+              >
+                <NoData
+                  message={error ? 'Could not load debt data.' : 'No outstanding debts! 🎉'}
+                  icon={error ? 'x-circle' : 'inbox'}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key='data'
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className='space-y-4'
+              >
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className='rounded-lg border p-4 shadow-sm transition-all hover:shadow-md'
+                >
+                  <p className='text-2xl font-bold text-red-600'>
+                    {formatCurrency(outstandingDebtAmount)}
+                  </p>
+                  <p className='text-muted-foreground pt-1 text-xs'>
+                    Total Outstanding debts Across {numberOfDebts} item(s)
+                  </p>
+                </motion.div>
+
+                {nextDueDebt && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 }}
+                    className='rounded-lg border p-4 shadow-sm transition-all hover:shadow-md'
+                  >
+                    <p className='text-muted-foreground mb-2 text-xs font-medium'>
+                      Next Payment Due
+                    </p>
+                    <div className='flex min-w-0 flex-col gap-2'>
+                      <div className='truncate font-medium break-words'>
+                        {nextDueDebt.debts.description}
+                      </div>
+                      <div className='flex items-baseline justify-between'>
+                        <span className='text-sm font-semibold text-red-600'>
+                          {formatCurrency(nextDueDebt.debts.amount)}
+                        </span>
+                        <span className='text-muted-foreground text-xs'>
+                          {getDueDateInfo(nextDueDebt.debts.dueDate)}
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </ScrollArea>
       </CardContent>
-      <div className='border-t p-3 text-center'>
-        <Button variant='link' size='sm' asChild className='text-xs'>
-          <Link href='/debts'>Manage Debts</Link>
-        </Button>
-      </div>
+      {!isLoading && !error && numberOfDebts > 0 && (
+        <div className='border-t p-3 text-center'>
+          <Button variant='link' size='sm' asChild className='text-xs'>
+            <Link href='/debts'>Manage Debts</Link>
+          </Button>
+        </div>
+      )}
     </Card>
   );
 };
