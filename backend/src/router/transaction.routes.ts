@@ -333,6 +333,7 @@ transactionRouter.get('/by/:field', authMiddleware, async (c) => {
 transactionRouter.get('/by/category/chart', authMiddleware, async (c) => {
   // get query params
   const duration = c.req.query('duration');
+  const accountId = c.req.query('accountId');
   const { startDate, endDate } = await getIntervalValue(duration);
   const userId = await c.get('userId' as any);
 
@@ -376,6 +377,7 @@ transactionRouter.get('/by/category/chart', authMiddleware, async (c) => {
           t."createdAt" >= ${startDate}
           AND t."createdAt" <= ${endDate}
           AND t.owner = ${userId}
+          ${accountId ? sql`AND t.account = ${accountId}` : sql``}
         GROUP BY
           c.name
       ) AS subquery;
