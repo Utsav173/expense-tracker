@@ -8,10 +8,33 @@ import { db } from '../database';
 import { HTTPException } from 'hono/http-exception';
 import { StatusCode } from 'hono/utils/http-status';
 import { PromisePool } from '@supercharge/promise-pool';
-import { parseISO, format as formatDateFn, subDays, eachDayOfInterval } from 'date-fns';
+import { parseISO, format as formatDateFn, subDays, eachDayOfInterval, isValid } from 'date-fns';
 import { fetchHistoricalPricesForSymbol } from '../utils/finance';
 
 const investmentRouter = new Hono();
+
+investmentRouter.get('/oldest-date', authMiddleware, async (c) => {
+  try {
+    const userId = await c.get('userId' as any);
+    // Use a join to ensure the investment belongs to the user
+    const result = await db
+      .select({ purchaseDate: Investment.purchaseDate })
+      .from(Investment)
+      .leftJoin(InvestmentAccount, eq(Investment.account, InvestmentAccount.id))
+      .where(eq(InvestmentAccount.userId, userId))
+      .orderBy(asc(Investment.purchaseDate))
+      .limit(1);
+
+    const oldestDate =
+      result.length && result[0].purchaseDate
+        ? result[0].purchaseDate.toISOString().split('T')[0]
+        : null;
+    return c.json({ oldestDate });
+  } catch (err) {
+    console.error('Error fetching oldest investment date:', err);
+    return c.json({ oldestDate: null }, 200);
+  }
+});
 
 investmentRouter.get('/portfolio', authMiddleware, async (c) => {
   try {
@@ -515,7 +538,7 @@ investmentRouter.get(
   async (c) => {
     try {
       const userId = c.get('userId' as any);
-      const { period } = c.req.valid('query');
+      const { period, startDate: customStartDate, endDate: customEndDate } = c.req.valid('query');
 
       const userPrefs = await db.query.User.findFirst({
         where: eq(User.id, userId),
@@ -545,25 +568,47 @@ investmentRouter.get(
       }
 
       // Use current time as end date to avoid future date issues with Yahoo Finance
-      const endDate = new Date();
+      const now = new Date();
+      let endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       let startDate: Date;
 
-      switch (period) {
-        case '7d':
-          startDate = subDays(endDate, 7);
-          break;
-        case '90d':
-          startDate = subDays(endDate, 90);
-          break;
-        case '1y':
-          startDate = subDays(endDate, 365);
-          break;
-        case '30d':
-        default:
-          startDate = subDays(endDate, 30);
-          break;
+      // Handle custom date range if provided
+      if (customStartDate && customEndDate) {
+        const parsedStartDate = parseISO(customStartDate);
+        const parsedEndDate = parseISO(customEndDate);
+
+        if (!isValid(parsedStartDate) || !isValid(parsedEndDate)) {
+          throw new HTTPException(400, { message: 'Invalid date format. Use YYYY-MM-DD.' });
+        }
+
+        // Ensure end date is not in the future
+        if (parsedEndDate > endDate) {
+          endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        } else {
+          endDate = parsedEndDate;
+        }
+        startDate = parsedStartDate;
+      } else {
+        // Use predefined periods as before
+        switch (period) {
+          case '7d':
+            startDate = subDays(endDate, 7);
+            break;
+          case '90d':
+            startDate = subDays(endDate, 90);
+            break;
+          case '1y':
+            startDate = subDays(endDate, 365);
+            break;
+          case '30d':
+          default:
+            startDate = subDays(endDate, 30);
+            break;
+        }
       }
+
       startDate.setHours(0, 0, 0, 0); // Start of the day
+      endDate.setHours(23, 59, 59, 999); // End of the day
 
       // Get all dates in range
       const allDatesInRange = eachDayOfInterval({ start: startDate, end: endDate });

@@ -135,6 +135,39 @@ export const investmentSchema = z.object({
     .refine((date) => !isNaN(date.getTime()), { message: 'Invalid date format' }),
 });
 
-export const historicalPortfolioQuerySchema = z.object({
-  period: z.enum(['7d', '30d', '90d', '1y']).default('30d'),
-});
+export const historicalPortfolioQuerySchema = z
+  .object({
+    period: z.enum(['7d', '30d', '90d', '1y']).default('30d').optional(),
+    startDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
+      .optional(),
+    endDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
+      .optional(),
+  })
+  .refine(
+    (data) => {
+      // If either startDate or endDate is provided, both must be provided
+      if (data.startDate || data.endDate) {
+        return data.startDate && data.endDate;
+      }
+      return true;
+    },
+    {
+      message: 'Both startDate and endDate must be provided when using custom date range',
+    },
+  )
+  .refine(
+    (data) => {
+      // If using custom dates, period should not be provided
+      if (data.startDate && data.endDate) {
+        return !data.period;
+      }
+      return true;
+    },
+    {
+      message: 'Cannot specify both period and custom date range',
+    },
+  );

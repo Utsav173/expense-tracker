@@ -7,8 +7,13 @@ export const fetchHistoricalPricesForSymbol = async (
 ): Promise<Map<string, number | null>> => {
   const priceMap = new Map<string, number | null>();
   const now = new Date();
+  now.setHours(0, 0, 0, 0); // Set to start of day for comparison
 
-  if (endDate > now) {
+  // Compare only the date part
+  const endDateOnly = new Date(endDate);
+  endDateOnly.setHours(0, 0, 0, 0);
+
+  if (endDateOnly > now) {
     console.warn(
       `Skipping historical fetch for ${symbol}: End date ${formatDateFn(
         endDate,
