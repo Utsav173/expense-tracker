@@ -17,7 +17,9 @@ This is the backend service for the Expense Tracker application, built with Bun.
 
 ## Database Data model visualize
 
-![image](public/image.png)
+The database schema is visualized below. For a more detailed view, you can use Drizzle Studio by running `bun run db:studio`.
+
+![Database Schema](https://raw.githubusercontent.com/Utsav173/expense-tracker/main/backend/public/database-schema.png)
 
 ## Technologies Used
 
@@ -115,8 +117,8 @@ This is the backend service for the Expense Tracker application, built with Bun.
       ```
   2.  **Start:**
       `bash
-    bun run start
-    `
+bun run start
+`
       (Ensure production environment variables are set).
 
 ## API Documentation
@@ -152,3 +154,69 @@ The API documentation is available via the Postman collection: [`expense-backend
 ## Contributing
 
 Please refer to the main project `CONTRIBUTING.md` file (if available) or open an issue/pull request.
+
+## Security
+
+The application implements several security measures:
+
+- **Authentication:**
+
+  - JWT-based authentication with secure token storage
+  - Password hashing using bcrypt
+  - Token expiration and refresh mechanisms
+  - Secure password reset flow
+
+- **Data Protection:**
+
+  - SQL injection prevention through Drizzle ORM
+  - Input validation using Zod schemas
+  - XSS protection through proper data sanitization
+  - CSRF protection via same-site cookies
+
+- **API Security:**
+
+  - Rate limiting on authentication endpoints
+  - CORS configuration for frontend access
+  - Request size limits
+  - Secure headers (HSTS, CSP)
+
+- **Best Practices:**
+  - Environment variables for sensitive data
+  - Regular dependency updates
+  - Secure session management
+  - Error handling without exposing sensitive information
+
+## Troubleshooting
+
+Common issues and their solutions:
+
+1. **Database Connection Issues:**
+
+   - Ensure your `DATABASE_URL` is correct and the database is accessible
+   - Check if the database server is running
+   - Verify network connectivity and firewall settings
+
+2. **JWT Authentication Problems:**
+
+   - Verify `JWT_SECRET` is set correctly
+   - Check token expiration settings
+   - Ensure proper token format in requests
+
+3. **Email Sending Issues:**
+
+   - Verify Gmail App Password is correct
+   - Check SMTP settings if using custom email provider
+   - Ensure proper email template configuration
+
+4. **Migration Errors:**
+
+   - Run `bun run db:check` to verify schema
+   - Check for conflicting migrations
+   - Ensure database user has proper permissions
+
+5. **Performance Issues:**
+   - Check database indexes
+   - Monitor query performance
+   - Review connection pool settings
+
+For additional help, please open an issue in the repository.

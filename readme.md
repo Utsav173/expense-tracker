@@ -1,7 +1,6 @@
-```markdown
 # Expense Tracker: Full-Stack Financial Management
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg?style=flat-square)](https://your-build-pipeline-url) [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE) [![Version](https://img.shields.io/badge/version-1.0.0-orange.svg?style=flat-square)]() [![Frontend](https://img.shields.io/badge/frontend-Next.js-black.svg?style=flat-square&logo=next.js&logoColor=white)](frontend) [![Backend](https://img.shields.io/badge/backend-Bun.js-black.svg?style=flat-square&logo=bun&logoColor=white)](backend) [![Database](https://img.shields.io/badge/database-PostgreSQL-blue.svg?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg?style=flat-square)](https://github.com/Utsav173/expense-tracker/actions) [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE) [![Version](https://img.shields.io/badge/version-1.0.0-orange.svg?style=flat-square)](https://github.com/Utsav173/expense-tracker/releases) [![Frontend](https://img.shields.io/badge/frontend-Next.js-black.svg?style=flat-square&logo=next.js&logoColor=white)](frontend) [![Backend](https://img.shields.io/badge/backend-Bun.js-black.svg?style=flat-square&logo=bun&logoColor=white)](backend) [![Database](https://img.shields.io/badge/database-PostgreSQL-blue.svg?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 
 > A comprehensive full-stack web application for tracking, managing, and understanding your finances.
 
@@ -17,6 +16,7 @@
 - [Running the Application](#running-the-application)
 - [API Documentation](#api-documentation)
 - [Deployment](#deployment)
+- [Demo](#demo)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -74,6 +74,7 @@ Detailed feature lists can be found in the respective README files:
 - See `backend/package.json` for full list.
 
 ## Project Structure
+
 ```
 
 expense-tracker/
@@ -87,10 +88,10 @@ expense-tracker/
 
 ### Prerequisites
 
-*   **Bun:** Install Bun (version >= 1.0 recommended). See [https://bun.sh/](https://bun.sh/).
-*   **Node.js:** Required for some frontend tooling (18+ recommended).
-*   **PostgreSQL Database:** A PostgreSQL database URL connection string is required (e.g., from Neon, Supabase, or local setup).
-*   **Gmail Account (for Email Features):** Requires a Gmail account with an "App Password" enabled for sending welcome/reset emails. See Google's documentation for creating App Passwords.
+- **Bun:** Install Bun (version >= 1.0 recommended). See [https://bun.sh/](https://bun.sh/).
+- **Node.js:** Required for some frontend tooling (18+ recommended).
+- **PostgreSQL Database:** A PostgreSQL database URL connection string is required (e.g., from Neon, Supabase, or local setup).
+- **Gmail Account (for Email Features):** Requires a Gmail account with an "App Password" enabled for sending welcome/reset emails. See Google's documentation for creating App Passwords.
 
 ### 1. Backend Setup
 
@@ -119,14 +120,37 @@ The backend API is documented via a Postman collection. See the **[Backend READM
 
 ## Deployment
 
-*   **Backend:** Refer to the [backend README](./backend/README.md#running-the-application) for build (`generate:build`) and start (`start`) commands. Ensure all necessary environment variables are set in your deployment environment.
-*   **Frontend:** Deploy as a standard Next.js application (e.g., to Vercel, Netlify). Ensure the `NEXT_PUBLIC_API_BASE_URL` environment variable points to your deployed backend URL.
+- **Backend:** Refer to the [backend README](./backend/README.md#running-the-application) for build (`generate:build`) and start (`start`) commands. Ensure all necessary environment variables are set in your deployment environment.
+- **Frontend:** Deploy as a standard Next.js application (e.g., to Vercel, Netlify). Ensure the `NEXT_PUBLIC_API_BASE_URL` environment variable points to your deployed backend URL.
+
+## Demo
+
+A live demo of the application is available at [pro-expense.vercel.app](https://pro-expense.vercel.app/auth/login).
+
+**Demo Credentials:**
+
+- Email: sampleuser@example.com
+- Password: Password@123
 
 ## Contributing
 
-Contributions are welcome! Please refer to the `CONTRIBUTING.md` file (if available) or open an issue/pull request.
+We welcome contributions from the community! To contribute:
+
+1. Fork the repository
+2. Create a new branch for your feature (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+Please ensure your PR:
+
+- Follows the existing code style
+- Includes tests for new features
+- Updates documentation as needed
+- Has a clear description of changes
+
+For major changes, please open an issue first to discuss what you would like to change.
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-```

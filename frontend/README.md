@@ -152,3 +152,89 @@ Please refer to the main project `CONTRIBUTING.md` file (if available) or open a
 ## License
 
 This project is licensed under the [MIT License](../LICENSE).
+
+## Browser Support
+
+The application is tested and supported on the following browsers:
+
+- Chrome (latest 2 versions)
+- Firefox (latest 2 versions)
+- Safari (latest 2 versions)
+- Edge (latest 2 versions)
+
+For optimal performance and experience, we recommend using the latest version of Chrome or Firefox.
+
+## Performance
+
+The application implements several performance optimizations:
+
+- **Code Splitting:**
+
+  - Dynamic imports for heavy components
+  - Route-based code splitting
+  - Lazy loading of non-critical resources
+
+- **Asset Optimization:**
+
+  - Image optimization using Next.js Image component
+  - Font optimization and subsetting
+  - CSS minification and purging
+
+- **Caching:**
+
+  - Service Worker for offline support
+  - Browser caching strategies
+  - API response caching with TanStack Query
+
+- **Rendering:**
+  - Static Site Generation (SSG) where possible
+  - Incremental Static Regeneration (ISR)
+  - Client-side hydration optimization
+
+## Development Guidelines
+
+### Code Style
+
+- Follow the project's ESLint and Prettier configuration
+- Use TypeScript for all new code
+- Follow React best practices and hooks guidelines
+- Write meaningful commit messages
+
+### Component Development
+
+1. **Structure:**
+
+   - Place components in appropriate feature directories
+   - Use atomic design principles
+   - Keep components focused and single-responsibility
+
+2. **State Management:**
+
+   - Use React Query for server state
+   - Use React Context for global UI state
+   - Use local state for component-specific state
+
+3. **Testing:**
+
+   - Write unit tests for utilities and hooks
+   - Write integration tests for complex components
+   - Use React Testing Library for component tests
+
+4. **Documentation:**
+   - Document complex components with JSDoc
+   - Add usage examples in component stories
+   - Keep README files up to date
+
+### Performance Guidelines
+
+- Use React.memo for expensive components
+- Implement proper loading states
+- Optimize re-renders with useMemo and useCallback
+- Monitor bundle size with @next/bundle-analyzer
+
+### Accessibility
+
+- Follow WCAG 2.1 guidelines
+- Use semantic HTML elements
+- Ensure proper keyboard navigation
+- Test with screen readers
