@@ -67,14 +67,16 @@ const LoginPage = () => {
   return (
     <Card className='w-full border-0 p-0 shadow-none'>
       <CardContent className='space-y-6 p-0 pt-4'>
-        <div className='select-none space-y-2 text-center'>
-          <h2 className='text-2xl font-semibold text-gray-800'>Welcome Back</h2>
-          <p className='text-sm text-gray-500'>Sign in to continue tracking your expenses</p>
+        <div className='space-y-2 text-center select-none'>
+          <h2 className='text-foreground text-2xl font-semibold'>Welcome Back</h2>
+          <p className='text-muted-foreground text-sm'>
+            Sign in to continue tracking your expenses
+          </p>
         </div>
 
         <form className='space-y-4' onSubmit={handleSubmit(handleLogin)}>
           <div className='space-y-2'>
-            <label className='text-sm font-medium text-gray-700' htmlFor='email'>
+            <label className='text-foreground text-sm font-medium' htmlFor='email'>
               Email
             </label>
             <Input
@@ -83,13 +85,15 @@ const LoginPage = () => {
               placeholder='you@example.com'
               {...register('email')}
               disabled={loginLoading}
-              className='w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 transition-all duration-200 focus:border-transparent focus:bg-white focus:ring-2 focus:ring-blue-500'
+              className='border-input bg-background focus:bg-card focus:ring-primary w-full rounded-lg border px-4 py-2 transition-all duration-200 focus:border-transparent focus:ring-2'
             />
-            {errors.email && <p className='py-1 text-xs text-red-500'> {errors.email.message}</p>}
+            {errors.email && (
+              <p className='text-destructive py-1 text-xs'> {errors.email.message}</p>
+            )}
           </div>
 
           <div className='space-y-2'>
-            <label className='text-sm font-medium text-gray-700' htmlFor='password'>
+            <label className='text-foreground text-sm font-medium' htmlFor='password'>
               Password
             </label>
             <PasswordInput
@@ -97,10 +101,10 @@ const LoginPage = () => {
               placeholder='••••••••'
               {...register('password')}
               disabled={loginLoading}
-              className='w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 transition-all duration-200 focus:border-transparent focus:bg-white focus:ring-2 focus:ring-blue-500'
+              className='border-input bg-background focus:bg-card focus:ring-primary w-full rounded-lg border px-4 py-2 transition-all duration-200 focus:border-transparent focus:ring-2'
             />
             {errors.password && (
-              <p className='py-1 text-xs text-red-500'> {errors.password.message}</p>
+              <p className='text-destructive py-1 text-xs'> {errors.password.message}</p>
             )}
           </div>
 
@@ -113,13 +117,13 @@ const LoginPage = () => {
       <CardFooter className='flex items-center justify-between pt-4'>
         <Link
           href='/auth/signup'
-          className='text-sm font-medium text-blue-600 transition-colors duration-200 hover:text-blue-500'
+          className='text-primary hover:text-primary/80 text-sm font-medium transition-colors duration-200'
         >
           Create account
         </Link>
         <Link
           href='/auth/forgot-password'
-          className='text-sm font-medium text-blue-600 transition-colors duration-200 hover:text-blue-500'
+          className='text-primary hover:text-primary/80 text-sm font-medium transition-colors duration-200'
         >
           Forgot Password?
         </Link>

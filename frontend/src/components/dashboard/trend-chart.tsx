@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useMemo, useState, useCallback } from 'react';
-import { DateRange } from 'react-day-picker';
-import DateRangePicker from '@/components/date-range-picker';
 import {
-  ComposedChart,
-  Bar,
+  LineChart as RechartsLineChart,
+  BarChart as RechartsBarChart,
+  AreaChart as RechartsAreaChart,
   Line,
+  Bar,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -14,283 +15,635 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
-import { format, isValid, startOfDay, endOfDay, addDays } from 'date-fns';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import {
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Activity,
+  BarChart,
+  LineChart,
+  AreaChart
+} from 'lucide-react';
+import { DateRange } from 'react-day-picker';
+import { getTimestampsForRange } from '@/lib/utils';
 
-interface ChartDataPoint {
-  x: number; // timestamp in seconds
-  y: number;
+interface ApiChartDataPoint {
+  x: number;
+  y: number | null;
 }
 
-interface TrendChartProps {
-  incomeData?: ChartDataPoint[];
-  expenseData?: ChartDataPoint[];
-  balanceData?: ChartDataPoint[];
+export interface TrendChartProps {
+  incomeData: ApiChartDataPoint[];
+  expenseData: ApiChartDataPoint[];
+  balanceData: ApiChartDataPoint[];
   className?: string;
+  currency?: string;
+  chartType?: 'line' | 'bar' | 'area';
+  setChartType?: (type: 'line' | 'bar' | 'area') => void;
+  timeRangeOption: string;
+  customDateRange?: DateRange;
 }
 
-type VisibilityKey = 'income' | 'expense' | 'balance';
-
-const chartConfig = {
-  income: { label: 'Income', color: 'hsl(142, 76%, 36%)' },
-  expense: { label: 'Expense', color: 'hsl(0, 84%, 60%)' },
-  balance: { label: 'Balance', color: 'hsl(214, 100%, 49%)' }
-};
-
-const formatCurrency = (value: number | undefined): string => {
-  if (value === null || value === undefined || isNaN(value)) return '₹0';
-
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    notation: 'compact',
-    maximumFractionDigits: 1
-  }).format(value);
-};
-
-const formatCombinedChartData = (
-  incomeData: ChartDataPoint[] = [],
-  expenseData: ChartDataPoint[] = [],
-  balanceData: ChartDataPoint[] = [],
-  dateRange?: DateRange
-) => {
-  const startTimestamp = dateRange?.from ? startOfDay(dateRange.from).getTime() / 1000 : 0;
-  const endTimestamp = dateRange?.to ? endOfDay(dateRange.to).getTime() / 1000 : Infinity;
-
-  const combinedMap = new Map<
-    string,
-    { date: string; income?: number; expense?: number; balance?: number; timestamp: number }
-  >();
-
-  const processData = (data: ChartDataPoint[] = [], key: VisibilityKey) => {
-    data.forEach((point) => {
-      if (!point || typeof point.x !== 'number' || typeof point.y !== 'number') return;
-      if (point.x < startTimestamp || point.x > endTimestamp) return;
-
-      const date = new Date(point.x * 1000);
-      if (!isValid(date)) return;
-
-      const dateStr = format(date, 'MMM dd');
-
-      if (!combinedMap.has(dateStr)) {
-        combinedMap.set(dateStr, {
-          date: dateStr,
-          timestamp: point.x
-        });
-      }
-
-      combinedMap.get(dateStr)![key] = point.y;
-    });
-  };
-
-  processData(incomeData, 'income');
-  processData(expenseData, 'expense');
-  processData(balanceData, 'balance');
-
-  // Convert to array and sort chronologically
-  return Array.from(combinedMap.values()).sort((a, b) => a.timestamp - b.timestamp);
-};
-
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (!active || !payload || !payload.length) return null;
-
-  return (
-    <div className='rounded-md border bg-background p-3 shadow-md'>
-      <p className='mb-2 text-sm font-medium'>{label}</p>
-      {payload.map((entry: any, index: number) => (
-        <div key={`tooltip-${index}`} className='flex justify-between gap-4 text-sm'>
-          <span style={{ color: entry.color }}>{entry.name}:</span>
-          <span className='font-medium'>{formatCurrency(entry.value)}</span>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-// Custom legend with toggle functionality
-const CustomLegend = ({ payload, visibility, onToggle }: any) => {
-  if (!payload) return null;
-
-  return (
-    <div className='mb-2 mt-1 flex flex-wrap justify-center gap-3'>
-      {payload.map((entry: any, index: number) => {
-        const dataKey = entry.dataKey;
-        if (!dataKey || !isVisibilityKey(dataKey)) return null;
-
-        const isActive = visibility[dataKey];
-
-        return (
-          <Badge
-            key={`legend-${index}`}
-            variant={isActive ? 'default' : 'outline'}
-            className={cn(
-              'cursor-pointer px-3 py-1 font-normal',
-              isActive ? 'opacity-100' : 'opacity-60'
-            )}
-            onClick={() => onToggle(dataKey)}
-            style={{
-              backgroundColor: isActive ? entry.color : 'transparent',
-              color: isActive ? 'white' : entry.color,
-              borderColor: entry.color
-            }}
-          >
-            {entry.value}
-          </Badge>
-        );
-      })}
-    </div>
-  );
-};
-
-function isVisibilityKey(key: any): key is VisibilityKey {
-  return typeof key === 'string' && ['income', 'expense', 'balance'].includes(key);
+interface ProcessedDataPoint {
+  date: string;
+  timestamp: number;
+  income: number | null;
+  expense: number | null;
+  balance: number | null;
+  incomeChange?: number;
+  expenseChange?: number;
+  balanceChange?: number;
 }
 
-const TrendChart: React.FC<TrendChartProps> = ({
+export const TrendChart: React.FC<TrendChartProps> = ({
   incomeData = [],
   expenseData = [],
   balanceData = [],
-  className
+  className,
+  currency = 'INR',
+  chartType = 'line',
+  setChartType,
+  timeRangeOption,
+  customDateRange
 }) => {
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-  const [visibility, setVisibility] = useState({
+  const [visibleSeries, setVisibleSeries] = useState({
     income: true,
     expense: true,
-    balance: true
+    balance: true,
+    showAll: true
   });
 
-  const combinedChartData = useMemo(
-    () => formatCombinedChartData(incomeData, expenseData, balanceData, dateRange),
-    [incomeData, expenseData, balanceData, dateRange]
+  const handleChartTypeChange = (type: 'line' | 'bar' | 'area') => {
+    if (setChartType) {
+      setChartType(type);
+    }
+  };
+
+  const selectSeries = useCallback(
+    (series: 'income' | 'expense' | 'balance' | 'showAll'): void => {
+      if (series === 'showAll') {
+        setVisibleSeries({
+          income: true,
+          expense: true,
+          balance: true,
+          showAll: true
+        });
+      } else {
+        // Count how many series (excluding showAll) are currently visible
+        const activeCount = ['income', 'expense', 'balance'].filter(
+          (key) => visibleSeries[key as 'income' | 'expense' | 'balance']
+        ).length;
+        // If only one is active and user tries to turn it off, reset to all
+        if (visibleSeries[series] && activeCount === 1) {
+          setVisibleSeries({
+            income: true,
+            expense: true,
+            balance: true,
+            showAll: true
+          });
+        } else {
+          setVisibleSeries({
+            income: series === 'income',
+            expense: series === 'expense',
+            balance: series === 'balance',
+            showAll: false
+          });
+        }
+      }
+    },
+    [visibleSeries]
   );
 
-  const dateRangeDescription = useMemo(() => {
-    if (dateRange?.from && dateRange?.to) {
-      return `Activity from ${format(dateRange.from, 'PPP')} to ${format(dateRange.to, 'PPP')}`;
-    }
-    return 'Daily activity overview (all time)';
-  }, [dateRange]);
+  const processedData = useMemo(() => {
+    const allIncome = incomeData ?? [];
+    const allExpense = expenseData ?? [];
+    const allBalance = balanceData ?? [];
 
-  const handleLegendToggle = useCallback((dataKey: VisibilityKey) => {
-    setVisibility((prev) => ({ ...prev, [dataKey]: !prev[dataKey] }));
-  }, []);
+    const { startTimestamp, endTimestamp } = getTimestampsForRange(
+      timeRangeOption,
+      customDateRange
+    );
+
+    const filterFn = (point: ApiChartDataPoint) => {
+      if (timeRangeOption === 'all' || !startTimestamp || !endTimestamp) {
+        return true;
+      }
+      return point.x >= startTimestamp && point.x <= endTimestamp;
+    };
+
+    const filteredIncome = allIncome.filter(filterFn);
+    const filteredExpense = allExpense.filter(filterFn);
+    const filteredBalance = allBalance.filter(filterFn);
+
+    const dataMap = new Map<number, ProcessedDataPoint>();
+
+    const ensureDataPoint = (timestamp: number) => {
+      if (!dataMap.has(timestamp)) {
+        dataMap.set(timestamp, {
+          date: format(new Date(timestamp * 1000), 'MMM dd'),
+          timestamp,
+          income: null,
+          expense: null,
+          balance: null
+        });
+      }
+      return dataMap.get(timestamp)!;
+    };
+
+    filteredIncome.forEach((point) => {
+      if (point.y !== null) {
+        ensureDataPoint(point.x).income = point.y;
+      }
+    });
+
+    filteredExpense.forEach((point) => {
+      if (point.y !== null) {
+        ensureDataPoint(point.x).expense = point.y;
+      }
+    });
+
+    filteredBalance.forEach((point) => {
+      if (point.y !== null) {
+        ensureDataPoint(point.x).balance = point.y;
+      }
+    });
+
+    const sortedData = Array.from(dataMap.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([_, value]) => value);
+
+    if (sortedData.length > 1) {
+      for (let i = 1; i < sortedData.length; i++) {
+        const current = sortedData[i];
+        const previous = sortedData[i - 1];
+
+        if (current.income !== null && previous.income !== null && previous.income !== 0) {
+          current.incomeChange =
+            ((current.income - previous.income) / Math.abs(previous.income)) * 100;
+        }
+
+        if (current.expense !== null && previous.expense !== null && previous.expense !== 0) {
+          current.expenseChange =
+            ((current.expense - previous.expense) / Math.abs(previous.expense)) * 100;
+        }
+
+        if (current.balance !== null && previous.balance !== null && previous.balance !== 0) {
+          current.balanceChange =
+            ((current.balance - previous.balance) / Math.abs(previous.balance)) * 100;
+        }
+      }
+    }
+
+    return sortedData;
+  }, [incomeData, expenseData, balanceData, timeRangeOption, customDateRange]);
+
+  const formatValue = (value: number | null) => {
+    if (value === null) return 'N/A';
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: currency,
+      maximumFractionDigits: 0
+    }).format(value);
+  };
+
+  const formatPercentage = (value: number | undefined) => {
+    if (value === undefined) return '';
+    return `${value > 0 ? '+' : ''}${value.toFixed(1)}%`;
+  };
+
+  const getTrendIcon = (change: number | undefined, size = 16) => {
+    if (change === undefined) return <Minus size={size} />;
+    if (change > 0) return <TrendingUp size={size} className='text-green-500' />;
+    if (change < 0) return <TrendingDown size={size} className='text-red-500' />;
+    return <Minus size={size} className='text-gray-500' />;
+  };
+
+  const getInsightText = (dataPoint: ProcessedDataPoint) => {
+    const insights = [];
+    if (dataPoint.incomeChange !== undefined && Math.abs(dataPoint.incomeChange) >= 5) {
+      insights.push(
+        `Income ${dataPoint.incomeChange > 0 ? 'increased' : 'decreased'} by ${Math.abs(dataPoint.incomeChange).toFixed(1)}%`
+      );
+    }
+    if (dataPoint.expenseChange !== undefined && Math.abs(dataPoint.expenseChange) >= 5) {
+      insights.push(
+        `Expenses ${dataPoint.expenseChange > 0 ? 'increased' : 'decreased'} by ${Math.abs(dataPoint.expenseChange).toFixed(1)}%`
+      );
+    }
+    if (dataPoint.balanceChange !== undefined && Math.abs(dataPoint.balanceChange) >= 5) {
+      insights.push(
+        `Balance ${dataPoint.balanceChange > 0 ? 'improved' : 'declined'} by ${Math.abs(dataPoint.balanceChange).toFixed(1)}%`
+      );
+    }
+    if (dataPoint.income !== null && dataPoint.expense !== null && dataPoint.income > 0) {
+      const ratio = dataPoint.expense / dataPoint.income;
+      if (ratio > 1) {
+        insights.push(
+          `Spending exceeded income by ${formatValue(dataPoint.expense - dataPoint.income)}`
+        );
+      } else if (ratio < 0.7) {
+        insights.push(`Strong savings: ${formatValue(dataPoint.income - dataPoint.expense)} saved`);
+      }
+    }
+    return insights;
+  };
+
+  const EnhancedTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const dataPoint = payload[0].payload as ProcessedDataPoint;
+      const insights = getInsightText(dataPoint);
+      const hasAnyData = payload.some((entry: any) => entry.value !== null);
+
+      if (!hasAnyData) return null;
+
+      return (
+        <div className='border-border bg-background max-w-xs rounded-lg border p-3 shadow-lg'>
+          <p className='mb-2 text-sm font-semibold md:text-base'>{label}</p>
+          <div className='space-y-1 md:space-y-2'>
+            {payload.map((entry: any, index: number) => {
+              if (entry.value === null) return null;
+              let name = entry.dataKey as string;
+              let change: number | undefined;
+
+              if (name === 'income') {
+                name = 'Income';
+                change = dataPoint.incomeChange;
+              } else if (name === 'expense') {
+                name = 'Expense';
+                change = dataPoint.expenseChange;
+              } else if (name === 'balance') {
+                name = 'Balance';
+                change = dataPoint.balanceChange;
+              }
+
+              return (
+                <div key={index} className='flex items-center justify-between text-xs md:text-sm'>
+                  <div className='flex items-center gap-1 md:gap-2'>
+                    <div
+                      className='h-2 w-2 rounded-full md:h-3 md:w-3'
+                      style={{ backgroundColor: entry.color }}
+                    ></div>
+                    <span className='capitalize'>{name}:</span>
+                  </div>
+                  <div className='flex items-center gap-1 md:gap-2'>
+                    <span className='font-medium'>{formatValue(entry.value)}</span>
+                    {change !== undefined && (
+                      <span
+                        className={`text-xs ${
+                          change > 0
+                            ? 'text-green-500'
+                            : change < 0
+                              ? 'text-red-500'
+                              : 'text-gray-500'
+                        }`}
+                      >
+                        {formatPercentage(change)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {insights.length > 0 && (
+            <div className='border-border mt-2 border-t pt-2 md:mt-3 md:pt-3'>
+              <div className='mb-1 flex items-center gap-1 text-xs font-medium'>
+                <Activity size={12} className='text-blue-500' />
+                <span>INSIGHTS</span>
+              </div>
+              <ul className='space-y-1 text-xs'>
+                {insights.map((insight, idx) => (
+                  <li key={idx} className='text-muted-foreground'>
+                    {insight}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const EnhancedLegend = ({ payload }: any) => {
+    if (!payload) return null;
+    return (
+      <div className='mt-1 flex flex-wrap justify-center gap-2 md:mt-2 md:gap-4'>
+        <div
+          key='show-all-button'
+          className={`flex cursor-pointer items-center rounded-full border px-2 py-1 text-xs transition-all md:px-3 md:text-sm ${
+            visibleSeries.showAll
+              ? `bg-opacity-10 border-blue-300 bg-blue-100 text-blue-600`
+              : 'border-gray-200 bg-gray-100 text-gray-500'
+          }`}
+          onClick={() => selectSeries('showAll')}
+        >
+          <div
+            className={`mr-1 h-2 w-2 rounded-full md:mr-2 md:h-3 md:w-3 ${
+              visibleSeries.showAll ? '' : 'opacity-30'
+            }`}
+            style={{ backgroundColor: '#64748b' }}
+          />
+          <span>All</span>
+        </div>
+        {payload.map((entry: any, index: number) => {
+          let seriesKey: 'income' | 'expense' | 'balance' | 'showAll';
+          if (entry.value === 'Income') seriesKey = 'income';
+          else if (entry.value === 'Expense') seriesKey = 'expense';
+          else if (entry.value === 'Balance') seriesKey = 'balance';
+          else return null;
+
+          const isActive = visibleSeries[seriesKey];
+
+          return (
+            <div
+              key={`item-${index}`}
+              className={`flex cursor-pointer items-center rounded-full border px-2 py-1 text-xs transition-all md:px-3 md:text-sm ${
+                isActive ? `bg-opacity-10 border-2` : 'border-gray-200 bg-gray-100 text-gray-400'
+              }`}
+              style={{
+                backgroundColor: isActive ? `${entry.color}20` : undefined,
+                borderColor: isActive ? entry.color : undefined,
+                color: isActive ? entry.color : undefined
+              }}
+              onClick={() => selectSeries(seriesKey)}
+            >
+              <div
+                className='mr-1 h-2 w-2 rounded-full md:mr-2 md:h-3 md:w-3'
+                style={{
+                  backgroundColor: entry.color,
+                  opacity: isActive ? 1 : 0.3
+                }}
+              />
+              <span>{entry.value}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderChart = () => {
+    const commonProps = {
+      data: processedData,
+      margin: { top: 10, right: 10, left: 0, bottom: 0 }
+    };
+    const chartProps = { ...commonProps, syncId: 'trendsSync' };
+    const axisStyle = { fontSize: 11, fontWeight: 400, color: '#64748b' };
+
+    switch (chartType) {
+      case 'bar':
+        return (
+          <RechartsBarChart {...chartProps}>
+            <defs>
+              <linearGradient id='incomeGradient' x1='0' y1='0' x2='0' y2='1'>
+                <stop offset='0%' stopColor='#4ade80' stopOpacity={0.8} />
+                <stop offset='100%' stopColor='#4ade80' stopOpacity={0.2} />
+              </linearGradient>
+              <linearGradient id='expenseGradient' x1='0' y1='0' x2='0' y2='1'>
+                <stop offset='0%' stopColor='#f87171' stopOpacity={0.8} />
+                <stop offset='100%' stopColor='#f87171' stopOpacity={0.2} />
+              </linearGradient>
+              <linearGradient id='balanceGradient' x1='0' y1='0' x2='0' y2='1'>
+                <stop offset='0%' stopColor='#60a5fa' stopOpacity={0.8} />
+                <stop offset='100%' stopColor='#60a5fa' stopOpacity={0.2} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray='3 3' vertical={false} stroke='#f1f5f9' />
+            <XAxis
+              dataKey='date'
+              tickLine={false}
+              axisLine={false}
+              style={axisStyle}
+              tick={{ fontSize: '0.7rem' }}
+              interval='preserveStartEnd'
+              minTickGap={15}
+            />
+            <YAxis
+              tickFormatter={(value) =>
+                new Intl.NumberFormat('en-IN', {
+                  notation: 'compact',
+                  compactDisplay: 'short'
+                }).format(value)
+              }
+              tickLine={false}
+              axisLine={false}
+              style={axisStyle}
+              width={35}
+              tick={{ fontSize: '0.7rem' }}
+            />
+            <Tooltip content={<EnhancedTooltip />} />
+            <Legend content={<EnhancedLegend />} />
+            {visibleSeries.income && (
+              <Bar
+                dataKey='income'
+                name='Income'
+                fill='url(#incomeGradient)'
+                stroke='#22c55e'
+                strokeWidth={1}
+                radius={[4, 4, 0, 0]}
+                animationDuration={800}
+                minPointSize={3}
+              />
+            )}
+            {visibleSeries.expense && (
+              <Bar
+                dataKey='expense'
+                name='Expense'
+                fill='url(#expenseGradient)'
+                stroke='#ef4444'
+                strokeWidth={1}
+                radius={[4, 4, 0, 0]}
+                animationDuration={800}
+                minPointSize={3}
+              />
+            )}
+            {visibleSeries.balance && (
+              <Bar
+                dataKey='balance'
+                name='Balance'
+                fill='url(#balanceGradient)'
+                stroke='#3b82f6'
+                strokeWidth={1}
+                radius={[4, 4, 0, 0]}
+                animationDuration={800}
+                minPointSize={3}
+              />
+            )}
+          </RechartsBarChart>
+        );
+      case 'area':
+        return (
+          <RechartsAreaChart {...chartProps}>
+            <defs>
+              <linearGradient id='incomeGradient' x1='0' y1='0' x2='0' y2='1'>
+                <stop offset='0%' stopColor='#4ade80' stopOpacity={0.3} />
+                <stop offset='100%' stopColor='#4ade80' stopOpacity={0.05} />
+              </linearGradient>
+              <linearGradient id='expenseGradient' x1='0' y1='0' x2='0' y2='1'>
+                <stop offset='0%' stopColor='#f87171' stopOpacity={0.3} />
+                <stop offset='100%' stopColor='#f87171' stopOpacity={0.05} />
+              </linearGradient>
+              <linearGradient id='balanceGradient' x1='0' y1='0' x2='0' y2='1'>
+                <stop offset='0%' stopColor='#60a5fa' stopOpacity={0.3} />
+                <stop offset='100%' stopColor='#60a5fa' stopOpacity={0.05} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray='3 3' vertical={false} stroke='#f1f5f9' />
+            <XAxis
+              dataKey='date'
+              tickLine={false}
+              axisLine={false}
+              style={axisStyle}
+              tick={{ fontSize: '0.7rem' }}
+              interval='preserveStartEnd'
+              minTickGap={15}
+            />
+            <YAxis
+              tickFormatter={(value) =>
+                new Intl.NumberFormat('en-IN', {
+                  notation: 'compact',
+                  compactDisplay: 'short'
+                }).format(value)
+              }
+              tickLine={false}
+              axisLine={false}
+              style={axisStyle}
+              width={35}
+              tick={{ fontSize: '0.7rem' }}
+            />
+            <Tooltip content={<EnhancedTooltip />} />
+            <Legend content={<EnhancedLegend />} />
+            {visibleSeries.income && (
+              <Area
+                type='monotone'
+                dataKey='income'
+                name='Income'
+                stroke='#22c55e'
+                strokeWidth={2}
+                fill='url(#incomeGradient)'
+                activeDot={{ r: 6, strokeWidth: 2, stroke: '#fff' }}
+                animationDuration={800}
+                connectNulls
+              />
+            )}
+            {visibleSeries.expense && (
+              <Area
+                type='monotone'
+                dataKey='expense'
+                name='Expense'
+                stroke='#ef4444'
+                strokeWidth={2}
+                fill='url(#expenseGradient)'
+                activeDot={{ r: 6, strokeWidth: 2, stroke: '#fff' }}
+                animationDuration={800}
+                connectNulls
+              />
+            )}
+            {visibleSeries.balance && (
+              <Area
+                type='monotone'
+                dataKey='balance'
+                name='Balance'
+                stroke='#3b82f6'
+                strokeWidth={2}
+                fill='url(#balanceGradient)'
+                activeDot={{ r: 6, strokeWidth: 2, stroke: '#fff' }}
+                animationDuration={800}
+                connectNulls
+              />
+            )}
+          </RechartsAreaChart>
+        );
+      case 'line':
+      default:
+        return (
+          <RechartsLineChart {...chartProps}>
+            <CartesianGrid strokeDasharray='3 3' vertical={false} stroke='#f1f5f9' />
+            <XAxis
+              dataKey='date'
+              tickLine={false}
+              axisLine={false}
+              style={axisStyle}
+              tick={{ fontSize: '0.7rem' }}
+              interval='preserveStartEnd'
+              minTickGap={15}
+            />
+            <YAxis
+              tickFormatter={(value) =>
+                new Intl.NumberFormat('en-IN', {
+                  notation: 'compact',
+                  compactDisplay: 'short'
+                }).format(value)
+              }
+              tickLine={false}
+              axisLine={false}
+              style={axisStyle}
+              width={35}
+              tick={{ fontSize: '0.7rem' }}
+            />
+            <Tooltip content={<EnhancedTooltip />} />
+            <Legend content={<EnhancedLegend />} />
+            {visibleSeries.income && (
+              <Line
+                type='monotone'
+                dataKey='income'
+                name='Income'
+                stroke='#22c55e'
+                strokeWidth={2}
+                dot={{ r: 2, fill: '#22c55e', strokeWidth: 1, stroke: '#fff' }}
+                activeDot={{ r: 5, strokeWidth: 2, stroke: '#fff' }}
+                animationDuration={800}
+                connectNulls
+              />
+            )}
+            {visibleSeries.expense && (
+              <Line
+                type='monotone'
+                dataKey='expense'
+                name='Expense'
+                stroke='#ef4444'
+                strokeWidth={2}
+                dot={{ r: 2, fill: '#ef4444', strokeWidth: 1, stroke: '#fff' }}
+                activeDot={{ r: 5, strokeWidth: 2, stroke: '#fff' }}
+                animationDuration={800}
+                connectNulls
+              />
+            )}
+            {visibleSeries.balance && (
+              <Line
+                type='monotone'
+                dataKey='balance'
+                name='Balance'
+                stroke='#3b82f6'
+                strokeWidth={2}
+                dot={{ r: 2, fill: '#3b82f6', strokeWidth: 1, stroke: '#fff' }}
+                activeDot={{ r: 5, strokeWidth: 2, stroke: '#fff' }}
+                animationDuration={800}
+                connectNulls
+              />
+            )}
+          </RechartsLineChart>
+        );
+    }
+  };
 
   return (
-    <Card className={cn('overflow-hidden', className)}>
-      <CardHeader className='space-y-2 pb-2'>
-        <div className='flex flex-row items-center justify-between'>
-          <CardTitle>Income, Expense & Balance Trend</CardTitle>
-          <DateRangePicker
-            dateRange={dateRange}
-            setDateRange={setDateRange}
-            className='w-auto sm:w-[280px]'
-          />
-        </div>
-        <CardDescription>{dateRangeDescription}</CardDescription>
-      </CardHeader>
-
-      <CardContent className='px-0 pt-4 sm:px-2'>
-        {combinedChartData.length > 0 ? (
-          <>
-            <CustomLegend
-              payload={Object.entries(chartConfig).map(([key, config]) => ({
-                value: config.label,
-                color: config.color,
-                dataKey: key
-              }))}
-              visibility={visibility}
-              onToggle={handleLegendToggle}
-            />
-
-            <ResponsiveContainer width='100%' height={350}>
-              <ComposedChart
-                data={combinedChartData}
-                margin={{ top: 5, right: 20, left: 10, bottom: 20 }}
-              >
-                <CartesianGrid strokeDasharray='3 3' vertical={false} strokeOpacity={0.3} />
-                <XAxis
-                  dataKey='date'
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                  padding={{ left: 10, right: 10 }}
-                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                  interval='preserveStartEnd'
-                />
-                <YAxis
-                  yAxisId='left'
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                  tickFormatter={formatCurrency}
-                  width={60}
-                />
-                <Tooltip content={<CustomTooltip />} />
-
-                {/* Render visible bars and lines */}
-                {visibility.income && (
-                  <Bar
-                    yAxisId='left'
-                    dataKey='income'
-                    name='Income'
-                    fill={chartConfig.income.color}
-                    radius={[4, 4, 0, 0]}
-                    barSize={12}
-                    maxBarSize={20}
-                  />
-                )}
-
-                {visibility.expense && (
-                  <Bar
-                    yAxisId='left'
-                    dataKey='expense'
-                    name='Expense'
-                    fill={chartConfig.expense.color}
-                    radius={[4, 4, 0, 0]}
-                    barSize={12}
-                    maxBarSize={20}
-                  />
-                )}
-
-                {visibility.balance && (
-                  <Line
-                    yAxisId='left'
-                    type='monotone'
-                    dataKey='balance'
-                    name='Balance'
-                    stroke={chartConfig.balance.color}
-                    strokeWidth={2}
-                    dot={{ r: 1 }}
-                    activeDot={{ r: 5 }}
-                  />
-                )}
-              </ComposedChart>
-            </ResponsiveContainer>
-          </>
-        ) : (
-          <div className='flex h-[350px] items-center justify-center'>
-            <div className='p-6 text-center'>
-              <div className='mb-2 text-3xl'>📊</div>
-              <p className='text-muted-foreground'>
-                No transaction data available for the selected period.
-              </p>
-              {dateRange && (
-                <button
-                  className='mt-2 text-sm text-primary underline'
-                  onClick={() => setDateRange(undefined)}
-                >
-                  Reset date filter
-                </button>
-              )}
-            </div>
+    <div className={`relative h-full w-full ${className}`}>
+      <ResponsiveContainer width='100%' height='100%'>
+        {renderChart()}
+      </ResponsiveContainer>
+      {processedData.length === 0 && (
+        <div className='absolute inset-0 flex items-center justify-center'>
+          <div className='text-center text-gray-500'>
+            <div className='mb-2 text-4xl'>📊</div>
+            <div className='text-lg font-medium'>No data available</div>
+            <div className='text-sm'>No trend data available for the selected period.</div>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      )}
+    </div>
   );
 };
-
-export default TrendChart;

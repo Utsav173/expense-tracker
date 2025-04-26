@@ -1,294 +1,272 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { accountGetDashboard, accountGetDropdown } from '@/lib/endpoints/accounts';
-import { goalGetAll } from '@/lib/endpoints/goal';
-import Loader from '@/components/ui/loader';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { DashboardData, SavingGoal, ApiResponse, AccountDropdown } from '@/lib/types';
 import { useToast } from '@/lib/hooks/useToast';
-import { formatCurrency } from '@/lib/utils';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import NoData from '@/components/ui/no-data';
+import { Frown, LayoutGrid } from 'lucide-react';
+import { FinancialSnapshot } from '@/components/dashboard/financial-snapshot';
+import TrendChartWrapper from '@/components/dashboard/trend-chart-wrapper';
 import { BudgetProgress } from '@/components/dashboard/budget-progress';
-import { GoalProgress } from '@/components/dashboard/goal-progress';
+import { GoalHighlights } from '@/components/dashboard/goal-highlights';
 import { InvestmentSummaryCard } from '@/components/dashboard/investment-summary-card';
 import { DebtSummaryCard } from '@/components/dashboard/debt-summary-card';
-import TrendChart from '@/components/dashboard/trend-chart';
-import NoData from '@/components/ui/no-data';
-import React, { useMemo } from 'react'; // Removed useState
+import { AccountListSummary } from '@/components/dashboard/account-list-summary';
+import { QuickStats } from '@/components/dashboard/quick-stats';
+import { SpendingBreakdown } from '@/components/dashboard/spending-breakdown';
+import { DashboardCardWrapper } from '@/components/dashboard/dashboard-card-wrapper';
+import FinancialHealth from '@/components/dashboard/financial-health';
+import { DASHBOARD_PRESETS, DASHBOARD_CARD_CONFIG } from '@/config/dashboard-config';
+import { DashboardControls } from '@/components/dashboard/dashboard-controls';
+import { useDashboardData } from '@/hooks/useDashboardData';
+import { useAuth } from '@/lib/hooks/useAuth';
+import Loader from '@/components/ui/loader';
+
+interface DashboardSettings {
+  preset: string;
+  darkMode: boolean;
+  hiddenSections: string[];
+  refreshInterval: number;
+}
+
+const initialDashboardSettings: DashboardSettings = {
+  preset: 'default',
+  darkMode: false,
+  hiddenSections: [],
+  refreshInterval: 0
+};
 
 const DashboardPage = () => {
-  const { showError } = useToast();
-  // Removed dateRange state
+  const { showSuccess, showError } = useToast();
+  const { user } = useAuth();
+
+  const [dashboardSettings, setDashboardSettings] =
+    useState<DashboardSettings>(initialDashboardSettings);
+
+  const [chartType, setChartType] = useState<'line' | 'bar' | 'area'>('line');
+
+  const currentPreset = dashboardSettings.preset;
+  const hiddenSections = useMemo(
+    () => new Set(dashboardSettings.hiddenSections || []),
+    [dashboardSettings.hiddenSections]
+  );
 
   const {
-    data: dashboardApiData,
-    isLoading: isDashboardLoading,
-    error: dashboardError
-  } = useQuery({
-    queryKey: ['dashboard'],
-    queryFn: () => accountGetDashboard(),
-    retry: false,
-    staleTime: 5 * 60 * 1000
+    data: dashboardPageData,
+    isLoading,
+    isFetching,
+    isError,
+    error,
+    refetch
+  } = useDashboardData({
+    user: user,
+    timeRangeOption: 'thisMonth',
+    customDateRange: undefined
   });
 
-  const {
-    data: goalsData,
-    isLoading: isGoalsLoading,
-    error: goalsError
-  } = useQuery<ApiResponse<{ data: SavingGoal[] }>>({
-    queryKey: ['goalsDashboard'],
-    queryFn: () => goalGetAll({ limit: 100 }),
-    retry: false,
-    staleTime: 15 * 60 * 1000
-  });
+  const updateSettings = useCallback((updates: Partial<DashboardSettings>) => {
+    setDashboardSettings((prev) => ({ ...prev, ...updates }));
+  }, []);
 
-  const {
-    data: accountsDropdownData,
-    isLoading: isAccountsDropdownLoading,
-    error: accountsDropdownError
-  } = useQuery<ApiResponse<AccountDropdown[]>>({
-    queryKey: ['accountsDropdownDashboard'],
-    queryFn: () => accountGetDropdown(),
-    retry: false,
-    staleTime: 15 * 60 * 1000
-  });
+  const toggleSectionVisibility = useCallback(
+    (sectionId: string) => {
+      const newHiddenSections = new Set(dashboardSettings.hiddenSections);
+      if (newHiddenSections.has(sectionId)) {
+        newHiddenSections.delete(sectionId);
+      } else {
+        newHiddenSections.add(sectionId);
+      }
+      updateSettings({ hiddenSections: Array.from(newHiddenSections) });
+    },
+    [dashboardSettings.hiddenSections, updateSettings]
+  );
 
-  const accountIdToCurrencyMap = useMemo(() => {
-    const map = new Map<string, string>();
-    (accountsDropdownData || []).forEach((acc) => {
-      map.set(acc.id, acc.currency);
-    });
-    return map;
-  }, [accountsDropdownData]);
+  const toggleDarkMode = useCallback(() => {
+    updateSettings({ darkMode: !dashboardSettings.darkMode });
+  }, [dashboardSettings.darkMode, updateSettings]);
 
-  const isLoading = isDashboardLoading || isGoalsLoading || isAccountsDropdownLoading;
+  const refetchAll = useCallback(async () => {
+    try {
+      await refetch();
+      showSuccess('Dashboard data refreshed.');
+    } catch (fetchError) {
+      console.error('Error refreshing dashboard:', fetchError);
+      showError('Failed to refresh dashboard data.');
+    }
+  }, [refetch, showSuccess, showError]);
 
-  if (isLoading && !dashboardApiData && !accountsDropdownData) {
-    return <Loader />;
+  const changePreset = useCallback(
+    (presetKey: string) => {
+      const config = DASHBOARD_CARD_CONFIG[presetKey] || DASHBOARD_CARD_CONFIG['default'];
+      const sectionsToHide = Object.entries(config)
+        .filter(([, value]) => !value.visible)
+        .map(([key]) => key);
+      updateSettings({ preset: presetKey, hiddenSections: sectionsToHide });
+      showSuccess(`Switched to "${DASHBOARD_PRESETS[presetKey]}" layout`);
+      refetchAll();
+    },
+    [showSuccess, refetchAll, updateSettings]
+  );
+
+  const handleSetRefreshInterval = useCallback(
+    (intervalMs: number) => {
+      updateSettings({ refreshInterval: intervalMs });
+      showSuccess(
+        intervalMs > 0
+          ? `Dashboard will refresh every ${intervalMs / 60000} minutes.`
+          : 'Automatic refresh disabled.'
+      );
+      refetchAll();
+    },
+    [showSuccess, refetchAll, updateSettings]
+  );
+
+  const currentLayoutConfig =
+    DASHBOARD_CARD_CONFIG[currentPreset] || DASHBOARD_CARD_CONFIG['default'];
+
+  const cardMap: Record<string, React.ReactNode> = useMemo(
+    () => ({
+      financialHealth: dashboardPageData?.dashboardSummary ? (
+        <FinancialHealth data={dashboardPageData.dashboardSummary} />
+      ) : null,
+      financialSnapshot: dashboardPageData?.dashboardSummary ? (
+        <FinancialSnapshot data={dashboardPageData.dashboardSummary} isLoading={isLoading} />
+      ) : null,
+      trendChart: dashboardPageData?.dashboardSummary ? (
+        <TrendChartWrapper
+          data={dashboardPageData.dashboardSummary}
+          chartType={chartType}
+          isLoading={isLoading}
+          setChartType={setChartType}
+        />
+      ) : null,
+      spendingBreakdown: <SpendingBreakdown className='h-full' />,
+      budgetProgress: <BudgetProgress />,
+      goals: <GoalHighlights data={dashboardPageData?.goals ?? undefined} isLoading={isLoading} />,
+      investments: <InvestmentSummaryCard />,
+      debtSummary: <DebtSummaryCard />,
+      accounts: (
+        <AccountListSummary
+          accountsInfo={dashboardPageData?.dashboardSummary?.accountsInfo}
+          accountIdToCurrencyMap={dashboardPageData?.accountIdToCurrencyMap ?? new Map()}
+          isLoading={isLoading}
+        />
+      ),
+      quickStats: dashboardPageData?.dashboardSummary ? (
+        <QuickStats data={dashboardPageData.dashboardSummary} isLoading={isLoading} />
+      ) : null
+    }),
+    [dashboardPageData, isLoading, chartType]
+  );
+
+  const renderSkeleton = () => (
+    <div className='mx-auto w-full max-w-7xl animate-pulse space-y-6 p-4 pt-6 lg:p-8 lg:pt-8'>
+      <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+        <Skeleton className='h-9 w-48 rounded-md' />
+        <div className='flex flex-wrap items-center gap-2'>
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className='h-9 w-28 rounded-md' />
+          ))}
+        </div>
+      </div>
+      <Skeleton className='h-28 w-full rounded-lg' />
+      <div className='grid grid-cols-12 gap-6'>
+        <Skeleton className='col-span-12 h-[400px] w-full rounded-lg lg:col-span-8' />
+        <Skeleton className='col-span-12 h-[400px] w-full rounded-lg lg:col-span-4' />
+      </div>
+    </div>
+  );
+
+  const renderErrorState = () => (
+    <Alert variant='destructive' className='max-auto mt-6'>
+      <Frown className='h-4 w-4' />
+      <AlertTitle>Oops! Something went wrong.</AlertTitle>
+      <AlertDescription>
+        We couldn't load your dashboard data. Please check your connection and try refreshing.
+        {error && (
+          <div className='text-muted-foreground mt-2 text-xs'>
+            Error: {(error as Error).message}
+          </div>
+        )}
+      </AlertDescription>
+    </Alert>
+  );
+
+  if (isLoading && !isFetching) {
+    return renderSkeleton();
   }
 
-  if (dashboardError) showError(`Dashboard Error: ${(dashboardError as Error).message}`);
-  if (goalsError) showError(`Goals Error: ${(goalsError as Error).message}`);
-  if (accountsDropdownError)
-    showError(`Accounts Dropdown Error: ${(accountsDropdownError as Error).message}`);
+  if (isError && !dashboardPageData) {
+    return renderErrorState();
+  }
 
-  const dashboardData: DashboardData = dashboardApiData || {
-    accountsInfo: [],
-    transactionsCountByAccount: {},
-    totalTransaction: 0,
-    mostExpensiveExpense: 0,
-    cheapestExpense: 0,
-    mostExpensiveIncome: 0,
-    cheapestIncome: 0,
-    incomeChartData: [],
-    expenseChartData: [],
-    balanceChartData: [],
-    overallIncome: 0,
-    overallExpense: 0,
-    overallBalance: 0,
-    overallIncomeChange: 0,
-    overallExpenseChange: 0
-  };
-
-  const renderChangeIndicator = (change: number | undefined | null) => {
-    if (change === undefined || change === null || isNaN(change)) return null;
-    const isPositive = change > 0;
-    const isNegative = change < 0;
-    const Icon = isPositive ? TrendingUp : isNegative ? TrendingDown : Minus;
-    const colorClass = isPositive
-      ? 'text-green-500'
-      : isNegative
-        ? 'text-red-500'
-        : 'text-gray-500';
+  if (
+    !isLoading &&
+    dashboardPageData &&
+    (dashboardPageData.dashboardSummary?.totalTransaction ?? 0) < 1
+  ) {
     return (
-      <span className={`flex items-center text-xs ${colorClass}`}>
-        <Icon className='mr-1 h-3 w-3' />
-        {change.toFixed(2)}%
-      </span>
+      <div className='mx-auto w-full max-w-7xl min-w-0 space-y-4 p-4 pt-6 select-none max-sm:max-w-full md:space-y-6 lg:p-8 lg:pt-8'>
+        <NoData
+          message='Your Dashboard is Ready! Add some accounts and transactions to see your trends.'
+          icon={LayoutGrid}
+          className='h-[calc(100vh-250px)]'
+        />
+      </div>
     );
-  };
+  }
 
   return (
-    <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
-      <div className='flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center'>
-        <h1 className='text-2xl font-bold md:text-3xl'>Dashboard</h1>
-      </div>
+    <div className='space-y-4 select-none'>
+      <DashboardControls
+        currentPreset={dashboardSettings.preset}
+        layoutConfig={currentLayoutConfig}
+        hiddenSections={hiddenSections}
+        refreshInterval={dashboardSettings.refreshInterval}
+        isDarkMode={dashboardSettings.darkMode}
+        isRefreshing={isFetching}
+        isLoading={isLoading}
+        onChangePreset={changePreset}
+        onToggleSectionVisibility={toggleSectionVisibility}
+        onSetRefreshInterval={handleSetRefreshInterval}
+        onToggleDarkMode={toggleDarkMode}
+        onRefetchAll={refetchAll}
+      />
 
-      {isLoading && !dashboardApiData ? (
-        <Loader />
-      ) : dashboardData.totalTransaction < 4 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Insufficient Data</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>You do not have enough data to visualize dashboard...</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-            {/* Summary Cards remain the same */}
-            <Card>
-              <CardHeader className='pb-2'>
-                <CardTitle className='text-sm font-medium'>Overall Income</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className='text-2xl font-bold'>{formatCurrency(dashboardData.overallIncome)}</p>
-                <div className='mt-1 flex items-center text-xs text-muted-foreground'>
-                  {renderChangeIndicator(dashboardData.overallIncomeChange)}
-                  <span className='ml-1'>avg. change</span>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className='pb-2'>
-                <CardTitle className='text-sm font-medium'>Overall Expense</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className='text-2xl font-bold'>{formatCurrency(dashboardData.overallExpense)}</p>
-                <div className='mt-1 flex items-center text-xs text-muted-foreground'>
-                  {renderChangeIndicator(dashboardData.overallExpenseChange)}
-                  <span className='ml-1'>avg. change</span>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className='pb-2'>
-                <CardTitle className='text-sm font-medium'>Overall Balance</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className='text-2xl font-bold'>{formatCurrency(dashboardData.overallBalance)}</p>
-                <p className='mt-1 text-xs text-muted-foreground'>Across all accounts</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className='pb-2'>
-                <CardTitle className='text-sm font-medium'>Total Transactions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className='text-2xl font-bold'>{dashboardData.totalTransaction}</p>
-                <p className='mt-1 text-xs text-muted-foreground'>All time</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Render the new TrendChart component */}
-          <div className='grid grid-cols-1 gap-6 lg:grid-cols-1'>
-            <TrendChart
-              incomeData={dashboardData.incomeChartData}
-              expenseData={dashboardData.expenseChartData}
-              balanceData={dashboardData.balanceChartData}
-            />
-          </div>
-
-          <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
-            <BudgetProgress />
-            <GoalProgress data={goalsData?.data || undefined} isLoading={isGoalsLoading} />
-            <InvestmentSummaryCard />
-            <DebtSummaryCard />
-            <Card>
-              <CardHeader>
-                <CardTitle>Account Overview</CardTitle>
-                <CardDescription>Current balance summary</CardDescription>
-              </CardHeader>
-              <CardContent className='scrollbar h-[250px] overflow-y-auto'>
-                {dashboardData.accountsInfo.length ? (
-                  <ul className='space-y-4'>
-                    {dashboardData.accountsInfo.map((accountInfo: any) => {
-                      const currency = accountIdToCurrencyMap.get(accountInfo.id) || 'INR';
-                      return (
-                        <li key={accountInfo.id} className='text-sm'>
-                          <div className='mb-1 flex justify-between'>
-                            <span className='font-semibold'>{accountInfo.name}</span>
-                            <span className='font-bold'>
-                              {formatCurrency(accountInfo.balance, currency)}
-                            </span>
-                          </div>
-                          <div className='flex justify-between text-xs text-muted-foreground'>
-                            <span>
-                              Income:{' '}
-                              <span className='text-green-600'>
-                                {formatCurrency(accountInfo.income ?? 0, currency)}
-                              </span>
-                            </span>
-                            <span>
-                              Expense:{' '}
-                              <span className='text-red-600'>
-                                {formatCurrency(accountInfo.expense ?? 0, currency)}
-                              </span>
-                            </span>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                ) : (
-                  <NoData message='No accounts found. Add one!' icon='inbox' />
-                )}
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Stats & Counts</CardTitle>
-                <CardDescription>Key figures and counts</CardDescription>
-              </CardHeader>
-              <CardContent className='scrollbar h-[250px] space-y-3 overflow-y-auto text-sm'>
-                <div className='flex justify-between'>
-                  <span>Highest Income:</span>{' '}
-                  <span className='font-medium text-green-600'>
-                    {dashboardData.mostExpensiveIncome
-                      ? formatCurrency(dashboardData.mostExpensiveIncome)
-                      : 'N/A'}
-                  </span>
-                </div>
-                <div className='flex justify-between'>
-                  <span>Lowest Income:</span>{' '}
-                  <span className='font-medium text-green-500'>
-                    {dashboardData.cheapestIncome
-                      ? formatCurrency(dashboardData.cheapestIncome)
-                      : 'N/A'}
-                  </span>
-                </div>
-                <div className='flex justify-between'>
-                  <span>Highest Expense:</span>{' '}
-                  <span className='font-medium text-red-600'>
-                    {dashboardData.mostExpensiveExpense
-                      ? formatCurrency(dashboardData.mostExpensiveExpense)
-                      : 'N/A'}
-                  </span>
-                </div>
-                <div className='flex justify-between'>
-                  <span>Lowest Expense:</span>{' '}
-                  <span className='font-medium text-red-500'>
-                    {dashboardData.cheapestExpense
-                      ? formatCurrency(dashboardData.cheapestExpense)
-                      : 'N/A'}
-                  </span>
-                </div>
-                {dashboardData?.transactionsCountByAccount &&
-                  Object.keys(dashboardData.transactionsCountByAccount).length > 0 && (
-                    <div className='pt-2'>
-                      <p className='mb-1 font-medium'>Transactions per Account:</p>
-                      <ul className='space-y-1 text-xs text-muted-foreground'>
-                        {Object.entries(dashboardData.transactionsCountByAccount).map(
-                          ([accountName, count]) => (
-                            <li key={accountName} className='flex justify-between'>
-                              <span>{accountName}:</span>
-                              <span>{count}</span>
-                            </li>
-                          )
-                        )}
-                      </ul>
-                    </div>
-                  )}
-              </CardContent>
-            </Card>
-          </div>
-        </>
+      {isError && dashboardPageData && (
+        <Alert variant='destructive' className='mt-4'>
+          <Frown className='h-4 w-4' />
+          <AlertTitle>Data Update Issue</AlertTitle>
+          <AlertDescription>
+            Could not update all dashboard sections. Some data might be stale.
+            {error && <div className='mt-1 text-xs'>Details: {(error as Error).message}</div>}
+          </AlertDescription>
+        </Alert>
       )}
+
+      <div className='mx-auto w-full max-w-7xl p-2 max-sm:max-w-full max-sm:p-0'>
+        <div className='grid max-w-7xl grid-cols-12 gap-4'>
+          {Object.entries(currentLayoutConfig)
+            .filter(([id]) => !hiddenSections.has(id))
+            .map(([id, config]) => (
+              <DashboardCardWrapper
+                key={id}
+                id={id}
+                title={config.title}
+                description={config.description}
+                gridSpanClass={config.gridSpan}
+                isHidden={hiddenSections.has(id)}
+                onVisibilityToggle={toggleSectionVisibility}
+                icon={config.icon}
+              >
+                {cardMap[id] ?? <Loader className='my-2' />}
+              </DashboardCardWrapper>
+            ))}
+        </div>
+      </div>
     </div>
   );
 };
+
 export default DashboardPage;

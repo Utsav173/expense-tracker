@@ -258,14 +258,14 @@ export type ChartDataType = {
 
 export type PreviousShareAccount = {
   id: string;
-  name: string | null;
-  balance: number | null;
+  name: string;
+  balance: number;
   User: {
     id: string;
     name: string;
     email: string;
     profilePic: string | null;
-  } | null;
+  };
 };
 
 export type DropdownUser = {
@@ -281,6 +281,16 @@ export type TransactionsResponse = ApiResponse<{
   totalCount: number;
   currentPage: number;
   pageSize: number;
+  filters: {
+    isIncome: boolean;
+    categoryId?: string;
+    sortBy: string;
+    sortOrder: string;
+  };
+  dateRange: {
+    minDate: string;
+    maxDate: string;
+  };
 }>;
 
 export interface CategorySpending {

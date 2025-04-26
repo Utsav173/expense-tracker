@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
-import { ColumnDef, SortingState } from '@tanstack/react-table';
+import React, { useState, useMemo } from 'react';
+import { ColumnDef } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2, Repeat, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
 import UpdateTransactionModal from './modals/update-transaction-modal';
@@ -15,6 +15,7 @@ import CommonTable from './ui/CommonTable';
 import { useMutation } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { SingleLineEllipsis } from './ui/ellipsis-components';
 
 interface TransactionTableProps {
   transactions: TransactionType[] | undefined;
@@ -26,6 +27,7 @@ interface TransactionTableProps {
   page: number;
   handlePageChange: (page: number) => void;
   refetchData: () => Promise<void>;
+  isOwner?: boolean;
 }
 
 const TransactionTable = ({
@@ -37,7 +39,8 @@ const TransactionTable = ({
   totalRecords,
   page,
   handlePageChange,
-  refetchData
+  refetchData,
+  isOwner = true
 }: TransactionTableProps) => {
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionType | null>(null);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
@@ -78,12 +81,20 @@ const TransactionTable = ({
         accessorKey: 'text',
         header: 'Description / Transfer',
         cell: ({ row }) => (
-          <div className='flex flex-col'>
-            <span className='max-w-[200px] truncate font-medium'>{row.original.text}</span>
+          <div className='flex flex-col space-y-1'>
+            <SingleLineEllipsis
+              showTooltip
+              className='text-sm font-medium max-md:max-w-[200px] md:max-w-[250px] md:text-base'
+            >
+              {row.original.text}
+            </SingleLineEllipsis>
             {row.original.transfer && (
-              <span className='max-w-[200px] truncate text-xs text-muted-foreground'>
+              <SingleLineEllipsis
+                showTooltip
+                className='text-muted-foreground text-xs max-md:max-w-[200px] md:max-w-[250px]'
+              >
                 via {row.original.transfer}
-              </span>
+              </SingleLineEllipsis>
             )}
           </div>
         ),
@@ -96,14 +107,23 @@ const TransactionTable = ({
           const transaction = row.original;
           const sign = transaction.isIncome ? '+' : '-';
           return (
-            <div
-              className={cn(
-                'min-w-fit font-medium',
-                transaction.isIncome ? 'text-green-600' : 'text-red-600'
-              )}
-            >
-              {sign}
-              {formatCurrency(transaction.amount, transaction.currency)}
+            <div className='flex items-center gap-2'>
+              <div
+                className={cn(
+                  'text-sm font-medium whitespace-nowrap md:text-base',
+                  transaction.isIncome ? 'text-success' : 'text-destructive'
+                )}
+              >
+                {sign}
+                {formatCurrency(transaction.amount, transaction.currency)}
+              </div>
+              <div className='flex items-center'>
+                {transaction.isIncome ? (
+                  <ArrowUpCircle className='text-success h-4 w-4' />
+                ) : (
+                  <ArrowDownCircle className='text-destructive h-4 w-4' />
+                )}
+              </div>
             </div>
           );
         },
@@ -113,8 +133,16 @@ const TransactionTable = ({
         accessorKey: 'category.name',
         header: 'Category',
         cell: ({ row }) => (
-          <Badge variant='outline' className='max-w-[150px] truncate whitespace-nowrap'>
-            {row.original.category?.name ?? 'Uncategorized'}
+          <Badge
+            variant='outline'
+            className='bg-muted/30 max-w-[120px] truncate whitespace-nowrap md:max-w-[150px]'
+          >
+            <SingleLineEllipsis
+              showTooltip
+              className='max-w-[100px] truncate text-xs md:max-w-[130px]'
+            >
+              {row.original.category?.name ?? 'Uncategorized'}
+            </SingleLineEllipsis>
           </Badge>
         ),
         enableSorting: true
@@ -125,9 +153,9 @@ const TransactionTable = ({
         cell: ({ row }) => {
           const date = new Date(row.original.createdAt);
           return (
-            <div className='whitespace-nowrap text-sm'>
-              {format(date, 'MMM d, yyyy')}
-              <span className='ml-2 text-xs text-muted-foreground'>{format(date, 'h:mm a')}</span>
+            <div className='flex flex-col text-sm max-md:items-start'>
+              <span className='font-medium whitespace-nowrap'>{format(date, 'MMM d, yyyy')}</span>
+              <span className='text-muted-foreground text-xs'>{format(date, 'h:mm a')}</span>
             </div>
           );
         },
@@ -137,114 +165,123 @@ const TransactionTable = ({
         accessorKey: 'isIncome',
         header: 'Type',
         cell: ({ row }) => (
-          <div className='flex items-center gap-1'>
+          <div className='flex items-center gap-1.5'>
             {row.original.isIncome ? (
-              <ArrowUpCircle className='h-4 w-4 text-green-500' />
+              <ArrowUpCircle className='text-success h-4 w-4' />
             ) : (
-              <ArrowDownCircle className='h-4 w-4 text-red-500' />
+              <ArrowDownCircle className='text-destructive h-4 w-4' />
             )}
-            <span className='text-sm'>{row.original.isIncome ? 'Income' : 'Expense'}</span>
+            <span className='text-muted-foreground text-sm'>
+              {row.original.isIncome ? 'Income' : 'Expense'}
+            </span>
           </div>
         ),
         enableSorting: true
       },
-      {
-        accessorKey: 'recurring',
-        header: 'Recurring',
-        cell: ({ row }) => {
-          const transaction = row.original;
-          if (!transaction.recurring) return null;
 
-          const tooltipContent = `Type: ${transaction.recurrenceType || 'N/A'} ${
-            transaction.recurrenceEndDate
-              ? ` | Ends: ${format(new Date(transaction.recurrenceEndDate), 'MMM d, yyyy')}`
-              : ''
-          }`;
+      ...(isOwner
+        ? [
+            {
+              accessorKey: 'recurring',
+              header: 'Recurring',
+              cell: ({ row }: { row: any }) => {
+                const transaction = row.original;
+                if (!transaction.recurring) return null;
 
-          return (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Repeat className='h-4 w-4 text-blue-500' />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{tooltipContent}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          );
-        },
-        enableSorting: false
-      },
-      {
-        accessorKey: 'createdBy.name',
-        header: 'Created By',
-        cell: ({ row }) => (
-          <div className='max-w-[120px] truncate text-sm'>
-            {row.original.createdBy?.name ?? 'N/A'}
-          </div>
-        ),
-        enableSorting: false
-      },
-      {
-        id: 'actions',
-        header: () => <div className='text-right'>Actions</div>,
-        cell: ({ row }) => (
-          <div className='flex justify-end gap-1'>
-            <Button size='icon' variant='ghost' onClick={() => handleEditClick(row.original)}>
-              <Pencil className='h-4 w-4' />
-              <span className='sr-only'>Edit</span>
-            </Button>
-            <DeleteConfirmationModal
-              title='Delete Transaction'
-              description={
-                <p>
-                  Are you sure you want to delete this transaction? <br />
-                  <span className='font-medium'>{row.original.text}</span>
-                  <br />
-                  <span
-                    className={cn(
-                      row.original.isIncome ? 'text-green-600' : 'text-red-600',
-                      'font-semibold'
-                    )}
-                  >
-                    {row.original.isIncome ? '+' : '-'}
-                    {formatCurrency(row.original.amount, row.original.currency)}
-                  </span>
-                </p>
-              }
-              onConfirm={handleDelete}
-              open={deleteTransactionId === row.original.id}
-              onOpenChange={(open) => !open && setDeleteTransactionId(null)}
-              triggerButton={
-                <Button
-                  size='icon'
-                  variant='ghost'
-                  className='text-destructive hover:text-destructive'
-                  onClick={() => handleDeleteClick(row.original.id)}
+                const tooltipContent = `Type: ${transaction.recurrenceType || 'N/A'} ${
+                  transaction.recurrenceEndDate
+                    ? ` | Ends: ${format(new Date(transaction.recurrenceEndDate), 'MMM d, yyyy')}`
+                    : ''
+                }`;
+
+                return (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className='flex items-center gap-1'>
+                          <Repeat className='text-primary h-4 w-4' />
+                          <span className='text-muted-foreground text-xs'>
+                            {transaction.recurrenceType}
+                          </span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className='text-xs'>{tooltipContent}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                );
+              },
+              enableSorting: false
+            },
+            {
+              accessorKey: 'createdBy.name',
+              header: 'Created By',
+              cell: ({ row }: { row: any }) => (
+                <SingleLineEllipsis
+                  showTooltip
+                  className='text-muted-foreground max-w-[80px] text-sm md:max-w-[120px]'
                 >
-                  <Trash2 className='h-4 w-4' />
-                  <span className='sr-only'>Delete</span>
-                </Button>
-              }
-            />
-          </div>
-        )
-      }
+                  {row.original.createdBy?.name ?? 'N/A'}
+                </SingleLineEllipsis>
+              ),
+              enableSorting: false
+            },
+            {
+              id: 'actions',
+              header: () => 'Actions',
+              headerAlign: 'right',
+              cell: ({ row }: { row: any }) => (
+                <div className='flex justify-end gap-2'>
+                  <Button
+                    size='icon'
+                    variant='ghost'
+                    onClick={() => handleEditClick(row.original)}
+                    className='hover:bg-muted h-8 w-8'
+                  >
+                    <Pencil className='text-muted-foreground h-3.5 w-3.5' />
+                    <span className='sr-only'>Edit</span>
+                  </Button>
+                  <DeleteConfirmationModal
+                    title='Delete Transaction'
+                    description={
+                      <p>
+                        Are you sure you want to delete this transaction? <br />
+                        <span className='font-medium'>{row.original.text}</span>
+                        <br />
+                        <span
+                          className={cn(
+                            row.original.isIncome ? 'text-success' : 'text-destructive',
+                            'font-semibold'
+                          )}
+                        >
+                          {row.original.isIncome ? '+' : '-'}
+                          {formatCurrency(row.original.amount, row.original.currency)}
+                        </span>
+                      </p>
+                    }
+                    onConfirm={handleDelete}
+                    open={deleteTransactionId === row.original.id}
+                    onOpenChange={(open) => !open && setDeleteTransactionId(null)}
+                    triggerButton={
+                      <Button
+                        size='icon'
+                        variant='ghost'
+                        className='text-destructive hover:bg-destructive/10 h-8 w-8'
+                        onClick={() => handleDeleteClick(row.original.id)}
+                      >
+                        <Trash2 className='h-3.5 w-3.5' />
+                        <span className='sr-only'>Delete</span>
+                      </Button>
+                    }
+                  />
+                </div>
+              )
+            }
+          ]
+        : [])
     ],
-    []
-  );
-
-  const handleSortChange = useCallback(
-    (sorting: SortingState) => {
-      if (sorting.length > 0) {
-        const sort = sorting[0];
-        onSort(sort.id, sort.desc ? 'desc' : 'asc');
-      } else {
-        onSort('createdAt', 'desc');
-      }
-    },
-    [onSort]
+    [isOwner]
   );
 
   return (
@@ -257,11 +294,19 @@ const TransactionTable = ({
         pageSize={10}
         currentPage={page}
         onPageChange={handlePageChange}
-        onSortChange={handleSortChange}
-        enablePagination={true}
+        onSortChange={(sorting) => {
+          if (sorting.length > 0) {
+            onSort(sorting[0].id, sorting[0].desc ? 'desc' : 'asc');
+          } else {
+            onSort('', 'asc');
+          }
+        }}
+        enablePagination
         sortBy={sortBy}
         sortOrder={sortOrder}
-        mobileTriggerColumns={['text', 'amount']}
+        tableClassName='bg-background'
+        headerClassName='bg-muted'
+        cellClassName='border-border'
       />
       <UpdateTransactionModal
         isOpen={isUpdateModalOpen}

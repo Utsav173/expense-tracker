@@ -1,83 +1,105 @@
 'use client';
 
-import { AccountDetails, ApiResponse } from '@/lib/types';
+import { AccountDetails } from '@/lib/types';
 import { Button } from '@/components/ui/button';
+import { Share, Plus, Download, History } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import Link from 'next/link';
-import React from 'react';
-import ShareAccountModal from '../modals/share-account-modal';
-import { ArrowLeftRight, History, Share } from 'lucide-react';
-import AddTransactionModal from '../modals/add-transaction-modal';
-import { useIsMobile } from '@/hooks/use-mobile';
+import AddTransactionModal from '@/components/modals/add-transaction-modal';
+import ShareAccountModal from '@/components/modals/share-account-modal';
 import { SingleLineEllipsis } from '../ui/ellipsis-components';
+import Link from 'next/link';
 
 interface AccountDetailsHeaderProps {
-  account: ApiResponse<AccountDetails> | undefined;
-  isLoading: boolean;
-  refetchData: () => Promise<void>;
+  account?: AccountDetails;
+  isLoading?: boolean;
+  refetchData: () => void;
+  isMobile?: boolean;
+  isOwner?: boolean;
 }
-export const AccountDetailsHeader: React.FC<AccountDetailsHeaderProps> = ({
+
+export const AccountDetailsHeader = ({
   account,
   isLoading,
-  refetchData
-}) => {
-  const isMobile = useIsMobile();
+  refetchData,
+  isMobile,
+  isOwner = true
+}: AccountDetailsHeaderProps) => {
+  if (isLoading) {
+    return (
+      <div className='space-y-4'>
+        <div className='flex items-center justify-between'>
+          <div className='space-y-1'>
+            <Skeleton className='h-7 w-64' />
+            <Skeleton className='h-5 w-32' />
+          </div>
+          <div className='flex gap-2 max-sm:hidden'>
+            <Skeleton className='h-9 w-24' />
+            <Skeleton className='h-9 w-24' />
+            <Skeleton className='h-9 w-32' />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!account) return null;
 
   return (
-    <section className='flex w-full flex-col items-center justify-between gap-4 rounded-xl bg-gradient-to-r from-background to-muted p-4 shadow-sm md:flex-row md:gap-6 md:p-6'>
-      {isLoading || !account ? (
-        <Skeleton className='h-8 w-full md:w-1/2' />
-      ) : (
-        <>
-          <SingleLineEllipsis className='w-full flex-1 text-center text-xl font-semibold text-foreground md:min-w-0 md:text-left'>
-            {account?.name}
+    <div className='space-y-4'>
+      <div className='flex items-center justify-between max-sm:flex-col max-sm:items-start max-sm:gap-4'>
+        <div className='min-w-0 space-y-1 max-sm:w-[300px]'>
+          <SingleLineEllipsis className='truncate text-2xl font-semibold tracking-tight'>
+            {account.name}
           </SingleLineEllipsis>
-          <div className='flex flex-shrink-0 flex-row items-center gap-2 max-md:flex-wrap max-md:justify-center md:gap-4'>
-            <ShareAccountModal
-              accountId={account.id}
-              triggerButton={
-                <Button
-                  size='sm'
-                  variant='outline'
-                  className='h-9 w-9 rounded-full p-0 transition-transform duration-200 hover:scale-110 hover:bg-muted'
-                  aria-label='Share account'
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Share className='h-4 w-4' />
-                </Button>
-              }
-            />
-            <Link href={`/accounts/shares/${account?.id}`}>
+          <p className='text-muted-foreground text-sm'>
+            {isOwner ? 'Personal Account' : 'Shared Account'} • {account.currency}
+          </p>
+        </div>
+
+        {isOwner && (
+          <div className='flex items-center gap-2 max-sm:w-full max-sm:justify-center'>
+            <Button variant='outline' size='sm' className='gap-2' onClick={() => window.print()}>
+              <Download className='h-4 w-4' />
+              {!isMobile && 'Export'}
+            </Button>
+
+            <Link href={`/accounts/shares/${account?.id}`} className='shrink-0'>
               <Button
                 variant='outline'
                 size='sm'
-                className='gap-2 transition-all duration-200 hover:scale-105 hover:bg-muted'
+                className='hover:bg-muted h-8 gap-1.5 text-xs transition-all duration-200 hover:scale-105 md:h-9 md:gap-2 md:text-sm'
               >
-                <History className='h-4 w-4' />
+                <History className='h-3.5 w-3.5 md:h-4 md:w-4' />
                 <span className='hidden md:inline'>View Account Sharing</span>
                 <span className='md:hidden'>Shares</span>
               </Button>
             </Link>
-            <AddTransactionModal
-              onTransactionAdded={async () => {
-                await refetchData();
-              }}
+
+            <ShareAccountModal
               accountId={account.id}
               triggerButton={
-                <Button
-                  variant='outline'
-                  size='sm'
-                  className='gap-2 transition-all duration-200 hover:scale-105 hover:bg-muted'
-                >
-                  <ArrowLeftRight className='h-4 w-4' />
-                  <span className='hidden capitalize md:inline'>Add Transaction</span>
-                  <span className='capitalize md:hidden'>Add</span>
+                <Button variant='outline' size='sm' className='gap-2'>
+                  <Share className='h-4 w-4' />
+                  {!isMobile && 'Share'}
+                </Button>
+              }
+            />
+
+            <AddTransactionModal
+              accountId={account.id}
+              onTransactionAdded={() => {
+                refetchData();
+              }}
+              triggerButton={
+                <Button variant='default' size='sm' className='gap-2'>
+                  <Plus className='h-4 w-4' />
+                  {!isMobile && 'Add Transaction'}
                 </Button>
               }
             />
           </div>
-        </>
-      )}
-    </section>
+        )}
+      </div>
+    </div>
   );
 };

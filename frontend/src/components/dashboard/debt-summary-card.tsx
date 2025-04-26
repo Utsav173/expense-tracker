@@ -1,31 +1,30 @@
-'use client';
-
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { DebtWithDetails, ApiResponse } from '@/lib/types';
-import { formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import NoData from '../ui/no-data';
-import { Scale } from 'lucide-react';
 import { getOutstandingDebts } from '@/lib/endpoints/debt';
-import { Skeleton } from '../ui/skeleton';
 import { useToast } from '@/lib/hooks/useToast';
+import { Button } from '../ui/button';
+import Link from 'next/link';
+import { formatDistanceToNowStrict, parseISO, isValid } from 'date-fns';
+import Loader from '../ui/loader';
 
 type OutstandingDebtsResponse = ApiResponse<{
   data: DebtWithDetails[];
   totalCount?: number;
-  totalPages?: number;
-  currentPage?: number;
-  pageSize?: number;
 }>;
 
-export const DebtSummaryCard: React.FC = () => {
+export const DebtSummaryCard: React.FC<{
+  className?: string;
+}> = ({ className }) => {
   const { showError } = useToast();
 
   const { data, isLoading, error } = useQuery<OutstandingDebtsResponse>({
     queryKey: ['outstandingDebtsDashboard'],
     queryFn: () => getOutstandingDebts(),
-    retry: false,
+    retry: 1,
     staleTime: 10 * 60 * 1000
   });
 
@@ -35,85 +34,79 @@ export const DebtSummaryCard: React.FC = () => {
     }
   }, [error, showError]);
 
-  const outstandingDebtAmount = data?.data
-    ? data.data.reduce(
-        (sum: number, debtItem: DebtWithDetails) => sum + (debtItem.debts?.amount || 0),
-        0
-      )
-    : 0;
+  const outstandingDebtAmount =
+    data?.data?.reduce((sum, debtItem) => sum + (debtItem.debts?.amount || 0), 0) ?? 0;
 
   const numberOfDebts = data?.data?.length ?? 0;
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className='flex items-center gap-2'>
-            <Scale className='h-5 w-5 text-red-500' />
-            Debt Summary
-          </CardTitle>
-          <CardDescription>Loading outstanding debts...</CardDescription>
-        </CardHeader>
-        <CardContent className='space-y-4 pt-2'>
-          <Skeleton className='h-6 w-3/4' />
-          <Skeleton className='mt-3 h-4 w-1/4' />
-        </CardContent>
-      </Card>
-    );
-  }
+  const nextDueDebt = data?.data
+    ?.filter((d) => d.debts?.dueDate)
+    .sort(
+      (a, b) => new Date(a.debts!.dueDate!).getTime() - new Date(b.debts!.dueDate!).getTime()
+    )[0];
 
-  // Show error state only if not loading and an error exists
-  if (!isLoading && error) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className='flex items-center gap-2'>
-            <Scale className='h-5 w-5 text-red-500' />
-            Debt Summary
-          </CardTitle>
-          <CardDescription>Overview of your outstanding debts.</CardDescription>
-        </CardHeader>
-        <CardContent className='h-[200px]'>
-          <NoData message={'Could not load debt data.'} icon='x-circle' />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Show "No Data" only if not loading, no error, and zero debts
-  if (!isLoading && !error && numberOfDebts === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className='flex items-center gap-2'>
-            <Scale className='h-5 w-5 text-red-500' />
-            Debt Summary
-          </CardTitle>
-          <CardDescription>Overview of your outstanding debts.</CardDescription>
-        </CardHeader>
-        <CardContent className='h-[200px]'>
-          <NoData message={'No outstanding debts found.'} icon='inbox' />
-        </CardContent>
-      </Card>
-    );
-  }
+  const getDueDateInfo = (dueDateStr?: string): string | null => {
+    if (!dueDateStr) return null;
+    const dueDate = parseISO(dueDateStr);
+    if (!isValid(dueDate)) return null;
+    return formatDistanceToNowStrict(dueDate, { addSuffix: true });
+  };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className='flex items-center gap-2'>
-          <Scale className='h-5 w-5 text-red-500' />
-          Debt Summary
-        </CardTitle>
-        <CardDescription>Total amount currently owed.</CardDescription>
-      </CardHeader>
-      <CardContent className='scrollbar h-[250px] space-y-3 overflow-y-auto text-sm'>
-        <div>
-          <p className='text-xs text-muted-foreground'>Total Outstanding Debt</p>
-          <p className='text-xl font-bold text-red-600'>{formatCurrency(outstandingDebtAmount)}</p>
+    <Card className={cn('flex h-full flex-col', className)}>
+      <CardContent className='flex h-full flex-col p-0'>
+        <div className='flex-1 px-4 py-4'>
+          {isLoading ? (
+            <div className='flex h-full items-center justify-center'>
+              <Loader />
+            </div>
+          ) : error || numberOfDebts === 0 ? (
+            <div className='flex h-full items-center justify-center'>
+              <NoData
+                message={error ? 'Could not load debt data.' : 'No outstanding debts! 🎉'}
+                icon={error ? 'x-circle' : 'inbox'}
+              />
+            </div>
+          ) : (
+            <div className='space-y-4'>
+              <div className='rounded-lg border p-4 shadow-sm transition-all hover:shadow-md'>
+                <p className='text-2xl font-bold text-red-600'>
+                  {formatCurrency(outstandingDebtAmount)}
+                </p>
+                <p className='text-muted-foreground pt-1 text-xs'>
+                  Total Outstanding debts Across {numberOfDebts} item(s)
+                </p>
+              </div>
+
+              {nextDueDebt && (
+                <div className='rounded-lg border p-4 shadow-sm transition-all hover:shadow-md'>
+                  <p className='text-muted-foreground mb-2 text-xs font-medium'>Next Payment Due</p>
+                  <div className='flex min-w-0 flex-col gap-2'>
+                    <div className='truncate font-medium break-words'>
+                      {nextDueDebt.debts.description}
+                    </div>
+                    <div className='flex items-baseline justify-between'>
+                      <span className='text-sm font-semibold text-red-600'>
+                        {formatCurrency(nextDueDebt.debts.amount)}
+                      </span>
+                      <span className='text-muted-foreground text-xs'>
+                        {getDueDateInfo(nextDueDebt.debts.dueDate)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
-        <p className='pt-2 text-xs text-muted-foreground'>Across {numberOfDebts} debt item(s).</p>
       </CardContent>
+      {!isLoading && !error && numberOfDebts > 0 && (
+        <div className='border-t p-3 text-center'>
+          <Button variant='link' size='sm' asChild className='text-xs'>
+            <Link href='/debts'>Manage Debts</Link>
+          </Button>
+        </div>
+      )}
     </Card>
   );
 };

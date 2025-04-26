@@ -3,9 +3,11 @@ import authMiddleware from '../middleware';
 import { Budget } from '../database/schema';
 import { zValidator } from '@hono/zod-validator';
 import { budgetSchema } from '../utils/schema.validations';
-import { eq, count, asc, desc, sql, and, sum, InferSelectModel } from 'drizzle-orm';
+import { eq, count, asc, desc, sql, and, sum, InferSelectModel, SQL } from 'drizzle-orm';
 import { db } from '../database';
 import { HTTPException } from 'hono/http-exception';
+import { endOfMonth, format } from 'date-fns';
+import { getIntervalValue } from '../utils';
 
 const budgetRouter = new Hono();
 
@@ -150,17 +152,47 @@ budgetRouter.delete('/:id', authMiddleware, async (c) => {
   }
 });
 
-// GET budget summary for user over specified duration
+// GET budget summary for user over specified duration (MODIFIED)
 budgetRouter.get('/summary', authMiddleware, async (c) => {
   try {
     const userId = await c.get('userId' as any);
-    const { month, year } = c.req.query();
+    // Accept duration, specific month/year for flexibility
+    const {
+      duration = 'thisMonth',
+      month: specificMonth,
+      year: specificYear,
+      startDate: customStartDate,
+      endDate: customEndDate,
+    } = c.req.query();
 
-    const monthValue = Number(month);
-    const yearValue = Number(year);
+    let startDateStr: string;
+    let endDateStr: string;
+    let filterClause: SQL;
 
-    if (isNaN(monthValue) || monthValue < 1 || monthValue > 12 || isNaN(yearValue)) {
-      throw new HTTPException(400, { message: 'Invalid month or year' });
+    // Determine date range based on query params
+    if (specificMonth && specificYear) {
+      const monthNum = parseInt(specificMonth);
+      const yearNum = parseInt(specificYear);
+      if (isNaN(monthNum) || isNaN(yearNum) || monthNum < 1 || monthNum > 12) {
+        throw new HTTPException(400, { message: 'Invalid month or year provided.' });
+      }
+      const firstDay = new Date(yearNum, monthNum - 1, 1);
+      const lastDay = endOfMonth(firstDay);
+      startDateStr = format(firstDay, 'yyyy-MM-dd 00:00:00.000');
+      endDateStr = format(lastDay, 'yyyy-MM-dd 23:59:59.999');
+      // Filter budgets specifically for this month/year
+      filterClause = sql`b.month = ${monthNum} AND b.year = ${yearNum}`;
+    } else {
+      // Use duration or custom range for filtering transactions, but fetch ALL budgets for the user
+      const range = await getIntervalValue(
+        duration === 'custom' && customStartDate && customEndDate
+          ? `${customStartDate},${customEndDate}`
+          : duration,
+      );
+      startDateStr = range.startDate;
+      endDateStr = range.endDate;
+      // Fetch all budgets for the user if no specific month/year is given
+      filterClause = sql`b."userId" = ${userId}`;
     }
 
     const result = await db
@@ -168,7 +200,7 @@ budgetRouter.get('/summary', authMiddleware, async (c) => {
         sql`
         SELECT
             b.category,
-            c.name as categoryName, -- Renamed to avoid conflict
+            c.name as categoryName,
             b.amount as budgetedAmount,
             COALESCE(SUM(t.amount), 0) as actualSpend
         FROM
@@ -176,28 +208,28 @@ budgetRouter.get('/summary', authMiddleware, async (c) => {
         LEFT JOIN
           transaction t
           ON b.category = t.category
-             AND EXTRACT(MONTH FROM t."createdAt") = ${monthValue}
-             AND EXTRACT(YEAR FROM t."createdAt") = ${yearValue}
-             AND t."isIncome" = false -- Only sum expenses for spending
-             AND t.owner = ${userId} -- Ensure transaction owner matches
+             AND t."createdAt" BETWEEN ${startDateStr}::timestamp AND ${endDateStr}::timestamp -- Filter transactions by calculated date range
+             AND t."isIncome" = false
+             AND t.owner = ${userId}
         JOIN
             category c ON b.category = c.id
         WHERE
-            b."userId" = ${userId} AND b.month = ${monthValue} AND b.year = ${yearValue}
-         GROUP BY
-              b.category, c.name, b.amount
+            ${filterClause} -- Filter budgets based on month/year or just userId
+            AND b."userId" = ${userId} -- Ensure user owns the budget record
+        GROUP BY
+            b.category, c.name, b.amount
         ORDER BY
-               b.amount DESC
-    `,
+            b.amount DESC
+        `,
       )
       .catch((err) => {
+        console.error('Error fetching budget summary:', err);
         throw new HTTPException(500, { message: `DB Error: ${err.message}` });
       });
 
-    // Map to ensure correct types and structure
     const summaryData = result.rows.map((row: any) => ({
       category: row.category,
-      categoryName: row.categoryname, // Access lowercase name
+      categoryName: row.categoryname,
       budgetedAmount: Number(row.budgetedamount || 0),
       actualSpend: Number(row.actualspend || 0),
     }));

@@ -8,17 +8,25 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { DayPickerProps } from 'react-day-picker';
 
 interface DateTimePickerProps {
   value?: Date;
   onChange?: (date: Date) => void;
-  disabled?: boolean;
+  disabled?: boolean | DayPickerProps['disabled'];
+  buttonDisabled?: boolean;
+  captionLayout?: DayPickerProps['captionLayout'];
 }
 
 type TimeType = 'hour' | 'minute' | 'ampm';
-type AMPM = 'AM' | 'PM';
 
-const DateTimePicker: React.FC<DateTimePickerProps> = ({ value, onChange, disabled = false }) => {
+const DateTimePicker: React.FC<DateTimePickerProps> = ({
+  value,
+  onChange,
+  disabled = false,
+  buttonDisabled = false,
+  captionLayout
+}) => {
   const [openPopover, setOpenPopover] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<Date>(value || new Date());
 
@@ -63,19 +71,21 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ value, onChange, disabl
             'w-full pl-3 text-left font-normal',
             !selectedDate && 'text-muted-foreground'
           )}
-          disabled={disabled}
+          disabled={!!buttonDisabled}
         >
           {selectedDate ? format(selectedDate, 'MM/dd/yyyy hh:mm aa') : 'MM/DD/YYYY hh:mm aa'}
           <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
         </Button>
       </PopoverTrigger>
       <PopoverContent className='w-auto p-0'>
-        <div className='relative z-[120] sm:flex'>
+        <div className='relative z-120 sm:flex'>
           <Calendar
             mode='single'
             selected={selectedDate}
             onSelect={handleDateSelect}
-            initialFocus
+            disabled={disabled}
+            captionLayout={captionLayout}
+            autoFocus
           />
           <div className='flex flex-col divide-y sm:h-[300px] sm:flex-row sm:divide-x sm:divide-y-0'>
             <ScrollArea className='w-64 sm:w-auto'>

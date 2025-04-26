@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { transactionGetAll } from '@/lib/endpoints/transactions';
 import { useDebounce } from 'use-debounce';
@@ -28,6 +28,7 @@ interface UseTransactionsReturn {
   filters: Filters;
   debouncedSearchQuery: string;
   setSearchQuery: (value: string) => void;
+  handleAccountChange: (value: string) => void;
   handleCategoryChange: (value: string) => void;
   handleIncomeTypeChange: (value: string | undefined) => void;
   handleDateRangeSelect: (range: DateRange | undefined) => void;
@@ -44,27 +45,57 @@ export const useTransactions = (
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
-  const [page, setPage] = useState(initialPage);
-  const [filters, setFilters] = useState<Filters>({
-    accountId: initialAccountId,
-    searchQuery: '',
-    categoryId: undefined,
-    isIncome: undefined,
-    dateRange: undefined,
-    sortBy: 'createdAt',
-    sortOrder: 'desc'
-  });
+  // Memoize initial filter state from URL params
+  const initialFilters = useMemo(
+    () => ({
+      accountId: searchParams.get('accountId') || initialAccountId,
+      searchQuery: searchParams.get('q') || '',
+      categoryId: searchParams.get('categoryId') || undefined,
+      isIncome:
+        searchParams.get('isIncome') === 'true'
+          ? true
+          : searchParams.get('isIncome') === 'false'
+            ? false
+            : undefined,
+      dateRange:
+        searchParams.get('dateFrom') && searchParams.get('dateTo')
+          ? {
+              from: parseISO(searchParams.get('dateFrom')!),
+              to: parseISO(searchParams.get('dateTo')!)
+            }
+          : undefined,
+      sortBy: searchParams.get('sortBy') || 'createdAt',
+      sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc'
+    }),
+    [searchParams, initialAccountId]
+  );
 
+  const [page, setPage] = useState(
+    searchParams.get('page') ? Number(searchParams.get('page')) : initialPage
+  );
+  const [filters, setFilters] = useState<Filters>(initialFilters);
   const [debouncedSearchQuery] = useDebounce(filters.searchQuery, 600);
 
-  const {
-    data: transactionsData,
-    isLoading,
-    isError,
-    error,
-    refetch
-  } = useQuery({
-    queryKey: [
+  const updateURL = useCallback(
+    (newParams: Record<string, string | undefined>) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      // Preserve existing params that aren't being updated
+      Object.entries(newParams).forEach(([key, value]) => {
+        if (value === undefined || value === '') {
+          params.delete(key);
+        } else {
+          params.set(key, value);
+        }
+      });
+
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [router, pathname, searchParams]
+  );
+
+  const queryKey = useMemo(
+    () => [
       'transactions',
       page,
       filters.accountId,
@@ -75,16 +106,35 @@ export const useTransactions = (
       filters.sortBy,
       filters.sortOrder
     ],
-    queryFn: () =>
-      transactionGetAll({
+    [
+      page,
+      filters.accountId,
+      debouncedSearchQuery,
+      filters.categoryId,
+      filters.isIncome,
+      filters.dateRange,
+      filters.sortBy,
+      filters.sortOrder
+    ]
+  );
+
+  const {
+    data: transactionsData,
+    isLoading,
+    isError,
+    error,
+    refetch
+  } = useQuery({
+    queryKey,
+    queryFn: () => {
+      const duration =
+        filters.dateRange?.from && filters.dateRange.to
+          ? `${format(filters.dateRange.from, 'yyyy-MM-dd')},${format(filters.dateRange.to, 'yyyy-MM-dd')}`
+          : undefined;
+
+      return transactionGetAll({
         accountId: filters.accountId === 'all' ? '' : filters.accountId,
-        duration:
-          filters.dateRange?.from && filters.dateRange.to
-            ? `${format(filters.dateRange.from, 'yyyy-MM-dd')},${format(
-                filters.dateRange.to,
-                'yyyy-MM-dd'
-              )}`
-            : undefined,
+        duration,
         page,
         pageSize: 10,
         q: debouncedSearchQuery,
@@ -92,75 +142,99 @@ export const useTransactions = (
         sortOrder: filters.sortOrder,
         categoryId: filters.categoryId === 'all' ? '' : filters.categoryId,
         isIncome: filters.isIncome
-      }),
+      });
+    },
     staleTime: 5 * 60 * 1000,
-    retry: false
+    retry: false,
+    enabled: !filters.dateRange || (!!filters.dateRange.from && !!filters.dateRange.to)
   });
 
-  const updateURL = useCallback(
-    (params: Partial<Record<string, string | undefined>>) => {
-      const currentParams = new URLSearchParams(searchParams.toString());
-
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== '') {
-          currentParams.set(key, value);
-        } else {
-          currentParams.delete(key);
-        }
-      });
-
-      const newUrl = `${pathname}?${currentParams.toString()}`;
-      router.push(newUrl, { scroll: false });
-    },
-    [router, pathname, searchParams]
-  );
   const handlePageChange = useCallback(
     (newPage: number) => {
       setPage(newPage);
-      updateURL({ page: newPage > 1 ? String(newPage) : undefined });
+      updateURL({ page: String(newPage) });
     },
     [updateURL]
   );
 
-  const setSearchQuery = (value: string) => {
-    setFilters((prevFilters) => ({ ...prevFilters, searchQuery: value }));
-  };
+  const setSearchQuery = useCallback(
+    (value: string) => {
+      setFilters((prev) => ({ ...prev, searchQuery: value }));
+      updateURL({ q: value || undefined, page: undefined });
+    },
+    [updateURL]
+  );
 
-  const handleCategoryChange = (value: string) => {
-    const categoryId = value === 'all' ? undefined : value;
-    setFilters((prevFilters) => ({ ...prevFilters, categoryId }));
-    updateURL({ categoryId, page: undefined });
-  };
+  const handleAccountChange = useCallback(
+    (value: string) => {
+      const newAccountId = value === 'all' ? undefined : value;
+      setFilters((prev) => ({ ...prev, accountId: newAccountId }));
+      updateURL({ accountId: newAccountId, page: undefined });
+    },
+    [updateURL]
+  );
 
-  const handleIncomeTypeChange = (value: string | undefined) => {
-    const isIncome = value === 'all' ? undefined : value === 'true';
-    setFilters((prevFilters) => ({ ...prevFilters, isIncome }));
-    updateURL({ isIncome: isIncome === undefined ? undefined : String(isIncome), page: undefined });
-  };
+  const handleCategoryChange = useCallback(
+    (value: string) => {
+      const newCategoryId = value === 'all' ? undefined : value;
+      setFilters((prev) => ({ ...prev, categoryId: newCategoryId }));
+      updateURL({ categoryId: newCategoryId, page: undefined });
+    },
+    [updateURL]
+  );
 
-  const handleDateRangeSelect = (range: DateRange | undefined) => {
-    setFilters((prevFilters) => ({ ...prevFilters, dateRange: range }));
-    if (range?.from && range.to) {
+  const handleIncomeTypeChange = useCallback(
+    (value: string | undefined) => {
+      const newIsIncome = value === 'all' ? undefined : value === 'true';
+      setFilters((prev) => ({ ...prev, isIncome: newIsIncome }));
       updateURL({
-        dateFrom: format(range.from, 'yyyy-MM-dd'),
-        dateTo: format(range.to, 'yyyy-MM-dd'),
+        isIncome: newIsIncome === undefined ? undefined : String(newIsIncome),
         page: undefined
       });
-    }
-  };
+    },
+    [updateURL]
+  );
 
-  const handleClearDateRange = () => {
-    setFilters((prevFilters) => ({ ...prevFilters, dateRange: undefined }));
+  const handleDateRangeSelect = useCallback(
+    (range: DateRange | undefined) => {
+      if (range?.from && range.to) {
+        const startDate = new Date(range.from);
+        const endDate = new Date(range.to);
+
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(23, 59, 59, 999);
+
+        if (startDate <= endDate) {
+          setFilters((prev) => ({ ...prev, dateRange: { from: startDate, to: endDate } }));
+          updateURL({
+            dateFrom: format(startDate, 'yyyy-MM-dd'),
+            dateTo: format(endDate, 'yyyy-MM-dd'),
+            page: undefined
+          });
+        }
+      } else {
+        setFilters((prev) => ({ ...prev, dateRange: undefined }));
+        updateURL({ dateFrom: undefined, dateTo: undefined, page: undefined });
+      }
+    },
+    [updateURL]
+  );
+
+  const handleClearDateRange = useCallback(() => {
+    setFilters((prev) => ({ ...prev, dateRange: undefined }));
     updateURL({ dateFrom: undefined, dateTo: undefined, page: undefined });
-  };
+  }, [updateURL]);
 
-  const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
-    setFilters((prevFilters) => ({ ...prevFilters, sortBy, sortOrder }));
-    updateURL({ sortBy, sortOrder, page: undefined });
-  };
+  const handleSort = useCallback(
+    (sortBy: string, sortOrder: 'asc' | 'desc') => {
+      setFilters((prev) => ({ ...prev, sortBy, sortOrder }));
+      updateURL({ sortBy, sortOrder, page: undefined });
+    },
+    [updateURL]
+  );
 
-  const resetFilters = () => {
-    setFilters({
+  const resetFilters = useCallback(() => {
+    const defaultFilters: Filters = {
       accountId: initialAccountId,
       searchQuery: '',
       categoryId: undefined,
@@ -168,45 +242,16 @@ export const useTransactions = (
       dateRange: undefined,
       sortBy: 'createdAt',
       sortOrder: 'desc'
-    });
+    };
+    setFilters(defaultFilters);
     setPage(1);
     router.push(pathname, { scroll: false });
-  };
+  }, [initialAccountId, pathname, router]);
 
+  // Sync filters with URL params
   useEffect(() => {
-    const urlPage = searchParams.get('page') ? Number(searchParams.get('page')) : 1;
-    const urlQ = searchParams.get('q') || '';
-    const urlCategoryId = searchParams.get('categoryId') || undefined;
-    const urlIsIncome =
-      searchParams.get('isIncome') === 'true'
-        ? true
-        : searchParams.get('isIncome') === 'false'
-          ? false
-          : undefined;
-    const urlDateFrom = searchParams.get('dateFrom');
-    const urlDateTo = searchParams.get('dateTo');
-    const urlSortBy = searchParams.get('sortBy') || 'createdAt';
-    const urlSortOrder = (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc';
-
-    const newDateRange =
-      urlDateFrom && urlDateTo
-        ? {
-            from: parseISO(urlDateFrom),
-            to: parseISO(urlDateTo)
-          }
-        : undefined;
-
-    setFilters({
-      accountId: initialAccountId,
-      searchQuery: urlQ,
-      categoryId: urlCategoryId,
-      isIncome: urlIsIncome,
-      dateRange: newDateRange,
-      sortBy: urlSortBy,
-      sortOrder: urlSortOrder
-    });
-    setPage(urlPage);
-  }, [searchParams, initialAccountId]);
+    setFilters(initialFilters);
+  }, [initialFilters]);
 
   return {
     transactionsData,
@@ -219,6 +264,7 @@ export const useTransactions = (
     filters,
     debouncedSearchQuery,
     setSearchQuery,
+    handleAccountChange,
     handleCategoryChange,
     handleIncomeTypeChange,
     handleDateRangeSelect,

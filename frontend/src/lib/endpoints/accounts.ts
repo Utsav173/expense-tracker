@@ -49,6 +49,7 @@ export const accountGetStatement = (
   apiFetch(`/accounts/${id}/statement`, 'GET', undefined, { params }, successMessage, errorMessage);
 
 export const accountGetDashboard = (
+  params: { duration?: string; startDate?: string; endDate?: string } = {},
   successMessage?: string,
   errorMessage?: string
 ): Promise<ApiResponse<DashboardData>> =>
@@ -56,7 +57,7 @@ export const accountGetDashboard = (
     '/accounts/dashboard',
     'GET',
     undefined,
-    undefined,
+    { params },
     successMessage,
     errorMessage || 'Failed to get dashboard data'
   );
@@ -102,3 +103,9 @@ export const accountGetSharedWithMe = (
   errorMessage?: string
 ): Promise<ApiResponse<{ data: Account[]; pagination: any }>> =>
   apiFetch('/accounts/get-shares', 'GET', undefined, { params }, successMessage, errorMessage);
+
+export const accountRevokeShare = (
+  body: { accountId: string; userId: string },
+  successMessage?: string,
+  errorMessage?: string
+) => apiFetch('/accounts/revoke-share', 'POST', body, undefined, successMessage, errorMessage);

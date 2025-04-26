@@ -10,10 +10,10 @@ import { Input } from '../ui/input';
 import AddModal from './add-modal';
 import { accountCreate } from '@/lib/endpoints/accounts';
 import { Label } from '../ui/label';
-import CurrencySelect from '../currency-select';
 import { useQuery } from '@tanstack/react-query';
 import { fetchCurrencies, COMMON_CURRENCIES } from '@/lib/endpoints/currency';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
+import CurrencySelect from '../ui/currency-select';
 
 const accountSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters long').max(64),
@@ -89,7 +89,7 @@ const AddAccountModal = () => {
         <div className='space-y-2'>
           <Label>Account Name</Label>
           <Input type='text' placeholder='Account Name' {...register('name')} className='w-full' />
-          {errors.name && <p className='text-sm text-red-500'>{errors.name.message}</p>}
+          {errors.name && <p className='text-destructive text-sm'>{errors.name.message}</p>}
         </div>
         <div className='space-y-2'>
           <Label>Starting Balance</Label>
@@ -99,7 +99,7 @@ const AddAccountModal = () => {
             {...register('balance')}
             className='w-full'
           />
-          {errors.balance && <p className='text-sm text-red-500'> {errors.balance.message}</p>}
+          {errors.balance && <p className='text-destructive text-sm'> {errors.balance.message}</p>}
         </div>
         <div className='space-y-2'>
           <Label htmlFor='currency'>Currency</Label>
@@ -109,7 +109,9 @@ const AddAccountModal = () => {
             onValueChange={(value) => setValue('currency', value)}
             isLoading={isLoadingCurrencies}
           />
-          {errors.currency && <p className='text-sm text-red-500'> {errors.currency.message} </p>}
+          {errors.currency && (
+            <p className='text-destructive text-sm'> {errors.currency.message} </p>
+          )}
         </div>
         <Button type='submit' className='w-full' disabled={isSubmitting}>
           {isSubmitting ? 'Creating...' : 'Create'}

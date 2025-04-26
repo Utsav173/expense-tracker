@@ -1,10 +1,10 @@
 import React, { Suspense } from 'react';
-
 import { Inter } from 'next/font/google';
-import ReactQueryProvider from '@/components/provider';
-import '../../globals.css';
 import Loader from '@/components/ui/loader';
 import { Metadata } from 'next';
+import ReactQueryProvider from '@/components/providers/provider';
+
+import '../../globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -32,12 +32,15 @@ export const metadata: Metadata = {
 const AuthLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <html lang='en'>
-      <body suppressHydrationWarning={true} className={inter.className}>
+      <body
+        suppressHydrationWarning={true}
+        className={inter.className + ' bg-background text-foreground'}
+      >
         <ReactQueryProvider>
           <Suspense fallback={<Loader />}>
-            <div className='flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 px-4 py-16 sm:px-6 lg:px-8'>
-              <div className='w-full max-w-lg space-y-2 rounded-xl border border-gray-100 bg-white p-8 shadow-2xl'>
-                <h1 className='select-none bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-center text-3xl font-bold text-transparent'>
+            <div className='dark:from-background dark:to-background flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 px-4 py-16 sm:px-6 lg:px-8'>
+              <div className='border-border bg-card dark:border-border dark:bg-card w-full max-w-lg space-y-2 rounded-xl border p-8 shadow-2xl'>
+                <h1 className='bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-center text-3xl font-bold text-transparent select-none'>
                   Expense Tracker
                 </h1>
                 {children}

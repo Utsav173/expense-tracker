@@ -189,7 +189,7 @@ class PixelCanvasElement extends HTMLElement {
       this._parent?.addEventListener('focus', () => this.handleAnimation('appear'), {
         capture: true
       });
-      this._parent?.addEventListener('blur', () => this.handleAnimation('disappear'), {
+      this._parent?.addEventListener('blur-sm', () => this.handleAnimation('disappear'), {
         capture: true
       });
     }
@@ -204,7 +204,7 @@ class PixelCanvasElement extends HTMLElement {
 
     if (!this.noFocus) {
       this._parent?.removeEventListener('focus', () => this.handleAnimation('appear'));
-      this._parent?.removeEventListener('blur', () => this.handleAnimation('disappear'));
+      this._parent?.removeEventListener('blur-sm', () => this.handleAnimation('disappear'));
     }
 
     if (this.animation) {

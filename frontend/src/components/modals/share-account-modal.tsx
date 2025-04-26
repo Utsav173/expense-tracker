@@ -20,10 +20,12 @@ import {
 } from '@/components/ui/form';
 import { Input } from '../ui/input';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
+import { DropdownUser } from '@/lib/types';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 const shareAccountSchema = z.object({
   accountId: z.string().uuid(),
-  userIds: z.array(z.string().uuid()).min(1, 'Please select at least one user') // Changed to array
+  userId: z.string().uuid()
 });
 
 type ShareAccountFormSchema = z.infer<typeof shareAccountSchema>;
@@ -42,7 +44,7 @@ const ShareAccountModal = ({
     resolver: zodResolver(shareAccountSchema),
     defaultValues: {
       accountId: accountId,
-      userIds: []
+      userId: ''
     }
   });
 
@@ -57,7 +59,7 @@ const ShareAccountModal = ({
     mutationFn: (data: ShareAccountFormSchema) =>
       accountShare(data, 'Account shared successfully!', 'Failed to share account.'),
     onSuccess: async () => {
-      await invalidate(['accounts']);
+      await invalidate(['accounts', 'accountShares']);
       showSuccess('Account shared successfully!');
       setIsOpen(false);
       form.reset();
@@ -77,77 +79,79 @@ const ShareAccountModal = ({
     if (open) {
       form.reset();
       form.setValue('accountId', accountId);
-      form.setValue('userIds', []);
+      form.setValue('userId', '');
     }
   };
 
   return (
     <AddModal
       title='Share Account'
-      description='Share an account with other users.'
+      description='Share this account with another user. They will be able to view and manage transactions.'
       triggerButton={triggerButton ?? <Button>Share Account</Button>}
       isOpen={isOpen}
       onOpenChange={handleOpenChange}
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleShareAccount)} className='space-y-4'>
-          <div>
-            <label htmlFor='accountId' className='block text-sm font-medium text-gray-700'>
-              Account Number
-            </label>
-            <Input
-              id='accountId'
-              type='text'
-              placeholder='Enter account Number'
-              {...form.register('accountId')}
-              className='w-full'
-              disabled
-            />
-            {form.formState.errors.accountId && (
-              <p className='mt-1 text-sm text-red-500'>{form.formState.errors.accountId.message}</p>
+          <FormField
+            control={form.control}
+            name='accountId'
+            render={({ field }) => (
+              <FormItem hidden>
+                <FormLabel>Account</FormLabel>
+                <FormControl>
+                  <Input {...field} disabled />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
-          </div>
-          <div>
-            <FormField
-              control={form.control}
-              name='userIds'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Users</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value?.join(',')} // Join for display, split on submit
-                  >
-                    <FormControl>
-                      <SelectTrigger className='w-full'>
-                        <SelectValue
-                          placeholder={isLoading ? 'Loading users...' : 'Select Users'}
-                        />
-                      </SelectTrigger>
-                    </FormControl>
+          />
+
+          <FormField
+            control={form.control}
+            name='userId'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Select User</FormLabel>
+                <FormControl>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Select a user to share with' />
+                    </SelectTrigger>
                     <SelectContent>
-                      {usersData && usersData.length > 0 ? (
-                        usersData.map((user) => (
-                          <SelectItem key={user.id} value={user.id}>
-                            {user.name}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value='no-user' disabled>
-                          No user found
+                      {usersData?.map((user: DropdownUser) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          <div className='flex items-center gap-2'>
+                            <Avatar>
+                              <AvatarImage src={user.profilePic || undefined} />
+                              <AvatarFallback>
+                                {user.name
+                                  .split(' ')
+                                  .map((n) => n[0])
+                                  .join('')}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span>{user.name}</span>
+                            <span className='text-muted-foreground'>({user.email})</span>
+                          </div>
                         </SelectItem>
-                      )}
+                      ))}
                     </SelectContent>
                   </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-          <Button type='submit' className='w-full' disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? 'Sharing...' : 'Share Account'}
-          </Button>
+          <div className='flex justify-end gap-2'>
+            <Button type='button' variant='outline' onClick={() => setIsOpen(false)}>
+              Cancel
+            </Button>
+            <Button type='submit' disabled={shareAccountMutation.isPending}>
+              {shareAccountMutation.isPending ? 'Sharing...' : 'Share Account'}
+            </Button>
+          </div>
         </form>
       </Form>
     </AddModal>

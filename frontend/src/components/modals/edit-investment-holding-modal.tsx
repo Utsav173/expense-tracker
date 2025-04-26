@@ -24,7 +24,6 @@ import {
   FormLabel,
   FormMessage
 } from '@/components/ui/form';
-import DateTimePicker from '../date-time-picker';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { Investment } from '@/lib/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -50,6 +49,7 @@ import {
   dividendUpdateSchema
 } from '@/lib/utils/schema.validations';
 import { z } from 'zod';
+import DateTimePicker from '../date/date-time-picker';
 
 type InvestmentHoldingUpdateFormSchema = z.infer<typeof investmentHoldingUpdateSchema>;
 type DividendUpdateFormSchema = z.infer<typeof dividendUpdateSchema>;
@@ -219,7 +219,7 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
         <DialogHeader>
           <div className='flex items-center justify-between'>
             <DialogTitle className='flex items-center gap-2 text-xl'>
-              <TrendingUp className='h-5 w-5 text-primary' />
+              <TrendingUp className='text-primary h-5 w-5' />
               Edit Investment
             </DialogTitle>
             <Badge variant='outline' className='ml-2'>
@@ -255,7 +255,7 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className='flex items-center gap-1.5'>
-                            <Layers className='h-4 w-4 text-muted-foreground' />
+                            <Layers className='text-muted-foreground h-4 w-4' />
                             Number of Shares
                           </FormLabel>
                           <FormControl>
@@ -266,12 +266,11 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
                                 decimalSeparator='.'
                                 allowNegative={false}
                                 placeholder='e.g., 10.5'
-                                className='pl-10'
                                 onValueChange={(values) => field.onChange(values.value)}
                                 value={field.value}
                               />
                               {sharesChange && (
-                                <div className='absolute right-3 top-1/2 -translate-y-1/2 transform'>
+                                <div className='absolute top-1/2 right-3 -translate-y-1/2 transform'>
                                   <Badge
                                     variant={sharesChange.isPositive ? 'default' : 'destructive'}
                                     className='px-1.5 text-xs'
@@ -313,11 +312,11 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
                                 onValueChange={(values) => field.onChange(values.value)}
                                 value={field.value}
                               />
-                              <span className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 transform text-sm text-muted-foreground'>
+                              <span className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 transform text-sm'>
                                 {accountCurrency}
                               </span>
                               {priceChange && (
-                                <div className='absolute right-3 top-1/2 -translate-y-1/2 transform'>
+                                <div className='absolute top-1/2 right-3 -translate-y-1/2 transform'>
                                   <Badge
                                     variant={priceChange.isPositive ? 'default' : 'destructive'}
                                     className='px-1.5 text-xs'
@@ -345,7 +344,7 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
                     render={({ field }) => (
                       <FormItem className='flex flex-col'>
                         <FormLabel className='flex items-center gap-1.5'>
-                          <Calendar className='h-4 w-4 text-muted-foreground' />
+                          <Calendar className='text-muted-foreground h-4 w-4' />
                           Purchase Date
                         </FormLabel>
                         <FormControl>
@@ -358,9 +357,9 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
                 </div>
 
                 {totalValue !== null && (
-                  <Card className='border border-primary/20 bg-muted/30 p-4'>
+                  <Card className='border-primary/20 bg-muted/30 border p-4'>
                     <h3 className='mb-2 flex items-center gap-2 text-sm font-medium'>
-                      <AlertCircle className='h-4 w-4 text-primary' />
+                      <AlertCircle className='text-primary h-4 w-4' />
                       Updated Investment Summary
                     </h3>
                     <div className='grid grid-cols-2 gap-2 text-sm'>
@@ -436,7 +435,7 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className='flex items-center gap-1.5'>
-                          <PiggyBank className='h-4 w-4 text-muted-foreground' />
+                          <PiggyBank className='text-muted-foreground h-4 w-4' />
                           Total Dividend Received
                         </FormLabel>
                         <FormControl>
@@ -452,11 +451,11 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
                               onValueChange={(values) => field.onChange(values.value)}
                               value={field.value}
                             />
-                            <span className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 transform text-sm text-muted-foreground'>
+                            <span className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 transform text-sm'>
                               {accountCurrency}
                             </span>
                             {dividendChange && (
-                              <div className='absolute right-3 top-1/2 -translate-y-1/2 transform'>
+                              <div className='absolute top-1/2 right-3 -translate-y-1/2 transform'>
                                 <Badge
                                   variant={dividendChange.isPositive ? 'default' : 'destructive'}
                                   className='px-1.5 text-xs'
@@ -479,9 +478,9 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
                 </div>
 
                 {dividend && !isNaN(parseFloat(dividend)) && totalValue !== null && (
-                  <Card className='border border-primary/20 bg-muted/30 p-4'>
+                  <Card className='border-primary/20 bg-muted/30 border p-4'>
                     <h3 className='mb-2 flex items-center gap-2 text-sm font-medium'>
-                      <PiggyBank className='h-4 w-4 text-primary' />
+                      <PiggyBank className='text-primary h-4 w-4' />
                       Dividend Summary
                     </h3>
                     <div className='grid grid-cols-2 gap-2 text-sm'>

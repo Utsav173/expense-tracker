@@ -2,13 +2,8 @@
 
 import { useToast } from '@/lib/hooks/useToast';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { Separator } from './ui/separator';
-import { Button } from './ui/button';
 import { useEffect, useState } from 'react';
 import { authUpdateUser } from '@/lib/endpoints/auth';
-import { Input } from './ui/input';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
@@ -19,8 +14,13 @@ import CurrencySelect from './currency-select';
 import { Camera, Save, X, User as UserIcon } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
+import { Card, CardContent, CardHeader, CardTitle } from './card';
+import { Avatar, AvatarFallback, AvatarImage } from './avatar';
+import { Separator } from './separator';
+import { Input } from './input';
+import { Button } from './button';
 
-const PixelCanvas = dynamic(() => import('./ui/pixel-canvas').then((mod) => mod.PixelCanvas), {
+const PixelCanvas = dynamic(() => import('./pixel-canvas').then((mod) => mod.PixelCanvas), {
   ssr: false
 });
 
@@ -166,7 +166,7 @@ const UserProfile = () => {
               ) : user.profilePic ? (
                 <AvatarImage src={user.profilePic} alt='user-image' className='object-cover' />
               ) : (
-                <AvatarFallback className='bg-blue-500 text-xl uppercase text-white'>
+                <AvatarFallback className='bg-blue-500 text-xl text-white uppercase'>
                   {user.name?.charAt(0) || 'U'}
                 </AvatarFallback>
               )}
@@ -175,7 +175,7 @@ const UserProfile = () => {
             {isEdit && (
               <label
                 htmlFor='profile-upload'
-                className='absolute -bottom-2 -right-2 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-blue-500 text-white shadow-md transition-all hover:bg-blue-600'
+                className='absolute -right-2 -bottom-2 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-blue-500 text-white shadow-md transition-all hover:bg-blue-600'
               >
                 <Camera size={16} />
                 <input
@@ -236,7 +236,7 @@ const UserProfile = () => {
                 size='sm'
                 type='submit'
                 disabled={isSubmitting}
-                className='flex items-center gap-1 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-300'
+                className='flex items-center gap-1 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-hidden disabled:bg-blue-300'
               >
                 <Save size={16} />
                 {isSubmitting ? 'Saving...' : 'Save Changes'}
@@ -246,7 +246,7 @@ const UserProfile = () => {
                 type='button'
                 size='sm'
                 onClick={handleCancel}
-                className='flex items-center gap-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+                className='flex items-center gap-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-hidden'
               >
                 <X size={16} />
                 Cancel
@@ -259,7 +259,7 @@ const UserProfile = () => {
               variant='outline'
               onClick={() => setIsEdit(true)}
               size='sm'
-              className='flex items-center gap-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+              className='flex items-center gap-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-hidden'
             >
               <UserIcon size={16} />
               Edit Profile

@@ -118,6 +118,18 @@ transactionRouter.get('/', authMiddleware, async (c) => {
     endDate,
   });
 
+  // Get date range for all transactions
+  const dateRange = await db
+    .select({
+      minDate: sql<string>`MIN(${Transaction.createdAt})`,
+      maxDate: sql<string>`MAX(${Transaction.createdAt})`,
+    })
+    .from(Transaction)
+    .where(query)
+    .catch((err) => {
+      throw new HTTPException(500, { message: err.message });
+    });
+
   // get total count
   const totalCount = await db
     .select({ count: count(Transaction.id) })
@@ -200,6 +212,10 @@ transactionRouter.get('/', authMiddleware, async (c) => {
       categoryId,
       sortBy: finalSortBy,
       sortOrder: finalSortOrder,
+    },
+    dateRange: {
+      minDate: dateRange[0].minDate,
+      maxDate: dateRange[0].maxDate,
     },
   });
 });
@@ -333,6 +349,7 @@ transactionRouter.get('/by/:field', authMiddleware, async (c) => {
 transactionRouter.get('/by/category/chart', authMiddleware, async (c) => {
   // get query params
   const duration = c.req.query('duration');
+  const accountId = c.req.query('accountId');
   const { startDate, endDate } = await getIntervalValue(duration);
   const userId = await c.get('userId' as any);
 
@@ -376,6 +393,7 @@ transactionRouter.get('/by/category/chart', authMiddleware, async (c) => {
           t."createdAt" >= ${startDate}
           AND t."createdAt" <= ${endDate}
           AND t.owner = ${userId}
+          ${accountId ? sql`AND t.account = ${accountId}` : sql``}
         GROUP BY
           c.name
       ) AS subquery;

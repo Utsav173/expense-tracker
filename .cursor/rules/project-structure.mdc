@@ -1,0 +1,25 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Project Structure Guide
+
+This is an expense tracker application with a Next.js frontend and Node.js backend.
+
+## Frontend Structure
+The frontend is built with Next.js and is located in the [frontend](mdc:frontend) directory:
+- [frontend/src](mdc:frontend/src): Contains the main application code
+- [frontend/package.json](mdc:frontend/package.json): Frontend dependencies and scripts
+- [frontend/tailwind.config.ts](mdc:frontend/tailwind.config.ts): Tailwind CSS configuration
+- [frontend/next.config.ts](mdc:frontend/next.config.ts): Next.js configuration
+
+## Backend Structure
+The backend is a Node.js application located in the [backend](mdc:backend) directory:
+- [backend/src](mdc:backend/src): Contains the server code and API endpoints
+- [backend/package.json](mdc:backend/package.json): Backend dependencies and scripts
+- [backend/drizzle.config.ts](mdc:backend/drizzle.config.ts): Database configuration using Drizzle ORM
+- [backend/Dockerfile](mdc:backend/Dockerfile): Docker configuration for containerization
+
+## API Documentation
+The backend API documentation is available in [backend/expense-backend-api.collection.json](mdc:backend/expense-backend-api.collection.json), which is a Postman collection containing all API endpoints and examples. but make sure it not 100% correct so always look backend code itself.

@@ -4,7 +4,7 @@ import { HTTPException } from 'hono/http-exception';
 import { zValidator } from '@hono/zod-validator';
 import { loginSchema, userSchema, updateUserSchema } from '../utils/schema.validations';
 import { db } from '../database';
-import { Account, Analytics, User } from '../database/schema';
+import { Account, Analytics, Category, User } from '../database/schema';
 import { eq } from 'drizzle-orm';
 import { WelcomeEmailTemp, compressImage, forgotPasswordTemp } from '../utils';
 import authMiddleware from '../middleware';
@@ -159,6 +159,18 @@ userRouter.post('/signup', zValidator('form', userSchema), async (c) => {
       account: defaultAccount[0].id,
       user: newUser[0].id,
     })
+    .catch((err) => {
+      throw new HTTPException(500, { message: err.message });
+    });
+
+  // create default category
+  await db
+    .insert(Category)
+    .values({
+      name: 'Default',
+      owner: newUser[0].id,
+    })
+    .returning()
     .catch((err) => {
       throw new HTTPException(500, { message: err.message });
     });

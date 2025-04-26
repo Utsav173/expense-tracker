@@ -32,7 +32,7 @@ export const createGoalColumns = ({
     accessorKey: 'targetAmount',
     header: 'Target Amount',
     cell: ({ row }) => (
-      <span className='font-semibold text-blue-600'>
+      <span className='text-primary font-semibold'>
         {formatCurrency(row.original.targetAmount, user?.preferredCurrency || 'INR')}
       </span>
     )
@@ -49,11 +49,11 @@ export const createGoalColumns = ({
 
       return (
         <div className='flex min-w-[150px] flex-col gap-1'>
-          <span className='font-semibold text-green-600'>
+          <span className='text-success font-semibold'>
             {formatCurrency(saved, user?.preferredCurrency || 'INR')}
           </span>
           <Progress value={progress} className='h-2' />
-          <span className='text-xs text-muted-foreground'>
+          <span className='text-muted-foreground text-xs'>
             {formatCurrency(remaining, user?.preferredCurrency || 'INR')} remaining
           </span>
         </div>
@@ -106,7 +106,7 @@ export const createGoalColumns = ({
             currency={user?.preferredCurrency || 'INR'}
             actionType='add'
             triggerButton={
-              <Button size='icon' variant='ghost' className='text-green-600 hover:text-green-700'>
+              <Button size='icon' variant='ghost' className='text-success hover:text-success/80'>
                 <Target size={18} />
                 <span className='sr-only'>Add Amount</span>
               </Button>
@@ -120,7 +120,7 @@ export const createGoalColumns = ({
             currency={user?.preferredCurrency || 'INR'}
             actionType='withdraw'
             triggerButton={
-              <Button size='icon' variant='ghost' className='text-orange-600 hover:text-orange-700'>
+              <Button size='icon' variant='ghost' className='text-warning hover:text-warning/80'>
                 {/* Placeholder for withdraw icon, maybe CircleMinus? */}
                 <svg
                   xmlns='http://www.w3.org/2000/svg'

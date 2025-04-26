@@ -136,7 +136,7 @@ const CommonTable = <T extends object>({
   }
 
   if (!data || data.length === 0) {
-    return <div className='py-8 text-center text-gray-500'>No results.</div>;
+    return <div className='text-muted-foreground py-8 text-center'>No results.</div>;
   }
 
   // Mobile View Logic
@@ -176,11 +176,15 @@ const CommonTable = <T extends object>({
         </Select>
 
         {/* Mobile Accordion View */}
-        <Accordion type='multiple' className='w-full'>
+        <Accordion type='multiple' className='w-full space-y-2'>
           {table.getRowModel().rows.map((row) => (
-            <AccordionItem key={row.id} value={row.id}>
-              <AccordionTrigger className='hover:no-underline'>
-                <div className='flex w-full items-center justify-between text-left'>
+            <AccordionItem
+              key={row.id}
+              value={row.id}
+              className='overflow-hidden rounded-lg border px-4'
+            >
+              <AccordionTrigger className='[&[data-state=open]]:bg-muted hover:no-underline'>
+                <div className='flex w-full items-center justify-between'>
                   {triggerColumns.map((column) => (
                     <span key={column.id} className='max-w-[50%] truncate px-1 text-sm'>
                       {column.columnDef.cell
@@ -197,7 +201,7 @@ const CommonTable = <T extends object>({
                 </div>
               </AccordionTrigger>
               <AccordionContent>
-                <div className='grid w-full grid-cols-[35%_65%] gap-y-2'>
+                <div className='grid w-full grid-cols-[35%_65%] gap-4'>
                   {table.getAllLeafColumns().map((column) => {
                     const header = column.columnDef.header;
                     const cell = row.getVisibleCells().find((c) => c.column.id === column.id);
@@ -223,7 +227,7 @@ const CommonTable = <T extends object>({
 
                     return (
                       <React.Fragment key={`${row.id}-${column.id}`}>
-                        <span className='truncate pr-2 text-xs font-medium text-muted-foreground'>
+                        <span className='text-muted-foreground truncate pr-2 text-xs font-medium'>
                           {headerString}:
                         </span>
                         <span className='truncate text-sm'>{displayValue}</span>
@@ -255,7 +259,7 @@ const CommonTable = <T extends object>({
   // Desktop View Logic
   return (
     <>
-      <div className='w-full overflow-x-auto rounded-md border'>
+      <div className='w-full overflow-x-auto rounded-md border select-none'>
         <Table className={tableClassName}>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (

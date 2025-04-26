@@ -23,10 +23,10 @@ import {
 } from 'lucide-react';
 import { AccountDropdown, Category } from '@/lib/types';
 import { Label } from '../ui/label';
-import DateTimePicker from '../date-time-picker';
 import AddCategoryModal from './add-category-modal';
 import { Card } from '../ui/card';
 import { NumericFormat } from 'react-number-format';
+import DateTimePicker from '../date/date-time-picker';
 
 // Define the schema outside of the component
 const transactionSchema = z.object({
@@ -183,7 +183,7 @@ const AddTransactionModal = ({
       triggerButton={
         triggerButton ?? (
           <Button
-            className='bg-gradient-to-r from-green-600 to-green-600 text-white shadow-md hover:from-green-700 hover:to-green-700 max-sm:w-full'
+            className='from-success to-success hover:from-success/80 hover:to-success/80 bg-linear-to-r text-white shadow-md max-sm:w-full'
             disabled={isSubmitting}
           >
             Add Transaction
@@ -197,7 +197,7 @@ const AddTransactionModal = ({
         {/* Transaction Type Selection */}
         <div className='mb-6 grid grid-cols-2 gap-4'>
           <Card
-            className={`cursor-pointer border-2 p-4 transition-all ${!isIncome ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:border-red-500 hover:bg-red-50'} ${isSubmitting ? 'pointer-events-none opacity-50' : ''}`}
+            className={`cursor-pointer border-2 p-4 transition-all ${!isIncome ? 'border-destructive bg-destructive/10' : 'border-border hover:border-destructive hover:bg-destructive/10'} ${isSubmitting ? 'pointer-events-none opacity-50' : ''}`}
             onClick={() => {
               if (!isSubmitting) {
                 setIsIncome(false);
@@ -207,16 +207,18 @@ const AddTransactionModal = ({
           >
             <div className='flex flex-col items-center justify-center space-y-2'>
               <ArrowDownCircle
-                className={`h-8 w-8 ${!isIncome ? 'text-red-500' : 'text-gray-400'}`}
+                className={`h-8 w-8 ${!isIncome ? 'text-destructive' : 'text-muted-foreground'}`}
               />
-              <span className={`font-medium ${!isIncome ? 'text-red-500' : 'text-gray-500'}`}>
+              <span
+                className={`font-medium ${!isIncome ? 'text-destructive' : 'text-muted-foreground'}`}
+              >
                 Expense
               </span>
             </div>
           </Card>
 
           <Card
-            className={`cursor-pointer border-2 p-4 transition-all ${isIncome ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-green-500 hover:bg-green-50'} ${isSubmitting ? 'pointer-events-none opacity-50' : ''}`}
+            className={`cursor-pointer border-2 p-4 transition-all ${isIncome ? 'border-success bg-success/10' : 'border-border hover:border-success hover:bg-success/10'} ${isSubmitting ? 'pointer-events-none opacity-50' : ''}`}
             onClick={() => {
               if (!isSubmitting) {
                 setIsIncome(true);
@@ -226,9 +228,11 @@ const AddTransactionModal = ({
           >
             <div className='flex flex-col items-center justify-center space-y-2'>
               <ArrowUpCircle
-                className={`h-8 w-8 ${isIncome ? 'text-green-500' : 'text-gray-400'}`}
+                className={`h-8 w-8 ${isIncome ? 'text-success' : 'text-muted-foreground'}`}
               />
-              <span className={`font-medium ${isIncome ? 'text-green-500' : 'text-gray-500'}`}>
+              <span
+                className={`font-medium ${isIncome ? 'text-success' : 'text-muted-foreground'}`}
+              >
                 Income
               </span>
             </div>
@@ -241,7 +245,7 @@ const AddTransactionModal = ({
         ) : (
           <div className='space-y-2'>
             <div className='flex items-center gap-2'>
-              <CreditCard className='h-4 w-4 text-gray-500' />
+              <CreditCard className='text-muted-foreground h-4 w-4' />
               <Label htmlFor='account' className='font-medium'>
                 Account
               </Label>
@@ -276,7 +280,9 @@ const AddTransactionModal = ({
                 )}
               </SelectContent>
             </Select>
-            {errors.accountId && <p className='text-sm text-red-500'>{errors.accountId.message}</p>}
+            {errors.accountId && (
+              <p className='text-destructive text-sm'>{errors.accountId.message}</p>
+            )}
           </div>
         )}
 
@@ -293,7 +299,7 @@ const AddTransactionModal = ({
             className='w-full'
             disabled={isSubmitting}
           />
-          {errors.text && <p className='text-sm text-red-500'>{errors.text.message}</p>}
+          {errors.text && <p className='text-destructive text-sm'>{errors.text.message}</p>}
         </div>
 
         {/* Amount and Currency */}
@@ -321,7 +327,7 @@ const AddTransactionModal = ({
               disabled={isSubmitting}
             />
           </div>
-          {errors.amount && <p className='text-sm text-red-500'>{errors.amount.message}</p>}
+          {errors.amount && <p className='text-destructive text-sm'>{errors.amount.message}</p>}
         </div>
 
         {/* Hidden currency field */}
@@ -330,7 +336,7 @@ const AddTransactionModal = ({
         {/* Category */}
         <div className='space-y-2'>
           <div className='flex items-center gap-2'>
-            <Tag className='h-4 w-4 text-gray-500' />
+            <Tag className='text-muted-foreground h-4 w-4' />
             <Label htmlFor='category' className='font-medium'>
               Category
             </Label>
@@ -383,7 +389,7 @@ const AddTransactionModal = ({
         {/* Date and Time */}
         <div className='space-y-2'>
           <div className='flex items-center gap-2'>
-            <Calendar className='h-4 w-4 text-gray-500' />
+            <Calendar className='text-muted-foreground h-4 w-4' />
             <Label htmlFor='createdAt' className='font-medium'>
               Date and Time
             </Label>
@@ -393,13 +399,15 @@ const AddTransactionModal = ({
             onChange={(date) => setValue('createdAt', date)}
             disabled={isSubmitting}
           />
-          {errors.createdAt && <p className='text-sm text-red-500'>{errors.createdAt.message}</p>}
+          {errors.createdAt && (
+            <p className='text-destructive text-sm'>{errors.createdAt.message}</p>
+          )}
         </div>
 
         {/* Submit Button */}
         <Button
           type='submit'
-          className='w-full disabled:cursor-not-allowed disabled:bg-gray-400 disabled:text-black'
+          className='disabled:bg-muted disabled:text-muted-foreground w-full disabled:cursor-not-allowed'
           disabled={isSubmitting}
         >
           {isSubmitting ? 'Adding...' : `Add ${isIncome ? 'Income' : 'Expense'}`}

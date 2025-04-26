@@ -17,9 +17,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '../ui/button';
 import AddModal from './add-modal';
-import DateTimePicker from '../date-time-picker';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { NumericFormat } from 'react-number-format';
+import DateTimePicker from '../date/date-time-picker';
 
 const goalSchema = z.object({
   name: z.string().min(3, 'Goal name must be at least 3 characters'),
@@ -55,6 +55,10 @@ const AddGoalModal = ({
     mode: 'onSubmit'
   });
 
+  const {
+    formState: { errors }
+  } = form;
+
   const createGoalMutation = useMutation({
     mutationFn: (data: GoalFormSchema) => {
       const payload = {
@@ -84,7 +88,13 @@ const AddGoalModal = ({
     <AddModal
       title='Add Goal'
       description='Create a new saving goal.'
-      triggerButton={hideTriggerButton ? null : <Button>Add Goal</Button>}
+      triggerButton={
+        hideTriggerButton ? null : (
+          <Button className='from-primary to-primary hover:from-primary/80 hover:to-primary/80 bg-linear-to-r text-white shadow-md max-sm:w-full'>
+            Add Goal
+          </Button>
+        )
+      }
       isOpen={isOpen}
       onOpenChange={onOpenChange}
     >
@@ -99,7 +109,7 @@ const AddGoalModal = ({
                 <FormControl>
                   <Input placeholder='Goal name' {...field} />
                 </FormControl>
-                <FormMessage />
+                {errors.name && <p className='text-destructive text-sm'>{errors.name.message}</p>}
               </FormItem>
             )}
           />
@@ -126,7 +136,9 @@ const AddGoalModal = ({
                     value={field.value}
                   />
                 </FormControl>
-                <FormMessage />
+                {errors.targetAmount && (
+                  <p className='text-destructive text-sm'>{errors.targetAmount.message}</p>
+                )}
               </FormItem>
             )}
           />
@@ -140,12 +152,18 @@ const AddGoalModal = ({
                 <FormControl>
                   <DateTimePicker value={field.value} onChange={field.onChange} />
                 </FormControl>
-                <FormMessage />
+                {errors.targetDate && (
+                  <p className='text-destructive text-sm'>{errors.targetDate.message}</p>
+                )}
               </FormItem>
             )}
           />
 
-          <Button type='submit' disabled={createGoalMutation.isPending} className='w-full'>
+          <Button
+            type='submit'
+            disabled={createGoalMutation.isPending}
+            className='disabled:bg-muted disabled:text-muted-foreground w-full disabled:cursor-not-allowed'
+          >
             {createGoalMutation.isPending ? 'Adding...' : 'Add Goal'}
           </Button>
         </form>

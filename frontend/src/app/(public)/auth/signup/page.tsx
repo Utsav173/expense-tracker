@@ -63,14 +63,14 @@ const SignupPage = () => {
   return (
     <Card className='w-full border-0 shadow-none'>
       <CardContent className='space-y-6 p-0 pt-4'>
-        <div className='select-none space-y-2 text-center'>
-          <h2 className='text-2xl font-semibold text-gray-800'>Create Account</h2>
-          <p className='text-sm text-gray-500'>Start your expense tracking journey today</p>
+        <div className='space-y-2 text-center select-none'>
+          <h2 className='text-foreground text-2xl font-semibold'>Create Account</h2>
+          <p className='text-muted-foreground text-sm'>Start your expense tracking journey today</p>
         </div>
 
         <form className='space-y-4' onSubmit={handleSubmit(handleSignUp)}>
           <div className='space-y-2'>
-            <label className='text-sm font-medium text-gray-700' htmlFor='name'>
+            <label className='text-foreground text-sm font-medium' htmlFor='name'>
               Full Name
             </label>
             <Input
@@ -79,15 +79,15 @@ const SignupPage = () => {
               placeholder='John Doe'
               {...register('name')}
               disabled={loading}
-              className='w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 transition-all duration-200 focus:border-transparent focus:bg-white focus:ring-2 focus:ring-blue-500'
+              className='border-input bg-background focus:bg-card focus:ring-primary w-full rounded-lg border px-4 py-2 transition-all duration-200 focus:border-transparent focus:ring-2'
             />
             {formState.errors.name && (
-              <p className='py-1 text-xs text-red-500'> {formState.errors.name.message}</p>
+              <p className='text-destructive py-1 text-xs'> {formState.errors.name.message}</p>
             )}
           </div>
 
           <div className='space-y-2'>
-            <label className='text-sm font-medium text-gray-700' htmlFor='email'>
+            <label className='text-foreground text-sm font-medium' htmlFor='email'>
               Email
             </label>
             <Input
@@ -96,15 +96,15 @@ const SignupPage = () => {
               placeholder='you@example.com'
               {...register('email')}
               disabled={loading}
-              className='w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 transition-all duration-200 focus:border-transparent focus:bg-white focus:ring-2 focus:ring-blue-500'
+              className='border-input bg-background focus:bg-card focus:ring-primary w-full rounded-lg border px-4 py-2 transition-all duration-200 focus:border-transparent focus:ring-2'
             />
             {formState.errors.email && (
-              <p className='py-1 text-xs text-red-500'> {formState.errors.email.message}</p>
+              <p className='text-destructive py-1 text-xs'> {formState.errors.email.message}</p>
             )}
           </div>
 
           <div className='space-y-2'>
-            <label className='text-sm font-medium text-gray-700' htmlFor='password'>
+            <label className='text-foreground text-sm font-medium' htmlFor='password'>
               Password
             </label>
             <PasswordInput
@@ -112,19 +112,19 @@ const SignupPage = () => {
               placeholder='••••••••'
               {...register('password')}
               disabled={loading}
-              className='w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 transition-all duration-200 focus:border-transparent focus:bg-white focus:ring-2 focus:ring-blue-500'
+              className='border-input bg-background focus:bg-card focus:ring-primary w-full rounded-lg border px-4 py-2 transition-all duration-200 focus:border-transparent focus:ring-2'
             />
             {formState.errors.password && (
-              <p className='py-1 text-xs text-red-500'> {formState.errors.password.message}</p>
+              <p className='text-destructive py-1 text-xs'> {formState.errors.password.message}</p>
             )}
           </div>
 
           <div className='space-y-2'>
-            <label className='text-sm font-medium text-gray-700'>Profile Picture</label>
-            <div className='mt-1 flex justify-center rounded-lg border-2 border-dashed border-gray-200 px-6 pb-6 pt-5 transition-colors duration-200 hover:border-blue-400'>
-              <div className='space-y-1 text-center'>
+            <label className='text-foreground text-sm font-medium'>Profile Picture</label>
+            <div className='border-input bg-background hover:border-primary mt-1 flex justify-center rounded-lg border-2 border-dashed px-2 pt-5 pb-6 transition-colors duration-200'>
+              <div className='w-full max-w-xs space-y-1 text-center'>
                 <svg
-                  className='mx-auto h-12 w-12 text-gray-400'
+                  className='text-muted-foreground mx-auto h-12 w-12'
                   stroke='currentColor'
                   fill='none'
                   viewBox='0 0 48 48'
@@ -137,8 +137,8 @@ const SignupPage = () => {
                     strokeLinejoin='round'
                   />
                 </svg>
-                <div className='flex text-sm text-gray-600'>
-                  <label className='relative cursor-pointer rounded-md bg-white font-medium text-blue-600 focus-within:outline-none hover:text-blue-500'>
+                <div className='text-muted-foreground flex flex-col items-center justify-center gap-1 text-sm sm:flex-row'>
+                  <label className='text-primary hover:text-primary/80 relative cursor-pointer rounded-md font-medium focus-within:outline-hidden'>
                     <span>Upload a file</span>
                     <input
                       id='file-upload'
@@ -150,26 +150,29 @@ const SignupPage = () => {
                       accept='image/png, image/jpeg, image/gif'
                     />
                   </label>
-                  <p className='pl-1'>or drag and drop</p>
+                  <span className='hidden px-1 sm:inline'>or</span>
+                  <span className='block sm:inline'>drag and drop</span>
                 </div>
-                <p className='text-xs text-gray-500'>PNG, JPG, GIF up to 2MB</p>{' '}
+                <p className='text-muted-foreground text-xs'>PNG, JPG, GIF up to 2MB</p>{' '}
               </div>
             </div>
             {profilePic && profilePic instanceof File && (
-              <p className='mt-1 text-xs text-gray-500'>Selected: {profilePic.name}</p>
+              <p className='text-muted-foreground mt-1 text-xs break-all'>
+                Selected: {profilePic.name}
+              </p>
             )}
           </div>
 
-          <Button type='submit' disabled={loading} variant={'authButton'}>
+          <Button type='submit' disabled={loading} variant={'authButton'} className='w-full'>
             {loading ? 'Creating Account...' : 'Create Account'}
           </Button>
         </form>
       </CardContent>
 
-      <CardFooter className='flex items-center justify-end pt-4'>
+      <CardFooter className='flex flex-col items-center justify-between gap-2 pt-4 sm:flex-row'>
         <Link
           href='/auth/login'
-          className='text-sm font-medium text-blue-600 transition-colors duration-200 hover:text-blue-500'
+          className='text-primary hover:text-primary/80 text-sm font-medium transition-colors duration-200'
         >
           Already have an account?
         </Link>

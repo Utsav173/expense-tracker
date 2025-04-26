@@ -38,10 +38,10 @@ export function NavMain({
             <SidebarMenuItem
               key={item.title}
               className={cn(
-                isActive && 'rounded-md bg-green-100 text-green-900 hover:bg-green-200'
+                isActive && 'bg-accent text-accent-foreground hover:bg-accent/80 rounded-md'
               )}
             >
-              <SidebarMenuButton className={cn(isActive && 'hover:bg-green-200')} asChild>
+              <SidebarMenuButton className={cn(isActive && 'hover:bg-accent/80')} asChild>
                 <Link href={item.url}>
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>

@@ -1,0 +1,28 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Coding Conventions and Best Practices
+
+## TypeScript
+Both frontend and backend use TypeScript. Key configuration files:
+- [frontend/tsconfig.json](mdc:frontend/tsconfig.json): Frontend TypeScript configuration
+- [backend/tsconfig.json](mdc:backend/tsconfig.json): Backend TypeScript configuration
+
+## Code Formatting
+The project uses Prettier for code formatting:
+- [frontend/.prettierrc](mdc:frontend/.prettierrc): Frontend Prettier configuration
+- [backend/.prettierrc](mdc:backend/.prettierrc): Backend Prettier configuration
+
+## Frontend Guidelines
+- Use Next.js App Router for routing
+- Implement components in the `src/components` directory
+- Follow Tailwind CSS for styling
+- Keep pages and API routes in the `src/app` directory
+
+## Backend Guidelines
+- Use Drizzle ORM for database operations
+- Keep API routes organized by feature
+- Follow RESTful API design principles
+- Use Docker for containerization
