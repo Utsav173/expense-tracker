@@ -1,3 +1,6 @@
+'use client';
+
+import React, { useEffect } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,43 +22,107 @@ import { accountGetDropdown, usersGetDropdown } from '@/lib/endpoints/accounts';
 import { apiCreateDebt } from '@/lib/endpoints/debt';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { useAuth } from '@/lib/hooks/useAuth';
-import DateRangePicker from '../date/date-range-picker';
+import DateRangePickerV2 from '../date/date-range-picker-v2';
+import { NumericInput } from '../ui/numeric-input';
+import { Loader2, PlusCircle } from 'lucide-react';
+import { format } from 'date-fns';
+import { DateRange } from 'react-day-picker';
 
-const debtFormSchema = z.object({
-  description: z.string().min(1, 'Description is required'),
-  amount: z.preprocess(
-    (val) => (val === '' ? undefined : Number(val)),
-    z.number({ invalid_type_error: 'Amount must be a number' }).positive('Amount must be positive')
-  ),
-  premiumAmount: z.preprocess(
-    (val) => (val === '' ? undefined : Number(val)),
-    z
-      .number({ invalid_type_error: 'Premium amount must be a number' })
-      .positive('Premium amount must be positive')
+const debtFormSchema = z
+  .object({
+    description: z.string().min(3, 'Description must be at least 3 characters.'),
+    amount: z
+      .string()
+      .min(1, { message: 'Amount is required.' })
+      .refine((value) => !isNaN(parseFloat(value)) && parseFloat(value) > 0, {
+        message: 'Amount must be a positive number.'
+      }),
+    premiumAmount: z
+      .string()
       .optional()
-  ),
-  account: z.string().min(1, 'Account selection is required'),
-  counterparty: z.string().min(1, 'Counterparty selection is required'),
-  type: z.enum(['given', 'taken']),
-  interestType: z.enum(['simple', 'compound']),
-  percentage: z.preprocess(
-    (val) => (val === '' ? undefined : Number(val)),
-    z
-      .number({ invalid_type_error: 'Interest percentage must be a number' })
-      .min(0, 'Percentage cannot be negative')
+      .refine(
+        (value) =>
+          value === undefined ||
+          value === '' ||
+          (!isNaN(parseFloat(value)) && parseFloat(value) >= 0),
+        {
+          message: 'Premium amount must be a non-negative number if provided.'
+        }
+      ),
+    account: z.string().uuid('Account selection is required.'),
+    counterparty: z.string().uuid('Counterparty selection is required.'),
+    type: z.enum(['given', 'taken'], { required_error: 'Debt type is required.' }),
+    interestType: z.enum(['simple', 'compound'], {
+      required_error: 'Interest type is required.'
+    }),
+    percentage: z
+      .string()
       .optional()
-  ),
-  frequency: z.preprocess(
-    (val) => (val === '' ? undefined : Number(val)),
-    z
-      .number({ invalid_type_error: 'Frequency must be a number' })
-      .int('Frequency must be a whole number')
-      .positive('Frequency must be positive')
+      .refine(
+        (value) =>
+          value === undefined ||
+          value === '' ||
+          (!isNaN(parseFloat(value)) && parseFloat(value) >= 0),
+        {
+          message: 'Interest rate must be a non-negative number if provided.'
+        }
+      ),
+    durationType: z.enum(['year', 'month', 'week', 'day', 'custom'], {
+      required_error: 'Duration type is required.'
+    }),
+    frequency: z
+      .string()
       .optional()
-  ),
-  durationType: z.enum(['year', 'month', 'week', 'day', 'custom']),
-  customDateRange: z.object({ from: z.date(), to: z.date() }).optional()
-});
+      .refine(
+        (value) =>
+          value === undefined || value === '' || (!isNaN(parseInt(value)) && parseInt(value) > 0),
+        {
+          message: 'Frequency must be a positive whole number.'
+        }
+      ),
+    customDateRange: z
+      .object({
+        from: z.date().optional(),
+        to: z.date().optional()
+      })
+      .optional()
+  })
+  .superRefine((data, ctx) => {
+    if (data.durationType !== 'custom' && (data.frequency === undefined || data.frequency === '')) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Frequency is required when duration type is not "custom".',
+        path: ['frequency']
+      });
+    }
+    if (data.durationType === 'custom') {
+      if (!data.customDateRange?.from) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Start date is required for custom range.',
+          path: ['customDateRange']
+        });
+      }
+      if (!data.customDateRange?.to) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'End date is required for custom range.',
+          path: ['customDateRange']
+        });
+      }
+      if (
+        data.customDateRange?.from &&
+        data.customDateRange?.to &&
+        data.customDateRange.from >= data.customDateRange.to
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'End date must be after start date.',
+          path: ['customDateRange']
+        });
+      }
+    }
+  });
 
 type DebtFormValues = z.infer<typeof debtFormSchema>;
 
@@ -72,16 +139,18 @@ type DebtApiPayload = {
   account: string;
 };
 
-const AddDebtModal = ({
-  onDebtAdded,
-  isOpen,
-  onOpenChange,
-  hideTriggerButton = false
-}: {
+interface AddDebtModalProps {
   onDebtAdded: () => void;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   hideTriggerButton?: boolean;
+}
+
+const AddDebtModal: React.FC<AddDebtModalProps> = ({
+  onDebtAdded,
+  isOpen,
+  onOpenChange,
+  hideTriggerButton = false
 }) => {
   const { showSuccess, showError } = useToast();
   const invalidate = useInvalidateQueries();
@@ -105,86 +174,136 @@ const AddDebtModal = ({
       type: 'taken',
       interestType: 'simple',
       description: '',
-      amount: undefined,
-      premiumAmount: undefined,
-      percentage: undefined,
-      frequency: undefined,
+      amount: '',
+      premiumAmount: '',
+      percentage: '',
+      frequency: '',
       account: '',
       counterparty: '',
       durationType: 'year',
       customDateRange: undefined
     },
-    mode: 'onSubmit'
+    mode: 'onChange'
   });
+
+  const durationType = form.watch('durationType');
+
+  useEffect(() => {
+    if (isOpen) {
+      form.reset({
+        type: 'taken',
+        interestType: 'simple',
+        description: '',
+        amount: '',
+        premiumAmount: '',
+        percentage: '',
+        frequency: '',
+        account: '',
+        counterparty: '',
+        durationType: 'year',
+        customDateRange: undefined
+      });
+    }
+  }, [isOpen, form]);
 
   const createDebtMutation = useMutation({
     mutationFn: (data: DebtApiPayload) => apiCreateDebt(data),
     onSuccess: async () => {
       await invalidate(['debts', 'accounts']);
       showSuccess('Debt created successfully!');
-      form.reset();
       onDebtAdded();
       onOpenChange(false);
     },
     onError: (error: any) => {
-      const message =
-        error?.response?.data?.error?.message || error.message || 'Failed to create debt.';
+      const message = error?.response?.data?.message || error.message || 'Failed to create debt.';
       showError(message);
       console.error('Debt creation failed:', error);
     }
   });
 
-  const handleCreate = async (formData: DebtFormValues) => {
+  const handleCreate = (formData: DebtFormValues) => {
     if (!user?.id) {
       showError('User information not found. Cannot create debt.');
       return;
     }
-    if (!formData.counterparty) {
-      showError('Please select a counterparty.');
-      return;
-    }
-    let duration: string = formData.durationType;
-    if (formData.durationType === 'custom' && formData.customDateRange) {
-      const { from, to } = formData.customDateRange;
-      if (!from || !to || from >= to) {
-        showError('Invalid custom date range.');
+
+    let apiDuration: string;
+    if (formData.durationType === 'custom') {
+      if (!formData.customDateRange?.from || !formData.customDateRange?.to) {
+        showError('Custom date range is incomplete.');
         return;
       }
-      duration = `${from.toISOString().split('T')[0]},${to.toISOString().split('T')[0]}`;
+      apiDuration = `${format(formData.customDateRange.from, 'yyyy-MM-dd')},${format(
+        formData.customDateRange.to,
+        'yyyy-MM-dd'
+      )}`;
+    } else {
+      apiDuration = formData.durationType;
     }
+
     const apiPayload: DebtApiPayload = {
-      amount: formData.amount,
-      premiumAmount: formData.premiumAmount,
+      amount: parseFloat(formData.amount),
+      premiumAmount:
+        formData.premiumAmount && formData.premiumAmount !== ''
+          ? parseFloat(formData.premiumAmount)
+          : undefined,
       description: formData.description,
-      duration,
-      percentage: formData.percentage,
-      frequency: formData.frequency ? String(formData.frequency) : undefined,
+      duration: apiDuration,
+      percentage:
+        formData.percentage && formData.percentage !== ''
+          ? parseFloat(formData.percentage)
+          : undefined,
+      frequency:
+        formData.durationType !== 'custom' && formData.frequency
+          ? String(formData.frequency)
+          : undefined,
       user: formData.counterparty,
       type: formData.type,
       interestType: formData.interestType,
       account: formData.account
     };
+
     createDebtMutation.mutate(apiPayload);
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open && !createDebtMutation.isPending) {
+      form.reset();
+    }
+    onOpenChange(open);
   };
 
   return (
     <AddModal
-      title='Add Debt'
-      description='Create a new debt record.'
-      triggerButton={hideTriggerButton ? null : <Button>Add Debt</Button>}
+      title='Add Debt Record'
+      description='Log money you owe or money owed to you.'
+      triggerButton={
+        hideTriggerButton ? null : (
+          <Button size='sm'>
+            <PlusCircle className='mr-2 h-4 w-4' /> Add Debt
+          </Button>
+        )
+      }
       isOpen={isOpen}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleOpenChange}
     >
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleCreate)} className='space-y-4'>
+        <form
+          onSubmit={form.handleSubmit(handleCreate)}
+          className='grid grid-cols-1 gap-x-4 gap-y-5 pt-2 md:grid-cols-2'
+        >
           <FormField
             control={form.control}
             name='description'
             render={({ field }) => (
-              <FormItem>
+              <FormItem className='md:col-span-2'>
                 <FormLabel>Description*</FormLabel>
                 <FormControl>
-                  <Input placeholder='E.g., Loan from John Doe' {...field} />
+                  <Input
+                    placeholder='E.g., Loan from John for rent'
+                    {...field}
+                    disabled={createDebtMutation.isPending}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -196,9 +315,15 @@ const AddDebtModal = ({
             name='amount'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Amount*</FormLabel>
+                <FormLabel>Principal Amount*</FormLabel>
                 <FormControl>
-                  <Input type='number' placeholder='E.g., 1000.00' {...field} step='any' />
+                  <NumericInput
+                    placeholder='1000.00'
+                    className='w-full'
+                    disabled={createDebtMutation.isPending}
+                    value={field.value}
+                    onValueChange={(values: { value: any }) => field.onChange(values.value)}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -210,9 +335,15 @@ const AddDebtModal = ({
             name='premiumAmount'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Premium Amount (Optional)</FormLabel>
+                <FormLabel>Premium Amount</FormLabel>
                 <FormControl>
-                  <Input type='number' placeholder='E.g., 50.00' {...field} step='any' />
+                  <NumericInput
+                    placeholder='50.00'
+                    className='w-full'
+                    disabled={createDebtMutation.isPending}
+                    value={field.value}
+                    onValueChange={(values: { value: any }) => field.onChange(values.value)}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -225,9 +356,13 @@ const AddDebtModal = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Associated Account*</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                  disabled={isLoadingAccounts || createDebtMutation.isPending}
+                >
                   <FormControl>
-                    <SelectTrigger disabled={isLoadingAccounts}>
+                    <SelectTrigger>
                       <SelectValue placeholder='Select account...' />
                     </SelectTrigger>
                   </FormControl>
@@ -237,9 +372,9 @@ const AddDebtModal = ({
                         Loading accounts...
                       </SelectItem>
                     ) : accountsData && accountsData.length > 0 ? (
-                      accountsData.map((account) => (
-                        <SelectItem key={account.id} value={account.id}>
-                          {account.name} ({account.currency})
+                      accountsData.map((acc) => (
+                        <SelectItem key={acc.id} value={acc.id}>
+                          {acc.name} ({acc.currency})
                         </SelectItem>
                       ))
                     ) : (
@@ -260,9 +395,13 @@ const AddDebtModal = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Counterparty*</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                  disabled={isLoadingUsers || createDebtMutation.isPending}
+                >
                   <FormControl>
-                    <SelectTrigger disabled={isLoadingUsers}>
+                    <SelectTrigger>
                       <SelectValue placeholder='Select user...' />
                     </SelectTrigger>
                   </FormControl>
@@ -297,7 +436,11 @@ const AddDebtModal = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Type*</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                  disabled={createDebtMutation.isPending}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder='Select type' />
@@ -319,7 +462,11 @@ const AddDebtModal = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Interest Type*</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                  disabled={createDebtMutation.isPending}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder='Select interest type' />
@@ -340,27 +487,15 @@ const AddDebtModal = ({
             name='percentage'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Interest Percentage (Optional)</FormLabel>
+                <FormLabel>Interest Rate (% p.a., Optional)</FormLabel>
                 <FormControl>
-                  <Input type='number' placeholder='E.g., 5.5 (for 5.5%)' {...field} step='any' />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name='frequency'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Interest Frequency (per year, Optional)</FormLabel>
-                <FormControl>
-                  <Input
-                    type='number'
-                    placeholder='E.g., 1 (Yearly), 12 (Monthly)'
-                    {...field}
-                    step='1'
+                  <NumericInput
+                    placeholder='5.5'
+                    className='w-full'
+                    disabled={createDebtMutation.isPending}
+                    value={field.value}
+                    onValueChange={(values: { value: any }) => field.onChange(values.value)}
+                    decimalScale={2}
                   />
                 </FormControl>
                 <FormMessage />
@@ -373,18 +508,26 @@ const AddDebtModal = ({
             name='durationType'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Duration*</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <FormLabel>Repayment Duration Type*</FormLabel>
+                <Select
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    form.setValue('frequency', '');
+                    form.setValue('customDateRange', undefined);
+                  }}
+                  value={field.value}
+                  disabled={createDebtMutation.isPending}
+                >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder='Select duration' />
+                      <SelectValue placeholder='Select duration type' />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value='year'>Year</SelectItem>
-                    <SelectItem value='month'>Month</SelectItem>
-                    <SelectItem value='week'>Week</SelectItem>
-                    <SelectItem value='day'>Day</SelectItem>
+                    <SelectItem value='year'>Years</SelectItem>
+                    <SelectItem value='month'>Months</SelectItem>
+                    <SelectItem value='week'>Weeks</SelectItem>
+                    <SelectItem value='day'>Days</SelectItem>
                     <SelectItem value='custom'>Custom Date Range</SelectItem>
                   </SelectContent>
                 </Select>
@@ -392,17 +535,50 @@ const AddDebtModal = ({
               </FormItem>
             )}
           />
-          {form.watch('durationType') === 'custom' && (
+
+          {durationType !== 'custom' && (
+            <FormField
+              control={form.control}
+              name='frequency'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Number of{' '}
+                    {durationType === 'year'
+                      ? 'Years'
+                      : durationType.charAt(0).toUpperCase() + durationType.slice(1)}
+                    s*
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type='number'
+                      placeholder={`e.g., ${durationType === 'year' ? '3' : durationType === 'month' ? '12' : '4'}`}
+                      {...field}
+                      disabled={createDebtMutation.isPending}
+                      step='1'
+                      min='1'
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
+          {durationType === 'custom' && (
             <FormField
               control={form.control}
               name='customDateRange'
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Custom Date Range*</FormLabel>
-                  <DateRangePicker
-                    dateRange={field.value}
-                    setDateRange={field.onChange}
-                    disabled={[{ before: new Date() }]}
+                <FormItem className='md:col-span-2'>
+                  <FormLabel>Custom Due Date Range*</FormLabel>
+                  <DateRangePickerV2
+                    date={
+                      field.value?.from && field.value?.to ? (field.value as DateRange) : undefined
+                    }
+                    onDateChange={field.onChange}
+                    disabled={createDebtMutation.isPending}
+                    minDate={new Date()}
                   />
                   <FormMessage />
                 </FormItem>
@@ -410,14 +586,35 @@ const AddDebtModal = ({
             />
           )}
 
-          <Button
-            type='submit'
-            disabled={createDebtMutation.isPending || isLoadingAccounts || !user?.id}
-            className='w-full'
-          >
-            {createDebtMutation.isPending ? 'Creating...' : 'Create Debt'}
-          </Button>
-          {!user && <p className='text-destructive text-center text-sm'>User ID not available.</p>}
+          <div className='flex justify-end gap-2 pt-4 md:col-span-2'>
+            <Button
+              type='button'
+              variant='outline'
+              onClick={() => onOpenChange(false)}
+              disabled={createDebtMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              type='submit'
+              disabled={createDebtMutation.isPending || !user?.id}
+              className='min-w-[120px]'
+            >
+              {createDebtMutation.isPending ? (
+                <>
+                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  Creating...
+                </>
+              ) : (
+                'Create Debt'
+              )}
+            </Button>
+          </div>
+          {!user && (
+            <p className='text-destructive text-center text-sm md:col-span-2'>
+              User information not found.
+            </p>
+          )}
         </form>
       </Form>
     </AddModal>

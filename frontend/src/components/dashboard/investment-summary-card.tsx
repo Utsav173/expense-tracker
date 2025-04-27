@@ -13,7 +13,6 @@ import {
   investmentGetOldestDate
 } from '@/lib/endpoints/investment';
 import { Skeleton } from '../ui/skeleton';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { useToast } from '@/lib/hooks/useToast';
 import {
   AreaChart,
@@ -24,7 +23,7 @@ import {
   XAxis,
   CartesianGrid
 } from 'recharts';
-import { parseISO, format } from 'date-fns';
+import { parseISO, format, differenceInDays } from 'date-fns';
 import Link from 'next/link';
 import { Button } from '../ui/button';
 import TooltipElement from '../ui/tooltip-element';
@@ -42,6 +41,28 @@ const PERIOD_OPTIONS: { value: PeriodOption; label: string }[] = [
   { value: '1y', label: '1Y' },
   { value: 'custom', label: 'Custom' }
 ];
+
+const getAvailablePeriodOptions = (
+  oldestDate: Date | undefined
+): { value: PeriodOption; label: string }[] => {
+  if (!oldestDate) return PERIOD_OPTIONS;
+
+  const daysSinceOldest = differenceInDays(new Date(), oldestDate);
+  const baseOptions = [
+    { value: '7d' as const, label: '7D' },
+    { value: '30d' as const, label: '30D' }
+  ];
+
+  if (daysSinceOldest <= 35) {
+    return [...baseOptions, { value: 'custom', label: 'Custom' }];
+  }
+
+  if (daysSinceOldest <= 95) {
+    return [...baseOptions, { value: '90d', label: '90D' }, { value: 'custom', label: 'Custom' }];
+  }
+
+  return PERIOD_OPTIONS;
+};
 
 export const InvestmentSummaryCard: React.FC<{
   className?: string;
@@ -106,6 +127,11 @@ export const InvestmentSummaryCard: React.FC<{
     refetchOnWindowFocus: true
   });
 
+  const availablePeriodOptions = React.useMemo(
+    () => getAvailablePeriodOptions(oldestDate),
+    [oldestDate]
+  );
+
   React.useEffect(() => {
     if (summaryError) showError(`Investment Summary Error: ${(summaryError as Error).message}`);
     if (historicalError)
@@ -121,6 +147,16 @@ export const InvestmentSummaryCard: React.FC<{
       })
       .catch(() => {});
   }, []);
+
+  React.useEffect(() => {
+    // If the currently selected period is not available in the new options, switch to 30d
+    if (
+      !availablePeriodOptions.find((opt) => opt.value === selectedPeriod) &&
+      selectedPeriod !== 'custom'
+    ) {
+      setSelectedPeriod('30d');
+    }
+  }, [availablePeriodOptions, selectedPeriod]);
 
   const isLoading = isSummaryLoading;
   const hasData = summaryData && summaryData.numberOfHoldings > 0;
@@ -204,157 +240,155 @@ export const InvestmentSummaryCard: React.FC<{
       : 'hsl(0, 84%, 60%)'; // Keep red for negative
 
   return (
-    <TooltipProvider>
-      <Card className={cn('col-span-1 flex flex-col md:col-span-1', className)}>
-        <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-          <CardDescription className='text-xs'>
-            {numberOfHoldings} holding(s) across {numberOfAccounts} account(s)
-            {valueIsEstimate && (
-              <TooltipElement tooltipContent='Values are estimated due to mixed currencies or missing price data.'>
-                <AlertTriangle className='ml-1 inline-block h-3 w-3 text-amber-500' />
-              </TooltipElement>
-            )}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className='space-y-4'>
-          <div className='flex items-center gap-2'>
-            <Tabs value={selectedPeriod} onValueChange={handlePeriodChange} className='w-fit'>
-              <TabsList className='h-7 p-1'>
-                {PERIOD_OPTIONS.map((option) => (
-                  <TabsTrigger
-                    key={option.value}
-                    value={option.value}
-                    className='px-2 py-0.5 text-xs'
-                  >
-                    {option.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-            {selectedPeriod === 'custom' && (
-              <DateRangePickerV2
-                date={dateRange}
-                onDateChange={setDateRange}
-                className='w-[260px]'
-                placeholder='Select dates'
-                noLabel
-                minDate={oldestDate}
-                maxDate={new Date()}
-              />
-            )}
-          </div>
-
-          {isHistoricalLoading ? (
-            <Skeleton className='h-[180px] w-full' />
-          ) : sparklineData.length > 1 ? (
-            <div className='h-[180px] w-full'>
-              <ResponsiveContainer width='100%' height='100%'>
-                <AreaChart data={sparklineData}>
-                  <defs>
-                    <linearGradient id='colorValue' x1='0' y1='0' x2='0' y2='1'>
-                      <stop offset='0%' stopColor={sparklineColor} stopOpacity={0.4} />
-                      <stop offset='50%' stopColor={sparklineColor} stopOpacity={0.1} />
-                      <stop offset='100%' stopColor={sparklineColor} stopOpacity={0} />
-                    </linearGradient>
-                    <filter id='glow'>
-                      <feGaussianBlur stdDeviation='3' result='coloredBlur' />
-                      <feMerge>
-                        <feMergeNode in='coloredBlur' />
-                        <feMergeNode in='SourceGraphic' />
-                      </feMerge>
-                    </filter>
-                  </defs>
-                  <CartesianGrid
-                    strokeDasharray='3 3'
-                    vertical={false}
-                    stroke='hsl(var(--border))'
-                    opacity={0.3}
-                  />
-                  <YAxis domain={['dataMin', 'dataMax']} hide padding={{ top: 20, bottom: 20 }} />
-                  <XAxis
-                    dataKey='date'
-                    tickFormatter={(date) => format(date, 'MMM d')}
-                    interval='preserveStartEnd'
-                    minTickGap={30}
-                    tick={{ fontSize: 10 }}
-                    axisLine={false}
-                    tickLine={false}
-                    stroke='hsl(var(--muted-foreground))'
-                  />
-                  <RechartsTooltip
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        const data = payload[0].payload;
-                        return (
-                          <div className='bg-background/95 rounded-lg border px-3 py-2 text-sm shadow-lg backdrop-blur-sm'>
-                            <div className='font-medium'>{format(data.date, 'MMM d, yyyy')}</div>
-                            <div className='text-muted-foreground'>
-                              {formatCurrency(data.value, currency)}
-                            </div>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  <Area
-                    type='monotone'
-                    dataKey='value'
-                    stroke={sparklineColor}
-                    strokeWidth={2.5}
-                    fillOpacity={1}
-                    fill='url(#colorValue)'
-                    filter='url(#glow)'
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <div className='h-[180px]' />
+    <Card className={cn('col-span-1 flex flex-col md:col-span-1', className)}>
+      <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+        <CardDescription className='text-xs'>
+          {numberOfHoldings} holding(s) across {numberOfAccounts} account(s)
+          {valueIsEstimate && (
+            <TooltipElement tooltipContent='Values are estimated due to mixed currencies or missing price data.'>
+              <AlertTriangle className='ml-1 inline-block h-3 w-3 text-amber-500' />
+            </TooltipElement>
           )}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className='space-y-4'>
+        <div className='flex items-center gap-2'>
+          <Tabs value={selectedPeriod} onValueChange={handlePeriodChange} className='w-fit'>
+            <TabsList className='h-7 p-1'>
+              {availablePeriodOptions.map((option) => (
+                <TabsTrigger
+                  key={option.value}
+                  value={option.value}
+                  className='px-2 py-0.5 text-xs'
+                >
+                  {option.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+          {selectedPeriod === 'custom' && (
+            <DateRangePickerV2
+              date={dateRange}
+              onDateChange={setDateRange}
+              className='w-[260px]'
+              placeholder='Select dates'
+              noLabel
+              minDate={oldestDate}
+              maxDate={new Date()}
+            />
+          )}
+        </div>
 
-          <div className='grid gap-4'>
-            <div className='grid grid-cols-2 gap-4'>
-              <div>
-                <div className='text-muted-foreground text-sm font-medium'>Current Value</div>
-                <div className='text-2xl font-bold'>
-                  {formatCurrency(currentMarketValue, currency)}
-                </div>
-              </div>
-              <div>
-                <div className='text-muted-foreground text-sm font-medium'>Total Invested</div>
-                <div className='text-2xl font-bold'>
-                  {formatCurrency(totalInvestedAmount, currency)}
-                </div>
+        {isHistoricalLoading ? (
+          <Skeleton className='h-[180px] w-full' />
+        ) : sparklineData.length > 1 ? (
+          <div className='h-[180px] w-full'>
+            <ResponsiveContainer width='100%' height='100%'>
+              <AreaChart data={sparklineData}>
+                <defs>
+                  <linearGradient id='colorValue' x1='0' y1='0' x2='0' y2='1'>
+                    <stop offset='0%' stopColor={sparklineColor} stopOpacity={0.4} />
+                    <stop offset='50%' stopColor={sparklineColor} stopOpacity={0.1} />
+                    <stop offset='100%' stopColor={sparklineColor} stopOpacity={0} />
+                  </linearGradient>
+                  <filter id='glow'>
+                    <feGaussianBlur stdDeviation='3' result='coloredBlur' />
+                    <feMerge>
+                      <feMergeNode in='coloredBlur' />
+                      <feMergeNode in='SourceGraphic' />
+                    </feMerge>
+                  </filter>
+                </defs>
+                <CartesianGrid
+                  strokeDasharray='3 3'
+                  vertical={false}
+                  stroke='hsl(var(--border))'
+                  opacity={0.3}
+                />
+                <YAxis domain={['dataMin', 'dataMax']} hide padding={{ top: 20, bottom: 20 }} />
+                <XAxis
+                  dataKey='date'
+                  tickFormatter={(date) => format(date, 'MMM d')}
+                  interval='preserveStartEnd'
+                  minTickGap={30}
+                  tick={{ fontSize: 10 }}
+                  axisLine={false}
+                  tickLine={false}
+                  stroke='hsl(var(--muted-foreground))'
+                />
+                <RechartsTooltip
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className='bg-background/95 rounded-lg border px-3 py-2 text-sm shadow-lg backdrop-blur-sm'>
+                          <div className='font-medium'>{format(data.date, 'MMM d, yyyy')}</div>
+                          <div className='text-muted-foreground'>
+                            {formatCurrency(data.value, currency)}
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Area
+                  type='monotone'
+                  dataKey='value'
+                  stroke={sparklineColor}
+                  strokeWidth={2.5}
+                  fillOpacity={1}
+                  fill='url(#colorValue)'
+                  filter='url(#glow)'
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        ) : (
+          <div className='h-[180px]' />
+        )}
+
+        <div className='grid gap-4'>
+          <div className='grid grid-cols-2 gap-4'>
+            <div>
+              <div className='text-muted-foreground text-sm font-medium'>Current Value</div>
+              <div className='text-2xl font-bold'>
+                {formatCurrency(currentMarketValue, currency)}
               </div>
             </div>
-
-            <div className='grid grid-cols-2 gap-4 rounded-lg border p-3'>
-              <div>
-                <div className={`flex items-center gap-1 text-sm font-medium ${gainLossColor}`}>
-                  <GainLossIcon className='h-4 w-4' />
-                  Total Return
-                </div>
-                <div className={`text-lg font-bold ${gainLossColor}`}>
-                  {formatCurrency(overallGainLoss, currency)}
-                  <span className='text-sm'> ({overallGainLossPercentage?.toFixed(1)}%)</span>
-                </div>
-              </div>
-              <div>
-                <div className='text-muted-foreground text-sm font-medium'>Total Dividends</div>
-                <div className='text-lg font-bold text-green-600'>
-                  {formatCurrency(totalDividends, currency)}
-                </div>
+            <div>
+              <div className='text-muted-foreground text-sm font-medium'>Total Invested</div>
+              <div className='text-2xl font-bold'>
+                {formatCurrency(totalInvestedAmount, currency)}
               </div>
             </div>
           </div>
-        </CardContent>
-        <div className='mt-auto border-t p-3 text-center'>
-          <Button variant='link' size='sm' asChild className='text-xs font-medium'>
-            <Link href='/investment'>Manage Investments</Link>
-          </Button>
+
+          <div className='grid grid-cols-2 gap-4 rounded-lg border p-3'>
+            <div>
+              <div className={`flex items-center gap-1 text-sm font-medium ${gainLossColor}`}>
+                <GainLossIcon className='h-4 w-4' />
+                Total Return
+              </div>
+              <div className={`text-lg font-bold ${gainLossColor}`}>
+                {formatCurrency(overallGainLoss, currency)}
+                <span className='text-sm'> ({overallGainLossPercentage?.toFixed(1)}%)</span>
+              </div>
+            </div>
+            <div>
+              <div className='text-muted-foreground text-sm font-medium'>Total Dividends</div>
+              <div className='text-lg font-bold text-green-600'>
+                {formatCurrency(totalDividends, currency)}
+              </div>
+            </div>
+          </div>
         </div>
-      </Card>
-    </TooltipProvider>
+      </CardContent>
+      <div className='mt-auto border-t p-3 text-center'>
+        <Button variant='link' size='sm' asChild className='text-xs font-medium'>
+          <Link href='/investment'>Manage Investments</Link>
+        </Button>
+      </div>
+    </Card>
   );
 };

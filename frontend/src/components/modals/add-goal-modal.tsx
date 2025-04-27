@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { goalCreate } from '@/lib/endpoints/goal';
 import { useToast } from '@/lib/hooks/useToast';
@@ -18,29 +19,42 @@ import { Input } from '@/components/ui/input';
 import { Button } from '../ui/button';
 import AddModal from './add-modal';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
-import { NumericFormat } from 'react-number-format';
+import { NumericInput } from '../ui/numeric-input';
 import DateTimePicker from '../date/date-time-picker';
+import { Loader2, PlusCircle, Target, CalendarDays } from 'lucide-react';
 
 const goalSchema = z.object({
-  name: z.string().min(3, 'Goal name must be at least 3 characters'),
-  targetAmount: z.string().refine((value) => !isNaN(Number(value)), {
-    message: 'Target amount must be a valid number'
-  }),
-  targetDate: z.date().optional()
+  name: z
+    .string()
+    .min(3, 'Goal name must be at least 3 characters.')
+    .max(100, 'Goal name cannot exceed 100 characters.'),
+  targetAmount: z
+    .string()
+    .min(1, { message: 'Target amount is required.' })
+    .refine((value) => !isNaN(parseFloat(value)) && parseFloat(value) > 0, {
+      message: 'Target amount must be a positive number.'
+    })
+    .transform((val) => parseFloat(val)), // Transform to number
+  targetDate: z.date({ required_error: 'Target date is required.' })
 });
 
 type GoalFormSchema = z.infer<typeof goalSchema>;
+type GoalApiPayload = Omit<GoalFormSchema, 'targetDate'> & {
+  targetDate: string;
+};
 
-const AddGoalModal = ({
-  onGoalAdded,
-  isOpen,
-  onOpenChange,
-  hideTriggerButton
-}: {
+interface AddGoalModalProps {
   onGoalAdded: () => void;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   hideTriggerButton?: boolean;
+}
+
+const AddGoalModal: React.FC<AddGoalModalProps> = ({
+  onGoalAdded,
+  isOpen,
+  onOpenChange,
+  hideTriggerButton = false
 }) => {
   const { showSuccess, showError } = useToast();
   const invalidate = useInvalidateQueries();
@@ -49,67 +63,82 @@ const AddGoalModal = ({
     resolver: zodResolver(goalSchema),
     defaultValues: {
       name: '',
-      targetAmount: '',
-      targetDate: undefined
+      targetAmount: 0,
+      targetDate: new Date()
     },
-    mode: 'onSubmit'
+    mode: 'onChange'
   });
 
-  const {
-    formState: { errors }
-  } = form;
-
   const createGoalMutation = useMutation({
-    mutationFn: (data: GoalFormSchema) => {
-      const payload = {
-        ...data,
-        targetAmount: Number(data.targetAmount),
-        targetDate: data.targetDate ? data.targetDate.toISOString() : undefined
-      };
-      return goalCreate(payload);
-    },
+    mutationFn: (data: GoalApiPayload) => goalCreate(data),
     onSuccess: async () => {
       await invalidate(['goals']);
       showSuccess('Goal created successfully!');
-      form.reset();
       onGoalAdded();
-      onOpenChange(false);
+      handleClose();
     },
     onError: (error: any) => {
-      showError(error.message);
+      const message = error?.response?.data?.message || error.message || 'Failed to create goal.';
+      showError(message);
     }
   });
 
-  const handleCreate = async (data: GoalFormSchema) => {
-    createGoalMutation.mutate(data);
+  const handleCreate = (data: GoalFormSchema) => {
+    const apiPayload: GoalApiPayload = {
+      ...data,
+      targetDate: data.targetDate.toISOString()
+    };
+    createGoalMutation.mutate(apiPayload);
   };
+
+  const handleClose = () => {
+    form.reset();
+    onOpenChange(false);
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      form.reset({
+        name: '',
+        targetAmount: 0,
+        targetDate: new Date()
+      });
+    }
+  }, [isOpen, form]);
 
   return (
     <AddModal
-      title='Add Goal'
-      description='Create a new saving goal.'
+      title='Add New Saving Goal'
+      description='Define your financial target and track your progress.'
       triggerButton={
         hideTriggerButton ? null : (
-          <Button className='from-primary to-primary hover:from-primary/80 hover:to-primary/80 bg-linear-to-r text-white shadow-md max-sm:w-full'>
-            Add Goal
+          <Button size='sm'>
+            <PlusCircle className='mr-2 h-4 w-4' /> Add Goal
           </Button>
         )
       }
       isOpen={isOpen}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleClose}
     >
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleCreate)} className='space-y-6'>
+        <form onSubmit={form.handleSubmit(handleCreate)} className='space-y-5 pt-2'>
           <FormField
             control={form.control}
             name='name'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Goal Name</FormLabel>
+                <FormLabel className='flex items-center gap-1.5'>
+                  <Target className='text-muted-foreground h-4 w-4' />
+                  Goal Name*
+                </FormLabel>
                 <FormControl>
-                  <Input placeholder='Goal name' {...field} />
+                  <Input
+                    placeholder='E.g., Vacation Fund, New Car'
+                    {...field}
+                    disabled={createGoalMutation.isPending}
+                  />
                 </FormControl>
-                {errors.name && <p className='text-destructive text-sm'>{errors.name.message}</p>}
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -119,26 +148,20 @@ const AddGoalModal = ({
             name='targetAmount'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Target Amount</FormLabel>
+                <FormLabel>Target Amount*</FormLabel>
                 <FormControl>
-                  <NumericFormat
-                    customInput={Input}
-                    thousandSeparator=','
-                    decimalSeparator='.'
-                    allowNegative={false}
-                    decimalScale={2}
-                    fixedDecimalScale
-                    placeholder='Target Amount'
+                  <NumericInput
+                    placeholder='5,000.00'
                     className='w-full'
-                    onValueChange={(values) => {
+                    disabled={createGoalMutation.isPending}
+                    value={field.value}
+                    onValueChange={(values: { value: string }) => {
                       field.onChange(values.value);
                     }}
-                    value={field.value}
+                    ref={field.ref as React.Ref<HTMLInputElement>}
                   />
                 </FormControl>
-                {errors.targetAmount && (
-                  <p className='text-destructive text-sm'>{errors.targetAmount.message}</p>
-                )}
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -147,25 +170,43 @@ const AddGoalModal = ({
             control={form.control}
             name='targetDate'
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Target Date</FormLabel>
+              <FormItem className='flex flex-col'>
+                <FormLabel className='flex items-center gap-1.5'>
+                  <CalendarDays className='text-muted-foreground h-4 w-4' />
+                  Target Date*
+                </FormLabel>
                 <FormControl>
-                  <DateTimePicker value={field.value} onChange={field.onChange} />
+                  <DateTimePicker
+                    value={field.value}
+                    onChange={field.onChange}
+                    disabled={createGoalMutation.isPending ? true : { before: new Date() }}
+                  />
                 </FormControl>
-                {errors.targetDate && (
-                  <p className='text-destructive text-sm'>{errors.targetDate.message}</p>
-                )}
+                <FormMessage />
               </FormItem>
             )}
           />
 
-          <Button
-            type='submit'
-            disabled={createGoalMutation.isPending}
-            className='disabled:bg-muted disabled:text-muted-foreground w-full disabled:cursor-not-allowed'
-          >
-            {createGoalMutation.isPending ? 'Adding...' : 'Add Goal'}
-          </Button>
+          <div className='flex justify-end gap-2 pt-4'>
+            <Button
+              type='button'
+              variant='outline'
+              onClick={handleClose}
+              disabled={createGoalMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button type='submit' disabled={createGoalMutation.isPending} className='min-w-[100px]'>
+              {createGoalMutation.isPending ? (
+                <>
+                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  Adding...
+                </>
+              ) : (
+                'Add Goal'
+              )}
+            </Button>
+          </div>
         </form>
       </Form>
     </AddModal>

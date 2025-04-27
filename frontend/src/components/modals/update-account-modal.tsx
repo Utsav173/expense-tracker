@@ -4,6 +4,7 @@ import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { useMutation } from '@tanstack/react-query';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -12,7 +13,8 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
+  DialogClose
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
@@ -23,24 +25,22 @@ import {
   FormLabel,
   FormMessage
 } from '@/components/ui/form';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { accountUpdate } from '@/lib/endpoints/accounts';
-import { fetchCurrencies, COMMON_CURRENCIES } from '@/lib/endpoints/currency';
-import { useQuery, useMutation } from '@tanstack/react-query';
 import { useToast } from '@/lib/hooks/useToast';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
-import { NumericFormat } from 'react-number-format';
-import { cn } from '@/lib/utils';
-import CurrencySelect from '../ui/currency-select';
+import { Loader2, Pencil, Banknote, CircleDollarSign } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
 
+// Schema only needs the name field for updating
 const formSchema = z.object({
-  name: z.string().min(2, {
-    message: 'Account name must be at least 2 characters.'
-  }),
-  balance: z.number().optional(),
-  currency: z.string().optional()
+  name: z
+    .string()
+    .min(2, 'Account name must be at least 2 characters.')
+    .max(64, 'Account name cannot exceed 64 characters.')
+    .trim()
 });
 
+// Define the type for the payload sent to the API (only name)
 type AccountUpdatePayload = Pick<z.infer<typeof formSchema>, 'name'>;
 
 interface UpdateAccountModalProps {
@@ -49,7 +49,7 @@ interface UpdateAccountModalProps {
   accountId: string;
   initialValues: {
     name: string;
-    balance: number | undefined;
+    balance: number | undefined | null; // Accept null for balance
     currency: string | undefined;
   };
   onAccountUpdated: () => void;
@@ -68,156 +68,145 @@ export function UpdateAccountModal({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: initialValues.name,
-      balance: initialValues.balance,
-      currency: initialValues.currency
-    }
+      name: initialValues.name
+    },
+    mode: 'onChange'
   });
 
+  // Reset form when initial values change or modal opens
   React.useEffect(() => {
     if (open) {
       form.reset({
-        name: initialValues.name,
-        balance: initialValues.balance,
-        currency: initialValues.currency
+        name: initialValues.name
       });
     }
-  }, [initialValues, open, form.reset]);
+  }, [initialValues.name, open, form]);
 
   const updateAccountMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: AccountUpdatePayload }) =>
       accountUpdate(id, data),
     onSuccess: async () => {
+      // Invalidate queries related to accounts and dashboard
       await invalidate(['accounts']);
-      showSuccess('Account updated successfully!');
-      onOpenChange(false);
+      await invalidate(['account', accountId]); // Invalidate specific account details
+      await invalidate(['dashboardData']);
+      showSuccess('Account name updated successfully!');
       onAccountUpdated();
+      onOpenChange(false); // Close modal on success
     },
     onError: (error: any) => {
-      showError(error.message || 'Failed to update account.');
+      const message =
+        error?.response?.data?.message || error.message || 'Failed to update account name.';
+      showError(message);
     }
   });
 
+  // Submit handler sends only the name
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const updateData = {
-      name: values.name,
-      balance: initialValues.balance,
-      currency: initialValues.currency
-    };
-    await updateAccountMutation.mutate({ id: accountId, data: updateData });
+    // Only include the name in the data payload
+    const updateData: AccountUpdatePayload = { name: values.name };
+    updateAccountMutation.mutate({ id: accountId, data: updateData });
   }
 
-  const { data: currencies, isLoading: isLoadingCurrencies } = useQuery({
-    queryKey: ['currencies'],
-    queryFn: fetchCurrencies,
-    staleTime: 24 * 60 * 60 * 1000,
-    gcTime: 7 * 24 * 60 * 60 * 1000,
-    retry: 2,
-    placeholderData: Object.entries(COMMON_CURRENCIES).map(([code, name]) => ({
-      code,
-      name
-    }))
-  });
+  const handleClose = () => {
+    if (!updateAccountMutation.isPending) {
+      onOpenChange(false);
+      form.reset({ name: initialValues.name });
+    }
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className='sm:max-w-[480px]'>
         <DialogHeader>
-          <DialogTitle>Edit Account Name</DialogTitle>
+          <DialogTitle className='flex items-center gap-2'>
+            <Pencil className='h-5 w-5' />
+            Edit Account Name
+          </DialogTitle>
           <DialogDescription>
-            Update the name for this account. Balance and currency cannot be changed here.
+            Update the name for this account. Balance and currency cannot be changed after creation.
           </DialogDescription>
         </DialogHeader>
-        <TooltipProvider>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-              <FormField
-                control={form.control}
-                name='name'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Account Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder='Account name' {...field} autoFocus />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6 pt-2'>
+            <FormField
+              control={form.control}
+              name='name'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Account Name*</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder='Enter new account name'
+                      {...field}
+                      disabled={updateAccountMutation.isPending}
+                      autoFocus
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <FormField
-                control={form.control}
-                name='balance'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Current Balance</FormLabel>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span tabIndex={0} className={cn('inline-block w-full')}>
-                          <FormControl>
-                            <NumericFormat
-                              customInput={Input}
-                              thousandSeparator=','
-                              decimalSeparator='.'
-                              allowNegative={false}
-                              decimalScale={2}
-                              fixedDecimalScale
-                              value={field.value ?? 0}
-                              readOnly
-                              disabled
-                              className='w-full disabled:cursor-not-allowed disabled:opacity-70'
-                              onValueChange={() => {}}
-                            />
-                          </FormControl>
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Balance cannot be edited.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </FormItem>
-                )}
-              />
+            {/* Display-only fields for balance and currency */}
+            <div className='grid grid-cols-2 gap-4'>
+              <FormItem>
+                <FormLabel className='text-muted-foreground flex items-center gap-1.5 text-sm'>
+                  <Banknote className='h-4 w-4' />
+                  Current Balance
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    value={formatCurrency(initialValues.balance ?? 0, initialValues.currency)}
+                    readOnly
+                    disabled
+                    className='bg-muted/50 cursor-not-allowed opacity-70'
+                  />
+                </FormControl>
+              </FormItem>
+              <FormItem>
+                <FormLabel className='text-muted-foreground flex items-center gap-1.5 text-sm'>
+                  <CircleDollarSign className='h-4 w-4' />
+                  Currency
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    value={initialValues.currency ?? 'N/A'}
+                    readOnly
+                    disabled
+                    className='bg-muted/50 cursor-not-allowed opacity-70'
+                  />
+                </FormControl>
+              </FormItem>
+            </div>
 
-              <FormField
-                control={form.control}
-                name='currency'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Currency</FormLabel>
-                    <FormControl>
-                      <CurrencySelect
-                        currencies={currencies}
-                        value={field.value}
-                        isLoading={isLoadingCurrencies}
-                        disabled
-                        disabledTooltip='Currency cannot be edited.'
-                        className='w-full disabled:cursor-not-allowed disabled:opacity-70'
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <DialogFooter>
-                <Button
-                  type='button'
-                  variant='outline'
-                  onClick={() => onOpenChange(false)}
-                  disabled={updateAccountMutation.isPending}
-                >
+            <DialogFooter className='gap-2 pt-4 sm:gap-0'>
+              <DialogClose asChild>
+                <Button type='button' variant='outline' disabled={updateAccountMutation.isPending}>
                   Cancel
                 </Button>
-                <Button
-                  type='submit'
-                  disabled={updateAccountMutation.isPending || !form.formState.isDirty}
-                >
-                  {updateAccountMutation.isPending ? 'Updating...' : 'Update Name'}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </TooltipProvider>
+              </DialogClose>
+              <Button
+                type='submit'
+                disabled={
+                  updateAccountMutation.isPending ||
+                  !form.formState.isDirty ||
+                  !form.formState.isValid
+                }
+                className='min-w-[120px]'
+              >
+                {updateAccountMutation.isPending ? (
+                  <>
+                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                    Saving...
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

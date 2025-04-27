@@ -81,7 +81,7 @@ export const createDebtColumns = ({
   },
   {
     id: 'actions',
-    header: () => <div className='text-right'>Actions</div>,
+    header: () => 'Actions',
     cell: ({ row }) => {
       const debt = row.original;
       const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);

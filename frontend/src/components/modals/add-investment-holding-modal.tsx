@@ -1,14 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { investmentCreate, investmentStockHistoricalPrice } from '@/lib/endpoints/investment';
 import { useToast } from '@/lib/hooks/useToast';
 import { Button } from '../ui/button';
-import { Input } from '../ui/input';
 import AddModal from './add-modal';
 import {
   Form,
@@ -20,43 +19,68 @@ import {
 } from '@/components/ui/form';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { StockPriceResult, StockSearchResult } from '@/lib/types';
-import { formatCurrency } from '@/lib/utils';
-import { Loader2, TrendingUp, Calendar, Layers } from 'lucide-react';
+import { formatCurrency, cn } from '@/lib/utils';
+import {
+  Loader2,
+  TrendingUp,
+  Calendar,
+  Layers,
+  Search,
+  PlusCircle,
+  TrendingDown
+} from 'lucide-react';
 import { Combobox, ComboboxOption } from '../ui/combobox';
-import { Card } from '../ui/card';
-import { Badge } from '../ui/badge';
-import { Separator } from '../ui/separator';
+import { Card, CardContent, CardDescription, CardHeader } from '../ui/card';
 import {
   format as formatDate,
   isValid as isDateValid,
   isWeekend,
   subDays,
   isFuture,
-  startOfDay
+  startOfDay,
+  isSameDay
 } from 'date-fns';
 import { useDebounce } from 'use-debounce';
-import { NumericFormat } from 'react-number-format';
+import { NumericInput } from '../ui/numeric-input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import DatePicker from '../date/date-picker';
+import { Skeleton } from '../ui/skeleton';
 
 const investmentHoldingSchema = z.object({
   symbol: z
-    .object({
-      value: z.string().min(1, 'Symbol is required.'),
-      label: z.string()
-    })
+    .object(
+      {
+        value: z.string().min(1, 'Symbol is required.'),
+        label: z.string()
+      },
+      { required_error: 'Symbol is required.' }
+    )
     .nullable()
-    .refine((data) => !!data?.value, { message: 'Symbol is required.' }),
-  shares: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
-    message: 'Shares must be a positive number'
-  }),
-  purchasePrice: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, {
-    message: 'Purchase price must be a non-negative number'
-  }),
+    .refine((data) => data !== null && data.value !== '', { message: 'Symbol is required.' }),
+  shares: z
+    .string()
+    .min(1, 'Number of shares is required.')
+    .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
+      message: 'Shares must be a positive number.'
+    }),
+  purchasePrice: z
+    .string()
+    .min(1, 'Purchase price is required.')
+    .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, {
+      message: 'Purchase price must be a non-negative number.'
+    }),
   purchaseDate: z.date({ required_error: 'Purchase date is required.' })
 });
 
 type InvestmentHoldingFormSchema = z.infer<typeof investmentHoldingSchema>;
+
+type InvestmentApiPayload = {
+  symbol: string;
+  shares: number;
+  purchasePrice: number;
+  purchaseDate: string;
+  investmentAccount: string;
+};
 
 interface AddInvestmentHoldingModalProps {
   isOpen: boolean;
@@ -70,24 +94,16 @@ interface AddInvestmentHoldingModalProps {
 }
 
 const getMostRecentValidDate = (initialDate: Date = new Date()): Date => {
-  let candidateDate = new Date(initialDate);
+  let candidateDate = startOfDay(new Date(initialDate));
   const todayStart = startOfDay(new Date());
 
-  if (startOfDay(candidateDate) > todayStart) {
-    const now = new Date();
-    candidateDate.setFullYear(now.getFullYear(), now.getMonth(), now.getDate());
+  if (isFuture(candidateDate)) {
+    candidateDate = todayStart;
   }
 
-  while (isWeekend(candidateDate) || startOfDay(candidateDate) > todayStart) {
+  while (isWeekend(candidateDate)) {
     candidateDate = subDays(candidateDate, 1);
   }
-
-  const referenceTime = initialDate || new Date();
-  candidateDate.setHours(
-    referenceTime.getHours(),
-    referenceTime.getMinutes(),
-    referenceTime.getSeconds()
-  );
 
   return candidateDate;
 };
@@ -102,18 +118,14 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
   getStockPriceFn,
   hideTriggerButton = false
 }) => {
-  const { showSuccess, showError } = useToast();
+  const { showSuccess, showError, showInfo } = useToast();
   const invalidate = useInvalidateQueries();
-  const [currentPrice, setCurrentPrice] = useState<number | null>(null);
-  const [isPriceLoading, setIsPriceLoading] = useState(false);
-  const [isHistoricalPriceLoading, setIsHistoricalPriceLoading] = useState(false);
-  const [totalValue, setTotalValue] = useState<number | null>(null);
-  const [shouldFetchHistorical, setShouldFetchHistorical] = useState(false);
+  const queryClient = useQueryClient();
 
   const form = useForm<InvestmentHoldingFormSchema>({
     resolver: zodResolver(investmentHoldingSchema),
     defaultValues: {
-      symbol: null,
+      symbol: null, // Start with null
       shares: '',
       purchasePrice: '',
       purchaseDate: getMostRecentValidDate()
@@ -121,172 +133,160 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
     mode: 'onChange'
   });
 
-  const selectedSymbol = form.watch('symbol');
+  const selectedSymbolOption = form.watch('symbol');
   const purchaseDate = form.watch('purchaseDate');
-  const shares = form.watch('shares');
-  const purchasePrice = form.watch('purchasePrice');
+  const sharesStr = form.watch('shares');
+  const purchasePriceStr = form.watch('purchasePrice');
 
-  const selectedSymbolValue = selectedSymbol?.value;
-  // Ensure purchaseDate is always a Date object before calling methods
-  const purchaseDateISO = purchaseDate instanceof Date ? purchaseDate.toISOString() : null;
+  const [debouncedSymbolValue] = useDebounce(selectedSymbolOption?.value, 500);
 
-  const [debouncedSymbolValue] = useDebounce(selectedSymbolValue, 1000);
+  const totalValue = useMemo(() => {
+    const sharesNum = parseFloat(sharesStr);
+    const priceNum = parseFloat(purchasePriceStr);
+    return !isNaN(sharesNum) && !isNaN(priceNum) ? sharesNum * priceNum : null;
+  }, [sharesStr, purchasePriceStr]);
 
+  // --- useQuery for Current Price ---
+  const { data: currentPriceInfo, isLoading: isPriceLoading } = useQuery({
+    queryKey: ['stockPrice', debouncedSymbolValue],
+    queryFn: async () => {
+      if (!debouncedSymbolValue) return null;
+      return getStockPriceFn(debouncedSymbolValue);
+    },
+    enabled: !!debouncedSymbolValue,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: true
+  });
+
+  const formattedPurchaseDate = useMemo(() => {
+    return purchaseDate && isDateValid(purchaseDate)
+      ? formatDate(purchaseDate, 'yyyy-MM-dd')
+      : null;
+  }, [purchaseDate]);
+
+  const canFetchHistorical = useMemo(() => {
+    return (
+      !!debouncedSymbolValue &&
+      !!formattedPurchaseDate &&
+      !isWeekend(new Date(formattedPurchaseDate)) &&
+      !isFuture(startOfDay(new Date(formattedPurchaseDate)))
+    );
+  }, [debouncedSymbolValue, formattedPurchaseDate]);
+
+  // --- useQuery for Historical Price ---
+  const { isLoading: isHistoricalPriceLoading, data: historicalPriceData } = useQuery({
+    queryKey: ['historicalStockPrice', debouncedSymbolValue, formattedPurchaseDate],
+    queryFn: async () => {
+      if (!debouncedSymbolValue || !formattedPurchaseDate) return null;
+      return investmentStockHistoricalPrice(debouncedSymbolValue, formattedPurchaseDate);
+    },
+    enabled: canFetchHistorical,
+    staleTime: Infinity,
+    gcTime: 24 * 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    retry: 1
+  });
+
+  // --- Effect to update form with fetched historical price ---
   useEffect(() => {
-    const sharesNum = parseFloat(shares);
-    const priceNum = parseFloat(purchasePrice);
-    setTotalValue(!isNaN(sharesNum) && !isNaN(priceNum) ? sharesNum * priceNum : null);
-  }, [shares, purchasePrice]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchPrice = async () => {
-      if (!debouncedSymbolValue) {
-        setCurrentPrice(null);
-        return;
+    if (
+      canFetchHistorical &&
+      !isHistoricalPriceLoading &&
+      historicalPriceData?.price !== null &&
+      historicalPriceData?.price !== undefined
+    ) {
+      const fetchedPriceString = historicalPriceData.price.toString();
+      // Only update if the fetched price is different from the current input
+      if (fetchedPriceString !== form.getValues('purchasePrice')) {
+        form.setValue('purchasePrice', fetchedPriceString, {
+          shouldValidate: true,
+          shouldDirty: true
+        });
+        showInfo(`Auto-filled price for ${debouncedSymbolValue} on ${formattedPurchaseDate}.`);
       }
-
-      setIsPriceLoading(true);
-      try {
-        const priceData = await getStockPriceFn(debouncedSymbolValue);
-        if (isMounted) {
-          setCurrentPrice(priceData?.price ?? null);
-        }
-      } catch (error) {
-        console.error('Error fetching current stock price:', error);
-        if (isMounted) {
-          setCurrentPrice(null);
-        }
-      } finally {
-        if (isMounted) {
-          setIsPriceLoading(false);
-        }
-      }
-    };
-
-    fetchPrice();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [debouncedSymbolValue, getStockPriceFn]);
-
-  useEffect(() => {
-    if (debouncedSymbolValue && purchaseDateISO) {
-      // Check if the date is valid and not a weekend before triggering fetch
-      const dateObj = new Date(purchaseDateISO);
-      if (isDateValid(dateObj) && !isWeekend(dateObj)) {
-        setShouldFetchHistorical(true);
-      }
+    } else if (canFetchHistorical && !isHistoricalPriceLoading && historicalPriceData) {
+      // If fetch succeeded but price is null/undefined
+      showError(
+        `Could not auto-fetch price for ${debouncedSymbolValue} on ${formattedPurchaseDate}. Enter manually.`
+      );
     }
-  }, [debouncedSymbolValue, purchaseDateISO]);
+  }, [
+    historicalPriceData,
+    isHistoricalPriceLoading,
+    canFetchHistorical,
+    form,
+    debouncedSymbolValue,
+    formattedPurchaseDate,
+    showInfo,
+    showError
+  ]);
 
-  useEffect(() => {
-    if (!shouldFetchHistorical || !debouncedSymbolValue || !purchaseDateISO) {
-      return;
+  // --- Price Comparison Memo ---
+  const priceComparison = useMemo(() => {
+    const currentPrice = currentPriceInfo?.price;
+    if (
+      currentPrice !== null &&
+      currentPrice !== undefined &&
+      purchasePriceStr &&
+      !isNaN(parseFloat(purchasePriceStr))
+    ) {
+      const purchasePriceNum = parseFloat(purchasePriceStr);
+      if (purchasePriceNum === 0) return null;
+      const diff = currentPrice - purchasePriceNum;
+      const percentage = (diff / purchasePriceNum) * 100;
+      return { diff, percentage, isPositive: diff >= 0 };
     }
+    return null;
+  }, [currentPriceInfo?.price, purchasePriceStr]);
 
-    let isMounted = true;
-    const purchaseDateObj = new Date(purchaseDateISO);
-
-    // Redundant check, but safe
-    if (!isDateValid(purchaseDateObj) || isWeekend(purchaseDateObj) || isFuture(purchaseDateObj)) {
-      setIsHistoricalPriceLoading(false);
-      setShouldFetchHistorical(false);
-      return;
-    }
-
-    const formattedDate = formatDate(purchaseDateObj, 'yyyy-MM-dd');
-
-    const fetchHistoricalPrice = async () => {
-      setIsHistoricalPriceLoading(true);
-      try {
-        const historicalPriceData = await investmentStockHistoricalPrice(
-          debouncedSymbolValue,
-          formattedDate
-        );
-
-        if (isMounted) {
-          if (historicalPriceData?.price !== null && historicalPriceData?.price !== undefined) {
-            form.setValue('purchasePrice', historicalPriceData.price.toString(), {
-              shouldValidate: true,
-              shouldDirty: true
-            });
-          } else {
-            showError(
-              `Could not auto-fetch price for ${debouncedSymbolValue} on ${formattedDate}. Please enter manually.`
-            );
-            // Optionally clear the price field if fetch fails:
-            // form.setValue('purchasePrice', '', { shouldValidate: true });
-          }
-        }
-      } catch (error: any) {
-        if (isMounted) {
-          showError(`Error fetching historical price: ${error.message}`);
-          // Optionally clear the price field on error:
-          // form.setValue('purchasePrice', '', { shouldValidate: true });
-        }
-      } finally {
-        if (isMounted) {
-          setIsHistoricalPriceLoading(false);
-          setShouldFetchHistorical(false);
-        }
-      }
-    };
-
-    fetchHistoricalPrice();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [debouncedSymbolValue, purchaseDateISO, shouldFetchHistorical, form, showError]);
-
+  // --- Mutation for Creating Investment ---
   const createInvestmentMutation = useMutation({
-    mutationFn: (data: InvestmentHoldingFormSchema) =>
-      investmentCreate({
-        symbol: data.symbol!.value,
-        shares: Number(data.shares),
-        purchasePrice: Number(data.purchasePrice),
-        purchaseDate: data.purchaseDate.toISOString(),
-        investmentAccount: accountId
-      }),
+    mutationFn: (data: InvestmentApiPayload) => investmentCreate(data),
     onSuccess: async () => {
       await invalidate(['investments', accountId]);
       await invalidate(['investmentAccountSummary', accountId]);
       await invalidate(['investmentPortfolioSummaryDashboard']);
+      await invalidate(['dashboardData']); // Invalidate dashboard too
       showSuccess('Investment added successfully!');
-      form.reset({
-        symbol: null,
-        shares: '',
-        purchasePrice: '',
-        purchaseDate: new Date()
-      });
       onInvestmentAdded();
-      onOpenChange(false);
+      handleClose();
     },
     onError: (error: any) => {
-      showError(error.message || 'Failed to add investment');
+      const message =
+        error?.response?.data?.message || error.message || 'Failed to add investment.';
+      showError(message);
     }
   });
 
-  const handleCreate = async (data: InvestmentHoldingFormSchema) => {
+  // --- Form Submission Handler ---
+  const handleCreate = (data: InvestmentHoldingFormSchema) => {
     if (!data.symbol?.value) {
-      form.setError('symbol', { type: 'manual', message: 'Symbol is required.' });
+      form.setError('symbol', { message: 'Symbol is required.' });
       return;
     }
-    createInvestmentMutation.mutate(data);
+
+    const apiPayload: InvestmentApiPayload = {
+      symbol: data.symbol.value,
+      shares: parseFloat(data.shares),
+      purchasePrice: parseFloat(data.purchasePrice),
+      purchaseDate: data.purchaseDate.toISOString(),
+      investmentAccount: accountId
+    };
+    createInvestmentMutation.mutate(apiPayload);
   };
 
+  // --- Stock Search Function ---
   const fetchStocks = useCallback(
     async (query: string): Promise<ComboboxOption[]> => {
-      if (!query || query.length < 2) return [];
+      if (!query || query.length < 1) return [];
       try {
         const results = await searchStocksFn(query);
         return (
           results?.map((stock) => ({
             value: stock.symbol,
-            label: `${stock.symbol} - ${stock.name}`
+            label: `${stock.symbol} - ${stock.name} (${stock.exchange})`
           })) || []
         );
       } catch (error) {
@@ -297,300 +297,257 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
     [searchStocksFn]
   );
 
-  const calculateComparison = () => {
-    if (
-      currentPrice !== null &&
-      purchasePrice &&
-      !isNaN(parseFloat(purchasePrice)) &&
-      parseFloat(purchasePrice) !== 0
-    ) {
-      const purchasePriceNum = parseFloat(purchasePrice);
-      const diff = currentPrice - purchasePriceNum;
-      const percentage = (diff / purchasePriceNum) * 100;
+  // --- Modal Close Handler ---
+  const handleClose = useCallback(() => {
+    form.reset({
+      symbol: null,
+      shares: '',
+      purchasePrice: '',
+      purchaseDate: getMostRecentValidDate()
+    });
+    // Reset query data if needed, or let cache handle it
+    queryClient.removeQueries({ queryKey: ['stockPrice', debouncedSymbolValue], exact: true });
+    queryClient.removeQueries({
+      queryKey: ['historicalStockPrice', debouncedSymbolValue, formattedPurchaseDate],
+      exact: true
+    });
 
-      return {
-        diff,
-        percentage,
-        isPositive: diff >= 0
-      };
-    }
-    return null;
+    onOpenChange(false);
+  }, [form, onOpenChange, queryClient, debouncedSymbolValue, formattedPurchaseDate]);
+
+  // --- Disable Past Dates/Weekends ---
+  const disabledDates = (date: Date): boolean => {
+    if (isWeekend(date)) return true;
+    if (isFuture(startOfDay(date))) return true;
+    return false;
   };
 
-  const priceComparison = calculateComparison();
-
-  useEffect(() => {
-    if (!isOpen) {
-      setShouldFetchHistorical(false);
-      form.reset({
-        symbol: null,
-        shares: '',
-        purchasePrice: '',
-        purchaseDate: getMostRecentValidDate()
-      });
-    }
-  }, [isOpen, form]);
-
-  const disabledWeekends = (date: Date) => {
-    const today = new Date();
-    const isToday =
-      date.getDate() === today.getDate() &&
-      date.getMonth() === today.getMonth() &&
-      date.getFullYear() === today.getFullYear();
-
-    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-
-    return isWeekend && !isToday;
-  };
-  const disableFutureDates = { after: new Date() };
+  // Combine all pending states
+  const isPending =
+    createInvestmentMutation.isPending || isPriceLoading || isHistoricalPriceLoading;
 
   return (
     <AddModal
       title='Add Investment Holding'
-      description='Add a new stock or asset to this investment account.'
+      description={`Add a new stock or asset to ${accountCurrency} account.`}
       triggerButton={
         hideTriggerButton ? null : (
-          <Button className='flex items-center gap-2'>
-            <TrendingUp className='h-4 w-4' />
-            <span>Add Investment</span>
+          <Button>
+            <PlusCircle className='mr-2 h-4 w-4' /> Add Holding
           </Button>
         )
       }
       isOpen={isOpen}
-      onOpenChange={onOpenChange}
-      hideClose
+      onOpenChange={handleClose}
     >
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleCreate)} className='space-y-6'>
-          <div className='space-y-2'>
-            <FormField
-              control={form.control}
-              name='symbol'
-              render={({ field }) => (
-                <FormItem className='flex flex-col'>
-                  <FormLabel className='flex items-center gap-2 font-medium'>
-                    <TrendingUp className='text-primary h-4 w-4' />
-                    Stock Symbol / Ticker
-                  </FormLabel>
-                  <FormControl>
-                    <Combobox
-                      value={field.value}
-                      onChange={(option) => {
-                        field.onChange(option);
-                        setCurrentPrice(null);
-                        form.setValue('purchasePrice', '', {
-                          shouldValidate: true
-                        });
-                      }}
-                      fetchOptions={fetchStocks}
-                      placeholder='Search for stock (e.g., AAPL, MSFT, GOOGL)...'
-                      loadingPlaceholder='Searching stocks...'
-                      noOptionsMessage='No stocks found. Try a different search term.'
-                      className='w-full'
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {selectedSymbol?.value && (
-              <Card className='bg-muted/40 p-3'>
-                <div className='flex items-center justify-between'>
-                  <div className='truncate pr-2 text-sm font-medium'>{selectedSymbol.label}</div>
-                  <Badge variant={isPriceLoading ? 'outline' : 'secondary'} className='ml-auto'>
-                    {selectedSymbol.value}
-                  </Badge>
-                </div>
-                <div className='mt-2 text-sm'>
-                  {isPriceLoading ? (
-                    <span className='text-muted-foreground flex items-center gap-1'>
-                      <Loader2 className='h-3 w-3 animate-spin' /> Fetching current price...
-                    </span>
-                  ) : currentPrice !== null ? (
-                    <div className='flex flex-col gap-1'>
-                      <div className='flex items-center justify-between'>
-                        <span className='text-muted-foreground'>Current Market Price:</span>
-                        <span className='font-medium'>
-                          {formatCurrency(currentPrice, accountCurrency)}
-                        </span>
-                      </div>
-                      {priceComparison && purchasePrice && !isNaN(parseFloat(purchasePrice)) && (
-                        <div className='mt-1 flex items-center justify-between'>
-                          <span className='text-muted-foreground'>Compared to Purchase:</span>
-                          <span
-                            className={`font-medium ${priceComparison.isPositive ? 'text-success' : 'text-destructive'}`}
-                          >
-                            {priceComparison.isPositive ? '+' : ''}
-                            {priceComparison.percentage.toFixed(2)}%
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <span className='text-muted-foreground'>Could not fetch current price</span>
-                  )}
-                </div>
-              </Card>
+        <form
+          onSubmit={form.handleSubmit(handleCreate)}
+          className='grid grid-cols-1 gap-5 pt-2 md:grid-cols-2'
+        >
+          <FormField
+            control={form.control}
+            name='symbol'
+            render={({ field }) => (
+              <FormItem className='md:col-span-2'>
+                <FormLabel className='flex items-center gap-1.5'>
+                  <Search className='text-muted-foreground h-4 w-4' />
+                  Stock Symbol / Ticker*
+                </FormLabel>
+                <FormControl>
+                  <Combobox
+                    value={field.value}
+                    onChange={(option) => {
+                      field.onChange(option);
+                      form.setValue('purchasePrice', '', { shouldValidate: true });
+                    }}
+                    fetchOptions={fetchStocks}
+                    placeholder='Search (e.g., AAPL, MSFT)'
+                    loadingPlaceholder='Searching stocks...'
+                    noOptionsMessage='No stocks found. Try a different term.'
+                    className='w-full'
+                    disabled={createInvestmentMutation.isPending}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
-          </div>
-          <Separator />
-          <div>
-            <h3 className='mb-3 flex items-center gap-1 text-sm font-medium'>
-              Purchase Information
-            </h3>
-            <FormField
-              control={form.control}
-              name='purchaseDate'
-              render={({ field }) => (
-                <FormItem className='mb-4 flex flex-col'>
-                  <FormLabel className='flex items-center gap-1 text-sm'>
-                    <Calendar className='text-muted-foreground h-4 w-4' />
-                    Purchase Date
-                  </FormLabel>
-                  <FormControl>
-                    <DatePicker
-                      value={field.value}
-                      onChange={(newDate) => {
-                        if (newDate) {
-                          // We don't need getMostRecentValidDate here on change
-                          // because the DateTimePicker's internal Calendar
-                          // already prevents selecting disabled dates.
-                          field.onChange(newDate);
-                          if (selectedSymbolValue) {
-                            setShouldFetchHistorical(true);
-                          }
-                        }
-                      }}
-                      disabled={[disabledWeekends, disableFutureDates]}
-                      buttonDisabled={new Date(field.value) > new Date()}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-              <FormField
-                control={form.control}
-                name='shares'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className='text-sm'>Number of Shares</FormLabel>
-                    <FormControl>
-                      <div className='relative'>
-                        <Layers className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
-                        <NumericFormat
-                          customInput={Input}
-                          thousandSeparator=','
-                          decimalSeparator='.'
-                          allowNegative={false}
-                          placeholder='e.g., 10.5'
-                          className='pl-10'
-                          onValueChange={(values) => field.onChange(values.value)}
-                          value={field.value}
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name='purchasePrice'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className='flex items-center gap-1.5 text-sm'>
-                      Purchase Price per Share
-                      {isHistoricalPriceLoading && (
-                        <TooltipProvider delayDuration={100}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Loader2 className='text-primary h-3 w-3 animate-spin' />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Fetching price for selected date...</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
-                    </FormLabel>
-                    <FormControl>
-                      <div className='relative'>
-                        <NumericFormat
-                          customInput={Input}
-                          thousandSeparator=','
-                          decimalSeparator='.'
-                          allowNegative={false}
-                          decimalScale={2}
-                          placeholder='e.g., 150.75'
-                          className='pr-10'
-                          onValueChange={(values) => field.onChange(values.value)}
-                          value={field.value}
-                        />
-                        <span className='text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 transform text-xs'>
-                          {accountCurrency}
-                        </span>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-          {totalValue !== null && (
-            <Card className='border-primary/20 bg-muted/30 p-4'>
-              <h3 className='mb-2 text-sm font-medium'>Investment Summary</h3>
-              <div className='grid grid-cols-2 gap-2 text-sm'>
-                <div className='text-muted-foreground'>Total Investment Value:</div>
-                <div className='text-right font-medium'>
-                  {formatCurrency(totalValue, accountCurrency)}
+          />
+
+          {/* Display Current Price Info Card */}
+          {selectedSymbolOption?.value && (
+            <Card className='border-border/50 bg-muted/30 md:col-span-2'>
+              <CardHeader className='flex flex-row items-center justify-between p-3'>
+                <div className='space-y-0.5'>
+                  <CardDescription className='text-xs'>
+                    Current Market Info ({selectedSymbolOption.value})
+                  </CardDescription>
+                  <div className='text-lg font-bold'>
+                    {isPriceLoading ? (
+                      <Skeleton className='h-6 w-24' />
+                    ) : currentPriceInfo?.price !== null &&
+                      currentPriceInfo?.price !== undefined ? (
+                      formatCurrency(
+                        currentPriceInfo.price,
+                        currentPriceInfo.currency ?? accountCurrency
+                      )
+                    ) : (
+                      <span className='text-muted-foreground text-sm'>N/A</span>
+                    )}
+                  </div>
                 </div>
-                {shares && !isNaN(parseFloat(shares)) && (
-                  <>
-                    <div className='text-muted-foreground'>Number of Shares:</div>
-                    <div className='text-right font-medium'>
-                      {parseFloat(shares).toLocaleString()}
+                {priceComparison && (
+                  <div className='text-right'>
+                    <div
+                      className={cn(
+                        'flex items-center justify-end gap-1 text-sm font-medium',
+                        priceComparison.isPositive ? 'text-success' : 'text-destructive'
+                      )}
+                    >
+                      {priceComparison.isPositive ? (
+                        <TrendingUp className='h-4 w-4' />
+                      ) : (
+                        <TrendingDown className='h-4 w-4' />
+                      )}
+                      <span>{priceComparison.percentage.toFixed(1)}%</span>
                     </div>
-                  </>
+                    <div className='text-muted-foreground text-xs'>vs Purchase</div>
+                  </div>
                 )}
-                {purchasePrice && !isNaN(parseFloat(purchasePrice)) && (
-                  <>
-                    <div className='text-muted-foreground'>Price per Share:</div>
-                    <div className='text-right font-medium'>
-                      {formatCurrency(parseFloat(purchasePrice), accountCurrency)}
-                    </div>
-                  </>
-                )}
-              </div>
+              </CardHeader>
             </Card>
           )}
-          <div className='space-y-3 pt-2'>
+
+          {/* Purchase Date */}
+          <FormField
+            control={form.control}
+            name='purchaseDate'
+            render={({ field }) => (
+              <FormItem className='flex flex-col md:col-span-2'>
+                <FormLabel className='flex items-center gap-1.5'>
+                  <Calendar className='text-muted-foreground h-4 w-4' />
+                  Purchase Date*
+                </FormLabel>
+                <FormControl>
+                  <DatePicker
+                    value={field.value}
+                    onChange={(newDate) => {
+                      if (newDate) {
+                        const validDate = getMostRecentValidDate(newDate);
+                        if (!isSameDay(validDate, field.value)) {
+                          field.onChange(validDate);
+                          form.setValue('purchasePrice', '', { shouldValidate: true }); // Clear price on date change
+                        }
+                      }
+                    }}
+                    disabled={disabledDates}
+                    buttonDisabled={isPending}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Shares */}
+          <FormField
+            control={form.control}
+            name='shares'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className='flex items-center gap-1.5'>
+                  <Layers className='text-muted-foreground h-4 w-4' />
+                  Number of Shares*
+                </FormLabel>
+                <FormControl>
+                  <NumericInput
+                    placeholder='e.g., 10.5'
+                    className='w-full'
+                    value={field.value}
+                    onValueChange={(values: { value: string }) => field.onChange(values.value)}
+                    disabled={isPending}
+                    ref={field.ref as React.Ref<HTMLInputElement>}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Purchase Price */}
+          <FormField
+            control={form.control}
+            name='purchasePrice'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className='flex items-center gap-1.5'>
+                  Purchase Price / Share*{' '}
+                  {isHistoricalPriceLoading && (
+                    <TooltipProvider delayDuration={100}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className='cursor-help'>
+                            <Loader2 className='text-primary h-3 w-3 animate-spin' />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Fetching price...</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </FormLabel>
+                <FormControl>
+                  <NumericInput
+                    placeholder='e.g., 150.75'
+                    className='w-full pr-10'
+                    value={field.value}
+                    onValueChange={(values: { value: string }) => field.onChange(values.value)}
+                    disabled={isPending || isHistoricalPriceLoading}
+                    suffix={` ${accountCurrency}`}
+                    ref={field.ref as React.Ref<HTMLInputElement>}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Total Investment Cost Card */}
+          {totalValue !== null && totalValue > 0 && (
+            <Card className='border-primary/20 bg-muted/30 md:col-span-2'>
+              <CardContent className='p-3'>
+                <div className='flex items-center justify-between text-sm'>
+                  <span className='text-muted-foreground'>Total Investment Cost</span>
+                  <span className='font-semibold'>
+                    {formatCurrency(totalValue, accountCurrency)}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Actions */}
+          <div className='flex justify-end gap-2 pt-4 md:col-span-2'>
+            <Button type='button' variant='outline' onClick={handleClose} disabled={isPending}>
+              Cancel
+            </Button>
             <Button
               type='submit'
-              disabled={createInvestmentMutation.isPending || isHistoricalPriceLoading}
-              className='h-11 w-full font-medium'
+              disabled={isPending || !form.formState.isValid}
+              className='min-w-[120px]'
             >
               {createInvestmentMutation.isPending ? (
                 <>
                   <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                  Adding Investment...
+                  Adding...
                 </>
               ) : (
                 <>
-                  <TrendingUp className='mr-2 h-4 w-4' />
-                  Add Investment Holding
+                  <PlusCircle className='mr-2 h-4 w-4' />
+                  Add Holding
                 </>
               )}
-            </Button>
-            <Button
-              type='button'
-              variant='outline'
-              onClick={() => onOpenChange(false)}
-              className='w-full'
-            >
-              Cancel
             </Button>
           </div>
         </form>

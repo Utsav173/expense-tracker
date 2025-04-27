@@ -17,7 +17,7 @@ import {
   endOfMonth as dateFnsEndOfMonth
 } from 'date-fns';
 import { CalendarIcon, X, ChevronDownIcon } from 'lucide-react';
-import { DateRange, CaptionLabelProps, MonthGridProps } from 'react-day-picker';
+import { DateRange, CaptionLabelProps, MonthGridProps, DayPickerProps } from 'react-day-picker';
 import type { Dispatch, SetStateAction } from 'react';
 
 import { cn } from '@/lib/utils';

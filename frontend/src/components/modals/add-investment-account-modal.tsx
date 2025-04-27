@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useEffect } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { investmentAccountCreate } from '@/lib/endpoints/investmentAccount';
 import { useToast } from '@/lib/hooks/useToast';
@@ -20,25 +21,37 @@ import AddModal from './add-modal';
 import { fetchCurrencies, COMMON_CURRENCIES } from '@/lib/endpoints/currency';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import CurrencySelect from '../ui/currency-select';
+import { Building, Landmark, PlusCircle, Loader2 } from 'lucide-react';
 
+// Slightly stricter schema with trimming
 export const investmentAccountSchema = z.object({
-  name: z.string().min(2, 'Account name must be at least 2 characters.'),
-  platform: z.string().min(1, 'Platform name is required.'),
-  currency: z.string().min(3, 'Currency is required.')
+  name: z
+    .string()
+    .min(2, 'Account name must be at least 2 characters.')
+    .max(100, 'Account name cannot exceed 100 characters.')
+    .trim(),
+  platform: z
+    .string()
+    .min(1, 'Platform name is required.')
+    .max(64, 'Platform name cannot exceed 64 characters.')
+    .trim(),
+  currency: z.string().length(3, 'Currency must be a 3-letter code.')
 });
 
 type InvestmentAccountFormSchema = z.infer<typeof investmentAccountSchema>;
 
-const AddInvestmentAccountModal = ({
-  onAccountAdded,
-  isOpen,
-  onOpenChange,
-  hideTriggerButton = false
-}: {
+interface AddInvestmentAccountModalProps {
   onAccountAdded: () => void;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   hideTriggerButton?: boolean;
+}
+
+const AddInvestmentAccountModal: React.FC<AddInvestmentAccountModalProps> = ({
+  onAccountAdded,
+  isOpen,
+  onOpenChange,
+  hideTriggerButton = false
 }) => {
   const { showSuccess, showError } = useToast();
   const invalidate = useInvalidateQueries();
@@ -62,46 +75,77 @@ const AddInvestmentAccountModal = ({
       platform: '',
       currency: 'INR'
     },
-    mode: 'onSubmit'
+    mode: 'onChange'
   });
 
   const createAccountMutation = useMutation({
     mutationFn: (data: InvestmentAccountFormSchema) => investmentAccountCreate(data),
     onSuccess: async () => {
+      // Invalidate queries that show account lists or portfolio summaries
       await invalidate(['investmentAccounts']);
       await invalidate(['investmentPortfolioSummaryDashboard']);
       showSuccess('Investment account created successfully!');
-      form.reset();
       onAccountAdded();
-      onOpenChange(false);
+      handleClose();
     },
     onError: (error: any) => {
-      showError(error.message);
+      const message =
+        error?.response?.data?.message || error.message || 'Failed to create investment account.';
+      showError(message);
     }
   });
 
-  const handleCreate = async (data: InvestmentAccountFormSchema) => {
+  const handleCreate = (data: InvestmentAccountFormSchema) => {
     createAccountMutation.mutate(data);
   };
+
+  const handleClose = () => {
+    form.reset(); // Reset form state
+    onOpenChange(false); // Close the dialog
+  };
+
+  // Reset form when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      form.reset({
+        name: '',
+        platform: '',
+        currency: 'INR'
+      });
+    }
+  }, [isOpen, form]);
 
   return (
     <AddModal
       title='Add Investment Account'
-      description='Create a new account to track your investments.'
-      triggerButton={hideTriggerButton ? null : <Button>Add Investment Account</Button>}
+      description='Create a new account to track your investments (e.g., stocks, mutual funds).'
+      triggerButton={
+        hideTriggerButton ? null : (
+          <Button>
+            <PlusCircle className='mr-2 h-4 w-4' /> Add Investment Account
+          </Button>
+        )
+      }
       isOpen={isOpen}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleClose}
     >
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleCreate)} className='space-y-6'>
+        <form onSubmit={form.handleSubmit(handleCreate)} className='space-y-5 pt-2'>
           <FormField
             control={form.control}
             name='name'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Account Name</FormLabel>
+                <FormLabel className='flex items-center gap-1.5'>
+                  <Landmark className='text-muted-foreground h-4 w-4' />
+                  Account Name*
+                </FormLabel>
                 <FormControl>
-                  <Input placeholder='e.g., Zerodha Stocks' {...field} />
+                  <Input
+                    placeholder='E.g., Zerodha Stocks, Groww MF Portfolio'
+                    {...field}
+                    disabled={createAccountMutation.isPending}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -113,9 +157,16 @@ const AddInvestmentAccountModal = ({
             name='platform'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Platform / Broker</FormLabel>
+                <FormLabel className='flex items-center gap-1.5'>
+                  <Building className='text-muted-foreground h-4 w-4' />
+                  Platform / Broker*
+                </FormLabel>
                 <FormControl>
-                  <Input placeholder='e.g., Zerodha, Groww, Upstox' {...field} />
+                  <Input
+                    placeholder='E.g., Zerodha, Groww, Upstox, HDFC Securities'
+                    {...field}
+                    disabled={createAccountMutation.isPending}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -127,23 +178,43 @@ const AddInvestmentAccountModal = ({
             name='currency'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Account Currency</FormLabel>
-                <FormControl>
-                  <CurrencySelect
-                    currencies={currencies}
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    isLoading={isLoadingCurrencies}
-                  />
-                </FormControl>
+                <FormLabel>Account Currency*</FormLabel>
+                <CurrencySelect
+                  currencies={currencies}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  isLoading={isLoadingCurrencies}
+                  disabled={createAccountMutation.isPending}
+                />
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          <Button type='submit' disabled={createAccountMutation.isPending} className='w-full'>
-            {createAccountMutation.isPending ? 'Adding...' : 'Add Account'}
-          </Button>
+          <div className='flex justify-end gap-2 pt-4'>
+            <Button
+              type='button'
+              variant='outline'
+              onClick={handleClose} // Use handleClose
+              disabled={createAccountMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              type='submit'
+              disabled={createAccountMutation.isPending}
+              className='min-w-[120px]'
+            >
+              {createAccountMutation.isPending ? (
+                <>
+                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  Adding...
+                </>
+              ) : (
+                'Add Account'
+              )}
+            </Button>
+          </div>
         </form>
       </Form>
     </AddModal>

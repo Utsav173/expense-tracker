@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,7 +8,6 @@ import { useMutation } from '@tanstack/react-query';
 import { budgetUpdate } from '@/lib/endpoints/budget';
 import { useToast } from '@/lib/hooks/useToast';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
@@ -29,18 +28,23 @@ import {
 import { Budget } from '@/lib/types';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { Loader2, CalendarDays, Tag, Pencil } from 'lucide-react';
-import { NumericFormat } from 'react-number-format';
+import { NumericInput } from '../ui/numeric-input';
+import { monthNames } from '@/lib/utils';
 
 export const budgetUpdateSchema = z.object({
   amount: z
     .string()
-    .min(1, { message: 'Amount is required' })
-    .refine((value) => !isNaN(Number(value)) && Number(value) >= 0, {
-      message: 'Amount must be a valid non-negative number'
+    .min(1, { message: 'Amount is required.' })
+    .refine((value) => !isNaN(parseFloat(value)), {
+      message: 'Amount must be a valid number.'
+    })
+    .refine((val) => parseFloat(val) >= 0, {
+      message: 'Budget amount cannot be negative.'
     })
 });
 
-type BudgetUpdateFormSchema = z.infer<typeof budgetUpdateSchema>;
+type BudgetUpdateFormSchema = { amount: string };
+type BudgetApiPayload = { amount: number };
 
 interface UpdateBudgetModalProps {
   isOpen: boolean;
@@ -62,107 +66,119 @@ const UpdateBudgetModal: React.FC<UpdateBudgetModalProps> = ({
     resolver: zodResolver(budgetUpdateSchema),
     defaultValues: {
       amount: budget?.amount?.toString() ?? ''
-    }
+    },
+    mode: 'onChange'
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen && budget) {
       form.reset({ amount: budget.amount.toString() });
     }
   }, [isOpen, budget, form]);
 
   const updateBudgetMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { amount: number } }) => budgetUpdate(id, data),
+    mutationFn: ({ id, data }: { id: string; data: BudgetApiPayload }) => budgetUpdate(id, data),
     onSuccess: async () => {
       await invalidate(['budgets']);
+      await invalidate(['budgetSummaryDashboard']);
       showSuccess('Budget updated successfully!');
-      onOpenChange(false);
       onBudgetUpdated();
+      handleClose();
     },
     onError: (error: any) => {
-      showError(error?.message ?? 'Failed to update budget. Please try again.');
+      const message = error?.response?.data?.message || error.message || 'Failed to update budget.';
+      showError(message);
     }
   });
 
   const handleUpdate = (data: BudgetUpdateFormSchema) => {
-    updateBudgetMutation.mutate({
-      id: budget.id,
-      data: { amount: Number(data.amount) }
+    form.trigger('amount').then((isValid) => {
+      if (isValid) {
+        const transformedData = budgetUpdateSchema.parse(data);
+        updateBudgetMutation.mutate({
+          id: budget.id,
+          data: { amount: parseFloat(transformedData.amount) }
+        });
+      }
     });
   };
 
+  const handleClose = () => {
+    if (!updateBudgetMutation.isPending) {
+      form.reset({ amount: budget?.amount?.toString() ?? '' });
+      onOpenChange(false);
+    }
+  };
+
+  const getMonthName = (monthNumber: number): string => {
+    return monthNames[monthNumber - 1] || 'Invalid Month';
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className='rounded-lg shadow-xl'>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className='sm:max-w-[480px]'>
         <DialogHeader>
-          <DialogTitle className='flex items-center gap-2 text-xl font-semibold text-gray-900 dark:text-gray-100'>
-            <Pencil className='h-5 w-5 text-gray-600 dark:text-gray-50' /> Edit Budget
+          <DialogTitle className='flex items-center gap-2 text-xl font-semibold'>
+            <Pencil className='h-5 w-5' /> Edit Budget
           </DialogTitle>
-          <DialogDescription className='mt-1 text-gray-600 dark:text-gray-400'>
-            Update the amount for the selected budget period.
+          <DialogDescription className='pt-1'>
+            Update the amount for the selected budget period. Category and period cannot be changed.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleUpdate)} className='space-y-4'>
+          <form onSubmit={form.handleSubmit(handleUpdate)} className='space-y-6 pt-2'>
+            <div className='bg-muted/50 space-y-3 rounded-md border p-4'>
+              <div className='flex items-center gap-2 text-sm'>
+                <Tag className='text-muted-foreground h-4 w-4' />
+                <span className='text-muted-foreground font-medium'>Category:</span>
+                <span className='text-foreground font-semibold'>
+                  {budget?.category?.name ?? 'N/A'}
+                </span>
+              </div>
+              <div className='flex items-center gap-2 text-sm'>
+                <CalendarDays className='text-muted-foreground h-4 w-4' />
+                <span className='text-muted-foreground font-medium'>Period:</span>
+                <span className='text-foreground font-semibold'>
+                  {budget ? `${getMonthName(budget.month)} ${budget.year}` : 'N/A'}
+                </span>
+              </div>
+            </div>
+
             <FormField
               control={form.control}
               name='amount'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                    Amount
-                  </FormLabel>
+                  <FormLabel>New Budget Amount*</FormLabel>
                   <FormControl>
-                    <NumericFormat
-                      customInput={Input}
-                      thousandSeparator={true}
-                      decimalScale={2}
-                      fixedDecimalScale={true}
-                      allowNegative={false}
-                      placeholder='e.g., 1,500.50'
-                      className='mt-1 block w-full rounded-md border-gray-300 shadow-xs focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'
+                    <NumericInput
+                      placeholder='1,500.50'
+                      className='w-full'
                       disabled={updateBudgetMutation.isPending}
-                      {...field}
-                      onValueChange={(values) => {
-                        field.onChange(values.floatValue?.toString() || '');
+                      value={String(field.value)}
+                      onValueChange={(values: { value: any }) => {
+                        field.onChange(values.value);
                       }}
+                      ref={field.ref as React.Ref<HTMLInputElement>}
                     />
                   </FormControl>
-                  <FormMessage className='mt-1 text-xs text-red-600 dark:text-red-400' />
+                  <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className='mt-4 space-y-3 border-t border-gray-200 pt-2 dark:border-gray-700'>
-              <div className='flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300'>
-                <Tag className='h-4 w-4 text-gray-500 dark:text-gray-400' />
-                <span className='font-medium'>Category:</span>
-                <span className='text-gray-900 dark:text-gray-100'>
-                  {budget?.category?.name ?? 'N/A'}
-                </span>
-              </div>
-              <div className='flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300'>
-                <CalendarDays className='h-4 w-4 text-gray-500 dark:text-gray-400' />
-                <span className='font-medium'>Period:</span>
-                <span className='text-gray-900 dark:text-gray-100'>
-                  {budget ? `${budget.month}/${budget.year}` : 'N/A'}
-                </span>
-              </div>
-            </div>
-
-            <DialogFooter className='mt-6 flex flex-col sm:flex-row sm:justify-end sm:space-x-2'>
+            <DialogFooter className='gap-2 pt-4 sm:gap-0'>
               <DialogClose asChild>
-                <Button
-                  type='button'
-                  variant='outline'
-                  disabled={updateBudgetMutation.isPending}
-                  className='w-full dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 sm:w-auto'
-                >
+                <Button type='button' variant='outline' disabled={updateBudgetMutation.isPending}>
                   Cancel
                 </Button>
               </DialogClose>
-              <Button type='submit' disabled={updateBudgetMutation.isPending}>
+              <Button
+                type='submit'
+                disabled={updateBudgetMutation.isPending || !form.formState.isValid}
+                className='min-w-[120px]'
+              >
                 {updateBudgetMutation.isPending ? (
                   <>
                     <Loader2 className='mr-2 h-4 w-4 animate-spin' />

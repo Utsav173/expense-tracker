@@ -22,7 +22,7 @@ import { PlusCircle } from 'lucide-react';
 import { createDebtColumns } from '@/components/debt/debt-columns';
 import AddDebtModal from '@/components/modals/add-debt-modal';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { DebtWithDetails } from '@/lib/types';
+
 type DebtTypeFilter = '' | 'given' | 'taken' | 'all' | undefined;
 
 const DebtsPage = () => {

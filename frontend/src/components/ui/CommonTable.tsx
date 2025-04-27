@@ -7,9 +7,7 @@ import {
   useReactTable,
   ColumnDef,
   getPaginationRowModel,
-  SortingState,
-  CellContext,
-  HeaderContext
+  SortingState
 } from '@tanstack/react-table';
 import {
   Table,
@@ -180,15 +178,15 @@ const CommonTable = <T extends object>({
           {table.getRowModel().rows.map((row) => (
             <AccordionItem
               key={row.id}
-              value={String(row.id)}
-              className='bg-background overflow-hidden rounded-lg border px-0 sm:px-2'
+              value={`item-${row.id}`}
+              className='bg-background w-full rounded-lg border px-0 sm:px-2'
             >
-              <AccordionTrigger className='[&[data-state=open]]:bg-muted min-h-[48px] px-4 hover:no-underline'>
-                <div className='flex w-full items-center justify-between gap-2'>
+              <AccordionTrigger className='[&[data-state=open]]:bg-muted flex min-h-[48px] w-full items-center justify-between gap-2 px-2 hover:no-underline sm:px-4'>
+                <div className='flex w-full items-center justify-between overflow-hidden'>
                   {triggerColumns.map((column) => (
                     <span
                       key={column.id}
-                      className='max-w-[50%] truncate px-1 text-base font-medium'
+                      className='max-w-[45%] truncate px-1 text-sm font-medium sm:text-base'
                     >
                       {column.columnDef.cell
                         ? flexRender(
@@ -203,8 +201,8 @@ const CommonTable = <T extends object>({
                   ))}
                 </div>
               </AccordionTrigger>
-              <AccordionContent>
-                <div className='grid w-full grid-cols-[35%_65%] gap-4'>
+              <AccordionContent className='px-2 sm:px-4'>
+                <div className='grid w-full grid-cols-[40%_60%] gap-x-1 gap-y-2 sm:grid-cols-[30%_70%] sm:gap-x-4'>
                   {table.getAllLeafColumns().map((column) => {
                     const header = column.columnDef.header;
                     const cell = row.getVisibleCells().find((c) => c.column.id === column.id);
@@ -230,10 +228,10 @@ const CommonTable = <T extends object>({
 
                     return (
                       <React.Fragment key={`${row.id}-${column.id}`}>
-                        <span className='text-muted-foreground truncate pr-2 text-xs font-medium'>
+                        <span className='text-muted-foreground pr-1 text-xs font-medium sm:text-sm'>
                           {headerString}:
                         </span>
-                        <span className='truncate text-sm'>{displayValue}</span>
+                        <span className='text-xs break-words sm:text-sm'>{displayValue}</span>
                       </React.Fragment>
                     );
                   })}
