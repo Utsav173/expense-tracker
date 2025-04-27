@@ -42,14 +42,19 @@ const CurrentBalanceCard = ({ account, isLoading }: { account: any; isLoading?: 
   }
 
   const isPositive = account?.balance && account?.balance > 0;
-  const bgColorClass =
-    account?.balance && account?.balance > 0
-      ? 'from-primary/10 to-primary/20'
-      : 'from-destructive/10 to-destructive/20';
+  const bgColorClass = 'from-blue-100/10 to-blue-400/20';
 
   return (
     <Card className='group relative h-full overflow-hidden border-none shadow-md transition-all duration-300 hover:shadow-lg'>
-      <PixelCanvas gap={10} speed={25} colors={['#e0f2fe', '#7dd3fc', '#0ea5e9']} />
+      <PixelCanvas
+        gap={10}
+        speed={25}
+        colors={
+          typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? ['#e0f2fe', '#7dd3fc', '#0ea5e9']
+            : ['#0c1a2f', '#1e293b', '#334155']
+        }
+      />
 
       <div
         className={`flex h-full w-full flex-col justify-between bg-gradient-to-br ${bgColorClass} p-6 sm:p-8`}

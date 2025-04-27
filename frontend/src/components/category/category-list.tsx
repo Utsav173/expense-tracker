@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState, useCallback } from 'react';
 import CommonTable from '../ui/CommonTable';
-import { Category, CategoryListResponse } from '@/types/category';
+import { Category, CategoryListResponse } from '@/lib/types';
 import { ColumnDef, SortingState } from '@tanstack/react-table';
 import { useMutation } from '@tanstack/react-query';
 import { categoryDelete } from '@/lib/endpoints/category';

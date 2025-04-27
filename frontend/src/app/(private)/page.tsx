@@ -13,7 +13,7 @@ import { useToast } from '@/lib/hooks/useToast';
 import { Button } from '@/components/ui/button';
 import DeleteConfirmationModal from '@/components/modals/delete-confirmation-modal';
 import AddTransactionModal from '@/components/modals/add-transaction-modal';
-import { EditAccountModal } from '@/components/modals/edit-account-modal';
+import { UpdateAccountModal } from '@/components/modals/update-account-modal';
 
 const AccountList = () => {
   const [page, setPage] = useState(1);
@@ -147,7 +147,7 @@ const AccountList = () => {
       />
 
       {selectedItem && (
-        <EditAccountModal
+        <UpdateAccountModal
           open={isEditModalOpen}
           onOpenChange={setIsEditModalOpen}
           accountId={selectedItem.id}

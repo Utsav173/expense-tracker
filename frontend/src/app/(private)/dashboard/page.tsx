@@ -149,8 +149,8 @@ const DashboardPage = () => {
       accounts: (
         <AccountListSummary
           accountsInfo={dashboardPageData?.dashboardSummary?.accountsInfo}
-          accountIdToCurrencyMap={dashboardPageData?.accountIdToCurrencyMap ?? new Map()}
           isLoading={isLoading}
+          className='col-span-12 md:col-span-6 lg:col-span-4'
         />
       ),
       quickStats: dashboardPageData?.dashboardSummary ? (
@@ -225,13 +225,10 @@ const DashboardPage = () => {
         hiddenSections={hiddenSections}
         refreshInterval={dashboardSettings.refreshInterval}
         isDarkMode={dashboardSettings.darkMode}
-        isRefreshing={isFetching}
-        isLoading={isLoading}
         onChangePreset={changePreset}
         onToggleSectionVisibility={toggleSectionVisibility}
         onSetRefreshInterval={handleSetRefreshInterval}
         onToggleDarkMode={toggleDarkMode}
-        onRefetchAll={refetchAll}
       />
 
       {isError && dashboardPageData && (

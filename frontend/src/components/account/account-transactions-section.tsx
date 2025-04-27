@@ -101,44 +101,44 @@ export const AccountTransactionsSection = ({
         {showFilters && (
           <div className='mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4'>
             {isOwner && (
-              <>
-                <div>
-                  <label className='mb-1 block text-xs font-medium sm:text-sm'>Category</label>
-                  <Select onValueChange={handleCategoryChange} value={filters.categoryId || 'all'}>
-                    <SelectTrigger className='h-9 w-full text-xs sm:h-10 sm:text-sm'>
-                      <SelectValue placeholder='All Categories' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='all'>All Categories</SelectItem>
-                      {categories?.categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className='mb-1 block text-xs font-medium sm:text-sm'>Type</label>
-                  <Select
-                    onValueChange={handleIncomeTypeChange}
-                    value={filters.isIncome ? 'income' : 'expense'}
-                  >
-                    <SelectTrigger className='h-9 w-full text-xs sm:h-10 sm:text-sm'>
-                      <SelectValue placeholder='All Types' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='all'>All Types</SelectItem>
-                      <SelectItem value='income'>Income</SelectItem>
-                      <SelectItem value='expense'>Expense</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </>
+              <div className='space-y-1'>
+                <label className='mb-1 block text-xs font-medium sm:text-sm'>Category</label>
+                <Select onValueChange={handleCategoryChange} value={filters.categoryId || 'all'}>
+                  <SelectTrigger className='h-9 w-full text-xs sm:h-10 sm:text-sm'>
+                    <SelectValue placeholder='All Categories' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='all'>All Categories</SelectItem>
+                    {categories?.categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
 
-            <div>
+            {isOwner && (
+              <div className='space-y-1'>
+                <label className='mb-1 block text-xs font-medium sm:text-sm'>Type</label>
+                <Select
+                  onValueChange={handleIncomeTypeChange}
+                  value={filters.isIncome ? 'income' : 'expense'}
+                >
+                  <SelectTrigger className='h-9 w-full text-xs sm:h-10 sm:text-sm'>
+                    <SelectValue placeholder='All Types' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='all'>All Types</SelectItem>
+                    <SelectItem value='income'>Income</SelectItem>
+                    <SelectItem value='expense'>Expense</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className='space-y-1'>
               <label className='mb-1 block text-xs font-medium sm:text-sm'>Date Range</label>
               <DateRangePickerV2
                 onDateChange={handleDateRangeSelect}
@@ -161,15 +161,17 @@ export const AccountTransactionsSection = ({
             </div>
 
             {isOwner && (
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={handleResetFilters}
-                className='flex items-center gap-2 sm:col-span-3'
-              >
-                <X className='h-4 w-4' />
-                Reset Filters
-              </Button>
+              <div className='mt-5 flex items-center max-sm:mt-0 max-sm:items-end'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={handleResetFilters}
+                  className='flex w-full items-center gap-2'
+                >
+                  <X className='h-4 w-4' />
+                  Reset Filters
+                </Button>
+              </div>
             )}
           </div>
         )}

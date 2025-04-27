@@ -1,25 +1,98 @@
 ---
 description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 # Project Structure Guide
 
-This is an expense tracker application with a Next.js frontend and Node.js backend.
+This is an expense tracker application with a Next.js frontend and Bun.js backend.
 
 ## Frontend Structure
 The frontend is built with Next.js and is located in the [frontend](mdc:frontend) directory:
-- [frontend/src](mdc:frontend/src): Contains the main application code
+
+### Core Directories
+- [frontend/src/app](mdc:frontend/src/app): Next.js App Router structure
+  - `(private)`: Routes requiring authentication
+  - `(public)`: Public routes (auth, landing)
+  - `layout.tsx`: Root layout
+  - `globals.css`: Global styles
+
+### Components
+- [frontend/src/components](mdc:frontend/src/components): Reusable UI components
+  - `ui/`: Base UI components (Shadcn + custom)
+  - `modals/`: Dialog/Modal components
+  - `dashboard/`: Dashboard specific components
+  - Feature-specific components (account, budget, etc.)
+
+### Core Logic
+- [frontend/src/lib](mdc:frontend/src/lib): Core logic and utilities
+  - `endpoints/`: API request functions
+  - `hooks/`: Custom React hooks
+  - `utils/`: Utility functions & schemas
+  - `config/`: Application configuration
+
+### Configuration Files
 - [frontend/package.json](mdc:frontend/package.json): Frontend dependencies and scripts
 - [frontend/tailwind.config.ts](mdc:frontend/tailwind.config.ts): Tailwind CSS configuration
 - [frontend/next.config.ts](mdc:frontend/next.config.ts): Next.js configuration
+- [frontend/tsconfig.json](mdc:frontend/tsconfig.json): TypeScript configuration
 
 ## Backend Structure
-The backend is a Node.js application located in the [backend](mdc:backend) directory:
-- [backend/src](mdc:backend/src): Contains the server code and API endpoints
+The backend is a Bun.js application located in the [backend](mdc:backend) directory:
+
+### Core Directories
+- [backend/src](mdc:backend/src): Main application code
+  - `routes/`: API route handlers
+  - `middleware/`: Custom middleware
+  - `utils/`: Utility functions
+  - `types/`: TypeScript types
+  - `db/`: Database related code
+  - `services/`: Business logic
+
+### Database
+- [backend/drizzle](mdc:backend/drizzle): Database schema and migrations
+  - `schema/`: Drizzle ORM schema definitions
+  - `migrations/`: Database migration files
+- [backend/drizzle.config.ts](mdc:backend/drizzle.config.ts): Drizzle ORM configuration
+
+### Configuration Files
 - [backend/package.json](mdc:backend/package.json): Backend dependencies and scripts
-- [backend/drizzle.config.ts](mdc:backend/drizzle.config.ts): Database configuration using Drizzle ORM
-- [backend/Dockerfile](mdc:backend/Dockerfile): Docker configuration for containerization
+- [backend/tsconfig.json](mdc:backend/tsconfig.json): TypeScript configuration
+- [backend/.env.example](mdc:backend/.env.example): Environment variables template
 
 ## API Documentation
-The backend API documentation is available in [backend/expense-backend-api.collection.json](mdc:backend/expense-backend-api.collection.json), which is a Postman collection containing all API endpoints and examples. but make sure it not 100% correct so always look backend code itself.
+The backend API documentation is available in [backend/expense-backend-api.collection.json](mdc:backend/expense-backend-api.collection.json), which is a Postman collection containing all API endpoints and examples.
+
+### API Structure
+- Authentication: `/auth/*`
+- Users: `/users/*`
+- Accounts: `/accounts/*`
+- Transactions: `/transactions/*`
+- Categories: `/categories/*`
+- Budgets: `/budgets/*`
+- Goals: `/goals/*`
+- Investments: `/investments/*`
+- Debts: `/debts/*`
+- Analytics: `/analytics/*`
+
+## Environment Variables
+
+### Frontend
+- `NEXT_PUBLIC_API_BASE_URL`: Backend API URL
+
+### Backend
+- `DATABASE_URL`: PostgreSQL connection string
+- `JWT_SECRET`: JWT signing secret
+- `FRONTEND_URL`: Frontend application URL
+- `GMAIL_USERNAME`: Email username
+- `GMAIL_PASS`: Email password
+- `SMTP_*`: Custom SMTP settings (optional)
+
+## Development Workflow
+1. Clone the repository
+2. Install dependencies (both frontend and backend)
+3. Set up environment variables
+4. Run database migrations
+5. Start development servers
+6. Access frontend at `http://localhost:3000`
+7. Access backend at `http://localhost:1337`

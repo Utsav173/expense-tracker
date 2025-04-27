@@ -1,5 +1,5 @@
 import React from 'react';
-import { Category } from '@/types/category';
+import { Category } from '@/lib/types';
 import { Button } from '../ui/button';
 import { Edit, Trash2 } from 'lucide-react';
 import DeleteConfirmationModal from '../modals/delete-confirmation-modal';

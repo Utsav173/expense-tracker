@@ -31,7 +31,9 @@ export const BudgetProgress: React.FC<{ className?: string }> = ({ className }) 
     queryFn: () => budgetGetSummary(selectedMonth, selectedYear),
     enabled: true,
     retry: 1,
-    staleTime: 5 * 60 * 1000
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true
   });
 
   useEffect(() => {
