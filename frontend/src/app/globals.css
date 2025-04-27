@@ -535,3 +535,32 @@
     scrollbar-color: hsl(var(--muted-foreground) / 0.2) transparent;
   }
 }
+
+.recharts-tooltip-wrapper:focus,
+.recharts-tooltip-wrapper:focus-visible {
+  outline: none !important;
+  border: none !important; /* Add border:none just in case */
+}
+
+/* Target the main Recharts container/surface */
+.recharts-wrapper:focus,
+.recharts-wrapper:focus-visible,
+.recharts-surface:focus,
+.recharts-surface:focus-visible {
+  outline: none !important;
+}
+
+/* Target individual sectors/cells (though you already tried with classes) */
+.recharts-pie-sector:focus,
+.recharts-pie-sector:focus-visible,
+.recharts-cell:focus,
+.recharts-cell:focus-visible {
+  outline: none !important;
+}
+
+/* Target elements within your active shape if necessary */
+/* (Less likely to be the direct cause of the box, but good for completeness) */
+.recharts-active-shape:focus,
+.recharts-active-shape:focus-visible {
+  outline: none !important;
+}

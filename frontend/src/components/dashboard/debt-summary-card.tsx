@@ -25,7 +25,9 @@ export const DebtSummaryCard: React.FC<{
     queryKey: ['outstandingDebtsDashboard'],
     queryFn: () => getOutstandingDebts(),
     retry: 1,
-    staleTime: 10 * 60 * 1000
+    staleTime: 10 * 60 * 1000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true
   });
 
   React.useEffect(() => {

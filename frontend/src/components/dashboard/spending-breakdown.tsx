@@ -116,6 +116,7 @@ const renderActiveShape = (props: ActiveShapeProps) => {
         endAngle={endAngle}
         fill={fill}
         className='opacity-100'
+        onClick={(e) => e.stopPropagation()}
       />
       <Sector
         cx={cx}
@@ -126,6 +127,7 @@ const renderActiveShape = (props: ActiveShapeProps) => {
         outerRadius={outerRadius + 10}
         fill={fill}
         className='opacity-90'
+        onClick={(e) => e.stopPropagation()}
       />
       <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill='none' />
       <circle cx={ex} cy={ey} r={2} fill={fill} stroke='none' />
@@ -171,7 +173,9 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
     queryKey: ['spendingBreakdown', duration, accountId],
     queryFn: () => transactionGetCategoryChart({ duration, accountId }),
     staleTime: 5 * 60 * 1000,
-    retry: 1
+    retry: 1,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true
   });
 
   useEffect(() => {
@@ -358,7 +362,7 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
           Expenses by category for {durationLabels[duration]}.{accountId && ' (Account specific)'}
         </CardDescription>
       </CardHeader>
-      <CardContent className='min-h-0 flex-1 pt-4'>
+      <CardContent className='min-h-[400px] flex-1 pt-4'>
         {isLoading || isFetching ? (
           <div className='flex h-full items-center justify-center'>
             <Skeleton className='h-[200px] w-[200px] rounded-full' />

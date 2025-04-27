@@ -7,20 +7,40 @@ import { cn, formatCurrency } from '@/lib/utils';
 import Link from 'next/link';
 import { Button } from '../ui/button';
 import { SingleLineEllipsis } from '../ui/ellipsis-components';
+import { useQuery } from '@tanstack/react-query';
+import { accountGetDropdown } from '@/lib/endpoints/accounts';
 
 interface AccountListSummaryProps {
   accountsInfo: DashboardData['accountsInfo'] | undefined;
-  accountIdToCurrencyMap: Map<string, string>;
   isLoading: boolean;
   className?: string;
 }
 
 export const AccountListSummary: React.FC<AccountListSummaryProps> = ({
   accountsInfo,
-  accountIdToCurrencyMap,
   isLoading,
   className
 }) => {
+  // Fetch accounts dropdown to get currency info
+  const { data: accountsDropdown } = useQuery({
+    queryKey: ['accountsDropdown'],
+    queryFn: accountGetDropdown,
+    staleTime: 30 * 60 * 1000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true
+  });
+
+  // Build the currency map
+  const accountIdToCurrencyMap = React.useMemo(() => {
+    const map = new Map<string, string>();
+    accountsDropdown?.forEach((acc) => {
+      if (acc?.id && acc.currency) {
+        map.set(acc.id, acc.currency);
+      }
+    });
+    return map;
+  }, [accountsDropdown]);
+
   const sortedAccounts = accountsInfo
     ?.slice()
     .sort((a, b) => (b.balance ?? 0) - (a.balance ?? 0))

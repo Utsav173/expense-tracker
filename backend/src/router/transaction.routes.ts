@@ -626,6 +626,7 @@ transactionRouter.post('/', zValidator('json', transactionSchema), authMiddlewar
     recurrenceType,
     recurrenceEndDate,
     currency,
+    createdAt,
   } = await c.req.json();
 
   // get userId from token
@@ -677,6 +678,7 @@ transactionRouter.post('/', zValidator('json', transactionSchema), authMiddlewar
       recurrenceType: recurring ? recurrenceType : null,
       recurrenceEndDate: recurring ? new Date(recurrenceEndDate) : null,
       currency: currency ?? validAccount[0].currency,
+      createdAt: createdAt ? new Date(createdAt) : new Date(),
     })
     .returning()
     .then(async (data) => {

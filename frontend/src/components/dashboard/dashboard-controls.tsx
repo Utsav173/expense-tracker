@@ -13,9 +13,10 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { RefreshCw, LayoutGrid, ChevronDown, SlidersHorizontal, Sun, Moon } from 'lucide-react';
+import { LayoutGrid, ChevronDown, SlidersHorizontal, Sun, Moon, ArrowLeft } from 'lucide-react';
 import { DASHBOARD_PRESETS, PresetConfig } from '@/config/dashboard-config';
 import { ModeToggle } from '../theme-toggle';
+import { useRouter } from 'next/navigation';
 
 interface DashboardControlsProps {
   currentPreset: string;
@@ -23,13 +24,10 @@ interface DashboardControlsProps {
   hiddenSections: Set<string>;
   refreshInterval: number;
   isDarkMode: boolean;
-  isRefreshing: boolean;
-  isLoading: boolean;
   onChangePreset: (preset: string) => void;
   onToggleSectionVisibility: (sectionId: string) => void;
   onSetRefreshInterval: (intervalMs: number) => void;
   onToggleDarkMode: () => void;
-  onRefetchAll: () => void;
 }
 
 export const DashboardControls: React.FC<DashboardControlsProps> = ({
@@ -38,24 +36,43 @@ export const DashboardControls: React.FC<DashboardControlsProps> = ({
   hiddenSections,
   refreshInterval,
   isDarkMode,
-  isRefreshing,
-  isLoading,
   onChangePreset,
   onToggleSectionVisibility,
   onSetRefreshInterval,
-  onToggleDarkMode,
-  onRefetchAll
+  onToggleDarkMode
 }) => {
+  const router = useRouter();
   return (
-    <div className='sticky top-5 z-20 flex w-full flex-col gap-4 rounded-lg border border-white/20 bg-white/10 px-4 py-4 backdrop-blur-xl max-sm:px-1 sm:flex-row sm:items-center sm:justify-between dark:border-white/10 dark:bg-white/5'>
-      <h1 className='text-3xl font-bold'>{DASHBOARD_PRESETS[currentPreset]} Dashboard</h1>
+    <div className='sticky top-5 z-20 flex w-full flex-col gap-4 rounded-lg border border-white/20 bg-white/10 px-2 py-3 backdrop-blur-xl max-sm:px-1 sm:flex-row sm:items-center sm:justify-between dark:border-white/10 dark:bg-white/5'>
+      <div className='absolute top-2 left-2 hidden max-sm:block'>
+        <Button variant='ghost' size='icon' onClick={() => router.back()}>
+          <ArrowLeft className='h-4 w-4' />
+        </Button>
+      </div>
 
-      <div className='flex flex-wrap items-center gap-2'>
+      {/* Responsive Dashboard Title */}
+      <h1 className='text-foreground text-2xl font-bold tracking-tight whitespace-nowrap max-sm:mx-auto sm:text-3xl'>
+        {DASHBOARD_PRESETS[currentPreset]} Dashboard
+      </h1>
+
+      {/* Controls Row: horizontally scrollable on mobile */}
+      <div
+        className='scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent flex flex-nowrap items-center gap-2 overflow-x-auto py-1 max-sm:mx-auto sm:flex-wrap sm:overflow-x-visible'
+        tabIndex={-1}
+      >
+        {/* Preset Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant='outline' size='sm' className='flex items-center gap-2'>
+            <Button
+              variant='outline'
+              size='sm'
+              className='flex min-w-fit items-center gap-2'
+              aria-label='Select Dashboard View'
+            >
               <LayoutGrid className='h-4 w-4' />
-              {DASHBOARD_PRESETS[currentPreset] || 'Select View'}
+              <span className='xs:inline hidden'>
+                {DASHBOARD_PRESETS[currentPreset] || 'Select View'}
+              </span>
               <ChevronDown className='h-3 w-3' />
             </Button>
           </DropdownMenuTrigger>
@@ -68,9 +85,15 @@ export const DashboardControls: React.FC<DashboardControlsProps> = ({
           </DropdownMenuContent>
         </DropdownMenu>
 
+        {/* Options Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant='outline' size='sm' className='flex items-center gap-2'>
+            <Button
+              variant='outline'
+              size='sm'
+              className='flex min-w-fit items-center gap-2'
+              aria-label='Dashboard Options'
+            >
               <SlidersHorizontal className='h-4 w-4' />
               <span className='hidden sm:inline'>Options</span>
               <ChevronDown className='h-3 w-3' />
@@ -121,17 +144,6 @@ export const DashboardControls: React.FC<DashboardControlsProps> = ({
         </DropdownMenu>
 
         <ModeToggle />
-
-        <Button
-          variant={isRefreshing ? 'outline' : 'default'}
-          size='sm'
-          onClick={onRefetchAll}
-          disabled={isRefreshing || isLoading}
-          className='min-w-[110px]'
-        >
-          <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
-        </Button>
       </div>
     </div>
   );

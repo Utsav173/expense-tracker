@@ -58,6 +58,7 @@ export const transactionSchema = z.object({
   recurrenceType: z.enum(['daily', 'weekly', 'monthly', 'yearly']).optional().nullable(),
   recurrenceEndDate: z.string().optional().nullable(),
   currency: z.string().optional(),
+  createdAt: z.string().optional().nullable(),
 });
 
 export const interestSchema = z.object({

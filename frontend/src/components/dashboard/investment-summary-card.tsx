@@ -74,7 +74,9 @@ export const InvestmentSummaryCard: React.FC<{
     queryKey: ['investmentPortfolioSummaryDashboard'],
     queryFn: () => investmentGetPortfolioSummary(),
     retry: 1,
-    staleTime: 15 * 60 * 1000
+    staleTime: 15 * 60 * 1000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true
   });
 
   const {
@@ -99,7 +101,9 @@ export const InvestmentSummaryCard: React.FC<{
       summaryData.numberOfHoldings > 0 &&
       (selectedPeriod !== 'custom' || (!!dateRange?.from && !!dateRange?.to)),
     retry: 1,
-    staleTime: 60 * 60 * 1000
+    staleTime: 60 * 60 * 1000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true
   });
 
   React.useEffect(() => {

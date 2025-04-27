@@ -5,8 +5,12 @@ export const categoryCreate = (
   body: any,
   successMessage?: string,
   errorMessage?: string
-): Promise<ApiResponse<Category>> =>
-  apiFetch('/category', 'POST', body, undefined, successMessage, errorMessage);
+): Promise<
+  ApiResponse<{
+    data: Category;
+    message: string;
+  }>
+> => apiFetch('/category', 'POST', body, undefined, successMessage, errorMessage);
 
 export const categoryUpdate = (
   id: string,

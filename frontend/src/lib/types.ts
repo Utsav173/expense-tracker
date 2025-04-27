@@ -142,6 +142,7 @@ export interface AccountDropdown {
   id: string;
   name: string;
   currency: string;
+  balance?: number;
 }
 
 // UserAccount Interface

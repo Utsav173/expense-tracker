@@ -4,7 +4,7 @@ import { ScaleLoader } from 'react-spinners';
 const Loader = ({ className }: { className?: string }) => {
   return (
     <div className={cn('flex h-full w-full items-center justify-center', className)}>
-      <ScaleLoader />
+      <ScaleLoader color='hsl(var(--primary))' />
     </div>
   );
 };

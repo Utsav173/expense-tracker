@@ -1,28 +1,28 @@
 'use client';
 
+import React from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { categoryCreate, categoryUpdate } from '@/lib/endpoints/category';
 import { useToast } from '@/lib/hooks/useToast';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import AddModal from './add-modal';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
+import { Loader2 } from 'lucide-react';
 
+// Schema with more validation rules
 const categorySchema = z.object({
-  name: z.string().min(3, {
-    message: 'Category name must be at least 3 characters.'
-  })
+  name: z
+    .string()
+    .min(3, 'Category name must be at least 3 characters')
+    .max(50, 'Category name cannot exceed 50 characters')
+    .trim()
+    .refine((value) => /^[a-zA-Z0-9\s-_]+$/.test(value), {
+      message: 'Category name can only contain letters, numbers, spaces, hyphens, and underscores'
+    })
 });
 
 type CategorySchemaType = z.infer<typeof categorySchema>;
@@ -49,65 +49,130 @@ const AddCategoryModal: React.FC<CreateCategoryModalProps> = ({
   const { showSuccess, showError } = useToast();
   const invalidate = useInvalidateQueries();
 
-  const form = useForm<CategorySchemaType>({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isValid, isSubmitting }
+  } = useForm<CategorySchemaType>({
     resolver: zodResolver(categorySchema),
     defaultValues: {
       name: initialValues?.name || ''
-    }
+    },
+    mode: 'onChange'
   });
 
-  const createCategoryMutation = useMutation({
-    mutationFn: (data: CategorySchemaType) =>
-      categoryId ? categoryUpdate(categoryId, data) : categoryCreate(data),
+  const { mutateAsync, isPending } = useMutation({
+    mutationFn: async (data: CategorySchemaType) => {
+      try {
+        if (categoryId) {
+          return await categoryUpdate(categoryId, data);
+        }
+        return await categoryCreate(data);
+      } catch (error: any) {
+        const errorMessage = error.response?.data?.message || error.message || 'An error occurred';
+        throw new Error(errorMessage);
+      }
+    },
     onSuccess: async () => {
       await invalidate(['categories']);
       showSuccess(categoryId ? 'Category updated successfully!' : 'Category created successfully!');
-      form.reset();
-      onCategoryAdded();
-      onOpenChange(false);
+      handleModalClose();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       showError(error.message);
     }
   });
 
-  const handleCreate = async (data: CategorySchemaType) => {
-    await createCategoryMutation.mutateAsync(data);
+  const handleModalClose = () => {
+    reset();
+    onCategoryAdded();
+    onOpenChange(false);
   };
+
+  const onSubmit = async (data: CategorySchemaType) => {
+    try {
+      await mutateAsync(data);
+    } catch (error) {
+      // Error is handled by mutation error callback
+      console.error('Failed to handle category operation:', error);
+    }
+  };
+
+  const isSubmitDisabled = isPending || !isValid;
 
   return (
     <AddModal
       isOpen={isOpen}
-      onOpenChange={onOpenChange}
+      onOpenChange={(open) => {
+        if (!open && !isPending) {
+          handleModalClose();
+        }
+        onOpenChange(open);
+      }}
       title={categoryId ? 'Edit Category' : 'Create Category'}
       description={
-        categoryId ? 'Edit your transaction category.' : 'Add an new transaction category.'
+        categoryId ? 'Edit your transaction category.' : 'Add a new transaction category.'
       }
       triggerButton={
-        noTriggerButton ? null : triggerButton || <Button type='button'>Create Category</Button>
+        noTriggerButton
+          ? null
+          : triggerButton || (
+              <Button type='button' variant='outline' className='w-full sm:w-auto'>
+                {categoryId ? 'Edit Category' : 'Create Category'}
+              </Button>
+            )
       }
     >
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleCreate)} className='space-y-4'>
-          <FormField
-            control={form.control}
-            name='name'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Category Name</FormLabel>
-                <FormControl>
-                  <Input placeholder='Category name' {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+      <form onSubmit={handleSubmit(onSubmit)} className='space-y-6' autoComplete='off'>
+        <div className='space-y-2'>
+          <Input
+            id='category-name'
+            placeholder='e.g., Groceries, Utilities'
+            {...register('name')}
+            disabled={isPending}
+            className='mt-2'
+            autoFocus
+            aria-invalid={!!errors.name}
+            aria-describedby={errors.name ? 'category-name-error' : undefined}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                if (!isSubmitDisabled) {
+                  handleSubmit(onSubmit)();
+                }
+              }
+            }}
           />
-
-          <Button type='submit' disabled={createCategoryMutation.isPending}>
-            {categoryId ? 'Update' : 'Create'}
+          {errors.name && (
+            <p id='category-name-error' className='text-destructive text-xs font-medium'>
+              {errors.name.message}
+            </p>
+          )}
+        </div>
+        <div className='flex justify-end gap-3'>
+          <Button
+            type='button'
+            variant='outline'
+            onClick={() => onOpenChange(false)}
+            disabled={isPending}
+          >
+            Cancel
           </Button>
-        </form>
-      </Form>
+          <Button type='submit' disabled={isSubmitDisabled} className='min-w-[100px]'>
+            {isPending ? (
+              <>
+                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                {categoryId ? 'Updating...' : 'Creating...'}
+              </>
+            ) : categoryId ? (
+              'Update'
+            ) : (
+              'Create'
+            )}
+          </Button>
+        </div>
+      </form>
     </AddModal>
   );
 };

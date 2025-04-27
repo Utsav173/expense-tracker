@@ -1,6 +1,6 @@
 'use client';
 
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useId } from 'react';
 
 import {
   Dialog,
@@ -21,19 +21,42 @@ interface AddModalProps {
   hideClose?: boolean;
 }
 
-const AddModal: React.FC<AddModalProps> = ({
+const AddModal = ({
+  children,
   title,
   description,
-  children,
   triggerButton,
-  onOpenChange,
   isOpen,
+  onOpenChange,
   hideClose = false
-}) => {
+}: AddModalProps) => {
+  const id = useId();
+
+  const handleTriggerClick = (e: React.MouseEvent<HTMLElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onOpenChange) {
+      onOpenChange(true);
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange} modal>
-      <DialogTrigger asChild>{triggerButton}</DialogTrigger>
-      <DialogContent className='mx-auto w-full max-w-[95vw] sm:max-w-[425px]' hideClose={hideClose}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange} key={id + 'dialog'}>
+      {triggerButton && (
+        <DialogTrigger asChild>
+          <span onClick={handleTriggerClick} style={{ display: 'contents' }}>
+            {triggerButton}
+          </span>
+        </DialogTrigger>
+      )}
+      <DialogContent
+        id={id}
+        onPointerDownOutside={(e) => {
+          e.preventDefault();
+        }}
+        className='mx-auto w-full max-w-[95vw] overflow-hidden sm:max-w-[425px]'
+        hideClose={hideClose}
+      >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>

@@ -40,6 +40,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
     if (date) {
       setSelectedDate(date);
       onChange?.(date);
+      setOpenPopover(false);
     }
   };
 
@@ -60,6 +61,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
     }
     setSelectedDate(newDate);
     onChange?.(newDate);
+    setOpenPopover(false);
   };
 
   return (
