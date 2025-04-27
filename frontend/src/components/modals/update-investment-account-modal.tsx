@@ -37,14 +37,14 @@ const investmentAccountUpdateSchema = z.object({
 
 type InvestmentAccountUpdateFormSchema = z.infer<typeof investmentAccountUpdateSchema>;
 
-interface EditInvestmentAccountModalProps {
+interface UpdateInvestmentAccountModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   account: InvestmentAccount;
   onAccountUpdated: () => void;
 }
 
-const EditInvestmentAccountModal: React.FC<EditInvestmentAccountModalProps> = ({
+const UpdateInvestmentAccountModal: React.FC<UpdateInvestmentAccountModalProps> = ({
   isOpen,
   onOpenChange,
   account,
@@ -171,4 +171,4 @@ const EditInvestmentAccountModal: React.FC<EditInvestmentAccountModalProps> = ({
   );
 };
 
-export default EditInvestmentAccountModal;
+export default UpdateInvestmentAccountModal;

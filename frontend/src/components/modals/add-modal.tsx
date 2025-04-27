@@ -33,12 +33,12 @@ const AddModal: React.FC<AddModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange} modal>
       <DialogTrigger asChild>{triggerButton}</DialogTrigger>
-      <DialogContent hideClose={hideClose}>
+      <DialogContent className='mx-auto w-full max-w-[95vw] sm:max-w-[425px]' hideClose={hideClose}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        {children}
+        <div className='max-h-[80vh] overflow-y-auto'>{children}</div>
       </DialogContent>
     </Dialog>
   );

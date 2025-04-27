@@ -25,7 +25,7 @@ import {
   InvestmentAccountSummary
 } from '@/lib/types';
 import AddInvestmentHoldingModal from '@/components/modals/add-investment-holding-modal';
-import EditInvestmentHoldingModal from '@/components/modals/edit-investment-holding-modal';
+import UpdateInvestmentHoldingModal from '@/components/modals/update-investment-holding-modal';
 import DeleteConfirmationModal from '@/components/modals/delete-confirmation-modal';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
@@ -265,7 +265,7 @@ const InvestmentAccountDetailPage = () => {
       />
 
       {selectedInvestment && (
-        <EditInvestmentHoldingModal
+        <UpdateInvestmentHoldingModal
           isOpen={isEditModalOpen}
           onOpenChange={setIsEditModalOpen}
           investment={selectedInvestment}

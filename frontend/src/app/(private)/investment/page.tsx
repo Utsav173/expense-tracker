@@ -14,7 +14,7 @@ import { useToast } from '@/lib/hooks/useToast';
 import { PlusCircle, Edit, TrendingUp } from 'lucide-react';
 import { InvestmentAccount } from '@/lib/types';
 import AddInvestmentAccountModal from '@/components/modals/add-investment-account-modal';
-import EditInvestmentAccountModal from '@/components/modals/edit-investment-account-modal';
+import UpdateInvestmentAccountModal from '@/components/modals/update-investment-account-modal';
 import DeleteConfirmationModal from '@/components/modals/delete-confirmation-modal';
 import { Card } from '@/components/ui/card';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
@@ -151,7 +151,7 @@ const InvestmentPage = () => {
       />
 
       {selectedAccount && (
-        <EditInvestmentAccountModal
+        <UpdateInvestmentAccountModal
           isOpen={isEditModalOpen}
           onOpenChange={setIsEditModalOpen}
           account={selectedAccount}

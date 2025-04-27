@@ -43,7 +43,7 @@ const formSchema = z.object({
 
 type AccountUpdatePayload = Pick<z.infer<typeof formSchema>, 'name'>;
 
-interface EditAccountModalProps {
+interface UpdateAccountModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   accountId: string;
@@ -55,13 +55,13 @@ interface EditAccountModalProps {
   onAccountUpdated: () => void;
 }
 
-export function EditAccountModal({
+export function UpdateAccountModal({
   open,
   onOpenChange,
   accountId,
   initialValues,
   onAccountUpdated
-}: EditAccountModalProps) {
+}: UpdateAccountModalProps) {
   const { showSuccess, showError } = useToast();
   const invalidate = useInvalidateQueries();
 

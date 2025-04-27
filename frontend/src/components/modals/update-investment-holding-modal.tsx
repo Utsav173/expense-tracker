@@ -54,7 +54,7 @@ import DateTimePicker from '../date/date-time-picker';
 type InvestmentHoldingUpdateFormSchema = z.infer<typeof investmentHoldingUpdateSchema>;
 type DividendUpdateFormSchema = z.infer<typeof dividendUpdateSchema>;
 
-interface EditInvestmentHoldingModalProps {
+interface UpdateInvestmentHoldingModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   investment: Investment;
@@ -87,7 +87,7 @@ const calculateYield = (dividendStr: string | undefined, totalValue: number | nu
 };
 // --- End Helper Functions ---
 
-const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
+const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> = ({
   isOpen,
   onOpenChange,
   investment,
@@ -545,4 +545,4 @@ const EditInvestmentHoldingModal: React.FC<EditInvestmentHoldingModalProps> = ({
   );
 };
 
-export default EditInvestmentHoldingModal;
+export default UpdateInvestmentHoldingModal;

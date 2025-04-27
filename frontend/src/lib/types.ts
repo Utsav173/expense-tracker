@@ -42,6 +42,20 @@ export interface Category {
   updatedAt?: string;
 }
 
+export interface CategoryPagination {
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface CategoryListData {
+  categories: Category[];
+  pagination: CategoryPagination;
+}
+
+export type CategoryListResponse = ApiResponse<CategoryListData>;
+
 // Debts Interface
 export interface Debts {
   id: string;
