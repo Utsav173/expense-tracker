@@ -252,7 +252,7 @@ export const InvestmentSummaryCard: React.FC<{
         </CardDescription>
       </CardHeader>
       <CardContent className='space-y-4'>
-        <div className='flex items-center gap-2'>
+        <div className='flex items-center gap-2 max-sm:flex-col max-sm:justify-center'>
           <Tabs value={selectedPeriod} onValueChange={handlePeriodChange} className='w-fit'>
             <TabsList className='h-7 p-1'>
               {availablePeriodOptions.map((option) => (

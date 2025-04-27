@@ -135,7 +135,7 @@ const TransactionTable = ({
         cell: ({ row }) => (
           <Badge
             variant='outline'
-            className='bg-muted/30 max-w-[120px] truncate whitespace-nowrap md:max-w-[150px]'
+            className='bg-muted/30 mx-auto max-w-[120px] truncate whitespace-nowrap md:max-w-[150px]'
           >
             <SingleLineEllipsis
               showTooltip

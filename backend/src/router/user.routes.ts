@@ -187,7 +187,7 @@ userRouter.post('/signup', zValidator('form', userSchema), async (c) => {
     from: 'expenssManger1234@gmail.com',
     to: email.toString(),
     subject: 'Welcome email',
-    text: WelcomeEmailTemp(name, process.env.LOGINPAGE, email),
+    html: WelcomeEmailTemp(name, process.env.LOGINPAGE, email),
   };
 
   transporter.sendMail(mailOptions, (error, info) => {

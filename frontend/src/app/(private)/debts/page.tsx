@@ -86,46 +86,49 @@ const DebtsPage = () => {
   }
 
   return (
-    <div className='container mx-auto space-y-6 p-4 md:p-6 lg:p-8'>
-      <div className='flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center'>
+    <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
+      <div className='flex flex-row justify-between gap-3 max-sm:flex-col max-sm:justify-center'>
         <h1 className='text-2xl font-semibold md:text-3xl'>Debts</h1>
         <Button onClick={() => setIsAddModalOpen(true)} size='sm'>
           <PlusCircle className='mr-2 h-4 w-4' /> Add Debt
         </Button>
       </div>
 
-      <div className='flex flex-col gap-4 sm:flex-row'>
+      <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4'>
         <Input
           type='text'
           placeholder='Search description, due date, amount...'
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className='max-w-xs grow'
+          className='max-w-full grow sm:max-w-xs'
         />
 
-        <Select onValueChange={(value) => setType(value as DebtTypeFilter)} value={type || 'all'}>
-          <SelectTrigger className='w-full sm:w-[180px]'>
-            <SelectValue placeholder='Select Type' />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value='all'>All Types</SelectItem>
-            <SelectItem value='given'>Given</SelectItem>
-            <SelectItem value='taken'>Taken</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className='w-full sm:w-[180px]'>
+          <Select onValueChange={(value) => setType(value as DebtTypeFilter)} value={type || 'all'}>
+            <SelectTrigger className='w-full'>
+              <SelectValue placeholder='Select Type' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='all'>All Types</SelectItem>
+              <SelectItem value='given'>Given</SelectItem>
+              <SelectItem value='taken'>Taken</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      <CommonTable
-        data={debts?.data || []}
-        columns={debtColumns}
-        loading={isLoading}
-        totalRecords={debts?.totalCount || 0}
-        pageSize={10}
-        currentPage={page}
-        onPageChange={handlePageChange}
-        enablePagination
-        mobileTriggerColumns={['amount', 'dueDate']}
-      />
+      <div className='w-full'>
+        <CommonTable
+          data={debts?.data || []}
+          columns={debtColumns}
+          loading={isLoading}
+          totalRecords={debts?.totalCount || 0}
+          pageSize={10}
+          currentPage={page}
+          onPageChange={handlePageChange}
+          enablePagination
+        />
+      </div>
 
       <AddDebtModal
         isOpen={isAddModalOpen}

@@ -5,13 +5,14 @@ import { format } from 'date-fns';
 import { debtsMarkAsPaid, apiDeleteDebt } from '@/lib/endpoints/debt';
 import { useMutation } from '@tanstack/react-query';
 import { useToast } from '@/lib/hooks/useToast';
-import { Check, Pencil, Trash2 } from 'lucide-react';
+import { Check, Eye, Pencil, Trash2 } from 'lucide-react';
 import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
 import { useState } from 'react';
 import UpdateDebtModal from '../modals/update-debt-modal';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { formatCurrency } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import ComingSoonModal from '../modals/comming-soon-modal';
 
 interface DebtColumnsProps {
   user: User | undefined;
@@ -86,6 +87,8 @@ export const createDebtColumns = ({
       const debt = row.original;
       const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
       const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+      // State for the Coming Soon modal
+      const [isBreakdownModalOpen, setIsBreakdownModalOpen] = useState(false);
       const invalidate = useInvalidateQueries();
       const { showSuccess, showError } = useToast();
 
@@ -102,7 +105,7 @@ export const createDebtColumns = ({
       });
 
       const deleteDebtMutation = useMutation({
-        mutationFn: (id: string) => apiDeleteDebt(id), // Use the delete function
+        mutationFn: (id: string) => apiDeleteDebt(id),
         onSuccess: async () => {
           await invalidate(['debts']);
           showSuccess('Debt deleted successfully!');
@@ -124,22 +127,42 @@ export const createDebtColumns = ({
 
       return (
         <div className='flex justify-end gap-1'>
+          {/* Mark as Paid Button */}
           {!debt.debts.isPaid && (
             <Button
               size='icon'
               variant='ghost'
               onClick={handlePaid}
               disabled={markAsPaidMutation.isPending}
-              className='text-green-600 hover:text-green-700'
+              className='h-8 w-8 text-green-600 hover:text-green-700'
+              aria-label='Mark as Paid'
             >
               <Check size={18} />
-              <span className='sr-only'>Mark as Paid</span>
             </Button>
           )}
-          <Button size='icon' variant='ghost' onClick={() => setIsUpdateModalOpen(true)}>
-            <Pencil size={18} />
-            <span className='sr-only'>Edit Debt</span>
+
+          {/* View Breakdown Button */}
+          <Button
+            size='icon'
+            variant='ghost'
+            className='hover:text-primary h-8 w-8'
+            onClick={() => setIsBreakdownModalOpen(true)}
+            aria-label='View Debt Breakdown'
+          >
+            <Eye size={16} />
           </Button>
+
+          {/* Edit Button */}
+          <Button
+            size='icon'
+            variant='ghost'
+            onClick={() => setIsUpdateModalOpen(true)}
+            className='h-8 w-8 hover:text-blue-600'
+            aria-label='Edit Debt'
+          >
+            <Pencil size={16} />
+          </Button>
+          {/* Delete Button */}
           <DeleteConfirmationModal
             title='Delete Debt'
             description={
@@ -155,15 +178,16 @@ export const createDebtColumns = ({
               <Button
                 size='icon'
                 variant='ghost'
-                className='text-destructive hover:text-destructive'
+                className='text-destructive hover:text-destructive h-8 w-8'
                 onClick={() => setIsDeleteModalOpen(true)}
+                aria-label='Delete Debt'
               >
-                <Trash2 size={18} />
-                <span className='sr-only'>Delete Debt</span>
+                <Trash2 size={16} />
               </Button>
             }
           />
 
+          {/* Update Debt Modal */}
           {isUpdateModalOpen && (
             <UpdateDebtModal
               isOpen={isUpdateModalOpen}
@@ -172,6 +196,13 @@ export const createDebtColumns = ({
               onDebtUpdated={refetchDebts}
             />
           )}
+
+          {/* Render the Coming Soon Modal */}
+          <ComingSoonModal
+            isOpen={isBreakdownModalOpen}
+            onOpenChange={setIsBreakdownModalOpen}
+            featureName='Debt Breakdown & Details'
+          />
         </div>
       );
     }

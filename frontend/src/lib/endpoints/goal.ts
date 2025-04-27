@@ -1,6 +1,13 @@
 import { Pagination, SavingGoal, ApiResponse } from '../types';
 import apiFetch from '../api-client';
 
+export type GoalApiPayload = {
+  name: string;
+  targetAmount: number;
+  savedAmount?: number; // Optional number
+  targetDate?: string | null; // Optional ISO string or null
+};
+
 export const goalCreate = (
   body: { name: string; targetAmount: number; targetDate?: string },
   successMessage?: string,
@@ -22,7 +29,7 @@ export const goalGetAll = (
 
 export const goalUpdate = (
   id: string,
-  body: { name?: string; targetAmount?: number; savedAmount?: number; targetDate?: Date },
+  body: GoalApiPayload,
   successMessage?: string,
   errorMessage?: string
 ): Promise<ApiResponse<{ message: string; id: string }>> =>

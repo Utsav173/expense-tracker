@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -15,7 +15,8 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
+  DialogClose
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -29,10 +30,20 @@ import { InvestmentAccount } from '@/lib/types';
 import { fetchCurrencies, COMMON_CURRENCIES } from '@/lib/endpoints/currency';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import CurrencySelect from '../ui/currency-select';
+import { Loader2, Pencil, Landmark, Building, CircleDollarSign } from 'lucide-react';
 
+// Schema remains the same - validates only editable fields
 const investmentAccountUpdateSchema = z.object({
-  name: z.string().min(2, 'Account name must be at least 2 characters.'),
-  platform: z.string().min(1, 'Platform name is required.')
+  name: z
+    .string()
+    .min(2, 'Account name must be at least 2 characters.')
+    .max(100, 'Account name cannot exceed 100 characters.')
+    .trim(),
+  platform: z
+    .string()
+    .min(1, 'Platform name is required.')
+    .max(64, 'Platform name cannot exceed 64 characters.')
+    .trim()
 });
 
 type InvestmentAccountUpdateFormSchema = z.infer<typeof investmentAccountUpdateSchema>;
@@ -40,7 +51,7 @@ type InvestmentAccountUpdateFormSchema = z.infer<typeof investmentAccountUpdateS
 interface UpdateInvestmentAccountModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  account: InvestmentAccount;
+  account: InvestmentAccount; // Use specific type
   onAccountUpdated: () => void;
 }
 
@@ -68,14 +79,15 @@ const UpdateInvestmentAccountModal: React.FC<UpdateInvestmentAccountModalProps> 
   const form = useForm<InvestmentAccountUpdateFormSchema>({
     resolver: zodResolver(investmentAccountUpdateSchema),
     defaultValues: {
-      name: account.name,
-      platform: account.platform || ''
+      name: account?.name ?? '',
+      platform: account?.platform ?? ''
     },
-    mode: 'onSubmit'
+    mode: 'onChange' // Enable onChange validation
   });
 
-  React.useEffect(() => {
-    if (isOpen) {
+  // Reset form when modal opens or account data changes
+  useEffect(() => {
+    if (isOpen && account) {
       form.reset({
         name: account.name,
         platform: account.platform || ''
@@ -87,39 +99,61 @@ const UpdateInvestmentAccountModal: React.FC<UpdateInvestmentAccountModalProps> 
     mutationFn: ({ id, data }: { id: string; data: InvestmentAccountUpdateFormSchema }) =>
       investmentAccountUpdate(id, data),
     onSuccess: async () => {
+      // Invalidate relevant queries
       await invalidate(['investmentAccounts']);
       await invalidate(['investmentAccount', account.id]);
       await invalidate(['investmentPortfolioSummaryDashboard']);
       showSuccess('Investment account updated successfully!');
-      onOpenChange(false);
       onAccountUpdated();
+      handleClose(); // Close and reset
     },
     onError: (error: any) => {
-      showError(error.message);
+      const message =
+        error?.response?.data?.message || error.message || 'Failed to update investment account.';
+      showError(message);
     }
   });
 
-  const handleUpdate = async (data: InvestmentAccountUpdateFormSchema) => {
-    await updateAccountMutation.mutate({ id: account.id, data });
+  const handleUpdate = (data: InvestmentAccountUpdateFormSchema) => {
+    updateAccountMutation.mutate({ id: account.id, data });
+  };
+
+  const handleClose = () => {
+    if (!updateAccountMutation.isPending) {
+      form.reset({ name: account?.name ?? '', platform: account?.platform ?? '' });
+      onOpenChange(false);
+    }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className='sm:max-w-[480px]'>
         <DialogHeader>
-          <DialogTitle>Edit Investment Account</DialogTitle>
-          <DialogDescription>Update the details of your investment account.</DialogDescription>
+          <DialogTitle className='flex items-center gap-2'>
+            <Pencil className='h-5 w-5' /> Edit Investment Account
+          </DialogTitle>
+          <DialogDescription>
+            Update the name and platform for this investment account. Currency cannot be changed.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleUpdate)} className='space-y-4'>
+          <form onSubmit={form.handleSubmit(handleUpdate)} className='space-y-5 pt-2'>
             <FormField
               control={form.control}
               name='name'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Account Name</FormLabel>
+                  <FormLabel className='flex items-center gap-1.5'>
+                    <Landmark className='text-muted-foreground h-4 w-4' />
+                    Account Name*
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder='e.g., Zerodha Stocks' {...field} />
+                    <Input
+                      placeholder='E.g., Zerodha Stocks'
+                      {...field}
+                      disabled={updateAccountMutation.isPending}
+                      autoFocus
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -131,17 +165,28 @@ const UpdateInvestmentAccountModal: React.FC<UpdateInvestmentAccountModalProps> 
               name='platform'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Platform / Broker</FormLabel>
+                  <FormLabel className='flex items-center gap-1.5'>
+                    <Building className='text-muted-foreground h-4 w-4' />
+                    Platform / Broker*
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder='e.g., Zerodha, Groww, Upstox' {...field} />
+                    <Input
+                      placeholder='E.g., Zerodha, Groww, Upstox'
+                      {...field}
+                      disabled={updateAccountMutation.isPending}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className='space-y-2'>
-              <FormLabel>Currency (Read-only)</FormLabel>
+            {/* Display Currency (Read-only) */}
+            <FormItem>
+              <FormLabel className='text-muted-foreground flex items-center gap-1.5 text-sm'>
+                <CircleDollarSign className='h-4 w-4' />
+                Currency (Read-only)
+              </FormLabel>
               <CurrencySelect
                 currencies={currencies}
                 value={account.currency}
@@ -149,19 +194,31 @@ const UpdateInvestmentAccountModal: React.FC<UpdateInvestmentAccountModalProps> 
                 disabled
                 disabledTooltip='Currency cannot be changed after creation.'
               />
-            </div>
+            </FormItem>
 
-            <DialogFooter>
+            <DialogFooter className='gap-2 pt-4 sm:gap-0'>
+              <DialogClose asChild>
+                <Button type='button' variant='outline' disabled={updateAccountMutation.isPending}>
+                  Cancel
+                </Button>
+              </DialogClose>
               <Button
-                type='button'
-                variant='outline'
-                onClick={() => onOpenChange(false)}
-                disabled={updateAccountMutation.isPending}
+                type='submit'
+                disabled={
+                  updateAccountMutation.isPending ||
+                  !form.formState.isDirty || // Disable if unchanged
+                  !form.formState.isValid // Disable if invalid
+                }
+                className='min-w-[120px]'
               >
-                Cancel
-              </Button>
-              <Button type='submit' disabled={updateAccountMutation.isPending}>
-                {updateAccountMutation.isPending ? 'Updating...' : 'Update Account'}
+                {updateAccountMutation.isPending ? (
+                  <>
+                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                    Saving...
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
               </Button>
             </DialogFooter>
           </form>

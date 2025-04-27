@@ -80,7 +80,6 @@ const GoalPage = () => {
         currentPage={page}
         onPageChange={handlePageChange}
         enablePagination
-        mobileTriggerColumns={['savedAmount', 'targetDate']}
       />
 
       <AddGoalModal

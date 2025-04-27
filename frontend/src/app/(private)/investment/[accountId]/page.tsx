@@ -243,7 +243,6 @@ const InvestmentAccountDetailPage = () => {
             enablePagination
             sortBy={state.sortBy}
             sortOrder={state.sortOrder} // Pass typed sortOrder
-            mobileTriggerColumns={['symbol', 'shares']}
           />
         </CardContent>
       </Card>

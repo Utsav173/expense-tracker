@@ -84,7 +84,6 @@ const BudgetPage = () => {
         enablePagination
         sortBy={state.sortBy}
         sortOrder={state.sortOrder} // Pass typed sortOrder
-        mobileTriggerColumns={['category.name', 'amount']}
       />
 
       <AddBudgetModal

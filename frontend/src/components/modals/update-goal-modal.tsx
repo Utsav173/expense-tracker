@@ -1,19 +1,20 @@
 'use client';
 
+import React, { useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/lib/hooks/useToast';
 import { Button } from '../ui/button';
-import { Input } from '../ui/input';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
+  DialogClose
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -24,25 +25,41 @@ import {
   FormMessage
 } from '@/components/ui/form';
 import { SavingGoal } from '@/lib/types';
-import { goalUpdate } from '@/lib/endpoints/goal';
+import { GoalApiPayload, goalUpdate } from '@/lib/endpoints/goal';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
-import React, { useEffect } from 'react';
-import { NumericFormat } from 'react-number-format';
+import { NumericInput } from '../ui/numeric-input';
 import DateTimePicker from '../date/date-time-picker';
+import { Input } from '../ui/input';
+import { Loader2, Pencil, Target, DollarSign, CalendarDays, Coins } from 'lucide-react';
 
 const goalSchema = z.object({
-  name: z.string().min(3, 'Goal name must be at least 3 characters'),
-  targetAmount: z.string().refine((value) => !isNaN(Number(value)), {
-    message: 'Target amount must be a valid number'
-  }),
+  name: z
+    .string()
+    .min(3, 'Goal name must be at least 3 characters.')
+    .max(100, 'Goal name cannot exceed 100 characters.'),
+  targetAmount: z
+    .string()
+    .min(1, { message: 'Target amount is required.' })
+    .refine((value) => !isNaN(parseFloat(value)) && parseFloat(value) > 0, {
+      message: 'Target amount must be a positive number.'
+    })
+    .transform((val) => parseFloat(val)),
   savedAmount: z
     .string()
-    .refine((value) => !isNaN(Number(value)), { message: 'Saved amount must be valid number' })
-    .optional(),
-  targetDate: z.date().optional()
+    .optional()
+    .refine(
+      (value) =>
+        value === undefined ||
+        value === '' ||
+        (!isNaN(parseFloat(value)) && parseFloat(value) >= 0),
+      { message: 'Saved amount must be a non-negative number.' }
+    )
+    .transform((val) => (val ? parseFloat(val) : undefined)), // Keep undefined if empty
+  targetDate: z.date().optional().nullable() // Allow null or undefined date
 });
 
 type GoalFormSchema = z.infer<typeof goalSchema>;
+// API expects numbers and optional ISO string for date
 
 interface UpdateGoalModalProps {
   isOpen: boolean;
@@ -64,66 +81,88 @@ const UpdateGoalModal: React.FC<UpdateGoalModalProps> = ({
     resolver: zodResolver(goalSchema),
     defaultValues: {
       name: '',
-      targetAmount: '',
-      savedAmount: undefined,
-      targetDate: undefined
+      targetAmount: 0,
+      savedAmount: 0,
+      targetDate: null
     },
-    mode: 'onSubmit'
+    mode: 'onChange'
   });
 
   useEffect(() => {
     if (isOpen && goal) {
       form.reset({
         name: goal.name,
-        targetAmount: goal.targetAmount.toString(),
-        savedAmount: goal.savedAmount ? goal.savedAmount.toString() : undefined,
-        targetDate: goal.targetDate ? new Date(goal.targetDate) : undefined
+        targetAmount: goal.targetAmount,
+        savedAmount: goal.savedAmount ? goal.savedAmount : 0,
+        targetDate: goal.targetDate ? new Date(goal.targetDate) : null
       });
     }
-  }, [isOpen, goal, form.reset]);
+  }, [isOpen, goal, form]);
 
   const updateGoalMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => goalUpdate(id, data),
+    mutationFn: ({ id, data }: { id: string; data: GoalApiPayload }) => goalUpdate(id, data),
     onSuccess: async () => {
       await invalidate(['goals']);
       showSuccess('Goal updated successfully!');
-      onOpenChange(false);
       onGoalUpdated();
+      handleClose(); // Close and reset
     },
     onError: (error: any) => {
-      showError(error.message);
+      const message = error?.response?.data?.message || error.message || 'Failed to update goal.';
+      showError(message);
     }
   });
 
-  const handleUpdate = async (data: GoalFormSchema) => {
-    await updateGoalMutation.mutate({
-      id: goal.id,
-      data: {
-        name: data.name,
-        targetAmount: Number(data.targetAmount),
-        savedAmount: data.savedAmount ? Number(data.savedAmount) : undefined,
-        targetDate: data.targetDate
-      }
-    });
+  const handleUpdate = (data: GoalFormSchema) => {
+    // Transform data for the API
+    const apiPayload: GoalApiPayload = {
+      name: data.name,
+      targetAmount: data.targetAmount, // Already number from schema transform
+      savedAmount: data.savedAmount, // Already number or undefined from schema transform
+      targetDate: data.targetDate ? data.targetDate.toISOString() : null // Send ISO string or null
+    };
+
+    updateGoalMutation.mutate({ id: goal.id, data: apiPayload });
+  };
+
+  const handleClose = () => {
+    if (!updateGoalMutation.isPending) {
+      form.reset({
+        name: '',
+        targetAmount: 0,
+        savedAmount: 0,
+        targetDate: null
+      });
+      onOpenChange(false);
+    }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className='sm:max-w-[480px]'>
         <DialogHeader>
-          <DialogTitle>Edit Goal</DialogTitle>
-          <DialogDescription>Update your goal information.</DialogDescription>
+          <DialogTitle className='flex items-center gap-2'>
+            <Pencil className='h-5 w-5' /> Edit Saving Goal
+          </DialogTitle>
+          <DialogDescription>Update the details for your goal: "{goal?.name}".</DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleUpdate)} className='space-y-4'>
+          <form onSubmit={form.handleSubmit(handleUpdate)} className='space-y-5 pt-2'>
             <FormField
               control={form.control}
               name='name'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Goal Name</FormLabel>
+                  <FormLabel className='flex items-center gap-1.5'>
+                    <Target className='text-muted-foreground h-4 w-4' />
+                    Goal Name*
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder='Goal name' {...field} />
+                    <Input
+                      placeholder='E.g., Emergency Fund'
+                      {...field}
+                      disabled={updateGoalMutation.isPending}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -135,21 +174,20 @@ const UpdateGoalModal: React.FC<UpdateGoalModalProps> = ({
               name='targetAmount'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Target Amount</FormLabel>
+                  <FormLabel className='flex items-center gap-1.5'>
+                    <DollarSign className='text-muted-foreground h-4 w-4' />
+                    Target Amount*
+                  </FormLabel>
                   <FormControl>
-                    <NumericFormat
-                      customInput={Input}
-                      thousandSeparator=','
-                      decimalSeparator='.'
-                      allowNegative={false}
-                      decimalScale={2}
-                      fixedDecimalScale
-                      placeholder='Target Amount'
+                    <NumericInput
+                      placeholder='5,000.00'
                       className='w-full'
-                      onValueChange={(values) => {
+                      disabled={updateGoalMutation.isPending}
+                      value={field.value}
+                      onValueChange={(values: { value: any }) => {
                         field.onChange(values.value);
                       }}
-                      value={field.value}
+                      ref={field.ref as React.Ref<HTMLInputElement>}
                     />
                   </FormControl>
                   <FormMessage />
@@ -162,21 +200,20 @@ const UpdateGoalModal: React.FC<UpdateGoalModalProps> = ({
               name='savedAmount'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Saved Amount</FormLabel>
+                  <FormLabel className='flex items-center gap-1.5'>
+                    <Coins className='text-muted-foreground h-4 w-4' />
+                    Current Saved Amount (Optional)
+                  </FormLabel>
                   <FormControl>
-                    <NumericFormat
-                      customInput={Input}
-                      thousandSeparator=','
-                      decimalSeparator='.'
-                      allowNegative={false}
-                      decimalScale={2}
-                      fixedDecimalScale
-                      placeholder='Saved Amount'
+                    <NumericInput
+                      placeholder='Current progress (e.g., 1250.00)'
                       className='w-full'
-                      onValueChange={(values) => {
+                      disabled={updateGoalMutation.isPending}
+                      value={field.value}
+                      onValueChange={(values: { value: any }) => {
                         field.onChange(values.value);
                       }}
-                      value={field.value}
+                      ref={field.ref as React.Ref<HTMLInputElement>}
                     />
                   </FormControl>
                   <FormMessage />
@@ -188,19 +225,44 @@ const UpdateGoalModal: React.FC<UpdateGoalModalProps> = ({
               control={form.control}
               name='targetDate'
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Target Date</FormLabel>
+                <FormItem className='flex flex-col'>
+                  <FormLabel className='flex items-center gap-1.5'>
+                    <CalendarDays className='text-muted-foreground h-4 w-4' />
+                    Target Date (Optional)
+                  </FormLabel>
                   <FormControl>
-                    <DateTimePicker value={field.value} onChange={field.onChange} />
+                    <DateTimePicker
+                      value={field.value ?? undefined} // Pass undefined if null
+                      onChange={field.onChange}
+                      disabled={updateGoalMutation.isPending}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <DialogFooter>
-              <Button type='submit' disabled={updateGoalMutation.isPending}>
-                {updateGoalMutation.isPending ? 'Updating...' : 'Update Goal'}
+            <DialogFooter className='gap-2 pt-4 sm:gap-0'>
+              <DialogClose asChild>
+                <Button type='button' variant='outline' disabled={updateGoalMutation.isPending}>
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button
+                type='submit'
+                disabled={
+                  updateGoalMutation.isPending || !form.formState.isValid || !form.formState.isDirty
+                }
+                className='min-w-[120px]'
+              >
+                {updateGoalMutation.isPending ? (
+                  <>
+                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                    Saving...
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
               </Button>
             </DialogFooter>
           </form>

@@ -113,7 +113,6 @@ const CategoryList = React.memo(
           sortBy={sortBy}
           sortOrder={sortOrder}
           enablePagination={true}
-          mobileTriggerColumns={['name']}
         />
 
         {selectedCategory && (

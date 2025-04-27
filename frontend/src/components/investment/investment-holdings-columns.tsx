@@ -4,9 +4,10 @@ import { ColumnDef } from '@tanstack/react-table';
 import { Investment } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Eye, Pencil, Trash2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
-import React from 'react';
+import React, { useState } from 'react';
+import ComingSoonModal from '../modals/comming-soon-modal';
 
 interface InvestmentHoldingsColumnsProps {
   handleEdit: (investment: Investment) => void;
@@ -62,19 +63,50 @@ export const investmentHoldingsColumns = ({
     header: 'Actions',
     cell: ({ row }) => {
       const investment = row.original;
+      // State for the Coming Soon modal
+      const [isInsightModalOpen, setIsInsightModalOpen] = useState(false);
+
       return (
-        <div className='flex gap-1'>
-          <Button size='icon' variant='ghost' onClick={() => handleEdit(investment)}>
-            <Pencil size={16} />
-          </Button>
+        <div className='flex justify-end gap-1'>
+          {/* View Insight Button */}
           <Button
             size='icon'
             variant='ghost'
-            className='text-destructive hover:text-destructive'
+            className='hover:text-primary h-8 w-8'
+            onClick={() => setIsInsightModalOpen(true)} // Open the modal
+            aria-label='View Investment Insight'
+          >
+            <Eye size={16} />
+          </Button>
+
+          {/* Edit Button */}
+          <Button
+            size='icon'
+            variant='ghost'
+            className='h-8 w-8 hover:text-blue-600'
+            onClick={() => handleEdit(investment)}
+            aria-label='Edit Investment'
+          >
+            <Pencil size={16} />
+          </Button>
+
+          {/* Delete Button */}
+          <Button
+            size='icon'
+            variant='ghost'
+            className='text-destructive hover:text-destructive h-8 w-8'
             onClick={() => handleDeleteClick(investment.id)}
+            aria-label='Delete Investment'
           >
             <Trash2 size={16} />
           </Button>
+
+          {/* Render the Coming Soon Modal */}
+          <ComingSoonModal
+            isOpen={isInsightModalOpen}
+            onOpenChange={setIsInsightModalOpen}
+            featureName='Investment Insight & Details'
+          />
         </div>
       );
     }

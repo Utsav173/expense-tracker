@@ -54,14 +54,14 @@ const AddModal = ({
         onPointerDownOutside={(e) => {
           e.preventDefault();
         }}
-        className='mx-auto w-full max-w-[95vw] overflow-hidden sm:max-w-[425px]'
+        className='mx-auto max-h-[90dvh] max-w-[95vw] overflow-y-auto max-sm:w-full sm:max-w-[425px]'
         hideClose={hideClose}
       >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <div className='max-h-[80vh] overflow-y-auto'>{children}</div>
+        {children}
       </DialogContent>
     </Dialog>
   );
