@@ -180,13 +180,16 @@ const CommonTable = <T extends object>({
           {table.getRowModel().rows.map((row) => (
             <AccordionItem
               key={row.id}
-              value={row.id}
-              className='overflow-hidden rounded-lg border px-4'
+              value={String(row.id)}
+              className='bg-background overflow-hidden rounded-lg border px-0 sm:px-2'
             >
-              <AccordionTrigger className='[&[data-state=open]]:bg-muted hover:no-underline'>
-                <div className='flex w-full items-center justify-between'>
+              <AccordionTrigger className='[&[data-state=open]]:bg-muted min-h-[48px] px-4 hover:no-underline'>
+                <div className='flex w-full items-center justify-between gap-2'>
                   {triggerColumns.map((column) => (
-                    <span key={column.id} className='max-w-[50%] truncate px-1 text-sm'>
+                    <span
+                      key={column.id}
+                      className='max-w-[50%] truncate px-1 text-base font-medium'
+                    >
                       {column.columnDef.cell
                         ? flexRender(
                             column.columnDef.cell,
@@ -269,7 +272,7 @@ const CommonTable = <T extends object>({
                     key={header.id}
                     className={cn(
                       'px-4 py-3 transition-colors',
-                      header.column.getCanSort() && 'cursor-pointer hover:bg-gray-100',
+                      header.column.getCanSort() && 'hover:bg-muted cursor-pointer', // replaced bg-gray-100 with bg-muted
                       headerClassName
                     )}
                     onClick={header.column.getToggleSortingHandler()}
@@ -281,10 +284,10 @@ const CommonTable = <T extends object>({
                       {header.column.getCanSort() && (
                         <span className='flex items-center'>
                           {{
-                            asc: <ChevronUp className='h-4 w-4 text-gray-600' />,
-                            desc: <ChevronDown className='h-4 w-4 text-gray-600' />
+                            asc: <ChevronUp className='text-muted-foreground h-4 w-4' />, // replaced text-gray-600 with text-muted-foreground
+                            desc: <ChevronDown className='text-muted-foreground h-4 w-4' /> // replaced text-gray-600 with text-muted-foreground
                           }[header.column.getIsSorted() as string] ?? (
-                            <ChevronsUpDown className='h-4 w-4 text-gray-400' />
+                            <ChevronsUpDown className='text-muted h-4 w-4' /> // replaced text-gray-400 with text-muted
                           )}
                         </span>
                       )}

@@ -276,6 +276,46 @@ const AddTransactionModal = ({
     [setValue, handleCreateCategoryInline]
   );
 
+  // Disabled function for recurrenceEndDate
+  const recurrenceEndDateDisabled = useCallback(
+    (date: Date) => {
+      if (!createdAt) return true;
+      const recurrenceType = watch('recurrenceType');
+      if (!recurrenceType) return true;
+      if (date < createdAt) return true;
+      switch (recurrenceType) {
+        case 'daily':
+          return date < createdAt;
+        case 'weekly': {
+          const diff = Math.floor((date.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+          return diff < 0 || diff % 7 !== 0;
+        }
+        case 'monthly': {
+          const createdDay = createdAt.getDate();
+          return (
+            date < createdAt ||
+            date.getDate() !== createdDay ||
+            (date.getFullYear() === createdAt.getFullYear() &&
+              date.getMonth() === createdAt.getMonth())
+          );
+        }
+        case 'yearly': {
+          const createdDay = createdAt.getDate();
+          const createdMonth = createdAt.getMonth();
+          return (
+            date < createdAt ||
+            date.getDate() !== createdDay ||
+            date.getMonth() !== createdMonth ||
+            date.getFullYear() === createdAt.getFullYear()
+          );
+        }
+        default:
+          return true;
+      }
+    },
+    [createdAt, watch]
+  );
+
   return (
     <AddModal
       title='Add Transaction'
@@ -465,7 +505,7 @@ const AddTransactionModal = ({
               <DateTimePicker
                 value={createdAt}
                 onChange={handleCreatedAtChange}
-                disabled={isSubmitting}
+                disabled={isSubmitting ? true : { after: new Date() }}
               />
             </div>
 
@@ -521,7 +561,7 @@ const AddTransactionModal = ({
                     <DateTimePicker
                       value={recurrenceEndDate || undefined}
                       onChange={handleRecurrenceEndDateChange}
-                      disabled={isSubmitting}
+                      disabled={isSubmitting ? true : recurrenceEndDateDisabled}
                     />
                     {errors.recurrenceEndDate && (
                       <p className='text-destructive text-xs'>{errors.recurrenceEndDate.message}</p>
