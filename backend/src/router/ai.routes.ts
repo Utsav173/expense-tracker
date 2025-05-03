@@ -32,8 +32,9 @@ aiRouter.post(
 
       // Return the AI's final text response and the session ID
       // The client can use the sessionId to continue the conversation
+      // FIX: Access result.response instead of result.text
       return c.json({
-        response: result.text,
+        response: result.response, // Corrected property name
         sessionId: result.sessionId,
         toolCalls: result.toolCalls,
         toolResults: result.toolResults,

@@ -1,5 +1,3 @@
-// src/lib/ai/tools.ts
-
 import { tool } from 'ai';
 import { z } from 'zod';
 import { accountService } from '../../services/account.service';
@@ -15,6 +13,7 @@ import {
   getYear,
   subMonths,
   getMonth,
+  parseISO,
 } from 'date-fns';
 import { InferInsertModel, and, eq, ilike, or, sql } from 'drizzle-orm';
 import {
@@ -25,6 +24,7 @@ import {
   Investment,
   User,
   Debts,
+  InvestmentAccount,
 } from '../../database/schema';
 import { db } from '../../database';
 import { goalService } from '../../services/goal.service';
@@ -32,8 +32,6 @@ import { budgetService } from '../../services/budget.service';
 import { debtService } from '../../services/debt.service';
 import { investmentAccountService } from '../../services/investmentAccount.service';
 import { investmentService } from '../../services/investment.service';
-
-// --- Helper Functions (Keep as before) ---
 
 function parseDateDescription(dateDescription: string | undefined | null): Date {
   const now = new Date();
@@ -47,8 +45,11 @@ function parseDateDescription(dateDescription: string | undefined | null): Date 
       parsedDate.setHours(12, 0, 0, 0);
       return parsedDate;
     }
-  } catch (e) {
-    /* ignore */
+  } catch (e) {}
+  const range = parseNaturalLanguageDateRange(dateDescription);
+  if (range?.startDate && isValidDateFn(range.startDate)) {
+    range.startDate.setHours(12, 0, 0, 0);
+    return range.startDate;
   }
   console.warn(`Could not parse date description: "${dateDescription}", defaulting to today.`);
   return now;
@@ -58,12 +59,9 @@ async function findAccountIdByName(userId: string, accountName: string): Promise
   if (!accountName || !accountName.trim()) return null;
   try {
     const accounts = await accountService.getAccountListSimple(userId);
-    let foundAccount = accounts.find((acc) => acc.name === accountName.trim());
-    if (!foundAccount) {
-      foundAccount = accounts.find(
-        (acc) => acc.name.toLowerCase() === accountName.trim().toLowerCase(),
-      );
-    }
+    const foundAccount = accounts.find(
+      (acc) => acc.name.toLowerCase() === accountName.trim().toLowerCase(),
+    );
     return foundAccount?.id ?? null;
   } catch (error) {
     console.error(`Error finding account ID for name "${accountName}":`, error);
@@ -74,55 +72,41 @@ async function findAccountIdByName(userId: string, accountName: string): Promise
 async function findCategoryIdByName(userId: string, categoryName: string): Promise<string | null> {
   if (!categoryName || !categoryName.trim()) return null;
   try {
-    const { categories } = await categoryService.getCategories(
-      userId,
-      1,
-      500,
-      categoryName.trim(),
-      'name',
-      'asc',
-    );
-    let foundCategory = categories.find((cat) => cat.name === categoryName.trim());
-    if (!foundCategory) {
-      foundCategory = categories.find(
-        (cat) => cat.name.toLowerCase() === categoryName.trim().toLowerCase(),
-      );
-    }
-    return foundCategory?.id ?? null;
+    const category = await db.query.Category.findFirst({
+      where: and(ilike(Category.name, categoryName.trim()), eq(Category.owner, userId)),
+      columns: { id: true },
+    });
+    return category?.id ?? null;
   } catch (error) {
     console.error(`Error finding category ID for name "${categoryName}":`, error);
     return null;
   }
 }
 
-// Helper to find Investment Account ID
 async function findInvestmentAccountIdByName(
   userId: string,
   invAccountName: string,
 ): Promise<string | null> {
   if (!invAccountName || !invAccountName.trim()) return null;
   try {
-    // Assuming investmentAccountService has a suitable listing method
-    const { data: accounts } = await investmentAccountService.getInvestmentAccounts(
-      userId,
-      1,
-      100,
-      'name',
-      'asc',
-    ); // Fetch potential matches
-    const foundAccount = accounts.find(
-      (acc) => acc.name.toLowerCase() === invAccountName.trim().toLowerCase(),
-    );
-    return foundAccount?.id ?? null;
+    const account = await db.query.InvestmentAccount.findFirst({
+      where: and(
+        ilike(InvestmentAccount.name, invAccountName.trim()),
+        eq(InvestmentAccount.userId, userId),
+      ),
+      columns: { id: true },
+    });
+    return account?.id ?? null;
   } catch (error) {
     console.error(`Error finding investment account ID for name "${invAccountName}":`, error);
     return null;
   }
 }
 
-// Helper to find Debt ID (more complex, might need better identifiers)
-async function findDebtId(userId: string, identifier: string): Promise<string | null> {
-  // Simple search based on description for now. Needs improvement.
+async function findDebtId(
+  userId: string,
+  identifier: string,
+): Promise<{ id: string; details: string } | null> {
   try {
     const { data: debts } = await debtService.getDebts(
       userId,
@@ -132,13 +116,23 @@ async function findDebtId(userId: string, identifier: string): Promise<string | 
       'createdAt',
       'desc',
     );
+
     if (debts.length === 1) {
-      return debts[0].debts.id; // Assuming structure from service
+      const d = debts[0].debts;
+      const involvedUser = await db.query.User.findFirst({
+        where: eq(User.id, d.userId),
+        columns: { name: true },
+      });
+      const details = `${d.type} ${d.amount} involving ${involvedUser?.name ?? 'Unknown User'} (${
+        d.description ?? 'No description'
+      })`;
+      return { id: d.id, details };
     }
-    // Handle multiple matches or no match (return null or throw clarification needed)
-    console.warn(
-      `Debt search for "${identifier}" yielded ${debts.length} results. Cannot uniquely identify.`,
-    );
+
+    if (debts.length > 1) {
+      console.warn(`Debt search for "${identifier}" yielded multiple results.`);
+      return null;
+    }
     return null;
   } catch (error) {
     console.error(`Error finding debt ID for identifier "${identifier}":`, error);
@@ -146,26 +140,30 @@ async function findDebtId(userId: string, identifier: string): Promise<string | 
   }
 }
 
-// Helper to find Saving Goal ID by name
-async function findGoalIdByName(userId: string, goalName: string): Promise<string | null> {
+async function findGoalIdByName(
+  userId: string,
+  goalName: string,
+): Promise<{ id: string; name: string } | null> {
   if (!goalName || !goalName.trim()) return null;
   try {
-    // Assuming goalService has a suitable listing method or use direct query
-    const { data: goals } = await goalService.getGoals(userId, 1, 100, 'name', 'asc'); // Fetch goals
-    const foundGoal = goals.find((g) => g.name.toLowerCase() === goalName.trim().toLowerCase());
-    return foundGoal?.id ?? null;
+    const goal = await db.query.SavingGoal.findFirst({
+      where: and(ilike(SavingGoal.name, `%${goalName.trim()}%`), eq(SavingGoal.userId, userId)),
+      columns: { id: true, name: true },
+    });
+    return goal ? { id: goal.id, name: goal.name } : null;
   } catch (error) {
     console.error(`Error finding goal ID for name "${goalName}":`, error);
     return null;
   }
 }
 
-// --- Tool Definition Creators ---
+const createJsonResponse = (result: any): string => {
+  return JSON.stringify(result);
+};
 
 export function createAccountTools(userId: string) {
   return {
     createAccount: tool({
-      /* ... (no change) ... */
       description: 'Creates a new bank account, wallet, or financial account for the user.',
       parameters: z.object({
         accountName: z.string().min(1).describe('The desired name for the new account.'),
@@ -189,21 +187,28 @@ export function createAccountTools(userId: string) {
             initialBalance,
             currency?.toUpperCase() || 'INR',
           );
-          return {
+          const response = {
             success: true,
-            message: `Account "${result.data.name}" created successfully with ID ${result.data.id}.`,
+            message: result.message,
+            data: {
+              id: result.data.id,
+              name: result.data.name,
+              balance: result.data.balance,
+              currency: result.data.currency,
+            },
           };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
               : `Failed to create account: ${error.message}`;
-          return { success: false, error: message };
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
     listAccounts: tool({
-      /* ... (no change) ... */
       description:
         "Lists the user's financial accounts, optionally filtering by name. Shows balances by default.",
       parameters: z.object({
@@ -222,34 +227,36 @@ export function createAccountTools(userId: string) {
             'asc',
             searchName || '',
           );
-          if (accounts.length === 0) {
-            return {
-              success: true,
-              accounts: [],
-              message: searchName
-                ? `No accounts found matching "${searchName}".`
-                : 'No accounts found.',
-            };
-          }
-          const formattedList = accounts
-            .map((acc) => `${acc.name} (${acc.balance?.toFixed(2)} ${acc.currency})`)
-            .join('\n');
-          return {
+          const message =
+            accounts.length > 0
+              ? `Found ${accounts.length} account(s)${
+                  searchName ? ` matching "${searchName}"` : ''
+                }.`
+              : searchName
+              ? `No accounts found matching "${searchName}".`
+              : 'No accounts found.';
+          const response = {
             success: true,
-            accounts: accounts,
-            message: `Found accounts:\n${formattedList}`,
+            message: message,
+            data: accounts.map((acc) => ({
+              id: acc.id,
+              name: acc.name,
+              balance: acc.balance,
+              currency: acc.currency,
+            })),
           };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
               : `Failed to list accounts: ${error.message}`;
-          return { success: false, error: message };
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
     getAccountBalance: tool({
-      /* ... (no change) ... */
       description: 'Retrieves the current balance for a specific account.',
       parameters: z.object({
         accountName: z
@@ -261,55 +268,29 @@ export function createAccountTools(userId: string) {
         try {
           const accountId = await findAccountIdByName(userId, accountName);
           if (!accountId)
-            return { success: false, error: `Account named "${accountName}" not found.` };
+            throw new HTTPException(404, { message: `Account named "${accountName}" not found.` });
           const account = await accountService.getAccountById(accountId, userId);
-          return {
+          const response = {
             success: true,
-            balance: account.balance,
-            currency: account.currency,
-            message: `Balance for ${account.name} is ${account.balance} ${account.currency}.`,
+            message: `Balance for ${account.name} is ${account.balance ?? 0} ${account.currency}.`,
+            data: {
+              id: account.id,
+              name: account.name,
+              balance: account.balance,
+              currency: account.currency,
+            },
           };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
               : `Failed to get balance: ${error.message}`;
-          return { success: false, error: message };
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
-    // Renamed original update tool, now requires ID
-    executeUpdateAccountNameById: tool({
-      description: 'Updates the name of an existing financial account using its specific ID.',
-      parameters: z.object({
-        accountId: z.string().describe('The unique ID of the account to rename.'),
-        newAccountName: z.string().min(1).describe('The desired new name for the account.'),
-      }),
-      execute: async ({ accountId, newAccountName }) => {
-        try {
-          // Service method already checks ownership based on userId passed to it implicitly
-          await accountService.updateAccount(
-            accountId,
-            userId,
-            newAccountName,
-            undefined,
-            undefined,
-          );
-          // We don't know the old name here easily without another query, so generic success message
-          return {
-            success: true,
-            message: `Account (ID: ${accountId}) renamed to "${newAccountName}".`,
-          };
-        } catch (error: any) {
-          const message =
-            error instanceof HTTPException
-              ? error.message
-              : `Failed to rename account: ${error.message}`;
-          return { success: false, error: message };
-        }
-      },
-    }),
-    // Kept the identification tool
     identifyAccountForDeletion: tool({
       description:
         'Identifies an account for deletion based on its name. User confirmation is required before actual deletion.',
@@ -323,24 +304,25 @@ export function createAccountTools(userId: string) {
         try {
           const accountId = await findAccountIdByName(userId, accountName);
           if (!accountId)
-            return { success: false, error: `Account named "${accountName}" not found.` };
-          return {
+            throw new HTTPException(404, { message: `Account named "${accountName}" not found.` });
+          const response = {
             success: true,
             confirmationNeeded: true,
-            accountId: accountId,
-            accountName: accountName,
-            message: `ACTION REQUIRED: Please confirm deletion of account "${accountName}" (ID: ${accountId}). This will also delete all associated transactions and cannot be undone.`,
+            id: accountId,
+            details: `Account: ${accountName}`,
+            message: `Are you sure you want to delete the account "${accountName}" (ID: ${accountId})? This action will remove all its transactions and cannot be undone. Please confirm by including the ID.`,
           };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
-              : `Failed to identify account for deletion: ${error.message}`;
-          return { success: false, error: message };
+              : `Failed to identify account: ${error.message}`;
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
-    // New tool for confirmed deletion
     executeConfirmedDeleteAccount: tool({
       description:
         'Deletes a specific financial account and all its data AFTER user confirmation, using its unique ID.',
@@ -349,18 +331,46 @@ export function createAccountTools(userId: string) {
       }),
       execute: async ({ accountId }) => {
         try {
-          // Service method performs ownership check implicitly via userId
-          await accountService.deleteAccount(accountId, userId);
-          return {
-            success: true,
-            message: `Account (ID: ${accountId}) and its data have been deleted.`,
-          };
+          const result = await accountService.deleteAccount(accountId, userId);
+          const response = { success: true, message: result.message };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
               : `Failed to delete account: ${error.message}`;
-          return { success: false, error: message };
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
+        }
+      },
+    }),
+    executeUpdateAccountNameById: tool({
+      description: 'Updates the name of an existing financial account using its specific ID.',
+      parameters: z.object({
+        accountId: z.string().describe('The unique ID of the account to rename.'),
+        newAccountName: z.string().min(1).describe('The desired new name for the account.'),
+      }),
+      execute: async ({ accountId, newAccountName }) => {
+        try {
+          await accountService.updateAccount(
+            accountId,
+            userId,
+            newAccountName,
+            undefined,
+            undefined,
+          );
+          const response = {
+            success: true,
+            message: `Account (ID: ${accountId}) renamed to "${newAccountName}".`,
+          };
+          return createJsonResponse(response);
+        } catch (error: any) {
+          const message =
+            error instanceof HTTPException
+              ? error.message
+              : `Failed to rename account: ${error.message}`;
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
@@ -370,7 +380,6 @@ export function createAccountTools(userId: string) {
 export function createCategoryTools(userId: string) {
   return {
     createCategory: tool({
-      /* ... (no change) ... */
       description: 'Creates a new custom category for classifying income or expenses.',
       parameters: z.object({
         categoryName: z.string().min(1).describe('The name for the new category.'),
@@ -378,21 +387,23 @@ export function createCategoryTools(userId: string) {
       execute: async ({ categoryName }) => {
         try {
           const newCategory = await categoryService.createCategory(userId, categoryName);
-          return {
+          const response = {
             success: true,
-            message: `Category "${newCategory.name}" created successfully with ID ${newCategory.id}.`,
+            message: `Category "${newCategory.name}" created.`,
+            data: { id: newCategory.id, name: newCategory.name },
           };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
               : `Failed to create category: ${error.message}`;
-          return { success: false, error: message };
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
     listCategories: tool({
-      /* ... (no change) ... */
       description:
         'Lists all available categories for the user (shared and custom). Optionally filters by name.',
       parameters: z.object({
@@ -411,55 +422,30 @@ export function createCategoryTools(userId: string) {
             'name',
             'asc',
           );
-          if (categories.length === 0)
-            return {
-              success: true,
-              categories: [],
-              message: searchName
-                ? `No categories found matching "${searchName}".`
-                : 'No categories found.',
-            };
-          const formattedList = categories.map((cat) => cat.name).join(', ');
-          return {
+          const message =
+            categories.length > 0
+              ? `Found ${categories.length} categories${
+                  searchName ? ` matching "${searchName}"` : ''
+                }.`
+              : searchName
+              ? `No categories found matching "${searchName}".`
+              : 'No categories found.';
+          const response = {
             success: true,
-            categories: categories,
-            message: `Found categories: ${formattedList}`,
+            message: message,
+            data: categories.map((c) => ({ id: c.id, name: c.name })),
           };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
               : `Failed to list categories: ${error.message}`;
-          return { success: false, error: message };
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
-    // Renamed original update tool, now requires ID
-    executeUpdateCategoryNameById: tool({
-      description:
-        'Updates the name of an existing custom category using its specific ID. Cannot rename shared/default categories.',
-      parameters: z.object({
-        categoryId: z.string().describe('The unique ID of the custom category to rename.'),
-        newCategoryName: z.string().min(1).describe('The desired new name.'),
-      }),
-      execute: async ({ categoryId, newCategoryName }) => {
-        try {
-          // Service method handles ownership check and duplicate name check
-          await categoryService.updateCategory(categoryId, userId, newCategoryName);
-          return {
-            success: true,
-            message: `Category (ID: ${categoryId}) renamed to "${newCategoryName}".`,
-          };
-        } catch (error: any) {
-          const message =
-            error instanceof HTTPException
-              ? error.message
-              : `Failed to rename category: ${error.message}`;
-          return { success: false, error: message };
-        }
-      },
-    }),
-    // Kept the identification tool
     identifyCategoryForDeletion: tool({
       description:
         'Identifies a custom category for deletion based on its name. Cannot delete categories with transactions. User confirmation required.',
@@ -472,39 +458,41 @@ export function createCategoryTools(userId: string) {
       execute: async ({ categoryName }) => {
         try {
           const category = await db.query.Category.findFirst({
-            where: and(eq(Category.name, categoryName), eq(Category.owner, userId)),
+            where: and(ilike(Category.name, categoryName), eq(Category.owner, userId)),
             columns: { id: true },
           });
           if (!category)
-            return { success: false, error: `Custom category named "${categoryName}" not found.` };
-          const categoryId = category.id;
-          try {
-            await categoryService.deleteCategory(categoryId, userId);
-            return {
-              success: true,
-              confirmationNeeded: true,
-              categoryId: categoryId,
-              categoryName: categoryName,
-              message: `ACTION REQUIRED: Please confirm deletion of category "${categoryName}" (ID: ${categoryId}). This cannot be undone.`,
-            };
-          } catch (serviceError: any) {
-            const message =
-              serviceError instanceof HTTPException ? serviceError.message : serviceError.message;
-            return {
-              success: false,
-              error: `Cannot delete category "${categoryName}": ${message}`,
-            };
+            throw new HTTPException(404, {
+              message: `Custom category named "${categoryName}" not found.`,
+            });
+
+          const transactionCheck = await db
+            .select({ count: sql`count(*)` })
+            .from(Transaction)
+            .where(and(eq(Transaction.category, category.id), eq(Transaction.owner, userId)));
+          if (Number(transactionCheck[0].count) > 0) {
+            throw new HTTPException(400, {
+              message: `Cannot delete category "${categoryName}" as it has associated transactions. Please reassign them first.`,
+            });
           }
+          const response = {
+            success: true,
+            confirmationNeeded: true,
+            id: category.id,
+            details: `Category: ${categoryName}`,
+            message: `Are you sure you want to delete the category "${categoryName}" (ID: ${category.id})? This cannot be undone. Please confirm by including the ID.`,
+          };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
-              : `Failed to identify category for deletion: ${error.message}`;
-          return { success: false, error: message };
+              : `Failed to identify category: ${error.message}`;
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
-    // New tool for confirmed deletion
     executeConfirmedDeleteCategory: tool({
       description:
         'Deletes a specific custom category AFTER user confirmation, using its unique ID. Fails if transactions are associated.',
@@ -513,15 +501,41 @@ export function createCategoryTools(userId: string) {
       }),
       execute: async ({ categoryId }) => {
         try {
-          // Service method performs ownership and transaction checks
-          await categoryService.deleteCategory(categoryId, userId);
-          return { success: true, message: `Category (ID: ${categoryId}) has been deleted.` };
+          const result = await categoryService.deleteCategory(categoryId, userId);
+          const response = { success: true, message: result.message };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
               : `Failed to delete category: ${error.message}`;
-          return { success: false, error: message };
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
+        }
+      },
+    }),
+    executeUpdateCategoryNameById: tool({
+      description:
+        'Updates the name of an existing custom category using its specific ID. Cannot rename shared/default categories.',
+      parameters: z.object({
+        categoryId: z.string().describe('The unique ID of the custom category to rename.'),
+        newCategoryName: z.string().min(1).describe('The desired new name.'),
+      }),
+      execute: async ({ categoryId, newCategoryName }) => {
+        try {
+          await categoryService.updateCategory(categoryId, userId, newCategoryName);
+          const response = {
+            success: true,
+            message: `Category (ID: ${categoryId}) renamed to "${newCategoryName}".`,
+          };
+          return createJsonResponse(response);
+        } catch (error: any) {
+          const message =
+            error instanceof HTTPException
+              ? error.message
+              : `Failed to rename category: ${error.message}`;
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
@@ -529,9 +543,19 @@ export function createCategoryTools(userId: string) {
 }
 
 export function createTransactionTools(userId: string) {
+  type TransactionFilters = {
+    accountId?: string;
+    userId?: string;
+    duration?: string;
+    q?: string;
+    isIncome?: string;
+    categoryId?: string;
+    minAmount?: number;
+    maxAmount?: number;
+  };
+
   return {
     addTransaction: tool({
-      /* ... (no change) ... */
       description:
         'Records a new financial transaction (income or expense) to a specified account. Can optionally include category, date, and transfer details.',
       parameters: z.object({
@@ -569,14 +593,11 @@ export function createTransactionTools(userId: string) {
       }) => {
         try {
           const accountId = await findAccountIdByName(userId, accountName);
-          if (!accountId) return { success: false, error: `Account "${accountName}" not found.` };
-
-          let categoryId: string | null = null;
-          if (categoryName) {
-            categoryId = await findCategoryIdByName(userId, categoryName);
-            if (!categoryId)
-              return { success: false, error: `Category "${categoryName}" not found.` };
-          }
+          if (!accountId)
+            throw new HTTPException(404, { message: `Account "${accountName}" not found.` });
+          const categoryId = categoryName ? await findCategoryIdByName(userId, categoryName) : null;
+          if (categoryName && !categoryId)
+            throw new HTTPException(404, { message: `Category "${categoryName}" not found.` });
 
           const transactionDate = parseDateDescription(date);
 
@@ -593,25 +614,25 @@ export function createTransactionTools(userId: string) {
           };
 
           const result = await transactionService.createTransaction(userId, payload);
-          return {
+          const response = {
             success: true,
-            message: `Transaction added successfully to ${accountName}.`,
-            data: result.data,
+            message: `Transaction added to ${accountName}.`,
+            data: { id: result.data.id, text: result.data.text, amount: result.data.amount },
           };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
               : `Failed to add transaction: ${error.message}`;
-          return { success: false, error: message };
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
-
     listTransactions: tool({
       description:
         'Lists transactions based on filters like account, category, date range, type, amount range, or text search.',
-      // Enhanced parameters
       parameters: z.object({
         accountName: z.string().optional().describe('Filter by account name.'),
         categoryName: z.string().optional().describe('Filter by category name.'),
@@ -647,34 +668,28 @@ export function createTransactionTools(userId: string) {
         limit = 10,
       }) => {
         try {
-          let accountId: string | undefined;
-          if (accountName) {
-            accountId = (await findAccountIdByName(userId, accountName)) ?? undefined;
-            if (accountName && !accountId)
-              return { success: false, error: `Account "${accountName}" not found.` };
-          }
+          const accountId = accountName
+            ? await findAccountIdByName(userId, accountName)
+            : undefined;
+          if (accountName && !accountId)
+            throw new HTTPException(404, { message: `Account "${accountName}" not found.` });
+          const categoryId = categoryName
+            ? await findCategoryIdByName(userId, categoryName)
+            : undefined;
+          if (categoryName && !categoryId)
+            throw new HTTPException(404, { message: `Category "${categoryName}" not found.` });
 
-          let categoryId: string | undefined;
-          if (categoryName) {
-            categoryId = (await findCategoryIdByName(userId, categoryName)) ?? undefined;
-            if (categoryName && !categoryId)
-              return { success: false, error: `Category "${categoryName}" not found.` };
-          }
-
-          // Use the enhanced filter type
-          const filters: Parameters<typeof transactionService.getTransactions>[0] = {
-            // Get type from service
-            accountId: accountId,
+          const filters: TransactionFilters = {
+            accountId: accountId ?? undefined,
             userId: accountId ? undefined : userId,
             duration: dateRange,
             q: searchText,
-            isIncome: type,
-            categoryId: categoryId,
-            minAmount: minAmount, // Pass amount filters
+            isIncome: type === undefined ? undefined : type === 'income' ? 'true' : 'false',
+            categoryId: categoryId ?? undefined,
+            minAmount: minAmount,
             maxAmount: maxAmount,
           };
 
-          // Call service with filters
           const result = await transactionService.getTransactions(
             filters,
             1,
@@ -682,42 +697,33 @@ export function createTransactionTools(userId: string) {
             'createdAt',
             'desc',
           );
-
-          if (result.transactions.length === 0) {
-            return {
-              success: true,
-              transactions: [],
-              message: 'No transactions found matching the criteria.',
-            };
-          }
-
-          const summary = result.transactions
-            .map(
-              (t) =>
-                `${formatDateFn(t.createdAt!, 'yyyy-MM-dd')}: ${t.text} (${t.isIncome ? '+' : '-'}${
-                  t.amount
-                } ${t.currency}) [${t.category?.name ?? 'Uncategorized'}]`,
-            )
-            .join('\n');
-          const count = result.transactions.length;
-          const total = result.pagination.total;
-
-          return {
+          const message =
+            result.transactions.length > 0
+              ? `Found ${result.transactions.length} of ${result.pagination.total} transaction(s) matching criteria.`
+              : 'No transactions found matching the criteria.';
+          const response = {
             success: true,
-            transactions: result.transactions,
-            message: `Found ${count} of ${total} transactions matching criteria:\n${summary}`,
+            message: message,
+            data: result.transactions.map((t) => ({
+              id: t.id,
+              date: t.createdAt,
+              text: t.text,
+              amount: t.amount,
+              type: t.isIncome ? 'income' : 'expense',
+              category: t.category?.name,
+            })),
           };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
               : `Failed to list transactions: ${error.message}`;
-          return { success: false, error: message };
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
-
-    // Kept identification tool
     findTransactionForUpdateOrDelete: tool({
       description:
         'Finds potential transactions based on description/date/amount to identify ONE for a future update or deletion. Returns matches for user clarification.',
@@ -740,25 +746,23 @@ export function createTransactionTools(userId: string) {
       }),
       execute: async ({ identifier, accountName, dateHint, amountHint }) => {
         try {
-          let accountId: string | undefined;
-          if (accountName) {
-            accountId = (await findAccountIdByName(userId, accountName)) ?? undefined;
-            if (accountName && !accountId)
-              return { success: false, error: `Account "${accountName}" not found.` };
-          }
+          const accountId = accountName
+            ? await findAccountIdByName(userId, accountName)
+            : undefined;
+          if (accountName && !accountId)
+            throw new HTTPException(404, { message: `Account "${accountName}" not found.` });
 
-          const filters: any = {
-            accountId: accountId,
+          const filters: TransactionFilters = {
+            accountId: accountId ?? undefined,
             userId: accountId ? undefined : userId,
             q: identifier,
             duration: dateHint
               ? formatDateFn(parseDateDescription(dateHint), 'yyyy-MM-dd,yyyy-MM-dd')
               : undefined,
-            // Add amountHint filtering if service supports it
           };
           if (amountHint !== undefined) {
-            filters.minAmount = amountHint * 0.9; // Example: +/- 10% range
-            filters.maxAmount = amountHint * 1.1;
+            filters.minAmount = amountHint * 0.95;
+            filters.maxAmount = amountHint * 1.05;
           }
 
           const result = await transactionService.getTransactions(
@@ -770,53 +774,53 @@ export function createTransactionTools(userId: string) {
           );
 
           if (result.transactions.length === 0) {
-            return {
-              success: false,
-              error: `No transactions found matching "${identifier}"${
+            throw new HTTPException(404, {
+              message: `No transactions found matching "${identifier}"${
                 accountName ? ` in account "${accountName}"` : ''
               }. Try being more specific.`,
-            };
+            });
           }
 
           const formattedTransactions = result.transactions.map((t, index) => ({
             index: index + 1,
             id: t.id,
-            details: `${formatDateFn(t.createdAt!, 'yyyy-MM-dd')}: ${t.text} (${
-              t.isIncome ? '+' : '-'
-            }${t.amount} ${t.currency})`,
+            details: `${
+              t.createdAt ? formatDateFn(parseISO(t.createdAt.toISOString()), 'yyyy-MM-dd') : 'N/A'
+            }: ${t.text} (${t.isIncome ? '+' : '-'}${t.amount} ${t.currency})`,
           }));
 
           if (result.transactions.length > 1) {
             const optionsText = formattedTransactions
               .map((t) => `${t.index}. ${t.details} (ID: ${t.id})`)
               .join('\n');
-            return {
+            const response = {
               success: true,
               clarificationNeeded: true,
-              possibleMatches: formattedTransactions,
               message: `Found multiple transactions matching "${identifier}". Please specify which one to modify/delete by its ID or number:\n${optionsText}`,
+              data: formattedTransactions.map((t) => ({ id: t.id, details: t.details })),
             };
+            return createJsonResponse(response);
           }
 
           const tx = result.transactions[0];
-          return {
+          const response = {
             success: true,
             confirmationNeeded: true,
-            transactionId: tx.id,
-            transactionDetails: formattedTransactions[0].details,
-            message: `Found transaction (ID: ${tx.id}): ${formattedTransactions[0].details}. Please confirm the action (update or delete) and provide necessary details for update.`,
+            id: tx.id,
+            details: formattedTransactions[0].details,
+            message: `Found transaction (ID: ${tx.id}): ${formattedTransactions[0].details}. Please confirm the action (update or delete) and provide necessary details for update, including the ID.`,
           };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
               : `Failed to find transaction: ${error.message}`;
-          return { success: false, error: message };
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
-
-    // New tool for confirmed deletion
     executeConfirmedDeleteTransaction: tool({
       description: 'Deletes a specific transaction AFTER user confirmation, using its unique ID.',
       parameters: z.object({
@@ -824,26 +828,24 @@ export function createTransactionTools(userId: string) {
       }),
       execute: async ({ transactionId }) => {
         try {
-          // Service method performs ownership check
-          await transactionService.deleteTransaction(transactionId, userId);
-          return { success: true, message: `Transaction (ID: ${transactionId}) has been deleted.` };
+          const result = await transactionService.deleteTransaction(transactionId, userId);
+          const response = { success: true, message: result.message };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
               : `Failed to delete transaction: ${error.message}`;
-          return { success: false, error: message };
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
-
-    // New tool for confirmed update
     executeUpdateTransactionById: tool({
       description:
         'Updates specific fields of a transaction AFTER user confirmation, using its unique ID.',
       parameters: z.object({
         transactionId: z.string().describe('The unique ID of the transaction to update.'),
-        // Make all updateable fields optional
         newAmount: z
           .number()
           .positive('Amount must be positive.')
@@ -870,69 +872,57 @@ export function createTransactionTools(userId: string) {
       execute: async (updates) => {
         const { transactionId, ...newValues } = updates;
         try {
-          // Prepare payload for the service
-          const payload: Partial<InferInsertModel<typeof Transaction>> = {};
-          let requiresAccountIdLookup = false;
-          let requiresCategoryIdLookup = false;
-
+          const payload: Partial<InferInsertModel<typeof Transaction> & { createdAt: Date }> = {};
           if (newValues.newAmount !== undefined) payload.amount = newValues.newAmount;
           if (newValues.newDescription !== undefined) payload.text = newValues.newDescription;
           if (newValues.newType !== undefined) payload.isIncome = newValues.newType === 'income';
           if (newValues.newTransferDetails !== undefined)
             payload.transfer = newValues.newTransferDetails;
-          if (newValues.newDate !== undefined)
-            payload.createdAt = parseDateDescription(newValues.newDate);
-
+          if (newValues.newDate !== undefined) {
+            const date = parseDateDescription(newValues.newDate);
+            payload.createdAt = date;
+          }
           if (newValues.newAccountName) {
             const newAccountId = await findAccountIdByName(userId, newValues.newAccountName);
             if (!newAccountId)
-              return {
-                success: false,
-                error: `Update failed: Account "${newValues.newAccountName}" not found.`,
-              };
+              throw new HTTPException(404, {
+                message: `Update failed: Account "${newValues.newAccountName}" not found.`,
+              });
             payload.account = newAccountId;
           }
-          if (newValues.newCategoryName) {
+          if (newValues.newCategoryName !== undefined) {
             const newCategoryId = await findCategoryIdByName(userId, newValues.newCategoryName);
-            if (!newCategoryId)
-              return {
-                success: false,
-                error: `Update failed: Category "${newValues.newCategoryName}" not found.`,
-              };
+            if (newValues.newCategoryName && !newCategoryId) {
+              throw new HTTPException(404, {
+                message: `Update failed: Category "${newValues.newCategoryName}" not found.`,
+              });
+            }
             payload.category = newCategoryId;
-          } else if (
-            newValues.hasOwnProperty('newCategoryName') &&
-            newValues.newCategoryName === null
-          ) {
-            // Allow explicitly setting category to null
-            payload.category = null;
           }
 
           if (Object.keys(payload).length === 0) {
-            return { success: false, error: 'No valid fields provided for update.' };
+            throw new HTTPException(400, { message: 'No valid fields provided for update.' });
           }
 
-          // Service method handles ownership check
           await transactionService.updateTransaction(transactionId, userId, payload);
-          return {
+          const response = {
             success: true,
-            message: `Transaction (ID: ${transactionId}) updated successfully.`,
+            message: `Transaction (ID: ${transactionId}) updated.`,
           };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
               : `Failed to update transaction: ${error.message}`;
-          return { success: false, error: message };
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
   };
 }
 
-/**
- * Creates tool definitions related to Budget management, bound to a specific user.
- */
 export function createBudgetTools(userId: string) {
   return {
     createBudget: tool({
@@ -962,25 +952,31 @@ export function createBudgetTools(userId: string) {
         try {
           const categoryId = await findCategoryIdByName(userId, categoryName);
           if (!categoryId)
-            return { success: false, error: `Category "${categoryName}" not found.` };
-
+            throw new HTTPException(404, { message: `Category "${categoryName}" not found.` });
           const payload = { category: categoryId, amount, month, year };
           const newBudget = await budgetService.createBudget(userId, payload);
-          return {
+          const response = {
             success: true,
-            message: `Budget of ${amount} set for category "${categoryName}" for ${month}/${year}.`,
-            data: newBudget,
+            message: `Budget of ${amount} set for ${categoryName} for ${month}/${year}.`,
+            data: {
+              id: newBudget.id,
+              category: categoryName,
+              amount: newBudget.amount,
+              month: newBudget.month,
+              year: newBudget.year,
+            },
           };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
               : `Failed to create budget: ${error.message}`;
-          return { success: false, error: message };
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
-
     listBudgets: tool({
       description: 'Lists existing budgets, optionally filtering by month and year.',
       parameters: z.object({
@@ -1008,51 +1004,39 @@ export function createBudgetTools(userId: string) {
       }),
       execute: async ({ month, year, limit = 20 }) => {
         try {
-          // Service needs update to handle month/year filtering directly
-          // For now, fetch all and filter, or adjust service call if updated
-          const { data: budgets } = await budgetService.getBudgets(
-            userId,
-            1,
-            limit,
-            'year',
-            'desc',
-          ); // Fetch recent first
-
+          const { data: budgets } = await budgetService.getBudgets(userId, 1, 500, 'year', 'desc');
           let filteredBudgets = budgets;
           if (month !== undefined)
             filteredBudgets = filteredBudgets.filter((b) => b.month === month);
           if (year !== undefined) filteredBudgets = filteredBudgets.filter((b) => b.year === year);
+          filteredBudgets = filteredBudgets.slice(0, limit);
 
-          if (filteredBudgets.length === 0) {
-            return {
-              success: true,
-              budgets: [],
-              message: 'No budgets found matching the criteria.',
-            };
-          }
-
-          const formattedList = filteredBudgets
-            .map(
-              (b) =>
-                `${b.category?.name ?? 'Unknown Category'} (${b.month}/${b.year}): ${b.amount}`,
-            )
-            .join('\n');
-          return {
+          const message =
+            filteredBudgets.length > 0
+              ? `Found ${filteredBudgets.length} budget(s) matching criteria.`
+              : 'No budgets found matching criteria.';
+          const response = {
             success: true,
-            budgets: filteredBudgets,
-            message: `Found budgets:\n${formattedList}`,
+            message: message,
+            data: filteredBudgets.map((b) => ({
+              id: b.id,
+              category: b.category?.name,
+              amount: b.amount,
+              month: b.month,
+              year: b.year,
+            })),
           };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
               : `Failed to list budgets: ${error.message}`;
-          return { success: false, error: message };
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
-
-    // Tool to identify budget for update/delete
     findBudgetForUpdateOrDelete: tool({
       description:
         'Identifies a specific budget based on category, month, and year for potential update or deletion.',
@@ -1065,8 +1049,7 @@ export function createBudgetTools(userId: string) {
         try {
           const categoryId = await findCategoryIdByName(userId, categoryName);
           if (!categoryId)
-            return { success: false, error: `Category "${categoryName}" not found.` };
-
+            throw new HTTPException(404, { message: `Category "${categoryName}" not found.` });
           const budget = await db.query.Budget.findFirst({
             where: and(
               eq(Budget.userId, userId),
@@ -1076,33 +1059,28 @@ export function createBudgetTools(userId: string) {
             ),
             columns: { id: true, amount: true },
           });
-
-          if (!budget) {
-            return {
-              success: false,
-              error: `Budget for category "${categoryName}" in ${month}/${year} not found.`,
-            };
-          }
-
-          return {
+          if (!budget)
+            throw new HTTPException(404, {
+              message: `Budget for ${categoryName} in ${month}/${year} not found.`,
+            });
+          const response = {
             success: true,
-            confirmationNeeded: true, // Always need confirmation for update/delete
-            budgetId: budget.id,
-            budgetName: `${categoryName} (${month}/${year})`,
-            currentAmount: budget.amount,
-            message: `Found budget for ${categoryName} (${month}/${year}) with amount ${budget.amount}. Please confirm the action (update amount or delete) and provide necessary details.`,
+            confirmationNeeded: true,
+            id: budget.id,
+            details: `Budget for ${categoryName} (${month}/${year}), Amount: ${budget.amount}`,
+            message: `Found budget (ID: ${budget.id}): ${categoryName} (${month}/${year}) amount ${budget.amount}. Confirm action (update/delete) and include the ID?`,
           };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
               : `Failed to find budget: ${error.message}`;
-          return { success: false, error: message };
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
-
-    // Tool for confirmed budget update
     executeUpdateBudgetById: tool({
       description:
         'Updates the amount of a specific budget AFTER user confirmation, using its unique ID.',
@@ -1113,21 +1091,21 @@ export function createBudgetTools(userId: string) {
       execute: async ({ budgetId, newAmount }) => {
         try {
           await budgetService.updateBudget(budgetId, userId, newAmount);
-          return {
+          const response = {
             success: true,
-            message: `Budget (ID: ${budgetId}) amount updated to ${newAmount}.`,
+            message: `Budget (ID: ${budgetId}) updated to ${newAmount}.`,
           };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
               : `Failed to update budget: ${error.message}`;
-          return { success: false, error: message };
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
-
-    // Tool for confirmed budget deletion
     executeConfirmedDeleteBudget: tool({
       description: 'Deletes a specific budget AFTER user confirmation, using its unique ID.',
       parameters: z.object({
@@ -1135,18 +1113,19 @@ export function createBudgetTools(userId: string) {
       }),
       execute: async ({ budgetId }) => {
         try {
-          await budgetService.deleteBudget(budgetId, userId);
-          return { success: true, message: `Budget (ID: ${budgetId}) has been deleted.` };
+          const result = await budgetService.deleteBudget(budgetId, userId);
+          const response = { success: true, message: result.message };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
               : `Failed to delete budget: ${error.message}`;
-          return { success: false, error: message };
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
-    // Tool to get budget summary/progress
     getBudgetSummary: tool({
       description:
         "Retrieves the budget summary, showing budgeted amounts versus actual spending for categories within a specified period (e.g., 'this month', 'last month', 'YYYY-MM').",
@@ -1160,11 +1139,10 @@ export function createBudgetTools(userId: string) {
       }),
       execute: async ({ period = 'this month' }) => {
         try {
-          // Parse period to month/year if possible, or use duration for service
           let queryParams: { month?: string; year?: string; duration?: string } = {
             duration: period,
           };
-          const yearMonthMatch = period.match(/^(\d{4})-(\d{1,2})$/); // Match YYYY-MM
+          const yearMonthMatch = period.match(/^(\d{4})-(\d{1,2})$/);
           if (yearMonthMatch) {
             queryParams = { year: yearMonthMatch[1], month: yearMonthMatch[2] };
           } else if (period === 'this month') {
@@ -1179,44 +1157,34 @@ export function createBudgetTools(userId: string) {
               month: (getMonth(lastMonthDate) + 1).toString(),
             };
           }
-          // Add more period parsing if needed
 
           const summaryData = await budgetService.getBudgetSummary(userId, queryParams);
-          if (summaryData.length === 0) {
-            return {
-              success: true,
-              summary: [],
-              message: `No budget data found for the period: ${period}.`,
-            };
-          }
-          const formattedSummary = summaryData
-            .map(
-              (s) =>
-                `${s.categoryName}: Spent ${s.actualSpend.toFixed(
-                  2,
-                )} / Budgeted ${s.budgetedAmount.toFixed(2)}`,
-            )
-            .join('\n');
-          return {
-            success: true,
-            summary: summaryData,
-            message: `Budget Summary for ${period}:\n${formattedSummary}`,
-          };
+          const message =
+            summaryData.length > 0
+              ? `Budget summary for ${period}:`
+              : `No budget data found for ${period}.`;
+          const response = { success: true, message: message, data: summaryData };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
               : `Failed to get budget summary: ${error.message}`;
-          return { success: false, error: message };
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
   };
 }
 
-/**
- * Creates tool definitions related to Saving Goal management, bound to a specific user.
- */
+type GoalApiPayload = {
+  name?: string;
+  targetAmount?: number;
+  savedAmount?: number;
+  targetDate?: Date | null;
+};
+
 export function createGoalTools(userId: string) {
   return {
     createSavingGoal: tool({
@@ -1236,63 +1204,62 @@ export function createGoalTools(userId: string) {
         try {
           let parsedDate: Date | undefined = undefined;
           if (targetDate) {
-            // Attempt to parse natural language/date string - enhance parseNaturalLanguageDateRange if needed
             const range = parseNaturalLanguageDateRange(targetDate);
-            parsedDate = range?.endDate; // Use end date of range as target
-            if (!parsedDate) console.warn(`Could not parse target date "${targetDate}" for goal.`);
+            parsedDate = range?.endDate;
           }
           const payload = { name: goalName, targetAmount, targetDate: parsedDate };
           const newGoal = await goalService.createGoal(userId, payload);
-          return {
+          const response = {
             success: true,
-            message: `Saving goal "${newGoal.name}" created with target ${newGoal.targetAmount}.`,
-            data: newGoal,
+            message: `Saving goal "${newGoal.name}" created.`,
+            data: {
+              id: newGoal.id,
+              name: newGoal.name,
+              target: newGoal.targetAmount,
+              date: newGoal.targetDate,
+            },
           };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
               : `Failed to create saving goal: ${error.message}`;
-          return { success: false, error: message };
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
-
     listSavingGoals: tool({
       description: 'Lists all current saving goals for the user.',
-      parameters: z.object({
-        // Add filters later if needed (e.g., searchName)
-      }),
+      parameters: z.object({}),
       execute: async () => {
         try {
-          const { data: goals } = await goalService.getGoals(userId, 1, 100, 'targetDate', 'asc'); // Fetch up to 100 goals, sorted by target date
-          if (goals.length === 0) {
-            return {
-              success: true,
-              goals: [],
-              message: 'You currently have no saving goals set up.',
-            };
-          }
-          const formattedList = goals
-            .map(
-              (g) =>
-                `${g.name}: ${g.savedAmount?.toFixed(2)} / ${g.targetAmount.toFixed(2)} (Target: ${
-                  g.targetDate ? formatDateFn(g.targetDate, 'yyyy-MM-dd') : 'N/A'
-                })`,
-            )
-            .join('\n');
-          return { success: true, goals: goals, message: `Your saving goals:\n${formattedList}` };
+          const { data: goals } = await goalService.getGoals(userId, 1, 100, 'targetDate', 'asc');
+          const message =
+            goals.length > 0 ? `Found ${goals.length} saving goal(s).` : 'No saving goals found.';
+          const response = {
+            success: true,
+            message: message,
+            data: goals.map((g) => ({
+              id: g.id,
+              name: g.name,
+              saved: g.savedAmount,
+              target: g.targetAmount,
+              date: g.targetDate,
+            })),
+          };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
-              : `Failed to list saving goals: ${error.message}`;
-          return { success: false, error: message };
+              : `Failed to list goals: ${error.message}`;
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
-
-    // Tool to identify a goal for update/delete/add/withdraw
     findSavingGoal: tool({
       description:
         'Identifies a specific saving goal by its name for potential modification or deletion.',
@@ -1301,50 +1268,29 @@ export function createGoalTools(userId: string) {
       }),
       execute: async ({ goalName }) => {
         try {
-          // Find goal by name (case-insensitive search might be better)
-          const goals = await db.query.SavingGoal.findMany({
-            where: and(eq(SavingGoal.userId, userId), ilike(SavingGoal.name, `%${goalName}%`)),
-            limit: 5, // Limit potential matches
-          });
-
-          if (goals.length === 0) {
-            return { success: false, error: `Saving goal matching "${goalName}" not found.` };
-          }
-          if (goals.length > 1) {
-            const options = goals.map((g, i) => `${i + 1}. ${g.name} (ID: ${g.id})`).join('\n');
-            return {
-              success: true,
-              clarificationNeeded: true,
-              possibleMatches: goals.map((g) => ({ id: g.id, name: g.name })),
-              message: `Found multiple goals matching "${goalName}". Please specify which one by ID or number:\n${options}`,
-            };
-          }
-
-          // Exactly one match
-          const goal = goals[0];
-          return {
+          const goalInfo = await findGoalIdByName(userId, goalName);
+          if (!goalInfo)
+            throw new HTTPException(404, {
+              message: `Saving goal matching "${goalName}" not found.`,
+            });
+          const response = {
             success: true,
-            confirmationNeeded: true, // Assume confirmation needed for any action
-            goalId: goal.id,
-            goalName: goal.name,
-            goalDetails: `${goal.name}: ${goal.savedAmount?.toFixed(
-              2,
-            )} / ${goal.targetAmount.toFixed(2)} (Target: ${
-              goal.targetDate ? formatDateFn(goal.targetDate, 'yyyy-MM-dd') : 'N/A'
-            })`,
-            message: `Found goal (ID: ${goal.id}): ${goal.name}. Please confirm the action (update, delete, add amount, withdraw amount) and provide necessary details.`,
+            confirmationNeeded: true,
+            id: goalInfo.id,
+            details: `Goal: ${goalInfo.name}`,
+            message: `Found goal (ID: ${goalInfo.id}): ${goalInfo.name}. Confirm action (update, delete, add/withdraw amount) and include the ID?`,
           };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
-              : `Failed to find saving goal: ${error.message}`;
-          return { success: false, error: message };
+              : `Failed to find goal: ${error.message}`;
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
-
-    // Tool for confirmed goal update
     executeUpdateSavingGoalById: tool({
       description:
         'Updates the target amount or target date of a specific saving goal AFTER user confirmation, using its unique ID.',
@@ -1359,37 +1305,33 @@ export function createGoalTools(userId: string) {
           .string()
           .optional()
           .describe("The new target date (e.g., '2025-12-31') (optional)."),
-        // Note: Updating savedAmount is handled by add/withdraw tools
       }),
       execute: async ({ goalId, newTargetAmount, newTargetDate }) => {
         try {
-          const payload: Partial<InferInsertModel<typeof SavingGoal>> = {};
+          const payload: Partial<GoalApiPayload> = {};
           if (newTargetAmount !== undefined) payload.targetAmount = newTargetAmount;
           if (newTargetDate !== undefined) {
-            const parsedDate = newTargetDate
-              ? parseDateFn(newTargetDate, 'yyyy-MM-dd', new Date())
-              : null;
+            const parsedDate = newTargetDate ? parseISO(newTargetDate) : null;
             if (newTargetDate && !isValidDateFn(parsedDate))
-              throw new HTTPException(400, { message: 'Invalid new target date format.' });
+              throw new HTTPException(400, { message: 'Invalid date format. Use YYYY-MM-DD.' });
             payload.targetDate = parsedDate;
           }
-
           if (Object.keys(payload).length === 0)
-            return { success: false, error: 'No valid fields provided for update.' };
+            throw new HTTPException(400, { message: 'No valid fields provided for update.' });
 
           await goalService.updateGoal(goalId, userId, payload);
-          return { success: true, message: `Saving goal (ID: ${goalId}) updated.` };
+          const response = { success: true, message: `Saving goal (ID: ${goalId}) updated.` };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
-              : `Failed to update saving goal: ${error.message}`;
-          return { success: false, error: message };
+              : `Failed to update goal: ${error.message}`;
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
-
-    // Tool for confirmed add amount
     executeAddAmountToGoalById: tool({
       description:
         'Adds an amount to a specific saving goal AFTER user confirmation, using its unique ID.',
@@ -1400,18 +1342,21 @@ export function createGoalTools(userId: string) {
       execute: async ({ goalId, amountToAdd }) => {
         try {
           await goalService.addAmountToGoal(goalId, userId, amountToAdd);
-          return { success: true, message: `Added ${amountToAdd} to saving goal (ID: ${goalId}).` };
+          const response = {
+            success: true,
+            message: `Added ${amountToAdd} to goal (ID: ${goalId}).`,
+          };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
-              : `Failed to add amount to goal: ${error.message}`;
-          return { success: false, error: message };
+              : `Failed to add amount: ${error.message}`;
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
-
-    // Tool for confirmed withdraw amount
     executeWithdrawAmountFromGoalById: tool({
       description:
         'Withdraws an amount from a specific saving goal AFTER user confirmation, using its unique ID. Fails if withdrawal exceeds saved amount.',
@@ -1422,21 +1367,21 @@ export function createGoalTools(userId: string) {
       execute: async ({ goalId, amountToWithdraw }) => {
         try {
           await goalService.withdrawAmountFromGoal(goalId, userId, amountToWithdraw);
-          return {
+          const response = {
             success: true,
-            message: `Withdrew ${amountToWithdraw} from saving goal (ID: ${goalId}).`,
+            message: `Withdrew ${amountToWithdraw} from goal (ID: ${goalId}).`,
           };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
-              : `Failed to withdraw amount from goal: ${error.message}`;
-          return { success: false, error: message };
+              : `Failed to withdraw amount: ${error.message}`;
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
-
-    // Tool for confirmed goal deletion
     executeConfirmedDeleteGoal: tool({
       description: 'Deletes a specific saving goal AFTER user confirmation, using its unique ID.',
       parameters: z.object({
@@ -1444,14 +1389,16 @@ export function createGoalTools(userId: string) {
       }),
       execute: async ({ goalId }) => {
         try {
-          await goalService.deleteGoal(goalId, userId);
-          return { success: true, message: `Saving goal (ID: ${goalId}) has been deleted.` };
+          const result = await goalService.deleteGoal(goalId, userId);
+          const response = { success: true, message: result.message };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
-              : `Failed to delete saving goal: ${error.message}`;
-          return { success: false, error: message };
+              : `Failed to delete goal: ${error.message}`;
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
@@ -1485,25 +1432,30 @@ export function createInvestmentAccountTools(userId: string) {
             userId,
             payload,
           );
-          return {
+          const response = {
             success: true,
             message: `Investment account "${newAccount.name}" created.`,
-            data: newAccount,
+            data: {
+              id: newAccount.id,
+              name: newAccount.name,
+              platform: newAccount.platform,
+              currency: newAccount.currency,
+            },
           };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
               : `Failed to create investment account: ${error.message}`;
-          return { success: false, error: message };
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
     listInvestmentAccounts: tool({
       description: "Lists the user's investment accounts.",
-      parameters: z.object({
-        // Add search/filter later if needed
-      }),
+      parameters: z.object({}),
       execute: async () => {
         try {
           const { data: accounts } = await investmentAccountService.getInvestmentAccounts(
@@ -1513,30 +1465,34 @@ export function createInvestmentAccountTools(userId: string) {
             'name',
             'asc',
           );
-          if (accounts.length === 0)
-            return { success: true, accounts: [], message: 'No investment accounts found.' };
-          const formattedList = accounts
-            .map((acc) => `${acc.name} (${acc.platform || 'N/A'}, ${acc.currency})`)
-            .join('\n');
-          return {
+          const message =
+            accounts.length > 0
+              ? `Found ${accounts.length} investment account(s).`
+              : 'No investment accounts found.';
+          const response = {
             success: true,
-            accounts: accounts,
-            message: `Found investment accounts:\n${formattedList}`,
+            message: message,
+            data: accounts.map((a) => ({
+              id: a.id,
+              name: a.name,
+              platform: a.platform,
+              currency: a.currency,
+            })),
           };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
               : `Failed to list investment accounts: ${error.message}`;
-          return { success: false, error: message };
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
-    // Add Identify/Update/Delete tools similar to Account/Category if needed
   };
 }
 
-// --- Investment Tools ---
 export function createInvestmentTools(userId: string) {
   return {
     addInvestment: tool({
@@ -1561,35 +1517,34 @@ export function createInvestmentTools(userId: string) {
         try {
           const accountId = await findInvestmentAccountIdByName(userId, investmentAccountName);
           if (!accountId)
-            return {
-              success: false,
-              error: `Investment account "${investmentAccountName}" not found.`,
-            };
-
-          const parsedDate = parseDateDescription(purchaseDate); // Use date helper
-
+            throw new HTTPException(404, {
+              message: `Investment account "${investmentAccountName}" not found.`,
+            });
+          const parsedDate = parseDateDescription(purchaseDate);
           const payload: Pick<
             InferInsertModel<typeof Investment>,
             'symbol' | 'shares' | 'purchasePrice' | 'purchaseDate' | 'account'
           > = {
             account: accountId,
-            symbol: symbol.toUpperCase(), // Standardize symbol
+            symbol: symbol.toUpperCase(),
             shares,
             purchasePrice,
             purchaseDate: parsedDate,
           };
-          const result = await investmentService.createInvestment(userId, payload); // Service calculates investedAmount
-          return {
+          const result = await investmentService.createInvestment(userId, payload as any);
+          const response = {
             success: true,
             message: `Added ${shares} units of ${symbol} to ${investmentAccountName}.`,
-            data: result.data,
+            data: { id: result.data.id, symbol: result.data.symbol, shares: result.data.shares },
           };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
               : `Failed to add investment: ${error.message}`;
-          return { success: false, error: message };
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
@@ -1612,11 +1567,9 @@ export function createInvestmentTools(userId: string) {
         try {
           const accountId = await findInvestmentAccountIdByName(userId, investmentAccountName);
           if (!accountId)
-            return {
-              success: false,
-              error: `Investment account "${investmentAccountName}" not found.`,
-            };
-
+            throw new HTTPException(404, {
+              message: `Investment account "${investmentAccountName}" not found.`,
+            });
           const { data: investments } = await investmentService.getInvestmentsForAccount(
             accountId,
             userId,
@@ -1625,44 +1578,35 @@ export function createInvestmentTools(userId: string) {
             'symbol',
             'asc',
           );
-
-          if (investments.length === 0)
-            return {
-              success: true,
-              investments: [],
-              message: `No investments found in account "${investmentAccountName}".`,
-            };
-
-          const formattedList = investments
-            .map(
-              (inv) =>
-                `${inv.symbol}: ${inv.shares} units @ ${
-                  inv.purchasePrice
-                } (Invested: ${inv.investedAmount?.toFixed(2)}, Dividend: ${inv.dividend?.toFixed(
-                  2,
-                )})`,
-            )
-            .join('\n');
-          return {
+          const message =
+            investments.length > 0
+              ? `Found ${investments.length} investment(s) in ${investmentAccountName}.`
+              : `No investments found in ${investmentAccountName}.`;
+          const response = {
             success: true,
-            investments: investments,
-            message: `Investments in ${investmentAccountName}:\n${formattedList}`,
+            message: message,
+            data: investments.map((i) => ({
+              id: i.id,
+              symbol: i.symbol,
+              shares: i.shares,
+              purchasePrice: i.purchasePrice,
+              investedAmount: i.investedAmount,
+            })),
           };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
               : `Failed to list investments: ${error.message}`;
-          return { success: false, error: message };
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
-    // Add Identify/Update/Delete tools similar to Transactions if needed
-    // Identification might be by symbol within a specific account name
   };
 }
 
-// --- Debt Tools ---
 export function createDebtTools(userId: string) {
   return {
     addDebt: tool({
@@ -1699,19 +1643,39 @@ export function createDebtTools(userId: string) {
           .optional()
           .describe('The account used for this debt transaction, if applicable (optional).'),
         dueDate: z.string().optional().describe("Optional due date (e.g., '2025-12-31')."),
+        durationType: z
+          .enum(['year', 'month', 'week', 'day', 'custom'])
+          .optional()
+          .describe("Duration unit (year, month, week, day) or 'custom' if using date range."),
+        frequency: z
+          .number()
+          .int()
+          .positive()
+          .optional()
+          .describe(
+            "Number of duration units (e.g., 3 for 3 months). Required if durationType is not 'custom'.",
+          ),
+        customDateRange: z
+          .string()
+          .optional()
+          .describe("Date range as 'YYYY-MM-DD,YYYY-MM-DD' if durationType is 'custom'."),
       }),
-      execute: async ({
-        amount,
-        type,
-        involvedUserEmailOrName,
-        description,
-        interestType = 'simple',
-        interestRate = 0,
-        accountName,
-        dueDate,
-      }) => {
+      execute: async (args) => {
         try {
-          // Find the involved user
+          const {
+            amount,
+            type,
+            involvedUserEmailOrName,
+            description,
+            interestType = 'simple',
+            interestRate = 0,
+            accountName,
+            dueDate,
+            durationType,
+            frequency,
+            customDateRange,
+          } = args;
+
           const involvedUser = await db.query.User.findFirst({
             where: or(
               eq(User.email, involvedUserEmailOrName),
@@ -1720,56 +1684,71 @@ export function createDebtTools(userId: string) {
             columns: { id: true },
           });
           if (!involvedUser)
-            return { success: false, error: `User "${involvedUserEmailOrName}" not found.` };
+            throw new HTTPException(404, {
+              message: `User "${involvedUserEmailOrName}" not found.`,
+            });
           if (involvedUser.id === userId)
-            return { success: false, error: 'Cannot create a debt with yourself.' };
+            throw new HTTPException(400, { message: 'Cannot create debt with yourself.' });
 
-          let accountId: string | undefined | null = null;
-          if (accountName) {
-            accountId = await findAccountIdByName(userId, accountName);
-            if (!accountId) return { success: false, error: `Account "${accountName}" not found.` };
+          const accountId = accountName ? await findAccountIdByName(userId, accountName) : null;
+          if (accountName && !accountId)
+            throw new HTTPException(404, { message: `Account "${accountName}" not found.` });
+
+          let apiDuration: string;
+          let apiFrequency: string | undefined = undefined;
+
+          if (durationType === 'custom' && customDateRange) {
+            apiDuration = customDateRange;
+          } else if (durationType && frequency) {
+            apiDuration = durationType;
+            apiFrequency = String(frequency);
+          } else if (dueDate) {
+            apiDuration = `${formatDateFn(new Date(), 'yyyy-MM-dd')},${formatDateFn(
+              parseDateDescription(dueDate),
+              'yyyy-MM-dd',
+            )}`;
+          } else {
+            throw new HTTPException(400, {
+              message: 'Either duration/frequency or a custom date range/due date is required.',
+            });
           }
 
-          const payload: Omit<
-            InferInsertModel<typeof Debts>,
-            | 'id'
-            | 'createdAt'
-            | 'updatedAt'
-            | 'createdBy'
-            | 'premiumAmount'
-            | 'duration'
-            | 'frequency'
-          > & { user: string } = {
+          const payload: any = {
             amount: amount,
             type: type,
-            userId: involvedUser.id, // This is the 'involvedUserId' from the service perspective
+            userId: involvedUser.id,
             description: description,
             interestType: interestType,
             percentage: interestRate,
             account: accountId,
-            dueDate: dueDate
-              ? parseDateDescription(dueDate).toISOString().split('T')[0]
-              : undefined, // Use helper, format YYYY-MM-DD
-            // premiumAmount, duration, frequency are not directly asked here, default in service
-            user: involvedUser.id, // Duplicate? Service expects 'userId' for involved party
+            duration: apiDuration,
+            frequency: apiFrequency,
+            user: involvedUser.id,
           };
 
-          const newDebt = await debtService.createDebt(userId, payload as any); // Cast needed due to extra 'user' field? review service signature
-          return {
+          const newDebt = await debtService.createDebt(userId, payload);
+          const response = {
             success: true,
             message: `Debt (${type}) of ${amount} involving ${involvedUserEmailOrName} recorded.`,
-            data: newDebt,
+            data: {
+              id: newDebt.id,
+              description: newDebt.description,
+              amount: newDebt.amount,
+              type: newDebt.type,
+            },
           };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException ? error.message : `Failed to add debt: ${error.message}`;
-          return { success: false, error: message };
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
     listDebts: tool({
       description:
-        'Lists debts, either money owed to the user (given) or by the user (taken). Can filter by type.',
+        'Lists debts, either money owed to the user (given) or by the user (taken). Can filter by type and paid status.',
       parameters: z.object({
         type: z
           .enum(['given', 'taken'])
@@ -1790,7 +1769,6 @@ export function createDebtTools(userId: string) {
       }),
       execute: async ({ type, showPaid = false, limit = 20 }) => {
         try {
-          // Service needs enhancement to filter by isPaid status
           const filters = { type: type };
           const { data: debts } = await debtService.getDebts(
             userId,
@@ -1799,39 +1777,42 @@ export function createDebtTools(userId: string) {
             limit,
             'dueDate',
             'asc',
-          ); // Sort by due date
-
+          );
           let filteredDebts = debts;
           if (!showPaid) {
             filteredDebts = debts.filter((d) => !d.debts.isPaid);
           }
 
-          if (filteredDebts.length === 0)
-            return { success: true, debts: [], message: 'No debts found matching the criteria.' };
-
-          const formattedList = filteredDebts
-            .map(
-              (d) =>
-                `${d.debts.type === 'given' ? 'Lent to' : 'Borrowed from'} ${
-                  d.debts.account || 'Unknown'
-                }: ${d.debts.amount} (${d.debts.description || 'No description'}) - Due: ${
-                  d.debts.dueDate || 'N/A'
-                } ${d.debts.isPaid ? '[PAID]' : ''}`,
-            )
-            .join('\n');
-          return { success: true, debts: filteredDebts, message: `Debts:\n${formattedList}` };
+          const message =
+            filteredDebts.length > 0
+              ? `Found ${filteredDebts.length} debt(s) matching criteria.`
+              : 'No debts found matching criteria.';
+          const response = {
+            success: true,
+            message: message,
+            data: filteredDebts.map((d) => ({
+              id: d.debts.id,
+              description: d.debts.description,
+              amount: d.debts.amount,
+              type: d.debts.type,
+              isPaid: d.debts.isPaid,
+              dueDate: d.debts.dueDate,
+            })),
+          };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
               : `Failed to list debts: ${error.message}`;
-          return { success: false, error: message };
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
     markDebtAsPaid: tool({
       description:
-        'Marks a specific debt as paid based on its description or involved user. Requires identification first.',
+        'Identifies a specific debt based on its description or involved user, then asks for confirmation to mark it as paid.',
       parameters: z.object({
         identifier: z
           .string()
@@ -1842,37 +1823,29 @@ export function createDebtTools(userId: string) {
       }),
       execute: async ({ identifier }) => {
         try {
-          // Use findDebtId helper (or similar logic)
-          const debtId = await findDebtId(userId, identifier);
-          if (!debtId)
-            return {
-              success: false,
-              error: `Could not uniquely identify debt matching "${identifier}". Please be more specific.`,
-            };
-
-          // Fetch details for confirmation message
-          const debtDetails = await db.query.Debts.findFirst({
-            where: eq(Debts.id, debtId),
-            with: { involvedUser: { columns: { name: true } } },
-          });
-
-          return {
+          const debtInfo = await findDebtId(userId, identifier);
+          if (!debtInfo)
+            throw new HTTPException(404, {
+              message: `Could not uniquely identify debt matching "${identifier}".`,
+            });
+          const response = {
             success: true,
             confirmationNeeded: true,
-            debtId: debtId,
-            debtDetails: `${debtDetails?.type} ${debtDetails?.amount} involving ${debtDetails?.involvedUser?.name} (${debtDetails?.description})`,
-            message: `ACTION REQUIRED: Found debt (ID: ${debtId}): ${debtDetails?.type} ${debtDetails?.amount} involving ${debtDetails?.involvedUser?.name} (${debtDetails?.description}). Please confirm marking this as paid.`,
+            id: debtInfo.id,
+            details: debtInfo.details,
+            message: `Found debt (ID: ${debtInfo.id}): ${debtInfo.details}. Confirm marking as paid by including the ID?`,
           };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
-              : `Failed to find debt to mark as paid: ${error.message}`;
-          return { success: false, error: message };
+              : `Failed to find debt: ${error.message}`;
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
-    // New tool for confirmed marking as paid
     executeConfirmedMarkDebtPaid: tool({
       description: 'Marks a specific debt as paid AFTER user confirmation, using its unique ID.',
       parameters: z.object({
@@ -1880,18 +1853,18 @@ export function createDebtTools(userId: string) {
       }),
       execute: async ({ debtId }) => {
         try {
-          // Service method handles ownership/involved party check
-          await debtService.markDebtAsPaid(debtId, userId);
-          return { success: true, message: `Debt (ID: ${debtId}) marked as paid.` };
+          const result = await debtService.markDebtAsPaid(debtId, userId);
+          const response = { success: true, message: result.message };
+          return createJsonResponse(response);
         } catch (error: any) {
           const message =
             error instanceof HTTPException
               ? error.message
-              : `Failed to mark debt as paid: ${error.message}`;
-          return { success: false, error: message };
+              : `Failed to mark debt paid: ${error.message}`;
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
         }
       },
     }),
-    // Add Identify/Update/Delete tools similar to others if needed
   };
 }

@@ -8,6 +8,13 @@
       "when": 1746245331740,
       "tag": "0000_flaky_monster_badoon",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1746267364734,
+      "tag": "0001_awesome_vargas",
+      "breakpoints": true
     }
   ]
 }

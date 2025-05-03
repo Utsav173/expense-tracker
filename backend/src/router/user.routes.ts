@@ -2,7 +2,12 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { zValidator } from '@hono/zod-validator';
-import { loginSchema, userSchema, updateUserSchema } from '../utils/schema.validations';
+import {
+  loginSchema,
+  userSchema,
+  updateUserSchema,
+  aiApiKeySchema,
+} from '../utils/schema.validations';
 import authMiddleware from '../middleware';
 import { UpdatePayload, userService } from '../services/user.service'; // Import the service
 
@@ -98,6 +103,19 @@ userRouter.put('/update', authMiddleware, zValidator('form', updateUserSchema), 
     if (error instanceof HTTPException) throw error;
     console.error('Update user error:', error); // Log the actual error server-side
     throw new HTTPException(500, { message: 'Something went wrong during user update.' });
+  }
+});
+
+userRouter.put('/ai-key', authMiddleware, zValidator('json', aiApiKeySchema), async (c) => {
+  try {
+    const userId = await c.get('userId');
+    const { apiKey } = c.req.valid('json');
+    const result = await userService.updateUserAiApiKey(userId, apiKey);
+    return c.json(result);
+  } catch (error: any) {
+    if (error instanceof HTTPException) throw error;
+    console.error('Update AI Key error:', error);
+    throw new HTTPException(500, { message: 'Failed to update AI API key.' });
   }
 });
 

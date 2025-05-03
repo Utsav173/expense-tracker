@@ -172,3 +172,7 @@ export const historicalPortfolioQuerySchema = z
       message: 'Cannot specify both period and custom date range',
     },
   );
+
+export const aiApiKeySchema = z.object({
+  apiKey: z.string().nullable().describe('The AI API key, or null to remove it.'),
+});

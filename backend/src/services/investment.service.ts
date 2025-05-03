@@ -540,7 +540,7 @@ export class InvestmentService {
     payload: Pick<
       InferInsertModel<typeof Investment>,
       'symbol' | 'shares' | 'purchasePrice' | 'purchaseDate' | 'account'
-    > & { investmentAccount: string },
+    > & { investmentAccount?: string },
   ): Promise<{ message: string; data: InferSelectModel<typeof Investment> }> {
     const investmentAccountId = payload.investmentAccount ?? payload.account;
 

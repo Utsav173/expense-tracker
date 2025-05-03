@@ -44,6 +44,7 @@ export const User = pgTable(
     lastLoginAt: timestamp('lastLoginAt'),
     resetPasswordToken: text('resetPasswordToken'),
     preferredCurrency: varchar('preferredCurrency', { length: 3 }).default('INR'),
+    aiApiKeyEncrypted: text('aiApiKeyEncrypted'),
   },
   (table) => [
     uniqueIndex('user_email_idx').on(table.email),
