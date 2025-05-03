@@ -3,17 +3,18 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  password: string;
+  password?: string;
   token?: string;
   isSocial: boolean;
-  profilePic: string;
+  profilePic: string | null;
   role: string;
   isActive: boolean;
-  lastLoginAt?: string;
-  resetPasswordToken?: string;
+  lastLoginAt?: string | null;
+  resetPasswordToken?: string | null;
   createdAt: string;
-  updatedAt?: string;
-  preferredCurrency: string;
+  updatedAt?: string | null;
+  preferredCurrency: string | null;
+  hasAiApiKey?: boolean;
 }
 
 // Analytics Interface

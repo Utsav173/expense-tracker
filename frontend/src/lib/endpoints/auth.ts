@@ -1,6 +1,6 @@
 import apiFetch from '../api-client';
 import { LoginResponse, User, ApiResponse } from '@/lib/types';
-type UserApiResponse = ApiResponse<User>;
+type UserApiResponse = ApiResponse<User & { hasAiApiKey?: boolean }>; // Update User type if needed
 type LoginApiResponse = ApiResponse<LoginResponse>;
 
 export const authSignup = (body: any, successMessage?: string, errorMessage?: string) =>
@@ -45,6 +45,20 @@ export const authUpdateUser = (body: any, successMessage?: string, errorMessage?
     successMessage,
     errorMessage
   );
+
+// --- NEW FUNCTION ---
+/**
+ * Updates or removes the user's AI API key.
+ * @param apiKey The new API key string, or null to remove the key.
+ * @param successMessage Optional success toast message.
+ * @param errorMessage Optional error toast message.
+ */
+export const authUpdateUserAiApiKey = (
+  apiKey: string | null,
+  successMessage?: string,
+  errorMessage?: string
+): Promise<ApiResponse<{ message: string }>> =>
+  apiFetch('/auth/ai-key', 'PUT', { apiKey }, undefined, successMessage, errorMessage);
 
 export const authUpdateUserPreferences = (
   body: any,
