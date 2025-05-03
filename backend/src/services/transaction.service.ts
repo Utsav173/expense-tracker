@@ -1,8 +1,6 @@
-// src/services/transaction.service.ts
 import { db } from '../database';
-import { Account, Analytics, Category, Transaction, User } from '../database/schema';
+import { Account, Category, Transaction, User } from '../database/schema';
 import {
-  AnyColumn,
   InferInsertModel,
   InferSelectModel,
   SQL,
@@ -17,6 +15,8 @@ import {
   or,
   sql,
   SQLWrapper,
+  max,
+  min,
 } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { HTTPException } from 'hono/http-exception';
@@ -28,6 +28,9 @@ import {
   getIntervalValue,
 } from '../utils/date.utils';
 import { analyticsService } from './analytics.service';
+import Papa from 'papaparse';
+import { format } from 'date-fns';
+import { utils as xlsxUtils, write as xlsxWrite } from 'xlsx';
 
 type TransactionFilters = {
   duration?: string; // Natural language or YYYY-MM-DD,YYYY-MM-DD
@@ -263,7 +266,13 @@ export class TransactionService {
     return transactionData[0] as TransactionSelect;
   }
 
-  async createTransaction(userId: string, payload: InferInsertModel<typeof Transaction>) {
+  async createTransaction(
+    userId: string,
+    payload: InferInsertModel<typeof Transaction>,
+    // --- ADDED Optional Parameter ---
+    _internal_bypassOwnerCheck: boolean = false,
+    // ------------------------------
+  ) {
     const {
       text,
       amount,
@@ -281,18 +290,39 @@ export class TransactionService {
     if (isNaN(parsedAmount))
       throw new HTTPException(400, { message: 'Invalid transaction amount.' });
 
+    // --- MODIFIED Account Check ---
+    const accountWhereClause = _internal_bypassOwnerCheck
+      ? eq(Account.id, account) // Internal call: Just check if account exists
+      : and(eq(Account.id, account), eq(Account.owner, userId)); // User call: Check ownership
+
     const validAccount = await db.query.Account.findFirst({
-      where: and(eq(Account.id, account), eq(Account.owner, userId)),
-      columns: { id: true, balance: true, currency: true },
+      where: accountWhereClause,
+      columns: { id: true, balance: true, currency: true, owner: true }, // Fetch owner always
     });
-    if (!validAccount)
+
+    // Throw 404 if account doesn't exist at all (for internal calls)
+    if (!validAccount && _internal_bypassOwnerCheck) {
+      throw new HTTPException(404, {
+        message: `Account ${account} not found during internal transaction creation.`,
+      });
+    }
+    // Throw 403 if account doesn't exist OR user doesn't own it (for user calls)
+    if (!validAccount && !_internal_bypassOwnerCheck) {
       throw new HTTPException(403, { message: 'Account not found or access denied.' });
-    if (!isIncome && (validAccount.balance ?? 0) < parsedAmount)
+    }
+    // -----------------------------
+
+    // Check balance only for user-initiated expenses
+    if (!_internal_bypassOwnerCheck && !isIncome && (validAccount!.balance ?? 0) < parsedAmount)
       throw new HTTPException(400, { message: 'Insufficient balance for this expense.' });
 
+    // Use the actual owner from the fetched account data, especially for internal calls
+    const actualOwnerId = validAccount!.owner;
+
     if (category) {
+      // Category check should still ensure the category owner is the transaction owner
       const validCategory = await db.query.Category.findFirst({
-        where: and(eq(Category.id, category), eq(Category.owner, userId)),
+        where: and(eq(Category.id, category), eq(Category.owner, actualOwnerId)),
         columns: { id: true },
       });
       if (!validCategory) throw new HTTPException(400, { message: 'Invalid category selected.' });
@@ -321,14 +351,14 @@ export class TransactionService {
           isIncome,
           transfer,
           category,
-          account,
-          owner: userId,
-          createdBy: userId,
+          account: validAccount!.id, // Use validated account ID
+          owner: actualOwnerId, // Use actual owner ID
+          createdBy: userId, // Log who initiated (user or system via template owner)
           updatedBy: userId,
           recurring: recurring ?? false,
           recurrenceType: recurring ? recurrenceType : null,
           recurrenceEndDate: parsedEndDate,
-          currency: currency ?? validAccount.currency,
+          currency: currency ?? validAccount!.currency ?? 'INR', // Use account currency
           createdAt: createdAt ? new Date(createdAt) : new Date(),
         })
         .returning()
@@ -338,9 +368,10 @@ export class TransactionService {
       if (!newTransaction || newTransaction.length === 0)
         throw new HTTPException(500, { message: 'Failed to create transaction record.' });
 
+      // Analytics update still uses the actual owner ID
       await analyticsService.handleAnalyticsUpdate({
-        account,
-        user: userId,
+        account: validAccount!.id,
+        user: actualOwnerId, // Use actual owner for analytics context
         isIncome,
         amount: parsedAmount,
         tx,
@@ -743,6 +774,149 @@ export class TransactionService {
 
     // console.warn("Skipping recurring transaction logic is not fully implemented. Placeholder update performed.");
     return { message: 'Recurring transaction skip noted (placeholder action).' };
+  }
+
+  async exportTransactions(
+    filters: TransactionFilters,
+    formatType: 'xlsx' | 'csv' = 'xlsx', // Rename format to formatType
+  ): Promise<{ data: Buffer | string; filename: string; contentType: string }> {
+    const dateRange = filters.duration ? await getIntervalValue(filters.duration) : null;
+    const filterConditions = this.getFilterConditions({
+      ...filters,
+      startDate: dateRange?.startDate ? new Date(dateRange.startDate) : undefined,
+      endDate: dateRange?.endDate ? new Date(dateRange.endDate) : undefined,
+    });
+
+    const transactions = await db.query.Transaction.findMany({
+      where: filterConditions,
+      columns: {
+        createdAt: true,
+        text: true,
+        amount: true,
+        isIncome: true,
+        transfer: true,
+        currency: true,
+      },
+      with: {
+        category: { columns: { name: true } },
+        account: { columns: { name: true } },
+      },
+      orderBy: desc(Transaction.createdAt),
+    }).catch((err) => {
+      throw new HTTPException(500, { message: `DB Fetch Error for Export: ${err.message}` });
+    });
+
+    if (!transactions.length) {
+      throw new HTTPException(404, {
+        message: 'No transactions found matching the specified criteria.',
+      });
+    }
+
+    const exportData = transactions.map((tx) => ({
+      Date: tx.createdAt ? format(tx.createdAt, 'yyyy-MM-dd HH:mm:ss') : 'N/A',
+      Description: tx.text,
+      Amount: tx.isIncome ? tx.amount : -tx.amount,
+      Type: tx.isIncome ? 'Income' : 'Expense',
+      Category: tx.category?.name ?? 'Uncategorized',
+      Account: tx.account?.name ?? 'N/A',
+      Currency: tx.currency,
+      Transfer: tx.transfer ?? '',
+    }));
+
+    const timestamp = format(new Date(), 'yyyyMMdd_HHmmss');
+    let fileData: Buffer | string;
+    let filename: string;
+    let contentType: string;
+
+    if (formatType === 'xlsx') {
+      // Use formatType
+      const ws = xlsxUtils.json_to_sheet(exportData);
+      const wb = xlsxUtils.book_new();
+      xlsxUtils.book_append_sheet(wb, ws, 'Transactions');
+      fileData = xlsxWrite(wb, { type: 'buffer', bookType: 'xlsx' });
+      filename = `transactions_${timestamp}.xlsx`;
+      contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    } else {
+      // csv
+      fileData = Papa.unparse(exportData);
+      filename = `transactions_${timestamp}.csv`;
+      contentType = 'text/csv';
+    }
+
+    return { data: fileData, filename, contentType };
+  }
+
+  async getExtremeTransaction(
+    userId: string,
+    type: 'highest_income' | 'lowest_income' | 'highest_expense' | 'lowest_expense',
+    duration?: string,
+    accountId?: string,
+  ) {
+    const { startDate, endDate } = duration
+      ? await getIntervalValue(duration)
+      : { startDate: undefined, endDate: undefined };
+
+    let whereClause: SQL<unknown> | undefined = eq(Transaction.owner, userId);
+    if (accountId) {
+      whereClause = and(whereClause, eq(Transaction.account, accountId));
+    }
+    if (startDate && endDate) {
+      whereClause = and(
+        whereClause,
+        gte(Transaction.createdAt, new Date(startDate)),
+        lte(Transaction.createdAt, new Date(endDate)),
+      );
+    }
+
+    let isIncomeFilter: boolean;
+    let orderByClause: SQL<unknown>;
+    let amountSelection: SQL<number>;
+
+    switch (type) {
+      case 'highest_income':
+        isIncomeFilter = true;
+        orderByClause = desc(Transaction.amount);
+        amountSelection = max(Transaction.amount).mapWith(Number);
+        break;
+      case 'lowest_income':
+        isIncomeFilter = true;
+        orderByClause = asc(Transaction.amount);
+        amountSelection = min(Transaction.amount).mapWith(Number);
+        break;
+      case 'highest_expense':
+        isIncomeFilter = false;
+        orderByClause = desc(Transaction.amount);
+        amountSelection = max(Transaction.amount).mapWith(Number);
+        break;
+      case 'lowest_expense':
+        isIncomeFilter = false;
+        orderByClause = asc(Transaction.amount);
+        amountSelection = min(Transaction.amount).mapWith(Number);
+        break;
+    }
+
+    whereClause = and(whereClause, eq(Transaction.isIncome, isIncomeFilter));
+
+    const extremeAmountResult = await db
+      .select({ amount: amountSelection })
+      .from(Transaction)
+      .where(whereClause)
+      .then((res) => res[0]?.amount);
+
+    if (extremeAmountResult === null || extremeAmountResult === undefined) {
+      return null;
+    }
+
+    const extremeTransaction = await db.query.Transaction.findFirst({
+      where: and(whereClause, eq(Transaction.amount, extremeAmountResult)),
+      orderBy: [orderByClause, desc(Transaction.createdAt)],
+      with: {
+        category: { columns: { name: true } },
+        account: { columns: { name: true, currency: true } },
+      },
+    });
+
+    return extremeTransaction;
   }
 }
 

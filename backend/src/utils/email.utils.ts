@@ -132,3 +132,128 @@ export function forgotPasswordTemp(
 </body>
 </html>`;
 }
+
+/**
+ * Generates HTML for a budget alert email.
+ * @param username User's name.
+ * @param budgetDetails Details like category name, budgeted amount, spent amount, period.
+ * @param alertType 'approaching' or 'exceeded'.
+ * @returns HTML string.
+ */
+export function budgetAlertEmailTemp(
+  username: string,
+  budgetDetails: {
+    categoryName: string;
+    budgetedAmount: number;
+    spentAmount: number;
+    period: string; // e.g., "August 2024"
+    currency: string;
+  },
+  alertType: 'approaching' | 'exceeded',
+): string {
+  const safeUsername = username || 'User';
+  const { categoryName, budgetedAmount, spentAmount, period, currency } = budgetDetails;
+  const percentageSpent = budgetedAmount > 0 ? (spentAmount / budgetedAmount) * 100 : 0;
+  const subject =
+    alertType === 'exceeded'
+      ? `Budget Exceeded for ${categoryName}`
+      : `Budget Alert for ${categoryName}`;
+  const message =
+    alertType === 'exceeded'
+      ? `You have exceeded your budget of ${currency}${budgetedAmount.toFixed(
+          2,
+        )} for <strong>${categoryName}</strong> in ${period}. You have spent ${currency}${spentAmount.toFixed(
+          2,
+        )} (${percentageSpent.toFixed(1)}%).`
+      : `You are approaching your budget limit for <strong>${categoryName}</strong> in ${period}. You have spent ${currency}${spentAmount.toFixed(
+          2,
+        )} of your ${currency}${budgetedAmount.toFixed(2)} budget (${percentageSpent.toFixed(
+          1,
+        )}%).`;
+
+  // Reusing a similar structure to other emails
+  return `<!DOCTYPE html>
+  <html>
+  <head> <meta charset="utf-8"> <title>${subject}</title> <style> /* Basic styles - copy from other templates if needed */ body { font-family: sans-serif; } .container { max-width: 600px; margin: 20px auto; padding: 20px; background-color: #f9f9f9; border-radius: 8px; } </style> </head>
+  <body>
+    <div class="container">
+      <h1>${subject}</h1>
+      <p>Hi ${safeUsername},</p>
+      <p>${message}</p>
+      <p>Consider reviewing your spending in this category.</p>
+      <p>Thank you,<br/>Expense Tracker Team</p>
+    </div>
+  </body>
+  </html>`;
+}
+
+/**
+ * Generates HTML for a saving goal reminder email.
+ * @param username User's name.
+ * @param goalDetails Details like goal name, target date, remaining amount.
+ * @returns HTML string.
+ */
+export function goalReminderEmailTemp(
+  username: string,
+  goalDetails: {
+    goalName: string;
+    targetDate: string; // Formatted date string
+    remainingAmount: number;
+    currency: string;
+  },
+): string {
+  const safeUsername = username || 'User';
+  const { goalName, targetDate, remainingAmount, currency } = goalDetails;
+
+  return `<!DOCTYPE html>
+  <html>
+  <head> <meta charset="utf-8"> <title>Saving Goal Reminder: ${goalName}</title> <style> /* Basic styles */ body { font-family: sans-serif; } .container { max-width: 600px; margin: 20px auto; padding: 20px; background-color: #f9f9f9; border-radius: 8px; } </style> </head>
+  <body>
+    <div class="container">
+      <h1>Goal Reminder: ${goalName}</h1>
+      <p>Hi ${safeUsername},</p>
+      <p>Just a friendly reminder that your saving goal "<strong>${goalName}</strong>" is approaching its target date of <strong>${targetDate}</strong>.</p>
+      <p>You still need to save <strong>${currency}${remainingAmount.toFixed(
+    2,
+  )}</strong> to reach your target.</p>
+      <p>Keep up the great work!</p>
+      <p>Thank you,<br/>Expense Tracker Team</p>
+    </div>
+  </body>
+  </html>`;
+}
+
+/**
+ * Generates HTML for a bill payment reminder email.
+ * @param username User's name.
+ * @param billDetails Details like bill description, amount, due date.
+ * @returns HTML string.
+ */
+export function billReminderEmailTemp(
+  username: string,
+  billDetails: {
+    description: string;
+    amount: number;
+    dueDate: string; // Formatted date string
+    currency: string;
+  },
+): string {
+  const safeUsername = username || 'User';
+  const { description, amount, dueDate, currency } = billDetails;
+
+  return `<!DOCTYPE html>
+  <html>
+  <head> <meta charset="utf-8"> <title>Bill Reminder: ${description}</title> <style> /* Basic styles */ body { font-family: sans-serif; } .container { max-width: 600px; margin: 20px auto; padding: 20px; background-color: #f9f9f9; border-radius: 8px; } </style> </head>
+  <body>
+    <div class="container">
+      <h1>Upcoming Bill Reminder</h1>
+      <p>Hi ${safeUsername},</p>
+      <p>This is a reminder that your recurring payment for "<strong>${description}</strong>" of <strong>${currency}${amount.toFixed(
+    2,
+  )}</strong> is due soon, around <strong>${dueDate}</strong>.</p>
+      <p>Please ensure you have sufficient funds available.</p>
+      <p>Thank you,<br/>Expense Tracker Team</p>
+    </div>
+  </body>
+  </html>`;
+}

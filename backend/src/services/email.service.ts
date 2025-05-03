@@ -1,8 +1,13 @@
-// src/services/email.service.ts
 import nodemailer from 'nodemailer';
 import Mail from 'nodemailer/lib/mailer';
 import { HTTPException } from 'hono/http-exception';
-import { WelcomeEmailTemp, forgotPasswordTemp } from '../utils/email.utils'; // Assuming templates are here
+import {
+  WelcomeEmailTemp,
+  billReminderEmailTemp,
+  budgetAlertEmailTemp,
+  forgotPasswordTemp,
+  goalReminderEmailTemp,
+} from '../utils/email.utils';
 import { config } from '../config';
 
 // Define a type for email options for better structure
@@ -102,6 +107,66 @@ export class EmailService {
     await this.sendMail({
       to: targetEmail,
       subject: subject,
+      html: html,
+    });
+  }
+
+  async sendBudgetAlertEmail(
+    userEmail: string,
+    username: string,
+    budgetDetails: {
+      categoryName: string;
+      budgetedAmount: number;
+      spentAmount: number;
+      period: string;
+      currency: string;
+    },
+    alertType: 'approaching' | 'exceeded',
+  ): Promise<void> {
+    const html = budgetAlertEmailTemp(username, budgetDetails, alertType);
+    const subject =
+      alertType === 'exceeded'
+        ? `Budget Exceeded: ${budgetDetails.categoryName}`
+        : `Budget Alert: ${budgetDetails.categoryName}`;
+    await this.sendMail({
+      to: userEmail,
+      subject: subject,
+      html: html,
+    });
+  }
+
+  async sendGoalReminderEmail(
+    userEmail: string,
+    username: string,
+    goalDetails: {
+      goalName: string;
+      targetDate: string;
+      remainingAmount: number;
+      currency: string;
+    },
+  ): Promise<void> {
+    const html = goalReminderEmailTemp(username, goalDetails);
+    await this.sendMail({
+      to: userEmail,
+      subject: `Saving Goal Reminder: ${goalDetails.goalName}`,
+      html: html,
+    });
+  }
+
+  async sendBillReminderEmail(
+    userEmail: string,
+    username: string,
+    billDetails: {
+      description: string;
+      amount: number;
+      dueDate: string;
+      currency: string;
+    },
+  ): Promise<void> {
+    const html = billReminderEmailTemp(username, billDetails);
+    await this.sendMail({
+      to: userEmail,
+      subject: `Upcoming Bill Reminder: ${billDetails.description}`,
       html: html,
     });
   }

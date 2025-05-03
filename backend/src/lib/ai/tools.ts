@@ -14,6 +14,8 @@ import {
   subMonths,
   getMonth,
   parseISO,
+  format,
+  startOfDay,
 } from 'date-fns';
 import { InferInsertModel, and, eq, ilike, or, sql } from 'drizzle-orm';
 import {
@@ -32,27 +34,43 @@ import { budgetService } from '../../services/budget.service';
 import { debtService } from '../../services/debt.service';
 import { investmentAccountService } from '../../services/investmentAccount.service';
 import { investmentService } from '../../services/investment.service';
+import { formatCurrency } from '../../utils/currency.utils';
+
+function safeFormatDate(date: Date | string | null | undefined, formatString: string): string {
+  if (!date) return 'N/A';
+  const dateObj = typeof date === 'string' ? parseISO(date) : date;
+  return isValidDateFn(dateObj) ? format(dateObj, formatString) : 'N/A';
+}
 
 function parseDateDescription(dateDescription: string | undefined | null): Date {
   const now = new Date();
   if (!dateDescription) return now;
-  const lowerDesc = dateDescription.toLowerCase();
-  if (lowerDesc === 'today') return now;
-  if (lowerDesc === 'yesterday') return subDays(now, 1);
+  const lowerDesc = dateDescription.toLowerCase().trim();
+
+  // Handle simple relative terms
+  if (lowerDesc === 'today') return startOfDay(now);
+  if (lowerDesc === 'yesterday') return startOfDay(subDays(now, 1));
+
+  // Try parsing YYYY-MM-DD
   try {
     const parsedDate = parseDateFn(dateDescription, 'yyyy-MM-dd', new Date());
     if (isValidDateFn(parsedDate)) {
-      parsedDate.setHours(12, 0, 0, 0);
-      return parsedDate;
+      return startOfDay(parsedDate);
     }
-  } catch (e) {}
+  } catch (e) {
+    /* ignore */
+  }
+
+  // Try parsing natural language ranges and return the start date if valid
   const range = parseNaturalLanguageDateRange(dateDescription);
   if (range?.startDate && isValidDateFn(range.startDate)) {
-    range.startDate.setHours(12, 0, 0, 0);
-    return range.startDate;
+    return startOfDay(range.startDate);
   }
-  console.warn(`Could not parse date description: "${dateDescription}", defaulting to today.`);
-  return now;
+
+  console.warn(
+    `Could not parse single date description: "${dateDescription}", defaulting to today.`,
+  );
+  return startOfDay(now); // Default to start of today
 }
 
 async function findAccountIdByName(userId: string, accountName: string): Promise<string | null> {
@@ -108,9 +126,10 @@ async function findDebtId(
   identifier: string,
 ): Promise<{ id: string; details: string } | null> {
   try {
+    // Ensure 'q' filter expects string | undefined
     const { data: debts } = await debtService.getDebts(
       userId,
-      { q: identifier },
+      { q: identifier || undefined }, // Pass undefined if empty
       1,
       5,
       'createdAt',
@@ -123,7 +142,10 @@ async function findDebtId(
         where: eq(User.id, d.userId),
         columns: { name: true },
       });
-      const details = `${d.type} ${d.amount} involving ${involvedUser?.name ?? 'Unknown User'} (${
+      const details = `${d.type} ${formatCurrency(d.amount)} involving ${
+        involvedUser?.name ?? 'Unknown User'
+      } (${
+        // Use formatCurrency
         d.description ?? 'No description'
       })`;
       return { id: d.id, details };
@@ -131,9 +153,9 @@ async function findDebtId(
 
     if (debts.length > 1) {
       console.warn(`Debt search for "${identifier}" yielded multiple results.`);
-      return null;
+      return null; // Indicate ambiguity or multiple matches
     }
-    return null;
+    return null; // No matches found
   } catch (error) {
     console.error(`Error finding debt ID for identifier "${identifier}":`, error);
     return null;
@@ -543,7 +565,7 @@ export function createCategoryTools(userId: string) {
 }
 
 export function createTransactionTools(userId: string) {
-  type TransactionFilters = {
+  type TransactionFiltersForAI = {
     accountId?: string;
     userId?: string;
     duration?: string;
@@ -679,12 +701,12 @@ export function createTransactionTools(userId: string) {
           if (categoryName && !categoryId)
             throw new HTTPException(404, { message: `Category "${categoryName}" not found.` });
 
-          const filters: TransactionFilters = {
+          const filters: TransactionFiltersForAI = {
             accountId: accountId ?? undefined,
             userId: accountId ? undefined : userId,
             duration: dateRange,
             q: searchText,
-            isIncome: type === undefined ? undefined : type === 'income' ? 'true' : 'false',
+            isIncome: type === undefined ? undefined : type === 'income' ? 'true' : 'false', // Convert to string
             categoryId: categoryId ?? undefined,
             minAmount: minAmount,
             maxAmount: maxAmount,
@@ -752,7 +774,7 @@ export function createTransactionTools(userId: string) {
           if (accountName && !accountId)
             throw new HTTPException(404, { message: `Account "${accountName}" not found.` });
 
-          const filters: TransactionFilters = {
+          const filters: TransactionFiltersForAI = {
             accountId: accountId ?? undefined,
             userId: accountId ? undefined : userId,
             q: identifier,
@@ -915,6 +937,72 @@ export function createTransactionTools(userId: string) {
             error instanceof HTTPException
               ? error.message
               : `Failed to update transaction: ${error.message}`;
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
+        }
+      },
+    }),
+    getExtremeTransaction: tool({
+      description:
+        'Finds the single highest or lowest transaction (income or expense) within a specified time period (e.g., "highest expense last month", "lowest income this year").',
+      parameters: z.object({
+        type: z
+          .enum(['highest_income', 'lowest_income', 'highest_expense', 'lowest_expense'])
+          .describe('The type of extreme transaction to find.'),
+        period: z
+          .string()
+          .optional()
+          .describe(
+            "Time period like 'today', 'last week', 'this month', 'last year'. Defaults to 'this month' if not specified.",
+          ),
+        accountName: z.string().optional().describe('Optional: Filter by a specific account name.'),
+      }),
+      execute: async ({ type, period = 'this month', accountName }) => {
+        try {
+          const accountId = accountName
+            ? await findAccountIdByName(userId, accountName)
+            : undefined;
+          if (!accountId)
+            throw new HTTPException(404, { message: `Account "${accountName}" not found.` });
+
+          const transaction = await transactionService.getExtremeTransaction(
+            userId,
+            type,
+            period,
+            accountId,
+          );
+
+          if (!transaction) {
+            const response = {
+              success: true,
+              message: `No ${type.replace('_', ' ')} found for ${period}.`,
+              data: null,
+            };
+            return createJsonResponse(response);
+          }
+
+          const formattedDate = safeFormatDate(transaction.createdAt, 'yyyy-MM-dd'); // Use safe formatter
+          const response = {
+            success: true,
+            message: `Found the ${type.replace('_', ' ')} for ${period}: ${
+              transaction.text
+            } (${formatCurrency(transaction.amount, transaction.currency)}) on ${formattedDate}.`, // Use backend formatCurrency
+            data: {
+              id: transaction.id,
+              text: transaction.text,
+              amount: transaction.amount,
+              type: transaction.isIncome ? 'income' : 'expense',
+              date: formattedDate,
+              category: transaction.category?.name,
+              account: transaction.account?.name,
+            },
+          };
+          return createJsonResponse(response);
+        } catch (error: any) {
+          const message =
+            error instanceof HTTPException
+              ? error.message
+              : `Failed to find extreme transaction: ${error.message}`;
           const response = { success: false, error: message };
           return createJsonResponse(response);
         }
@@ -1170,6 +1258,44 @@ export function createBudgetTools(userId: string) {
             error instanceof HTTPException
               ? error.message
               : `Failed to get budget summary: ${error.message}`;
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
+        }
+      },
+    }),
+    getBudgetProgress: tool({
+      description:
+        'Retrieves the current spending progress against the budget for a specific category in the current month.',
+      parameters: z.object({
+        categoryName: z
+          .string()
+          .min(1)
+          .describe('The name of the category to check budget progress for.'),
+      }),
+      execute: async ({ categoryName }) => {
+        try {
+          const progressData = await budgetService.getBudgetProgressByName(userId, categoryName);
+          // Use backend formatCurrency
+          const response = {
+            success: true,
+            message: `Budget progress for ${categoryName}: Spent ${formatCurrency(
+              progressData.totalSpent,
+              'INR',
+            )} of ${formatCurrency(
+              progressData.budgetedAmount,
+              'INR',
+            )} (${progressData.progress.toFixed(1)}%). Remaining: ${formatCurrency(
+              progressData.remainingAmount,
+              'INR',
+            )}.`,
+            data: progressData,
+          };
+          return createJsonResponse(response);
+        } catch (error: any) {
+          const message =
+            error instanceof HTTPException
+              ? error.message
+              : `Failed to get budget progress: ${error.message}`;
           const response = { success: false, error: message };
           return createJsonResponse(response);
         }

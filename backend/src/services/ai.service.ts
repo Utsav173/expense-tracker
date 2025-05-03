@@ -1,7 +1,7 @@
 import { db } from '../database';
 import { AiConversationHistory, User } from '../database/schema';
 import { eq, and, desc } from 'drizzle-orm';
-import { generateText, CoreMessage, TextPart, ToolCallPart } from 'ai';
+import { generateText, CoreMessage, TextPart, ToolCallPart, CoreAssistantMessage } from 'ai'; // Import CoreAssistantMessage
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { HTTPException } from 'hono/http-exception';
 import {
@@ -33,7 +33,19 @@ export class AiService {
         limit: MAX_HISTORY_MESSAGES * 2,
         columns: { message: true },
       });
-      return history.map((h) => h.message as CoreMessage).reverse();
+      // Ensure correct parsing and typing - Drizzle might return stringified JSON
+      return history
+        .map((h) => {
+          try {
+            // Attempt to parse if it's a string, otherwise assume it's already an object
+            return typeof h.message === 'string' ? JSON.parse(h.message) : h.message;
+          } catch (e) {
+            console.error('Failed to parse message from history:', h.message, e);
+            // Return a placeholder or skip if unparseable
+            return { role: 'system', content: '[Error parsing message]' } as CoreMessage;
+          }
+        })
+        .filter((msg) => msg.role !== 'system'); // Filter out error placeholders if needed
     } catch (error: any) {
       console.error(`Error fetching AI history for session ${sessionId}:`, error);
       return [];
@@ -44,20 +56,20 @@ export class AiService {
     userId: string,
     sessionId: string,
     userMessage: CoreMessage,
-    assistantMessage: CoreMessage,
+    assistantMessage: CoreAssistantMessage, // Use the specific assistant message type
   ): Promise<void> {
     try {
       const messagesToSave: Array<InferInsertModel<typeof AiConversationHistory>> = [
         {
           userId,
           sessionId,
-          message: userMessage as unknown as CoreMessage,
+          message: userMessage, // Drizzle should handle JSONB stringification
           createdAt: new Date(),
         },
         {
           userId,
           sessionId,
-          message: assistantMessage as unknown as CoreMessage,
+          message: assistantMessage, // Drizzle should handle JSONB stringification
           createdAt: new Date(Date.now() + 1),
         },
       ];
@@ -100,6 +112,7 @@ export class AiService {
     const userMessage: CoreMessage = { role: 'user', content: prompt };
     const messages: CoreMessage[] = [...history, userMessage];
 
+    // --- Tool Setup ---
     const accountTools = createAccountTools(userId);
     const categoryTools = createCategoryTools(userId);
     const transactionTools = createTransactionTools(userId);
@@ -127,7 +140,22 @@ export class AiService {
         messages: messages,
         tools: allTools,
         maxSteps: 5,
-        system: `You are a helpful financial assistant integrated into an expense tracker app. Use the available tools to perform actions requested by the user (create, list, update, delete accounts, categories, transactions, budgets, saving goals, investment accounts, investments, debts). IMPORTANT for Transactions: The 'amount' parameter MUST always be a positive number. Use the 'type' parameter ('income' or 'expense') for direction. IMPORTANT for Budgets/Goals: Amounts should always be positive. IMPORTANT for Deletion/Updates (2-Step Confirmation): 1. First, use an identification tool (like 'identifyAccountForDeletion', 'findBudgetForUpdateOrDelete', 'findSavingGoal', 'markDebtAsPaid') to locate the specific item the user wants to modify. 2. These identification tools will return a structured JSON string containing '{ confirmationNeeded: true, id: '...', details: '...', message: '...' }'. You MUST present the 'message' clearly to the user, asking for their confirmation. 3. If the user confirms the action AND their confirmation message explicitly contains the correct ID returned in step 2 (e.g., "Yes, confirm delete account [ID]", "Confirm update budget [ID]"), THEN you MUST use the corresponding 'executeConfirmed...' or 'executeUpdate...' tool (like 'executeConfirmedDeleteAccount', 'executeUpdateTransactionById', 'executeConfirmedMarkDebtPaid') and provide ONLY the required ID (and any update data if applicable). 4. Do NOT use any 'executeConfirmed...' or 'executeUpdate...' tools unless the user has provided explicit confirmation containing the specific ID from the previous step. If the user simply says "yes" without the ID, ask them to confirm with the ID. If the user cancels or says no, acknowledge the cancellation. Clarification: If a user request is ambiguous (e.g., multiple items match a name), use the tool to list the items and ask the user to clarify by providing the specific name or ID. If an account or category name is not found, inform the user clearly. Dates: Infer dates like 'today', 'yesterday', 'last month', 'this month'. Default to 'today' if unspecified for transactions. Use 'YYYY-MM-DD' format if specified. For budgets, require month and year. For goals, target date is optional. Confirmation Messages: After successfully executing *any* tool (create, list, or a CONFIRMED update/delete/mark as paid), provide a brief, clear confirmation message (e.g., 'OK, account created.', 'Transaction deleted.', 'Debt marked as paid.', 'Here are your categories: ...'). Errors: If a tool returns an error (in the structured JSON like '{ success: false, error: '...' }'), explain the 'error' message clearly to the user. Do not expose raw JSON errors.`,
+        system: `You are a helpful financial assistant integrated into an expense tracker app. Use the available tools to perform actions requested by the user (create, list, update, delete accounts, categories, transactions, budgets, saving goals, investment accounts, investments, debts).
+        **Tool Usage Guidelines:**
+        - **Transactions:** 'amount' MUST always be positive. Use 'type' ('income' or 'expense') for direction.
+        - **Budgets/Goals:** Amounts should always be positive.
+        - **Identification & Confirmation (Updates/Deletes/Mark as Paid):**
+            1. Use an identification tool first (e.g., 'identifyAccountForDeletion', 'findBudgetForUpdateOrDelete', 'findTransactionForUpdateOrDelete', 'findSavingGoal', 'markDebtAsPaid').
+            2. These tools return JSON like '{ confirmationNeeded: true, id: '...', details: '...', message: '...' }'.
+            3. PRESENT the 'message' clearly to the user, asking for confirmation.
+            4. If the user confirms AND includes the correct ID (e.g., "Yes, confirm delete account [ID]"), THEN use the corresponding 'execute...' tool (e.g., 'executeConfirmedDeleteAccount', 'executeUpdateTransactionById', 'executeConfirmedMarkDebtPaid') providing ONLY the required ID (and update data if applicable).
+            5. Do NOT use 'execute...' tools without explicit user confirmation containing the specific ID. If they just say "yes", ask for the ID. Acknowledge cancellations.
+        - **Ambiguity:** If a request is ambiguous (multiple items match), use a listing tool and ask the user to clarify by name or ID.
+        - **Not Found:** If an item (account, category, etc.) isn't found, inform the user clearly.
+        - **Dates:** Infer relative dates ('today', 'yesterday', 'last month'). Default to 'today' for transactions if unspecified. Use 'YYYY-MM-DD' if provided. Budgets require month/year. Goal target dates are optional.
+        - **New Tools:** You can now check budget progress ('getBudgetProgress') and find extreme transactions ('getExtremeTransaction').
+        **Confirmation Messages:** After successfully executing *any* tool (create, list, confirmed update/delete), provide a brief, clear confirmation (e.g., 'OK, account created.', 'Transaction deleted.', 'Budget progress retrieved.').
+        **Errors:** If a tool returns an error (JSON like '{ success: false, error: '...' }'), explain the 'error' message clearly. Do not show raw JSON.`,
       });
     } catch (aiError: any) {
       console.error(`AI Model Error (Session: ${currentSessionId}, User: ${userId}):`, aiError);
@@ -141,33 +169,32 @@ export class AiService {
           message: `AI failed to use tool correctly: ${aiError.message}`,
         });
       }
+      if (aiError.message?.includes('quota') || aiError.status === 429) {
+        throw new HTTPException(429, {
+          message: 'AI processing limit reached. Please try again later.',
+        });
+      }
       throw new HTTPException(502, { message: `AI processing failed: ${aiError.message}` });
     }
 
-    const assistantMessageForHistory: CoreMessage = {
+    // --- Use the message object from the result for history ---
+    // Ensure result.message conforms to CoreAssistantMessage
+    const assistantMessageForHistory: CoreAssistantMessage = {
       role: 'assistant',
-      content: [
-        ...(result.text ? [{ type: 'text', text: result.text } as TextPart] : []),
-        ...(result.toolCalls?.map(
-          (tc) =>
-            ({
-              type: 'tool-call',
-              toolCallId: tc.toolCallId,
-              toolName: tc.toolName,
-              args: tc.args,
-            } as ToolCallPart),
-        ) ?? []),
-      ],
+      content: result.text, // Use content from result.message
     };
+    // ---------------------------------------------------------
 
     await this.saveHistory(userId, currentSessionId, userMessage, assistantMessageForHistory);
 
+    // --- Return the final text and the last step's tool info ---
     return {
       response: result.text,
-      toolCalls: result.toolCalls,
-      toolResults: result.toolResults,
+      toolCalls: result.toolCalls, // Still useful for frontend display summary
+      toolResults: result.toolResults, // Still useful for frontend display summary
       sessionId: currentSessionId,
     };
+    // ----------------------------------------------------------
   }
 }
 

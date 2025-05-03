@@ -1,4 +1,3 @@
-// src/router/transaction.routes.ts
 import { Hono } from 'hono';
 import authMiddleware from '../middleware';
 import { HTTPException } from 'hono/http-exception';
@@ -11,6 +10,56 @@ import { getIntervalValue } from '../utils/date.utils';
 
 const chance = new Chance();
 const transactionRouter = new Hono();
+
+transactionRouter.get('/export', authMiddleware, async (c) => {
+  try {
+    const {
+      accountId,
+      duration,
+      q,
+      isIncome,
+      categoryId,
+      format = 'xlsx',
+      minAmount,
+      maxAmount,
+    } = c.req.query();
+    const userId = c.get('userId');
+
+    if (format !== 'xlsx' && format !== 'csv') {
+      throw new HTTPException(400, { message: "Invalid format specified. Use 'xlsx' or 'csv'." });
+    }
+
+    const parsedMinAmount = minAmount ? parseFloat(minAmount) : undefined;
+    const parsedMaxAmount = maxAmount ? parseFloat(maxAmount) : undefined;
+    if (minAmount && isNaN(parsedMinAmount!))
+      throw new HTTPException(400, { message: 'Invalid minAmount.' });
+    if (maxAmount && isNaN(parsedMaxAmount!))
+      throw new HTTPException(400, { message: 'Invalid maxAmount.' });
+
+    const filters = {
+      accountId,
+      userId: accountId ? undefined : userId,
+      duration,
+      q,
+      isIncome, // Pass string directly, service handles conversion
+      categoryId,
+      minAmount: parsedMinAmount,
+      maxAmount: parsedMaxAmount,
+    };
+
+    const result = await transactionService.exportTransactions(filters, format as 'xlsx' | 'csv');
+
+    c.header('Content-Type', result.contentType);
+    c.header('Content-Disposition', `attachment; filename="${result.filename}"`);
+
+    return c.body(result.data as any);
+  } catch (err: any) {
+    if (err instanceof HTTPException) throw err;
+    console.error('Export Transactions Error:', err);
+    c.status(err.status || 500);
+    return c.json({ message: `Failed to export transactions: ${err.message}` });
+  }
+});
 
 // GET / - Get a list of transactions (main endpoint)
 transactionRouter.get('/', authMiddleware, async (c) => {

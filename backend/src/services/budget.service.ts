@@ -1,4 +1,3 @@
-// src/services/budget.service.ts
 import { db } from '../database';
 import { Budget, Category, Transaction } from '../database/schema';
 import {
@@ -13,9 +12,10 @@ import {
   sum,
   AnyColumn,
   InferSelectModel,
+  ilike,
 } from 'drizzle-orm';
 import { HTTPException } from 'hono/http-exception';
-import { endOfMonth, format } from 'date-fns';
+import { endOfMonth, format, getMonth, getYear } from 'date-fns';
 import { getIntervalValue } from '../utils/date.utils';
 
 export class BudgetService {
@@ -278,13 +278,13 @@ export class BudgetService {
   async getBudgetProgress(budgetId: string, userId: string) {
     const budget = await db.query.Budget.findFirst({
       where: and(eq(Budget.id, budgetId), eq(Budget.userId, userId)),
+      with: { category: { columns: { name: true, id: true } } },
     });
 
     if (!budget) {
       throw new HTTPException(404, { message: 'Budget not found or access denied.' });
     }
 
-    // Calculate start and end dates for the budget's month/year
     const budgetStartDate = new Date(budget.year, budget.month - 1, 1);
     const budgetEndDate = endOfMonth(budgetStartDate);
 
@@ -293,36 +293,72 @@ export class BudgetService {
       .from(Transaction)
       .where(
         and(
-          eq(Transaction.category, budget.category),
-          eq(Transaction.owner, userId), // Ensure transactions belong to the user
-          eq(Transaction.isIncome, false), // Only expenses
-          sql`"createdAt" >= ${format(budgetStartDate, 'yyyy-MM-dd 00:00:00.000')}`, // Use formatted dates
+          eq(Transaction.category, budget.category.id),
+          eq(Transaction.owner, userId),
+          eq(Transaction.isIncome, false),
+          sql`"createdAt" >= ${format(budgetStartDate, 'yyyy-MM-dd 00:00:00.000')}`,
           sql`"createdAt" <= ${format(budgetEndDate, 'yyyy-MM-dd 23:59:59.999')}`,
         ),
       )
-      .then((res) => res[0] ?? { total: '0' }) // Default to '0' string if no result
+      .then((res) => res[0] ?? { total: '0' })
       .catch((err) => {
         throw new HTTPException(500, { message: `DB Spending Error: ${err.message}` });
       });
 
-    const totalSpentValue = Number(totalSpentResult.total ?? 0); // Handle potential null from DB
-    const budgetedAmount = Number(budget.amount || 0); // Ensure budget amount is a number
+    const totalSpentValue = Number(totalSpentResult.total ?? 0);
+    const budgetedAmount = Number(budget.amount || 0);
     const remainingAmount = budgetedAmount - totalSpentValue;
     const progress =
       budgetedAmount > 0
         ? Math.max(0, Math.min((totalSpentValue / budgetedAmount) * 100, 100))
         : totalSpentValue > 0
         ? 100
-        : 0; // Handle budget of 0: 100% if spent, 0% otherwise
+        : 0;
 
     return {
       budgetId: budget.id,
-      categoryName: budget.category, // Consider joining category table if name is needed
+      categoryName: budget.category.name, // Use joined name
       budgetedAmount: budgetedAmount,
       totalSpent: totalSpentValue,
-      remainingAmount: parseFloat(remainingAmount.toFixed(2)), // Format for consistency
-      progress: parseFloat(progress.toFixed(2)), // Format for consistency
+      remainingAmount: parseFloat(remainingAmount.toFixed(2)),
+      progress: parseFloat(progress.toFixed(2)),
     };
+  }
+
+  async getBudgetProgressByName(userId: string, categoryName: string) {
+    const now = new Date();
+    const currentMonth = getMonth(now) + 1;
+    const currentYear = getYear(now);
+
+    // Find the category ID first
+    const category = await db.query.Category.findFirst({
+      where: and(ilike(Category.name, categoryName), eq(Category.owner, userId)),
+      columns: { id: true, name: true },
+    });
+
+    if (!category) {
+      throw new HTTPException(404, { message: `Category "${categoryName}" not found.` });
+    }
+
+    // Find the budget for this category and current month/year
+    const budget = await db.query.Budget.findFirst({
+      where: and(
+        eq(Budget.userId, userId),
+        eq(Budget.category, category.id),
+        eq(Budget.month, currentMonth),
+        eq(Budget.year, currentYear),
+      ),
+      columns: { id: true, amount: true, month: true, year: true }, // Include needed fields
+    });
+
+    if (!budget) {
+      throw new HTTPException(404, {
+        message: `No budget found for "${categoryName}" in ${format(now, 'MMMM yyyy')}.`,
+      });
+    }
+
+    // Reuse existing progress logic
+    return this.getBudgetProgress(budget.id, userId);
   }
 }
 

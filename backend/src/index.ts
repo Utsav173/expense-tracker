@@ -1,9 +1,9 @@
-// src/index.ts
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-import { config } from './config'; // Import validated config
+import { config } from './config';
+import cron from 'node-cron';
 
 // Import routers
 import userRouter from './router/user.routes';
@@ -18,10 +18,15 @@ import investmentRouter from './router/investment.routes';
 import aiRouter from './router/ai.routes';
 import { StatusCode } from 'hono/utils/http-status';
 
+// --- Import Services for Cron ---
+import { recurringTransactionService } from './services/recurring.service';
+import { notificationService } from './services/notification.service';
+// -------------------------------
+
 const app = new Hono();
 
 // Apply CORS and Logger middleware
-app.use('*', cors()); // Configure origins specifically for production
+app.use('*', cors());
 app.use(logger());
 
 // <---------------------------------------------- Routes ----------------------------------------------------->
@@ -44,17 +49,13 @@ app.onError((err, c) => {
   if (err instanceof HTTPException) {
     statusCode = err.status;
     message = err.message;
-    // Log server errors (5xx) from HTTPException
     if (statusCode >= 500) {
       console.error(
         `HTTPException Error [${c.req.method} ${c.req.url}]: Status ${statusCode}, Message: ${err.message}`,
       );
-      // console.error(err.stack); // Optionally log stack for 5xx
     }
   } else if (err instanceof Error) {
-    // Log unexpected errors with stack trace
     console.error(`Unhandled Error [${c.req.method} ${c.req.url}]:`, err);
-    // Don't expose stack trace to client in production
     if (config.NODE_ENV !== 'production') {
       message = err.message;
     }
@@ -75,6 +76,55 @@ app.notFound((c) => {
   c.status(404);
   return c.json({ message: 'Not Found', status: 404 });
 });
+
+// <---------------------------------------------- Cron Jobs Setup ---------------------------------------------->
+if (config.NODE_ENV !== 'test') {
+  console.log('Setting up scheduled jobs...');
+
+  // Recurring Transactions (Run daily at 1 AM server time - adjust cron string as needed)
+  // Cron syntax: second minute hour day-of-month month day-of-week
+  cron.schedule(
+    '0 1 * * *',
+    async () => {
+      // Use cron.schedule
+      console.log(`[${new Date().toISOString()}] Running Recurring Transactions Job...`);
+      try {
+        await recurringTransactionService.generateDueTransactions();
+      } catch (error) {
+        console.error(`[${new Date().toISOString()}] Error in Recurring Transactions Job:`, error);
+      }
+    },
+    {
+      scheduled: true,
+      timezone: 'Asia/Kolkata', // Example: Set your server's timezone
+    },
+  );
+
+  // Notifications (Run daily at 8 AM server time)
+  cron.schedule(
+    '0 8 * * *',
+    async () => {
+      // Use cron.schedule
+      console.log(`[${new Date().toISOString()}] Running Daily Notifications Job...`);
+      try {
+        await notificationService.checkBudgetAlerts();
+        await notificationService.checkGoalReminders();
+        await notificationService.checkBillReminders();
+      } catch (error) {
+        console.error(`[${new Date().toISOString()}] Error in Daily Notifications Job:`, error);
+      }
+    },
+    {
+      scheduled: true,
+      timezone: 'Asia/Kolkata', // Example: Set your server's timezone
+    },
+  );
+
+  console.log('Scheduled jobs configured.');
+} else {
+  console.log('Skipping scheduled jobs setup in test environment.');
+}
+// -------------------------------------------------------------------------------------------------------------
 
 // <---------------------------------------------- Server Export ------------------------------------------------>
 export default {

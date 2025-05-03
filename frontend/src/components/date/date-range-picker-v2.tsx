@@ -48,6 +48,7 @@ interface DateRangePickerV2Props {
   endYearOffset?: number;
   noLabel?: boolean;
   buttonClassName?: string;
+  hideCloseButton?: boolean;
 }
 
 const defaultProps: Partial<DateRangePickerV2Props> = {
@@ -92,7 +93,8 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
     startYearOffset,
     endYearOffset,
     noLabel,
-    buttonClassName
+    buttonClassName,
+    hideCloseButton = false
   } = mergedProps;
 
   const id = useId();
@@ -410,7 +412,7 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
             </PopoverContent>
           </Popover>
 
-          {(tempDate?.from || date?.from) && !disabled && (
+          {!hideCloseButton && (tempDate?.from || date?.from) && !disabled && (
             <Button
               type='button'
               variant='ghost'
