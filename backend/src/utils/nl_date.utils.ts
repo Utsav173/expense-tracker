@@ -1,23 +1,18 @@
-// src/utils/nl_date.utils.ts
 import {
   startOfDay,
   endOfDay,
   subDays,
-  addDays,
   startOfWeek,
   endOfWeek,
   startOfMonth,
   endOfMonth,
   subMonths,
-  addMonths,
   startOfYear,
   endOfYear,
   subYears,
-  addYears,
   parse as parseDateFn,
   isValid as isValidDateFn,
   format as formatDateFn,
-  differenceInDays,
 } from 'date-fns';
 
 type DateRange = { startDate: Date; endDate: Date };

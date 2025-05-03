@@ -3,10 +3,14 @@ import { z } from 'zod';
 import { accountService } from '../../services/account.service';
 import { categoryService } from '../../services/category.service';
 import { transactionService } from '../../services/transaction.service';
+import { budgetService } from '../../services/budget.service';
+import { goalService } from '../../services/goal.service';
+import { debtService } from '../../services/debt.service';
+import { investmentAccountService } from '../../services/investmentAccount.service';
+import { investmentService } from '../../services/investment.service';
 import { parseNaturalLanguageDateRange } from '../../utils/nl_date.utils';
 import { HTTPException } from 'hono/http-exception';
 import {
-  format as formatDateFn,
   subDays,
   parse as parseDateFn,
   isValid as isValidDateFn,
@@ -16,6 +20,8 @@ import {
   parseISO,
   format,
   startOfDay,
+  isEqual,
+  isBefore,
 } from 'date-fns';
 import { InferInsertModel, and, eq, ilike, or, sql } from 'drizzle-orm';
 import {
@@ -27,56 +33,76 @@ import {
   User,
   Debts,
   InvestmentAccount,
+  Account,
 } from '../../database/schema';
 import { db } from '../../database';
-import { goalService } from '../../services/goal.service';
-import { budgetService } from '../../services/budget.service';
-import { debtService } from '../../services/debt.service';
-import { investmentAccountService } from '../../services/investmentAccount.service';
-import { investmentService } from '../../services/investment.service';
-import { formatCurrency } from '../../utils/currency.utils';
+import { formatCurrency } from '../../utils/currency.utils'; // Import backend currency formatter
+import { financeService } from '../../services/finance.service';
 
+// --- Helper Functions ---
+
+/**
+ * Safely formats a date object or string, returning 'N/A' if invalid.
+ */
 function safeFormatDate(date: Date | string | null | undefined, formatString: string): string {
   if (!date) return 'N/A';
+  // Attempt to parse if it's a string, otherwise use the Date object directly
   const dateObj = typeof date === 'string' ? parseISO(date) : date;
+  // Check if the resulting object is a valid date
   return isValidDateFn(dateObj) ? format(dateObj, formatString) : 'N/A';
 }
 
+/**
+ * Parses common date descriptions ("today", "yesterday", "YYYY-MM-DD") or
+ * falls back to the start date of a natural language range phrase.
+ * Defaults to the start of today if parsing fails.
+ */
 function parseDateDescription(dateDescription: string | undefined | null): Date {
   const now = new Date();
-  if (!dateDescription) return now;
+  if (!dateDescription) return startOfDay(now); // Default to start of today
   const lowerDesc = dateDescription.toLowerCase().trim();
 
-  // Handle simple relative terms
+  // Handle simple relative terms first
   if (lowerDesc === 'today') return startOfDay(now);
   if (lowerDesc === 'yesterday') return startOfDay(subDays(now, 1));
 
-  // Try parsing YYYY-MM-DD
+  // Try parsing specific date format YYYY-MM-DD
   try {
+    // Use date-fns parse for better format control
     const parsedDate = parseDateFn(dateDescription, 'yyyy-MM-dd', new Date());
     if (isValidDateFn(parsedDate)) {
-      return startOfDay(parsedDate);
+      return startOfDay(parsedDate); // Return start of the parsed day
     }
   } catch (e) {
-    /* ignore */
+    /* ignore parsing error */
   }
 
-  // Try parsing natural language ranges and return the start date if valid
+  // Try parsing natural language ranges (e.g., "last month", "this week")
+  // and use the start date if valid
   const range = parseNaturalLanguageDateRange(dateDescription);
   if (range?.startDate && isValidDateFn(range.startDate)) {
-    return startOfDay(range.startDate);
+    return startOfDay(range.startDate); // Return start of the range's start day
   }
 
+  // Log warning and default if all parsing fails
   console.warn(
     `Could not parse single date description: "${dateDescription}", defaulting to today.`,
   );
-  return startOfDay(now); // Default to start of today
+  return startOfDay(now);
 }
 
+/**
+ * Finds an account ID by name for the given user. Case-insensitive search.
+ */
 async function findAccountIdByName(userId: string, accountName: string): Promise<string | null> {
   if (!accountName || !accountName.trim()) return null;
   try {
-    const accounts = await accountService.getAccountListSimple(userId);
+    // Fetch only names and IDs for efficiency
+    const accounts = await db.query.Account.findMany({
+      where: and(eq(Account.owner, userId), ilike(Account.name, accountName.trim())),
+      columns: { id: true, name: true },
+    });
+    // Perform case-insensitive comparison if needed (DB might handle it)
     const foundAccount = accounts.find(
       (acc) => acc.name.toLowerCase() === accountName.trim().toLowerCase(),
     );
@@ -87,10 +113,14 @@ async function findAccountIdByName(userId: string, accountName: string): Promise
   }
 }
 
+/**
+ * Finds a category ID by name for the given user. Case-insensitive search.
+ */
 async function findCategoryIdByName(userId: string, categoryName: string): Promise<string | null> {
   if (!categoryName || !categoryName.trim()) return null;
   try {
     const category = await db.query.Category.findFirst({
+      // Use ilike for case-insensitive search if DB supports it, otherwise fetch and filter
       where: and(ilike(Category.name, categoryName.trim()), eq(Category.owner, userId)),
       columns: { id: true },
     });
@@ -101,6 +131,9 @@ async function findCategoryIdByName(userId: string, categoryName: string): Promi
   }
 }
 
+/**
+ * Finds an investment account ID by name for the given user. Case-insensitive search.
+ */
 async function findInvestmentAccountIdByName(
   userId: string,
   invAccountName: string,
@@ -121,39 +154,40 @@ async function findInvestmentAccountIdByName(
   }
 }
 
+/**
+ * Finds a single debt ID based on an identifier (description, amount, user name).
+ * Returns null if no match or multiple matches.
+ */
 async function findDebtId(
   userId: string,
   identifier: string,
 ): Promise<{ id: string; details: string } | null> {
+  if (!identifier || !identifier.trim()) return null;
   try {
-    // Ensure 'q' filter expects string | undefined
+    // Fetch debts matching the identifier (using q filter)
     const { data: debts } = await debtService.getDebts(
       userId,
-      { q: identifier || undefined }, // Pass undefined if empty
+      { q: identifier }, // Use the 'q' filter in the service
       1,
-      5,
+      5, // Limit results to avoid overwhelming choices
       'createdAt',
       'desc',
     );
 
     if (debts.length === 1) {
       const d = debts[0].debts;
-      const involvedUser = await db.query.User.findFirst({
-        where: eq(User.id, d.userId),
-        columns: { name: true },
-      });
+      // Fetch involved user's name separately for better detail string
+      const involvedUser = debts[0].user; // User details are now included in DebtWithDetails
       const details = `${d.type} ${formatCurrency(d.amount)} involving ${
         involvedUser?.name ?? 'Unknown User'
-      } (${
-        // Use formatCurrency
-        d.description ?? 'No description'
-      })`;
+      } (${d.description ?? 'No description'})`;
       return { id: d.id, details };
     }
 
     if (debts.length > 1) {
       console.warn(`Debt search for "${identifier}" yielded multiple results.`);
-      return null; // Indicate ambiguity or multiple matches
+      // Optionally, return the list for clarification? For now, return null.
+      return null;
     }
     return null; // No matches found
   } catch (error) {
@@ -162,6 +196,9 @@ async function findDebtId(
   }
 }
 
+/**
+ * Finds a single saving goal ID by name. Case-insensitive search.
+ */
 async function findGoalIdByName(
   userId: string,
   goalName: string,
@@ -169,6 +206,7 @@ async function findGoalIdByName(
   if (!goalName || !goalName.trim()) return null;
   try {
     const goal = await db.query.SavingGoal.findFirst({
+      // Use ilike for case-insensitive search
       where: and(ilike(SavingGoal.name, `%${goalName.trim()}%`), eq(SavingGoal.userId, userId)),
       columns: { id: true, name: true },
     });
@@ -179,9 +217,20 @@ async function findGoalIdByName(
   }
 }
 
+/**
+ * Helper to consistently format JSON responses for AI tools.
+ */
 const createJsonResponse = (result: any): string => {
-  return JSON.stringify(result);
+  // Ensure result is stringified, handle potential circular references if complex objects were returned
+  try {
+    return JSON.stringify(result);
+  } catch (e) {
+    console.error('Error stringifying tool response:', e);
+    return JSON.stringify({ success: false, error: 'Internal error formatting tool result.' });
+  }
 };
+
+// --- Tool Definitions ---
 
 export function createAccountTools(userId: string) {
   return {
@@ -244,7 +293,7 @@ export function createAccountTools(userId: string) {
           const { accounts } = await accountService.getAccountList(
             userId,
             1,
-            100,
+            100, // Fetch a reasonable limit for listing via AI
             'name',
             'asc',
             searchName || '',
@@ -294,7 +343,10 @@ export function createAccountTools(userId: string) {
           const account = await accountService.getAccountById(accountId, userId);
           const response = {
             success: true,
-            message: `Balance for ${account.name} is ${account.balance ?? 0} ${account.currency}.`,
+            message: `Balance for ${account.name} is ${formatCurrency(
+              account.balance ?? 0,
+              account.currency,
+            )}.`,
             data: {
               id: account.id,
               name: account.name,
@@ -378,7 +430,7 @@ export function createAccountTools(userId: string) {
             accountId,
             userId,
             newAccountName,
-            undefined,
+            undefined, // Pass undefined for fields not being updated
             undefined,
           );
           const response = {
@@ -439,7 +491,7 @@ export function createCategoryTools(userId: string) {
           const { categories } = await categoryService.getCategories(
             userId,
             1,
-            500,
+            500, // Fetch a large number for listing
             searchName || '',
             'name',
             'asc',
@@ -489,7 +541,7 @@ export function createCategoryTools(userId: string) {
             });
 
           const transactionCheck = await db
-            .select({ count: sql`count(*)` })
+            .select({ count: sql<number>`count(*)` }) // Ensure count is treated as number
             .from(Transaction)
             .where(and(eq(Transaction.category, category.id), eq(Transaction.owner, userId)));
           if (Number(transactionCheck[0].count) > 0) {
@@ -565,12 +617,13 @@ export function createCategoryTools(userId: string) {
 }
 
 export function createTransactionTools(userId: string) {
+  // Type for filters passed from AI to service layer
   type TransactionFiltersForAI = {
     accountId?: string;
     userId?: string;
-    duration?: string;
+    duration?: string; // Keep as string for service parsing
     q?: string;
-    isIncome?: string;
+    isIncome?: string; // Expect 'true', 'false', or undefined
     categoryId?: string;
     minAmount?: number;
     maxAmount?: number;
@@ -598,7 +651,9 @@ export function createTransactionTools(userId: string) {
         date: z
           .string()
           .optional()
-          .describe("Date (e.g., 'today', 'yesterday', '2024-03-15'). Defaults to today."),
+          .describe(
+            "Date (e.g., 'today', 'yesterday', 'last monday', '2024-03-15'). Defaults to today.",
+          ),
         transferDetails: z
           .string()
           .optional()
@@ -621,7 +676,7 @@ export function createTransactionTools(userId: string) {
           if (categoryName && !categoryId)
             throw new HTTPException(404, { message: `Category "${categoryName}" not found.` });
 
-          const transactionDate = parseDateDescription(date);
+          const transactionDate = parseDateDescription(date); // Use helper
 
           const payload: InferInsertModel<typeof Transaction> = {
             account: accountId,
@@ -630,7 +685,7 @@ export function createTransactionTools(userId: string) {
             text: description,
             category: categoryId,
             transfer: transferDetails,
-            createdAt: transactionDate,
+            createdAt: transactionDate, // Pass Date object
             owner: userId,
             createdBy: userId,
           };
@@ -652,6 +707,7 @@ export function createTransactionTools(userId: string) {
         }
       },
     }),
+
     listTransactions: tool({
       description:
         'Lists transactions based on filters like account, category, date range, type, amount range, or text search.',
@@ -704,7 +760,7 @@ export function createTransactionTools(userId: string) {
           const filters: TransactionFiltersForAI = {
             accountId: accountId ?? undefined,
             userId: accountId ? undefined : userId,
-            duration: dateRange,
+            duration: dateRange, // Pass string directly
             q: searchText,
             isIncome: type === undefined ? undefined : type === 'income' ? 'true' : 'false', // Convert to string
             categoryId: categoryId ?? undefined,
@@ -714,7 +770,7 @@ export function createTransactionTools(userId: string) {
 
           const result = await transactionService.getTransactions(
             filters,
-            1,
+            1, // Start from page 1 for AI lists
             limit,
             'createdAt',
             'desc',
@@ -746,6 +802,7 @@ export function createTransactionTools(userId: string) {
         }
       },
     }),
+
     findTransactionForUpdateOrDelete: tool({
       description:
         'Finds potential transactions based on description/date/amount to identify ONE for a future update or deletion. Returns matches for user clarification.',
@@ -763,7 +820,7 @@ export function createTransactionTools(userId: string) {
         dateHint: z
           .string()
           .optional()
-          .describe("Approximate date if known (e.g., 'today', '2024-08-15')."),
+          .describe("Approximate date or range (e.g., 'today', 'last week', '2024-08-15')."),
         amountHint: z.number().optional().describe('Approximate amount if known.'),
       }),
       execute: async ({ identifier, accountName, dateHint, amountHint }) => {
@@ -778,9 +835,7 @@ export function createTransactionTools(userId: string) {
             accountId: accountId ?? undefined,
             userId: accountId ? undefined : userId,
             q: identifier,
-            duration: dateHint
-              ? formatDateFn(parseDateDescription(dateHint), 'yyyy-MM-dd,yyyy-MM-dd')
-              : undefined,
+            duration: dateHint, // Pass string directly
           };
           if (amountHint !== undefined) {
             filters.minAmount = amountHint * 0.95;
@@ -790,7 +845,7 @@ export function createTransactionTools(userId: string) {
           const result = await transactionService.getTransactions(
             filters,
             1,
-            5,
+            5, // Limit results
             'createdAt',
             'desc',
           );
@@ -799,16 +854,16 @@ export function createTransactionTools(userId: string) {
             throw new HTTPException(404, {
               message: `No transactions found matching "${identifier}"${
                 accountName ? ` in account "${accountName}"` : ''
-              }. Try being more specific.`,
+              }${dateHint ? ` around ${dateHint}` : ''}. Try being more specific.`,
             });
           }
 
           const formattedTransactions = result.transactions.map((t, index) => ({
             index: index + 1,
             id: t.id,
-            details: `${
-              t.createdAt ? formatDateFn(parseISO(t.createdAt.toISOString()), 'yyyy-MM-dd') : 'N/A'
-            }: ${t.text} (${t.isIncome ? '+' : '-'}${t.amount} ${t.currency})`,
+            details: `${safeFormatDate(t.createdAt, 'yyyy-MM-dd')}: ${t.text} (${
+              t.isIncome ? '+' : '-'
+            }${formatCurrency(t.amount, t.currency)})`,
           }));
 
           if (result.transactions.length > 1) {
@@ -843,26 +898,7 @@ export function createTransactionTools(userId: string) {
         }
       },
     }),
-    executeConfirmedDeleteTransaction: tool({
-      description: 'Deletes a specific transaction AFTER user confirmation, using its unique ID.',
-      parameters: z.object({
-        transactionId: z.string().describe('The unique ID of the transaction to delete.'),
-      }),
-      execute: async ({ transactionId }) => {
-        try {
-          const result = await transactionService.deleteTransaction(transactionId, userId);
-          const response = { success: true, message: result.message };
-          return createJsonResponse(response);
-        } catch (error: any) {
-          const message =
-            error instanceof HTTPException
-              ? error.message
-              : `Failed to delete transaction: ${error.message}`;
-          const response = { success: false, error: message };
-          return createJsonResponse(response);
-        }
-      },
-    }),
+
     executeUpdateTransactionById: tool({
       description:
         'Updates specific fields of a transaction AFTER user confirmation, using its unique ID.',
@@ -901,8 +937,7 @@ export function createTransactionTools(userId: string) {
           if (newValues.newTransferDetails !== undefined)
             payload.transfer = newValues.newTransferDetails;
           if (newValues.newDate !== undefined) {
-            const date = parseDateDescription(newValues.newDate);
-            payload.createdAt = date;
+            payload.createdAt = parseDateDescription(newValues.newDate); // Use helper
           }
           if (newValues.newAccountName) {
             const newAccountId = await findAccountIdByName(userId, newValues.newAccountName);
@@ -913,13 +948,17 @@ export function createTransactionTools(userId: string) {
             payload.account = newAccountId;
           }
           if (newValues.newCategoryName !== undefined) {
-            const newCategoryId = await findCategoryIdByName(userId, newValues.newCategoryName);
-            if (newValues.newCategoryName && !newCategoryId) {
-              throw new HTTPException(404, {
-                message: `Update failed: Category "${newValues.newCategoryName}" not found.`,
-              });
+            if (newValues.newCategoryName === null || newValues.newCategoryName.trim() === '') {
+              payload.category = null;
+            } else {
+              const newCategoryId = await findCategoryIdByName(userId, newValues.newCategoryName);
+              if (!newCategoryId) {
+                throw new HTTPException(404, {
+                  message: `Update failed: Category "${newValues.newCategoryName}" not found.`,
+                });
+              }
+              payload.category = newCategoryId;
             }
-            payload.category = newCategoryId;
           }
 
           if (Object.keys(payload).length === 0) {
@@ -942,6 +981,7 @@ export function createTransactionTools(userId: string) {
         }
       },
     }),
+
     getExtremeTransaction: tool({
       description:
         'Finds the single highest or lowest transaction (income or expense) within a specified time period (e.g., "highest expense last month", "lowest income this year").',
@@ -965,6 +1005,7 @@ export function createTransactionTools(userId: string) {
           if (!accountId)
             throw new HTTPException(404, { message: `Account "${accountName}" not found.` });
 
+          // Pass period string directly to service
           const transaction = await transactionService.getExtremeTransaction(
             userId,
             type,
@@ -981,12 +1022,12 @@ export function createTransactionTools(userId: string) {
             return createJsonResponse(response);
           }
 
-          const formattedDate = safeFormatDate(transaction.createdAt, 'yyyy-MM-dd'); // Use safe formatter
+          const formattedDate = safeFormatDate(transaction.createdAt, 'yyyy-MM-dd');
           const response = {
             success: true,
             message: `Found the ${type.replace('_', ' ')} for ${period}: ${
               transaction.text
-            } (${formatCurrency(transaction.amount, transaction.currency)}) on ${formattedDate}.`, // Use backend formatCurrency
+            } (${formatCurrency(transaction.amount, transaction.currency)}) on ${formattedDate}.`,
             data: {
               id: transaction.id,
               text: transaction.text,
@@ -1003,6 +1044,27 @@ export function createTransactionTools(userId: string) {
             error instanceof HTTPException
               ? error.message
               : `Failed to find extreme transaction: ${error.message}`;
+          const response = { success: false, error: message };
+          return createJsonResponse(response);
+        }
+      },
+    }),
+
+    executeConfirmedDeleteTransaction: tool({
+      description: 'Deletes a specific transaction AFTER user confirmation, using its unique ID.',
+      parameters: z.object({
+        transactionId: z.string().describe('The unique ID of the transaction to delete.'),
+      }),
+      execute: async ({ transactionId }) => {
+        try {
+          const result = await transactionService.deleteTransaction(transactionId, userId);
+          const response = { success: true, message: result.message };
+          return createJsonResponse(response);
+        } catch (error: any) {
+          const message =
+            error instanceof HTTPException
+              ? error.message
+              : `Failed to delete transaction: ${error.message}`;
           const response = { success: false, error: message };
           return createJsonResponse(response);
         }
@@ -1045,7 +1107,9 @@ export function createBudgetTools(userId: string) {
           const newBudget = await budgetService.createBudget(userId, payload);
           const response = {
             success: true,
-            message: `Budget of ${amount} set for ${categoryName} for ${month}/${year}.`,
+            message: `Budget of ${formatCurrency(
+              amount,
+            )} set for ${categoryName} for ${month}/${year}.`, // Use formatCurrency
             data: {
               id: newBudget.id,
               category: categoryName,
@@ -1155,8 +1219,14 @@ export function createBudgetTools(userId: string) {
             success: true,
             confirmationNeeded: true,
             id: budget.id,
-            details: `Budget for ${categoryName} (${month}/${year}), Amount: ${budget.amount}`,
-            message: `Found budget (ID: ${budget.id}): ${categoryName} (${month}/${year}) amount ${budget.amount}. Confirm action (update/delete) and include the ID?`,
+            details: `Budget for ${categoryName} (${month}/${year}), Amount: ${formatCurrency(
+              budget.amount,
+            )}`, // Use formatCurrency
+            message: `Found budget (ID: ${
+              budget.id
+            }): ${categoryName} (${month}/${year}) amount ${formatCurrency(
+              budget.amount,
+            )}. Confirm action (update/delete) and include the ID?`,
           };
           return createJsonResponse(response);
         } catch (error: any) {
@@ -1181,7 +1251,7 @@ export function createBudgetTools(userId: string) {
           await budgetService.updateBudget(budgetId, userId, newAmount);
           const response = {
             success: true,
-            message: `Budget (ID: ${budgetId}) updated to ${newAmount}.`,
+            message: `Budget (ID: ${budgetId}) updated to ${formatCurrency(newAmount)}.`, // Use formatCurrency
           };
           return createJsonResponse(response);
         } catch (error: any) {
@@ -1275,19 +1345,13 @@ export function createBudgetTools(userId: string) {
       execute: async ({ categoryName }) => {
         try {
           const progressData = await budgetService.getBudgetProgressByName(userId, categoryName);
-          // Use backend formatCurrency
           const response = {
             success: true,
             message: `Budget progress for ${categoryName}: Spent ${formatCurrency(
               progressData.totalSpent,
-              'INR',
-            )} of ${formatCurrency(
-              progressData.budgetedAmount,
-              'INR',
-            )} (${progressData.progress.toFixed(1)}%). Remaining: ${formatCurrency(
-              progressData.remainingAmount,
-              'INR',
-            )}.`,
+            )} of ${formatCurrency(progressData.budgetedAmount)} (${progressData.progress.toFixed(
+              1,
+            )}%). Remaining: ${formatCurrency(progressData.remainingAmount)}.`, // Use formatCurrency
             data: progressData,
           };
           return createJsonResponse(response);
@@ -1330,8 +1394,12 @@ export function createGoalTools(userId: string) {
         try {
           let parsedDate: Date | undefined = undefined;
           if (targetDate) {
-            const range = parseNaturalLanguageDateRange(targetDate);
-            parsedDate = range?.endDate;
+            // Use parseDateDescription for consistency, although range parser works too
+            parsedDate = parseDateDescription(targetDate);
+            // Ensure the parsed date is not in the past if it's a specific date
+            if (parsedDate && isBefore(parsedDate, startOfDay(new Date()))) {
+              throw new Error('Target date cannot be in the past.');
+            }
           }
           const payload = { name: goalName, targetAmount, targetDate: parsedDate };
           const newGoal = await goalService.createGoal(userId, payload);
@@ -1434,13 +1502,26 @@ export function createGoalTools(userId: string) {
       }),
       execute: async ({ goalId, newTargetAmount, newTargetDate }) => {
         try {
-          const payload: Partial<GoalApiPayload> = {};
+          const payload: Partial<GoalApiPayload> = {}; // Use the imported type
           if (newTargetAmount !== undefined) payload.targetAmount = newTargetAmount;
           if (newTargetDate !== undefined) {
-            const parsedDate = newTargetDate ? parseISO(newTargetDate) : null;
-            if (newTargetDate && !isValidDateFn(parsedDate))
-              throw new HTTPException(400, { message: 'Invalid date format. Use YYYY-MM-DD.' });
-            payload.targetDate = parsedDate;
+            // Allow setting date to null or parsing it
+            if (
+              newTargetDate === null ||
+              newTargetDate.toLowerCase() === 'null' ||
+              newTargetDate.trim() === ''
+            ) {
+              payload.targetDate = null;
+            } else {
+              const parsedDate = parseDateDescription(newTargetDate); // Use helper
+              if (!isValidDateFn(parsedDate)) {
+                throw new Error('Invalid date format provided.');
+              }
+              if (isBefore(parsedDate, startOfDay(new Date()))) {
+                throw new Error('Target date cannot be in the past.');
+              }
+              payload.targetDate = new Date(parsedDate.toISOString());
+            }
           }
           if (Object.keys(payload).length === 0)
             throw new HTTPException(400, { message: 'No valid fields provided for update.' });
@@ -1470,7 +1551,7 @@ export function createGoalTools(userId: string) {
           await goalService.addAmountToGoal(goalId, userId, amountToAdd);
           const response = {
             success: true,
-            message: `Added ${amountToAdd} to goal (ID: ${goalId}).`,
+            message: `Added ${formatCurrency(amountToAdd)} to goal (ID: ${goalId}).`, // Use formatCurrency
           };
           return createJsonResponse(response);
         } catch (error: any) {
@@ -1495,7 +1576,7 @@ export function createGoalTools(userId: string) {
           await goalService.withdrawAmountFromGoal(goalId, userId, amountToWithdraw);
           const response = {
             success: true,
-            message: `Withdrew ${amountToWithdraw} from goal (ID: ${goalId}).`,
+            message: `Withdrew ${formatCurrency(amountToWithdraw)} from goal (ID: ${goalId}).`, // Use formatCurrency
           };
           return createJsonResponse(response);
         } catch (error: any) {
@@ -1587,7 +1668,7 @@ export function createInvestmentAccountTools(userId: string) {
           const { data: accounts } = await investmentAccountService.getInvestmentAccounts(
             userId,
             1,
-            100,
+            100, // Fetch reasonable limit
             'name',
             'asc',
           );
@@ -1616,6 +1697,7 @@ export function createInvestmentAccountTools(userId: string) {
         }
       },
     }),
+    // Add identify/delete/update tools for investment accounts if needed, following the pattern
   };
 }
 
@@ -1636,7 +1718,13 @@ export function createInvestmentTools(userId: string) {
             "The stock ticker or mutual fund symbol (e.g., 'RELIANCE.NS', 'INFY', 'ICICIPRULI.MF').",
           ),
         shares: z.number().positive('Number of shares or units purchased.'),
-        purchasePrice: z.number().nonnegative('Price per share/unit at the time of purchase.'),
+        purchasePrice: z
+          .number()
+          .nonnegative()
+          .optional()
+          .describe(
+            'Price per share/unit at purchase. If omitted, the tool will try to fetch the closing price for the purchase date.',
+          ),
         purchaseDate: z.string().describe("Date of purchase (e.g., 'today', '2024-01-15')."),
       }),
       execute: async ({ investmentAccountName, symbol, shares, purchasePrice, purchaseDate }) => {
@@ -1646,7 +1734,52 @@ export function createInvestmentTools(userId: string) {
             throw new HTTPException(404, {
               message: `Investment account "${investmentAccountName}" not found.`,
             });
+
           const parsedDate = parseDateDescription(purchaseDate);
+          const formattedDate = format(parsedDate, 'yyyy-MM-dd');
+
+          let finalPurchasePrice: number;
+
+          if (purchasePrice === undefined || purchasePrice === null) {
+            console.log(
+              `[AI Tool] Purchase price missing for ${symbol}, fetching for ${formattedDate}...`,
+            );
+            try {
+              // --- Use financeService method ---
+              const historicalPriceData = await financeService.getHistoricalStockPrice(
+                symbol.toUpperCase(),
+                formattedDate,
+              );
+              // ---------------------------------
+              if (historicalPriceData?.price !== null && historicalPriceData?.price !== undefined) {
+                finalPurchasePrice = historicalPriceData.price;
+                console.log(`[AI Tool] Auto-fetched price: ${finalPurchasePrice}`);
+              } else {
+                throw new Error(
+                  `Could not automatically fetch the price for ${symbol} on ${formattedDate}. Please provide the purchase price.`,
+                );
+              }
+            } catch (fetchError: any) {
+              console.error(
+                `[AI Tool] Error fetching historical price for ${symbol} on ${formattedDate}:`,
+                fetchError,
+              );
+              // Check if the error is already an HTTPException (like 404 from financeService)
+              if (fetchError instanceof HTTPException) {
+                throw new Error(fetchError.message); // Re-throw user-friendly message
+              }
+              throw new Error(
+                `Could not automatically fetch the price for ${symbol} on ${formattedDate}. Please provide the purchase price.`,
+              );
+            }
+          } else {
+            finalPurchasePrice = purchasePrice;
+          }
+
+          if (finalPurchasePrice < 0) {
+            throw new Error('Purchase price cannot be negative.');
+          }
+
           const payload: Pick<
             InferInsertModel<typeof Investment>,
             'symbol' | 'shares' | 'purchasePrice' | 'purchaseDate' | 'account'
@@ -1654,13 +1787,18 @@ export function createInvestmentTools(userId: string) {
             account: accountId,
             symbol: symbol.toUpperCase(),
             shares,
-            purchasePrice,
+            purchasePrice: finalPurchasePrice,
             purchaseDate: parsedDate,
           };
+          // Call the investment service (not finance service) to create the record
           const result = await investmentService.createInvestment(userId, payload as any);
           const response = {
             success: true,
-            message: `Added ${shares} units of ${symbol} to ${investmentAccountName}.`,
+            message: `Added ${shares} units of ${symbol} to ${investmentAccountName} at ${formatCurrency(
+              finalPurchasePrice,
+            )}/share (Price ${
+              purchasePrice === undefined || purchasePrice === null ? 'auto-fetched' : 'provided'
+            }).`,
             data: { id: result.data.id, symbol: result.data.symbol, shares: result.data.shares },
           };
           return createJsonResponse(response);
@@ -1730,10 +1868,25 @@ export function createInvestmentTools(userId: string) {
         }
       },
     }),
+    // Add identify/delete/update tools for investments if needed
   };
 }
 
 export function createDebtTools(userId: string) {
+  // Type for API payload, ensuring correct types
+  type DebtApiPayload = {
+    amount: number;
+    premiumAmount?: number;
+    description: string;
+    duration: string; // Formatted range or unit string
+    percentage?: number;
+    frequency?: string; // String representation of number
+    user: string; // counterparty user ID
+    type: 'given' | 'taken';
+    interestType: 'simple' | 'compound';
+    account: string; // Associated account ID
+  };
+
   return {
     addDebt: tool({
       description:
@@ -1768,23 +1921,22 @@ export function createDebtTools(userId: string) {
           .string()
           .optional()
           .describe('The account used for this debt transaction, if applicable (optional).'),
-        dueDate: z.string().optional().describe("Optional due date (e.g., '2025-12-31')."),
-        durationType: z
-          .enum(['year', 'month', 'week', 'day', 'custom'])
+        // Use string for date/duration input from AI
+        durationOrDate: z
+          .string()
           .optional()
-          .describe("Duration unit (year, month, week, day) or 'custom' if using date range."),
+          .describe(
+            "Repayment term (e.g., '6 months', '1 year', 'next week') or specific due date ('YYYY-MM-DD') or date range ('YYYY-MM-DD,YYYY-MM-DD').",
+          ),
+        // Frequency only relevant if duration is unit-based
         frequency: z
           .number()
           .int()
           .positive()
           .optional()
           .describe(
-            "Number of duration units (e.g., 3 for 3 months). Required if durationType is not 'custom'.",
+            "Number of duration units (e.g., 3 for 3 months). Required if duration is like 'months', 'years' etc.",
           ),
-        customDateRange: z
-          .string()
-          .optional()
-          .describe("Date range as 'YYYY-MM-DD,YYYY-MM-DD' if durationType is 'custom'."),
       }),
       execute: async (args) => {
         try {
@@ -1796,10 +1948,8 @@ export function createDebtTools(userId: string) {
             interestType = 'simple',
             interestRate = 0,
             accountName,
-            dueDate,
-            durationType,
+            durationOrDate,
             frequency,
-            customDateRange,
           } = args;
 
           const involvedUser = await db.query.User.findFirst({
@@ -1819,43 +1969,88 @@ export function createDebtTools(userId: string) {
           const accountId = accountName ? await findAccountIdByName(userId, accountName) : null;
           if (accountName && !accountId)
             throw new HTTPException(404, { message: `Account "${accountName}" not found.` });
+          if (!accountId) {
+            throw new HTTPException(400, {
+              message: `An associated account is required to record a debt.`,
+            });
+          }
 
           let apiDuration: string;
           let apiFrequency: string | undefined = undefined;
 
-          if (durationType === 'custom' && customDateRange) {
-            apiDuration = customDateRange;
-          } else if (durationType && frequency) {
-            apiDuration = durationType;
-            apiFrequency = String(frequency);
-          } else if (dueDate) {
-            apiDuration = `${formatDateFn(new Date(), 'yyyy-MM-dd')},${formatDateFn(
-              parseDateDescription(dueDate),
-              'yyyy-MM-dd',
-            )}`;
-          } else {
+          // Parse durationOrDate
+          if (!durationOrDate) {
             throw new HTTPException(400, {
-              message: 'Either duration/frequency or a custom date range/due date is required.',
+              message: 'A duration, due date, or date range is required.',
             });
           }
 
-          const payload: any = {
+          const dateRange = parseNaturalLanguageDateRange(durationOrDate);
+          const singleDate = parseDateDescription(durationOrDate); // Try parsing as single date/phrase
+
+          if (
+            dateRange &&
+            dateRange.startDate &&
+            dateRange.endDate &&
+            !isEqual(dateRange.startDate, dateRange.endDate)
+          ) {
+            // It's a range
+            apiDuration = `${format(dateRange.startDate, 'yyyy-MM-dd')},${format(
+              dateRange.endDate,
+              'yyyy-MM-dd',
+            )}`;
+            apiFrequency = undefined; // Frequency not applicable for custom range
+          } else if (
+            isValidDateFn(singleDate) &&
+            !durationOrDate.match(/\b(year|month|week|day)s?\b/i)
+          ) {
+            // It's likely a specific due date (or parsed relative like today/yesterday)
+            // Treat it as a custom range from today to the due date for the service
+            apiDuration = `${format(new Date(), 'yyyy-MM-dd')},${format(singleDate, 'yyyy-MM-dd')}`;
+            apiFrequency = undefined;
+          } else {
+            // Assume it's a duration unit (e.g., "6 months", "1 year")
+            const durationMatch = durationOrDate.match(/(\d+)\s+(year|month|week|day)s?/i);
+            if (durationMatch) {
+              const num = parseInt(durationMatch[1]);
+              const unit = durationMatch[2].toLowerCase() as 'year' | 'month' | 'week' | 'day';
+              apiDuration = unit;
+              apiFrequency = String(num);
+            } else if (
+              frequency &&
+              ['year', 'month', 'week', 'day'].includes(durationOrDate.toLowerCase())
+            ) {
+              // Handle cases where AI might send unit and number separately
+              apiDuration = durationOrDate.toLowerCase() as 'year' | 'month' | 'week' | 'day';
+              apiFrequency = String(frequency);
+            } else {
+              throw new HTTPException(400, {
+                message: `Could not parse duration/date: "${durationOrDate}". Use phrases like '6 months', 'next year', 'YYYY-MM-DD', or 'YYYY-MM-DD,YYYY-MM-DD'.`,
+              });
+            }
+          }
+
+          const payload: DebtApiPayload = {
             amount: amount,
             type: type,
-            userId: involvedUser.id,
-            description: description,
+            user: involvedUser.id, // Counterparty ID
+            description:
+              description ||
+              `${type === 'given' ? 'Loan to' : 'Loan from'} ${involvedUserEmailOrName}`, // Default description
             interestType: interestType,
             percentage: interestRate,
-            account: accountId,
+            account: accountId, // Required account ID
             duration: apiDuration,
             frequency: apiFrequency,
-            user: involvedUser.id,
+            // premiumAmount is optional, handle if needed
           };
 
-          const newDebt = await debtService.createDebt(userId, payload);
+          const newDebt = await debtService.createDebt(userId, payload as any); // Cast needed as service expects slightly different input structure now
           const response = {
             success: true,
-            message: `Debt (${type}) of ${amount} involving ${involvedUserEmailOrName} recorded.`,
+            message: `Debt (${type}) of ${formatCurrency(
+              amount,
+            )} involving ${involvedUserEmailOrName} recorded.`,
             data: {
               id: newDebt.id,
               description: newDebt.description,
@@ -1895,19 +2090,22 @@ export function createDebtTools(userId: string) {
       }),
       execute: async ({ type, showPaid = false, limit = 20 }) => {
         try {
+          // The service layer doesn't directly support showPaid filter yet, filter here
           const filters = { type: type };
           const { data: debts } = await debtService.getDebts(
             userId,
             filters,
-            1,
-            limit,
+            1, // Fetch first page for AI
+            50, // Fetch a larger number to filter locally
             'dueDate',
             'asc',
           );
+
           let filteredDebts = debts;
           if (!showPaid) {
             filteredDebts = debts.filter((d) => !d.debts.isPaid);
           }
+          filteredDebts = filteredDebts.slice(0, limit); // Apply limit after filtering
 
           const message =
             filteredDebts.length > 0
@@ -1923,6 +2121,7 @@ export function createDebtTools(userId: string) {
               type: d.debts.type,
               isPaid: d.debts.isPaid,
               dueDate: d.debts.dueDate,
+              involvedUser: d.user?.name, // Include involved user name
             })),
           };
           return createJsonResponse(response);
@@ -1952,7 +2151,7 @@ export function createDebtTools(userId: string) {
           const debtInfo = await findDebtId(userId, identifier);
           if (!debtInfo)
             throw new HTTPException(404, {
-              message: `Could not uniquely identify debt matching "${identifier}".`,
+              message: `Could not uniquely identify debt matching "${identifier}". Try being more specific.`,
             });
           const response = {
             success: true,
@@ -1992,5 +2191,6 @@ export function createDebtTools(userId: string) {
         }
       },
     }),
+    // Add identify/delete/update tools for debts if needed
   };
 }

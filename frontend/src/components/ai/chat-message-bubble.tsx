@@ -109,6 +109,8 @@ const ToolInfo: React.FC<{
   const cardBgColor = hasError ? 'bg-destructive/5' : 'bg-primary/5';
   const [isOpen, setIsOpen] = useState(false); // State for collapsible
 
+  if (toolCalls?.length === 0) return null;
+
   return (
     <Collapsible
       open={isOpen}
