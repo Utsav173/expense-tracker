@@ -1,11 +1,10 @@
-// src/router/account.routes.ts
 import { Hono } from 'hono';
 import authMiddleware from '../middleware';
 import { zValidator } from '@hono/zod-validator';
 import { accountSchema } from '../utils/schema.validations';
 import { HTTPException } from 'hono/http-exception';
 import { BunFile } from 'bun';
-import { accountService } from '../services/account.service'; // Import Account Service
+import { accountService } from '../services/account.service';
 
 const accountRouter = new Hono();
 
@@ -63,7 +62,7 @@ accountRouter.post('/import/transaction', authMiddleware, async (c) => {
   try {
     const body = await c.req.formData();
     const accountId = body.get('accountId') as string;
-    const docFile = body.get('document') as unknown as BunFile; // Assuming BunFile type
+    const docFile = body.get('document') as unknown as BunFile;
     const userId = c.get('userId');
 
     if (!accountId || !docFile) {
@@ -176,7 +175,6 @@ accountRouter.get('/get/import/:id', authMiddleware, async (c) => {
   }
 });
 
-// Account CRUD Routes
 accountRouter.get('/', authMiddleware, async (c) => {
   try {
     const userId = c.get('userId');
@@ -187,12 +185,12 @@ accountRouter.get('/', authMiddleware, async (c) => {
       sortOrder = 'desc',
       search = '',
     } = c.req.query();
-    // Fix: Call getAccountList instead of getAccounts
+
     const result = await accountService.getAccountList(
       userId,
       +page,
       +limit,
-      sortBy as any, // Cast needed as sortBy string might not be a valid keyof AccountInsert
+      sortBy as any,
       sortOrder,
       search,
     );
@@ -207,7 +205,7 @@ accountRouter.get('/', authMiddleware, async (c) => {
 accountRouter.get('/list', authMiddleware, async (c) => {
   try {
     const userId = c.get('userId');
-    const accounts = await accountService.getAccountListSimple(userId); // Use the simple list method
+    const accounts = await accountService.getAccountListSimple(userId);
     return c.json(accounts);
   } catch (err: any) {
     if (err instanceof HTTPException) throw err;
@@ -234,7 +232,7 @@ accountRouter.post('/revoke-share', authMiddleware, async (c) => {
   try {
     const { accountId, userId: targetUserId } = await c.req.json();
     const ownerId = c.get('userId');
-    // Fix: Call the correct service method
+
     const result = await accountService.revokeShare(accountId, targetUserId, ownerId);
     return c.json(result);
   } catch (err: any) {
@@ -248,7 +246,7 @@ accountRouter.get('/:id', authMiddleware, async (c) => {
   try {
     const accountId = c.req.param('id');
     const userId = c.get('userId');
-    // Fix: Call the correct service method
+
     const accountData = await accountService.getAccountById(accountId, userId);
     return c.json(accountData);
   } catch (err: any) {

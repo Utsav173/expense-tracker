@@ -3,7 +3,7 @@ import authMiddleware from '../middleware';
 import { HTTPException } from 'hono/http-exception';
 import { transactionSchema } from '../utils/schema.validations';
 import { zValidator } from '@hono/zod-validator';
-import { transactionService } from '../services/transaction.service'; // Import Transaction Service
+import { transactionService } from '../services/transaction.service';
 import { utils, write } from 'xlsx';
 import { Chance } from 'chance';
 import { getIntervalValue } from '../utils/date.utils';
@@ -41,7 +41,7 @@ transactionRouter.get('/export', authMiddleware, async (c) => {
       userId: accountId ? undefined : userId,
       duration,
       q,
-      isIncome, // Pass string directly, service handles conversion
+      isIncome,
       categoryId,
       minAmount: parsedMinAmount,
       maxAmount: parsedMaxAmount,
@@ -61,7 +61,6 @@ transactionRouter.get('/export', authMiddleware, async (c) => {
   }
 });
 
-// GET / - Get a list of transactions (main endpoint)
 transactionRouter.get('/', authMiddleware, async (c) => {
   try {
     const {
@@ -75,10 +74,9 @@ transactionRouter.get('/', authMiddleware, async (c) => {
       sortBy = 'createdAt',
       sortOrder = 'desc',
     } = c.req.query();
-    // Get userId *only* if accountId is not provided, otherwise service handles filtering by accountId
+
     const userId = accountId ? undefined : c.get('userId');
 
-    // Basic validation for pagination and sorting
     const pageNum = parseInt(page);
     const pageSizeNum = parseInt(pageSize);
     if (isNaN(pageNum) || pageNum < 1)
@@ -87,7 +85,6 @@ transactionRouter.get('/', authMiddleware, async (c) => {
       throw new HTTPException(400, { message: 'Invalid page size (1-100).' });
     if (sortOrder !== 'asc' && sortOrder !== 'desc')
       throw new HTTPException(400, { message: 'Invalid sort order (asc/desc).' });
-    // Service layer should validate sortBy against allowed fields
 
     const filters = { accountId, userId, duration, q, isIncome, categoryId };
     const result = await transactionService.getTransactions(
@@ -105,13 +102,12 @@ transactionRouter.get('/', authMiddleware, async (c) => {
   }
 });
 
-// GET /:id - Get a single transaction
 transactionRouter.get('/:id', authMiddleware, async (c) => {
   try {
     const { id } = c.req.param();
     const userId = c.get('userId');
     const transaction = await transactionService.getTransactionById(id, userId);
-    return c.json({ transaction }); // Consistent response structure
+    return c.json({ transaction });
   } catch (err: any) {
     if (err instanceof HTTPException) throw err;
     console.error('Get Transaction By ID Error:', err);
@@ -119,7 +115,6 @@ transactionRouter.get('/:id', authMiddleware, async (c) => {
   }
 });
 
-// POST / - Create a new transaction
 transactionRouter.post('/', authMiddleware, zValidator('json', transactionSchema), async (c) => {
   try {
     const payload = await c.req.json();
@@ -134,7 +129,6 @@ transactionRouter.post('/', authMiddleware, zValidator('json', transactionSchema
   }
 });
 
-// PUT /:id - Update a transaction
 transactionRouter.put('/:id', authMiddleware, zValidator('json', transactionSchema), async (c) => {
   try {
     const { id } = c.req.param();
@@ -149,7 +143,6 @@ transactionRouter.put('/:id', authMiddleware, zValidator('json', transactionSche
   }
 });
 
-// DELETE /:id - Delete a transaction
 transactionRouter.delete('/:id', authMiddleware, async (c) => {
   try {
     const { id } = c.req.param();
@@ -163,9 +156,6 @@ transactionRouter.delete('/:id', authMiddleware, async (c) => {
   }
 });
 
-// --- Chart and Specific View Routes ---
-
-// GET /by/category/chart - Aggregated data by category
 transactionRouter.get('/by/category/chart', authMiddleware, async (c) => {
   try {
     const { duration, accountId } = c.req.query();
@@ -179,7 +169,6 @@ transactionRouter.get('/by/category/chart', authMiddleware, async (c) => {
   }
 });
 
-// GET /by/income/expense - Aggregated income/expense totals
 transactionRouter.get('/by/income/expense', authMiddleware, async (c) => {
   try {
     const { duration, accountId } = c.req.query();
@@ -193,7 +182,6 @@ transactionRouter.get('/by/income/expense', authMiddleware, async (c) => {
   }
 });
 
-// GET /by/income/expense/chart - Time-series income/expense/balance data
 transactionRouter.get('/by/income/expense/chart', authMiddleware, async (c) => {
   try {
     const { duration, accountId } = c.req.query();
@@ -207,7 +195,6 @@ transactionRouter.get('/by/income/expense/chart', authMiddleware, async (c) => {
   }
 });
 
-// --- Recurring Transaction Routes ---
 transactionRouter.get('/recurring', authMiddleware, async (c) => {
   try {
     const userId = c.get('userId');
@@ -250,7 +237,7 @@ transactionRouter.put(
       const { id } = c.req.param();
       const payload = await c.req.json();
       const userId = c.get('userId');
-      // Ensure recurring flag is handled correctly if not explicitly in payload
+
       if (payload.recurring === undefined) payload.recurring = true;
       if (!payload.recurring)
         throw new HTTPException(400, {
@@ -258,7 +245,6 @@ transactionRouter.put(
             'Cannot update a non-recurring transaction via this endpoint. Use PUT /transactions/:id instead.',
         });
 
-      // Use the general update service method which handles recurring fields
       const result = await transactionService.updateTransaction(id, userId, payload);
       return c.json(result);
     } catch (err: any) {
@@ -273,8 +259,7 @@ transactionRouter.delete('/recurring/:id', authMiddleware, async (c) => {
   try {
     const { id } = c.req.param();
     const userId = c.get('userId');
-    // Use the general delete method, service layer handles checks and ensures it's owned by user
-    // Note: This deletes the recurring transaction template. It doesn't affect past generated instances.
+
     const result = await transactionService.deleteTransaction(id, userId);
     return c.json(result);
   } catch (err: any) {
@@ -297,7 +282,6 @@ transactionRouter.post('/recurring/:id/skip', authMiddleware, async (c) => {
   }
 });
 
-// --- Fake Data Route (Keep for testing/demo) ---
 transactionRouter.get('/fakeData/by', async (c) => {
   const { duration = 'thisMonth', length = '50' } = c.req.query();
   const lengthNum = parseInt(length);
@@ -305,7 +289,6 @@ transactionRouter.get('/fakeData/by', async (c) => {
     throw new HTTPException(400, { message: 'Invalid length parameter (1-1000).' });
   }
 
-  // Use util to get date range
   const { startDate, endDate } = await getIntervalValue(duration);
 
   const catIds = [
@@ -326,7 +309,7 @@ transactionRouter.get('/fakeData/by', async (c) => {
     'Other',
   ];
   const exportedArray = [];
-  let balance = 0; // Track balance to avoid unrealistic scenarios
+  let balance = 0;
 
   for (let index = 0; index < lengthNum; index++) {
     const randomCategory = chance.pickone(catIds);
@@ -342,7 +325,6 @@ transactionRouter.get('/fakeData/by', async (c) => {
       balance -= randomAmount;
     }
 
-    // Generate random date within the calculated range
     const randomDate = new Date(
       new Date(startDate).getTime() +
         Math.random() * (new Date(endDate).getTime() - new Date(startDate).getTime()),
@@ -354,7 +336,7 @@ transactionRouter.get('/fakeData/by', async (c) => {
       Type: isIncome ? 'income' : 'expense',
       Transfer: chance.name(),
       Category: randomCategory,
-      Date: randomDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
+      Date: randomDate.toISOString().split('T')[0],
     });
   }
 

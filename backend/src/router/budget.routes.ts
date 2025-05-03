@@ -1,27 +1,24 @@
-// src/router/budget.routes.ts
 import { Hono } from 'hono';
 import authMiddleware from '../middleware';
 import { zValidator } from '@hono/zod-validator';
 import { budgetSchema } from '../utils/schema.validations';
 import { HTTPException } from 'hono/http-exception';
-import { budgetService } from '../services/budget.service'; // Import Budget Service
-import { Budget } from '../database/schema'; // Import Budget type if needed
+import { budgetService } from '../services/budget.service';
+import { Budget } from '../database/schema';
 import { InferSelectModel } from 'drizzle-orm';
 
 const budgetRouter = new Hono();
 
 budgetRouter.get('/:id/all', authMiddleware, async (c) => {
   try {
-    const requestedId = c.req.param('id'); // Can be user ID or 'all'
+    const requestedId = c.req.param('id');
     const { page = '1', limit = '10', sortBy = 'createdAt', sortOrder = 'desc' } = c.req.query();
     const userId = await c.get('userId');
 
-    // Authorization check: user can only request their own budgets unless 'all' is specified (which defaults to their own)
     if (requestedId !== 'all' && requestedId !== userId) {
       throw new HTTPException(403, { message: 'Forbidden: You can only access your own budgets.' });
     }
 
-    // Basic validation
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
     if (isNaN(pageNum) || pageNum < 1)
@@ -61,11 +58,10 @@ budgetRouter.post('/', authMiddleware, zValidator('json', budgetSchema), async (
 });
 
 budgetRouter.put('/:id', authMiddleware, async (c) => {
-  // Consider adding validation for the payload { amount: number }
   try {
     const budgetId = c.req.param('id');
     const { amount } = await c.req.json();
-    const userId = await c.get('userId'); // Get userId for authorization check in service
+    const userId = await c.get('userId');
     const result = await budgetService.updateBudget(budgetId, userId, amount);
     return c.json(result);
   } catch (err: any) {
@@ -78,7 +74,7 @@ budgetRouter.put('/:id', authMiddleware, async (c) => {
 budgetRouter.delete('/:id', authMiddleware, async (c) => {
   try {
     const id = c.req.param('id');
-    const userId = await c.get('userId'); // Get userId for authorization check in service
+    const userId = await c.get('userId');
     const result = await budgetService.deleteBudget(id, userId);
     return c.json(result);
   } catch (err: any) {
@@ -91,7 +87,7 @@ budgetRouter.delete('/:id', authMiddleware, async (c) => {
 budgetRouter.get('/summary', authMiddleware, async (c) => {
   try {
     const userId = await c.get('userId');
-    // Pass all relevant query parameters to the service
+
     const queryParams = c.req.query();
     const summaryData = await budgetService.getBudgetSummary(userId, queryParams);
     return c.json(summaryData);

@@ -1,17 +1,13 @@
-// src/router/interest.routes.ts
 import { Hono } from 'hono';
 import { debtSchema, interestSchema } from '../utils/schema.validations';
 import { zValidator } from '@hono/zod-validator';
 import authMiddleware from '../middleware';
 import { HTTPException } from 'hono/http-exception';
-import { debtService } from '../services/debt.service'; // Import Debt Service
+import { debtService } from '../services/debt.service';
 
-const interestRouter = new Hono(); // Renaming might be good later (e.g., debtRouter)
+const interestRouter = new Hono();
 
-// POST /calculate - Calculate simple or compound interest (Utility Endpoint)
 interestRouter.post('/calculate', zValidator('json', interestSchema), async (c) => {
-  // This endpoint seems like a utility and might not need auth, depending on requirements.
-  // If it's just a calculator, auth might be optional.
   try {
     const { amount, percentage, type, duration, compoundingFrequency } = await c.req.json();
     const result = debtService.calculateInterest(
@@ -29,15 +25,12 @@ interestRouter.post('/calculate', zValidator('json', interestSchema), async (c) 
   }
 });
 
-// --- Debt Management Routes ---
-
-// POST /debts - Create a new debt record
 interestRouter.post('/debts', authMiddleware, zValidator('json', debtSchema), async (c) => {
   try {
     const payload = await c.req.json();
     const ownerId = await c.get('userId');
     const newDebt = await debtService.createDebt(ownerId, payload);
-    c.status(201); // Set status for creation
+    c.status(201);
     return c.json({ message: 'Debt created successfully', data: newDebt });
   } catch (err: any) {
     if (err instanceof HTTPException) throw err;
@@ -46,7 +39,6 @@ interestRouter.post('/debts', authMiddleware, zValidator('json', debtSchema), as
   }
 });
 
-// GET /debts - Get a list of debts (paginated, filtered, sorted)
 interestRouter.get('/debts', authMiddleware, async (c) => {
   try {
     const userId = await c.get('userId');
@@ -60,7 +52,6 @@ interestRouter.get('/debts', authMiddleware, async (c) => {
       sortOrder = 'desc',
     } = c.req.query();
 
-    // Basic validation
     const pageNum = parseInt(page);
     const pageSizeNum = parseInt(pageSize);
     if (isNaN(pageNum) || pageNum < 1)
@@ -89,12 +80,10 @@ interestRouter.get('/debts', authMiddleware, async (c) => {
   }
 });
 
-// PUT /debts/:id - Update specific fields of a debt record
 interestRouter.put('/debts/:id', authMiddleware, async (c) => {
-  // Consider adding Zod validation for update payload
   try {
     const { id } = c.req.param();
-    const payload = await c.req.json(); // Payload contains optional fields: description, isPaid, duration, frequency
+    const payload = await c.req.json();
     const userId = await c.get('userId');
     const result = await debtService.updateDebt(id, userId, payload);
     return c.json(result);
@@ -105,7 +94,6 @@ interestRouter.put('/debts/:id', authMiddleware, async (c) => {
   }
 });
 
-// DELETE /debts/:id - Delete a debt record
 interestRouter.delete('/debts/:id', authMiddleware, async (c) => {
   try {
     const { id } = c.req.param();
@@ -119,7 +107,6 @@ interestRouter.delete('/debts/:id', authMiddleware, async (c) => {
   }
 });
 
-// PUT /debts/:id/mark-paid - Mark a debt record as paid
 interestRouter.put('/debts/:id/mark-paid', authMiddleware, async (c) => {
   try {
     const { id } = c.req.param();

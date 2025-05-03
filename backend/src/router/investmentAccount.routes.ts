@@ -1,11 +1,10 @@
-// src/router/investmentAccount.routes.ts
 import { Hono } from 'hono';
 import authMiddleware from '../middleware';
 import { zValidator } from '@hono/zod-validator';
 import { investmentAccountSchema } from '../utils/schema.validations';
 import { HTTPException } from 'hono/http-exception';
-import { investmentAccountService } from '../services/investmentAccount.service'; // Import Service
-import { InvestmentAccount } from '../database/schema'; // Import type if needed
+import { investmentAccountService } from '../services/investmentAccount.service';
+import { InvestmentAccount } from '../database/schema';
 import { InferSelectModel } from 'drizzle-orm';
 
 const investmentAccountRouter = new Hono();
@@ -15,7 +14,6 @@ investmentAccountRouter.get('/all', authMiddleware, async (c) => {
     const userId = await c.get('userId');
     const { page = '1', limit = '10', sortBy = 'createdAt', sortOrder = 'desc' } = c.req.query();
 
-    // Basic validation
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
     if (isNaN(pageNum) || pageNum < 1)
@@ -24,7 +22,6 @@ investmentAccountRouter.get('/all', authMiddleware, async (c) => {
       throw new HTTPException(400, { message: 'Invalid limit value (1-100).' });
     if (sortOrder !== 'asc' && sortOrder !== 'desc')
       throw new HTTPException(400, { message: 'Invalid sort order (asc/desc).' });
-    // Add validation for sortBy if needed
 
     const result = await investmentAccountService.getInvestmentAccounts(
       userId,
@@ -93,10 +90,9 @@ investmentAccountRouter.post(
 );
 
 investmentAccountRouter.put('/:id', authMiddleware, async (c) => {
-  // Add validation schema if needed
   try {
     const accountId = c.req.param('id');
-    const payload = await c.req.json(); // Expects { name?, platform? }
+    const payload = await c.req.json();
     const userId = await c.get('userId');
     const result = await investmentAccountService.updateInvestmentAccount(
       accountId,

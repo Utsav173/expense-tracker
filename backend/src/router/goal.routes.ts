@@ -1,11 +1,10 @@
-// src/router/goal.routes.ts
 import { Hono } from 'hono';
 import authMiddleware from '../middleware';
 import { zValidator } from '@hono/zod-validator';
 import { savingGoalSchema } from '../utils/schema.validations';
 import { HTTPException } from 'hono/http-exception';
-import { goalService } from '../services/goal.service'; // Import Goal Service
-import { SavingGoal } from '../database/schema'; // Import type if needed
+import { goalService } from '../services/goal.service';
+import { SavingGoal } from '../database/schema';
 import { InferSelectModel } from 'drizzle-orm';
 
 const goalRouter = new Hono();
@@ -15,7 +14,6 @@ goalRouter.get('/all', authMiddleware, async (c) => {
     const userId = await c.get('userId');
     const { page = '1', limit = '10', sortBy = 'createdAt', sortOrder = 'desc' } = c.req.query();
 
-    // Basic validation
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
     if (isNaN(pageNum) || pageNum < 1)
@@ -24,7 +22,6 @@ goalRouter.get('/all', authMiddleware, async (c) => {
       throw new HTTPException(400, { message: 'Invalid limit value (1-100).' });
     if (sortOrder !== 'asc' && sortOrder !== 'desc')
       throw new HTTPException(400, { message: 'Invalid sort order (asc/desc).' });
-    // Add validation for sortBy if needed
 
     const result = await goalService.getGoals(
       userId,
@@ -56,10 +53,9 @@ goalRouter.post('/', authMiddleware, zValidator('json', savingGoalSchema), async
 });
 
 goalRouter.put('/:id', authMiddleware, async (c) => {
-  // Add validation if needed
   try {
     const goalId = c.req.param('id');
-    const payload = await c.req.json(); // Payload: { name?, targetAmount?, targetDate?, savedAmount? }
+    const payload = await c.req.json();
     const userId = await c.get('userId');
     const result = await goalService.updateGoal(goalId, userId, payload);
     return c.json(result);

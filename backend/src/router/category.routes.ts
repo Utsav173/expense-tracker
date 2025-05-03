@@ -1,4 +1,3 @@
-// src/router/category.routes.ts
 import { Hono } from 'hono';
 import authMiddleware from '../middleware';
 import { HTTPException } from 'hono/http-exception';
@@ -17,7 +16,6 @@ categoryRouter.get('/', authMiddleware, async (c) => {
       (c.req.query('sortBy') as keyof InferSelectModel<typeof Category>) || 'createdAt';
     const userId = await c.get('userId');
 
-    // Basic validation for pagination
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
     if (isNaN(pageNum) || pageNum < 1)
@@ -48,7 +46,7 @@ categoryRouter.post('/', authMiddleware, zValidator('json', categorySchema), asy
     const { name } = await c.req.json();
     const userId = await c.get('userId');
     const newCategory = await categoryService.createCategory(userId, name);
-    c.status(201); // Set status for creation
+    c.status(201);
     return c.json({
       message: 'Category created successfully',
       data: newCategory,
@@ -74,7 +72,6 @@ categoryRouter.delete('/:id', authMiddleware, async (c) => {
 });
 
 categoryRouter.put('/:id', authMiddleware, zValidator('json', categorySchema), async (c) => {
-  // Reuse schema for update validation
   try {
     const id = c.req.param('id');
     const { name } = await c.req.json();

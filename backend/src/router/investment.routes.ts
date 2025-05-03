@@ -1,17 +1,15 @@
-// src/router/investment.routes.ts
 import { Hono } from 'hono';
 import authMiddleware from '../middleware';
 import { zValidator } from '@hono/zod-validator';
 import { historicalPortfolioQuerySchema, investmentSchema } from '../utils/schema.validations';
 import { HTTPException } from 'hono/http-exception';
-import { investmentService } from '../services/investment.service'; // Import Investment Service
-import { Investment } from '../database/schema'; // Import type if needed
+import { investmentService } from '../services/investment.service';
+import { Investment } from '../database/schema';
 import { StatusCode } from 'hono/utils/http-status';
 import { InferSelectModel } from 'drizzle-orm';
 
 const investmentRouter = new Hono();
 
-// GET /oldest-date - Get the date of the first investment for the user
 investmentRouter.get('/oldest-date', authMiddleware, async (c) => {
   try {
     const userId = await c.get('userId');
@@ -20,12 +18,11 @@ investmentRouter.get('/oldest-date', authMiddleware, async (c) => {
   } catch (err: any) {
     if (err instanceof HTTPException) throw err;
     console.error('Oldest Investment Date Error:', err);
-    // Return gracefully even if error occurs, as it's informational
+
     return c.json({ oldestDate: null }, 500);
   }
 });
 
-// GET /portfolio-summary - Get overall portfolio summary
 investmentRouter.get('/portfolio-summary', authMiddleware, async (c) => {
   try {
     const userId = await c.get('userId');
@@ -38,7 +35,6 @@ investmentRouter.get('/portfolio-summary', authMiddleware, async (c) => {
   }
 });
 
-// GET /stocks/search - Search for stock symbols/names
 investmentRouter.get('/stocks/search', authMiddleware, async (c) => {
   try {
     const query = c.req.query('q');
@@ -52,7 +48,6 @@ investmentRouter.get('/stocks/search', authMiddleware, async (c) => {
   }
 });
 
-// GET /stocks/price/:symbol - Get current price for a stock symbol
 investmentRouter.get('/stocks/price/:symbol', authMiddleware, async (c) => {
   try {
     const symbol = c.req.param('symbol');
@@ -65,7 +60,6 @@ investmentRouter.get('/stocks/price/:symbol', authMiddleware, async (c) => {
   }
 });
 
-// GET /stocks/historical-price/:symbol - Get historical price for a symbol on a specific date
 investmentRouter.get('/stocks/historical-price/:symbol', authMiddleware, async (c) => {
   try {
     const symbol = c.req.param('symbol');
@@ -81,7 +75,6 @@ investmentRouter.get('/stocks/historical-price/:symbol', authMiddleware, async (
   }
 });
 
-// GET /portfolio-historical - Get historical portfolio value over a period
 investmentRouter.get(
   '/portfolio-historical',
   authMiddleware,
@@ -105,7 +98,6 @@ investmentRouter.get(
   },
 );
 
-// GET /details/:id - Get details of a specific investment
 investmentRouter.get('/details/:id', authMiddleware, async (c) => {
   try {
     const investmentId = c.req.param('id');
@@ -119,9 +111,7 @@ investmentRouter.get('/details/:id', authMiddleware, async (c) => {
   }
 });
 
-// PUT /:id/update-dividend - Update dividend for a specific investment
 investmentRouter.put('/:id/update-dividend', authMiddleware, async (c) => {
-  // Add validation for { dividend: number }
   try {
     const invId = c.req.param('id');
     const userId = await c.get('userId');
@@ -138,15 +128,12 @@ investmentRouter.put('/:id/update-dividend', authMiddleware, async (c) => {
   }
 });
 
-// GET /:id - Get investments for a specific account (paginated)
 investmentRouter.get('/:accountId', authMiddleware, async (c) => {
-  // Changed param name for clarity
   try {
     const accountId = c.req.param('accountId');
     const userId = await c.get('userId');
     const { page = '1', limit = '10', sortBy = 'purchaseDate', sortOrder = 'desc' } = c.req.query();
 
-    // Basic validation
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
     if (isNaN(pageNum) || pageNum < 1)
@@ -155,7 +142,6 @@ investmentRouter.get('/:accountId', authMiddleware, async (c) => {
       throw new HTTPException(400, { message: 'Invalid limit value (1-100).' });
     if (sortOrder !== 'asc' && sortOrder !== 'desc')
       throw new HTTPException(400, { message: 'Invalid sort order (asc/desc).' });
-    // Add validation for sortBy if needed
 
     const result = await investmentService.getInvestmentsForAccount(
       accountId,
@@ -173,13 +159,11 @@ investmentRouter.get('/:accountId', authMiddleware, async (c) => {
   }
 });
 
-// PUT /:id - Update a specific investment record
 investmentRouter.put('/:id', authMiddleware, async (c) => {
-  // Add validation schema if needed
   try {
     const invId = c.req.param('id');
     const userId = await c.get('userId');
-    const payload = await c.req.json(); // Expects { shares, purchasePrice, purchaseDate }
+    const payload = await c.req.json();
     const result = await investmentService.updateInvestment(invId, userId, payload);
     return c.json(result);
   } catch (err: any) {
@@ -189,7 +173,6 @@ investmentRouter.put('/:id', authMiddleware, async (c) => {
   }
 });
 
-// DELETE /:id - Delete a specific investment record
 investmentRouter.delete('/:id', authMiddleware, async (c) => {
   try {
     const invId = c.req.param('id');
@@ -203,7 +186,6 @@ investmentRouter.delete('/:id', authMiddleware, async (c) => {
   }
 });
 
-// POST / - Create a new investment record
 investmentRouter.post('/', authMiddleware, zValidator('json', investmentSchema), async (c) => {
   try {
     const payload = await c.req.json();

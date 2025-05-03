@@ -1,4 +1,3 @@
-// src/router/user.routes.ts
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { zValidator } from '@hono/zod-validator';
@@ -9,7 +8,7 @@ import {
   aiApiKeySchema,
 } from '../utils/schema.validations';
 import authMiddleware from '../middleware';
-import { UpdatePayload, userService } from '../services/user.service'; // Import the service
+import { UpdatePayload, userService } from '../services/user.service';
 
 const userRouter = new Hono();
 
@@ -42,7 +41,7 @@ userRouter.post('/signup', zValidator('form', userSchema), async (c) => {
       name: formData.get('name') as string,
       email: formData.get('email') as string,
       password: formData.get('password') as string,
-      profilePic: formData.get('profilePic'), // Service handles compression
+      profilePic: formData.get('profilePic'),
     };
     const result = await userService.signup(payload);
     c.status(201);
@@ -80,7 +79,6 @@ userRouter.put('/update', authMiddleware, zValidator('form', updateUserSchema), 
     const userId = await c.get('userId');
     const formData = await c.req.formData();
 
-    // Construct the payload explicitly matching UpdatePayload
     const payload = {} as UpdatePayload;
     if (formData.has('name')) {
       payload.name = formData.get('name') as string;
@@ -92,16 +90,15 @@ userRouter.put('/update', authMiddleware, zValidator('form', updateUserSchema), 
       payload.profilePic = formData.get('profilePic') as string;
     }
 
-    // Validate if the constructed payload is empty (only if all fields are optional)
     if (Object.keys(payload).length === 0) {
       throw new HTTPException(400, { message: 'No update fields provided in form data.' });
     }
 
-    const result = await userService.updateUser(userId, payload); // Pass the correctly typed payload
+    const result = await userService.updateUser(userId, payload);
     return c.json(result);
   } catch (error: any) {
     if (error instanceof HTTPException) throw error;
-    console.error('Update user error:', error); // Log the actual error server-side
+    console.error('Update user error:', error);
     throw new HTTPException(500, { message: 'Something went wrong during user update.' });
   }
 });
