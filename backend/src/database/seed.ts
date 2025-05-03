@@ -14,7 +14,7 @@ import {
   UserAccount,
   RecurrenceType,
 } from './schema';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { Chance } from 'chance';
 import chalk from 'chalk';
 import { PromisePool } from '@supercharge/promise-pool';
@@ -153,11 +153,6 @@ async function seedCategories(users: InferSelectModel<typeof User>[]): Promise<{
     'Domestic Help',
     'Bank Charges',
   ];
-  const sharedCategories = await db
-    .insert(Category)
-    .values(sharedCategoryNames.map((name) => ({ name, owner: null })))
-    .returning();
-
   const userSpecificCategoriesMap = new Map<string, InferSelectModel<typeof Category>[]>();
   const userCategoriesToInsert: InferInsertModel<typeof Category>[] = [];
 
@@ -166,6 +161,7 @@ async function seedCategories(users: InferSelectModel<typeof User>[]): Promise<{
       `${user.name}'s Pooja Expenses`,
       `${user.name}'s Investment Fees`,
       `Startup ${user.name}`,
+      ...sharedCategoryNames,
     ];
     specificNames.forEach((name) => {
       userCategoriesToInsert.push({ name, owner: user.id });
@@ -177,7 +173,7 @@ async function seedCategories(users: InferSelectModel<typeof User>[]): Promise<{
       ? await db.insert(Category).values(userCategoriesToInsert).returning()
       : [];
 
-  const allCategories = [...sharedCategories, ...insertedUserCategories];
+  const allCategories = insertedUserCategories;
   const categoriesMap = new Map(allCategories.map((cat) => [cat.name, cat]));
 
   insertedUserCategories.forEach((cat) => {
@@ -187,12 +183,8 @@ async function seedCategories(users: InferSelectModel<typeof User>[]): Promise<{
   });
 
   categoriesTask?.increment();
-  console.log(
-    chalk.green(
-      `\nSeeded ${sharedCategories.length} shared and ${insertedUserCategories.length} user-specific categories.`,
-    ),
-  );
-  return { shared: sharedCategories, userSpecific: userSpecificCategoriesMap, categoriesMap };
+  console.log(chalk.green(`\nSeeded ${insertedUserCategories.length} user-specific categories.`));
+  return { shared: [], userSpecific: userSpecificCategoriesMap, categoriesMap };
 }
 
 async function seedAccountsAndAnalytics(

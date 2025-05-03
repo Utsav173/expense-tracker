@@ -1,9 +1,9 @@
-// <---- for deployment
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 import { migrate } from 'drizzle-orm/neon-http/migrator';
+import { config } from '../config';
 
-const sql = neon(process.env.DATABASE_URL_NEW!);
+const sql = neon(config.DATABASE_URL_NEW!);
 
 const db = drizzle(sql);
 
@@ -12,7 +12,7 @@ const db = drizzle(sql);
 // import { migrate } from 'drizzle-orm/postgres-js/migrator';
 // import * as schema from './schema';
 
-// const db = drizzle(process.env.DATABASE_URL_NEW as string, { schema: schema, logger: false });
+// const db = drizzle(config.DATABASE_URL_NEW as string, { schema: schema, logger: false });
 
 // for migrations
 migrate(db, { migrationsFolder: './drizzle' })

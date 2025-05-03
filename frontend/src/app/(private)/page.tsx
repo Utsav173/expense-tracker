@@ -1,4 +1,3 @@
-// page.tsx
 'use client';
 
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -114,7 +113,7 @@ const AccountList = () => {
       )}
 
       <div className='mt-6 flex justify-center'>
-        {data && data.total > 10 && (
+        {data && data.pagination.total > 10 && (
           <div className='flex space-x-2'>
             <Button
               variant='outline'
@@ -128,7 +127,7 @@ const AccountList = () => {
               variant='outline'
               size='sm'
               onClick={() => setPage((old) => old + 1)}
-              disabled={page >= Math.ceil(data.total / 10)}
+              disabled={page >= Math.ceil(data.pagination.total / 10)}
             >
               Next
             </Button>

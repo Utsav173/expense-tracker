@@ -292,15 +292,16 @@ export type DropdownUser = {
 
 export type TransactionsResponse = ApiResponse<{
   transactions: Transaction[];
-  totalPages: number;
-  totalCount: number;
-  currentPage: number;
-  pageSize: number;
+  pagination: {
+    total: number;
+    totalPages: number;
+    currentPage: number;
+    pageSize: number;
+  };
   filters: {
-    isIncome: boolean;
-    categoryId?: string;
     sortBy: string;
     sortOrder: string;
+    q: string;
   };
   dateRange: {
     minDate: string;

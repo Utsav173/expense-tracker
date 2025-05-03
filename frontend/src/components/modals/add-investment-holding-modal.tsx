@@ -204,7 +204,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
           shouldValidate: true,
           shouldDirty: true
         });
-        showInfo(`Auto-filled price for ${debouncedSymbolValue} on ${formattedPurchaseDate}.`);
+        showSuccess(`Auto-filled price for ${debouncedSymbolValue} on ${formattedPurchaseDate}.`);
       }
     } else if (canFetchHistorical && !isHistoricalPriceLoading && historicalPriceData) {
       // If fetch succeeded but price is null/undefined
@@ -219,7 +219,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
     form,
     debouncedSymbolValue,
     formattedPurchaseDate,
-    showInfo,
+    showSuccess,
     showError
   ]);
 

@@ -92,8 +92,8 @@ const TransactionsPage = () => {
         <div>
           <h1 className='text-xl font-bold sm:text-2xl'>Transactions</h1>
           <p className='text-muted-foreground mt-1 text-sm sm:text-base'>
-            {transactionsData?.totalCount
-              ? `${transactionsData.totalCount} transactions found`
+            {transactionsData?.pagination.total
+              ? `${transactionsData.pagination.total} transactions found`
               : 'Manage your financial transactions'}
           </p>
         </div>
@@ -225,7 +225,6 @@ const TransactionsPage = () => {
                 onDateChange={handleDateRangeSelect}
                 onClear={handleClearDateRange}
                 className='h-9 text-xs sm:h-10 sm:text-sm'
-                placeholder='Select date range'
                 closeOnComplete={true}
                 buttonClassName='h-full'
                 noLabel
@@ -254,7 +253,7 @@ const TransactionsPage = () => {
             sortBy={filters.sortBy}
             sortOrder={filters.sortOrder}
             loading={isLoading}
-            totalRecords={transactionsData.totalCount}
+            totalRecords={transactionsData.pagination.total}
             page={page}
             handlePageChange={handlePageChange}
             refetchData={async () => {
@@ -265,7 +264,7 @@ const TransactionsPage = () => {
         </div>
       ) : (
         <div className='flex items-center justify-center py-12'>
-          <p className='text-muted-foreground'>No transactions found</p>
+          <p className='text-muted-foreground'>No transactions found Try adjust your filters</p>
         </div>
       )}
     </div>

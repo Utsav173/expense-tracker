@@ -4,16 +4,14 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   investmentUpdate,
   investmentUpdateDividend,
-  investmentStockHistoricalPrice,
-  investmentStockPrice
+  investmentStockHistoricalPrice
 } from '@/lib/endpoints/investment';
 import { useToast } from '@/lib/hooks/useToast';
 import { Button } from '../ui/button';
-import { Input } from '../ui/input';
 import {
   Dialog,
   DialogContent,
@@ -32,10 +30,10 @@ import {
   FormMessage
 } from '@/components/ui/form';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
-import { Investment, StockPriceResult, StockSearchResult } from '@/lib/types';
+import { Investment, StockPriceResult } from '@/lib/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency, cn } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardDescription } from '@/components/ui/card';
 import {
   Loader2,
   TrendingUp,
@@ -52,7 +50,6 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { NumericInput } from '../ui/numeric-input';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import DatePicker from '../date/date-picker';
 import { Skeleton } from '../ui/skeleton';
 import {
@@ -65,7 +62,6 @@ import {
   isSameDay,
   parseISO
 } from 'date-fns';
-import { Combobox, ComboboxOption } from '../ui/combobox';
 import { NumberFormatValues } from 'react-number-format';
 
 // --- Helper Functions ---
@@ -284,7 +280,7 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
             shouldValidate: true,
             shouldDirty: true
           });
-          showInfo(`Auto-filled price for ${investment?.symbol} on ${formattedPurchaseDate}.`);
+          showSuccess(`Auto-filled price for ${investment?.symbol} on ${formattedPurchaseDate}.`);
         }
       }
     } else if (canFetchHistorical && !isHistoricalPriceLoading && historicalPriceData) {
@@ -299,7 +295,7 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
     detailsForm,
     investment?.symbol,
     formattedPurchaseDate,
-    showInfo,
+    showSuccess,
     showError
   ]);
 

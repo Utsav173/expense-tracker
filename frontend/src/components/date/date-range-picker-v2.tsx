@@ -14,7 +14,8 @@ import {
   addYears,
   subYears,
   startOfMonth as dateFnsStartOfMonth,
-  endOfMonth as dateFnsEndOfMonth
+  endOfMonth as dateFnsEndOfMonth,
+  subDays
 } from 'date-fns';
 import { CalendarIcon, X, ChevronDownIcon } from 'lucide-react';
 import { DateRange, CaptionLabelProps, MonthGridProps, DayPickerProps } from 'react-day-picker';
@@ -51,7 +52,7 @@ interface DateRangePickerV2Props {
 
 const defaultProps: Partial<DateRangePickerV2Props> = {
   label: 'Date range picker',
-  placeholder: 'Pick a date range',
+  placeholder: 'thisMonth',
   closeOnComplete: true,
   minDaysBetween: 1,
   dateFormat: 'LLL dd, y',
@@ -179,11 +180,14 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
     if (range.from > range.to) {
       return { valid: false, message: 'Start date must be before end date.' };
     }
-    if (minDate && range.from < minDate) {
-      return {
-        valid: false,
-        message: `Start date cannot be before ${format(minDate, dateFormat!)}.`
-      };
+    if (minDate) {
+      const minDateLimit = subDays(minDate, 1);
+      if (range.from < minDateLimit) {
+        return {
+          valid: false,
+          message: `Start date cannot be before ${format(minDate, dateFormat!)}.`
+        };
+      }
     }
     if (maxDate && range.to > maxDate) {
       return {
@@ -298,20 +302,18 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
 
   const getDisplayText = (): string => {
     const displayDate = tempDate ?? date;
-    if (!displayDate?.from) return placeholder!;
+    if (!displayDate?.from) {
+      // If a range exists in props.date, show it as placeholder
+      if (date?.from && date?.to) {
+        return `${formatDateDisplay(date.from)} - ${formatDateDisplay(date.to)}`;
+      }
+      return placeholder!;
+    }
     if (displayDate.to)
       return `${formatDateDisplay(displayDate.from)} - ${formatDateDisplay(displayDate.to)}`;
     return `${formatDateDisplay(displayDate.from)}${
       tempDate?.from && !tempDate?.to ? ' - ...' : ''
     }`;
-  };
-
-  const isDateDisabled = (d: Date): boolean => {
-    if (!isValid(d)) return true;
-    const dayOnly = startOfYear(d);
-    if (minDate && isBefore(dayOnly, startOfYear(minDate))) return true;
-    if (maxDate && isAfter(dayOnly, endOfYear(maxDate))) return true;
-    return disabledDatesSet.has(format(d, 'yyyy-MM-dd'));
   };
 
   return (
@@ -354,7 +356,12 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
                 onMonthChange={setMonth}
                 defaultMonth={month}
                 numberOfMonths={1}
-                disabled={isDateDisabled}
+                disabled={[
+                  {
+                    before: minDate,
+                    after: maxDate
+                  }
+                ]}
                 startMonth={minDate}
                 endMonth={maxDate}
                 components={{
@@ -385,8 +392,8 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
                     </CustomMonthGrid>
                   )
                 }}
+                className='overflow-hidden rounded-md border p-2'
                 classNames={{
-                  root: 'p-4',
                   month_caption: 'ms-2.5 me-20 justify-start',
                   nav: 'justify-end',
                   nav_button_previous: 'absolute left-1 top-2.5',
@@ -502,7 +509,12 @@ function CustomMonthGrid({
       <table className={cn(className, isYearView ? 'invisible' : '')}>{children}</table>
 
       {isYearView && (
-        <div className={cn(className, isYearView ? 'bg-background absolute inset-0 z-20' : '')}>
+        <div
+          className={cn(
+            className,
+            isYearView ? 'bg-background absolute inset-0 z-20 -mx-2 -mb-2' : ''
+          )}
+        >
           <ScrollArea ref={scrollAreaRef} className='h-full w-full'>
             {years.map((yearDate) => {
               const year = yearDate.getFullYear();

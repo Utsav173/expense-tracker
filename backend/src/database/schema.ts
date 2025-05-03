@@ -1,9 +1,11 @@
+// src/database/schema.ts
 import { relations, sql } from 'drizzle-orm';
 import {
   boolean,
   date,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   real,
@@ -12,14 +14,13 @@ import {
   uniqueIndex,
   varchar,
 } from 'drizzle-orm/pg-core';
+import { CoreMessage } from 'ai';
 
-// <---------------------------------------------- Enums ----------------------------------------------->
 export const roleEnum = pgEnum('role', ['user', 'admin']);
 export const DebtType = pgEnum('DebtType', ['given', 'taken']);
 export const InterestType = pgEnum('InterestType', ['simple', 'compound']);
 export const RecurrenceType = pgEnum('recurrence_type', ['daily', 'weekly', 'monthly', 'yearly']);
 
-// <---------------------------------------------- Common Columns ----------------------------------------------->
 const commonFields = {
   id: varchar('id', { length: 64 })
     .primaryKey()
@@ -28,7 +29,6 @@ const commonFields = {
   updatedAt: timestamp('updatedAt'),
 };
 
-// <---------------------------------------------- Tables ----------------------------------------------->
 export const User = pgTable(
   'user',
   {
@@ -115,7 +115,7 @@ export const Transaction = pgTable(
     recurring: boolean('recurring').default(false),
     recurrenceType: RecurrenceType('recurrence_type'),
     recurrenceEndDate: timestamp('recurrence_end_date'),
-    currency: varchar('currency', { length: 3 }).notNull().default('INR'), // Multi-Currency Support
+    currency: varchar('currency', { length: 3 }).notNull().default('INR'),
   },
   (table) => [
     index('textIndex').on(table.text),
@@ -256,59 +256,74 @@ export const Investment = pgTable(
   },
   (table) => [index('investedAccountSymbolIdx').on(table.account, table.symbol)],
 );
-// <---------------------------------------------- Relations ----------------------------------------------->
+
+export const AiConversationHistory = pgTable(
+  'ai_conversation_history',
+  {
+    ...commonFields,
+    userId: varchar('userId', { length: 64 })
+      .notNull()
+      .references(() => User.id, { onDelete: 'cascade' }),
+    sessionId: varchar('sessionId', { length: 64 }).notNull(),
+    message: jsonb('message').$type<CoreMessage>().notNull(),
+  },
+  (table) => [
+    index('aiConvUserIdSessionIdx').on(table.userId, table.sessionId),
+    index('aiConvCreatedAtIdx').on(table.createdAt),
+  ],
+);
+
 export const usersRelations = relations(User, ({ many }) => ({
   accounts: many(Account),
-  transactions: many(Transaction, { relationName: 'owner' }), // now consistency
-  investmentAccounts: many(InvestmentAccount, {
-    relationName: 'userInvestments', //added consistent naming
-  }),
+  transactions: many(Transaction, { relationName: 'owner' }),
+  investmentAccounts: many(InvestmentAccount),
+  categories: many(Category),
+  budgets: many(Budget),
+  savingGoals: many(SavingGoal),
+  debtsCreated: many(Debts, { relationName: 'debtsCreated' }),
+  debtsInvolved: many(Debts, { relationName: 'debtsInvolved' }),
+  userAccounts: many(UserAccount),
+  aiHistory: many(AiConversationHistory),
 }));
 
 export const accountsRelations = relations(Account, ({ one, many }) => ({
-  owner: one(User, {
-    fields: [Account.owner],
-    references: [User.id],
-  }),
-  transactions: many(Transaction, {
-    relationName: 'accountTransactions',
-  }),
-  debts: many(Debts, { relationName: 'accountDebts' }),
+  owner: one(User, { fields: [Account.owner], references: [User.id] }),
+  transactions: many(Transaction),
+  analytics: one(Analytics, { fields: [Account.id], references: [Analytics.account] }),
+  userAccounts: many(UserAccount),
+  debts: many(Debts),
+  importData: many(ImportData),
+}));
+
+export const userAccountRelations = relations(UserAccount, ({ one }) => ({
+  user: one(User, { fields: [UserAccount.userId], references: [User.id] }),
+  account: one(Account, { fields: [UserAccount.accountId], references: [Account.id] }),
 }));
 
 export const debtsRelations = relations(Debts, ({ one }) => ({
-  account: one(Account, {
-    fields: [Debts.account],
-    references: [Account.id],
-    relationName: 'accountDebts',
+  account: one(Account, { fields: [Debts.account], references: [Account.id] }),
+  creator: one(User, {
+    fields: [Debts.createdBy],
+    references: [User.id],
+    relationName: 'debtsCreated',
+  }),
+  involvedUser: one(User, {
+    fields: [Debts.userId],
+    references: [User.id],
+    relationName: 'debtsInvolved',
   }),
 }));
 
 export const categoriesRelations = relations(Category, ({ one, many }) => ({
-  owner: one(User, {
-    fields: [Category.owner],
-    references: [User.id],
-  }),
-  transactions: many(Transaction, { relationName: 'categoryTransactions' }), // now consistency
-  budgets: many(Budget, { relationName: 'categoryBudgets' }),
+  owner: one(User, { fields: [Category.owner], references: [User.id] }),
+  transactions: many(Transaction),
+  budgets: many(Budget),
 }));
 
 export const transactionsRelations = relations(Transaction, ({ one }) => ({
-  account: one(Account, {
-    fields: [Transaction.account],
-    references: [Account.id],
-    relationName: 'accountTransactions',
-  }),
-  category: one(Category, {
-    fields: [Transaction.category],
-    references: [Category.id],
-    relationName: 'categoryTransactions',
-  }),
-  owner: one(User, {
-    fields: [Transaction.owner],
-    references: [User.id],
-    relationName: 'owner',
-  }),
+  account: one(Account, { fields: [Transaction.account], references: [Account.id] }),
+  category: one(Category, { fields: [Transaction.category], references: [Category.id] }),
+  owner: one(User, { fields: [Transaction.owner], references: [User.id], relationName: 'owner' }),
   createdBy: one(User, {
     fields: [Transaction.createdBy],
     references: [User.id],
@@ -322,44 +337,39 @@ export const transactionsRelations = relations(Transaction, ({ one }) => ({
 }));
 
 export const analyticsRelations = relations(Analytics, ({ one }) => ({
-  account: one(Account, {
-    fields: [Analytics.account],
-    references: [Account.id],
-  }),
-  user: one(User, {
-    fields: [Analytics.user],
-    references: [User.id],
-  }),
+  account: one(Account, { fields: [Analytics.account], references: [Account.id] }),
+  user: one(User, { fields: [Analytics.user], references: [User.id] }),
 }));
 
 export const budgetRelations = relations(Budget, ({ one }) => ({
-  category: one(Category, {
-    fields: [Budget.category],
-    references: [Category.id],
-    relationName: 'categoryBudgets',
-  }),
-  user: one(User, {
-    fields: [Budget.userId],
-    references: [User.id],
-    relationName: 'budgetUser',
-  }),
+  category: one(Category, { fields: [Budget.category], references: [Category.id] }),
+  user: one(User, { fields: [Budget.userId], references: [User.id] }),
 }));
 
 export const investmentAccountRelations = relations(InvestmentAccount, ({ one, many }) => ({
-  user: one(User, {
-    fields: [InvestmentAccount.userId],
-    references: [User.id],
-    relationName: 'userInvestments',
-  }),
-  investments: many(Investment, {
-    relationName: 'accountInvestments', //explicit reference, now will remove error from type checks
-  }),
+  user: one(User, { fields: [InvestmentAccount.userId], references: [User.id] }),
+  investments: many(Investment),
 }));
 
 export const investmentRelations = relations(Investment, ({ one }) => ({
   account: one(InvestmentAccount, {
     fields: [Investment.account],
     references: [InvestmentAccount.id],
-    relationName: 'accountInvestments', //explicit naming for relationship type from another table now
+  }),
+}));
+
+export const importDataRelations = relations(ImportData, ({ one }) => ({
+  account: one(Account, { fields: [ImportData.account], references: [Account.id] }),
+  user: one(User, { fields: [ImportData.user], references: [User.id] }),
+}));
+
+export const savingGoalRelations = relations(SavingGoal, ({ one }) => ({
+  user: one(User, { fields: [SavingGoal.userId], references: [User.id] }),
+}));
+
+export const aiConversationHistoryRelations = relations(AiConversationHistory, ({ one }) => ({
+  user: one(User, {
+    fields: [AiConversationHistory.userId],
+    references: [User.id],
   }),
 }));

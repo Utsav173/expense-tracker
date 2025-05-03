@@ -84,6 +84,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
           disabled={disabled}
           startMonth={new Date(1980, 0)}
           endMonth={new Date(2100, 11)}
+          hideNavigation
           components={{
             DropdownNav: (props: DropdownNavProps) => {
               return <div className='flex w-full items-center gap-2'>{props.children}</div>;

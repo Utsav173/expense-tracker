@@ -2,6 +2,7 @@ import { MiddlewareHandler } from 'hono';
 import { verify } from 'hono/jwt';
 import { HTTPException } from 'hono/http-exception';
 import { db } from '../database';
+import { config } from '../config';
 
 // Define the authMiddleware function, which takes a context and a next function as arguments
 const authMiddleware: MiddlewareHandler<any> = async (c, next) => {
@@ -27,7 +28,7 @@ const authMiddleware: MiddlewareHandler<any> = async (c, next) => {
       }
 
       // Verify the token using the "secret" key
-      const data = await verify(token, 'secret');
+      const data = await verify(token, config.JWT_SECRET);
 
       // If the token is invalid, throw an error
       if (!data) {

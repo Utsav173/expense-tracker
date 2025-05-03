@@ -73,7 +73,7 @@ const AddBudgetModal = ({
 
   const { data: categoriesData, isLoading: isLoadingCategories } = useQuery({
     queryKey: ['categories'],
-    queryFn: () => categoryGetAll({ limit: 500 }),
+    queryFn: () => categoryGetAll({ limit: 100 }),
     staleTime: 5 * 60 * 1000
   });
 

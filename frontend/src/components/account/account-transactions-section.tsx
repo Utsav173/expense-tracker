@@ -22,11 +22,18 @@ import { DateRange } from 'react-day-picker';
 interface AccountTransactionsSectionProps {
   transactionsData?: {
     transactions: Transaction[];
-    totalPages: number;
-    totalCount: number;
-    currentPage: number;
-    pageSize: number;
-    dateRange?: {
+    pagination: {
+      total: number;
+      totalPages: number;
+      currentPage: number;
+      pageSize: number;
+    };
+    filters: {
+      sortBy: string;
+      sortOrder: string;
+      q: string;
+    };
+    dateRange: {
       minDate: string;
       maxDate: string;
     };
@@ -192,7 +199,7 @@ export const AccountTransactionsSection = ({
           </div>
         ) : transactionsData?.transactions.length === 0 ? (
           <div className='text-muted-foreground flex h-full items-center justify-center p-8 text-center'>
-            No transactions found.
+            No transactions found for the selected filters.
             {Object.keys(filters).length > 0 && isOwner && (
               <Button variant='link' className='ml-1' onClick={handleResetFilters}>
                 Clear filters
@@ -206,7 +213,7 @@ export const AccountTransactionsSection = ({
             sortBy={filters.sortBy}
             sortOrder={filters.sortOrder}
             loading={isTransactionLoading ?? false}
-            totalRecords={transactionsData?.totalCount ?? 0}
+            totalRecords={transactionsData?.pagination.total ?? 0}
             page={page}
             handlePageChange={handlePageChange}
             refetchData={async () => {

@@ -67,12 +67,6 @@ export const investmentUpdateDividend = (
     errorMessage
   );
 
-export const investmentGetPortfolio = (
-  successMessage?: string,
-  errorMessage?: string
-): Promise<ApiResponse<PortfolioItem[]>> =>
-  apiFetch('/investment/portfolio', 'GET', undefined, undefined, successMessage, errorMessage);
-
 export const investmentStockSearch = (
   params: { q: string },
   successMessage?: string,

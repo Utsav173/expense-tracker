@@ -10,7 +10,6 @@ import {
   Cell,
   ResponsiveContainer,
   Tooltip,
-  Legend,
   Sector,
   BarChart,
   Bar,
