@@ -87,6 +87,16 @@
   --color-chart-3: hsl(var(--chart-3));
   --color-chart-4: hsl(var(--chart-4));
   --color-chart-5: hsl(var(--chart-5));
+  --color-chart-6: hsl(var(--chart-6));
+  --color-chart-7: hsl(var(--chart-7));
+  --color-chart-8: hsl(var(--chart-8));
+  --color-chart-other: hsl(var(--chart-other));
+  --color-chart-income: hsl(var(--chart-income));
+  --color-chart-expense: hsl(var(--chart-expense));
+  --color-chart-balance: hsl(var(--chart-balance));
+  --color-chart-savings: hsl(var(--chart-savings));
+  --color-chart-investment: hsl(var(--chart-investment));
+  --color-chart-debt: hsl(var(--chart-debt));
 
   /* Sidebar Colors */
   --color-sidebar: hsl(var(--sidebar-background));
@@ -128,14 +138,6 @@
   --color-balance-active: hsl(var(--balance-active));
   --color-balance-muted: hsl(var(--balance-muted));
   --color-balance-muted-foreground: hsl(var(--balance-muted-foreground));
-
-  /* Financial Chart Colors */
-  --color-chart-income: hsl(var(--chart-income));
-  --color-chart-expense: hsl(var(--chart-expense));
-  --color-chart-balance: hsl(var(--chart-balance));
-  --color-chart-savings: hsl(var(--chart-savings));
-  --color-chart-investment: hsl(var(--chart-investment));
-  --color-chart-debt: hsl(var(--chart-debt));
 
   /* Financial Status Colors */
   --color-positive: hsl(var(--positive));
@@ -279,11 +281,21 @@
     --ring-active: 240 8% 1.9%;
 
     /* Chart Colors */
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --chart-1: 220 70% 50%; /* Blue */
+    --chart-2: 160 60% 45%; /* Teal */
+    --chart-3: 30 80% 55%; /* Orange */
+    --chart-4: 280 65% 60%; /* Purple */
+    --chart-5: 340 75% 55%; /* Pink */
+    --chart-6: 100 70% 40%; /* Lime */
+    --chart-7: 200 80% 50%; /* Sky Blue */
+    --chart-8: 50 90% 50%; /* Yellow */
+    --chart-other: 240 4% 60%; /* Gray */
+    --chart-income: 142 76% 36%; /* Green */
+    --chart-expense: 0 84% 60%; /* Red */
+    --chart-balance: 217 91% 60%; /* Indigo */
+    --chart-savings: 199 89% 48%; /* Bright Blue */
+    --chart-investment: 38 92% 50%; /* Gold */
+    --chart-debt: 0 62% 30%; /* Dark Red */
 
     /* Sidebar Colors */
     --sidebar-background: 0 0% 98%;
@@ -319,14 +331,6 @@
     --balance-active: 217 71% 40%;
     --balance-muted: 217 91% 60% / 0.1;
     --balance-muted-foreground: 217 91% 60%;
-
-    /* Financial Chart Colors - Light Mode */
-    --chart-income: 142 76% 36%;
-    --chart-expense: 0 84% 60%;
-    --chart-balance: 217 91% 60%;
-    --chart-savings: 199 89% 48%;
-    --chart-investment: 38 92% 50%;
-    --chart-debt: 0 62% 30%;
 
     /* Financial Status Colors - Light Mode */
     --positive: 142 76% 36%;
@@ -427,6 +431,16 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+    --chart-6: 100 70% 40%;
+    --chart-7: 200 80% 50%;
+    --chart-8: 50 90% 50%;
+    --chart-other: 240 4% 60%;
+    --chart-income: 142 76% 36%;
+    --chart-expense: 0 84% 60%;
+    --chart-balance: 217 91% 60%;
+    --chart-savings: 199 89% 48%;
+    --chart-investment: 38 92% 50%;
+    --chart-debt: 0 62% 30%;
 
     /* Sidebar Colors */
     --sidebar-background: 240 5.9% 10%;
@@ -459,14 +473,6 @@
     --balance-active: 217 71% 40%;
     --balance-muted: 217 91% 60% / 0.2;
     --balance-muted-foreground: 217 91% 60%;
-
-    /* Financial Chart Colors - Dark Mode */
-    --chart-income: 142 76% 36%;
-    --chart-expense: 0 84% 60%;
-    --chart-balance: 217 91% 60%;
-    --chart-savings: 199 89% 48%;
-    --chart-investment: 38 92% 50%;
-    --chart-debt: 0 62% 30%;
 
     /* Financial Status Colors - Dark Mode */
     --positive: 142 76% 36%;
@@ -539,10 +545,9 @@
 .recharts-tooltip-wrapper:focus,
 .recharts-tooltip-wrapper:focus-visible {
   outline: none !important;
-  border: none !important; /* Add border:none just in case */
+  border: none !important;
 }
 
-/* Target the main Recharts container/surface */
 .recharts-wrapper:focus,
 .recharts-wrapper:focus-visible,
 .recharts-surface:focus,
@@ -550,7 +555,6 @@
   outline: none !important;
 }
 
-/* Target individual sectors/cells (though you already tried with classes) */
 .recharts-pie-sector:focus,
 .recharts-pie-sector:focus-visible,
 .recharts-cell:focus,
@@ -558,8 +562,6 @@
   outline: none !important;
 }
 
-/* Target elements within your active shape if necessary */
-/* (Less likely to be the direct cause of the box, but good for completeness) */
 .recharts-active-shape:focus,
 .recharts-active-shape:focus-visible {
   outline: none !important;

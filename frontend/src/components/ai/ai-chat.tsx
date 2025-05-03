@@ -61,7 +61,7 @@ export const AiChat = ({ handleClose }: { handleClose?: () => void }) => {
   };
 
   return (
-    <div className='bg-background flex h-full w-[70dvw] flex-col rounded-2xl max-sm:w-full'>
+    <div className='bg-background m-auto flex h-full max-h-[80dvh] w-[70dvw] flex-col rounded-2xl max-sm:w-full'>
       {/* Header remains similar but not using CardHeader */}
       <div className='flex flex-shrink-0 items-center justify-between border-b p-4'>
         <div className='flex items-center space-x-3'>

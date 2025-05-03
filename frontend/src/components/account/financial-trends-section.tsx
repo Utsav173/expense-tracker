@@ -6,9 +6,9 @@ import { cn } from '@/lib/utils';
 interface FinancialTrendsSectionProps {
   chartData: Array<{
     date: string;
-    income: number;
-    expense: number;
-    balance: number;
+    income: number | null;
+    expense: number | null;
+    balance: number | null;
   }>;
   isChartLoading: boolean;
   currency: string;
