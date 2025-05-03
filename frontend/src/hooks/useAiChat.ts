@@ -30,9 +30,14 @@ export const useAiChat = (): UseAiChatReturn => {
     if (typeof window !== 'undefined') {
       const storedMessages = localStorage.getItem(STORAGE_KEY_MESSAGES);
       try {
-        return storedMessages ? JSON.parse(storedMessages) : [];
+        const parsed = storedMessages ? JSON.parse(storedMessages) : [];
+        return parsed.map((msg: ChatMessage) => ({
+          ...msg,
+          createdAt: msg.createdAt ? new Date(msg.createdAt) : undefined
+        }));
       } catch (e) {
         console.error('Failed to parse stored messages:', e);
+        localStorage.removeItem(STORAGE_KEY_MESSAGES);
         return [];
       }
     }
@@ -48,14 +53,12 @@ export const useAiChat = (): UseAiChatReturn => {
 
   const [error, setError] = useState<Error | null>(null);
 
-  // Save messages to localStorage whenever they change
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_KEY_MESSAGES, JSON.stringify(messages));
     }
   }, [messages]);
 
-  // Save sessionId to localStorage whenever it changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
       if (sessionId) {
@@ -69,30 +72,43 @@ export const useAiChat = (): UseAiChatReturn => {
   const mutation = useMutation({
     mutationFn: async (prompt: string) => {
       setError(null);
+
       return aiProcessPrompt({ prompt, sessionId });
     },
     onSuccess: (data) => {
-      if (data) {
+      if (data?.response !== undefined) {
         const assistantMessage: ChatMessage = {
           id: crypto.randomUUID(),
           role: 'assistant',
-          content: data.response,
+          content: data.response ?? '',
           toolCalls: data.toolCalls,
           toolResults: data.toolResults,
           createdAt: new Date()
         };
         setMessages((prev) => [...prev, assistantMessage]);
+
         if (data.sessionId && data.sessionId !== sessionId) {
           setSessionId(data.sessionId);
         }
       } else {
-        setError(new Error('Received an empty response from the AI.'));
+        console.warn('Received success response but no AI message content.');
+
+        setError(new Error('Received an empty response from the AI assistant.'));
+
         setMessages((prev) => prev.slice(0, -1));
       }
     },
     onError: (err: Error) => {
+      console.error('AI processing error:', err);
       setError(err);
-      setMessages((prev) => prev.slice(0, -1));
+
+      setMessages((prev) => {
+        const lastUserIndex = prev.map((m) => m.role).lastIndexOf('user');
+        if (lastUserIndex > -1) {
+          return prev.slice(0, lastUserIndex);
+        }
+        return prev;
+      });
     }
   });
 
@@ -107,7 +123,9 @@ export const useAiChat = (): UseAiChatReturn => {
         content: prompt,
         createdAt: new Date()
       };
+
       setMessages((prev) => [...prev, userMessage]);
+
       await mutation.mutateAsync(prompt);
     },
     [mutation, sessionId]
@@ -117,10 +135,12 @@ export const useAiChat = (): UseAiChatReturn => {
     setMessages([]);
     setSessionId(undefined);
     setError(null);
+
     if (typeof window !== 'undefined') {
       localStorage.removeItem(STORAGE_KEY_MESSAGES);
       localStorage.removeItem(STORAGE_KEY_SESSION_ID);
     }
+    toast.success('Chat history cleared.');
   }, []);
 
   const latestAssistantMessage = useMemo(() => {

@@ -157,10 +157,10 @@ const InvestmentAccountDetailPage = () => {
 
   return (
     <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 max-sm:px-0 md:space-y-6'>
-      <div className='flex w-full min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+      <div className='flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div className='flex min-w-0 flex-1 items-center gap-4'>
           <Button variant='ghost' onClick={() => router.back()} className='shrink-0'>
-            <ArrowLeft size={16} className='mr-2' /> Back
+            <ArrowLeft size={16} className='mr-2' />
           </Button>
           <SingleLineEllipsis className='min-w-0 text-xl font-semibold md:text-2xl'>
             {account.name} ({account.platform || 'N/A'})

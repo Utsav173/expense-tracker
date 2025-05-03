@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAiChat } from '@/hooks/useAiChat';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Send, Loader2, RefreshCcw, Bot, User, AlertTriangle, X } from 'lucide-react';
+import { Send, Loader2, RefreshCcw, Bot, User, AlertTriangle, X, BrainCircuit } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   AlertDialog,
@@ -24,14 +24,14 @@ import { Avatar, AvatarFallback } from '../ui/avatar';
 import { AnimatePresence, motion } from 'framer-motion';
 
 export const AiChat = ({ handleClose }: { handleClose?: () => void }) => {
-  const { messages, sendMessage, isLoading, error, clearChat, sessionId, latestAssistantMessage } =
+  const { messages, sendMessage, isLoading, error, clearChat, latestAssistantMessage } =
     useAiChat();
   const [input, setInput] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
 
   useEffect(() => {
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       if (scrollAreaRef.current) {
         scrollAreaRef.current.scrollTo({
           top: scrollAreaRef.current.scrollHeight,
@@ -39,6 +39,7 @@ export const AiChat = ({ handleClose }: { handleClose?: () => void }) => {
         });
       }
     }, 100);
+    return () => clearTimeout(timer);
   }, [messages, isLoading]);
 
   const handleSendMessage = async (e?: React.FormEvent<HTMLFormElement>) => {
@@ -61,21 +62,21 @@ export const AiChat = ({ handleClose }: { handleClose?: () => void }) => {
   };
 
   return (
-    <div className='bg-background m-auto flex h-full max-h-[82dvh] w-[70dvw] flex-col rounded-2xl max-sm:max-h-[85dvh] max-sm:w-full'>
-      {/* Header remains similar but not using CardHeader */}
+    <div className='bg-background m-auto flex h-full max-h-[82dvh] w-full flex-col rounded-2xl max-sm:max-h-[85dvh]'>
+      {/* Header */}
       <div className='flex flex-shrink-0 items-center justify-between border-b p-4'>
         <div className='flex items-center space-x-3'>
           <Bot className='text-primary h-6 w-6' />
           <h2 className='text-lg font-semibold'>AI Financial Assistant</h2>
         </div>
-        <div className='flex items-center space-x-2'>
+        <div className='flex items-center space-x-1'>
           <AlertDialog open={isClearConfirmOpen} onOpenChange={setIsClearConfirmOpen}>
             <AlertDialogTrigger asChild>
               <Button
                 variant='ghost'
                 size='icon'
                 disabled={isLoading || messages.length === 0}
-                className={cn('h-8 w-8', messages.length === 0 && 'cursor-not-allowed opacity-50')} // Slightly smaller
+                className={cn('h-8 w-8', messages.length === 0 && 'cursor-not-allowed opacity-50')}
                 aria-label='Clear chat'
               >
                 <RefreshCcw className='h-4 w-4' />
@@ -96,14 +97,20 @@ export const AiChat = ({ handleClose }: { handleClose?: () => void }) => {
             </AlertDialogContent>
           </AlertDialog>
           {handleClose && (
-            <Button variant='ghost' size='icon' onClick={handleClose}>
+            <Button
+              variant='ghost'
+              size='icon'
+              className='h-8 w-8'
+              onClick={handleClose}
+              aria-label='Close chat'
+            >
               <X className='h-4 w-4' />
             </Button>
           )}
         </div>
       </div>
 
-      {/* Main chat message area */}
+      {/* Chat Message Area */}
       <ScrollArea ref={scrollAreaRef} className='flex-1 overflow-y-auto p-4'>
         <AnimatePresence initial={false}>
           <motion.div
@@ -113,18 +120,33 @@ export const AiChat = ({ handleClose }: { handleClose?: () => void }) => {
             transition={{ duration: 0.3 }}
             className='space-y-4 pb-4'
           >
+            {messages.length === 0 && !isLoading && !error && (
+              <div className='text-muted-foreground flex h-full flex-col items-center justify-center p-8 text-center'>
+                <BrainCircuit className='mb-4 h-12 w-12' />
+                <p>Ask me anything about your finances!</p>
+                <p className='mt-1 text-xs'>
+                  E.g., "Add 500 expense for groceries", "Show my budget for travel", "List my
+                  savings accounts"
+                </p>
+              </div>
+            )}
             {messages.map((message, index) => (
               <motion.div
                 key={message.id}
+                layout
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
+                exit={{ opacity: 0, transition: { duration: 0.15 } }}
+                transition={{ duration: 0.3, delay: 0.05 }}
               >
                 <ChatMessageBubble message={message} />
               </motion.div>
             ))}
+            {/* Loading Indicator */}
             {isLoading && messages[messages.length - 1]?.role === 'user' && (
               <motion.div
+                key='loading'
+                layout
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
@@ -142,8 +164,11 @@ export const AiChat = ({ handleClose }: { handleClose?: () => void }) => {
                 </div>
               </motion.div>
             )}
+            {/* Error Display */}
             {error && !isLoading && (
               <motion.div
+                key='error'
+                layout
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
@@ -165,10 +190,10 @@ export const AiChat = ({ handleClose }: { handleClose?: () => void }) => {
         </AnimatePresence>
       </ScrollArea>
 
-      {/* Suggested actions appear above the input */}
+      {/* Suggested Actions */}
       <SuggestedActions latestAssistantMessage={latestAssistantMessage} />
 
-      {/* Footer with input */}
+      {/* Input Area */}
       <div className='flex-shrink-0 border-t p-4'>
         <form onSubmit={handleSendMessage} className='relative flex w-full items-center'>
           <Textarea
@@ -180,12 +205,13 @@ export const AiChat = ({ handleClose }: { handleClose?: () => void }) => {
             onKeyDown={handleKeyDown}
             disabled={isLoading}
             aria-label='Chat input'
+            style={{ maxHeight: '100px', overflowY: 'auto' }}
           />
           <Button
             type='submit'
             size='icon'
             disabled={isLoading || !input.trim()}
-            className='absolute right-4 shrink-0 rounded-full'
+            className='absolute right-2 bottom-1.5 h-8 w-8 shrink-0 rounded-full'
             aria-label='Send message'
           >
             {isLoading ? (

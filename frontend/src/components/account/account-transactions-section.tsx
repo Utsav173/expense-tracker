@@ -309,19 +309,7 @@ export const AccountTransactionsSection = ({
       </div>
 
       <ScrollArea className='flex-1'>
-        {isTransactionLoading && !transactionsData ? (
-          <div className='space-y-4 p-4'>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className='flex items-center justify-between'>
-                <div className='space-y-2'>
-                  <Skeleton className='h-4 w-[200px]' />
-                  <Skeleton className='h-3 w-[150px]' />
-                </div>
-                <Skeleton className='h-4 w-[100px]' />
-              </div>
-            ))}
-          </div>
-        ) : transactionsData?.transactions.length === 0 ? (
+        {transactionsData?.transactions.length === 0 ? (
           <div className='text-muted-foreground flex h-full items-center justify-center p-8 text-center'>
             No transactions found for the selected filters.
             {Object.values(filters).some(

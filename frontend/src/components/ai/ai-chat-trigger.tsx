@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { BrainCircuit } from 'lucide-react';
 import { AiChat } from './ai-chat';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -48,11 +48,19 @@ export const AiChatTrigger = () => {
         )}
         aria-describedby={undefined}
       >
-        <SheetHeader className='sr-only'>
-          <SheetTitle>AI Financial Assistant</SheetTitle>
-        </SheetHeader>
+        {/* SheetHeader might not be needed if AiChat handles its own title */}
+        {/* <SheetHeader className="sr-only"> <SheetTitle>AI Assistant</SheetTitle> </SheetHeader> */}
 
-        <AiChat handleClose={isMobile ? () => setIsOpen(false) : undefined} />
+        {/* Pass handleClose only if not mobile for the header X */}
+        <AiChat handleClose={!isMobile ? () => setIsOpen(false) : undefined} />
+
+        {/* Optional: Add an explicit close button inside SheetContent if needed for mobile?
+            The AiChat header already has one, so maybe not necessary. */}
+        {/* {isMobile && (
+           <Button variant="ghost" size="icon" className="absolute top-4 right-4" onClick={() => setIsOpen(false)}>
+               <X className="h-4 w-4" />
+           </Button>
+        )} */}
       </SheetContent>
     </Sheet>
   );

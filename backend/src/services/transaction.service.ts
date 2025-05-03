@@ -20,7 +20,7 @@ import {
 } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { HTTPException } from 'hono/http-exception';
-import { parseNaturalLanguageDateRange, formatDateRangeForQuery } from '../utils/nl_date.utils';
+
 import {
   getDateTruncate,
   getOrderBy,
@@ -33,14 +33,14 @@ import { format } from 'date-fns';
 import { utils as xlsxUtils, write as xlsxWrite } from 'xlsx';
 
 type TransactionFilters = {
-  duration?: string; // Natural language or YYYY-MM-DD,YYYY-MM-DD
+  duration?: string;
   q?: string;
   isIncome?: string;
   categoryId?: string;
   accountId?: string;
   userId?: string;
-  minAmount?: number; // Added minAmount
-  maxAmount?: number; // Added maxAmount
+  minAmount?: number;
+  maxAmount?: number;
   startDate?: Date;
   endDate?: Date;
 };
@@ -57,7 +57,6 @@ type TransactionSelect = InferSelectModel<typeof Transaction> & {
 };
 
 export class TransactionService {
-  // Updated to handle amount filters
   private getFilterConditions(filters: TransactionFilters): SQL<unknown> | undefined {
     const { q, isIncome, categoryId, startDate, endDate, accountId, userId, minAmount, maxAmount } =
       filters;
@@ -83,17 +82,13 @@ export class TransactionService {
 
     const dateCondition =
       startDate && endDate
-        ? and(
-            gte(Transaction.createdAt, startDate), // Use gte for start date
-            lte(Transaction.createdAt, endDate), // Use lte for end date
-          )
+        ? and(gte(Transaction.createdAt, startDate), lte(Transaction.createdAt, endDate))
         : undefined;
 
     const incomeCondition =
       isIncome !== undefined ? eq(Transaction.isIncome, isIncome === 'true') : undefined;
     const categoryCondition = categoryId ? eq(Transaction.category, categoryId) : undefined;
 
-    // Add amount range conditions
     const minAmountCondition =
       minAmount !== undefined ? gte(Transaction.amount, minAmount) : undefined;
     const maxAmountCondition =
@@ -119,13 +114,17 @@ export class TransactionService {
     sortBy: string,
     sortOrder: string,
   ) {
-    // Use new date parser
-    const dateRange = await getIntervalValue(filters.duration);
+    const { startDate: startDateString, endDate: endDateString } = await getIntervalValue(
+      filters.duration,
+    );
+
+    const startDate = startDateString ? new Date(startDateString) : undefined;
+    const endDate = endDateString ? new Date(endDateString) : undefined;
 
     const filterConditions = this.getFilterConditions({
       ...filters,
-      startDate: new Date(dateRange?.startDate),
-      endDate: new Date(dateRange?.endDate),
+      startDate,
+      endDate,
     });
 
     const UpdatedBy = alias(User, 'UpdatedBy');
@@ -269,9 +268,7 @@ export class TransactionService {
   async createTransaction(
     userId: string,
     payload: InferInsertModel<typeof Transaction>,
-    // --- ADDED Optional Parameter ---
     _internal_bypassOwnerCheck: boolean = false,
-    // ------------------------------
   ) {
     const {
       text,
@@ -290,37 +287,30 @@ export class TransactionService {
     if (isNaN(parsedAmount))
       throw new HTTPException(400, { message: 'Invalid transaction amount.' });
 
-    // --- MODIFIED Account Check ---
     const accountWhereClause = _internal_bypassOwnerCheck
-      ? eq(Account.id, account) // Internal call: Just check if account exists
-      : and(eq(Account.id, account), eq(Account.owner, userId)); // User call: Check ownership
+      ? eq(Account.id, account!)
+      : and(eq(Account.id, account!), eq(Account.owner, userId));
 
     const validAccount = await db.query.Account.findFirst({
       where: accountWhereClause,
-      columns: { id: true, balance: true, currency: true, owner: true }, // Fetch owner always
+      columns: { id: true, balance: true, currency: true, owner: true },
     });
 
-    // Throw 404 if account doesn't exist at all (for internal calls)
     if (!validAccount && _internal_bypassOwnerCheck) {
       throw new HTTPException(404, {
         message: `Account ${account} not found during internal transaction creation.`,
       });
     }
-    // Throw 403 if account doesn't exist OR user doesn't own it (for user calls)
     if (!validAccount && !_internal_bypassOwnerCheck) {
       throw new HTTPException(403, { message: 'Account not found or access denied.' });
     }
-    // -----------------------------
 
-    // Check balance only for user-initiated expenses
     if (!_internal_bypassOwnerCheck && !isIncome && (validAccount!.balance ?? 0) < parsedAmount)
       throw new HTTPException(400, { message: 'Insufficient balance for this expense.' });
 
-    // Use the actual owner from the fetched account data, especially for internal calls
     const actualOwnerId = validAccount!.owner;
 
     if (category) {
-      // Category check should still ensure the category owner is the transaction owner
       const validCategory = await db.query.Category.findFirst({
         where: and(eq(Category.id, category), eq(Category.owner, actualOwnerId)),
         columns: { id: true },
@@ -351,14 +341,14 @@ export class TransactionService {
           isIncome,
           transfer,
           category,
-          account: validAccount!.id, // Use validated account ID
-          owner: actualOwnerId, // Use actual owner ID
-          createdBy: userId, // Log who initiated (user or system via template owner)
+          account: validAccount!.id,
+          owner: actualOwnerId,
+          createdBy: userId,
           updatedBy: userId,
           recurring: recurring ?? false,
           recurrenceType: recurring ? recurrenceType : null,
           recurrenceEndDate: parsedEndDate,
-          currency: currency ?? validAccount!.currency ?? 'INR', // Use account currency
+          currency: currency ?? validAccount!.currency ?? 'INR',
           createdAt: createdAt ? new Date(createdAt) : new Date(),
         })
         .returning()
@@ -368,10 +358,9 @@ export class TransactionService {
       if (!newTransaction || newTransaction.length === 0)
         throw new HTTPException(500, { message: 'Failed to create transaction record.' });
 
-      // Analytics update still uses the actual owner ID
       await analyticsService.handleAnalyticsUpdate({
         account: validAccount!.id,
-        user: actualOwnerId, // Use actual owner for analytics context
+        user: actualOwnerId,
         isIncome,
         amount: parsedAmount,
         tx,
@@ -570,14 +559,9 @@ export class TransactionService {
     return { message: 'Transaction deleted successfully', id: result.id };
   }
 
-  // --- Chart and Specific View Methods --- (Implement logic here)
-
   async getCategoryChartData(userId: string, accountId?: string, duration?: string) {
     const { startDate, endDate } = await getIntervalValue(duration);
 
-    /* The below code is a SQL query that retrieves aggregated data on income and expenses
-    for categories associated with a specific user within a given time range. Here is a breakdown
-    of the code: */
     const result = await db
       .execute(
         sql`
@@ -605,8 +589,8 @@ export class TransactionService {
         JOIN
           category AS c ON t.category = c.id
         WHERE
-          t."createdAt" >= ${startDate}
-          AND t."createdAt" <= ${endDate}
+          t."createdAt" >= ${startDate}::timestamp
+          AND t."createdAt" <= ${endDate}::timestamp
           AND t.owner = ${userId}
           ${accountId ? sql`AND t.account = ${accountId}` : sql``}
         GROUP BY
@@ -623,15 +607,15 @@ export class TransactionService {
   }
 
   async getIncomeExpenseTotals(userId: string, accountId?: string, duration?: string) {
-    const dateRange = duration ? parseNaturalLanguageDateRange(duration) : null;
-    const { startDate, endDate } = dateRange
-      ? formatDateRangeForQuery(dateRange)
-      : { startDate: undefined, endDate: undefined };
+    const { startDate, endDate } = await getIntervalValue(duration);
+
+    const startDateObj = startDate ? new Date(startDate) : undefined;
+    const endDateObj = endDate ? new Date(endDate) : undefined;
 
     let whereClause = and(
       eq(Transaction.owner, userId),
-      startDate ? gte(Transaction.createdAt, new Date(startDate)) : undefined,
-      endDate ? lte(Transaction.createdAt, new Date(endDate)) : undefined,
+      startDateObj ? gte(Transaction.createdAt, startDateObj) : undefined,
+      endDateObj ? lte(Transaction.createdAt, endDateObj) : undefined,
     );
     if (accountId) {
       whereClause = and(whereClause, eq(Transaction.account, accountId));
@@ -658,23 +642,18 @@ export class TransactionService {
   }
 
   async getIncomeExpenseChartData(userId: string, accountId?: string, duration?: string) {
-    const { startDate, endDate } = duration
-      ? await getIntervalValue(duration)
-      : { startDate: undefined, endDate: undefined };
+    const { startDate, endDate } = await getIntervalValue(duration);
 
     if (!startDate || !endDate) {
-      // Handle case where date range couldn't be parsed - maybe default or throw?
       throw new HTTPException(400, { message: 'Invalid or missing date range for chart.' });
     }
 
     const dateTruncate = getDateTruncate(duration);
 
-    // This query generates aggregated income, expense and balance data
-    // for a given duration, accountId or userId
     const result = await db
       .execute(
         sql.raw(`
-      SELECT 
+      SELECT
         json_agg(${getDateFormatting(duration)}) AS "date",
         json_agg(total_income) AS "income",
         json_agg(total_expense) AS "expense",
@@ -699,11 +678,8 @@ export class TransactionService {
         throw new HTTPException(500, { message: err.message });
       });
 
-    // Ensure arrays exist even if query returns null/undefined for them
     return result;
   }
-
-  // --- Recurring Transaction Specific Methods ---
 
   async getRecurringTransactions(userId: string, page: number, pageSize: number) {
     const whereClause = and(eq(Transaction.owner, userId), eq(Transaction.recurring, true));
@@ -753,10 +729,9 @@ export class TransactionService {
   }
 
   async skipNextRecurringOccurrence(transactionId: string, userId: string) {
-    // Placeholder implementation - Actual skipping needs external logic
     const updated = await db
       .update(Transaction)
-      .set({ updatedAt: new Date() }) // Just touch the record
+      .set({ updatedAt: new Date() })
       .where(
         and(
           eq(Transaction.id, transactionId),
@@ -772,19 +747,23 @@ export class TransactionService {
       });
     }
 
-    // console.warn("Skipping recurring transaction logic is not fully implemented. Placeholder update performed.");
     return { message: 'Recurring transaction skip noted (placeholder action).' };
   }
 
   async exportTransactions(
     filters: TransactionFilters,
-    formatType: 'xlsx' | 'csv' = 'xlsx', // Rename format to formatType
+    formatType: 'xlsx' | 'csv' = 'xlsx',
   ): Promise<{ data: Buffer | string; filename: string; contentType: string }> {
-    const dateRange = filters.duration ? await getIntervalValue(filters.duration) : null;
+    const { startDate: startDateString, endDate: endDateString } = await getIntervalValue(
+      filters.duration,
+    );
+    const startDate = startDateString ? new Date(startDateString) : undefined;
+    const endDate = endDateString ? new Date(endDateString) : undefined;
+
     const filterConditions = this.getFilterConditions({
       ...filters,
-      startDate: dateRange?.startDate ? new Date(dateRange.startDate) : undefined,
-      endDate: dateRange?.endDate ? new Date(dateRange.endDate) : undefined,
+      startDate,
+      endDate,
     });
 
     const transactions = await db.query.Transaction.findMany({
@@ -829,7 +808,6 @@ export class TransactionService {
     let contentType: string;
 
     if (formatType === 'xlsx') {
-      // Use formatType
       const ws = xlsxUtils.json_to_sheet(exportData);
       const wb = xlsxUtils.book_new();
       xlsxUtils.book_append_sheet(wb, ws, 'Transactions');
@@ -837,7 +815,6 @@ export class TransactionService {
       filename = `transactions_${timestamp}.xlsx`;
       contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
     } else {
-      // csv
       fileData = Papa.unparse(exportData);
       filename = `transactions_${timestamp}.csv`;
       contentType = 'text/csv';
@@ -852,9 +829,9 @@ export class TransactionService {
     duration?: string,
     accountId?: string,
   ) {
-    const { startDate, endDate } = duration
-      ? await getIntervalValue(duration)
-      : { startDate: undefined, endDate: undefined };
+    const { startDate: startDateString, endDate: endDateString } = await getIntervalValue(duration);
+    const startDate = startDateString ? new Date(startDateString) : undefined;
+    const endDate = endDateString ? new Date(endDateString) : undefined;
 
     let whereClause: SQL<unknown> | undefined = eq(Transaction.owner, userId);
     if (accountId) {
@@ -863,8 +840,8 @@ export class TransactionService {
     if (startDate && endDate) {
       whereClause = and(
         whereClause,
-        gte(Transaction.createdAt, new Date(startDate)),
-        lte(Transaction.createdAt, new Date(endDate)),
+        gte(Transaction.createdAt, startDate),
+        lte(Transaction.createdAt, endDate),
       );
     }
 

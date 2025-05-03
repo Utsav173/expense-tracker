@@ -17,26 +17,34 @@ import {
   Sparkles,
   ClipboardCopy,
   Check,
-  Info,
-  Database,
-  MessageSquareWarning,
-  ChevronDown
+  ChevronDown,
+  HelpCircle,
+  AlertTriangle,
+  Loader2
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { CardContent } from '../ui/card';
 import { ScrollArea } from '../ui/scroll-area';
 import ReactMarkdown from 'react-markdown';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { useToast } from '@/lib/hooks/useToast';
-import {
-  Collapsible, // Import Collapsible components
-  CollapsibleContent,
-  CollapsibleTrigger
-} from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface ChatMessageBubbleProps {
   message: ChatMessage;
+}
+
+interface ToolResponse {
+  success: boolean;
+  message?: string;
+  data?: any;
+  error?: string;
+  confirmationNeeded?: boolean;
+  id?: string;
+  details?: string;
+  clarificationNeeded?: boolean;
+  options?: { id: string; name?: string; description?: string; details?: string }[];
 }
 
 const toolIcons: Record<string, React.ElementType> = {
@@ -55,6 +63,7 @@ const toolIcons: Record<string, React.ElementType> = {
 };
 
 const getToolIcon = (toolName: string): React.ElementType => {
+  if (!toolName) return toolIcons.default;
   const lowerToolName = toolName.toLowerCase();
   for (const prefix in toolIcons) {
     if (lowerToolName.startsWith(prefix)) {
@@ -73,20 +82,22 @@ const renderResultData = (data: any): React.ReactNode => {
     if (data.length === 0) return <span className='italic opacity-70'>Empty list</span>;
     return (
       <div className='mt-1 space-y-1'>
-        {data.slice(0, 3).map((item, index) => (
-          <pre key={index} className='bg-muted/50 rounded p-1 text-[9px]'>
+        {data.slice(0, 5).map((item, index) => (
+          <pre key={index} className='bg-muted/50 rounded p-1 text-[9px] leading-tight'>
             {JSON.stringify(item, null, 1)}
           </pre>
         ))}
-        {data.length > 3 && (
-          <p className='text-[9px] italic opacity-70'>... and {data.length - 3} more</p>
+        {data.length > 5 && (
+          <p className='text-[9px] italic opacity-70'>... and {data.length - 5} more</p>
         )}
       </div>
     );
   }
   if (typeof data === 'object') {
     return (
-      <pre className='bg-muted/50 mt-1 rounded p-1 text-[9px]'>{JSON.stringify(data, null, 1)}</pre>
+      <pre className='bg-muted/50 mt-1 rounded p-1 text-[9px] leading-tight'>
+        {JSON.stringify(data, null, 1)}
+      </pre>
     );
   }
   return <span className='italic opacity-70'>[Unsupported Data Type]</span>;
@@ -96,20 +107,69 @@ const ToolInfo: React.FC<{
   toolCalls?: ChatMessage['toolCalls'];
   toolResults?: ChatMessage['toolResults'];
 }> = ({ toolCalls, toolResults }) => {
-  if (!toolCalls && !toolResults) return null;
-  const hasError = toolResults?.some((r) => {
-    try {
-      const p = typeof r.result === 'string' ? JSON.parse(r.result) : r.result;
-      return p?.error || p?.success === false;
-    } catch {
-      return false;
-    }
-  });
-  const cardBorderColor = hasError ? 'border-destructive/40' : 'border-primary/40';
-  const cardBgColor = hasError ? 'bg-destructive/5' : 'bg-primary/5';
-  const [isOpen, setIsOpen] = useState(false); // State for collapsible
+  const hasMeaningfulContent =
+    (toolCalls && toolCalls.length > 0) || (toolResults && toolResults.length > 0);
+  if (!hasMeaningfulContent) return null;
 
-  if (toolCalls?.length === 0) return null;
+  const [isOpen, setIsOpen] = useState(true);
+
+  let overallStatus: 'error' | 'pending' | 'success' | 'info' | 'confirm' | 'clarify' = 'info';
+  if (
+    toolResults?.some((res) => {
+      try {
+        const p = typeof res.result === 'string' ? JSON.parse(res.result) : res.result;
+        return p?.success === false || !!p?.error;
+      } catch {
+        return false;
+      }
+    })
+  ) {
+    overallStatus = 'error';
+  } else if (
+    toolResults?.some((res) => {
+      try {
+        const p = typeof res.result === 'string' ? JSON.parse(res.result) : res.result;
+        return p?.confirmationNeeded === true;
+      } catch {
+        return false;
+      }
+    })
+  ) {
+    overallStatus = 'confirm';
+  } else if (
+    toolResults?.some((res) => {
+      try {
+        const p = typeof res.result === 'string' ? JSON.parse(res.result) : res.result;
+        return p?.clarificationNeeded === true;
+      } catch {
+        return false;
+      }
+    })
+  ) {
+    overallStatus = 'clarify';
+  } else if (toolCalls && (!toolResults || toolResults.length < toolCalls.length)) {
+    overallStatus = 'pending';
+  } else if (toolResults && toolResults.length > 0) {
+    overallStatus = 'success';
+  }
+
+  const cardBorderColor = {
+    error: 'border-destructive/40',
+    pending: 'border-blue-500/40',
+    success: 'border-success/40',
+    info: 'border-info/40',
+    confirm: 'border-amber-500/40',
+    clarify: 'border-purple-500/40'
+  }[overallStatus];
+
+  const cardBgColor = {
+    error: 'bg-destructive/5',
+    pending: 'bg-blue-500/5',
+    success: 'bg-success/5',
+    info: 'bg-info/5',
+    confirm: 'bg-amber-500/5',
+    clarify: 'bg-purple-500/5'
+  }[overallStatus];
 
   return (
     <Collapsible
@@ -122,7 +182,16 @@ const ToolInfo: React.FC<{
           <div className='text-foreground/80 flex items-center gap-1.5 text-xs font-medium'>
             <Sparkles className='text-primary h-3.5 w-3.5' />
             <span>AI Tool Activity</span>
-            {hasError && <XCircle className='text-destructive h-3.5 w-3.5' />}
+            {overallStatus === 'error' && <XCircle className='text-destructive h-3.5 w-3.5' />}
+            {overallStatus === 'confirm' && (
+              <AlertTriangle className='h-3.5 w-3.5 text-amber-600 dark:text-amber-400' />
+            )}
+            {overallStatus === 'clarify' && (
+              <HelpCircle className='h-3.5 w-3.5 text-purple-600 dark:text-purple-400' />
+            )}
+            {overallStatus === 'pending' && (
+              <Loader2 className='h-3.5 w-3.5 animate-spin text-blue-500' />
+            )}
           </div>
           <ChevronDown
             className={cn('h-4 w-4 transition-transform duration-200', isOpen && 'rotate-180')}
@@ -131,6 +200,7 @@ const ToolInfo: React.FC<{
       </CollapsibleTrigger>
       <CollapsibleContent>
         <CardContent className='max-h-60 overflow-y-auto p-2 pt-0 text-[11px]'>
+          {/* Display Tool Calls */}
           {toolCalls?.map((call) => {
             const Icon = getToolIcon(call.toolName);
             return (
@@ -153,90 +223,67 @@ const ToolInfo: React.FC<{
               </div>
             );
           })}
+
+          {/* Display Tool Results with Interpretation */}
           {toolResults?.map((result) => {
-            let isErrorResult = false;
-            let displayContent: string | React.ReactNode = '';
-            let resultType: 'success' | 'error' | 'info' | 'confirm' = 'info';
-            let dataContent: React.ReactNode = null;
+            let parsedResult: ToolResponse | null = null;
+            let rawResultString: string = '';
+            let parseError = false;
+
             try {
-              const parsed =
-                typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
-              if (parsed && typeof parsed === 'object') {
-                if (parsed.error) {
-                  displayContent = parsed.error;
-                  isErrorResult = true;
-                  resultType = 'error';
-                } else if (parsed.message && parsed.success === false) {
-                  displayContent = parsed.message;
-                  isErrorResult = true;
-                  resultType = 'error';
-                } else if (parsed.message && parsed.confirmationNeeded) {
-                  displayContent = parsed.message;
-                  resultType = 'confirm';
-                } else if (parsed.message) {
-                  displayContent = parsed.message;
-                  resultType = 'success';
-                } else {
-                  displayContent = 'Operation completed.';
-                  resultType = 'success';
-                }
-                if (parsed.data) {
-                  dataContent = renderResultData(parsed.data);
-                } else if (
-                  parsed.accounts ||
-                  parsed.categories ||
-                  parsed.transactions ||
-                  parsed.budgets ||
-                  parsed.goals ||
-                  parsed.investments ||
-                  parsed.debts
-                ) {
-                  dataContent = renderResultData(
-                    parsed.accounts ||
-                      parsed.categories ||
-                      parsed.transactions ||
-                      parsed.budgets ||
-                      parsed.goals ||
-                      parsed.investments ||
-                      parsed.debts
-                  );
-                }
-              } else {
-                displayContent = String(result.result);
-                resultType = 'info';
+              rawResultString =
+                typeof result.result === 'string' ? result.result : JSON.stringify(result.result);
+              parsedResult = JSON.parse(rawResultString) as ToolResponse;
+              if (typeof parsedResult !== 'object' || parsedResult === null) {
+                throw new Error('Parsed result is not an object');
               }
             } catch (e) {
-              displayContent = String(result.result);
-              resultType = 'info';
+              console.warn('Could not parse tool result as JSON:', rawResultString, e);
+              parseError = true;
             }
-            const ResultIcon = isErrorResult
+
+            const isError =
+              !parseError && (parsedResult?.success === false || !!parsedResult?.error);
+            const isConfirm = !parseError && parsedResult?.confirmationNeeded === true;
+            const isClarify = !parseError && parsedResult?.clarificationNeeded === true;
+            const isSuccess = !parseError && !isError && !isConfirm && !isClarify;
+
+            const ResultIcon = isError
               ? XCircle
-              : resultType === 'confirm'
-                ? MessageSquareWarning
-                : resultType === 'success'
-                  ? CheckCircle
-                  : Info;
-            const resultColorClass = isErrorResult
+              : isConfirm
+                ? AlertTriangle
+                : isClarify
+                  ? HelpCircle
+                  : CheckCircle;
+            const resultColorClass = isError
               ? 'text-destructive'
-              : resultType === 'confirm'
+              : isConfirm
                 ? 'text-amber-600 dark:text-amber-400'
-                : resultType === 'success'
-                  ? 'text-success'
-                  : 'text-info';
-            const resultBgClass = isErrorResult
+                : isClarify
+                  ? 'text-purple-600 dark:text-purple-400'
+                  : 'text-success';
+            const resultBgClass = isError
               ? 'bg-destructive/10 border-destructive/30'
-              : resultType === 'confirm'
+              : isConfirm
                 ? 'bg-amber-500/10 border-amber-500/30'
-                : resultType === 'success'
-                  ? 'bg-success/10 border-success/30'
-                  : 'bg-info/10 border-info/30';
-            const resultBadgeVariant = isErrorResult
+                : isClarify
+                  ? 'bg-purple-500/10 border-purple-500/30'
+                  : 'bg-success/10 border-success/30';
+            const resultBadgeVariant = isError
               ? 'destructive'
-              : resultType === 'confirm'
+              : isConfirm
                 ? 'outline'
-                : resultType === 'success'
-                  ? 'default'
-                  : 'secondary';
+                : isClarify
+                  ? 'outline'
+                  : 'default';
+            const resultStatusText = isError
+              ? 'Error'
+              : isConfirm
+                ? 'Confirm?'
+                : isClarify
+                  ? 'Clarify?'
+                  : 'Success';
+
             return (
               <div
                 key={result.toolCallId}
@@ -246,20 +293,47 @@ const ToolInfo: React.FC<{
                   className={cn('mb-1 flex items-center gap-1 font-mono text-xs', resultColorClass)}
                 >
                   <ResultIcon className='h-3 w-3 shrink-0' /> Result:
-                  {resultType !== 'info' && (
-                    <Badge
-                      variant={resultBadgeVariant}
-                      className='ml-auto scale-75 px-1 py-0 text-[9px]'
-                    >
-                      {resultType}
-                    </Badge>
-                  )}
+                  <Badge
+                    variant={resultBadgeVariant}
+                    className='ml-auto scale-75 px-1 py-0 text-[9px]'
+                    style={
+                      isClarify
+                        ? { borderColor: 'hsl(var(--purple))', color: 'hsl(var(--purple))' }
+                        : isConfirm
+                          ? { borderColor: 'hsl(var(--amber))', color: 'hsl(var(--amber))' }
+                          : {}
+                    }
+                  >
+                    {resultStatusText}
+                  </Badge>
                 </p>
                 <ScrollArea className='max-h-24 w-full'>
                   <div className='bg-background/60 text-foreground/80 rounded p-1 font-mono text-[10px] break-words whitespace-pre-wrap'>
-                    {displayContent}
-                    {dataContent && (
-                      <div className='border-border/50 mt-1 border-t pt-1'>{dataContent}</div>
+                    {parseError ? (
+                      <>
+                        <span className='font-semibold'>Raw Result:</span>
+                        <pre className='mt-1 text-[9px]'>{rawResultString}</pre>
+                      </>
+                    ) : isConfirm ? (
+                      <span className='italic opacity-80'>
+                        {parsedResult?.message || 'Confirmation required.'}
+                      </span>
+                    ) : isClarify ? (
+                      <span className='italic opacity-80'>
+                        {parsedResult?.message || 'Clarification needed.'}
+                      </span>
+                    ) : (
+                      <>
+                        {(parsedResult?.message || parsedResult?.error) && (
+                          <p className={`mb-1 font-semibold ${isError ? 'text-destructive' : ''}`}>
+                            {parsedResult?.message || parsedResult?.error}
+                          </p>
+                        )}
+                        {(parsedResult?.data || (isError && !parsedResult?.message)) &&
+                          renderResultData(
+                            parsedResult?.data ?? (isError ? 'Details unavailable' : null)
+                          )}
+                      </>
                     )}
                   </div>
                 </ScrollArea>
@@ -308,7 +382,7 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message })
       <div
         className={cn(
           'relative w-auto max-w-[80%] space-y-1 rounded-lg px-3 py-2 shadow-sm',
-          isUser ? 'bg-primary text-primary-foreground' : 'bg-background'
+          isUser ? 'bg-primary text-primary-foreground' : 'bg-background border'
         )}
       >
         {!isUser && message.content && (
@@ -326,9 +400,11 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message })
             )}
           </Button>
         )}
+        {/* Ensure content is rendered even if empty for spacing */}
         <div className='prose prose-sm dark:prose-invert prose-p:before:content-none prose-p:after:content-none max-w-none pt-1 break-words'>
-          <ReactMarkdown components={{}}>{message.content}</ReactMarkdown>
+          <ReactMarkdown components={{}}>{message.content || ''}</ReactMarkdown>
         </div>
+        {/* Pass potentially undefined toolCalls/Results */}
         <ToolInfo toolCalls={message.toolCalls} toolResults={message.toolResults} />
         {message.createdAt && (
           <p className='pt-1 text-right text-[10px] opacity-70'>

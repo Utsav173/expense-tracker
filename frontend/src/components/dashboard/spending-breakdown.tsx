@@ -286,7 +286,7 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
     return (
       <ChartContainer
         config={chartConfig}
-        className='mx-auto aspect-square h-[400px]'
+        className='mx-auto aspect-square h-[400px] max-sm:h-[280px]'
         aria-label={`${chartType} chart showing spending breakdown by category for ${durationLabels[duration]}`} // Accessibility
       >
         <ResponsiveContainer width='100%' height='100%'>

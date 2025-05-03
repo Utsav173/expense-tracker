@@ -114,7 +114,7 @@ const LoginPage = () => {
         </form>
       </CardContent>
 
-      <CardFooter className='flex items-center justify-between pt-4'>
+      <CardFooter className='flex items-center justify-between gap-2 pt-4 max-sm:mt-2 max-sm:flex-col max-sm:justify-center'>
         <Link
           href='/auth/signup'
           className='text-primary hover:text-primary/80 text-sm font-medium transition-colors duration-200'

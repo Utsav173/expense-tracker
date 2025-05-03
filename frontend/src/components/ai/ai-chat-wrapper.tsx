@@ -1,9 +1,7 @@
 'use client';
-
-import React from 'react';
 import { usePathname } from 'next/navigation';
 import { AiChatTrigger } from './ai-chat-trigger';
-import { useAuth } from '@/lib/hooks/useAuth'; // Import useAuth
+import { useAuth } from '@/lib/hooks/useAuth';
 
 const AI_CHAT_ALLOWED_PATHS = [
   '/dashboard',
@@ -20,14 +18,11 @@ const AI_CHAT_DETAIL_PATH_REGEX =
 
 export const AiChatWrapper = () => {
   const pathname = usePathname();
-  const { user, userIsLoading } = useAuth(); // Get user and loading state
+  const { user, userIsLoading } = useAuth();
 
-  // Determine if the path allows the chat bubble
   const isPathAllowed =
     AI_CHAT_ALLOWED_PATHS.includes(pathname) || AI_CHAT_DETAIL_PATH_REGEX.test(pathname);
 
-  // Determine if the bubble should be shown based on path AND API key status
-  // Don't show while user data is loading
   const showAiChatBubble = !userIsLoading && isPathAllowed && !!user?.hasAiApiKey;
 
   return showAiChatBubble ? <AiChatTrigger /> : null;

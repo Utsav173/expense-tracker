@@ -385,7 +385,7 @@ const TransactionsPage = () => {
       </div>
 
       {/* Transaction Table */}
-      {isLoading && !transactionsData ? (
+      {!transactionsData ? (
         <Loader />
       ) : transactionsData?.transactions && transactionsData.transactions.length > 0 ? (
         <div className='my-2 mb-16 sm:mb-0'>

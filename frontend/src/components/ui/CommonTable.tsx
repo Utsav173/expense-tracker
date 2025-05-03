@@ -29,10 +29,11 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { ChevronDown, ChevronsUpDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronsUpDown, ChevronUp, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Loader from './loader';
 import EnhancedPagination from './enhance-pagination';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface CommonTableProps<T extends object> {
   data: T[];
@@ -88,6 +89,17 @@ const CommonTable = <T extends object>({
     }
     return [];
   });
+
+  // Track expanded state for each row
+  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+
+  // Toggle expanded state for a specific row
+  const toggleRowExpanded = (rowId: string) => {
+    setExpandedRows((prev) => ({
+      ...prev,
+      [rowId]: !prev[rowId]
+    }));
+  };
 
   const table = useReactTable({
     data,
@@ -169,10 +181,31 @@ const CommonTable = <T extends object>({
     [table]
   );
 
+  // Updated loading skeleton for better mobile responsiveness
   if (loading) {
     return (
-      <div className='flex h-64 items-center justify-center'>
-        <Loader />
+      <div className='w-full'>
+        {isMobile ? (
+          // Mobile loading skeleton
+          <div className='space-y-3'>
+            {Array.from({ length: 3 }).map((_, index) => (
+              <Card key={index} className='animate-pulse overflow-hidden'>
+                <CardHeader className='flex flex-row items-start justify-between p-4 pb-2'>
+                  <div className='flex-1 space-y-2 pr-2'>
+                    <div className='bg-muted h-5 w-3/4 rounded'></div>
+                    <div className='bg-muted h-4 w-1/2 rounded'></div>
+                  </div>
+                  <div className='bg-muted h-8 w-8 flex-shrink-0 rounded'></div>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          // Desktop loading skeleton
+          <div className='flex h-64 items-center justify-center'>
+            <Loader />
+          </div>
+        )}
       </div>
     );
   }
@@ -181,7 +214,7 @@ const CommonTable = <T extends object>({
     return <div className='text-muted-foreground py-8 text-center'>No results found.</div>;
   }
 
-  // Mobile Card View Logic
+  // Mobile Card View Logic with collapsible content
   if (isMobile && columns.length > 2) {
     return (
       <>
@@ -212,57 +245,69 @@ const CommonTable = <T extends object>({
         )}
 
         <div className='space-y-3'>
-          {table.getRowModel().rows.map(
-            (
-              row: Row<T> // Add type Row<T>
-            ) => (
-              <Card key={row.id} className='overflow-hidden'>
-                <CardHeader className='flex flex-row items-start justify-between p-4 pb-2'>
-                  <div className='flex-1 space-y-1 pr-2'>
-                    {primaryMobileCols.map((col) => {
-                      const cell = row.getVisibleCells().find((c) => c.column.id === col.id);
-                      return cell ? (
-                        <CardTitle key={col.id} className='text-base leading-snug font-semibold'>
-                          {flexRender(col.columnDef.cell, cell.getContext())}
-                        </CardTitle>
-                      ) : null;
-                    })}
-                  </div>
-                  {actionColumn && (
-                    <div className='flex-shrink-0'>
-                      {flexRender(
-                        actionColumn.columnDef.cell,
-                        row
-                          .getVisibleCells()
-                          .find((c) => c.column.id === actionColumn.id)!
-                          .getContext()
-                      )}
-                    </div>
-                  )}
-                </CardHeader>
-                <CardContent className='grid min-w-0 grid-cols-[auto_1fr] gap-x-3 gap-y-3 p-4 pt-1 text-sm'>
-                  {otherMobileCols.map((col: Column<T, unknown>) => {
-                    const cell = row.getVisibleCells().find((c) => c.column.id === col.id);
-                    const headerContext = getHeaderInstance(table, col.id);
-                    const headerContent = headerContext
-                      ? flexRender(col.columnDef.header, headerContext)
-                      : col.id;
+          {table.getRowModel().rows.map((row: Row<T>) => {
+            const isExpanded = expandedRows[row.id] ?? false;
 
-                    return cell ? (
-                      <React.Fragment key={col.id}>
-                        <div className='text-muted-foreground text-xs font-medium'>
-                          {headerContent}:
-                        </div>
-                        <div className='truncate'>
-                          {flexRender(col.columnDef.cell, cell.getContext())}
-                        </div>
-                      </React.Fragment>
-                    ) : null;
-                  })}
-                </CardContent>
+            return (
+              <Card key={row.id} className='overflow-hidden'>
+                <Collapsible open={isExpanded} onOpenChange={() => toggleRowExpanded(row.id)}>
+                  <CollapsibleTrigger className='w-full'>
+                    <CardHeader className='flex min-w-[400px] flex-row items-start justify-between p-4 pb-2 max-sm:max-w-[calc(100vw-4rem)]'>
+                      <div className='flex-1 space-y-1 pr-2'>
+                        {primaryMobileCols.map((col) => {
+                          const cell = row.getVisibleCells().find((c) => c.column.id === col.id);
+                          return cell ? (
+                            <CardTitle key={col.id} className='mr-auto max-w-full leading-snug'>
+                              {flexRender(col.columnDef.cell, cell.getContext())}
+                            </CardTitle>
+                          ) : null;
+                        })}
+                      </div>
+                      <div className='flex items-center space-x-2'>
+                        {actionColumn && (
+                          <div className='flex-shrink-0'>
+                            {flexRender(
+                              actionColumn.columnDef.cell,
+                              row
+                                .getVisibleCells()
+                                .find((c) => c.column.id === actionColumn.id)!
+                                .getContext()
+                            )}
+                          </div>
+                        )}
+                        <ChevronRight
+                          className={`h-5 w-5 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                        />
+                      </div>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+
+                  <CollapsibleContent>
+                    <CardContent className='grid min-w-0 grid-cols-[auto_1fr] gap-x-3 gap-y-3 p-4 pt-1 text-sm'>
+                      {otherMobileCols.map((col: Column<T, unknown>) => {
+                        const cell = row.getVisibleCells().find((c) => c.column.id === col.id);
+                        const headerContext = getHeaderInstance(table, col.id);
+                        const headerContent = headerContext
+                          ? flexRender(col.columnDef.header, headerContext)
+                          : col.id;
+
+                        return cell ? (
+                          <React.Fragment key={col.id}>
+                            <div className='text-muted-foreground text-xs font-medium'>
+                              {headerContent}:
+                            </div>
+                            <div className='truncate'>
+                              {flexRender(col.columnDef.cell, cell.getContext())}
+                            </div>
+                          </React.Fragment>
+                        ) : null;
+                      })}
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
               </Card>
-            )
-          )}
+            );
+          })}
         </div>
 
         {enablePagination && totalRecords > pageSize && (

@@ -1,7 +1,7 @@
 import { db } from '../database';
 import { AiConversationHistory, User } from '../database/schema';
 import { eq, and, desc } from 'drizzle-orm';
-import { generateText, CoreMessage, TextPart, ToolCallPart, CoreAssistantMessage } from 'ai'; // Import CoreAssistantMessage
+import { generateText, CoreMessage, TextPart, ToolCallPart, CoreAssistantMessage } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { HTTPException } from 'hono/http-exception';
 import {
@@ -18,7 +18,6 @@ import { generateId } from 'ai';
 import { InferInsertModel } from 'drizzle-orm';
 import { decryptApiKey } from '../utils/crypto.utils';
 
-type AssistantContentArray = Array<TextPart | ToolCallPart>;
 const MAX_HISTORY_MESSAGES = 10;
 
 export class AiService {
@@ -33,19 +32,17 @@ export class AiService {
         limit: MAX_HISTORY_MESSAGES * 2,
         columns: { message: true },
       });
-      // Ensure correct parsing and typing - Drizzle might return stringified JSON
+
       return history
         .map((h) => {
           try {
-            // Attempt to parse if it's a string, otherwise assume it's already an object
             return typeof h.message === 'string' ? JSON.parse(h.message) : h.message;
           } catch (e) {
             console.error('Failed to parse message from history:', h.message, e);
-            // Return a placeholder or skip if unparseable
             return { role: 'system', content: '[Error parsing message]' } as CoreMessage;
           }
         })
-        .filter((msg) => msg.role !== 'system'); // Filter out error placeholders if needed
+        .filter((msg): msg is CoreMessage => msg.role !== 'system');
     } catch (error: any) {
       console.error(`Error fetching AI history for session ${sessionId}:`, error);
       return [];
@@ -56,20 +53,20 @@ export class AiService {
     userId: string,
     sessionId: string,
     userMessage: CoreMessage,
-    assistantMessage: CoreAssistantMessage, // Use the specific assistant message type
+    assistantMessage: CoreAssistantMessage,
   ): Promise<void> {
     try {
       const messagesToSave: Array<InferInsertModel<typeof AiConversationHistory>> = [
         {
           userId,
           sessionId,
-          message: userMessage, // Drizzle should handle JSONB stringification
+          message: userMessage,
           createdAt: new Date(),
         },
         {
           userId,
           sessionId,
-          message: assistantMessage, // Drizzle should handle JSONB stringification
+          message: assistantMessage,
           createdAt: new Date(Date.now() + 1),
         },
       ];
@@ -112,7 +109,6 @@ export class AiService {
     const userMessage: CoreMessage = { role: 'user', content: prompt };
     const messages: CoreMessage[] = [...history, userMessage];
 
-    // --- Tool Setup ---
     const accountTools = createAccountTools(userId);
     const categoryTools = createCategoryTools(userId);
     const transactionTools = createTransactionTools(userId);
@@ -145,17 +141,18 @@ export class AiService {
         - **Transactions:** 'amount' MUST always be positive. Use 'type' ('income' or 'expense') for direction.
         - **Budgets/Goals:** Amounts should always be positive.
         - **Identification & Confirmation (Updates/Deletes/Mark as Paid):**
-            1. Use an identification tool first (e.g., 'identifyAccountForDeletion', 'findBudgetForUpdateOrDelete', 'findTransactionForUpdateOrDelete', 'findSavingGoal', 'markDebtAsPaid').
-            2. These tools return JSON like '{ confirmationNeeded: true, id: '...', details: '...', message: '...' }'.
-            3. PRESENT the 'message' clearly to the user, asking for confirmation.
-            4. If the user confirms AND includes the correct ID (e.g., "Yes, confirm delete account [ID]"), THEN use the corresponding 'execute...' tool (e.g., 'executeConfirmedDeleteAccount', 'executeUpdateTransactionById', 'executeConfirmedMarkDebtPaid') providing ONLY the required ID (and update data if applicable).
-            5. Do NOT use 'execute...' tools without explicit user confirmation containing the specific ID. If they just say "yes", ask for the ID. Acknowledge cancellations.
-        - **Ambiguity:** If a request is ambiguous (multiple items match), use a listing tool and ask the user to clarify by name or ID.
-        - **Not Found:** If an item (account, category, etc.) isn't found, inform the user clearly.
-        - **Dates:** Infer relative dates ('today', 'yesterday', 'last month'). Default to 'today' for transactions if unspecified. Use 'YYYY-MM-DD' if provided. Budgets require month/year. Goal target dates are optional.
+            1. Use an identification tool first (e.g., 'identifyAccountForAction', 'identifyBudgetForAction', 'identifyTransactionForAction', 'findSavingGoal', 'markDebtAsPaid').
+            2. These tools return JSON like '{ success: true, confirmationNeeded: true, id: '...', details: '...', message: '...' }' OR '{ success: true, clarificationNeeded: true, ... }' OR '{ success: false, error: '...' }'.
+            3. If clarification is needed, present the options and stop.
+            4. If confirmation is needed, PRESENT the 'message' clearly to the user.
+            5. If the user confirms AND includes the correct ID (e.g., "Yes, confirm delete account [ID]"), THEN use the corresponding 'executeConfirmed...' tool (e.g., 'executeConfirmedDeleteAccount', 'executeConfirmedUpdateTransaction', 'executeConfirmedMarkDebtPaid') providing ONLY the required ID (and update data if applicable).
+            6. Do NOT use 'executeConfirmed...' tools without explicit user confirmation containing the specific ID. If they just say "yes", ask for the ID. Acknowledge cancellations (if user says "no" or "cancel").
+        - **Ambiguity:** If a resolver tool returns clarificationNeeded, present the options clearly and ask the user to specify by ID or name. Do not proceed with action.
+        - **Not Found:** If an item (account, category, etc.) isn't found by a resolver, inform the user clearly using the error message provided by the tool.
+        - **Dates:** Use the date resolver tools. Infer relative dates ('today', 'yesterday', 'last month'). Default to 'today' for transactions if unspecified. Budgets require month/year. Goal target dates are optional.
         - **New Tools:** You can now check budget progress ('getBudgetProgress') and find extreme transactions ('getExtremeTransaction').
-        **Confirmation Messages:** After successfully executing *any* tool (create, list, confirmed update/delete), provide a brief, clear confirmation (e.g., 'OK, account created.', 'Transaction deleted.', 'Budget progress retrieved.').
-        **Errors:** If a tool returns an error (JSON like '{ success: false, error: '...' }'), explain the 'error' message clearly. Do not show raw JSON.`,
+        **Confirmation Messages:** After successfully executing *any* tool (create, list, confirmed update/delete/mark paid), provide a brief, clear confirmation message from the tool's response (e.g., 'OK, account created.', 'Transaction deleted.', 'Budget progress retrieved.').
+        **Errors:** If a tool returns an error (JSON like '{ success: false, error: '...' }'), explain the 'error' message clearly and concisely. Do not show raw JSON or technical details.`,
       });
     } catch (aiError: any) {
       console.error(`AI Model Error (Session: ${currentSessionId}, User: ${userId}):`, aiError);
@@ -177,24 +174,19 @@ export class AiService {
       throw new HTTPException(502, { message: `AI processing failed: ${aiError.message}` });
     }
 
-    // --- Use the message object from the result for history ---
-    // Ensure result.message conforms to CoreAssistantMessage
     const assistantMessageForHistory: CoreAssistantMessage = {
       role: 'assistant',
-      content: result.text, // Use content from result.message
+      content: result.text || '',
     };
-    // ---------------------------------------------------------
 
     await this.saveHistory(userId, currentSessionId, userMessage, assistantMessageForHistory);
 
-    // --- Return the final text and the last step's tool info ---
     return {
       response: result.text,
-      toolCalls: result.toolCalls, // Still useful for frontend display summary
-      toolResults: result.toolResults, // Still useful for frontend display summary
+      toolCalls: result.toolCalls,
+      toolResults: result.toolResults,
       sessionId: currentSessionId,
     };
-    // ----------------------------------------------------------
   }
 }
 
