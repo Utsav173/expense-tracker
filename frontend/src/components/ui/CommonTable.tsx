@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   flexRender,
@@ -54,7 +53,6 @@ interface CommonTableProps<T extends object> {
   paginationVariant?: 'default' | 'minimalist' | 'pill';
 }
 
-// Helper function to get a Header instance for a column
 const getHeaderInstance = <T extends object>(
   table: ReturnType<typeof useReactTable<T>>,
   columnId: string
@@ -89,11 +87,8 @@ const CommonTable = <T extends object>({
     }
     return [];
   });
-
-  // Track expanded state for each row
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
 
-  // Toggle expanded state for a specific row
   const toggleRowExpanded = (rowId: string) => {
     setExpandedRows((prev) => ({
       ...prev,
@@ -117,12 +112,10 @@ const CommonTable = <T extends object>({
     if (onSortChange) {
       const propSorting: SortingState =
         sortBy && sortOrder ? [{ id: sortBy, desc: sortOrder === 'desc' }] : [];
-
       const isDifferent =
         sorting.length !== propSorting.length ||
         (sorting.length > 0 &&
           (sorting[0].id !== propSorting[0]?.id || sorting[0].desc !== propSorting[0]?.desc));
-
       if (isDifferent) {
         onSortChange(sorting);
       }
@@ -136,7 +129,6 @@ const CommonTable = <T extends object>({
     const currentInternalDesc = sorting[0]?.desc;
     const propId = propSorting[0]?.id;
     const propDesc = propSorting[0]?.desc;
-
     if (currentInternalId !== propId || currentInternalDesc !== propDesc) {
       setSorting(propSorting);
     }
@@ -181,28 +173,25 @@ const CommonTable = <T extends object>({
     [table]
   );
 
-  // Updated loading skeleton for better mobile responsiveness
   if (loading) {
     return (
       <div className='w-full'>
         {isMobile ? (
-          // Mobile loading skeleton
-          <div className='space-y-3'>
+          <div className='w-full space-y-3'>
             {Array.from({ length: 3 }).map((_, index) => (
-              <Card key={index} className='animate-pulse overflow-hidden'>
-                <CardHeader className='flex flex-row items-start justify-between p-4 pb-2'>
-                  <div className='flex-1 space-y-2 pr-2'>
-                    <div className='bg-muted h-5 w-3/4 rounded'></div>
-                    <div className='bg-muted h-4 w-1/2 rounded'></div>
+              <Card key={index} className='w-full animate-pulse overflow-hidden'>
+                <CardHeader className='flex flex-row items-start justify-between p-3 pb-2'>
+                  <div className='w-full flex-1 space-y-2 pr-2'>
+                    <div className='bg-muted h-4 w-3/4 rounded'></div>
+                    <div className='bg-muted h-3 w-1/2 rounded'></div>
                   </div>
-                  <div className='bg-muted h-8 w-8 flex-shrink-0 rounded'></div>
+                  <div className='bg-muted h-6 w-6 flex-shrink-0 rounded'></div>
                 </CardHeader>
               </Card>
             ))}
           </div>
         ) : (
-          // Desktop loading skeleton
-          <div className='flex h-64 items-center justify-center'>
+          <div className='flex h-64 w-full items-center justify-center'>
             <Loader />
           </div>
         )}
@@ -214,7 +203,6 @@ const CommonTable = <T extends object>({
     return <div className='text-muted-foreground py-8 text-center'>No results found.</div>;
   }
 
-  // Mobile Card View Logic with collapsible content
   if (isMobile && columns.length > 2) {
     return (
       <>
@@ -230,7 +218,7 @@ const CommonTable = <T extends object>({
               }
             }}
           >
-            <SelectTrigger className='mb-4 w-full'>
+            <SelectTrigger className='mb-3 w-full'>
               <SelectValue placeholder='Sort by...' />
             </SelectTrigger>
             <SelectContent>
@@ -244,26 +232,28 @@ const CommonTable = <T extends object>({
           </Select>
         )}
 
-        <div className='space-y-3'>
+        <div className='w-full space-y-3'>
           {table.getRowModel().rows.map((row: Row<T>) => {
             const isExpanded = expandedRows[row.id] ?? false;
-
             return (
-              <Card key={row.id} className='overflow-hidden'>
+              <Card key={row.id} className='w-full overflow-hidden'>
                 <Collapsible open={isExpanded} onOpenChange={() => toggleRowExpanded(row.id)}>
                   <CollapsibleTrigger className='w-full'>
-                    <CardHeader className='flex min-w-[400px] flex-row items-start justify-between p-4 pb-2 max-sm:max-w-[calc(100vw-4rem)]'>
-                      <div className='flex-1 space-y-1 pr-2'>
+                    <CardHeader className='flex w-full flex-row items-center justify-between p-2'>
+                      <div className='mb-0 flex flex-1 flex-col gap-1 overflow-hidden pr-2'>
                         {primaryMobileCols.map((col) => {
                           const cell = row.getVisibleCells().find((c) => c.column.id === col.id);
                           return cell ? (
-                            <CardTitle key={col.id} className='mr-auto max-w-full leading-snug'>
+                            <CardTitle
+                              key={col.id}
+                              className='overflow-hidden text-sm leading-snug text-ellipsis whitespace-nowrap'
+                            >
                               {flexRender(col.columnDef.cell, cell.getContext())}
                             </CardTitle>
                           ) : null;
                         })}
                       </div>
-                      <div className='flex items-center space-x-2'>
+                      <div className='flex flex-shrink-0 items-center space-x-1'>
                         {actionColumn && (
                           <div className='flex-shrink-0'>
                             {flexRender(
@@ -276,14 +266,14 @@ const CommonTable = <T extends object>({
                           </div>
                         )}
                         <ChevronRight
-                          className={`h-5 w-5 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                          className={`h-4 w-4 flex-shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
                         />
                       </div>
                     </CardHeader>
                   </CollapsibleTrigger>
 
                   <CollapsibleContent>
-                    <CardContent className='grid min-w-0 grid-cols-[auto_1fr] gap-x-3 gap-y-3 p-4 pt-1 text-sm'>
+                    <CardContent className='grid w-full grid-cols-[minmax(80px,auto)_1fr] gap-x-3 gap-y-3 overflow-x-auto p-4 pt-1 text-sm'>
                       {otherMobileCols.map((col: Column<T, unknown>) => {
                         const cell = row.getVisibleCells().find((c) => c.column.id === col.id);
                         const headerContext = getHeaderInstance(table, col.id);
@@ -296,7 +286,7 @@ const CommonTable = <T extends object>({
                             <div className='text-muted-foreground text-xs font-medium'>
                               {headerContent}:
                             </div>
-                            <div className='truncate'>
+                            <div className='overflow-hidden break-words'>
                               {flexRender(col.columnDef.cell, cell.getContext())}
                             </div>
                           </React.Fragment>
@@ -311,7 +301,7 @@ const CommonTable = <T extends object>({
         </div>
 
         {enablePagination && totalRecords > pageSize && (
-          <div className='mt-6'>
+          <div className='mt-4'>
             <EnhancedPagination
               totalRecords={totalRecords}
               pageSize={pageSize}
@@ -326,11 +316,10 @@ const CommonTable = <T extends object>({
     );
   }
 
-  // Desktop Table View Logic
   return (
     <>
-      <div className='w-full overflow-x-auto rounded-md border select-none'>
-        <Table className={tableClassName}>
+      <div className='w-full overflow-x-auto rounded-lg border'>
+        <Table className={cn(tableClassName, 'min-w-full')}>
           <TableHeader className={headerClassName}>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -338,7 +327,7 @@ const CommonTable = <T extends object>({
                   <TableHead
                     key={header.id}
                     className={cn(
-                      'text-muted-foreground px-4 py-3 text-xs font-medium tracking-wider uppercase',
+                      'text-muted-foreground px-3 py-2 text-xs font-medium tracking-wider uppercase',
                       header.column.getCanSort() && 'hover:bg-muted cursor-pointer',
                       headerClassName
                     )}
@@ -365,9 +354,20 @@ const CommonTable = <T extends object>({
           <TableBody>
             {table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && 'selected'}
+                  className='hover:bg-muted/50 transition-colors'
+                >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className={cn('p-4 align-middle', cellClassName)}>
+                    <TableCell
+                      key={cell.id}
+                      className={cn(
+                        'p-3 align-middle text-sm',
+                        cellClassName,
+                        'max-w-[200px] truncate'
+                      )}
+                    >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
@@ -375,7 +375,7 @@ const CommonTable = <T extends object>({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className='h-24 text-center'>
+                <TableCell colSpan={columns.length} className='h-12 text-center'>
                   No results found.
                 </TableCell>
               </TableRow>
@@ -385,7 +385,7 @@ const CommonTable = <T extends object>({
       </div>
 
       {enablePagination && totalRecords > pageSize && (
-        <div className='mt-6'>
+        <div className='mt-4'>
           <EnhancedPagination
             totalRecords={totalRecords}
             pageSize={pageSize}

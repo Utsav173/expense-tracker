@@ -147,6 +147,8 @@ Access the application in your browser, typically at `http://localhost:3000`.
 
 The backend API is documented via a Postman collection. See the **[Backend README](./backend/README.md#api-documentation)** for the link to the collection file (`expense-backend-api.collection.json`).
 
+**Published Backend Docs:** [View API Documentation on Postman](https://documenter.getpostman.com/view/23794641/2sB2j68A9x)
+
 ## Deployment
 
 - **Backend:** Refer to the [backend README](./backend/README.md#running-the-application) for build (`generate:build`) and start (`start`) commands. Ensure all necessary environment variables (`DATABASE_URL_NEW`, `JWT_SECRET`, `AI_API_KEY_ENCRYPTION_SECRET`, `FRONTEND_URL` etc.) are set securely in your deployment environment (e.g., using environment variables in Vercel, Render, Docker secrets). Use the provided `Dockerfile` for containerization.
