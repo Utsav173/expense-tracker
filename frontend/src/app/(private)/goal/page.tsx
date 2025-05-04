@@ -12,7 +12,7 @@ import { useToast } from '@/lib/hooks/useToast';
 import AddGoalModal from '@/components/modals/add-goal-modal';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 const GoalPage = () => {
   const router = useRouter();

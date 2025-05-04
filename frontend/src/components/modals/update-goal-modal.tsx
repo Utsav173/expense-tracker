@@ -54,12 +54,11 @@ const goalSchema = z.object({
         (!isNaN(parseFloat(value)) && parseFloat(value) >= 0),
       { message: 'Saved amount must be a non-negative number.' }
     )
-    .transform((val) => (val ? parseFloat(val) : undefined)), // Keep undefined if empty
-  targetDate: z.date().optional().nullable() // Allow null or undefined date
+    .transform((val) => (val ? parseFloat(val) : undefined)),
+  targetDate: z.date().optional().nullable()
 });
 
 type GoalFormSchema = z.infer<typeof goalSchema>;
-// API expects numbers and optional ISO string for date
 
 interface UpdateGoalModalProps {
   isOpen: boolean;
@@ -105,7 +104,7 @@ const UpdateGoalModal: React.FC<UpdateGoalModalProps> = ({
       await invalidate(['goals']);
       showSuccess('Goal updated successfully!');
       onGoalUpdated();
-      handleClose(); // Close and reset
+      handleClose();
     },
     onError: (error: any) => {
       const message = error?.response?.data?.message || error.message || 'Failed to update goal.';
@@ -114,12 +113,11 @@ const UpdateGoalModal: React.FC<UpdateGoalModalProps> = ({
   });
 
   const handleUpdate = (data: GoalFormSchema) => {
-    // Transform data for the API
     const apiPayload: GoalApiPayload = {
       name: data.name,
-      targetAmount: data.targetAmount, // Already number from schema transform
-      savedAmount: data.savedAmount, // Already number or undefined from schema transform
-      targetDate: data.targetDate ? data.targetDate.toISOString() : null // Send ISO string or null
+      targetAmount: data.targetAmount,
+      savedAmount: data.savedAmount,
+      targetDate: data.targetDate ? data.targetDate.toISOString() : null
     };
 
     updateGoalMutation.mutate({ id: goal.id, data: apiPayload });
@@ -232,7 +230,7 @@ const UpdateGoalModal: React.FC<UpdateGoalModalProps> = ({
                   </FormLabel>
                   <FormControl>
                     <DateTimePicker
-                      value={field.value ?? undefined} // Pass undefined if null
+                      value={field.value ?? undefined}
                       onChange={field.onChange}
                       disabled={updateGoalMutation.isPending}
                     />

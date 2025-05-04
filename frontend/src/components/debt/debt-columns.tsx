@@ -27,7 +27,7 @@ export const createDebtColumns = ({
     accessorKey: 'description',
     header: 'Description',
     cell: ({ row }) => (
-      <span className='max-w-[200px] truncate font-medium'>
+      <span className='max-w-[200px] truncate font-medium max-sm:max-w-[100px]'>
         {row.original.debts.description || 'N/A'}
       </span>
     )

@@ -1,134 +1,87 @@
-import { Category, Transaction } from './../database/schema';
 import { Hono } from 'hono';
 import authMiddleware from '../middleware';
-import { db } from '../database';
 import { HTTPException } from 'hono/http-exception';
-import { InferInsertModel, SQL, and, asc, count, desc, eq, ilike, isNull, or } from 'drizzle-orm';
+import { InferSelectModel } from 'drizzle-orm';
 import { categorySchema } from '../utils/schema.validations';
 import { zValidator } from '@hono/zod-validator';
+import { categoryService } from '../services/category.service';
+import { Category } from '../database/schema';
 
 const categoryRouter = new Hono();
 
 categoryRouter.get('/', authMiddleware, async (c) => {
-  const { page = 1, limit = 10, search = '', sortOrder = 'desc' } = c.req.query();
-  const sortBy: keyof InferInsertModel<typeof Category> =
-    (c.req.query('sortBy') as any) || 'createdAt';
-  const userId = await c.get('userId' as any);
-
-  let whereQuery = and(eq(Category.owner, userId));
-
-  if (search && search.length > 0) {
-    whereQuery = and(whereQuery, ilike(Category.name, `%${search}%`))!;
-  }
-
   try {
-    const total = await db
-      .select({ tot: count(Category.id) })
-      .from(Category)
-      .where(whereQuery)
-      .then((res) => res[0].tot);
+    const { page = '1', limit = '10', search = '', sortOrder = 'desc' } = c.req.query();
+    const sortBy =
+      (c.req.query('sortBy') as keyof InferSelectModel<typeof Category>) || 'createdAt';
+    const userId = await c.get('userId');
 
-    const categories = await db
-      .select({
-        id: Category.id,
-        name: Category.name,
-      })
-      .from(Category)
-      .where(whereQuery)
-      .limit(+limit)
-      .offset(+limit * (+page - 1))
-      .orderBy(sortOrder === 'desc' ? desc(Category[sortBy]) : asc(Category[sortBy]));
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    if (isNaN(pageNum) || pageNum < 1)
+      throw new HTTPException(400, { message: 'Invalid page number.' });
+    if (isNaN(limitNum) || limitNum < 1 || limitNum > 100)
+      throw new HTTPException(400, { message: 'Invalid limit value (1-100).' });
+    if (sortOrder !== 'asc' && sortOrder !== 'desc')
+      throw new HTTPException(400, { message: 'Invalid sort order (asc/desc).' });
 
-    return c.json({
-      categories,
-      pagination: { total, totalPages: Math.ceil(total / +limit), page: +page, limit: +limit },
-    });
-  } catch (err) {
-    throw new HTTPException(500, {
-      message: err instanceof Error ? err.message : 'Something went wrong',
-    });
+    const result = await categoryService.getCategories(
+      userId,
+      pageNum,
+      limitNum,
+      search,
+      sortBy as keyof InferSelectModel<typeof Category>,
+      sortOrder,
+    );
+    return c.json(result);
+  } catch (err: any) {
+    if (err instanceof HTTPException) throw err;
+    console.error('Get Categories Error:', err);
+    throw new HTTPException(500, { message: 'Failed to fetch categories.' });
   }
 });
 
 categoryRouter.post('/', authMiddleware, zValidator('json', categorySchema), async (c) => {
   try {
     const { name } = await c.req.json();
-    const userId = await c.get('userId' as any);
-    const categoryData = await db
-      .insert(Category)
-      .values({
-        name,
-        owner: userId,
-      })
-      .returning();
-
+    const userId = await c.get('userId');
+    const newCategory = await categoryService.createCategory(userId, name);
+    c.status(201);
     return c.json({
       message: 'Category created successfully',
-      data: categoryData[0],
+      data: newCategory,
     });
-  } catch (err) {
-    throw new HTTPException(500, {
-      message: err instanceof Error ? err.message : 'Something went wrong',
-    });
+  } catch (err: any) {
+    if (err instanceof HTTPException) throw err;
+    console.error('Create Category Error:', err);
+    throw new HTTPException(500, { message: 'Failed to create category.' });
   }
 });
 
 categoryRouter.delete('/:id', authMiddleware, async (c) => {
   try {
     const id = c.req.param('id');
-
-    const hasTransactions = await db
-      .select({
-        count: Transaction.id,
-      })
-      .from(Transaction)
-      .where(eq(Transaction.category, id))
-      .catch((err) => {
-        throw new HTTPException(500, { message: err.message });
-      });
-
-    if (hasTransactions && Number(hasTransactions[0].count) > 0) {
-      throw new HTTPException(400, {
-        message: 'Cannot delete category with transactions',
-      });
-    }
-
-    const category = await db
-      .select({
-        owner: Category.owner,
-      })
-      .from(Category)
-      .where(eq(Category.id, id))
-      .catch((err) => {
-        throw new HTTPException(500, { message: err.message });
-      });
-
-    if (category && category[0].owner !== (await c.get('userId' as any))) {
-      throw new HTTPException(403, {
-        message: 'You are not authorized to delete this category',
-      });
-    }
-
-    await db.delete(Category).where(eq(Category.id, id));
-    return c.json({ message: 'Category deleted successfully' });
-  } catch (err) {
-    throw new HTTPException(400, {
-      message: err instanceof Error ? err.message : 'Something went wrong',
-    });
+    const userId = await c.get('userId');
+    const result = await categoryService.deleteCategory(id, userId);
+    return c.json(result);
+  } catch (err: any) {
+    if (err instanceof HTTPException) throw err;
+    console.error('Delete Category Error:', err);
+    throw new HTTPException(500, { message: 'Failed to delete category.' });
   }
 });
 
-categoryRouter.put('/:id', authMiddleware, async (c) => {
+categoryRouter.put('/:id', authMiddleware, zValidator('json', categorySchema), async (c) => {
   try {
     const id = c.req.param('id');
     const { name } = await c.req.json();
-
-    await db.update(Category).set({ name }).where(eq(Category.id, id));
-    return c.json({ message: 'Category updated successfully' });
-  } catch (err) {
-    throw new HTTPException(400, {
-      message: err instanceof Error ? err.message : 'Something went wrong',
-    });
+    const userId = await c.get('userId');
+    const result = await categoryService.updateCategory(id, userId, name);
+    return c.json(result);
+  } catch (err: any) {
+    if (err instanceof HTTPException) throw err;
+    console.error('Update Category Error:', err);
+    throw new HTTPException(500, { message: 'Failed to update category.' });
   }
 });
 

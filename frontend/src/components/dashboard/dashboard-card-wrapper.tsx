@@ -11,7 +11,7 @@ import {
   DialogDescription,
   DialogTrigger
 } from '@/components/ui/dialog';
-import { Maximize2, Eye, EyeOff, X } from 'lucide-react';
+import { Maximize2, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface DashboardCardWrapperProps {
@@ -60,7 +60,7 @@ export const DashboardCardWrapper: React.FC<DashboardCardWrapperProps> = ({
                 <Button
                   variant='ghost'
                   size='icon'
-                  className='hidden h-7 w-7 md:flex' // Hide on mobile, show on md and up
+                  className='hidden h-7 w-7 md:flex'
                   disabled={isHidden}
                   aria-label={'Maximize'}
                 >

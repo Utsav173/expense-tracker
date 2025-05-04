@@ -105,7 +105,7 @@ export const getOutstandingDebts = (
     '/interest/debts',
     'GET',
     undefined,
-    { params: { type: 'taken', isPaid: 'false', pageSize: 500 } },
+    { params: { type: 'taken', isPaid: 'false', pageSize: 100 } },
     successMessage,
     errorMessage || 'Failed to fetch outstanding debts'
   );

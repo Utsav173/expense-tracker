@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 interface PageProps {
   params: Promise<{ id: string }>;

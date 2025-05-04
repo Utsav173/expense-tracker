@@ -3,17 +3,18 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  password: string;
+  password?: string;
   token?: string;
   isSocial: boolean;
-  profilePic: string;
+  profilePic: string | null;
   role: string;
   isActive: boolean;
-  lastLoginAt?: string;
-  resetPasswordToken?: string;
+  lastLoginAt?: string | null;
+  resetPasswordToken?: string | null;
   createdAt: string;
-  updatedAt?: string;
-  preferredCurrency: string;
+  updatedAt?: string | null;
+  preferredCurrency: string | null;
+  hasAiApiKey?: boolean;
 }
 
 // Analytics Interface
@@ -292,15 +293,16 @@ export type DropdownUser = {
 
 export type TransactionsResponse = ApiResponse<{
   transactions: Transaction[];
-  totalPages: number;
-  totalCount: number;
-  currentPage: number;
-  pageSize: number;
+  pagination: {
+    total: number;
+    totalPages: number;
+    currentPage: number;
+    pageSize: number;
+  };
   filters: {
-    isIncome: boolean;
-    categoryId?: string;
     sortBy: string;
     sortOrder: string;
+    q: string;
   };
   dateRange: {
     minDate: string;

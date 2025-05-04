@@ -1,169 +1,115 @@
 import { Hono } from 'hono';
 import authMiddleware from '../middleware';
-import { SavingGoal } from '../database/schema';
 import { zValidator } from '@hono/zod-validator';
 import { savingGoalSchema } from '../utils/schema.validations';
-import { eq, count, sql, asc, desc, InferSelectModel } from 'drizzle-orm';
-import { db } from '../database';
 import { HTTPException } from 'hono/http-exception';
-import { parseISO } from 'date-fns';
+import { goalService } from '../services/goal.service';
+import { SavingGoal } from '../database/schema';
+import { InferSelectModel } from 'drizzle-orm';
 
 const goalRouter = new Hono();
 
-// GET / - Get a list of goals
 goalRouter.get('/all', authMiddleware, async (c) => {
   try {
-    const userId = await c.get('userId' as any);
-    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = c.req.query();
+    const userId = await c.get('userId');
+    const { page = '1', limit = '10', sortBy = 'createdAt', sortOrder = 'desc' } = c.req.query();
 
-    const allowedSortFields: (keyof InferSelectModel<typeof SavingGoal>)[] = [
-      'id',
-      'createdAt',
-      'updatedAt',
-      'name',
-      'targetAmount',
-      'savedAmount',
-      'targetDate',
-    ];
-    const validSortBy = allowedSortFields.includes(
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    if (isNaN(pageNum) || pageNum < 1)
+      throw new HTTPException(400, { message: 'Invalid page number.' });
+    if (isNaN(limitNum) || limitNum < 1 || limitNum > 100)
+      throw new HTTPException(400, { message: 'Invalid limit value (1-100).' });
+    if (sortOrder !== 'asc' && sortOrder !== 'desc')
+      throw new HTTPException(400, { message: 'Invalid sort order (asc/desc).' });
+
+    const result = await goalService.getGoals(
+      userId,
+      pageNum,
+      limitNum,
       sortBy as keyof InferSelectModel<typeof SavingGoal>,
-    )
-      ? (sortBy as keyof InferSelectModel<typeof SavingGoal>)
-      : 'createdAt';
-
-    const sortColumn = SavingGoal[validSortBy];
-    if (!sortColumn) {
-      throw new HTTPException(400, { message: 'Invalid sort field specified.' });
-    }
-
-    const sortDirection = sortOrder.toLowerCase() === 'asc' ? asc : desc;
-    const orderByClause = sortDirection(sortColumn);
-
-    const totalQuery = await db
-      .select({ tot: count(SavingGoal.id) })
-      .from(SavingGoal)
-      .where(eq(SavingGoal.userId, userId))
-      .then((res) => res[0]?.tot ?? 0)
-      .catch((err) => {
-        throw new HTTPException(500, { message: `DB Error: ${err.message}` });
-      });
-
-    const savingGoals = await db.query.SavingGoal.findMany({
-      where(fields, ops) {
-        return ops.eq(fields.userId, userId);
-      },
-      limit: +limit,
-      offset: +limit * (+page - 1),
-      orderBy: [orderByClause],
-    }).catch((err) => {
-      throw new HTTPException(500, { message: `DB Error: ${err.message}` });
-    });
-
-    return c.json({
-      data: savingGoals,
-      pagination: {
-        total: totalQuery,
-        totalPages: Math.ceil(totalQuery / +limit),
-        page: +page,
-        limit: +limit,
-      },
-    });
-  } catch (err) {
+      sortOrder as 'asc' | 'desc',
+    );
+    return c.json(result);
+  } catch (err: any) {
     if (err instanceof HTTPException) throw err;
-    console.error('Error fetching goals:', err);
-    throw new HTTPException(500, {
-      message: err instanceof Error ? err.message : 'something went wrong',
-    });
+    console.error('Get Goals Error:', err);
+    throw new HTTPException(500, { message: 'Failed to fetch saving goals.' });
   }
 });
 
-// POST - create new goal for a month
 goalRouter.post('/', authMiddleware, zValidator('json', savingGoalSchema), async (c) => {
   try {
-    const { name, targetAmount, targetDate } = await c.req.json();
-    const userId = await c.get('userId' as any);
-    const newSavingGoal = await db
-      .insert(SavingGoal)
-      .values({
-        userId: userId,
-        targetAmount: targetAmount,
-        name: name,
-        targetDate: parseISO(targetDate),
-      })
-      .returning();
-
-    return c.json({ message: 'saving goal created successfully', data: newSavingGoal[0] });
-  } catch (err) {
-    throw new HTTPException(400, {
-      message: err instanceof Error ? err.message : 'something went wrong',
-    });
+    const payload = await c.req.json();
+    const userId = await c.get('userId');
+    const newGoal = await goalService.createGoal(userId, payload);
+    c.status(201);
+    return c.json({ message: 'Saving goal created successfully', data: newGoal });
+  } catch (err: any) {
+    if (err instanceof HTTPException) throw err;
+    console.error('Create Goal Error:', err);
+    throw new HTTPException(500, { message: 'Failed to create saving goal.' });
   }
 });
 
-// PUT - edit goal
 goalRouter.put('/:id', authMiddleware, async (c) => {
   try {
     const goalId = c.req.param('id');
-    const { targetAmount, targetDate, savedAmount } = await c.req.json();
-
-    await db
-      .update(SavingGoal)
-      .set({ targetAmount, targetDate: parseISO(targetDate), savedAmount: savedAmount })
-      .where(eq(SavingGoal.id, goalId));
-    return c.json({ message: 'Goal updated successfully!', id: goalId });
-  } catch (err) {
-    throw new HTTPException(400, {
-      message: err instanceof Error ? err.message : 'something went wrong',
-    });
+    const payload = await c.req.json();
+    const userId = await c.get('userId');
+    const result = await goalService.updateGoal(goalId, userId, payload);
+    return c.json(result);
+  } catch (err: any) {
+    if (err instanceof HTTPException) throw err;
+    console.error('Update Goal Error:', err);
+    throw new HTTPException(500, { message: 'Failed to update saving goal.' });
   }
 });
 
-// PUT /goals/:id/add-amount - Add an amount towards a saving goal
 goalRouter.put('/:id/add-amount', authMiddleware, async (c) => {
   try {
     const goalId = c.req.param('id');
     const { amount } = await c.req.json();
-
-    await db
-      .update(SavingGoal)
-      .set({ savedAmount: sql`${SavingGoal.savedAmount} + ${amount}` })
-      .where(eq(SavingGoal.id, goalId));
-    return c.json({ message: 'Goal updated successfully!', id: goalId });
-  } catch (err) {
-    throw new HTTPException(400, {
-      message: err instanceof Error ? err.message : 'something went wrong',
-    });
+    const userId = await c.get('userId');
+    if (typeof amount !== 'number') {
+      throw new HTTPException(400, { message: 'Amount must be a number.' });
+    }
+    const result = await goalService.addAmountToGoal(goalId, userId, amount);
+    return c.json(result);
+  } catch (err: any) {
+    if (err instanceof HTTPException) throw err;
+    console.error('Add Amount to Goal Error:', err);
+    throw new HTTPException(500, { message: 'Failed to add amount to saving goal.' });
   }
 });
 
-// PUT /goals/:id/withdraw-amount - Withdraw an amount from a saving goal
 goalRouter.put('/:id/withdraw-amount', authMiddleware, async (c) => {
   try {
     const goalId = c.req.param('id');
     const { amount } = await c.req.json();
-
-    await db
-      .update(SavingGoal)
-      .set({ savedAmount: sql`${SavingGoal.savedAmount} - ${amount}` })
-      .where(eq(SavingGoal.id, goalId));
-    return c.json({ message: 'Goal updated successfully!', id: goalId });
-  } catch (err) {
-    throw new HTTPException(400, {
-      message: err instanceof Error ? err.message : 'something went wrong',
-    });
+    const userId = await c.get('userId');
+    if (typeof amount !== 'number') {
+      throw new HTTPException(400, { message: 'Amount must be a number.' });
+    }
+    const result = await goalService.withdrawAmountFromGoal(goalId, userId, amount);
+    return c.json(result);
+  } catch (err: any) {
+    if (err instanceof HTTPException) throw err;
+    console.error('Withdraw Amount from Goal Error:', err);
+    throw new HTTPException(500, { message: 'Failed to withdraw amount from saving goal.' });
   }
 });
 
-// DELETE - Delete a goal
 goalRouter.delete('/:id', authMiddleware, async (c) => {
   try {
     const id = c.req.param('id');
-    await db.delete(SavingGoal).where(eq(SavingGoal.id, id));
-    return c.json({ message: 'Saving Goal Deleted successfully!' });
-  } catch (err) {
-    throw new HTTPException(400, {
-      message: err instanceof Error ? err.message : 'something went wrong',
-    });
+    const userId = await c.get('userId');
+    const result = await goalService.deleteGoal(id, userId);
+    return c.json(result);
+  } catch (err: any) {
+    if (err instanceof HTTPException) throw err;
+    console.error('Delete Goal Error:', err);
+    throw new HTTPException(500, { message: 'Failed to delete saving goal.' });
   }
 });
 

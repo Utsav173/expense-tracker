@@ -1,10 +1,9 @@
 'use client';
-
-import React, { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import TransactionTable from '@/components/transactions-table';
+import TransactionTable from '@/components/transactions/transactions-table';
 import DateRangePickerV2 from '@/components/date/date-range-picker-v2';
 import {
   Select,
@@ -13,20 +12,30 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { Search, Filter, X } from 'lucide-react';
+import { Search, Filter, X, Download, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Skeleton } from '../ui/skeleton';
 import { Category, Transaction } from '@/lib/types';
 import { DateRange } from 'react-day-picker';
+import { API_BASE_URL } from '@/lib/api-client';
+import { getAuthTokenClient } from '@/lib/auth';
+import { useToast } from '@/lib/hooks/useToast';
+import { format } from 'date-fns';
 
 interface AccountTransactionsSectionProps {
   transactionsData?: {
     transactions: Transaction[];
-    totalPages: number;
-    totalCount: number;
-    currentPage: number;
-    pageSize: number;
-    dateRange?: {
+    pagination: {
+      total: number;
+      totalPages: number;
+      currentPage: number;
+      pageSize: number;
+    };
+    filters: {
+      sortBy: string;
+      sortOrder: string;
+      q: string;
+    };
+    dateRange: {
       minDate: string;
       maxDate: string;
     };
@@ -41,6 +50,7 @@ interface AccountTransactionsSectionProps {
     isIncome?: boolean;
     dateRange?: DateRange;
     tempDateRange?: DateRange;
+    accountId?: string;
   };
   handleSort: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
   page: number;
@@ -74,10 +84,84 @@ export const AccountTransactionsSection = ({
   isOwner = true
 }: AccountTransactionsSectionProps) => {
   const [showFilters, setShowFilters] = useState(false);
+  const [exportFormat, setExportFormat] = useState<'xlsx' | 'csv'>('xlsx');
+  const [isExporting, setIsExporting] = useState(false);
+  const { showError, showSuccess, showInfo } = useToast();
+
+  const handleExport = useCallback(async () => {
+    if (!transactionsData?.transactions || transactionsData.transactions.length === 0) {
+      showError('No transactions available to export with the current filters.');
+      return;
+    }
+
+    setIsExporting(true);
+    showInfo('Preparing your export...');
+
+    try {
+      const params = new URLSearchParams();
+
+      if (filters.accountId) params.set('accountId', filters.accountId);
+      if (filters.debouncedSearchQuery) params.set('q', filters.debouncedSearchQuery);
+      if (filters.categoryId && filters.categoryId !== 'all')
+        params.set('categoryId', filters.categoryId);
+      if (filters.isIncome !== undefined) params.set('isIncome', String(filters.isIncome));
+      if (filters.dateRange?.from)
+        params.set('dateFrom', format(filters.dateRange.from, 'yyyy-MM-dd'));
+      if (filters.dateRange?.to) params.set('dateTo', format(filters.dateRange.to, 'yyyy-MM-dd'));
+      params.set('format', exportFormat);
+
+      const exportUrl = `${API_BASE_URL}/transactions/export?${params.toString()}`;
+      const token = getAuthTokenClient();
+
+      const response = await fetch(exportUrl, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        let errorMsg = `Export failed with status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.message || errorMsg;
+        } catch (_) {}
+        throw new Error(errorMsg);
+      }
+
+      const disposition = response.headers.get('content-disposition');
+      let filename = `transactions.${exportFormat}`;
+      if (disposition && disposition.indexOf('attachment') !== -1) {
+        const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+        const matches = filenameRegex.exec(disposition);
+        if (matches != null && matches[1]) {
+          filename = matches[1].replace(/['"]/g, '');
+        }
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+
+      showSuccess('Export started successfully!');
+    } catch (error: any) {
+      console.error('Export error:', error);
+      showError(error.message || 'Failed to export transactions.');
+    } finally {
+      setIsExporting(false);
+    }
+  }, [filters, exportFormat, showError, showSuccess, showInfo, transactionsData?.transactions]);
 
   return (
     <div className='flex h-full flex-col'>
       <div className='border-b p-4'>
+        {/* Search and Filter Toggle */}
         <div className='flex items-center gap-2'>
           <div className='relative flex-1'>
             <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
@@ -92,14 +176,16 @@ export const AccountTransactionsSection = ({
             variant='outline'
             size='icon'
             onClick={() => setShowFilters(!showFilters)}
-            className={cn(showFilters && 'bg-accent')}
+            className={cn('h-9 w-9 shrink-0', showFilters && 'bg-accent')}
+            aria-label={showFilters ? 'Hide Filters' : 'Show Filters'}
           >
             <Filter className='h-4 w-4' />
           </Button>
         </div>
 
+        {/* Filter Controls */}
         {showFilters && (
-          <div className='mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4'>
+          <div className='mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5'>
             {isOwner && (
               <div className='space-y-1'>
                 <label className='mb-1 block text-xs font-medium sm:text-sm'>Category</label>
@@ -124,15 +210,15 @@ export const AccountTransactionsSection = ({
                 <label className='mb-1 block text-xs font-medium sm:text-sm'>Type</label>
                 <Select
                   onValueChange={handleIncomeTypeChange}
-                  value={filters.isIncome ? 'income' : 'expense'}
+                  value={filters.isIncome === undefined ? 'all' : String(filters.isIncome)}
                 >
                   <SelectTrigger className='h-9 w-full text-xs sm:h-10 sm:text-sm'>
                     <SelectValue placeholder='All Types' />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value='all'>All Types</SelectItem>
-                    <SelectItem value='income'>Income</SelectItem>
-                    <SelectItem value='expense'>Expense</SelectItem>
+                    <SelectItem value='true'>Income</SelectItem>
+                    <SelectItem value='false'>Expense</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -145,7 +231,7 @@ export const AccountTransactionsSection = ({
                 onClear={handleClearDateRange}
                 date={filters.dateRange}
                 closeOnComplete={true}
-                buttonClassName='h-full'
+                buttonClassName='h-9 sm:h-10 text-xs sm:text-sm'
                 noLabel
                 minDate={
                   transactionsData?.dateRange?.minDate
@@ -160,44 +246,73 @@ export const AccountTransactionsSection = ({
               />
             </div>
 
-            {isOwner && (
-              <div className='mt-5 flex items-center max-sm:mt-0 max-sm:items-end'>
+            {/* Export Controls */}
+            <div className='space-y-1'>
+              <label className='mb-1 block text-xs font-medium sm:text-sm'>Export Format</label>
+              <Select
+                value={exportFormat}
+                onValueChange={(value) => setExportFormat(value as 'xlsx' | 'csv')}
+                disabled={isExporting}
+              >
+                <SelectTrigger className='h-9 w-full text-xs sm:h-10 sm:text-sm'>
+                  <SelectValue placeholder='Select Format' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='xlsx'>Excel (.xlsx)</SelectItem>
+                  <SelectItem value='csv'>CSV (.csv)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Action Buttons */}
+            <div className='flex items-end gap-2'>
+              {isOwner && (
                 <Button
-                  variant='outline'
+                  variant='ghost'
                   size='sm'
                   onClick={handleResetFilters}
-                  className='flex w-full items-center gap-2'
+                  className='flex h-9 flex-1 items-center gap-1 px-2 text-xs sm:h-10 sm:flex-auto sm:px-3 sm:text-sm'
                 >
                   <X className='h-4 w-4' />
-                  Reset Filters
+                  Reset
                 </Button>
-              </div>
-            )}
+              )}
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={handleExport}
+                disabled={
+                  isExporting ||
+                  isTransactionLoading ||
+                  !transactionsData?.transactions ||
+                  transactionsData.transactions.length === 0
+                }
+                className='flex h-9 flex-1 items-center gap-1 px-2 text-xs sm:h-10 sm:flex-auto sm:px-3 sm:text-sm'
+              >
+                {isExporting ? (
+                  <Loader2 className='h-4 w-4 animate-spin' />
+                ) : (
+                  <Download className='h-4 w-4' />
+                )}
+                Export
+              </Button>
+            </div>
           </div>
         )}
       </div>
 
       <ScrollArea className='flex-1'>
-        {isTransactionLoading ? (
-          <div className='space-y-4 p-4'>
-            {[1, 2, 3].map((i) => (
-              <div key={i} className='flex items-center justify-between'>
-                <div className='space-y-2'>
-                  <Skeleton className='h-4 w-[200px]' />
-                  <Skeleton className='h-3 w-[150px]' />
-                </div>
-                <Skeleton className='h-4 w-[100px]' />
-              </div>
-            ))}
-          </div>
-        ) : transactionsData?.transactions.length === 0 ? (
+        {transactionsData?.transactions.length === 0 ? (
           <div className='text-muted-foreground flex h-full items-center justify-center p-8 text-center'>
-            No transactions found.
-            {Object.keys(filters).length > 0 && isOwner && (
-              <Button variant='link' className='ml-1' onClick={handleResetFilters}>
-                Clear filters
-              </Button>
-            )}
+            No transactions found for the selected filters.
+            {Object.values(filters).some(
+              (val) => val !== undefined && val !== '' && val !== 'createdAt' && val !== 'desc'
+            ) &&
+              isOwner && (
+                <Button variant='link' className='ml-1' onClick={handleResetFilters}>
+                  Clear filters
+                </Button>
+              )}
           </div>
         ) : (
           <TransactionTable
@@ -206,12 +321,10 @@ export const AccountTransactionsSection = ({
             sortBy={filters.sortBy}
             sortOrder={filters.sortOrder}
             loading={isTransactionLoading ?? false}
-            totalRecords={transactionsData?.totalCount ?? 0}
+            totalRecords={transactionsData?.pagination.total ?? 0}
             page={page}
             handlePageChange={handlePageChange}
-            refetchData={async () => {
-              await refetchData();
-            }}
+            refetchData={refetchData}
             isOwner={isOwner}
           />
         )}

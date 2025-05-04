@@ -34,7 +34,7 @@ const goalSchema = z.object({
     .refine((value) => !isNaN(parseFloat(value)) && parseFloat(value) > 0, {
       message: 'Target amount must be a positive number.'
     })
-    .transform((val) => parseFloat(val)), // Transform to number
+    .transform((val) => parseFloat(val)),
   targetDate: z.date({ required_error: 'Target date is required.' })
 });
 

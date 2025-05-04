@@ -17,8 +17,17 @@ export const accountGetAll = (
   params: any,
   successMessage?: string,
   errorMessage?: string
-): Promise<ApiResponse<{ accounts: Account[]; total: number }>> =>
-  apiFetch('/accounts', 'GET', undefined, { params }, successMessage, errorMessage);
+): Promise<
+  ApiResponse<{
+    accounts: Account[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  }>
+> => apiFetch('/accounts', 'GET', undefined, { params }, successMessage, errorMessage);
 
 export const accountUpdate = (
   id: string,

@@ -26,7 +26,7 @@ import {
   FormMessage
 } from '@/components/ui/form';
 import { apiUpdateDebt } from '@/lib/endpoints/debt';
-import { Debts } from '@/lib/types'; // Use the specific Debts type
+import { Debts } from '@/lib/types';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import DateRangePickerV2 from '../date/date-range-picker-v2';
@@ -38,7 +38,6 @@ import { formatCurrency } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { DateRange } from 'react-day-picker';
 
-// Schema validates only the fields the backend endpoint updates
 const debtUpdateSchema = z
   .object({
     description: z
@@ -48,7 +47,6 @@ const debtUpdateSchema = z
     durationType: z.enum(['year', 'month', 'week', 'day', 'custom'], {
       required_error: 'Duration type is required.'
     }),
-    // Optional because it's only needed if durationType != 'custom'
     frequency: z
       .string()
       .optional()
@@ -59,7 +57,6 @@ const debtUpdateSchema = z
           message: 'Frequency must be a positive whole number.'
         }
       ),
-    // Optional because it's only needed if durationType == 'custom'
     customDateRange: z
       .object({
         from: z.date().optional(),
@@ -81,14 +78,14 @@ const debtUpdateSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: 'Start date is required for custom range.',
-          path: ['customDateRange', 'from'] // Target specific field
+          path: ['customDateRange', 'from']
         });
       }
       if (!data.customDateRange?.to) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: 'End date is required for custom range.',
-          path: ['customDateRange', 'to'] // Target specific field
+          path: ['customDateRange', 'to']
         });
       }
       if (
@@ -99,29 +96,27 @@ const debtUpdateSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: 'End date must be after start date.',
-          path: ['customDateRange'] // Target the range itself
+          path: ['customDateRange']
         });
       }
     }
   });
 
-// Type for the form data
 type DebtUpdateFormSchema = z.infer<typeof debtUpdateSchema>;
-// Type for the data sent to the API
+
 type DebtUpdateApiPayload = {
   description: string;
-  duration: string; // This will be formatted before sending
-  frequency?: string; // Sent as string if applicable
+  duration: string;
+  frequency?: string;
 };
 
 interface UpdateDebtModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  debt: Debts; // Use the precise Debts type
+  debt: Debts;
   onDebtUpdated: () => void;
 }
 
-// Helper to parse initial duration/frequency from debt prop
 const parseInitialDuration = (
   debt: Debts
 ): Pick<DebtUpdateFormSchema, 'durationType' | 'frequency' | 'customDateRange'> => {
@@ -135,7 +130,7 @@ const parseInitialDuration = (
     if (isDateValid(fromDate) && isDateValid(toDate)) {
       return {
         durationType: 'custom',
-        frequency: '', // Frequency not applicable for custom range
+        frequency: '',
         customDateRange: { from: fromDate, to: toDate }
       };
     }
@@ -144,12 +139,11 @@ const parseInitialDuration = (
   if (['year', 'month', 'week', 'day'].includes(durationString || '')) {
     return {
       durationType: durationString as 'year' | 'month' | 'week' | 'day',
-      frequency: frequencyString || '', // Use existing frequency
+      frequency: frequencyString || '',
       customDateRange: undefined
     };
   }
 
-  // Fallback default if parsing fails
   return {
     durationType: 'year',
     frequency: frequencyString || '',
@@ -180,7 +174,6 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
   const { watch, reset } = form;
   const durationType = watch('durationType');
 
-  // Reset form when modal opens or debt data changes
   useEffect(() => {
     if (isOpen && debt) {
       const parsedDuration = parseInitialDuration(debt);
@@ -198,7 +191,7 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
       await invalidate(['debts']);
       showSuccess('Debt updated successfully!');
       onDebtUpdated();
-      handleClose(); // Close and reset
+      handleClose();
     },
     onError: (error: any) => {
       const message = error?.response?.data?.message || error.message || 'Failed to update debt.';
@@ -209,7 +202,6 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
   const handleUpdate = (formData: DebtUpdateFormSchema) => {
     let apiDuration: string;
     if (formData.durationType === 'custom') {
-      // Validation should ensure from and to exist here
       apiDuration = `${format(formData.customDateRange!.from!, 'yyyy-MM-dd')},${format(
         formData.customDateRange!.to!,
         'yyyy-MM-dd'
@@ -221,7 +213,7 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
     const apiPayload: DebtUpdateApiPayload = {
       description: formData.description,
       duration: apiDuration,
-      // Send frequency only if duration type is not 'custom'
+
       frequency: formData.durationType !== 'custom' ? formData.frequency || undefined : undefined
     };
 
@@ -231,7 +223,6 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
   const handleClose = () => {
     if (!updateDebtMutation.isPending) {
       onOpenChange(false);
-      // Resetting happens in useEffect based on isOpen
     }
   };
 
@@ -316,13 +307,13 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
                     <Select
                       onValueChange={(value) => {
                         field.onChange(value);
-                        // Reset conditional fields when type changes
+
                         if (value === 'custom') {
-                          form.setValue('frequency', ''); // Clear frequency
+                          form.setValue('frequency', '');
                         } else {
-                          form.setValue('customDateRange', null); // Clear date range
+                          form.setValue('customDateRange', null);
                         }
-                        form.clearErrors(['frequency', 'customDateRange']); // Clear related errors
+                        form.clearErrors(['frequency', 'customDateRange']);
                       }}
                       value={field.value}
                       disabled={updateDebtMutation.isPending}
@@ -363,12 +354,12 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
                           placeholder={`e.g., ${durationType === 'year' ? '3' : durationType === 'month' ? '12' : '4'}`}
                           className='w-full'
                           {...field}
-                          value={field.value} // Bind string value
-                          onValueChange={(values: { value: any }) => field.onChange(values.value)} // Update with string
+                          value={field.value}
+                          onValueChange={(values: { value: any }) => field.onChange(values.value)}
                           disabled={updateDebtMutation.isPending}
                           allowNegative={false}
                           allowLeadingZeros={false}
-                          decimalScale={0} // Integer only
+                          decimalScale={0}
                           step={1}
                           min={1}
                         />
@@ -391,7 +382,7 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
                       date={field.value ? (field.value as DateRange) : undefined}
                       onDateChange={field.onChange}
                       disabled={updateDebtMutation.isPending}
-                      minDate={new Date()} // Example: Prevent past dates
+                      minDate={new Date()}
                     />
                     <FormMessage />
                   </FormItem>

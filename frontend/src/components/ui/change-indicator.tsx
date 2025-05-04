@@ -14,7 +14,7 @@ export const ChangeIndicator: React.FC<ChangeIndicatorProps> = ({
   className
 }) => {
   if (change === undefined || change === null || isNaN(change)) {
-    return <span className={cn('text-xs text-muted-foreground', className)}>--</span>;
+    return <span className={cn('text-muted-foreground text-xs', className)}>--</span>;
   }
 
   const isPositiveActual = change > 0;

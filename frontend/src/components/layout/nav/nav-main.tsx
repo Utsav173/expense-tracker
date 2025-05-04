@@ -1,31 +1,17 @@
 'use client';
-
-import { type LucideIcon } from 'lucide-react';
-
 import {
   SidebarGroup,
   SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem
+  SidebarMenuItem,
+  SidebarMenuButton
 } from '@/components/ui/sidebar';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
-export function NavMain({
-  items
-}: {
-  items: {
-    title: string;
-    url: string;
-    icon?: LucideIcon;
-    isActive?: boolean;
-    items?: {
-      title: string;
-      url: string;
-    }[];
-  }[];
-}) {
+import { NavItem } from '../app-sidebar';
+
+export function NavMain({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
 
   return (
@@ -33,19 +19,33 @@ export function NavMain({
       <SidebarMenu>
         {items.map((item) => {
           const isActive = pathname === item.url;
+          const LinkIcon = item.icon;
 
           return (
-            <SidebarMenuItem
-              key={item.title}
-              className={cn(
-                isActive && 'bg-accent text-accent-foreground hover:bg-accent/80 rounded-md'
-              )}
-            >
-              <SidebarMenuButton className={cn(isActive && 'hover:bg-accent/80')} asChild>
-                <Link href={item.url}>
-                  {item.icon && <item.icon />}
-                  <span>{item.title}</span>
-                </Link>
+            <SidebarMenuItem key={item.title} className={cn(isActive && 'bg-transparent')}>
+              {/* Pass tooltip content directly to SidebarMenuButton */}
+              <SidebarMenuButton
+                asChild={!item.disabled}
+                isActive={isActive}
+                disabled={item.disabled}
+                aria-disabled={item.disabled}
+                tooltip={item.disabled ? item.tooltip : item.title}
+              >
+                {item.disabled ? (
+                  <span className='w-full cursor-not-allowed'>
+                    <LinkIcon className='h-4 w-4 shrink-0' />
+                    <span className='truncate group-data-[collapsible=icon]:hidden'>
+                      {item.title}
+                    </span>
+                  </span>
+                ) : (
+                  <Link href={item.url} className='w-full'>
+                    <LinkIcon className='h-4 w-4 shrink-0' />
+                    <span className='truncate group-data-[collapsible=icon]:hidden'>
+                      {item.title}
+                    </span>
+                  </Link>
+                )}
               </SidebarMenuButton>
             </SidebarMenuItem>
           );

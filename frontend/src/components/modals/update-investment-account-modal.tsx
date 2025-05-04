@@ -32,7 +32,6 @@ import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import CurrencySelect from '../ui/currency-select';
 import { Loader2, Pencil, Landmark, Building, CircleDollarSign } from 'lucide-react';
 
-// Schema remains the same - validates only editable fields
 const investmentAccountUpdateSchema = z.object({
   name: z
     .string()
@@ -51,7 +50,7 @@ type InvestmentAccountUpdateFormSchema = z.infer<typeof investmentAccountUpdateS
 interface UpdateInvestmentAccountModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  account: InvestmentAccount; // Use specific type
+  account: InvestmentAccount;
   onAccountUpdated: () => void;
 }
 
@@ -82,10 +81,9 @@ const UpdateInvestmentAccountModal: React.FC<UpdateInvestmentAccountModalProps> 
       name: account?.name ?? '',
       platform: account?.platform ?? ''
     },
-    mode: 'onChange' // Enable onChange validation
+    mode: 'onChange'
   });
 
-  // Reset form when modal opens or account data changes
   useEffect(() => {
     if (isOpen && account) {
       form.reset({
@@ -99,13 +97,12 @@ const UpdateInvestmentAccountModal: React.FC<UpdateInvestmentAccountModalProps> 
     mutationFn: ({ id, data }: { id: string; data: InvestmentAccountUpdateFormSchema }) =>
       investmentAccountUpdate(id, data),
     onSuccess: async () => {
-      // Invalidate relevant queries
       await invalidate(['investmentAccounts']);
       await invalidate(['investmentAccount', account.id]);
       await invalidate(['investmentPortfolioSummaryDashboard']);
       showSuccess('Investment account updated successfully!');
       onAccountUpdated();
-      handleClose(); // Close and reset
+      handleClose();
     },
     onError: (error: any) => {
       const message =
@@ -206,8 +203,8 @@ const UpdateInvestmentAccountModal: React.FC<UpdateInvestmentAccountModalProps> 
                 type='submit'
                 disabled={
                   updateAccountMutation.isPending ||
-                  !form.formState.isDirty || // Disable if unchanged
-                  !form.formState.isValid // Disable if invalid
+                  !form.formState.isDirty ||
+                  !form.formState.isValid
                 }
                 className='min-w-[120px]'
               >

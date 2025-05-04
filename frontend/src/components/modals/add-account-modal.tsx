@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -24,18 +24,17 @@ import {
 import { NumericFormat } from 'react-number-format';
 import { Loader2, PlusCircle } from 'lucide-react';
 
-// Define the schema matching the API request body for creating an account
 const accountSchema = z.object({
   name: z
     .string()
     .min(2, 'Account name must be at least 2 characters.')
     .max(64, 'Account name cannot exceed 64 characters.'),
   balance: z
-    .string() // Accept string input from NumericFormat
+    .string()
     .refine((val) => !isNaN(parseFloat(val)), {
       message: 'Starting balance must be a valid number.'
     })
-    .transform((val) => parseFloat(val)) // Transform to number for API
+    .transform((val) => parseFloat(val))
     .refine((val) => val >= 0, {
       message: 'Starting balance cannot be negative.'
     }),
@@ -53,35 +52,34 @@ const AddAccountModal = () => {
     resolver: zodResolver(accountSchema),
     defaultValues: {
       name: '',
-      balance: 0, // Default balance as string for NumericFormat
-      currency: 'INR' // Default to INR as per project context
+      balance: 0,
+      currency: 'INR'
     },
-    mode: 'onChange' // Validate on change for better UX
+    mode: 'onChange'
   });
 
   const { data: currencies, isLoading: isLoadingCurrencies } = useQuery({
     queryKey: ['currencies'],
     queryFn: fetchCurrencies,
-    staleTime: 24 * 60 * 60 * 1000, // Cache currencies for a day
-    gcTime: 7 * 24 * 60 * 60 * 1000, // Keep cache for a week
+    staleTime: 24 * 60 * 60 * 1000,
+    gcTime: 7 * 24 * 60 * 60 * 1000,
     retry: 2,
     placeholderData: Object.entries(COMMON_CURRENCIES).map(([code, name]) => ({
       code,
       name
-    })) // Provide common currencies as initial data
+    }))
   });
 
   const createAccountMutation = useMutation({
     mutationFn: accountCreate,
     onSuccess: async () => {
-      await invalidate(['accounts']); // Invalidate accounts list query
-      await invalidate(['dashboardData']); // Invalidate dashboard summary
+      await invalidate(['accounts']);
+      await invalidate(['dashboardData']);
       showSuccess('Account created successfully!');
       setIsOpen(false);
-      form.reset(); // Reset form after successful submission
+      form.reset();
     },
     onError: (error: any) => {
-      // Use the specific error message from the API if available
       const message =
         error?.response?.data?.message || error.message || 'Failed to create account.';
       showError(message);
@@ -89,14 +87,13 @@ const AddAccountModal = () => {
   });
 
   const handleCreate = (data: AccountFormSchema) => {
-    // The schema transformation already converts balance to number
     createAccountMutation.mutate(data);
   };
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (!open && !createAccountMutation.isPending) {
-      form.reset(); // Reset form when closing if not submitting
+      form.reset();
     }
   };
 
@@ -148,10 +145,9 @@ const AddAccountModal = () => {
                     placeholder='0.00'
                     className='w-full'
                     onValueChange={(values) => {
-                      // Update the form state with the string value
                       field.onChange(values.value);
                     }}
-                    value={field.value} // Bind value from RHF
+                    value={field.value}
                     disabled={createAccountMutation.isPending}
                   />
                 </FormControl>

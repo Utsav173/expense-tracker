@@ -58,7 +58,7 @@ const updateTransactionSchema = z.object({
     .string()
     .min(1, { message: 'Amount is required.' })
     .refine((value) => !isNaN(parseFloat(value)) && parseFloat(value) >= 0, {
-      message: 'Amount must be a non-negative number.' // Allow 0 amount
+      message: 'Amount must be a non-negative number.'
     }),
   isIncome: z.boolean(),
   categoryId: z.string().uuid('Invalid category format.').optional().nullable(),
@@ -114,14 +114,13 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
     watch
   } = form;
 
-  // --- Data Fetching ---
   const {
     data: categoriesData,
     isLoading: isLoadingCategory,
     refetch: refetchCategories
   } = useQuery({
     queryKey: ['categories'],
-    queryFn: () => categoryGetAll({ limit: 500 }),
+    queryFn: () => categoryGetAll({ limit: 100 }),
     staleTime: 5 * 60 * 1000
   });
 
@@ -131,7 +130,6 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
     staleTime: 5 * 60 * 1000
   });
 
-  // --- Form Reset & Initialization ---
   useEffect(() => {
     if (isOpen && transaction) {
       reset({
@@ -159,9 +157,7 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
       setLocalCategories(categoriesData.categories);
     }
   }, [categoriesData]);
-  // --- End Form Reset ---
 
-  // --- Category Combobox ---
   const fetchCategoryOptions = useCallback(
     async (query: string): Promise<ComboboxOption[]> => {
       setCategoryComboboxError(null);
@@ -193,7 +189,7 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
       try {
         const res = await categoryCreate({ name });
         if (res && res.data.id) {
-          await refetchCategories(); // Refetch after creation
+          await refetchCategories();
           showSuccess('Category created!');
           return { value: res.data.id, label: res.data.name };
         }
@@ -227,9 +223,7 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
     },
     [setValue, handleCreateCategoryInline]
   );
-  // --- End Category Combobox ---
 
-  // --- Update Mutation ---
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: TransactionApiPayload }) =>
       transactionUpdate(id, data),
@@ -240,7 +234,7 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
         ['dashboardData'],
         ['customAnalytics', transaction?.account],
         ['incomeExpenseChart', transaction?.account],
-        ...(queryKey ? [queryKey] : []) // Include specific query key if provided
+        ...(queryKey ? [queryKey] : [])
       ];
       await Promise.all(cacheKeysToInvalidate.map((key) => invalidate(key)));
       onUpdate();
@@ -252,9 +246,7 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
       showError(message);
     }
   });
-  // --- End Update Mutation ---
 
-  // --- Submit Handler ---
   const handleUpdateTransaction = (formData: UpdateTransactionFormSchema) => {
     if (!transaction) return;
 

@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { PasswordInput } from '@/components/ui/password-input';
 
@@ -114,7 +114,7 @@ const LoginPage = () => {
         </form>
       </CardContent>
 
-      <CardFooter className='flex items-center justify-between pt-4'>
+      <CardFooter className='flex items-center justify-between gap-2 pt-4 max-sm:mt-2 max-sm:flex-col max-sm:justify-center'>
         <Link
           href='/auth/signup'
           className='text-primary hover:text-primary/80 text-sm font-medium transition-colors duration-200'

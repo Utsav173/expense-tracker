@@ -8,38 +8,48 @@ import {
   Line,
   LineChart as RechartsLineChart,
   ResponsiveContainer,
-  Tooltip,
   XAxis,
-  YAxis,
-  Legend
+  YAxis
 } from 'recharts';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  ChartContainer,
+  ChartConfig,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent
+} from '@/components/ui/chart';
+import { Skeleton } from '../ui/skeleton';
+import NoData from '../ui/no-data';
+import { formatCurrency } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface FinancialTrendsChartProps {
   data: Array<{
     date: string;
-    income: number;
-    expense: number;
-    balance: number;
+    income: number | null;
+    expense: number | null;
+    balance: number | null;
   }>;
   isLoading?: boolean;
   currency: string;
 }
 
-const chartConfig = {
+const trendsChartConfig = {
   income: {
     label: 'Income',
-    color: 'hsl(142, 76%, 36%)'
+    color: 'hsl(var(--chart-income))'
   },
   expense: {
     label: 'Expense',
-    color: 'hsl(0, 84%, 60%)'
+    color: 'hsl(var(--chart-expense))'
   },
   balance: {
     label: 'Balance',
-    color: 'hsl(214, 100%, 49%)'
+    color: 'hsl(var(--chart-balance))'
   }
-};
+} satisfies ChartConfig;
 
 export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
   data,
@@ -47,37 +57,46 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
   currency
 }) => {
   const [chartType, setChartType] = useState('bar');
-
-  const formatCurrency = (
-    value: number,
-    notation?: 'compact' | 'standard' | 'scientific' | 'engineering' | undefined
-  ) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-      notation
-    }).format(value);
-  };
+  const isMobile = useIsMobile();
 
   const formatYaxis = (value: number) => {
-    return formatCurrency(value, 'compact');
+    return new Intl.NumberFormat('en-IN', {
+      notation: 'compact',
+      compactDisplay: 'short',
+      maximumFractionDigits: 1
+    }).format(value);
   };
 
   if (isLoading) {
     return (
       <Card className='border-border/40 border shadow-xs'>
         <CardHeader className='pb-4'>
-          <div className='bg-muted h-6 w-48 animate-pulse rounded-md' />
-          <div className='bg-muted h-4 w-72 animate-pulse rounded-md opacity-70' />
+          <Skeleton className='h-6 w-48 rounded-md' />
+          <Skeleton className='h-4 w-72 rounded-md opacity-70' />
         </CardHeader>
         <CardContent>
-          <div className='bg-muted h-[350px] animate-pulse rounded-md' />
+          <Skeleton className='h-[350px] rounded-md' />
         </CardContent>
       </Card>
     );
   }
+
+  if (!data || data.length === 0) {
+    return (
+      <Card className='border-border/40 flex h-[440px] items-center justify-center border shadow-xs'>
+        <NoData message='No trend data available.' icon='inbox' />
+      </Card>
+    );
+  }
+
+  const axisTickStyle = {
+    fontSize: isMobile ? 10 : 12,
+    fill: 'hsl(var(--muted-foreground))'
+  };
+  const yAxisWidth = isMobile ? 35 : 45;
+  const barSize = isMobile ? 15 : 20;
+  const lineDotRadius = isMobile ? 2 : 3;
+  const lineActiveDotRadius = isMobile ? 4 : 5;
 
   return (
     <Card className='border-border/40 overflow-hidden border shadow-xs transition-all duration-200'>
@@ -97,225 +116,132 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
       </CardHeader>
 
       <CardContent className='px-2 pt-0 pb-0'>
-        {chartType === 'bar' && (
-          <div className='ring-offset-background focus-visible:ring-ring mt-2 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden'>
-            <div className='px-1'>
-              <ResponsiveContainer width='100%' height={320}>
-                <BarChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
-                  <defs>
-                    <linearGradient id='incomeGradient' x1='0' y1='0' x2='0' y2='1'>
-                      <stop offset='5%' stopColor={chartConfig.income.color} stopOpacity={0.8} />
-                      <stop offset='95%' stopColor={chartConfig.income.color} stopOpacity={0.4} />
-                    </linearGradient>
-                    <linearGradient id='expenseGradient' x1='0' y1='0' x2='0' y2='1'>
-                      <stop offset='5%' stopColor={chartConfig.expense.color} stopOpacity={0.8} />
-                      <stop offset='95%' stopColor={chartConfig.expense.color} stopOpacity={0.4} />
-                    </linearGradient>
-                    <linearGradient id='balanceGradient' x1='0' y1='0' x2='0' y2='1'>
-                      <stop offset='5%' stopColor={chartConfig.balance.color} stopOpacity={0.8} />
-                      <stop offset='95%' stopColor={chartConfig.balance.color} stopOpacity={0.4} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid
-                    strokeDasharray='3 3'
-                    vertical={false}
-                    horizontal={false}
-                    stroke='hsl(var(--border)/0.5)'
-                  />
-                  <XAxis
-                    dataKey='date'
-                    tick={{ fontSize: 12 }}
-                    tickLine={false}
-                    axisLine={{ stroke: 'hsl(var(--border))' }}
-                  />
-                  <YAxis
-                    tickFormatter={formatYaxis}
-                    tick={{ fontSize: 12 }}
-                    tickLine={true}
-                    dx={-10}
-                    axisLine={{ stroke: 'hsl(var(--border))' }}
-                  />
-                  <Tooltip
-                    content={({ active, payload, label }) => {
-                      if (active && payload && payload.length) {
-                        return (
-                          <div className='border-border/40 bg-popover rounded-lg border p-3 shadow-md backdrop-blur-[2px]'>
-                            <p className='mb-2 font-medium'>{label}</p>
-                            <div className='grid grid-cols-[auto_auto] gap-x-2 gap-y-1'>
-                              {payload.map((entry, index) => (
-                                <React.Fragment key={`tooltip-item-${index}`}>
-                                  <div className='flex items-center gap-2'>
-                                    <div
-                                      className='h-2 w-2 rounded-full'
-                                      style={{ backgroundColor: entry.color }}
-                                    />
-                                    <span className='text-muted-foreground text-sm'>
-                                      {entry.name}:
-                                    </span>
-                                  </div>
-                                  <span className='text-right text-sm font-medium'>
-                                    {formatCurrency(entry.value as number)}
-                                  </span>
-                                </React.Fragment>
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                    cursor={{ fill: '#f0f0f0' }}
-                  />
-                  <Legend
-                    verticalAlign='top'
-                    height={36}
-                    formatter={(value) => <span className='text-xs font-medium'>{value}</span>}
-                  />
-                  <Bar
-                    dataKey='income'
-                    name='Income'
-                    fill='url(#incomeGradient)'
-                    stroke={chartConfig.income.color}
-                    strokeWidth={1}
-                    radius={[4, 4, 0, 0]}
-                    barSize={20}
-                  />
-                  <Bar
-                    dataKey='expense'
-                    name='Expense'
-                    fill='url(#expenseGradient)'
-                    stroke={chartConfig.expense.color}
-                    strokeWidth={1}
-                    radius={[4, 4, 0, 0]}
-                    barSize={20}
-                  />
-                  <Bar
-                    dataKey='balance'
-                    name='Balance'
-                    fill='url(#balanceGradient)'
-                    stroke={chartConfig.balance.color}
-                    strokeWidth={1}
-                    radius={[4, 4, 0, 0]}
-                    barSize={20}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
-
-        {chartType === 'line' && (
-          <div className='ring-offset-background focus-visible:ring-ring mt-2 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden'>
-            <div className='px-1'>
-              <ResponsiveContainer width='100%' height={320}>
-                <RechartsLineChart
-                  data={data}
-                  margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
-                >
-                  <defs>
-                    <linearGradient id='incomeAreaGradient' x1='0' y1='0' x2='0' y2='1'>
-                      <stop offset='5%' stopColor={chartConfig.income.color} stopOpacity={0.1} />
-                      <stop offset='95%' stopColor={chartConfig.income.color} stopOpacity={0.01} />
-                    </linearGradient>
-                    <linearGradient id='expenseAreaGradient' x1='0' y1='0' x2='0' y2='1'>
-                      <stop offset='5%' stopColor={chartConfig.expense.color} stopOpacity={0.1} />
-                      <stop offset='95%' stopColor={chartConfig.expense.color} stopOpacity={0.01} />
-                    </linearGradient>
-                    <linearGradient id='balanceAreaGradient' x1='0' y1='0' x2='0' y2='1'>
-                      <stop offset='5%' stopColor={chartConfig.balance.color} stopOpacity={0.1} />
-                      <stop offset='95%' stopColor={chartConfig.balance.color} stopOpacity={0.01} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid
-                    strokeDasharray='3 3'
-                    vertical={false}
-                    horizontal={false}
-                    stroke='hsl(var(--border)/0.5)'
-                  />
-                  <XAxis
-                    dataKey='date'
-                    tick={{ fontSize: 12 }}
-                    tickLine={false}
-                    axisLine={{ stroke: 'hsl(var(--border))' }}
-                  />
-                  <YAxis
-                    tickFormatter={formatYaxis}
-                    tick={{ fontSize: 12 }}
-                    tickLine={true}
-                    dx={-10}
-                    axisLine={{ stroke: 'hsl(var(--border))' }}
-                  />
-                  <Tooltip
-                    content={({ active, payload, label }) => {
-                      if (active && payload && payload.length) {
-                        return (
-                          <div className='border-border/40 bg-popover rounded-lg border p-3 shadow-md backdrop-blur-[2px]'>
-                            <p className='mb-2 font-medium'>{label}</p>
-                            <div className='grid grid-cols-[auto_auto] gap-x-2 gap-y-1'>
-                              {payload.map((entry, index) => (
-                                <React.Fragment key={`tooltip-item-${index}`}>
-                                  <div className='flex items-center gap-2'>
-                                    <div
-                                      className='h-2 w-2 rounded-full'
-                                      style={{ backgroundColor: entry.color }}
-                                    />
-                                    <span className='text-muted-foreground text-sm'>
-                                      {entry.name}:
-                                    </span>
-                                  </div>
-                                  <span className='text-right text-sm font-medium'>
-                                    {formatCurrency(entry.value as number)}
-                                  </span>
-                                </React.Fragment>
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                    cursor={{ fill: 'none' }}
-                  />
-                  <Legend
-                    verticalAlign='top'
-                    height={36}
-                    formatter={(value) => <span className='text-xs font-medium'>{value}</span>}
-                  />
-                  <Line
-                    type='monotone'
-                    dataKey='income'
-                    name='Income'
-                    stroke={chartConfig.income.color}
-                    strokeWidth={2}
-                    dot={{ r: 3, strokeWidth: 1, fill: 'white' }}
-                    activeDot={{ r: 5, strokeWidth: 0 }}
-                    animationDuration={1500}
-                  />
-                  <Line
-                    type='monotone'
-                    dataKey='expense'
-                    name='Expense'
-                    stroke={chartConfig.expense.color}
-                    strokeWidth={2}
-                    dot={{ r: 3, strokeWidth: 1, fill: 'white' }}
-                    activeDot={{ r: 5, strokeWidth: 0 }}
-                    animationDuration={1500}
-                  />
-                  <Line
-                    type='monotone'
-                    dataKey='balance'
-                    name='Balance'
-                    stroke={chartConfig.balance.color}
-                    strokeWidth={2}
-                    dot={{ r: 3, strokeWidth: 1, fill: 'white' }}
-                    activeDot={{ r: 5, strokeWidth: 0 }}
-                    animationDuration={1500}
-                  />
-                </RechartsLineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
+        <ChartContainer
+          config={trendsChartConfig}
+          className='h-[320px] w-full'
+          aria-label={`Chart showing income, expense, and balance trends as a ${chartType} chart.`}
+        >
+          {chartType === 'bar' ? (
+            <ResponsiveContainer width='100%' height='100%'>
+              <BarChart data={data} margin={{ top: 10, right: 5, left: -10, bottom: 0 }}>
+                <CartesianGrid
+                  strokeDasharray='3 3'
+                  vertical={false}
+                  horizontal={false}
+                  stroke='hsl(var(--border)/0.5)'
+                />
+                <XAxis
+                  dataKey='date'
+                  tickLine={false}
+                  axisLine={{ stroke: 'hsl(var(--border))' }}
+                  tick={axisTickStyle}
+                  interval='preserveStartEnd'
+                  minTickGap={isMobile ? 20 : 15}
+                />
+                <YAxis
+                  tickFormatter={formatYaxis}
+                  tickLine={true}
+                  dx={-5}
+                  axisLine={{ stroke: 'hsl(var(--border))' }}
+                  tick={axisTickStyle}
+                  width={yAxisWidth}
+                />
+                <ChartTooltip
+                  cursor={{ fill: 'hsl(var(--muted))' }}
+                  content={
+                    <ChartTooltipContent
+                      formatter={(value) => formatCurrency(value as number, currency)}
+                      labelKey='date'
+                    />
+                  }
+                />
+                <ChartLegend content={<ChartLegendContent />} verticalAlign='top' height={36} />
+                <Bar
+                  dataKey='income'
+                  fill='var(--color-income)'
+                  radius={[4, 4, 0, 0]}
+                  barSize={barSize}
+                />
+                <Bar
+                  dataKey='expense'
+                  fill='var(--color-expense)'
+                  radius={[4, 4, 0, 0]}
+                  barSize={barSize}
+                />
+                <Bar
+                  dataKey='balance'
+                  fill='var(--color-balance)'
+                  radius={[4, 4, 0, 0]}
+                  barSize={barSize}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <ResponsiveContainer width='100%' height='100%'>
+              <RechartsLineChart data={data} margin={{ top: 10, right: 5, left: -10, bottom: 0 }}>
+                <CartesianGrid
+                  strokeDasharray='3 3'
+                  vertical={false}
+                  horizontal={false}
+                  stroke='hsl(var(--border)/0.5)'
+                />
+                <XAxis
+                  dataKey='date'
+                  tickLine={false}
+                  axisLine={{ stroke: 'hsl(var(--border))' }}
+                  tick={axisTickStyle}
+                  interval='preserveStartEnd'
+                  minTickGap={isMobile ? 20 : 15}
+                />
+                <YAxis
+                  tickFormatter={formatYaxis}
+                  tickLine={true}
+                  dx={-5}
+                  axisLine={{ stroke: 'hsl(var(--border))' }}
+                  tick={axisTickStyle}
+                  width={yAxisWidth}
+                />
+                <ChartTooltip
+                  cursor={false}
+                  content={
+                    <ChartTooltipContent
+                      formatter={(value) => formatCurrency(value as number, currency)}
+                      labelKey='date'
+                    />
+                  }
+                />
+                <ChartLegend content={<ChartLegendContent />} verticalAlign='top' height={36} />
+                <Line
+                  type='monotone'
+                  dataKey='income'
+                  stroke='var(--color-income)'
+                  strokeWidth={2}
+                  dot={{ r: lineDotRadius, strokeWidth: 1, fill: 'var(--background)' }}
+                  activeDot={{ r: lineActiveDotRadius, strokeWidth: 1 }}
+                  connectNulls
+                />
+                <Line
+                  type='monotone'
+                  dataKey='expense'
+                  stroke='var(--color-expense)'
+                  strokeWidth={2}
+                  dot={{ r: lineDotRadius, strokeWidth: 1, fill: 'var(--background)' }}
+                  activeDot={{ r: lineActiveDotRadius, strokeWidth: 1 }}
+                  connectNulls
+                />
+                <Line
+                  type='monotone'
+                  dataKey='balance'
+                  stroke='var(--color-balance)'
+                  strokeWidth={2}
+                  dot={{ r: lineDotRadius, strokeWidth: 1, fill: 'var(--background)' }}
+                  activeDot={{ r: lineActiveDotRadius, strokeWidth: 1 }}
+                  connectNulls
+                />
+              </RechartsLineChart>
+            </ResponsiveContainer>
+          )}
+        </ChartContainer>
       </CardContent>
     </Card>
   );

@@ -20,8 +20,7 @@ import {
   ResponsiveContainer,
   Tooltip as RechartsTooltip,
   YAxis,
-  XAxis,
-  CartesianGrid
+  XAxis
 } from 'recharts';
 import { parseISO, format, differenceInDays } from 'date-fns';
 import Link from 'next/link';
@@ -31,6 +30,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DateRange } from 'react-day-picker';
 import { format as formatDate, startOfToday, subDays } from 'date-fns';
 import DateRangePickerV2 from '../date/date-range-picker-v2';
+import { ChartContainer, ChartConfig } from '@/components/ui/chart';
 
 type PeriodOption = '7d' | '30d' | '90d' | '1y' | 'custom';
 
@@ -64,6 +64,13 @@ const getAvailablePeriodOptions = (
   return PERIOD_OPTIONS;
 };
 
+const sparklineChartConfig = {
+  value: {
+    label: 'Portfolio Value',
+    color: 'hsl(var(--chart-investment))'
+  }
+} satisfies ChartConfig;
+
 export const InvestmentSummaryCard: React.FC<{
   className?: string;
 }> = ({ className }) => {
@@ -78,7 +85,6 @@ export const InvestmentSummaryCard: React.FC<{
     if (period !== 'custom') {
       setDateRange(undefined);
     } else if (!dateRange) {
-      // Set default date range for custom period (last 30 days)
       const today = startOfToday();
       setDateRange({
         from: subDays(today, 30),
@@ -149,7 +155,6 @@ export const InvestmentSummaryCard: React.FC<{
   }, []);
 
   React.useEffect(() => {
-    // If the currently selected period is not available in the new options, switch to 30d
     if (
       !availablePeriodOptions.find((opt) => opt.value === selectedPeriod) &&
       selectedPeriod !== 'custom'
@@ -234,10 +239,8 @@ export const InvestmentSummaryCard: React.FC<{
       }))
       .sort((a, b) => a.date.getTime() - b.date.getTime()) || [];
 
-  const sparklineColor =
-    overallGainLoss >= 0
-      ? 'hsl(213, 94%, 68%)' // Bright blue
-      : 'hsl(0, 84%, 60%)'; // Keep red for negative
+  const sparklineColorVarName =
+    overallGainLoss >= 0 ? 'var(--color-chart-investment)' : 'var(--color-chart-expense)';
 
   return (
     <Card className={cn('col-span-1 flex flex-col md:col-span-1', className)}>
@@ -283,69 +286,59 @@ export const InvestmentSummaryCard: React.FC<{
           <Skeleton className='h-[180px] w-full' />
         ) : sparklineData.length > 1 ? (
           <div className='h-[180px] w-full'>
-            <ResponsiveContainer width='100%' height='100%'>
-              <AreaChart data={sparklineData}>
-                <defs>
-                  <linearGradient id='colorValue' x1='0' y1='0' x2='0' y2='1'>
-                    <stop offset='0%' stopColor={sparklineColor} stopOpacity={0.4} />
-                    <stop offset='50%' stopColor={sparklineColor} stopOpacity={0.1} />
-                    <stop offset='100%' stopColor={sparklineColor} stopOpacity={0} />
-                  </linearGradient>
-                  <filter id='glow'>
-                    <feGaussianBlur stdDeviation='3' result='coloredBlur' />
-                    <feMerge>
-                      <feMergeNode in='coloredBlur' />
-                      <feMergeNode in='SourceGraphic' />
-                    </feMerge>
-                  </filter>
-                </defs>
-                <CartesianGrid
-                  strokeDasharray='3 3'
-                  vertical={false}
-                  stroke='hsl(var(--border))'
-                  opacity={0.3}
-                />
-                <YAxis domain={['dataMin', 'dataMax']} hide padding={{ top: 20, bottom: 20 }} />
-                <XAxis
-                  dataKey='date'
-                  tickFormatter={(date) => format(date, 'MMM d')}
-                  interval='preserveStartEnd'
-                  minTickGap={30}
-                  tick={{ fontSize: 10 }}
-                  axisLine={false}
-                  tickLine={false}
-                  stroke='hsl(var(--muted-foreground))'
-                />
-                <RechartsTooltip
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      const data = payload[0].payload;
-                      return (
-                        <div className='bg-background/95 rounded-lg border px-3 py-2 text-sm shadow-lg backdrop-blur-sm'>
-                          <div className='font-medium'>{format(data.date, 'MMM d, yyyy')}</div>
-                          <div className='text-muted-foreground'>
-                            {formatCurrency(data.value, currency)}
+            <ChartContainer
+              config={sparklineChartConfig}
+              className='h-full w-full'
+              aria-label={`Sparkline area chart showing portfolio value trend for the selected period (${selectedPeriod})`}
+            >
+              <ResponsiveContainer width='100%' height='100%'>
+                <AreaChart data={sparklineData}>
+                  <defs>
+                    <linearGradient id='sparklineValue' x1='0' y1='0' x2='0' y2='1'>
+                      <stop offset='0%' stopColor={sparklineColorVarName} stopOpacity={0.4} />
+                      <stop offset='50%' stopColor={sparklineColorVarName} stopOpacity={0.1} />
+                      <stop offset='100%' stopColor={sparklineColorVarName} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <YAxis domain={['dataMin', 'dataMax']} hide />
+                  <XAxis dataKey='date' hide />
+                  <RechartsTooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        return (
+                          <div className='bg-background/95 rounded-lg border px-3 py-2 text-sm shadow-lg backdrop-blur-sm'>
+                            <div className='font-medium'>{format(data.date, 'MMM d, yyyy')}</div>
+                            <div className='text-muted-foreground'>
+                              {formatCurrency(data.value, currency)}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Area
-                  type='monotone'
-                  dataKey='value'
-                  stroke={sparklineColor}
-                  strokeWidth={2.5}
-                  fillOpacity={1}
-                  fill='url(#colorValue)'
-                  filter='url(#glow)'
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+                        );
+                      }
+                      return null;
+                    }}
+                    cursor={{
+                      stroke: 'hsl(var(--border))',
+                      strokeWidth: 1,
+                      strokeDasharray: '3 3'
+                    }}
+                  />
+                  <Area
+                    type='monotone'
+                    dataKey='value'
+                    stroke={sparklineColorVarName}
+                    strokeWidth={2.5}
+                    fillOpacity={1}
+                    fill='url(#sparklineValue)'
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </ChartContainer>
           </div>
         ) : (
-          <div className='h-[180px]' />
+          <div className='text-muted-foreground flex h-[180px] items-center justify-center text-sm'>
+            Not enough data for trendline.
+          </div>
         )}
 
         <div className='grid gap-4'>

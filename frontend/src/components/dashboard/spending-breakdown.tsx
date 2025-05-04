@@ -9,30 +9,27 @@ import {
   Pie,
   Cell,
   ResponsiveContainer,
-  Tooltip,
-  Legend,
   Sector,
   BarChart,
   Bar,
   XAxis,
-  YAxis
+  YAxis,
+  CartesianGrid
 } from 'recharts';
 import { formatCurrency } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useToast } from '@/lib/hooks/useToast';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-const COLORS = [
-  'hsl(var(--chart-1))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
-  '#a0aec0',
-  '#f6ad55',
-  '#4fd1c5'
-];
+import {
+  ChartContainer,
+  ChartConfig,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent
+} from '@/components/ui/chart';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const truncateLabel = (label: string, max: number) =>
   label.length > max ? label.slice(0, max - 1) + '…' : label;
@@ -66,7 +63,6 @@ interface ActiveShapeProps {
   chartType: ChartType;
 }
 
-// Active shape component for the pie chart
 const renderActiveShape = (props: ActiveShapeProps) => {
   const RADIAN = Math.PI / 180;
   const {
@@ -101,7 +97,7 @@ const renderActiveShape = (props: ActiveShapeProps) => {
           y={cy}
           dy={8}
           textAnchor='middle'
-          fill={fill}
+          fill={'hsl(var(--foreground))'}
           className='text-base font-semibold'
         >
           {truncateLabel(payload.name, 15)}
@@ -129,8 +125,12 @@ const renderActiveShape = (props: ActiveShapeProps) => {
         className='opacity-90'
         onClick={(e) => e.stopPropagation()}
       />
-      <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill='none' />
-      <circle cx={ex} cy={ey} r={2} fill={fill} stroke='none' />
+      <path
+        d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`}
+        stroke={'hsl(var(--foreground))'}
+        fill='none'
+      />
+      <circle cx={ex} cy={ey} r={2} fill={'hsl(var(--foreground))'} stroke='none' />
       <text
         x={ex + (cos >= 0 ? 1 : -1) * 12}
         y={ey}
@@ -163,6 +163,7 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
   const [activeIndex, setActiveIndex] = useState(0);
   const [chartType, setChartType] = useState<ChartType>(chartTypes[0]);
   const { showError } = useToast();
+  const isMobile = useIsMobile();
 
   const {
     data: chartData,
@@ -184,8 +185,8 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
     }
   }, [error, showError]);
 
-  const formattedData = useMemo(() => {
-    if (!chartData || !chartData.name) return [];
+  const { formattedData, chartConfig } = useMemo(() => {
+    if (!chartData || !chartData.name) return { formattedData: [], chartConfig: {} };
 
     const expenseData = chartData.name
       .map((name, index) => ({
@@ -195,19 +196,29 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
       .filter((item) => item.value > 0);
 
     const sortedData = expenseData.sort((a, b) => b.value - a.value);
-    const topN = 6; // Increased slightly
+    const topN = 6;
     const topData = sortedData.slice(0, topN);
     const otherValue = sortedData.slice(topN).reduce((sum, item) => sum + item.value, 0);
 
     const finalData = [...topData];
+    const otherCategoryName = 'Other Categories';
     if (otherValue > 0) {
-      finalData.push({ name: 'Other Categories', value: otherValue });
+      finalData.push({ name: otherCategoryName, value: otherValue });
     }
 
-    return finalData.map((item, index) => ({
-      ...item,
-      fill: COLORS[index % COLORS.length]
-    }));
+    const config: ChartConfig = {};
+    const formatted = finalData.map((item, index) => {
+      const configKey = item.name.replace(/[^a-zA-Z0-9]/g, '_');
+      const colorVar = item.name === otherCategoryName ? 'chart-other' : `chart-${(index % 8) + 1}`;
+
+      config[configKey] = {
+        label: item.name,
+        color: `hsl(var(--${colorVar}))`
+      };
+      return { ...item, fill: `var(--color-${configKey})`, configKey };
+    });
+
+    return { formattedData: formatted, chartConfig: config };
   }, [chartData]);
 
   const totalExpense = useMemo(
@@ -228,108 +239,112 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
   const renderChart = () => {
     if (chartType === 'column') {
       return (
-        <ResponsiveContainer width='100%' height='100%'>
-          <BarChart
-            data={formattedData}
-            margin={{ top: 20, right: 20, left: 20, bottom: 60 }}
-            barSize={40}
-          >
-            <XAxis
-              dataKey='name'
-              angle={-45}
-              textAnchor='end'
-              height={60}
-              interval={0}
-              tick={{ fontSize: 12 }}
-              tickFormatter={(value) => truncateLabel(value, 12)}
-            />
-            <YAxis width={80} tickFormatter={(value) => formatCurrency(value).split('.')[0]} />
-            <Tooltip
-              content={({ active, payload }) => {
-                if (active && payload && payload.length) {
-                  const data = payload[0].payload;
-                  const percentage = totalExpense > 0 ? (data.value / totalExpense) * 100 : 0;
-                  return (
-                    <div className='bg-background/80 rounded-lg border p-3 shadow-md backdrop-blur-sm'>
-                      <p className='mb-1 text-sm font-semibold'>{data.name}</p>
-                      <p className='text-muted-foreground text-xs'>
-                        {formatCurrency(data.value)}
-                        <span className='ml-1 font-medium'>({percentage.toFixed(1)}%)</span>
-                      </p>
-                    </div>
-                  );
+        <ChartContainer
+          config={chartConfig}
+          className='h-[400px] w-full'
+          aria-label={`Vertical bar chart showing spending breakdown by category for ${durationLabels[duration]}`}
+        >
+          <ResponsiveContainer width='100%' height='100%'>
+            <BarChart
+              data={formattedData}
+              layout='vertical'
+              margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+              barSize={isMobile ? 15 : 20}
+            >
+              <CartesianGrid horizontal={false} strokeDasharray='3 3' />
+              <XAxis type='number' hide />
+              <YAxis
+                dataKey='name'
+                type='category'
+                tickLine={false}
+                axisLine={false}
+                tick={{ fontSize: isMobile ? 10 : 12 }}
+                tickFormatter={(value) => truncateLabel(value, isMobile ? 10 : 15)}
+                width={isMobile ? 80 : 100}
+              />
+              <ChartTooltip
+                cursor={{ fill: 'hsl(var(--muted))' }}
+                content={
+                  <ChartTooltipContent
+                    nameKey='name'
+                    formatter={(value) => formatCurrency(value as number)}
+                  />
                 }
-                return null;
-              }}
-            />
-            <Bar dataKey='value' radius={[4, 4, 0, 0]}>
-              {formattedData.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={entry.fill}
-                  className='opacity-90 transition-opacity hover:opacity-100'
-                />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+              />
+              <Bar dataKey='value' radius={[0, 4, 4, 0]}>
+                {formattedData.map((entry) => (
+                  <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartContainer>
       );
     }
 
-    // For Pie and Donut charts
     return (
-      <ResponsiveContainer width='100%' height='100%'>
-        <PieChart>
-          <Tooltip
-            content={({ active, payload }) => {
-              if (active && payload && payload.length) {
-                const data = payload[0].payload;
-                const percentage = totalExpense > 0 ? (data.value / totalExpense) * 100 : 0;
-                return (
-                  <div className='bg-background/80 rounded-lg border p-3 shadow-md backdrop-blur-sm'>
-                    <p className='mb-1 text-sm font-semibold'>{data.name}</p>
-                    <p className='text-muted-foreground text-xs'>
-                      {formatCurrency(data.value)}
-                      <span className='ml-1 font-medium'>({percentage.toFixed(1)}%)</span>
-                    </p>
-                  </div>
-                );
+      <ChartContainer
+        config={chartConfig}
+        className='mx-auto aspect-square h-[400px] max-sm:h-[280px]'
+        aria-label={`${chartType} chart showing spending breakdown by category for ${durationLabels[duration]}`}
+      >
+        <ResponsiveContainer width='100%' height='100%'>
+          <PieChart>
+            <ChartTooltip
+              cursor={false}
+              content={
+                <ChartTooltipContent
+                  hideLabel
+                  formatter={(value, name) => {
+                    const percentage = totalExpense > 0 ? (Number(value) / totalExpense) * 100 : 0;
+                    return (
+                      <div className='flex flex-col'>
+                        <span className='text-sm font-medium'>{name}</span>
+                        <span className='text-muted-foreground text-xs'>
+                          {formatCurrency(value as number)} ({percentage.toFixed(1)}%)
+                        </span>
+                      </div>
+                    );
+                  }}
+                />
               }
-              return null;
-            }}
-          />
-          <Pie
-            activeIndex={activeIndex}
-            activeShape={(props: any) =>
-              renderActiveShape({ ...props, chartType } as ActiveShapeProps)
-            }
-            data={formattedData}
-            cx='50%'
-            cy='50%'
-            innerRadius={chartType === 'donut' ? '60%' : '0%'}
-            outerRadius='80%'
-            paddingAngle={2}
-            fill='#8884d8'
-            dataKey='value'
-            onMouseEnter={onPieEnter}
-            className='outline-none focus:outline-none'
-          >
-            {formattedData.map((entry, index) => (
-              <Cell
-                key={`cell-${index}`}
-                fill={entry.fill}
-                className='opacity-90 transition-opacity outline-none hover:opacity-100 hover:outline-none focus:outline-none active:outline-none'
-                style={{ outline: 'none', stroke: 'none' }}
-              />
-            ))}
-          </Pie>
-        </PieChart>
-      </ResponsiveContainer>
+            />
+            <Pie
+              activeIndex={activeIndex}
+              activeShape={(props: any) =>
+                renderActiveShape({ ...props, chartType } as ActiveShapeProps)
+              }
+              data={formattedData}
+              cx='50%'
+              cy='50%'
+              innerRadius={chartType === 'donut' ? '60%' : '0%'}
+              outerRadius={isMobile ? '70%' : '80%'}
+              paddingAngle={2}
+              dataKey='value'
+              nameKey='name'
+              onMouseEnter={onPieEnter}
+              className='outline-none focus:outline-none'
+            >
+              {formattedData.map((entry) => (
+                <Cell
+                  key={`cell-${entry.name}`}
+                  fill={entry.fill}
+                  className='opacity-90 transition-opacity outline-none hover:opacity-100 hover:outline-none focus:outline-none active:outline-none'
+                  style={{ outline: 'none', stroke: 'none' }}
+                />
+              ))}
+            </Pie>
+            {chartType === 'pie' && formattedData.length > 0 && (
+              <ChartLegend content={<ChartLegendContent nameKey='name' />} />
+            )}
+          </PieChart>
+        </ResponsiveContainer>
+      </ChartContainer>
     );
   };
 
   return (
-    <Card className={cn('flex h-[600px] flex-col', className)}>
+    <Card className={cn('flex h-full flex-col', className)}>
       <CardHeader className='flex flex-none gap-2 pb-2'>
         <div className='flex flex-col items-center justify-between gap-4 sm:flex-row'>
           {showDurationSelector && (
@@ -352,7 +367,7 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
             <TabsList className={`grid w-full grid-cols-${chartTypes.length}`}>
               {chartTypes.map((type: string) => (
                 <TabsTrigger key={type} value={type}>
-                  {type}
+                  {type.charAt(0).toUpperCase() + type.slice(1)}
                 </TabsTrigger>
               ))}
             </TabsList>

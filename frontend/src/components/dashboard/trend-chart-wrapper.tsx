@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import { useMemo } from 'react';
 import { DashboardData } from '@/lib/types';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, LineChart, AreaChart } from 'lucide-react';
@@ -9,6 +9,7 @@ import NoData from '../ui/no-data';
 import { TrendChart } from './trend-chart';
 import { useDateRangeFilter } from '@/hooks/useDateRangeFilter';
 import { cn } from '@/lib/utils';
+import { startOfDay, subDays } from 'date-fns';
 
 interface TrendChartWrapperProps {
   data: DashboardData | null | undefined;
@@ -30,24 +31,41 @@ const TrendChartWrapper = ({
     maxDate: new Date(),
     urlPersistence: false,
     defaultRange: {
-      from: new Date(new Date().setDate(new Date().getDate() - 30)),
-      to: new Date()
+      from: subDays(startOfDay(new Date()), 30),
+      to: startOfDay(new Date())
     }
   });
 
   const handleChartTypeChange = (value: string) => {
     setChartType(value as 'line' | 'bar' | 'area');
   };
-  const incomeChartData = data?.incomeChartData ?? [];
-  const expenseChartData = data?.expenseChartData ?? [];
-  const balanceChartData = data?.balanceChartData ?? [];
+
+  const transformedChartData = useMemo(() => {
+    const incomeMap = new Map(data?.incomeChartData?.map((p) => [p.x, p.y ?? null]) ?? []);
+    const expenseMap = new Map(data?.expenseChartData?.map((p) => [p.x, p.y ?? null]) ?? []);
+    const balanceMap = new Map(data?.balanceChartData?.map((p) => [p.x, p.y ?? null]) ?? []);
+
+    const allTimestamps = new Set([
+      ...(data?.incomeChartData?.map((p) => p.x) ?? []),
+      ...(data?.expenseChartData?.map((p) => p.x) ?? []),
+      ...(data?.balanceChartData?.map((p) => p.x) ?? [])
+    ]);
+
+    const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b);
+
+    return sortedTimestamps.map((ts) => ({
+      date: new Date(ts * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      income: incomeMap.get(ts) ?? null,
+      expense: expenseMap.get(ts) ?? null,
+      balance: balanceMap.get(ts) ?? null
+    }));
+  }, [data]);
 
   const renderContent = () => {
     if (isLoading) {
       return <Skeleton className='h-full min-h-[400px] w-full' />;
     }
-    const hasData =
-      incomeChartData.length > 0 || expenseChartData.length > 0 || balanceChartData.length > 0;
+    const hasData = transformedChartData.length > 0;
 
     if (!hasData) {
       return (
@@ -62,15 +80,15 @@ const TrendChartWrapper = ({
     return (
       <div className='h-full min-h-[400px] w-full'>
         <TrendChart
-          incomeData={incomeChartData}
-          expenseData={expenseChartData}
-          balanceData={balanceChartData}
+          incomeData={data?.incomeChartData ?? []}
+          expenseData={data?.expenseChartData ?? []}
+          balanceData={data?.balanceChartData ?? []}
           chartType={chartType}
           currency={data?.accountsInfo?.[0]?.currency ?? 'INR'}
           className='h-full w-full'
-          setChartType={setChartType}
           timeRangeOption={dateRange ? 'custom' : 'thisMonth'}
           customDateRange={dateRange}
+          isLoading={isLoading}
         />
       </div>
     );
@@ -78,6 +96,7 @@ const TrendChartWrapper = ({
 
   return (
     <div className={cn('flex h-full w-full flex-col', className)}>
+      {/* Controls remain in the wrapper */}
       <div className='flex flex-wrap items-center justify-between gap-4 px-6 py-2'>
         <DateRangeFilter />
         {!!setChartType && (

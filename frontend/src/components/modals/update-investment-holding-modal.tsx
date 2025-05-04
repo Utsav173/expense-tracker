@@ -4,16 +4,14 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   investmentUpdate,
   investmentUpdateDividend,
-  investmentStockHistoricalPrice,
-  investmentStockPrice
+  investmentStockHistoricalPrice
 } from '@/lib/endpoints/investment';
 import { useToast } from '@/lib/hooks/useToast';
 import { Button } from '../ui/button';
-import { Input } from '../ui/input';
 import {
   Dialog,
   DialogContent,
@@ -32,10 +30,10 @@ import {
   FormMessage
 } from '@/components/ui/form';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
-import { Investment, StockPriceResult, StockSearchResult } from '@/lib/types';
+import { Investment, StockPriceResult } from '@/lib/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency, cn } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardDescription } from '@/components/ui/card';
 import {
   Loader2,
   TrendingUp,
@@ -52,7 +50,6 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { NumericInput } from '../ui/numeric-input';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import DatePicker from '../date/date-picker';
 import { Skeleton } from '../ui/skeleton';
 import {
@@ -65,12 +62,10 @@ import {
   isSameDay,
   parseISO
 } from 'date-fns';
-import { Combobox, ComboboxOption } from '../ui/combobox';
 import { NumberFormatValues } from 'react-number-format';
 
-// --- Helper Functions ---
 const calculateChange = (currentStr: string | undefined, original: number | undefined | null) => {
-  const currentNum = currentStr !== undefined ? parseFloat(currentStr) : NaN; // Parse string here
+  const currentNum = currentStr !== undefined ? parseFloat(currentStr) : NaN;
   if (original === null || original === undefined || isNaN(currentNum)) {
     return null;
   }
@@ -108,9 +103,7 @@ const getMostRecentValidDate = (initialDate: Date = new Date()): Date => {
   }
   return candidateDate;
 };
-// --- End Helper Functions ---
 
-// --- Zod Schemas ---
 const investmentHoldingUpdateSchema = z.object({
   shares: z
     .string()
@@ -135,9 +128,7 @@ const dividendUpdateSchema = z.object({
       message: 'Dividend must be a non-negative number.'
     })
 });
-// --- End Zod Schemas ---
 
-// --- Type Definitions ---
 type InvestmentHoldingUpdateFormValues = {
   shares: string;
   purchasePrice: string;
@@ -145,14 +136,12 @@ type InvestmentHoldingUpdateFormValues = {
 };
 type DividendUpdateFormValues = { dividend: string };
 
-// API payloads expect numbers and ISO string for date
 type InvestmentUpdateApiPayload = {
   shares: number;
   purchasePrice: number;
-  purchaseDate: string; // ISO String
+  purchaseDate: string;
 };
 type DividendUpdateApiPayload = { dividend: number };
-// --- End Type Definitions ---
 
 interface UpdateInvestmentHoldingModalProps {
   isOpen: boolean;
@@ -179,7 +168,7 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
   const detailsForm = useForm<InvestmentHoldingUpdateFormValues>({
     resolver: zodResolver(investmentHoldingUpdateSchema),
     mode: 'onChange',
-    // Default values use strings for numeric inputs
+
     defaultValues: {
       shares:
         investment?.shares !== undefined && investment?.shares !== null
@@ -205,7 +194,7 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
           : '0'
     }
   });
-  // Watched Values
+
   const purchaseDate = detailsForm.watch('purchaseDate');
   const sharesStr = detailsForm.watch('shares');
   const purchasePriceStr = detailsForm.watch('purchasePrice');
@@ -228,7 +217,6 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
     );
   }, [investment?.symbol, purchaseDate]);
 
-  // --- Current Price Fetching (Optional) ---
   const { data: currentPriceInfo, isLoading: isPriceLoading } = useQuery({
     queryKey: ['stockPrice', investment?.symbol],
     queryFn: async () => {
@@ -241,7 +229,6 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
     refetchOnWindowFocus: true
   });
 
-  // --- Historical Price Fetching ---
   const { isLoading: isHistQueryLoading, data: historicalPriceData } = useQuery({
     queryKey: ['historicalStockPrice', investment?.symbol, formattedPurchaseDate],
     queryFn: async () => {
@@ -262,7 +249,6 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
     retry: 1
   });
 
-  // --- Effect to update form with fetched historical price ---
   useEffect(() => {
     if (
       canFetchHistorical &&
@@ -284,7 +270,7 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
             shouldValidate: true,
             shouldDirty: true
           });
-          showInfo(`Auto-filled price for ${investment?.symbol} on ${formattedPurchaseDate}.`);
+          showSuccess(`Auto-filled price for ${investment?.symbol} on ${formattedPurchaseDate}.`);
         }
       }
     } else if (canFetchHistorical && !isHistoricalPriceLoading && historicalPriceData) {
@@ -299,11 +285,10 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
     detailsForm,
     investment?.symbol,
     formattedPurchaseDate,
-    showInfo,
+    showSuccess,
     showError
   ]);
 
-  // --- Form Reset ---
   useEffect(() => {
     if (isOpen && investment) {
       detailsForm.reset({
@@ -320,7 +305,6 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
     }
   }, [isOpen, investment, detailsForm, dividendForm]);
 
-  // --- Memoized Calculations ---
   const totalValue = useMemo(() => {
     const sharesNum = parseFloat(sharesStr);
     const priceNum = parseFloat(purchasePriceStr);
@@ -344,7 +328,6 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
     [dividendStr, totalValue]
   );
 
-  // --- Price Comparison ---
   const priceComparison = useMemo(() => {
     const currentPrice = currentPriceInfo?.price;
     if (
@@ -366,7 +349,6 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
     return null;
   }, [currentPriceInfo?.price, purchasePriceStr]);
 
-  // --- Mutations ---
   const updateInvestmentMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: InvestmentUpdateApiPayload }) =>
       investmentUpdate(id, data),
@@ -401,9 +383,7 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
     }
   });
 
-  // --- Submit Handlers ---
   const handleDetailsUpdate = (data: InvestmentHoldingUpdateFormValues) => {
-    // Data is already transformed by zod schema
     const apiPayload: InvestmentUpdateApiPayload = {
       shares: Number(data.shares),
       purchasePrice: Number(data.purchasePrice),
@@ -413,25 +393,20 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
   };
 
   const handleDividendUpdate = (data: DividendUpdateFormValues) => {
-    // Data is already transformed by zod schema
     updateDividendMutation.mutate({ id: investment.id, data: { dividend: Number(data.dividend) } });
   };
 
-  // --- Modal Close Handler ---
   const handleClose = useCallback(() => {
     if (!updateInvestmentMutation.isPending && !updateDividendMutation.isPending) {
       onOpenChange(false);
-      // Reset happens via useEffect on isOpen change
     }
   }, [onOpenChange, updateInvestmentMutation.isPending, updateDividendMutation.isPending]);
 
-  // Combined Pending State
   const isPending =
     updateInvestmentMutation.isPending ||
     updateDividendMutation.isPending ||
     isHistoricalPriceLoading;
 
-  // Date Picker Disable Logic
   const disabledDates = (date: Date): boolean => {
     const todayStart = startOfDay(new Date());
     if (isWeekend(date)) return true;
@@ -527,7 +502,7 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
                               const validDate = getMostRecentValidDate(newDate);
                               if (!isSameDay(validDate, field.value)) {
                                 field.onChange(validDate);
-                                detailsForm.setValue('purchasePrice', ''); // Clear price if date changes
+                                detailsForm.setValue('purchasePrice', '');
                               }
                             }
                           }}
@@ -553,7 +528,7 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
                           <div className='relative'>
                             <NumericInput
                               placeholder='e.g., 10.5'
-                              value={field.value} // Pass string value
+                              value={field.value}
                               onValueChange={(values: NumberFormatValues) =>
                                 field.onChange(values.value)
                               }
@@ -598,7 +573,7 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
                             <NumericInput
                               placeholder='e.g., 150.75'
                               className='pr-10'
-                              value={field.value} // Pass string value
+                              value={field.value}
                               onValueChange={(values: NumberFormatValues) =>
                                 field.onChange(values.value)
                               }
@@ -691,7 +666,7 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
                           <NumericInput
                             placeholder='e.g., 25.50'
                             className='pr-10'
-                            value={field.value} // Pass string value
+                            value={field.value}
                             onValueChange={(values: NumberFormatValues) =>
                               field.onChange(values.value)
                             }

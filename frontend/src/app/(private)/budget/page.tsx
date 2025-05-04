@@ -13,7 +13,7 @@ import { PlusCircle } from 'lucide-react';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { Budget } from '@/lib/types';
 import { useUrlState } from '@/hooks/useUrlState';
-import { SortingState } from '@tanstack/react-table'; // Import SortingState
+import { SortingState } from '@tanstack/react-table';
 
 const BudgetPage = () => {
   const { showError } = useToast();
@@ -22,8 +22,8 @@ const BudgetPage = () => {
 
   const { state, setState, handlePageChange } = useUrlState({
     page: 1,
-    sortBy: 'year', // Default sort
-    sortOrder: 'desc' as 'asc' | 'desc' // Explicitly type sortOrder
+    sortBy: 'year',
+    sortOrder: 'desc' as 'asc' | 'desc'
   });
 
   const { data, isLoading, isError, error, refetch } = useQuery({
@@ -43,14 +43,12 @@ const BudgetPage = () => {
     refetch();
   };
 
-  // Updated handleSort to match CommonTable's expected signature
   const handleSort = (newSortingState: SortingState) => {
     if (newSortingState.length > 0) {
       const { id, desc } = newSortingState[0];
       setState({ sortBy: id, sortOrder: desc ? 'desc' : 'asc', page: 1 });
     } else {
-      // Handle case where sorting is cleared (optional)
-      setState({ sortBy: 'year', sortOrder: 'desc', page: 1 }); // Revert to default or clear
+      setState({ sortBy: 'year', sortOrder: 'desc', page: 1 });
     }
   };
 
@@ -80,10 +78,10 @@ const BudgetPage = () => {
         pageSize={10}
         currentPage={state.page}
         onPageChange={handlePageChange}
-        onSortChange={handleSort} // Pass the correctly typed handler
+        onSortChange={handleSort}
         enablePagination
         sortBy={state.sortBy}
-        sortOrder={state.sortOrder} // Pass typed sortOrder
+        sortOrder={state.sortOrder}
       />
 
       <AddBudgetModal

@@ -88,7 +88,7 @@ const InvestmentAccountDetailPage = () => {
         page: state.page,
         limit: 10,
         sortBy: state.sortBy,
-        sortOrder: state.sortOrder // Pass typed sortOrder
+        sortOrder: state.sortOrder
       }),
     enabled: !!accountId,
     retry: false
@@ -132,13 +132,12 @@ const InvestmentAccountDetailPage = () => {
     return investmentStockPrice(symbol);
   };
 
-  // Updated handleSort to match CommonTable's expected signature
   const handleSort = (newSortingState: SortingState) => {
     if (newSortingState.length > 0) {
       const { id, desc } = newSortingState[0];
       setState({ sortBy: id, sortOrder: desc ? 'desc' : 'asc', page: 1 });
     } else {
-      setState({ sortBy: 'purchaseDate', sortOrder: 'desc', page: 1 }); // Revert to default or clear
+      setState({ sortBy: 'purchaseDate', sortOrder: 'desc', page: 1 });
     }
   };
 
@@ -157,10 +156,10 @@ const InvestmentAccountDetailPage = () => {
 
   return (
     <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 max-sm:px-0 md:space-y-6'>
-      <div className='flex w-full min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+      <div className='flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div className='flex min-w-0 flex-1 items-center gap-4'>
           <Button variant='ghost' onClick={() => router.back()} className='shrink-0'>
-            <ArrowLeft size={16} className='mr-2' /> Back
+            <ArrowLeft size={16} className='mr-2' />
           </Button>
           <SingleLineEllipsis className='min-w-0 text-xl font-semibold md:text-2xl'>
             {account.name} ({account.platform || 'N/A'})
@@ -239,10 +238,10 @@ const InvestmentAccountDetailPage = () => {
             pageSize={10}
             currentPage={state.page}
             onPageChange={handlePageChange}
-            onSortChange={handleSort} // Pass the correctly typed handler
+            onSortChange={handleSort}
             enablePagination
             sortBy={state.sortBy}
-            sortOrder={state.sortOrder} // Pass typed sortOrder
+            sortOrder={state.sortOrder}
           />
         </CardContent>
       </Card>

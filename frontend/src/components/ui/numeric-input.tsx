@@ -13,7 +13,6 @@ const NumericInput = React.forwardRef<HTMLInputElement, NumericFormatProps<any>>
       decimalSeparator='.'
       allowNegative={false}
       decimalScale={2}
-      fixedDecimalScale
       placeholder='0.00'
       {...props}
     />

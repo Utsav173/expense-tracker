@@ -1,6 +1,5 @@
 'use client';
-
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo } from 'react';
 import {
   LineChart as RechartsLineChart,
   BarChart as RechartsBarChart,
@@ -11,22 +10,21 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
-  Legend,
   ResponsiveContainer
 } from 'recharts';
 import { format } from 'date-fns';
-import {
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  Activity,
-  BarChart,
-  LineChart,
-  AreaChart
-} from 'lucide-react';
 import { DateRange } from 'react-day-picker';
-import { getTimestampsForRange } from '@/lib/utils';
+import { getTimestampsForRange, formatCurrency } from '@/lib/utils';
+import {
+  ChartContainer,
+  ChartConfig,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent
+} from '@/components/ui/chart';
+import { Skeleton } from '../ui/skeleton';
+import NoData from '../ui/no-data';
 
 interface ApiChartDataPoint {
   x: number;
@@ -40,9 +38,10 @@ export interface TrendChartProps {
   className?: string;
   currency?: string;
   chartType?: 'line' | 'bar' | 'area';
-  setChartType?: (type: 'line' | 'bar' | 'area') => void;
+
   timeRangeOption: string;
   customDateRange?: DateRange;
+  isLoading?: boolean;
 }
 
 interface ProcessedDataPoint {
@@ -51,10 +50,22 @@ interface ProcessedDataPoint {
   income: number | null;
   expense: number | null;
   balance: number | null;
-  incomeChange?: number;
-  expenseChange?: number;
-  balanceChange?: number;
 }
+
+const trendsChartConfig = {
+  income: {
+    label: 'Income',
+    color: 'hsl(var(--chart-income))'
+  },
+  expense: {
+    label: 'Expense',
+    color: 'hsl(var(--chart-expense))'
+  },
+  balance: {
+    label: 'Balance',
+    color: 'hsl(var(--chart-balance))'
+  }
+} satisfies ChartConfig;
 
 export const TrendChart: React.FC<TrendChartProps> = ({
   incomeData = [],
@@ -63,58 +74,10 @@ export const TrendChart: React.FC<TrendChartProps> = ({
   className,
   currency = 'INR',
   chartType = 'line',
-  setChartType,
   timeRangeOption,
-  customDateRange
+  customDateRange,
+  isLoading = false
 }) => {
-  const [visibleSeries, setVisibleSeries] = useState({
-    income: true,
-    expense: true,
-    balance: true,
-    showAll: true
-  });
-
-  const handleChartTypeChange = (type: 'line' | 'bar' | 'area') => {
-    if (setChartType) {
-      setChartType(type);
-    }
-  };
-
-  const selectSeries = useCallback(
-    (series: 'income' | 'expense' | 'balance' | 'showAll'): void => {
-      if (series === 'showAll') {
-        setVisibleSeries({
-          income: true,
-          expense: true,
-          balance: true,
-          showAll: true
-        });
-      } else {
-        // Count how many series (excluding showAll) are currently visible
-        const activeCount = ['income', 'expense', 'balance'].filter(
-          (key) => visibleSeries[key as 'income' | 'expense' | 'balance']
-        ).length;
-        // If only one is active and user tries to turn it off, reset to all
-        if (visibleSeries[series] && activeCount === 1) {
-          setVisibleSeries({
-            income: true,
-            expense: true,
-            balance: true,
-            showAll: true
-          });
-        } else {
-          setVisibleSeries({
-            income: series === 'income',
-            expense: series === 'expense',
-            balance: series === 'balance',
-            showAll: false
-          });
-        }
-      }
-    },
-    [visibleSeries]
-  );
-
   const processedData = useMemo(() => {
     const allIncome = incomeData ?? [];
     const allExpense = expenseData ?? [];
@@ -129,6 +92,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
       if (timeRangeOption === 'all' || !startTimestamp || !endTimestamp) {
         return true;
       }
+
       return point.x >= startTimestamp && point.x <= endTimestamp;
     };
 
@@ -173,477 +137,265 @@ export const TrendChart: React.FC<TrendChartProps> = ({
       .sort((a, b) => a[0] - b[0])
       .map(([_, value]) => value);
 
-    if (sortedData.length > 1) {
-      for (let i = 1; i < sortedData.length; i++) {
-        const current = sortedData[i];
-        const previous = sortedData[i - 1];
-
-        if (current.income !== null && previous.income !== null && previous.income !== 0) {
-          current.incomeChange =
-            ((current.income - previous.income) / Math.abs(previous.income)) * 100;
-        }
-
-        if (current.expense !== null && previous.expense !== null && previous.expense !== 0) {
-          current.expenseChange =
-            ((current.expense - previous.expense) / Math.abs(previous.expense)) * 100;
-        }
-
-        if (current.balance !== null && previous.balance !== null && previous.balance !== 0) {
-          current.balanceChange =
-            ((current.balance - previous.balance) / Math.abs(previous.balance)) * 100;
-        }
-      }
-    }
-
     return sortedData;
   }, [incomeData, expenseData, balanceData, timeRangeOption, customDateRange]);
 
-  const formatValue = (value: number | null) => {
-    if (value === null) return 'N/A';
+  const formatYaxis = (value: number) => {
     return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: currency,
-      maximumFractionDigits: 0
+      notation: 'compact',
+      compactDisplay: 'short',
+      maximumFractionDigits: 1
     }).format(value);
   };
 
-  const formatPercentage = (value: number | undefined) => {
-    if (value === undefined) return '';
-    return `${value > 0 ? '+' : ''}${value.toFixed(1)}%`;
-  };
-
-  const getTrendIcon = (change: number | undefined, size = 16) => {
-    if (change === undefined) return <Minus size={size} />;
-    if (change > 0) return <TrendingUp size={size} className='text-green-500' />;
-    if (change < 0) return <TrendingDown size={size} className='text-red-500' />;
-    return <Minus size={size} className='text-gray-500' />;
-  };
-
-  const getInsightText = (dataPoint: ProcessedDataPoint) => {
-    const insights = [];
-    if (dataPoint.incomeChange !== undefined && Math.abs(dataPoint.incomeChange) >= 5) {
-      insights.push(
-        `Income ${dataPoint.incomeChange > 0 ? 'increased' : 'decreased'} by ${Math.abs(dataPoint.incomeChange).toFixed(1)}%`
-      );
-    }
-    if (dataPoint.expenseChange !== undefined && Math.abs(dataPoint.expenseChange) >= 5) {
-      insights.push(
-        `Expenses ${dataPoint.expenseChange > 0 ? 'increased' : 'decreased'} by ${Math.abs(dataPoint.expenseChange).toFixed(1)}%`
-      );
-    }
-    if (dataPoint.balanceChange !== undefined && Math.abs(dataPoint.balanceChange) >= 5) {
-      insights.push(
-        `Balance ${dataPoint.balanceChange > 0 ? 'improved' : 'declined'} by ${Math.abs(dataPoint.balanceChange).toFixed(1)}%`
-      );
-    }
-    if (dataPoint.income !== null && dataPoint.expense !== null && dataPoint.income > 0) {
-      const ratio = dataPoint.expense / dataPoint.income;
-      if (ratio > 1) {
-        insights.push(
-          `Spending exceeded income by ${formatValue(dataPoint.expense - dataPoint.income)}`
-        );
-      } else if (ratio < 0.7) {
-        insights.push(`Strong savings: ${formatValue(dataPoint.income - dataPoint.expense)} saved`);
-      }
-    }
-    return insights;
-  };
-
-  const EnhancedTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      const dataPoint = payload[0].payload as ProcessedDataPoint;
-      const insights = getInsightText(dataPoint);
-      const hasAnyData = payload.some((entry: any) => entry.value !== null);
-
-      if (!hasAnyData) return null;
-
-      return (
-        <div className='border-border bg-background max-w-xs rounded-lg border p-3 shadow-lg'>
-          <p className='mb-2 text-sm font-semibold md:text-base'>{label}</p>
-          <div className='space-y-1 md:space-y-2'>
-            {payload.map((entry: any, index: number) => {
-              if (entry.value === null) return null;
-              let name = entry.dataKey as string;
-              let change: number | undefined;
-
-              if (name === 'income') {
-                name = 'Income';
-                change = dataPoint.incomeChange;
-              } else if (name === 'expense') {
-                name = 'Expense';
-                change = dataPoint.expenseChange;
-              } else if (name === 'balance') {
-                name = 'Balance';
-                change = dataPoint.balanceChange;
-              }
-
-              return (
-                <div key={index} className='flex items-center justify-between text-xs md:text-sm'>
-                  <div className='flex items-center gap-1 md:gap-2'>
-                    <div
-                      className='h-2 w-2 rounded-full md:h-3 md:w-3'
-                      style={{ backgroundColor: entry.color }}
-                    ></div>
-                    <span className='capitalize'>{name}:</span>
-                  </div>
-                  <div className='flex items-center gap-1 md:gap-2'>
-                    <span className='font-medium'>{formatValue(entry.value)}</span>
-                    {change !== undefined && (
-                      <span
-                        className={`text-xs ${
-                          change > 0
-                            ? 'text-green-500'
-                            : change < 0
-                              ? 'text-red-500'
-                              : 'text-gray-500'
-                        }`}
-                      >
-                        {formatPercentage(change)}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          {insights.length > 0 && (
-            <div className='border-border mt-2 border-t pt-2 md:mt-3 md:pt-3'>
-              <div className='mb-1 flex items-center gap-1 text-xs font-medium'>
-                <Activity size={12} className='text-blue-500' />
-                <span>INSIGHTS</span>
-              </div>
-              <ul className='space-y-1 text-xs'>
-                {insights.map((insight, idx) => (
-                  <li key={idx} className='text-muted-foreground'>
-                    {insight}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      );
-    }
-    return null;
-  };
-
-  const EnhancedLegend = ({ payload }: any) => {
-    if (!payload) return null;
+  if (isLoading) {
     return (
-      <div className='mt-1 flex flex-wrap justify-center gap-2 md:mt-2 md:gap-4'>
-        <div
-          key='show-all-button'
-          className={`flex cursor-pointer items-center rounded-full border px-2 py-1 text-xs transition-all md:px-3 md:text-sm ${
-            visibleSeries.showAll
-              ? `bg-opacity-10 border-blue-300 bg-blue-100 text-blue-600`
-              : 'border-gray-200 bg-gray-100 text-gray-500'
-          }`}
-          onClick={() => selectSeries('showAll')}
-        >
-          <div
-            className={`mr-1 h-2 w-2 rounded-full md:mr-2 md:h-3 md:w-3 ${
-              visibleSeries.showAll ? '' : 'opacity-30'
-            }`}
-            style={{ backgroundColor: '#64748b' }}
-          />
-          <span>All</span>
-        </div>
-        {payload.map((entry: any, index: number) => {
-          let seriesKey: 'income' | 'expense' | 'balance' | 'showAll';
-          if (entry.value === 'Income') seriesKey = 'income';
-          else if (entry.value === 'Expense') seriesKey = 'expense';
-          else if (entry.value === 'Balance') seriesKey = 'balance';
-          else return null;
-
-          const isActive = visibleSeries[seriesKey];
-
-          return (
-            <div
-              key={`item-${index}`}
-              className={`flex cursor-pointer items-center rounded-full border px-2 py-1 text-xs transition-all md:px-3 md:text-sm ${
-                isActive ? `bg-opacity-10 border-2` : 'border-gray-200 bg-gray-100 text-gray-400'
-              }`}
-              style={{
-                backgroundColor: isActive ? `${entry.color}20` : undefined,
-                borderColor: isActive ? entry.color : undefined,
-                color: isActive ? entry.color : undefined
-              }}
-              onClick={() => selectSeries(seriesKey)}
-            >
-              <div
-                className='mr-1 h-2 w-2 rounded-full md:mr-2 md:h-3 md:w-3'
-                style={{
-                  backgroundColor: entry.color,
-                  opacity: isActive ? 1 : 0.3
-                }}
-              />
-              <span>{entry.value}</span>
-            </div>
-          );
-        })}
+      <div className={`relative h-[320px] w-full ${className}`}>
+        <Skeleton className='h-full w-full' />
       </div>
     );
-  };
+  }
 
-  const renderChart = () => {
-    const commonProps = {
-      data: processedData,
-      margin: { top: 10, right: 10, left: 0, bottom: 0 }
-    };
-    const chartProps = { ...commonProps, syncId: 'trendsSync' };
-    const axisStyle = { fontSize: 11, fontWeight: 400, color: '#64748b' };
-
-    switch (chartType) {
-      case 'bar':
-        return (
-          <RechartsBarChart {...chartProps}>
-            <defs>
-              <linearGradient id='incomeGradient' x1='0' y1='0' x2='0' y2='1'>
-                <stop offset='0%' stopColor='#4ade80' stopOpacity={0.8} />
-                <stop offset='100%' stopColor='#4ade80' stopOpacity={0.2} />
-              </linearGradient>
-              <linearGradient id='expenseGradient' x1='0' y1='0' x2='0' y2='1'>
-                <stop offset='0%' stopColor='#f87171' stopOpacity={0.8} />
-                <stop offset='100%' stopColor='#f87171' stopOpacity={0.2} />
-              </linearGradient>
-              <linearGradient id='balanceGradient' x1='0' y1='0' x2='0' y2='1'>
-                <stop offset='0%' stopColor='#60a5fa' stopOpacity={0.8} />
-                <stop offset='100%' stopColor='#60a5fa' stopOpacity={0.2} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray='3 3' vertical={false} stroke='#f1f5f9' />
-            <XAxis
-              dataKey='date'
-              tickLine={false}
-              axisLine={false}
-              style={axisStyle}
-              tick={{ fontSize: '0.7rem' }}
-              interval='preserveStartEnd'
-              minTickGap={15}
-            />
-            <YAxis
-              tickFormatter={(value) =>
-                new Intl.NumberFormat('en-IN', {
-                  notation: 'compact',
-                  compactDisplay: 'short'
-                }).format(value)
-              }
-              tickLine={false}
-              axisLine={false}
-              style={axisStyle}
-              width={35}
-              tick={{ fontSize: '0.7rem' }}
-            />
-            <Tooltip content={<EnhancedTooltip />} />
-            <Legend content={<EnhancedLegend />} />
-            {visibleSeries.income && (
-              <Bar
-                dataKey='income'
-                name='Income'
-                fill='url(#incomeGradient)'
-                stroke='#22c55e'
-                strokeWidth={1}
-                radius={[4, 4, 0, 0]}
-                animationDuration={800}
-                minPointSize={3}
-              />
-            )}
-            {visibleSeries.expense && (
-              <Bar
-                dataKey='expense'
-                name='Expense'
-                fill='url(#expenseGradient)'
-                stroke='#ef4444'
-                strokeWidth={1}
-                radius={[4, 4, 0, 0]}
-                animationDuration={800}
-                minPointSize={3}
-              />
-            )}
-            {visibleSeries.balance && (
-              <Bar
-                dataKey='balance'
-                name='Balance'
-                fill='url(#balanceGradient)'
-                stroke='#3b82f6'
-                strokeWidth={1}
-                radius={[4, 4, 0, 0]}
-                animationDuration={800}
-                minPointSize={3}
-              />
-            )}
-          </RechartsBarChart>
-        );
-      case 'area':
-        return (
-          <RechartsAreaChart {...chartProps}>
-            <defs>
-              <linearGradient id='incomeGradient' x1='0' y1='0' x2='0' y2='1'>
-                <stop offset='0%' stopColor='#4ade80' stopOpacity={0.3} />
-                <stop offset='100%' stopColor='#4ade80' stopOpacity={0.05} />
-              </linearGradient>
-              <linearGradient id='expenseGradient' x1='0' y1='0' x2='0' y2='1'>
-                <stop offset='0%' stopColor='#f87171' stopOpacity={0.3} />
-                <stop offset='100%' stopColor='#f87171' stopOpacity={0.05} />
-              </linearGradient>
-              <linearGradient id='balanceGradient' x1='0' y1='0' x2='0' y2='1'>
-                <stop offset='0%' stopColor='#60a5fa' stopOpacity={0.3} />
-                <stop offset='100%' stopColor='#60a5fa' stopOpacity={0.05} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray='3 3' vertical={false} stroke='#f1f5f9' />
-            <XAxis
-              dataKey='date'
-              tickLine={false}
-              axisLine={false}
-              style={axisStyle}
-              tick={{ fontSize: '0.7rem' }}
-              interval='preserveStartEnd'
-              minTickGap={15}
-            />
-            <YAxis
-              tickFormatter={(value) =>
-                new Intl.NumberFormat('en-IN', {
-                  notation: 'compact',
-                  compactDisplay: 'short'
-                }).format(value)
-              }
-              tickLine={false}
-              axisLine={false}
-              style={axisStyle}
-              width={35}
-              tick={{ fontSize: '0.7rem' }}
-            />
-            <Tooltip content={<EnhancedTooltip />} />
-            <Legend content={<EnhancedLegend />} />
-            {visibleSeries.income && (
-              <Area
-                type='monotone'
-                dataKey='income'
-                name='Income'
-                stroke='#22c55e'
-                strokeWidth={2}
-                fill='url(#incomeGradient)'
-                activeDot={{ r: 6, strokeWidth: 2, stroke: '#fff' }}
-                animationDuration={800}
-                connectNulls
-              />
-            )}
-            {visibleSeries.expense && (
-              <Area
-                type='monotone'
-                dataKey='expense'
-                name='Expense'
-                stroke='#ef4444'
-                strokeWidth={2}
-                fill='url(#expenseGradient)'
-                activeDot={{ r: 6, strokeWidth: 2, stroke: '#fff' }}
-                animationDuration={800}
-                connectNulls
-              />
-            )}
-            {visibleSeries.balance && (
-              <Area
-                type='monotone'
-                dataKey='balance'
-                name='Balance'
-                stroke='#3b82f6'
-                strokeWidth={2}
-                fill='url(#balanceGradient)'
-                activeDot={{ r: 6, strokeWidth: 2, stroke: '#fff' }}
-                animationDuration={800}
-                connectNulls
-              />
-            )}
-          </RechartsAreaChart>
-        );
-      case 'line':
-      default:
-        return (
-          <RechartsLineChart {...chartProps}>
-            <CartesianGrid strokeDasharray='3 3' vertical={false} stroke='#f1f5f9' />
-            <XAxis
-              dataKey='date'
-              tickLine={false}
-              axisLine={false}
-              style={axisStyle}
-              tick={{ fontSize: '0.7rem' }}
-              interval='preserveStartEnd'
-              minTickGap={15}
-            />
-            <YAxis
-              tickFormatter={(value) =>
-                new Intl.NumberFormat('en-IN', {
-                  notation: 'compact',
-                  compactDisplay: 'short'
-                }).format(value)
-              }
-              tickLine={false}
-              axisLine={false}
-              style={axisStyle}
-              width={35}
-              tick={{ fontSize: '0.7rem' }}
-            />
-            <Tooltip content={<EnhancedTooltip />} />
-            <Legend content={<EnhancedLegend />} />
-            {visibleSeries.income && (
-              <Line
-                type='monotone'
-                dataKey='income'
-                name='Income'
-                stroke='#22c55e'
-                strokeWidth={2}
-                dot={{ r: 2, fill: '#22c55e', strokeWidth: 1, stroke: '#fff' }}
-                activeDot={{ r: 5, strokeWidth: 2, stroke: '#fff' }}
-                animationDuration={800}
-                connectNulls
-              />
-            )}
-            {visibleSeries.expense && (
-              <Line
-                type='monotone'
-                dataKey='expense'
-                name='Expense'
-                stroke='#ef4444'
-                strokeWidth={2}
-                dot={{ r: 2, fill: '#ef4444', strokeWidth: 1, stroke: '#fff' }}
-                activeDot={{ r: 5, strokeWidth: 2, stroke: '#fff' }}
-                animationDuration={800}
-                connectNulls
-              />
-            )}
-            {visibleSeries.balance && (
-              <Line
-                type='monotone'
-                dataKey='balance'
-                name='Balance'
-                stroke='#3b82f6'
-                strokeWidth={2}
-                dot={{ r: 2, fill: '#3b82f6', strokeWidth: 1, stroke: '#fff' }}
-                activeDot={{ r: 5, strokeWidth: 2, stroke: '#fff' }}
-                animationDuration={800}
-                connectNulls
-              />
-            )}
-          </RechartsLineChart>
-        );
-    }
-  };
+  if (processedData.length === 0) {
+    return (
+      <div className={`relative flex h-[320px] w-full items-center justify-center ${className}`}>
+        <NoData message='No trend data for selected period.' />
+      </div>
+    );
+  }
 
   return (
-    <div className={`relative h-full w-full ${className}`}>
-      <ResponsiveContainer width='100%' height='100%'>
-        {renderChart()}
-      </ResponsiveContainer>
-      {processedData.length === 0 && (
-        <div className='absolute inset-0 flex items-center justify-center'>
-          <div className='text-center text-gray-500'>
-            <div className='mb-2 text-4xl'>📊</div>
-            <div className='text-lg font-medium'>No data available</div>
-            <div className='text-sm'>No trend data available for the selected period.</div>
-          </div>
-        </div>
-      )}
+    <div className={`relative h-[320px] w-full ${className}`}>
+      <ChartContainer config={trendsChartConfig} className='h-full w-full'>
+        <ResponsiveContainer width='100%' height='100%'>
+          {chartType === 'bar' ? (
+            <RechartsBarChart
+              data={processedData}
+              margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+            >
+              <CartesianGrid
+                strokeDasharray='3 3'
+                vertical={false}
+                stroke='hsl(var(--border)/0.5)'
+              />
+              <XAxis
+                dataKey='date'
+                tickLine={false}
+                axisLine={false}
+                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                interval='preserveStartEnd'
+                minTickGap={15}
+              />
+              <YAxis
+                tickFormatter={formatYaxis}
+                tickLine={false}
+                axisLine={false}
+                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                width={45}
+              />
+              {/* Use standardized ChartTooltip */}
+              <ChartTooltip
+                cursor={{ fill: 'hsl(var(--muted))' }}
+                content={
+                  <ChartTooltipContent
+                    formatter={(value) => formatCurrency(value as number, currency)}
+                    labelKey='date'
+                  />
+                }
+              />
+              {/* Use standardized ChartLegend */}
+              <ChartLegend content={<ChartLegendContent />} verticalAlign='top' height={36} />
+              <Bar
+                dataKey='income'
+                fill='var(--color-income)'
+                radius={[4, 4, 0, 0]}
+                animationDuration={800}
+                minPointSize={3}
+              />
+              <Bar
+                dataKey='expense'
+                fill='var(--color-expense)'
+                radius={[4, 4, 0, 0]}
+                animationDuration={800}
+                minPointSize={3}
+              />
+              <Bar
+                dataKey='balance'
+                fill='var(--color-balance)'
+                radius={[4, 4, 0, 0]}
+                animationDuration={800}
+                minPointSize={3}
+              />
+            </RechartsBarChart>
+          ) : chartType === 'area' ? (
+            <RechartsAreaChart
+              data={processedData}
+              margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+            >
+              <defs>
+                {/* Define gradients using CSS variables */}
+                <linearGradient id='incomeGradientArea' x1='0' y1='0' x2='0' y2='1'>
+                  <stop offset='0%' stopColor='var(--color-income)' stopOpacity={0.3} />
+                  <stop offset='100%' stopColor='var(--color-income)' stopOpacity={0.05} />
+                </linearGradient>
+                <linearGradient id='expenseGradientArea' x1='0' y1='0' x2='0' y2='1'>
+                  <stop offset='0%' stopColor='var(--color-expense)' stopOpacity={0.3} />
+                  <stop offset='100%' stopColor='var(--color-expense)' stopOpacity={0.05} />
+                </linearGradient>
+                <linearGradient id='balanceGradientArea' x1='0' y1='0' x2='0' y2='1'>
+                  <stop offset='0%' stopColor='var(--color-balance)' stopOpacity={0.3} />
+                  <stop offset='100%' stopColor='var(--color-balance)' stopOpacity={0.05} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid
+                strokeDasharray='3 3'
+                vertical={false}
+                stroke='hsl(var(--border)/0.5)'
+              />
+              <XAxis
+                dataKey='date'
+                tickLine={false}
+                axisLine={false}
+                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                interval='preserveStartEnd'
+                minTickGap={15}
+              />
+              <YAxis
+                tickFormatter={formatYaxis}
+                tickLine={false}
+                axisLine={false}
+                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                width={45}
+              />
+              {/* Use standardized ChartTooltip */}
+              <ChartTooltip
+                cursor={false}
+                content={
+                  <ChartTooltipContent
+                    formatter={(value) => formatCurrency(value as number, currency)}
+                    labelKey='date'
+                  />
+                }
+              />
+              {/* Use standardized ChartLegend */}
+              <ChartLegend content={<ChartLegendContent />} verticalAlign='top' height={36} />
+              <Area
+                type='monotone'
+                dataKey='income'
+                stroke='var(--color-income)'
+                strokeWidth={2}
+                fill='url(#incomeGradientArea)'
+                activeDot={{ r: 6, strokeWidth: 2, stroke: '#fff' }}
+                animationDuration={800}
+                connectNulls
+              />
+              <Area
+                type='monotone'
+                dataKey='expense'
+                stroke='var(--color-expense)'
+                strokeWidth={2}
+                fill='url(#expenseGradientArea)'
+                activeDot={{ r: 6, strokeWidth: 2, stroke: '#fff' }}
+                animationDuration={800}
+                connectNulls
+              />
+              <Area
+                type='monotone'
+                dataKey='balance'
+                stroke='var(--color-balance)'
+                strokeWidth={2}
+                fill='url(#balanceGradientArea)'
+                activeDot={{ r: 6, strokeWidth: 2, stroke: '#fff' }}
+                animationDuration={800}
+                connectNulls
+              />
+            </RechartsAreaChart>
+          ) : (
+            <RechartsLineChart
+              data={processedData}
+              margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+            >
+              <CartesianGrid
+                strokeDasharray='3 3'
+                vertical={false}
+                stroke='hsl(var(--border)/0.5)'
+              />
+              <XAxis
+                dataKey='date'
+                tickLine={false}
+                axisLine={false}
+                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                interval='preserveStartEnd'
+                minTickGap={15}
+              />
+              <YAxis
+                tickFormatter={formatYaxis}
+                tickLine={false}
+                axisLine={false}
+                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                width={45}
+              />
+              {/* Use standardized ChartTooltip */}
+              <ChartTooltip
+                cursor={false}
+                content={
+                  <ChartTooltipContent
+                    formatter={(value) => formatCurrency(value as number, currency)}
+                    labelKey='date'
+                  />
+                }
+              />
+              {/* Use standardized ChartLegend */}
+              <ChartLegend content={<ChartLegendContent />} verticalAlign='top' height={36} />
+              <Line
+                type='monotone'
+                dataKey='income'
+                stroke='var(--color-income)'
+                strokeWidth={2}
+                dot={{
+                  r: 2,
+                  fill: 'var(--color-income)',
+                  strokeWidth: 1,
+                  stroke: 'var(--background)'
+                }}
+                activeDot={{ r: 5, strokeWidth: 2, stroke: 'var(--background)' }}
+                animationDuration={800}
+                connectNulls
+              />
+              <Line
+                type='monotone'
+                dataKey='expense'
+                stroke='var(--color-expense)'
+                strokeWidth={2}
+                dot={{
+                  r: 2,
+                  fill: 'var(--color-expense)',
+                  strokeWidth: 1,
+                  stroke: 'var(--background)'
+                }}
+                activeDot={{ r: 5, strokeWidth: 2, stroke: 'var(--background)' }}
+                animationDuration={800}
+                connectNulls
+              />
+              <Line
+                type='monotone'
+                dataKey='balance'
+                stroke='var(--color-balance)'
+                strokeWidth={2}
+                dot={{
+                  r: 2,
+                  fill: 'var(--color-balance)',
+                  strokeWidth: 1,
+                  stroke: 'var(--background)'
+                }}
+                activeDot={{ r: 5, strokeWidth: 2, stroke: 'var(--background)' }}
+                animationDuration={800}
+                connectNulls
+              />
+            </RechartsLineChart>
+          )}
+        </ResponsiveContainer>
+      </ChartContainer>
     </div>
   );
 };

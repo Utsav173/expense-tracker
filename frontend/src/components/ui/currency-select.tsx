@@ -42,7 +42,7 @@ const CurrencySelect: React.FC<CurrencySelectProps> = ({
     <SelectTrigger
       disabled={disabled}
       className={cn(
-        'w-full justify-between bg-background px-3 font-normal outline-offset-0 hover:bg-background focus-visible:border-ring focus-visible:outline-[3px] focus-visible:outline-ring/20',
+        'bg-background hover:bg-background focus-visible:border-ring focus-visible:outline-ring/20 w-full justify-between px-3 font-normal outline-offset-0 focus-visible:outline-[3px]',
         className
       )}
     >
@@ -72,7 +72,7 @@ const CurrencySelect: React.FC<CurrencySelectProps> = ({
       ) : (
         trigger
       )}
-      <SelectContent className='w-full border-input p-0'>
+      <SelectContent className='border-input w-full p-0'>
         <SelectGroup>
           {currencies.map((currency) => (
             <SelectItem
@@ -87,10 +87,10 @@ const CurrencySelect: React.FC<CurrencySelectProps> = ({
           ))}
         </SelectGroup>
         {currencies.length === 0 && !isLoading && (
-          <div className='p-2 text-center text-sm text-muted-foreground'>No currency found.</div>
+          <div className='text-muted-foreground p-2 text-center text-sm'>No currency found.</div>
         )}
         {isLoading && (
-          <div className='p-2 text-center text-sm text-muted-foreground'>Loading currencies...</div>
+          <div className='text-muted-foreground p-2 text-center text-sm'>Loading currencies...</div>
         )}
       </SelectContent>
     </Select>

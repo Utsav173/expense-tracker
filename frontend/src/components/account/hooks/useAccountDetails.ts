@@ -25,6 +25,7 @@ interface QueryKeys {
   account: string[];
   analytics: any[];
   chart: any[];
+  spendingChart: any[];
 }
 
 export const useAccountDetails = (id: string, searchParams: SearchParams) => {
@@ -71,6 +72,13 @@ export const useAccountDetails = (id: string, searchParams: SearchParams) => {
         {
           dateRange: filters.dateRange
         }
+      ],
+      spendingChart: [
+        'spendingChart',
+        id,
+        {
+          dateRange: filters.dateRange
+        }
       ]
     }),
     [id, filters, page]
@@ -81,7 +89,8 @@ export const useAccountDetails = (id: string, searchParams: SearchParams) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.transactions, refetchType: 'all' }),
       queryClient.invalidateQueries({ queryKey: queryKeys.account, refetchType: 'all' }),
       queryClient.invalidateQueries({ queryKey: queryKeys.analytics, refetchType: 'all' }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.chart, refetchType: 'all' })
+      queryClient.invalidateQueries({ queryKey: queryKeys.chart, refetchType: 'all' }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.spendingChart, refetchType: 'all' })
     ]);
   }, [queryClient, queryKeys]);
 

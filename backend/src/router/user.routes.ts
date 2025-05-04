@@ -1,387 +1,160 @@
 import { Hono } from 'hono';
-import { sign, verify } from 'hono/jwt';
 import { HTTPException } from 'hono/http-exception';
 import { zValidator } from '@hono/zod-validator';
-import { loginSchema, userSchema, updateUserSchema } from '../utils/schema.validations';
-import { db } from '../database';
-import { Account, Analytics, Category, User } from '../database/schema';
-import { eq } from 'drizzle-orm';
-import { WelcomeEmailTemp, compressImage, forgotPasswordTemp } from '../utils';
+import {
+  loginSchema,
+  userSchema,
+  updateUserSchema,
+  aiApiKeySchema,
+} from '../utils/schema.validations';
 import authMiddleware from '../middleware';
-import bcrypt from 'bcrypt';
-import nodemailer from 'nodemailer';
+import { UpdatePayload, userService } from '../services/user.service';
 
-// Create a new Hono instance for the user router
 const userRouter = new Hono();
 
-// GET /me - Get information about the currently authenticated user
 userRouter.get('/me', authMiddleware, async (c) => {
-  const userId = await c.get('userId' as any);
-
-  const findUser = await db.query.User.findFirst({
-    where(fields, operators) {
-      return operators.eq(fields.id, userId);
-    },
-    columns: {
-      id: true,
-      name: true,
-      email: true,
-      profilePic: true,
-      lastLoginAt: true,
-      createdAt: true,
-      preferredCurrency: true,
-    },
-  }).catch((err) => {
-    throw new HTTPException(500, { message: err.message });
-  });
-
-  return c.json(findUser ?? {});
+  const userId = await c.get('userId');
+  try {
+    const user = await userService.getMe(userId);
+    return c.json(user);
+  } catch (error: any) {
+    if (error instanceof HTTPException) throw error;
+    throw new HTTPException(500, { message: error.message });
+  }
 });
 
-// POST /login - Login a user with email and password
 userRouter.post('/login', zValidator('json', loginSchema), async (c) => {
-  const { email, password } = await c.req.json();
-
-  const findUser = await db.query.User.findFirst({
-    where(fields, operators) {
-      return operators.eq(fields.email, email);
-    },
-    columns: {
-      id: true,
-      name: true,
-      email: true,
-      password: true,
-      profilePic: true,
-      isSocial: true,
-    },
-  }).catch((err) => {
-    throw new HTTPException(500, { message: err.message });
-  });
-
-  if (!findUser) {
-    throw new HTTPException(404, { message: 'User not found' });
+  try {
+    const payload = await c.req.json();
+    const result = await userService.login(payload);
+    return c.json({ data: result });
+  } catch (error: any) {
+    if (error instanceof HTTPException) throw error;
+    throw new HTTPException(500, { message: error.message });
   }
-
-  if (findUser.isSocial) {
-    throw new HTTPException(400, { message: 'Login with social account' });
-  }
-
-  // check if password is correct
-  const isMatch = await bcrypt.compare(password, findUser.password);
-
-  if (!isMatch) {
-    throw new HTTPException(400, { message: 'Invalid credentials' });
-  }
-
-  const token = await sign({ id: findUser.id, email: findUser.email }, 'secret');
-
-  await db.update(User).set({ token, lastLoginAt: new Date() }).where(eq(User.id, findUser.id));
-
-  return c.json({
-    data: {
-      token,
-      user: {
-        id: findUser.id,
-        name: findUser.name,
-        email: findUser.email,
-        profile: findUser.profilePic,
-      },
-    },
-  });
 });
 
-// POST /signup - Create a new user account
 userRouter.post('/signup', zValidator('form', userSchema), async (c) => {
-  const data = await c.req.parseBody();
-  const { name, email, password } = data;
-
-  const findUser = await db.query.User.findFirst({
-    where(fields, operators) {
-      return operators.eq(fields.email, email.toString());
-    },
-    columns: {
-      id: true,
-    },
-  }).catch((err) => {
-    throw new HTTPException(500, { message: err.message });
-  });
-
-  if (findUser) {
-    throw new HTTPException(409, { message: 'User already exists' });
+  try {
+    const formData = await c.req.formData();
+    const payload = {
+      name: formData.get('name') as string,
+      email: formData.get('email') as string,
+      password: formData.get('password') as string,
+      profilePic: formData.get('profilePic'),
+    };
+    const result = await userService.signup(payload);
+    c.status(201);
+    return c.json(result);
+  } catch (error: any) {
+    if (error instanceof HTTPException) throw error;
+    throw new HTTPException(500, { message: error.message });
   }
-
-  let profilePic = await c.req.formData();
-
-  profilePic = profilePic.get('profilePic') as any;
-
-  let profile;
-  if (profilePic) {
-    const { error, data } = await compressImage(profilePic);
-
-    if (error) {
-      throw new HTTPException(400, { message: data });
-    }
-
-    profile = data;
-  }
-
-  const hashedPassword = await bcrypt.hash(password.toString(), 10);
-
-  const newUser = await db
-    .insert(User)
-    .values({
-      name: name.toString(),
-      email: email.toString(),
-      password: hashedPassword,
-      profilePic: profile,
-      isSocial: false,
-    })
-    .returning()
-    .catch((err) => {
-      throw new HTTPException(500, { message: err.message });
-    });
-
-  const defaultAccount = await db
-    .insert(Account)
-    .values({
-      name: `${newUser[0].name}'s Account`,
-      owner: newUser[0].id,
-      balance: 0,
-    })
-    .returning()
-    .catch((err) => {
-      throw new HTTPException(500, { message: err.message });
-    });
-
-  await db
-    .insert(Analytics)
-    .values({
-      account: defaultAccount[0].id,
-      user: newUser[0].id,
-    })
-    .catch((err) => {
-      throw new HTTPException(500, { message: err.message });
-    });
-
-  // create default category
-  await db
-    .insert(Category)
-    .values({
-      name: 'Default',
-      owner: newUser[0].id,
-    })
-    .returning()
-    .catch((err) => {
-      throw new HTTPException(500, { message: err.message });
-    });
-
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.GMAIL_USERNAME,
-      pass: process.env.GMAIL_PASS,
-    },
-  });
-
-  const mailOptions = {
-    from: 'expenssManger1234@gmail.com',
-    to: email.toString(),
-    subject: 'Welcome email',
-    html: WelcomeEmailTemp(name, process.env.LOGINPAGE, email),
-  };
-
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.log(error.message);
-    } else {
-      console.log('Email sent: ' + info.response);
-    }
-  });
-
-  c.status(201);
-
-  return c.json({ message: 'User created successfully!' });
 });
 
-// POST /forgot-password - Send password reset link to user's email
 userRouter.post('/forgot-password', async (c) => {
-  const { email } = await c.req.json();
-
-  if (!email) {
-    throw new HTTPException(400, { message: 'Email is required' });
+  try {
+    const { email } = await c.req.json();
+    const result = await userService.forgotPassword(email);
+    return c.json(result);
+  } catch (error: any) {
+    if (error instanceof HTTPException) throw error;
+    throw new HTTPException(500, { message: error.message });
   }
-
-  const validUser = await db.query.User.findFirst({
-    where(fields, operators) {
-      return operators.eq(fields.email, email);
-    },
-    columns: {
-      name: true,
-      email: true,
-    },
-  });
-
-  if (!validUser) {
-    throw new HTTPException(404, { message: 'User not found' });
-  }
-
-  // generate token
-  const token = await sign({ name: validUser.name, email: validUser.email }, 'secret');
-
-  await db.update(User).set({ resetPasswordToken: token }).where(eq(User.email, email));
-
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.GMAIL_USERNAME,
-      pass: process.env.GMAIL_PASS,
-    },
-  });
-
-  const forgotPasswordLink = `${process.env.RESETPAGE}?token=${token}`;
-
-  const mailOptions = {
-    from: 'expenssManger1234@gmail.com',
-    to: validUser.email,
-    subject: 'Forgot Password',
-    html: forgotPasswordTemp(validUser.name, forgotPasswordLink, validUser.email),
-  };
-
-  transporter.sendMail(mailOptions, (err, info) => {
-    if (err) {
-      console.log(err.message);
-    } else {
-      console.log(info.response);
-    }
-  });
-
-  return c.json({ message: 'Password reset link sent to your email' });
 });
 
-// POST /reset-password - Reset user's password using a reset token
 userRouter.post('/reset-password', async (c) => {
-  const { password, resetPasswordToken } = await c.req.json();
-
-  if (!password || !resetPasswordToken) {
-    throw new HTTPException(400, {
-      message: 'Password and reset password token are required',
-    });
+  try {
+    const { password, resetPasswordToken } = await c.req.json();
+    const result = await userService.resetPassword(resetPasswordToken, password);
+    return c.json(result);
+  } catch (error: any) {
+    if (error instanceof HTTPException) throw error;
+    throw new HTTPException(500, { message: error.message });
   }
-
-  //verify token
-  const verifyToken = await verify(resetPasswordToken, 'secret');
-
-  if (!verifyToken) {
-    throw new HTTPException(400, { message: 'Invalid reset password token' });
-  }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  await db
-    .update(User)
-    .set({ password: hashedPassword, resetPasswordToken: null })
-    .where(eq(User.email, verifyToken.email))
-    .catch((err) => {
-      throw new HTTPException(500, { message: err.message });
-    });
-
-  return c.json({ message: 'Password reset successfully!' });
 });
 
-// POST /update-user - Update user details
 userRouter.put('/update', authMiddleware, zValidator('form', updateUserSchema), async (c) => {
   try {
-    const userId = await c.get('userId' as any);
+    const userId = await c.get('userId');
     const formData = await c.req.formData();
-    const name = formData.get('name');
-    const preferredCurrency = formData.get('preferredCurrency');
-    const profilePic = formData.get('profilePic');
 
-    const updateData: any = {};
-
-    if (name) {
-      updateData.name = name;
+    const payload = {} as UpdatePayload;
+    if (formData.has('name')) {
+      payload.name = formData.get('name') as string;
+    }
+    if (formData.has('preferredCurrency')) {
+      payload.preferredCurrency = formData.get('preferredCurrency') as string;
+    }
+    if (formData.has('profilePic')) {
+      payload.profilePic = formData.get('profilePic') as string;
     }
 
-    if (preferredCurrency) {
-      updateData.preferredCurrency = preferredCurrency;
+    if (Object.keys(payload).length === 0) {
+      throw new HTTPException(400, { message: 'No update fields provided in form data.' });
     }
 
-    if (profilePic) {
-      const { error, data } = await compressImage(profilePic);
-
-      if (error) {
-        throw new HTTPException(400, { message: data });
-      }
-
-      updateData.profilePic = data;
-    }
-
-    await db.update(User).set(updateData).where(eq(User.id, userId));
-
-    return c.json({
-      message: 'User updated successfully',
-      data: updateData,
-    });
-  } catch (error) {
-    console.log(error);
-
-    throw new HTTPException(500, {
-      message: error instanceof Error ? error.message : 'Something went wrong',
-    });
+    const result = await userService.updateUser(userId, payload);
+    return c.json(result);
+  } catch (error: any) {
+    if (error instanceof HTTPException) throw error;
+    console.error('Update user error:', error);
+    throw new HTTPException(500, { message: 'Something went wrong during user update.' });
   }
 });
 
-// PUT /user/preferences - Update user preferences
+userRouter.put('/ai-key', authMiddleware, zValidator('json', aiApiKeySchema), async (c) => {
+  try {
+    const userId = await c.get('userId');
+    const { apiKey } = c.req.valid('json');
+    const result = await userService.updateUserAiApiKey(userId, apiKey);
+    return c.json(result);
+  } catch (error: any) {
+    if (error instanceof HTTPException) throw error;
+    console.error('Update AI Key error:', error);
+    throw new HTTPException(500, { message: 'Failed to update AI API key.' });
+  }
+});
+
 userRouter.put('/preferences', authMiddleware, async (c) => {
-  const userId = await c.get('userId' as any);
-  const { preferredCurrency } = await c.req.json();
-
   try {
-    await db.update(User).set({ preferredCurrency }).where(eq(User.id, userId));
-
-    return c.json({ message: 'User preferences updated successfully' });
-  } catch (error) {
-    throw new HTTPException(500, {
-      message: error instanceof Error ? error.message : 'Something went wrong',
-    });
+    const userId = await c.get('userId');
+    const { preferredCurrency } = await c.req.json();
+    if (typeof preferredCurrency !== 'string') {
+      throw new HTTPException(400, { message: 'preferredCurrency must be a string.' });
+    }
+    const result = await userService.updatePreferences(userId, preferredCurrency);
+    return c.json(result);
+  } catch (error: any) {
+    if (error instanceof HTTPException) throw error;
+    throw new HTTPException(500, { message: error.message });
   }
 });
 
-// GET /user/preferences - Get user preferences
 userRouter.get('/preferences', authMiddleware, async (c) => {
-  const userId = await c.get('userId' as any);
-
   try {
-    const user = await db.query.User.findFirst({
-      where: eq(User.id, userId),
-      columns: {
-        preferredCurrency: true,
-      },
-    });
-
-    return c.json(user || {});
-  } catch (error) {
-    throw new HTTPException(500, {
-      message: error instanceof Error ? error.message : 'Something went wrong',
-    });
+    const userId = await c.get('userId');
+    const result = await userService.getPreferences(userId);
+    return c.json(result);
+  } catch (error: any) {
+    if (error instanceof HTTPException) throw error;
+    throw new HTTPException(500, { message: error.message });
   }
 });
 
-// POST /logout - Log out the currently authenticated user
 userRouter.post('/logout', authMiddleware, async (c) => {
-  const userId = await c.get('userId' as any);
-
-  await db.update(User).set({ token: null }).where(eq(User.id, userId));
-
-  return c.json({ message: 'User logged out successfully!' });
+  try {
+    const userId = await c.get('userId');
+    const result = await userService.logout(userId);
+    return c.json(result);
+  } catch (error: any) {
+    if (error instanceof HTTPException) throw error;
+    throw new HTTPException(500, { message: error.message });
+  }
 });
 
-// POST /hc - Health check route (returns a simple message)
 userRouter.get('/hc', (c) => {
-  return c.json({
-    message: 'Hello Health Chekkers!',
-  });
+  return c.json({ message: 'Hello Health Checkers!' });
 });
 
 export default userRouter;

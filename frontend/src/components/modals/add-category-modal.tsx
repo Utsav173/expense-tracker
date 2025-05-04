@@ -13,7 +13,6 @@ import AddModal from './add-modal';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { Loader2 } from 'lucide-react';
 
-// Schema with more validation rules
 const categorySchema = z.object({
   name: z
     .string()
@@ -94,7 +93,6 @@ const AddCategoryModal: React.FC<CreateCategoryModalProps> = ({
     try {
       await mutateAsync(data);
     } catch (error) {
-      // Error is handled by mutation error callback
       console.error('Failed to handle category operation:', error);
     }
   };

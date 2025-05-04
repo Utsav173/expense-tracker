@@ -4,18 +4,18 @@ import React, { useState, useMemo } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2, Repeat, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
-import UpdateTransactionModal from './modals/update-transaction-modal';
-import DeleteConfirmationModal from './modals/delete-confirmation-modal';
+import UpdateTransactionModal from '../modals/update-transaction-modal';
+import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
 import { transactionDelete } from '@/lib/endpoints/transactions';
 import { useToast } from '@/lib/hooks/useToast';
 import { Transaction as TransactionType } from '@/lib/types';
 import { cn, formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
-import CommonTable from './ui/CommonTable';
+import CommonTable from '../ui/CommonTable';
 import { useMutation } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { SingleLineEllipsis } from './ui/ellipsis-components';
+import { SingleLineEllipsis } from '../ui/ellipsis-components';
 
 interface TransactionTableProps {
   transactions: TransactionType[] | undefined;

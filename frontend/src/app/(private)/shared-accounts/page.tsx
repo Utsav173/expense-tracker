@@ -1,11 +1,8 @@
 'use client';
-
 import { useQuery } from '@tanstack/react-query';
 import { accountGetSharedWithMe } from '@/lib/endpoints/accounts';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AccountCard } from '@/components/ui/account-card';
 import { useToast } from '@/lib/hooks/useToast';
-import { Account } from '@/lib/types';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Share2 } from 'lucide-react';
 import { useState } from 'react';

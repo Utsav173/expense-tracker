@@ -21,7 +21,6 @@ import { NumericFormat } from 'react-number-format';
 import DateTimePicker from '../date/date-time-picker';
 import { Combobox, ComboboxOption } from '../ui/combobox';
 
-// Define the schema outside of the component
 const transactionSchema = z.object({
   text: z.string().min(3, 'Description must be at least 3 characters').max(255),
   amount: z
@@ -152,7 +151,6 @@ const AddTransactionModal = ({
         return;
       }
 
-      // Validate account balance for expenses
       if (
         !data.isIncome &&
         selectedAccount.balance &&
@@ -168,7 +166,6 @@ const AddTransactionModal = ({
         return;
       }
 
-      // Validate recurring transaction fields
       if (data.recurring) {
         if (!data.recurrenceType) {
           showError('Please select a recurrence type for recurring transactions.');
@@ -200,7 +197,6 @@ const AddTransactionModal = ({
     }
   };
 
-  // Handle account selection
   const handleAccountChange = (value: string) => {
     setValue('accountId', value);
     const selectedAccount = accounts.find((acc) => acc.id === value);
@@ -209,30 +205,25 @@ const AddTransactionModal = ({
     }
   };
 
-  // Memoized fetchCategoryOptions to prevent infinite re-renders
-  const fetchCategoryOptions = useCallback(
-    async (query: string): Promise<ComboboxOption[]> => {
-      setCategoryComboboxError(null);
-      setCategoryComboboxLoading(true);
-      try {
-        const res = await categoryGetAll({ search: query });
-        const cats = res?.categories || [];
-        const options = cats.map((cat) => ({ value: cat.id, label: cat.name }));
-        if (query && !options.some((opt) => opt.label.toLowerCase() === query.toLowerCase())) {
-          options.push({ value: '__create__', label: `Create "${query}"` });
-        }
-        return options;
-      } catch (err: any) {
-        setCategoryComboboxError('Failed to load categories');
-        return [];
-      } finally {
-        setCategoryComboboxLoading(false);
+  const fetchCategoryOptions = useCallback(async (query: string): Promise<ComboboxOption[]> => {
+    setCategoryComboboxError(null);
+    setCategoryComboboxLoading(true);
+    try {
+      const res = await categoryGetAll({ search: query });
+      const cats = res?.categories || [];
+      const options = cats.map((cat) => ({ value: cat.id, label: cat.name }));
+      if (query && !options.some((opt) => opt.label.toLowerCase() === query.toLowerCase())) {
+        options.push({ value: '__create__', label: `Create "${query}"` });
       }
-    },
-    [] // No dependencies needed
-  );
+      return options;
+    } catch (err: any) {
+      setCategoryComboboxError('Failed to load categories');
+      return [];
+    } finally {
+      setCategoryComboboxLoading(false);
+    }
+  }, []);
 
-  // Memoized handleCreateCategoryInline
   const handleCreateCategoryInline = useCallback(
     async (name: string): Promise<ComboboxOption | null> => {
       try {
@@ -252,7 +243,6 @@ const AddTransactionModal = ({
     [setCategories, setValue, showSuccess, showError]
   );
 
-  // Memoized handleCategoryComboboxChange
   const handleCategoryComboboxChange = useCallback(
     async (option: ComboboxOption | null) => {
       if (!option) {
@@ -260,7 +250,6 @@ const AddTransactionModal = ({
         return;
       }
       if (option.value === '__create__') {
-        // Extract the name from the label
         const match = option.label.match(/^Create\s+"(.+)"$/);
         const name = match ? match[1] : '';
         if (name) {
@@ -276,7 +265,6 @@ const AddTransactionModal = ({
     [setValue, handleCreateCategoryInline]
   );
 
-  // Disabled function for recurrenceEndDate
   const recurrenceEndDateDisabled = useCallback(
     (date: Date) => {
       if (!createdAt) return true;

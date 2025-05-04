@@ -155,11 +155,9 @@ const StatCard = ({
 
   const config = cardConfig[type];
 
-  // Function to determine if a change is considered "good" based on card type
   const isPositiveChange = () => {
-    // For expenses, negative change is good
     if (type === 'expense') return change < 0;
-    // For income and balance, positive change is good
+
     return change > 0;
   };
 

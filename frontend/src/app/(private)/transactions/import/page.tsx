@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Upload, FileText, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -223,7 +223,7 @@ const ImportTransactions = () => {
       <Card className='max-h-fit w-full max-w-4xl'>
         <CardHeader className='space-y-1'>
           <CardTitle className='text-2xl font-bold'>Import Transactions</CardTitle>
-          <p className='text-sm text-muted-foreground'>
+          <p className='text-muted-foreground text-sm'>
             Upload your transaction file in Excel (.xlsx, .xls) or PDF format
           </p>
         </CardHeader>
@@ -259,18 +259,18 @@ const ImportTransactions = () => {
             } ${!accountId ? 'cursor-not-allowed opacity-50' : ''}`}
           >
             <input {...getInputProps()} />
-            <Upload className='h-8 w-8 text-muted-foreground' />
+            <Upload className='text-muted-foreground h-8 w-8' />
             {!accountId ? (
-              <p className='mt-2 text-sm font-medium text-muted-foreground'>
+              <p className='text-muted-foreground mt-2 text-sm font-medium'>
                 Please select an account first
               </p>
             ) : (
               <>
                 <p className='mt-2 text-sm font-medium'>
                   Drag & drop your file here or{' '}
-                  <span className='cursor-pointer text-primary hover:underline'>browse</span>
+                  <span className='text-primary cursor-pointer hover:underline'>browse</span>
                 </p>
-                <p className='text-xs text-muted-foreground'>
+                <p className='text-muted-foreground text-xs'>
                   Supported formats: Excel (.xlsx, .xls) or PDF (max 5MB)
                 </p>
               </>
@@ -306,7 +306,7 @@ const ImportTransactions = () => {
       </Card>
 
       <Dialog open={isFirstConfirmationOpen} onOpenChange={setIsFirstConfirmationOpen}>
-        <DialogContent>
+        <DialogContent className='!w-[90%] max-sm:!w-full'>
           <DialogHeader>
             <DialogTitle>Confirm Transactions</DialogTitle>
             <DialogDescription>
@@ -319,7 +319,7 @@ const ImportTransactions = () => {
               <p className='mb-2 text-sm font-medium'>Total Records: {transactions.length}</p>
               <ScrollArea className='h-[400px] rounded-md border'>
                 <table className='w-full'>
-                  <thead className='sticky top-0 bg-background'>
+                  <thead className='bg-background sticky top-0'>
                     <tr className='border-b'>
                       {Object.keys(transactions[0]).map((key) => (
                         <th key={key} className='p-2 text-left text-sm font-medium'>
@@ -330,7 +330,7 @@ const ImportTransactions = () => {
                   </thead>
                   <tbody>
                     {transactions.map((tx, index) => (
-                      <tr key={index} className='border-b last:border-0 hover:bg-muted/50'>
+                      <tr key={index} className='hover:bg-muted/50 border-b last:border-0'>
                         {Object.values(tx).map((value: any, idx) => (
                           <td key={idx} className='p-2 text-xs'>
                             {typeof value === 'number' ? value.toFixed(2) : value}

@@ -194,7 +194,7 @@ const EnhancedPagination: React.FC<EnhancedPaginationProps> = ({
                     variant === 'pill' && 'rounded-full',
                     variant === 'minimalist' &&
                       page === currentPage &&
-                      'rounded-none border-b-2 border-primary bg-transparent text-primary hover:bg-transparent'
+                      'border-primary text-primary rounded-none border-b-2 bg-transparent hover:bg-transparent'
                   )}
                 >
                   {page}

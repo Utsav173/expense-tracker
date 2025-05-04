@@ -1,5 +1,4 @@
 'use client';
-
 import { ColumnDef } from '@tanstack/react-table';
 import { Budget } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -12,7 +11,6 @@ import UpdateBudgetModal from '../modals/update-budget-modal';
 import { useState } from 'react';
 import { formatCurrency } from '@/lib/utils';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
-import React from 'react';
 
 export const budgetColumns: ColumnDef<Budget>[] = [
   {

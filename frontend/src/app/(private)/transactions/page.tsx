@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import TransactionTable from '@/components/transactions-table';
+import TransactionTable from '@/components/transactions/transactions-table';
 import Loader from '@/components/ui/loader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,18 +15,30 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import AddTransactionModal from '@/components/modals/add-transaction-modal';
-import { Filter, Import, X } from 'lucide-react';
+import { Filter, Import, X, Download } from 'lucide-react';
 import { accountGetDropdown } from '@/lib/endpoints/accounts';
-import { categoryGetAll } from '@/lib/endpoints/category';
+
 import { useToast } from '@/lib/hooks/useToast';
-import { AccountDropdown, Category } from '@/lib/types';
+import { AccountDropdown } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { useTransactions } from '@/components/transactions/hooks/useTransactions';
 import DateRangePickerV2 from '@/components/date/date-range-picker-v2';
+import { API_BASE_URL } from '@/lib/api-client';
+import { getAuthTokenClient } from '@/lib/auth';
+import { format } from 'date-fns';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem
+} from '@/components/ui/dropdown-menu';
+import CategoryCombobox from '@/components/ui/category-combobox';
 
 const TransactionsPage = () => {
-  const { showError } = useToast();
+  const { showError, showSuccess, showInfo } = useToast();
   const [filtersExpanded, setFiltersExpanded] = useState(false);
+  const [exportFormat, setExportFormat] = useState<'xlsx' | 'csv'>('xlsx');
+  const [isExporting, setIsExporting] = useState(false);
 
   const {
     transactionsData,
@@ -53,13 +65,7 @@ const TransactionsPage = () => {
     queryFn: accountGetDropdown
   });
 
-  const { data: categoriesData, isLoading: isLoadingCategories } = useQuery({
-    queryKey: ['categories'],
-    queryFn: categoryGetAll
-  });
-
   const [accounts, setAccounts] = useState<AccountDropdown[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
 
   const activeFiltersCount = [
     filters.accountId !== undefined && filters.accountId !== 'all',
@@ -75,11 +81,82 @@ const TransactionsPage = () => {
     }
   }, [accountsData]);
 
-  useEffect(() => {
-    if (categoriesData?.categories) {
-      setCategories(categoriesData.categories);
+  const handleExport = useCallback(async () => {
+    if (!transactionsData?.transactions || transactionsData.transactions.length === 0) {
+      showError('No transactions available to export with the current filters.');
+      return;
     }
-  }, [categoriesData?.categories]);
+    setIsExporting(true);
+    showInfo('Preparing your export...');
+
+    try {
+      const params = new URLSearchParams();
+      if (filters.accountId && filters.accountId !== 'all')
+        params.set('accountId', filters.accountId);
+      if (debouncedSearchQuery) params.set('q', debouncedSearchQuery);
+      if (filters.categoryId && filters.categoryId !== 'all')
+        params.set('categoryId', filters.categoryId);
+      if (filters.isIncome !== undefined) params.set('isIncome', String(filters.isIncome));
+      if (filters.dateRange?.from)
+        params.set('dateFrom', format(filters.dateRange.from, 'yyyy-MM-dd'));
+      if (filters.dateRange?.to) params.set('dateTo', format(filters.dateRange.to, 'yyyy-MM-dd'));
+      params.set('format', exportFormat);
+
+      const exportUrl = `${API_BASE_URL}/transactions/export?${params.toString()}`;
+      const token = getAuthTokenClient();
+
+      const response = await fetch(exportUrl, {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!response.ok) {
+        let errorMsg = `Export failed with status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.message || errorMsg;
+        } catch (_) {}
+        throw new Error(errorMsg);
+      }
+
+      const disposition = response.headers.get('content-disposition');
+      let filename = `transactions.${exportFormat}`;
+      if (disposition && disposition.indexOf('attachment') !== -1) {
+        const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+        const matches = filenameRegex.exec(disposition);
+        if (matches != null && matches[1]) filename = matches[1].replace(/['"]/g, '');
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+      showSuccess('Export started successfully!');
+    } catch (error: any) {
+      console.error('Export error:', error);
+      showError(error.message || 'Failed to export transactions.');
+    } finally {
+      setIsExporting(false);
+    }
+  }, [
+    filters,
+    exportFormat,
+    showError,
+    showSuccess,
+    showInfo,
+    transactionsData?.transactions,
+    debouncedSearchQuery
+  ]);
+
+  const handleExportWithFormat = async (format: 'xlsx' | 'csv') => {
+    setExportFormat(format);
+    await handleExport();
+  };
 
   if (isError) {
     showError(`Failed to get Transaction Details: ${(error as Error).message}`);
@@ -88,12 +165,13 @@ const TransactionsPage = () => {
 
   return (
     <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
+      {/* Header */}
       <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div>
           <h1 className='text-xl font-bold sm:text-2xl'>Transactions</h1>
           <p className='text-muted-foreground mt-1 text-sm sm:text-base'>
-            {transactionsData?.totalCount
-              ? `${transactionsData.totalCount} transactions found`
+            {transactionsData?.pagination.total
+              ? `${transactionsData.pagination.total} transactions found`
               : 'Manage your financial transactions'}
           </p>
         </div>
@@ -108,6 +186,7 @@ const TransactionsPage = () => {
         </div>
       </div>
 
+      {/* Filters */}
       <div className='flex w-full flex-col'>
         <div
           className={cn(`flex flex-col gap-3 sm:flex-row sm:items-center`, {
@@ -154,8 +233,9 @@ const TransactionsPage = () => {
           </div>
         </div>
         {filtersExpanded && (
-          <div className='mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4'>
-            <div>
+          <div className='mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5'>
+            {/* Account Filter */}
+            <div className='space-y-1'>
               <label className='mb-1 block text-xs font-medium sm:text-sm'>Account</label>
               <Select onValueChange={handleAccountChange} value={filters.accountId || 'all'}>
                 <SelectTrigger className='h-9 w-full text-xs sm:h-10 sm:text-sm'>
@@ -178,30 +258,20 @@ const TransactionsPage = () => {
               </Select>
             </div>
 
-            <div>
+            {/* Category Filter - REPLACED */}
+            <div className='space-y-1'>
               <label className='mb-1 block text-xs font-medium sm:text-sm'>Category</label>
-              <Select onValueChange={handleCategoryChange} value={filters.categoryId || 'all'}>
-                <SelectTrigger className='h-9 w-full text-xs sm:h-10 sm:text-sm'>
-                  <SelectValue placeholder='All Categories' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='all'>All Categories</SelectItem>
-                  {isLoadingCategories ? (
-                    <SelectItem value='loading-categories' disabled>
-                      Loading categories...
-                    </SelectItem>
-                  ) : (
-                    categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+              <CategoryCombobox
+                value={filters.categoryId}
+                onChange={handleCategoryChange}
+                allowClear={true}
+                placeholder='All Categories'
+                className='h-9 text-xs sm:h-10 sm:text-sm'
+              />
             </div>
 
-            <div>
+            {/* Type Filter */}
+            <div className='space-y-1'>
               <label className='mb-1 block text-xs font-medium sm:text-sm'>Type</label>
               <Select
                 onValueChange={handleIncomeTypeChange}
@@ -218,17 +288,18 @@ const TransactionsPage = () => {
               </Select>
             </div>
 
-            <div>
+            {/* Date Range Filter */}
+            <div className='space-y-1'>
               <label className='mb-1 block text-xs font-medium sm:text-sm'>Date Range</label>
               <DateRangePickerV2
                 date={filters.dateRange}
                 onDateChange={handleDateRangeSelect}
                 onClear={handleClearDateRange}
                 className='h-9 text-xs sm:h-10 sm:text-sm'
-                placeholder='Select date range'
                 closeOnComplete={true}
                 buttonClassName='h-full'
                 noLabel
+                hideCloseButton
                 minDate={
                   transactionsData?.dateRange?.minDate
                     ? new Date(transactionsData.dateRange.minDate)
@@ -241,10 +312,50 @@ const TransactionsPage = () => {
                 }
               />
             </div>
+
+            {/* Export Controls */}
+            <div className='space-y-1 sm:ml-2'>
+              <label className='mb-1 block text-xs font-medium sm:text-sm'>Export</label>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant='outline'
+                    className='flex h-9 w-full items-center gap-2 text-xs sm:h-10 sm:text-sm'
+                    disabled={
+                      isExporting ||
+                      isLoading ||
+                      !transactionsData?.transactions ||
+                      transactionsData.transactions.length === 0
+                    }
+                  >
+                    <Download className='h-4 w-4' />
+                    Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='start' className='min-w-[180px]'>
+                  <DropdownMenuItem
+                    onClick={async () => await handleExportWithFormat('xlsx')}
+                    disabled={isExporting}
+                  >
+                    <Download className='mr-2 h-4 w-4' />
+                    Export as Excel (.xlsx)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={async () => await handleExportWithFormat('csv')}
+                    disabled={isExporting}
+                  >
+                    <Download className='mr-2 h-4 w-4' />
+                    Export as CSV (.csv)
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         )}
       </div>
-      {isLoading ? (
+
+      {/* Transaction Table */}
+      {isLoading && !transactionsData ? (
         <Loader />
       ) : transactionsData?.transactions && transactionsData.transactions.length > 0 ? (
         <div className='my-2 mb-16 sm:mb-0'>
@@ -254,7 +365,7 @@ const TransactionsPage = () => {
             sortBy={filters.sortBy}
             sortOrder={filters.sortOrder}
             loading={isLoading}
-            totalRecords={transactionsData.totalCount}
+            totalRecords={transactionsData.pagination.total}
             page={page}
             handlePageChange={handlePageChange}
             refetchData={async () => {
@@ -265,7 +376,9 @@ const TransactionsPage = () => {
         </div>
       ) : (
         <div className='flex items-center justify-center py-12'>
-          <p className='text-muted-foreground'>No transactions found</p>
+          <p className='text-muted-foreground'>
+            No transactions found. Try adjusting your filters.
+          </p>
         </div>
       )}
     </div>
