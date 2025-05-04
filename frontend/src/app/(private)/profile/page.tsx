@@ -4,7 +4,6 @@ import UserProfile from '@/components/ui/user-profile';
 import { useTheme } from 'next-themes';
 import dynamic from 'next/dynamic';
 
-// Dynamically import Particles to avoid SSR issues
 const Particles = dynamic(() => import('@/components/ui/particles').then((mod) => mod.Particles), {
   ssr: false
 });

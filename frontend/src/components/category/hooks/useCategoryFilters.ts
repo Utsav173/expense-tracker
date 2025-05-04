@@ -14,10 +14,8 @@ export const useCategoryFilters = () => {
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
-  // Use a ref to track if we're currently updating from URL
   const isUpdatingFromUrl = useRef(false);
 
-  // Use a ref to track the last URL update to avoid loops
   const lastUrlUpdate = useRef({
     q: searchParams.get('q') || '',
     sortBy: searchParams.get('sortBy') || 'createdAt',
@@ -33,10 +31,8 @@ export const useCategoryFilters = () => {
 
   const [debouncedSearchQuery] = useDebounce(filters.searchQuery, 1000);
 
-  // Safe URL update that prevents cycles
   const updateURL = useCallback(
     (params: Record<string, string | undefined>) => {
-      // Check if this would actually change anything
       let hasChanges = false;
       for (const [key, value] of Object.entries(params)) {
         const currentValue = searchParams.get(key) || '';
@@ -47,14 +43,12 @@ export const useCategoryFilters = () => {
         }
       }
 
-      if (!hasChanges) return; // Skip if no changes
+      if (!hasChanges) return;
 
-      // Update lastUrlUpdate ref to remember what we're changing
       Object.entries(params).forEach(([key, value]) => {
         lastUrlUpdate.current[key as keyof typeof lastUrlUpdate.current] = value || '';
       });
 
-      // Update the URL
       const newSearchParams = new URLSearchParams(searchParams.toString());
 
       Object.entries(params).forEach(([key, value]) => {
@@ -71,49 +65,41 @@ export const useCategoryFilters = () => {
     [router, pathname, searchParams]
   );
 
-  // Handle debounced search query changes
   useEffect(() => {
-    if (isUpdatingFromUrl.current) return; // Skip if updating from URL
-    if (debouncedSearchQuery === lastUrlUpdate.current.q) return; // Skip if unchanged
+    if (isUpdatingFromUrl.current) return;
+    if (debouncedSearchQuery === lastUrlUpdate.current.q) return;
 
-    // Update the filters state with debounced value
     setFilters((prev) => ({
       ...prev,
       debouncedSearchQuery
     }));
 
-    // Update URL
     updateURL({
       q: debouncedSearchQuery || undefined,
       page: undefined
     });
   }, [debouncedSearchQuery, updateURL]);
 
-  // Sync from URL changes
   useEffect(() => {
     const urlQ = searchParams.get('q') || '';
     const urlSortBy = searchParams.get('sortBy') || 'createdAt';
     const urlSortOrder = searchParams.get('sortOrder') || 'asc';
 
-    // Check if this is a change we didn't initiate
     const isSelfUpdate =
       urlQ === lastUrlUpdate.current.q &&
       urlSortBy === lastUrlUpdate.current.sortBy &&
       urlSortOrder === lastUrlUpdate.current.sortOrder;
 
-    if (isSelfUpdate) return; // Skip our own updates
+    if (isSelfUpdate) return;
 
-    // Update our tracking refs
     lastUrlUpdate.current = {
       q: urlQ,
       sortBy: urlSortBy,
       sortOrder: urlSortOrder
     };
 
-    // Flag that we're updating from URL
     isUpdatingFromUrl.current = true;
 
-    // Update state from URL
     setFilters({
       searchQuery: urlQ,
       debouncedSearchQuery: urlQ,
@@ -121,15 +107,13 @@ export const useCategoryFilters = () => {
       sortOrder: urlSortOrder as 'asc' | 'desc'
     });
 
-    // Reset flag after state update
     setTimeout(() => {
       isUpdatingFromUrl.current = false;
     }, 0);
   }, [searchParams]);
 
-  // Handlers remain simple
   const setSearchQuery = useCallback((value: string) => {
-    if (isUpdatingFromUrl.current) return; // Skip if updating from URL
+    if (isUpdatingFromUrl.current) return;
 
     setFilters((prev) => ({
       ...prev,
@@ -139,7 +123,7 @@ export const useCategoryFilters = () => {
 
   const handleSort = useCallback(
     (sortBy: string, sortOrder: 'asc' | 'desc') => {
-      if (isUpdatingFromUrl.current) return; // Skip if updating from URL
+      if (isUpdatingFromUrl.current) return;
       if (sortBy === lastUrlUpdate.current.sortBy && sortOrder === lastUrlUpdate.current.sortOrder)
         return;
 

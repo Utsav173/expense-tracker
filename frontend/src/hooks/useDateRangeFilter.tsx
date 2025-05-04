@@ -32,7 +32,6 @@ export const useDateRangeFilter = ({
   const router = useRouter();
   const [dateRange, setDateRange] = useState<DateRange | undefined>(defaultRange);
 
-  // Initialize date range from URL params only if both dates are present
   useEffect(() => {
     if (urlPersistence) {
       const from = searchParams.get('from');
@@ -55,7 +54,6 @@ export const useDateRangeFilter = ({
         onDateChange(newDate);
       }
 
-      // Only update URL if both dates are selected
       if (newDate?.from && newDate?.to && urlPersistence) {
         const params = new URLSearchParams(searchParams.toString());
         params.set('from', newDate.from.toISOString());

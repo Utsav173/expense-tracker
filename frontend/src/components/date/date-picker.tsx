@@ -40,7 +40,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
     if (date) {
       setSelectedDate(date);
       onChange?.(date);
-      setOpenPopover(false); // Close the popover after selecting a date
+      setOpenPopover(false);
     }
   };
 

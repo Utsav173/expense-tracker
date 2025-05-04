@@ -26,7 +26,7 @@ import {
   SidebarHeader,
   SidebarRail
 } from '@/components/ui/sidebar';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { Skeleton } from '../ui/skeleton'; // Import Skeleton
 
 // Define the structure for navigation items, including disabled state

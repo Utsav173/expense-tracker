@@ -4,7 +4,6 @@ import { cookies } from 'next/headers';
 import { z } from 'zod';
 import { API_BASE_URL } from '../../../lib/api-client';
 
-// Function to store the auth token in a server-side cookie
 export async function storeAuthToken(token: string) {
   const cookieStore = await cookies();
 
@@ -49,7 +48,6 @@ export async function userLogout() {
   cookieStore.delete('token');
   cookieStore.delete('user');
 
-  // Make an API call to the backend to logout
   try {
     const response = await fetch(`${API_BASE_URL}/auth/logout`, {
       method: 'POST',
@@ -61,9 +59,6 @@ export async function userLogout() {
     if (!response.ok) {
       console.error('Failed to logout from backend');
     }
-
-    // Clear the token from local storage (client-side)
-    // window.localStorage.removeItem('token'); // This will cause error since it's server action
   } catch (error) {
     console.error('Error logging out:', error);
   }
@@ -116,10 +111,8 @@ export async function userLogin(state: any, formData: FormData) {
       };
     }
 
-    // Store the auth token in a server-side cookie
     await storeAuthToken(data.token);
 
-    // Store the user data in a server-side cookie
     (await cookies()).set('user', JSON.stringify(data.user));
 
     return { error: '', prevState: state, data: data };

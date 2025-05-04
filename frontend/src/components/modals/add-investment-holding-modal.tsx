@@ -125,7 +125,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
   const form = useForm<InvestmentHoldingFormSchema>({
     resolver: zodResolver(investmentHoldingSchema),
     defaultValues: {
-      symbol: null, // Start with null
+      symbol: null,
       shares: '',
       purchasePrice: '',
       purchaseDate: getMostRecentValidDate()
@@ -146,7 +146,6 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
     return !isNaN(sharesNum) && !isNaN(priceNum) ? sharesNum * priceNum : null;
   }, [sharesStr, purchasePriceStr]);
 
-  // --- useQuery for Current Price ---
   const { data: currentPriceInfo, isLoading: isPriceLoading } = useQuery({
     queryKey: ['stockPrice', debouncedSymbolValue],
     queryFn: async () => {
@@ -174,7 +173,6 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
     );
   }, [debouncedSymbolValue, formattedPurchaseDate]);
 
-  // --- useQuery for Historical Price ---
   const { isLoading: isHistoricalPriceLoading, data: historicalPriceData } = useQuery({
     queryKey: ['historicalStockPrice', debouncedSymbolValue, formattedPurchaseDate],
     queryFn: async () => {
@@ -189,7 +187,6 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
     retry: 1
   });
 
-  // --- Effect to update form with fetched historical price ---
   useEffect(() => {
     if (
       canFetchHistorical &&
@@ -198,7 +195,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
       historicalPriceData?.price !== undefined
     ) {
       const fetchedPriceString = historicalPriceData.price.toString();
-      // Only update if the fetched price is different from the current input
+
       if (fetchedPriceString !== form.getValues('purchasePrice')) {
         form.setValue('purchasePrice', fetchedPriceString, {
           shouldValidate: true,
@@ -207,7 +204,6 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
         showSuccess(`Auto-filled price for ${debouncedSymbolValue} on ${formattedPurchaseDate}.`);
       }
     } else if (canFetchHistorical && !isHistoricalPriceLoading && historicalPriceData) {
-      // If fetch succeeded but price is null/undefined
       showError(
         `Could not auto-fetch price for ${debouncedSymbolValue} on ${formattedPurchaseDate}. Enter manually.`
       );
@@ -223,7 +219,6 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
     showError
   ]);
 
-  // --- Price Comparison Memo ---
   const priceComparison = useMemo(() => {
     const currentPrice = currentPriceInfo?.price;
     if (
@@ -241,14 +236,13 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
     return null;
   }, [currentPriceInfo?.price, purchasePriceStr]);
 
-  // --- Mutation for Creating Investment ---
   const createInvestmentMutation = useMutation({
     mutationFn: (data: InvestmentApiPayload) => investmentCreate(data),
     onSuccess: async () => {
       await invalidate(['investments', accountId]);
       await invalidate(['investmentAccountSummary', accountId]);
       await invalidate(['investmentPortfolioSummaryDashboard']);
-      await invalidate(['dashboardData']); // Invalidate dashboard too
+      await invalidate(['dashboardData']);
       showSuccess('Investment added successfully!');
       onInvestmentAdded();
       handleClose();
@@ -260,7 +254,6 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
     }
   });
 
-  // --- Form Submission Handler ---
   const handleCreate = (data: InvestmentHoldingFormSchema) => {
     if (!data.symbol?.value) {
       form.setError('symbol', { message: 'Symbol is required.' });
@@ -277,7 +270,6 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
     createInvestmentMutation.mutate(apiPayload);
   };
 
-  // --- Stock Search Function ---
   const fetchStocks = useCallback(
     async (query: string): Promise<ComboboxOption[]> => {
       if (!query || query.length < 1) return [];
@@ -297,7 +289,6 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
     [searchStocksFn]
   );
 
-  // --- Modal Close Handler ---
   const handleClose = useCallback(() => {
     form.reset({
       symbol: null,
@@ -305,7 +296,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
       purchasePrice: '',
       purchaseDate: getMostRecentValidDate()
     });
-    // Reset query data if needed, or let cache handle it
+
     queryClient.removeQueries({ queryKey: ['stockPrice', debouncedSymbolValue], exact: true });
     queryClient.removeQueries({
       queryKey: ['historicalStockPrice', debouncedSymbolValue, formattedPurchaseDate],
@@ -315,14 +306,12 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
     onOpenChange(false);
   }, [form, onOpenChange, queryClient, debouncedSymbolValue, formattedPurchaseDate]);
 
-  // --- Disable Past Dates/Weekends ---
   const disabledDates = (date: Date): boolean => {
     if (isWeekend(date)) return true;
     if (isFuture(startOfDay(date))) return true;
     return false;
   };
 
-  // Combine all pending states
   const isPending =
     createInvestmentMutation.isPending || isPriceLoading || isHistoricalPriceLoading;
 
@@ -436,7 +425,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                         const validDate = getMostRecentValidDate(newDate);
                         if (!isSameDay(validDate, field.value)) {
                           field.onChange(validDate);
-                          form.setValue('purchasePrice', '', { shouldValidate: true }); // Clear price on date change
+                          form.setValue('purchasePrice', '', { shouldValidate: true });
                         }
                       }
                     }}

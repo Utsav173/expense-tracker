@@ -1,7 +1,7 @@
 'use client';
 import { usePathname } from 'next/navigation';
 import { AiChatTrigger } from './ai-chat-trigger';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 const AI_CHAT_ALLOWED_PATHS = [
   '/dashboard',

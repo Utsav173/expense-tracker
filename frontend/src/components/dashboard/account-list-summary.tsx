@@ -21,7 +21,6 @@ export const AccountListSummary: React.FC<AccountListSummaryProps> = ({
   isLoading,
   className
 }) => {
-  // Fetch accounts dropdown to get currency info
   const { data: accountsDropdown } = useQuery({
     queryKey: ['accountsDropdown'],
     queryFn: accountGetDropdown,
@@ -30,7 +29,6 @@ export const AccountListSummary: React.FC<AccountListSummaryProps> = ({
     refetchOnWindowFocus: true
   });
 
-  // Build the currency map
   const accountIdToCurrencyMap = React.useMemo(() => {
     const map = new Map<string, string>();
     accountsDropdown?.forEach((acc) => {

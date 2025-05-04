@@ -1,10 +1,9 @@
 'use client';
-
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import TransactionTable from '@/components/transactions-table';
+import TransactionTable from '@/components/transactions/transactions-table';
 import DateRangePickerV2 from '@/components/date/date-range-picker-v2';
 import {
   Select,
@@ -15,7 +14,6 @@ import {
 } from '@/components/ui/select';
 import { Search, Filter, X, Download, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Skeleton } from '../ui/skeleton';
 import { Category, Transaction } from '@/lib/types';
 import { DateRange } from 'react-day-picker';
 import { API_BASE_URL } from '@/lib/api-client';
@@ -88,10 +86,9 @@ export const AccountTransactionsSection = ({
   const [showFilters, setShowFilters] = useState(false);
   const [exportFormat, setExportFormat] = useState<'xlsx' | 'csv'>('xlsx');
   const [isExporting, setIsExporting] = useState(false);
-  const { showError, showSuccess, showInfo } = useToast(); // Add showInfo
+  const { showError, showSuccess, showInfo } = useToast();
 
   const handleExport = useCallback(async () => {
-    // Prevent export if no transactions match current filters
     if (!transactionsData?.transactions || transactionsData.transactions.length === 0) {
       showError('No transactions available to export with the current filters.');
       return;
@@ -103,7 +100,6 @@ export const AccountTransactionsSection = ({
     try {
       const params = new URLSearchParams();
 
-      // Add filters to params
       if (filters.accountId) params.set('accountId', filters.accountId);
       if (filters.debouncedSearchQuery) params.set('q', filters.debouncedSearchQuery);
       if (filters.categoryId && filters.categoryId !== 'all')
@@ -125,14 +121,11 @@ export const AccountTransactionsSection = ({
       });
 
       if (!response.ok) {
-        // Try to parse error message from backend
         let errorMsg = `Export failed with status: ${response.status}`;
         try {
           const errorData = await response.json();
           errorMsg = errorData.message || errorMsg;
-        } catch (_) {
-          // Ignore if response is not JSON
-        }
+        } catch (_) {}
         throw new Error(errorMsg);
       }
 
@@ -183,7 +176,7 @@ export const AccountTransactionsSection = ({
             variant='outline'
             size='icon'
             onClick={() => setShowFilters(!showFilters)}
-            className={cn('h-9 w-9 shrink-0', showFilters && 'bg-accent')} // Ensure button doesn't shrink
+            className={cn('h-9 w-9 shrink-0', showFilters && 'bg-accent')}
             aria-label={showFilters ? 'Hide Filters' : 'Show Filters'}
           >
             <Filter className='h-4 w-4' />

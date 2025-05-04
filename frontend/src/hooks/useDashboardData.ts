@@ -31,7 +31,6 @@ export const useDashboardData = ({
 } => {
   const queryClient = useQueryClient();
 
-  // Only fetch dashboard summary and goals here
   const dashboardSummaryQuery = useQuery({
     queryKey: ['dashboardData'],
     queryFn: () => accountGetDashboard(),
@@ -50,7 +49,6 @@ export const useDashboardData = ({
     refetchOnWindowFocus: true
   });
 
-  // Only loading and error for the above queries
   const isLoading = dashboardSummaryQuery.isLoading || goalsQuery.isLoading;
   const isFetching = dashboardSummaryQuery.isFetching || goalsQuery.isFetching;
   const error = dashboardSummaryQuery.error || goalsQuery.error;

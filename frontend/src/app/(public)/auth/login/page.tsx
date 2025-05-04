@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { PasswordInput } from '@/components/ui/password-input';
 

@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose // Import DialogClose
+  DialogClose
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -28,28 +28,25 @@ import {
 } from '@/components/ui/form';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { formatCurrency } from '@/lib/utils';
-import { NumericInput } from '../ui/numeric-input'; // Use the new component
+import { NumericInput } from '../ui/numeric-input';
 import { Loader2, MinusCircle, PlusCircle } from 'lucide-react';
 
-// Schema factory to create schema dynamically based on mode and max amount
 const createAmountSchema = (maxAmount?: number, actionType: 'add' | 'withdraw' = 'add') =>
   z.object({
     amount: z
       .string()
-      .min(1, 'Amount is required.') // Ensure field is not empty
+      .min(1, 'Amount is required.')
       .refine((value) => !isNaN(parseFloat(value)) && parseFloat(value) > 0, {
         message: 'Amount must be a positive number.'
       })
       .refine(
         (value) => {
           if (actionType === 'withdraw' && maxAmount !== undefined) {
-            // Ensure the comparison happens with numbers
             return parseFloat(value) <= maxAmount;
           }
           return true;
         },
         {
-          // Dynamically generate error message with formatted currency
           message: `Cannot withdraw more than the saved amount (${formatCurrency(maxAmount ?? 0)}).`
         }
       )
@@ -83,7 +80,6 @@ const AddWithdrawGoalAmountModal: React.FC<AddWithdrawGoalAmountModalProps> = ({
   const { showSuccess, showError } = useToast();
   const invalidate = useInvalidateQueries();
 
-  // Memoize the schema to prevent recreation on every render unless dependencies change
   const amountSchema = useMemo(
     () => createAmountSchema(mode === 'withdraw' ? currentSavedAmount : undefined, mode),
     [mode, currentSavedAmount]
@@ -92,10 +88,9 @@ const AddWithdrawGoalAmountModal: React.FC<AddWithdrawGoalAmountModalProps> = ({
   const form = useForm<AmountFormSchema>({
     resolver: zodResolver(amountSchema),
     defaultValues: { amount: '' },
-    mode: 'onChange' // Provide feedback as the user types
+    mode: 'onChange'
   });
 
-  // Determine mutation function and messages based on mode
   const mutationFn = mode === 'add' ? goalAddAmount : goalWithdrawAmount;
   const successMessage =
     mode === 'add' ? 'Amount added successfully!' : 'Amount withdrawn successfully!';
@@ -109,13 +104,12 @@ const AddWithdrawGoalAmountModal: React.FC<AddWithdrawGoalAmountModalProps> = ({
   const addWithdrawMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: { amount: number } }) => mutationFn(id, data),
     onSuccess: async () => {
-      await invalidate(['goals']); // Invalidate the goals query cache
+      await invalidate(['goals']);
       showSuccess(successMessage);
-      onSuccess(); // Callback provided by parent
-      handleClose(); // Close modal and reset form
+      onSuccess();
+      handleClose();
     },
     onError: (error: any) => {
-      // Use the specific error message from the API if available
       const message = error?.response?.data?.message || error.message || errorMessage;
       showError(message);
     }
@@ -126,11 +120,10 @@ const AddWithdrawGoalAmountModal: React.FC<AddWithdrawGoalAmountModalProps> = ({
   };
 
   const handleClose = () => {
-    form.reset({ amount: '' }); // Reset form state with default empty string
-    onOpenChange(false); // Close the dialog
+    form.reset({ amount: '' });
+    onOpenChange(false);
   };
 
-  // Reset form when modal is opened or dependencies change
   useEffect(() => {
     if (isOpen) {
       form.reset({ amount: '' });
@@ -167,13 +160,11 @@ const AddWithdrawGoalAmountModal: React.FC<AddWithdrawGoalAmountModalProps> = ({
                       placeholder='0.00'
                       className='w-full'
                       disabled={addWithdrawMutation.isPending}
-                      value={field.value} // Bind value from RHF
+                      value={field.value}
                       onValueChange={(values: { value: any }) => {
-                        // Update form state with the string value
                         field.onChange(values.value);
                       }}
                       autoFocus
-                      // Pass the ref if NumericInput forwards it
                       ref={field.ref as React.Ref<HTMLInputElement>}
                     />
                   </FormControl>
@@ -190,7 +181,7 @@ const AddWithdrawGoalAmountModal: React.FC<AddWithdrawGoalAmountModalProps> = ({
               </DialogClose>
               <Button
                 type='submit'
-                disabled={addWithdrawMutation.isPending || !form.formState.isValid} // Disable if form is invalid
+                disabled={addWithdrawMutation.isPending || !form.formState.isValid}
                 className='min-w-[120px]'
               >
                 {addWithdrawMutation.isPending ? (

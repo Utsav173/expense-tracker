@@ -29,7 +29,7 @@ import {
   ChartLegend,
   ChartLegendContent
 } from '@/components/ui/chart';
-import { useIsMobile } from '@/hooks/use-mobile'; // Import useIsMobile
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const truncateLabel = (label: string, max: number) =>
   label.length > max ? label.slice(0, max - 1) + '…' : label;
@@ -163,7 +163,7 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
   const [activeIndex, setActiveIndex] = useState(0);
   const [chartType, setChartType] = useState<ChartType>(chartTypes[0]);
   const { showError } = useToast();
-  const isMobile = useIsMobile(); // Use the hook
+  const isMobile = useIsMobile();
 
   const {
     data: chartData,
@@ -242,14 +242,14 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
         <ChartContainer
           config={chartConfig}
           className='h-[400px] w-full'
-          aria-label={`Vertical bar chart showing spending breakdown by category for ${durationLabels[duration]}`} // Accessibility
+          aria-label={`Vertical bar chart showing spending breakdown by category for ${durationLabels[duration]}`}
         >
           <ResponsiveContainer width='100%' height='100%'>
             <BarChart
               data={formattedData}
               layout='vertical'
-              margin={{ top: 5, right: 5, left: 5, bottom: 5 }} // Adjust margins
-              barSize={isMobile ? 15 : 20} // Smaller bars on mobile
+              margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+              barSize={isMobile ? 15 : 20}
             >
               <CartesianGrid horizontal={false} strokeDasharray='3 3' />
               <XAxis type='number' hide />
@@ -258,9 +258,9 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
                 type='category'
                 tickLine={false}
                 axisLine={false}
-                tick={{ fontSize: isMobile ? 10 : 12 }} // Smaller font on mobile
-                tickFormatter={(value) => truncateLabel(value, isMobile ? 10 : 15)} // Shorter labels on mobile
-                width={isMobile ? 80 : 100} // Less width on mobile
+                tick={{ fontSize: isMobile ? 10 : 12 }}
+                tickFormatter={(value) => truncateLabel(value, isMobile ? 10 : 15)}
+                width={isMobile ? 80 : 100}
               />
               <ChartTooltip
                 cursor={{ fill: 'hsl(var(--muted))' }}
@@ -282,12 +282,11 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
       );
     }
 
-    // For Pie and Donut charts
     return (
       <ChartContainer
         config={chartConfig}
         className='mx-auto aspect-square h-[400px] max-sm:h-[280px]'
-        aria-label={`${chartType} chart showing spending breakdown by category for ${durationLabels[duration]}`} // Accessibility
+        aria-label={`${chartType} chart showing spending breakdown by category for ${durationLabels[duration]}`}
       >
         <ResponsiveContainer width='100%' height='100%'>
           <PieChart>
@@ -319,7 +318,7 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
               cx='50%'
               cy='50%'
               innerRadius={chartType === 'donut' ? '60%' : '0%'}
-              outerRadius={isMobile ? '70%' : '80%'} // Slightly smaller on mobile
+              outerRadius={isMobile ? '70%' : '80%'}
               paddingAngle={2}
               dataKey='value'
               nameKey='name'

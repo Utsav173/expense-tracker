@@ -21,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { accountGetDropdown, usersGetDropdown } from '@/lib/endpoints/accounts';
 import { apiCreateDebt } from '@/lib/endpoints/debt';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import DateRangePickerV2 from '../date/date-range-picker-v2';
 import { NumericInput } from '../ui/numeric-input';
 import { Loader2, PlusCircle } from 'lucide-react';

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { AiChat } from '@/components/ai/ai-chat';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import Loader from '@/components/ui/loader';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, KeyRound } from 'lucide-react';
@@ -53,7 +53,6 @@ const AiChatPage = () => {
     );
   }
 
-  // Only render AiChat if loading is done and user has API key
   return (
     <div className='container mx-auto flex h-full w-full flex-1 items-center justify-center'>
       <AiChat />

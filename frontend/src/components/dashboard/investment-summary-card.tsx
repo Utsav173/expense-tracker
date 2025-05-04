@@ -30,7 +30,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DateRange } from 'react-day-picker';
 import { format as formatDate, startOfToday, subDays } from 'date-fns';
 import DateRangePickerV2 from '../date/date-range-picker-v2';
-import { ChartContainer, ChartConfig } from '@/components/ui/chart'; // Import Chart components
+import { ChartContainer, ChartConfig } from '@/components/ui/chart';
 
 type PeriodOption = '7d' | '30d' | '90d' | '1y' | 'custom';
 
@@ -289,7 +289,7 @@ export const InvestmentSummaryCard: React.FC<{
             <ChartContainer
               config={sparklineChartConfig}
               className='h-full w-full'
-              aria-label={`Sparkline area chart showing portfolio value trend for the selected period (${selectedPeriod})`} // Accessibility
+              aria-label={`Sparkline area chart showing portfolio value trend for the selected period (${selectedPeriod})`}
             >
               <ResponsiveContainer width='100%' height='100%'>
                 <AreaChart data={sparklineData}>

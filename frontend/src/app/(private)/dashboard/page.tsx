@@ -20,7 +20,7 @@ import FinancialHealth from '@/components/dashboard/financial-health';
 import { DASHBOARD_PRESETS, DASHBOARD_CARD_CONFIG } from '@/config/dashboard-config';
 import { DashboardControls } from '@/components/dashboard/dashboard-controls';
 import { useDashboardData } from '@/hooks/useDashboardData';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import Loader from '@/components/ui/loader';
 
 interface DashboardSettings {

@@ -150,7 +150,6 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
         setMonth(initialDefaultMonth || new Date());
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date, initialDefaultMonth]);
 
   const isSameRange = (a?: DateRange, b?: DateRange): boolean => {
@@ -305,7 +304,6 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
   const getDisplayText = (): string => {
     const displayDate = tempDate ?? date;
     if (!displayDate?.from) {
-      // If a range exists in props.date, show it as placeholder
       if (date?.from && date?.to) {
         return `${formatDateDisplay(date.from)} - ${formatDateDisplay(date.to)}`;
       }

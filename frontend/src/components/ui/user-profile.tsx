@@ -1,7 +1,7 @@
 'use client';
 
 import { useToast } from '@/lib/hooks/useToast';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import React, { useEffect, useState, useCallback, useMemo } from 'react'; // Added useMemo
 import { authUpdateUser, authUpdateUserAiApiKey } from '@/lib/endpoints/auth';
 import { useForm } from 'react-hook-form';

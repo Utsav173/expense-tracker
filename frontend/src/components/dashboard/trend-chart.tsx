@@ -1,6 +1,5 @@
 'use client';
-
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo } from 'react';
 import {
   LineChart as RechartsLineChart,
   BarChart as RechartsBarChart,
@@ -11,22 +10,11 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip, // Keep Tooltip from recharts for the <ChartTooltip> wrapper
-  Legend, // Keep Legend from recharts for the <ChartLegend> wrapper
   ResponsiveContainer
 } from 'recharts';
 import { format } from 'date-fns';
-import {
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  Activity,
-  BarChart,
-  LineChart,
-  AreaChart
-} from 'lucide-react';
 import { DateRange } from 'react-day-picker';
-import { getTimestampsForRange, formatCurrency } from '@/lib/utils'; // Assuming formatCurrency is here
+import { getTimestampsForRange, formatCurrency } from '@/lib/utils';
 import {
   ChartContainer,
   ChartConfig,
@@ -34,9 +22,9 @@ import {
   ChartTooltipContent,
   ChartLegend,
   ChartLegendContent
-} from '@/components/ui/chart'; // Import standardized components
-import { Skeleton } from '../ui/skeleton'; // Import Skeleton
-import NoData from '../ui/no-data'; // Import NoData
+} from '@/components/ui/chart';
+import { Skeleton } from '../ui/skeleton';
+import NoData from '../ui/no-data';
 
 interface ApiChartDataPoint {
   x: number;
@@ -50,10 +38,10 @@ export interface TrendChartProps {
   className?: string;
   currency?: string;
   chartType?: 'line' | 'bar' | 'area';
-  // setChartType is handled by the wrapper, not needed here directly
+
   timeRangeOption: string;
   customDateRange?: DateRange;
-  isLoading?: boolean; // Add isLoading prop
+  isLoading?: boolean;
 }
 
 interface ProcessedDataPoint {
@@ -62,17 +50,12 @@ interface ProcessedDataPoint {
   income: number | null;
   expense: number | null;
   balance: number | null;
-  // Optional: Keep change calculations if needed, but TooltipContent might handle it
-  // incomeChange?: number;
-  // expenseChange?: number;
-  // balanceChange?: number;
 }
 
-// Define the chart config using CSS variables
 const trendsChartConfig = {
   income: {
     label: 'Income',
-    color: 'hsl(var(--chart-income))' // Use HSL for theme compatibility
+    color: 'hsl(var(--chart-income))'
   },
   expense: {
     label: 'Expense',
@@ -93,16 +76,8 @@ export const TrendChart: React.FC<TrendChartProps> = ({
   chartType = 'line',
   timeRangeOption,
   customDateRange,
-  isLoading = false // Default isLoading to false
+  isLoading = false
 }) => {
-  // Keep visibility state if needed for custom legend interaction, otherwise remove
-  // const [visibleSeries, setVisibleSeries] = useState({
-  //   income: true,
-  //   expense: true,
-  //   balance: true,
-  // });
-
-  // Data processing remains the same
   const processedData = useMemo(() => {
     const allIncome = incomeData ?? [];
     const allExpense = expenseData ?? [];
@@ -117,7 +92,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
       if (timeRangeOption === 'all' || !startTimestamp || !endTimestamp) {
         return true;
       }
-      // Ensure timestamp is compared correctly (seconds vs ms)
+
       return point.x >= startTimestamp && point.x <= endTimestamp;
     };
 
@@ -130,7 +105,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
     const ensureDataPoint = (timestamp: number) => {
       if (!dataMap.has(timestamp)) {
         dataMap.set(timestamp, {
-          date: format(new Date(timestamp * 1000), 'MMM dd'), // Use consistent date formatting
+          date: format(new Date(timestamp * 1000), 'MMM dd'),
           timestamp,
           income: null,
           expense: null,
@@ -165,7 +140,6 @@ export const TrendChart: React.FC<TrendChartProps> = ({
     return sortedData;
   }, [incomeData, expenseData, balanceData, timeRangeOption, customDateRange]);
 
-  // Y-axis formatter remains the same
   const formatYaxis = (value: number) => {
     return new Intl.NumberFormat('en-IN', {
       notation: 'compact',
@@ -174,7 +148,6 @@ export const TrendChart: React.FC<TrendChartProps> = ({
     }).format(value);
   };
 
-  // Loading State
   if (isLoading) {
     return (
       <div className={`relative h-[320px] w-full ${className}`}>
@@ -183,7 +156,6 @@ export const TrendChart: React.FC<TrendChartProps> = ({
     );
   }
 
-  // No Data State
   if (processedData.length === 0) {
     return (
       <div className={`relative flex h-[320px] w-full items-center justify-center ${className}`}>
@@ -192,7 +164,6 @@ export const TrendChart: React.FC<TrendChartProps> = ({
     );
   }
 
-  // Render the chart using ChartContainer and standardized components
   return (
     <div className={`relative h-[320px] w-full ${className}`}>
       <ChartContainer config={trendsChartConfig} className='h-full w-full'>
@@ -228,7 +199,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
                 content={
                   <ChartTooltipContent
                     formatter={(value) => formatCurrency(value as number, currency)}
-                    labelKey='date' // Ensure label uses the 'date' field
+                    labelKey='date'
                   />
                 }
               />
@@ -236,21 +207,21 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               <ChartLegend content={<ChartLegendContent />} verticalAlign='top' height={36} />
               <Bar
                 dataKey='income'
-                fill='var(--color-income)' // Use CSS variable via config
+                fill='var(--color-income)'
                 radius={[4, 4, 0, 0]}
                 animationDuration={800}
                 minPointSize={3}
               />
               <Bar
                 dataKey='expense'
-                fill='var(--color-expense)' // Use CSS variable via config
+                fill='var(--color-expense)'
                 radius={[4, 4, 0, 0]}
                 animationDuration={800}
                 minPointSize={3}
               />
               <Bar
                 dataKey='balance'
-                fill='var(--color-balance)' // Use CSS variable via config
+                fill='var(--color-balance)'
                 radius={[4, 4, 0, 0]}
                 animationDuration={800}
                 minPointSize={3}
@@ -340,7 +311,6 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               />
             </RechartsAreaChart>
           ) : (
-            // Default to Line Chart
             <RechartsLineChart
               data={processedData}
               margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
@@ -380,7 +350,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               <Line
                 type='monotone'
                 dataKey='income'
-                stroke='var(--color-income)' // Use CSS variable via config
+                stroke='var(--color-income)'
                 strokeWidth={2}
                 dot={{
                   r: 2,
@@ -395,7 +365,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               <Line
                 type='monotone'
                 dataKey='expense'
-                stroke='var(--color-expense)' // Use CSS variable via config
+                stroke='var(--color-expense)'
                 strokeWidth={2}
                 dot={{
                   r: 2,
@@ -410,7 +380,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               <Line
                 type='monotone'
                 dataKey='balance'
-                stroke='var(--color-balance)' // Use CSS variable via config
+                stroke='var(--color-balance)'
                 strokeWidth={2}
                 dot={{
                   r: 2,

@@ -23,7 +23,6 @@ import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import CurrencySelect from '../ui/currency-select';
 import { Building, Landmark, PlusCircle, Loader2 } from 'lucide-react';
 
-// Slightly stricter schema with trimming
 export const investmentAccountSchema = z.object({
   name: z
     .string()
@@ -81,7 +80,6 @@ const AddInvestmentAccountModal: React.FC<AddInvestmentAccountModalProps> = ({
   const createAccountMutation = useMutation({
     mutationFn: (data: InvestmentAccountFormSchema) => investmentAccountCreate(data),
     onSuccess: async () => {
-      // Invalidate queries that show account lists or portfolio summaries
       await invalidate(['investmentAccounts']);
       await invalidate(['investmentPortfolioSummaryDashboard']);
       showSuccess('Investment account created successfully!');
@@ -100,11 +98,10 @@ const AddInvestmentAccountModal: React.FC<AddInvestmentAccountModalProps> = ({
   };
 
   const handleClose = () => {
-    form.reset(); // Reset form state
-    onOpenChange(false); // Close the dialog
+    form.reset();
+    onOpenChange(false);
   };
 
-  // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
       form.reset({
@@ -195,7 +192,7 @@ const AddInvestmentAccountModal: React.FC<AddInvestmentAccountModalProps> = ({
             <Button
               type='button'
               variant='outline'
-              onClick={handleClose} // Use handleClose
+              onClick={handleClose}
               disabled={createAccountMutation.isPending}
             >
               Cancel

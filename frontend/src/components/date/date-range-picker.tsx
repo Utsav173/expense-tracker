@@ -38,13 +38,10 @@ const DateRangePicker = ({
   const [open, setOpen] = useState(false);
   const [month, setMonth] = useState<Date>(dateRange?.from || new Date());
 
-  // Track which date in the range we're currently selecting (from or to)
   const [selectionState, setSelectionState] = useState<'from' | 'to' | 'complete'>('from');
 
-  // Initialize with props or undefined
   const [localRange, setLocalRange] = useState<DateRange | undefined>(dateRange);
 
-  // Presets for quick date selection
   const today = new Date();
   const presets = [
     { label: 'Today', range: { from: today, to: today } },
@@ -69,19 +66,16 @@ const DateRangePicker = ({
     }
   ];
 
-  // Update month when dateRange changes from parent
   useEffect(() => {
     if (dateRange?.from) {
       setMonth(dateRange.from);
     }
   }, [dateRange]);
 
-  // Update local state when props change
   useEffect(() => {
     setLocalRange(dateRange);
   }, [dateRange]);
 
-  // Reset selection state when popover closes
   useEffect(() => {
     if (!open && localRange?.from && localRange?.to) {
       setSelectionState('complete');
@@ -92,24 +86,19 @@ const DateRangePicker = ({
 
   const handleDateSelect = (range: DateRange | undefined) => {
     if (!range) {
-      // Handle clearing the selection
       setLocalRange(undefined);
       setDateRange(undefined);
       setSelectionState('from');
       return;
     }
 
-    // Handle new date selection based on current state
     if (selectionState === 'from' && range.from) {
-      // User selected start date
       setLocalRange({ from: range.from, to: undefined });
       setSelectionState('to');
       return;
     }
 
     if (selectionState === 'to' && range.from && range.to) {
-      // User selected both dates
-      // Instead of swapping dates, create a properly ordered range
       const orderedRange = createOrderedDateRange(range.from, range.to);
       setLocalRange(orderedRange);
       setDateRange(orderedRange);
@@ -118,7 +107,6 @@ const DateRangePicker = ({
       return;
     }
 
-    // Handle single day selection (when from and to are the same)
     if (range.from && range.to && isEqual(range.from, range.to)) {
       setLocalRange(range);
       setDateRange(range);
@@ -127,17 +115,13 @@ const DateRangePicker = ({
     }
   };
 
-  // Create a properly ordered date range
   const createOrderedDateRange = (date1: Date, date2: Date): DateRange => {
-    // Clone dates to avoid mutating original references
     const startDate = new Date(date1);
     const endDate = new Date(date2);
 
-    // Reset time components for consistent comparison
     startDate.setHours(0, 0, 0, 0);
     endDate.setHours(0, 0, 0, 0);
 
-    // Return dates in correct order
     return isBefore(startDate, endDate)
       ? { from: startDate, to: endDate }
       : { from: endDate, to: startDate };

@@ -12,7 +12,6 @@ export function useIsMobile() {
     const controller = new AbortController();
     const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
 
-    // Debounced update function
     let timeoutId: NodeJS.Timeout;
     const debouncedUpdate = () => {
       clearTimeout(timeoutId);
@@ -21,20 +20,16 @@ export function useIsMobile() {
       }, DEBOUNCE_DELAY);
     };
 
-    // Handle media query changes
     const onChange = () => {
       setIsMobile(mql.matches);
     };
 
-    // Handle resize events
     const onResize = () => {
       debouncedUpdate();
     };
 
-    // Set initial value
     setIsMobile(mql.matches);
 
-    // Add event listeners
     mql.addEventListener('change', onChange, { signal: controller.signal });
     window.addEventListener('resize', onResize, { signal: controller.signal });
 

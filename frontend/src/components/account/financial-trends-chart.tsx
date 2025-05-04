@@ -23,7 +23,7 @@ import {
 import { Skeleton } from '../ui/skeleton';
 import NoData from '../ui/no-data';
 import { formatCurrency } from '@/lib/utils';
-import { useIsMobile } from '@/hooks/use-mobile'; // Import useIsMobile
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface FinancialTrendsChartProps {
   data: Array<{
@@ -57,7 +57,7 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
   currency
 }) => {
   const [chartType, setChartType] = useState('bar');
-  const isMobile = useIsMobile(); // Use the hook
+  const isMobile = useIsMobile();
 
   const formatYaxis = (value: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -90,13 +90,13 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
   }
 
   const axisTickStyle = {
-    fontSize: isMobile ? 10 : 12, // Smaller font on mobile
+    fontSize: isMobile ? 10 : 12,
     fill: 'hsl(var(--muted-foreground))'
   };
-  const yAxisWidth = isMobile ? 35 : 45; // Narrower Y-axis on mobile
-  const barSize = isMobile ? 15 : 20; // Smaller bars on mobile
-  const lineDotRadius = isMobile ? 2 : 3; // Smaller dots on mobile
-  const lineActiveDotRadius = isMobile ? 4 : 5; // Smaller active dots
+  const yAxisWidth = isMobile ? 35 : 45;
+  const barSize = isMobile ? 15 : 20;
+  const lineDotRadius = isMobile ? 2 : 3;
+  const lineActiveDotRadius = isMobile ? 4 : 5;
 
   return (
     <Card className='border-border/40 overflow-hidden border shadow-xs transition-all duration-200'>
@@ -119,7 +119,7 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
         <ChartContainer
           config={trendsChartConfig}
           className='h-[320px] w-full'
-          aria-label={`Chart showing income, expense, and balance trends as a ${chartType} chart.`} // Accessibility
+          aria-label={`Chart showing income, expense, and balance trends as a ${chartType} chart.`}
         >
           {chartType === 'bar' ? (
             <ResponsiveContainer width='100%' height='100%'>
@@ -136,12 +136,12 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
                   axisLine={{ stroke: 'hsl(var(--border))' }}
                   tick={axisTickStyle}
                   interval='preserveStartEnd'
-                  minTickGap={isMobile ? 20 : 15} // Adjust tick gap
+                  minTickGap={isMobile ? 20 : 15}
                 />
                 <YAxis
                   tickFormatter={formatYaxis}
                   tickLine={true}
-                  dx={-5} // Adjust dx
+                  dx={-5}
                   axisLine={{ stroke: 'hsl(var(--border))' }}
                   tick={axisTickStyle}
                   width={yAxisWidth}
@@ -177,7 +177,6 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            // Default to Line Chart
             <ResponsiveContainer width='100%' height='100%'>
               <RechartsLineChart data={data} margin={{ top: 10, right: 5, left: -10, bottom: 0 }}>
                 <CartesianGrid

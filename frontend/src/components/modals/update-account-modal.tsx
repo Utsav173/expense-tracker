@@ -31,7 +31,6 @@ import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { Loader2, Pencil, Banknote, CircleDollarSign } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
-// Schema only needs the name field for updating
 const formSchema = z.object({
   name: z
     .string()
@@ -40,7 +39,6 @@ const formSchema = z.object({
     .trim()
 });
 
-// Define the type for the payload sent to the API (only name)
 type AccountUpdatePayload = Pick<z.infer<typeof formSchema>, 'name'>;
 
 interface UpdateAccountModalProps {
@@ -49,7 +47,7 @@ interface UpdateAccountModalProps {
   accountId: string;
   initialValues: {
     name: string;
-    balance: number | undefined | null; // Accept null for balance
+    balance: number | undefined | null;
     currency: string | undefined;
   };
   onAccountUpdated: () => void;
@@ -73,7 +71,6 @@ export function UpdateAccountModal({
     mode: 'onChange'
   });
 
-  // Reset form when initial values change or modal opens
   React.useEffect(() => {
     if (open) {
       form.reset({
@@ -86,13 +83,12 @@ export function UpdateAccountModal({
     mutationFn: ({ id, data }: { id: string; data: AccountUpdatePayload }) =>
       accountUpdate(id, data),
     onSuccess: async () => {
-      // Invalidate queries related to accounts and dashboard
       await invalidate(['accounts']);
-      await invalidate(['account', accountId]); // Invalidate specific account details
+      await invalidate(['account', accountId]);
       await invalidate(['dashboardData']);
       showSuccess('Account name updated successfully!');
       onAccountUpdated();
-      onOpenChange(false); // Close modal on success
+      onOpenChange(false);
     },
     onError: (error: any) => {
       const message =
@@ -101,9 +97,7 @@ export function UpdateAccountModal({
     }
   });
 
-  // Submit handler sends only the name
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // Only include the name in the data payload
     const updateData: AccountUpdatePayload = { name: values.name };
     updateAccountMutation.mutate({ id: accountId, data: updateData });
   }
