@@ -1,4 +1,3 @@
-// src/services/investmentAccount.service.ts
 import { db } from '../database';
 import { Investment, InvestmentAccount } from '../database/schema';
 import {
@@ -42,14 +41,9 @@ export class InvestmentAccountService {
       limit: limit,
       offset: limit * (page - 1),
       orderBy: [orderByClause],
-      // Optionally include related investments count or summary here if needed
-      // with: { investments: { columns: { id: true } } } // Example to get count later
     }).catch((err) => {
       throw new HTTPException(500, { message: `DB Fetch Error: ${err.message}` });
     });
-
-    // If you need investment count per account, you might query it separately or adjust the above
-    // For simplicity now, returning accounts directly.
 
     return {
       data: investmentAccounts,
@@ -67,43 +61,38 @@ export class InvestmentAccountService {
       throw new HTTPException(404, { message: 'Investment account not found or access denied.' });
     }
 
-    // Use Drizzle's aggregate functions for clarity and type safety
     const summaryResult = await db
       .select({
         totalInvestment: sum(Investment.investedAmount).mapWith(Number),
         totalDividend: sum(Investment.dividend).mapWith(Number),
-        // totalShares: sum(Investment.shares).mapWith(Number) // If needed
       })
       .from(Investment)
       .where(eq(Investment.account, accountId))
-      .groupBy(Investment.account) // Group by account ID is sufficient here
-      .then((res) => res[0]) // Expecting one row or none
+      .groupBy(Investment.account)
+      .then((res) => res[0])
       .catch((err) => {
         throw new HTTPException(500, { message: `DB Summary Error: ${err.message}` });
       });
 
     const totalInvestment = summaryResult?.totalInvestment ?? 0;
     const totalDividend = summaryResult?.totalDividend ?? 0;
-    // Calculate total value (assuming it's investment + dividend for simplicity)
+
     const totalValue = totalInvestment + totalDividend;
 
     return {
-      accountId: accountCheck.id, // Return ID for consistency
+      accountId: accountCheck.id,
       accountname: accountCheck.name,
       currency: accountCheck.currency,
       platform: accountCheck.platform,
       totalinvestment: totalInvestment,
       totaldividend: totalDividend,
-      totalvalue: totalValue, // Based on simple calculation
+      totalvalue: totalValue,
     };
   }
 
   async getInvestmentAccountById(accountId: string, userId: string) {
     const investmentAccount = await db.query.InvestmentAccount.findFirst({
-      // Ensure user owns the account
       where: and(eq(InvestmentAccount.id, accountId), eq(InvestmentAccount.userId, userId)),
-      // Optionally load related investments here if always needed
-      // with: { investments: true }
     }).catch((err) => {
       throw new HTTPException(500, { message: `DB Fetch Error: ${err.message}` });
     });
@@ -121,7 +110,6 @@ export class InvestmentAccountService {
   ) {
     const { name, platform, currency } = payload;
 
-    // Optionally check for duplicate account names for the same user
     const existingAccount = await db.query.InvestmentAccount.findFirst({
       where: and(eq(InvestmentAccount.name, name), eq(InvestmentAccount.userId, userId)),
       columns: { id: true },
@@ -139,7 +127,7 @@ export class InvestmentAccountService {
         name,
         platform,
         currency,
-        createdAt: new Date(), // Explicitly set createdAt
+        createdAt: new Date(),
       })
       .returning()
       .catch((err) => {
@@ -160,10 +148,9 @@ export class InvestmentAccountService {
   ) {
     const { name, platform } = payload;
 
-    // Verify ownership
     const account = await db.query.InvestmentAccount.findFirst({
       where: and(eq(InvestmentAccount.id, accountId), eq(InvestmentAccount.userId, userId)),
-      columns: { id: true, name: true, platform: true }, // Fetch fields being updated for comparison
+      columns: { id: true, name: true, platform: true },
     });
 
     if (!account) {
@@ -179,7 +166,7 @@ export class InvestmentAccountService {
     if (name !== undefined && name !== account.name) {
       updateData.name = name;
       changed = true;
-      // Optionally check for duplicate names again if updating name
+
       const existingName = await db.query.InvestmentAccount.findFirst({
         where: and(
           eq(InvestmentAccount.name, name),
@@ -220,7 +207,6 @@ export class InvestmentAccountService {
   }
 
   async deleteInvestmentAccount(accountId: string, userId: string) {
-    // Verify ownership
     const account = await db.query.InvestmentAccount.findFirst({
       where: and(eq(InvestmentAccount.id, accountId), eq(InvestmentAccount.userId, userId)),
       columns: { id: true },
@@ -232,7 +218,6 @@ export class InvestmentAccountService {
       });
     }
 
-    // Use transaction for atomicity: delete investments first, then the account
     await db.transaction(async (tx) => {
       await tx
         .delete(Investment)

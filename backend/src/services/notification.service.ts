@@ -14,8 +14,8 @@ import {
   addYears,
   isBefore,
   isEqual,
-  isAfter, // Import isAfter
-  parseISO, // Import parseISO
+  isAfter,
+  parseISO,
 } from 'date-fns';
 import {
   budgetAlertEmailTemp,
@@ -23,7 +23,7 @@ import {
   billReminderEmailTemp,
 } from '../utils/email.utils';
 import { recurringTransactionService } from './recurring.service';
-import { HTTPException } from 'hono/http-exception'; // Keep HTTPException
+import { HTTPException } from 'hono/http-exception';
 
 const BUDGET_ALERT_THRESHOLD = 0.9;
 const GOAL_REMINDER_DAYS = 7;
@@ -47,7 +47,7 @@ class NotificationService {
         ),
         with: {
           user: { columns: { id: true, email: true, name: true, preferredCurrency: true } },
-          category: { columns: { id: true, name: true } }, // Ensure category ID and name are fetched
+          category: { columns: { id: true, name: true } },
         },
       });
 
@@ -87,7 +87,7 @@ class NotificationService {
           const percentageSpent = budgetedAmount > 0 ? spentAmount / budgetedAmount : 0;
 
           const budgetDetails = {
-            categoryName: budget.category.name ?? 'Unknown Category', // Use fetched name
+            categoryName: budget.category.name ?? 'Unknown Category',
             budgetedAmount: budgetedAmount,
             spentAmount: spentAmount,
             period: format(now, 'MMMM yyyy'),
@@ -138,7 +138,7 @@ class NotificationService {
     try {
       const goalsToRemind = await db.query.SavingGoal.findMany({
         where: and(
-          isNotNull(SavingGoal.targetDate), // Use isNotNull correctly
+          isNotNull(SavingGoal.targetDate),
           lte(SavingGoal.targetDate, reminderCutoffDate),
           gt(SavingGoal.targetDate, now),
           sql`${SavingGoal.savedAmount} < ${SavingGoal.targetAmount}`,
@@ -157,7 +157,6 @@ class NotificationService {
       let errorCount = 0;
 
       for (const goal of goalsToRemind) {
-        // Ensure user and targetDate are present
         if (!goal.user || !goal.targetDate) continue;
 
         try {
@@ -198,7 +197,7 @@ class NotificationService {
           eq(Transaction.isIncome, false),
           or(isNull(Transaction.recurrenceEndDate), gt(Transaction.recurrenceEndDate, now)),
         ),
-        // Fetch related user and account data correctly
+
         with: {
           owner: {
             columns: { id: true, email: true, name: true, preferredCurrency: true },
@@ -218,7 +217,6 @@ class NotificationService {
       let errorCount = 0;
 
       for (const template of templates) {
-        // Access user via the relation name
         const user = template.owner;
         if (!user) {
           console.warn(`Skipping template ${template.id} due to missing user relation.`);
@@ -267,19 +265,14 @@ class NotificationService {
             isBefore(nextDueDate, reminderCutoffDate)
           ) {
             console.log(`Sending bill reminder for user ${user.id}, bill "${template.text}"`);
-            // Access account currency via relation
+
             const accountCurrency = template.account?.currency;
-            await emailService.sendBillReminderEmail(
-              // Use correct method name
-              user.email,
-              user.name,
-              {
-                description: template.text,
-                amount: template.amount,
-                dueDate: format(nextDueDate, 'MMMM d, yyyy'),
-                currency: template.currency ?? accountCurrency ?? user.preferredCurrency ?? 'INR', // Fallback logic
-              },
-            );
+            await emailService.sendBillReminderEmail(user.email, user.name, {
+              description: template.text,
+              amount: template.amount,
+              dueDate: format(nextDueDate, 'MMMM d, yyyy'),
+              currency: template.currency ?? accountCurrency ?? user.preferredCurrency ?? 'INR',
+            });
             remindedCount++;
           }
         } catch (err: any) {

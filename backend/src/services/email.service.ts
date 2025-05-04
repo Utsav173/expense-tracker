@@ -1,6 +1,5 @@
 import nodemailer from 'nodemailer';
 import Mail from 'nodemailer/lib/mailer';
-import { HTTPException } from 'hono/http-exception';
 import {
   WelcomeEmailTemp,
   billReminderEmailTemp,
@@ -10,7 +9,6 @@ import {
 } from '../utils/email.utils';
 import { config } from '../config';
 
-// Define a type for email options for better structure
 interface EmailOptions {
   to: string;
   subject: string;
@@ -21,22 +19,20 @@ export class EmailService {
   private transporter: Mail;
 
   constructor() {
-    // Configure the transporter once
-    // TODO: Replace with configuration loading later (Step 5)
     if (!config.GMAIL_USERNAME || !config.GMAIL_PASS) {
       console.warn(
         'EmailService: GMAIL_USERNAME or GMAIL_PASS environment variables not set. Email sending will likely fail.',
       );
-      // Create a dummy transporter or throw an error if email is critical
+
       this.transporter = nodemailer.createTransport({
-        jsonTransport: true, // Doesn't send emails, just generates messages
+        jsonTransport: true,
       });
     } else {
       this.transporter = nodemailer.createTransport({
-        service: 'gmail', // Or use SMTP host/port/user/pass from env vars
+        service: 'gmail',
         auth: {
           user: config.GMAIL_USERNAME,
-          pass: config.GMAIL_PASS, // Use App Password for Gmail
+          pass: config.GMAIL_PASS,
         },
       });
     }
@@ -49,7 +45,7 @@ export class EmailService {
    */
   async sendMail(options: EmailOptions): Promise<void> {
     const mailOptions = {
-      from: `"Expense Tracker" <${config.GMAIL_USERNAME || 'noreply@example.com'}>`, // Use a display name and configured sender
+      from: `"Expense Tracker" <${config.GMAIL_USERNAME || 'noreply@example.com'}>`,
       to: options.to,
       subject: options.subject,
       html: options.html,
@@ -60,8 +56,6 @@ export class EmailService {
       console.log(`Email sent: ${options.subject} to ${options.to}. Response: ${info.response}`);
     } catch (error: any) {
       console.error(`Failed to send email "${options.subject}" to ${options.to}:`, error.message);
-      // Decide if this should throw or just log. Logging for now.
-      // throw new HTTPException(500, { message: `Failed to send email: ${error.message}` });
     }
   }
 
@@ -69,7 +63,7 @@ export class EmailService {
    * Sends the welcome email.
    */
   async sendWelcomeEmail(username: string, email: string): Promise<void> {
-    const loginPageUrl = config.LOGINPAGE || '#'; // Get URL from env
+    const loginPageUrl = config.LOGINPAGE || '#';
     const html = WelcomeEmailTemp(username, loginPageUrl, email);
     await this.sendMail({
       to: email,
@@ -82,7 +76,7 @@ export class EmailService {
    * Sends the forgot password email.
    */
   async sendForgotPasswordEmail(username: string, email: string, token: string): Promise<void> {
-    const resetPageUrl = config.RESETPAGE || '#'; // Get URL from env
+    const resetPageUrl = config.RESETPAGE || '#';
     const resetLink = `${resetPageUrl}?token=${token}`;
     const html = forgotPasswordTemp(username, resetLink, email);
     await this.sendMail({
@@ -103,7 +97,7 @@ export class EmailService {
     const subject = `Expense Tracker: Account Shared - ${accountName}`;
     const html = `<p>Hello,</p><p>The Expense Tracker account "<strong>${accountName}</strong>"${
       sharerName ? ` shared by ${sharerName}` : ''
-    } has been shared with you.</p><p>You can now view its details within the app.</p>`; // Simple template
+    } has been shared with you.</p><p>You can now view its details within the app.</p>`;
     await this.sendMail({
       to: targetEmail,
       subject: subject,
@@ -172,5 +166,4 @@ export class EmailService {
   }
 }
 
-// Export a singleton instance
 export const emailService = new EmailService();

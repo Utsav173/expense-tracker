@@ -26,7 +26,7 @@ export class BudgetService {
     sortBy: keyof InferSelectModel<typeof Budget>,
     sortOrder: 'asc' | 'desc',
   ) {
-    const sortColumn = Budget[sortBy] || Budget.createdAt; // Default sort
+    const sortColumn = Budget[sortBy] || Budget.createdAt;
     const orderByClause =
       sortOrder === 'asc' ? asc(sortColumn as AnyColumn) : desc(sortColumn as AnyColumn);
 
@@ -45,7 +45,7 @@ export class BudgetService {
       limit: limit,
       offset: limit * (page - 1),
       with: {
-        category: { columns: { id: true, name: true } }, // Include category name
+        category: { columns: { id: true, name: true } },
       },
       orderBy: [orderByClause],
     }).catch((err) => {
@@ -70,11 +70,9 @@ export class BudgetService {
       throw new HTTPException(400, { message: 'Invalid budget amount.' });
     }
     if (month < 1 || month > 12 || year < 1900 || year > 2100) {
-      // Basic validation
       throw new HTTPException(400, { message: 'Invalid month or year.' });
     }
 
-    // Check if category exists and belongs to user or is shared
     const validCategory = await db.query.Category.findFirst({
       where: and(eq(Category.id, categoryId), eq(Category.owner, userId)),
       columns: { id: true },
@@ -84,7 +82,6 @@ export class BudgetService {
       throw new HTTPException(404, { message: 'Category not found or access denied.' });
     }
 
-    // Check if a budget for this category, month, and year already exists
     const existingBudget = await db.query.Budget.findFirst({
       where: and(
         eq(Budget.userId, userId),
@@ -128,7 +125,6 @@ export class BudgetService {
       throw new HTTPException(400, { message: 'Invalid amount.' });
     }
 
-    // Verify the user owns the budget
     const existingBudget = await db.query.Budget.findFirst({
       where: and(eq(Budget.id, budgetId), eq(Budget.userId, userId)),
       columns: { id: true },
@@ -157,7 +153,6 @@ export class BudgetService {
   }
 
   async deleteBudget(budgetId: string, userId: string) {
-    // Verify the user owns the budget
     const existingBudget = await db.query.Budget.findFirst({
       where: and(eq(Budget.id, budgetId), eq(Budget.userId, userId)),
       columns: { id: true },
@@ -206,7 +201,6 @@ export class BudgetService {
     let endDateStr: string;
     let filterClause: SQL;
 
-    // Determine date range based on query params
     if (specificMonth && specificYear) {
       const monthNum = parseInt(specificMonth);
       const yearNum = parseInt(specificYear);
@@ -217,10 +211,9 @@ export class BudgetService {
       const lastDay = endOfMonth(firstDay);
       startDateStr = format(firstDay, 'yyyy-MM-dd 00:00:00.000');
       endDateStr = format(lastDay, 'yyyy-MM-dd 23:59:59.999');
-      // Filter budgets specifically for this month/year
+
       filterClause = sql`b.month = ${monthNum} AND b.year = ${yearNum}`;
     } else {
-      // Use duration or custom range for filtering transactions, but fetch ALL budgets for the user
       const range = await getIntervalValue(
         duration === 'custom' && customStartDate && customEndDate
           ? `${customStartDate},${customEndDate}`
@@ -228,11 +221,10 @@ export class BudgetService {
       );
       startDateStr = range.startDate;
       endDateStr = range.endDate;
-      // Fetch all budgets for the user if no specific month/year is given
+
       filterClause = sql`b."userId" = ${userId}`;
     }
 
-    // SQL query to join Budget, Category, and aggregate Transactions
     const result = await db
       .execute(
         sql`
@@ -317,7 +309,7 @@ export class BudgetService {
 
     return {
       budgetId: budget.id,
-      categoryName: budget.category.name, // Use joined name
+      categoryName: budget.category.name,
       budgetedAmount: budgetedAmount,
       totalSpent: totalSpentValue,
       remainingAmount: parseFloat(remainingAmount.toFixed(2)),
@@ -330,7 +322,6 @@ export class BudgetService {
     const currentMonth = getMonth(now) + 1;
     const currentYear = getYear(now);
 
-    // Find the category ID first
     const category = await db.query.Category.findFirst({
       where: and(ilike(Category.name, categoryName), eq(Category.owner, userId)),
       columns: { id: true, name: true },
@@ -340,7 +331,6 @@ export class BudgetService {
       throw new HTTPException(404, { message: `Category "${categoryName}" not found.` });
     }
 
-    // Find the budget for this category and current month/year
     const budget = await db.query.Budget.findFirst({
       where: and(
         eq(Budget.userId, userId),
@@ -348,7 +338,7 @@ export class BudgetService {
         eq(Budget.month, currentMonth),
         eq(Budget.year, currentYear),
       ),
-      columns: { id: true, amount: true, month: true, year: true }, // Include needed fields
+      columns: { id: true, amount: true, month: true, year: true },
     });
 
     if (!budget) {
@@ -357,7 +347,6 @@ export class BudgetService {
       });
     }
 
-    // Reuse existing progress logic
     return this.getBudgetProgress(budget.id, userId);
   }
 }

@@ -1,4 +1,3 @@
-// src/utils/image.utils.ts
 import sharp from 'sharp';
 import { HTTPException } from 'hono/http-exception';
 
@@ -26,7 +25,6 @@ export async function compressImage(imageData: any): Promise<{ error: boolean; d
     const metadata = await sharpInstance.metadata();
     const format = metadata.format;
 
-    // Allow common image formats
     const allowedFormats = ['jpeg', 'jpg', 'png', 'gif', 'webp', 'avif', 'tiff'];
     if (!format || !allowedFormats.includes(format)) {
       console.error(
@@ -39,7 +37,7 @@ export async function compressImage(imageData: any): Promise<{ error: boolean; d
 
     const reducedFile = await sharpInstance
       .resize(250, 250, { fit: 'inside', withoutEnlargement: true })
-      .webp({ quality: 80 }) // Convert to webp for generally good compression
+      .webp({ quality: 80 })
       .toBuffer();
 
     const sizeInMB = reducedFile.length / (1024 * 1024);
@@ -53,7 +51,7 @@ export async function compressImage(imageData: any): Promise<{ error: boolean; d
       );
       throw new HTTPException(413, {
         message: `Image size exceeds ${sizeLimitMB}MB limit after compression.`,
-      }); // 413 Payload Too Large
+      });
     }
 
     return {
@@ -61,13 +59,12 @@ export async function compressImage(imageData: any): Promise<{ error: boolean; d
       data: `data:image/webp;base64,${reducedFile.toString('base64')}`,
     };
   } catch (error: any) {
-    // Log the original error for debugging
     console.error('Image compression error:', error);
-    // Re-throw HTTPException or return a structured error
+
     if (error instanceof HTTPException) {
-      throw error; // Re-throw if it's already an HTTPException
+      throw error;
     }
-    // Return a generic error message for other errors
+
     throw new HTTPException(500, { message: `Image processing failed: ${error.message}` });
   }
 }

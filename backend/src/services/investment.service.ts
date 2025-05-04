@@ -1,4 +1,3 @@
-// src/services/investment.service.ts
 import { db } from '../database';
 import { Investment, InvestmentAccount, User } from '../database/schema';
 import {
@@ -23,7 +22,7 @@ import {
   subDays,
   eachDayOfInterval,
 } from 'date-fns';
-// Import the centralized finance service and its types
+
 import {
   financeService,
   StockPriceResult,
@@ -31,7 +30,6 @@ import {
   HistoricalPriceResult,
 } from './finance.service';
 
-// Define return types used within this service
 type PortfolioSummary = {
   totalInvestedAmount: number;
   currentMarketValue: number;
@@ -45,7 +43,7 @@ type PortfolioSummary = {
 };
 
 type HistoricalPortfolioPoint = {
-  date: string; // YYYY-MM-DD
+  date: string;
   value: number;
 };
 
@@ -55,7 +53,6 @@ type HistoricalPortfolioResult = {
   valueIsEstimate: boolean;
 };
 
-// Define type for Investment with nested account details needed
 type InvestmentWithAccount = InferSelectModel<typeof Investment> & {
   account: { currency: string | null; userId: string } | null;
 };
@@ -122,11 +119,11 @@ export class InvestmentService {
       };
     }
 
-    const uniqueSymbols = Array.from(new Set(investments.map((inv) => inv.symbol))); // Convert Set to Array here
+    const uniqueSymbols = Array.from(new Set(investments.map((inv) => inv.symbol)));
     const priceMap = new Map<string, { price: number | null; currency: string | null }>();
     let valueIsEstimate = false;
 
-    const { results: priceResults } = await PromisePool.for(uniqueSymbols) // Use the array
+    const { results: priceResults } = await PromisePool.for(uniqueSymbols)
       .withConcurrency(5)
       .handleError(async (error, symbol) =>
         console.error(`Portfolio Summary Pool: Failed for ${symbol}:`, error),
@@ -154,12 +151,12 @@ export class InvestmentService {
     let totalInvestedAmount = 0;
     let estimatedCurrentMarketValue = 0;
     let totalDividends = 0;
-    const encounteredCurrenciesSet = new Set<string>(); // Use a Set initially
+    const encounteredCurrenciesSet = new Set<string>();
 
     investments.forEach((inv) => {
       const investedAmt = inv.investedAmount ?? 0;
       const accountCurrency = inv.account?.currency;
-      if (accountCurrency) encounteredCurrenciesSet.add(accountCurrency); // Add to Set
+      if (accountCurrency) encounteredCurrenciesSet.add(accountCurrency);
 
       totalInvestedAmount += investedAmt;
       totalDividends += inv.dividend ?? 0;
@@ -170,7 +167,7 @@ export class InvestmentService {
 
       if (stockCurrency && accountCurrency && stockCurrency !== accountCurrency)
         valueIsEstimate = true;
-      if (stockCurrency) encounteredCurrenciesSet.add(stockCurrency); // Add to Set
+      if (stockCurrency) encounteredCurrenciesSet.add(stockCurrency);
 
       if (currentPrice !== null && currentPrice !== undefined && inv.shares) {
         estimatedCurrentMarketValue += currentPrice * inv.shares;
@@ -180,7 +177,6 @@ export class InvestmentService {
       }
     });
 
-    // Convert Set to Array for size check and iteration if needed
     const encounteredCurrencies = Array.from(encounteredCurrenciesSet);
 
     if (!valueIsEstimate && encounteredCurrencies.length === 1) {
@@ -280,11 +276,11 @@ export class InvestmentService {
     const marketDays = eachDayOfInterval({ start: startDate, end: endDate }).filter(
       (d) => !isWeekend(d),
     );
-    const uniqueSymbols = Array.from(new Set(investments.map((inv) => inv.symbol))); // Convert Set to Array here
+    const uniqueSymbols = Array.from(new Set(investments.map((inv) => inv.symbol)));
     const allPricesMap = new Map<string, Map<string, number | null>>();
     let valueIsEstimate = accounts.some((acc, i, arr) => i > 0 && acc.currency !== arr[0].currency);
 
-    const { results: priceResults } = await PromisePool.for(uniqueSymbols) // Use the array
+    const { results: priceResults } = await PromisePool.for(uniqueSymbols)
       .withConcurrency(5)
       .handleError(async (error, symbol) =>
         console.error(`Hist. Portfolio Pool: Failed for ${symbol}:`, error),
@@ -327,7 +323,6 @@ export class InvestmentService {
           columns: { preferredCurrency: true },
         })
       )?.preferredCurrency || 'USD';
-    // valueIsEstimate = valueIsEstimate || portfolioValues.length < marketDays.length * 0.8; // Optional check
 
     return { data: portfolioValues, currency: preferredCurrency, valueIsEstimate };
   }
@@ -406,7 +401,7 @@ export class InvestmentService {
 
     const sortColumn = Investment[sortBy] || Investment.purchaseDate;
     const orderByClause =
-      sortOrder === 'asc' ? asc(sortColumn as AnyColumn) : desc(sortColumn as AnyColumn); // Cast needed
+      sortOrder === 'asc' ? asc(sortColumn as AnyColumn) : desc(sortColumn as AnyColumn);
 
     const totalResult = await db
       .select({ count: count() })
@@ -607,8 +602,7 @@ export class InvestmentService {
 
 export const investmentService = new InvestmentService();
 
-// Helper for weekend check (keep here or move to date.utils.ts)
 function isWeekend(date: Date): boolean {
   const day = date.getDay();
-  return day === 0 || day === 6; // 0 = Sunday, 6 = Saturday
+  return day === 0 || day === 6;
 }

@@ -34,7 +34,6 @@ class RecurringTransactionService {
       let errorCount = 0;
 
       for (const template of templates) {
-        // Basic check: Ensure the template has an associated account ID
         if (!template.account) {
           console.warn(`Skipping template ${template.id}: Missing account ID.`);
           skippedCount++;
@@ -45,7 +44,7 @@ class RecurringTransactionService {
           const lastInstance = await db.query.Transaction.findFirst({
             where: and(
               eq(Transaction.owner, template.owner),
-              eq(Transaction.account, template.account), // Safe to use ! here due to check above
+              eq(Transaction.account, template.account),
               eq(Transaction.text, template.text),
               eq(Transaction.amount, template.amount),
               eq(Transaction.isIncome, template.isIncome),
@@ -91,27 +90,26 @@ class RecurringTransactionService {
                 }`,
               );
 
-              // Access currency from the eager-loaded relation
               const accountCurrency = template.account?.currency;
 
               await transactionService.createTransaction(
-                template.owner, // Pass owner ID as the 'creator' for logging
+                template.owner,
                 {
                   text: template.text,
                   amount: template.amount,
                   isIncome: template.isIncome,
                   transfer: template.transfer,
                   category: template.category,
-                  account: template.account, // Pass account ID
-                  currency: template.currency ?? accountCurrency ?? 'INR', // Use currency hierarchy
+                  account: template.account,
+                  currency: template.currency ?? accountCurrency ?? 'INR',
                   createdAt: new Date(nextDueDate.toISOString()),
                   recurring: false,
                   recurrenceType: null,
                   recurrenceEndDate: null,
-                  owner: template.owner, // Ensure owner is set
-                  createdBy: template.owner, // Log who owned the template
+                  owner: template.owner,
+                  createdBy: template.owner,
                 },
-                true, // <-- Pass true to bypass owner check
+                true,
               );
               generatedCount++;
             } else {

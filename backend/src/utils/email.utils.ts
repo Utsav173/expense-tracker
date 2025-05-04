@@ -1,5 +1,3 @@
-// src/utils/email.utils.ts
-
 /**
  * Generates the HTML content for a welcome email.
  * @param username - The name of the new user.
@@ -8,9 +6,8 @@
  * @returns HTML string for the email body.
  */
 export function WelcomeEmailTemp(username: string, loginpage: string, email: string): string {
-  // Basic validation
   const safeUsername = username || 'Valued User';
-  const safeLoginpage = loginpage || '#'; // Default link if none provided
+  const safeLoginpage = loginpage || '#';
   const safeEmail = email || 'your email address';
 
   return `<!DOCTYPE html>
@@ -22,7 +19,7 @@ export function WelcomeEmailTemp(username: string, loginpage: string, email: str
   <style>
     body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #F5F7FA; margin: 0; padding: 0; color: #333333; }
     .container { max-width: 600px; margin: 20px auto; padding: 30px; background-color: #FFFFFF; border-radius: 12px; box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1); }
-    .logo { text-align: center; margin-bottom: 25px; } /* Add logo img src if available */
+    .logo { text-align: center; margin-bottom: 25px; }
     .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #EEEEEE; }
     .header h1 { font-size: 32px; margin: 0; color: #2672FF; }
     .content { font-size: 16px; line-height: 1.6; margin-bottom: 35px; color: #555555; }
@@ -81,7 +78,6 @@ export function forgotPasswordTemp(
   resetPasswordLink: string,
   email: string,
 ): string {
-  // Basic validation
   const safeUsername = username || 'User';
   const safeResetLink = resetPasswordLink || '#';
   const safeEmail = email || 'your email address';
@@ -95,7 +91,7 @@ export function forgotPasswordTemp(
   <style>
      body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #F5F7FA; margin: 0; padding: 0; color: #333333; }
     .container { max-width: 600px; margin: 20px auto; padding: 30px; background-color: #FFFFFF; border-radius: 12px; box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1); }
-    .logo { text-align: center; margin-bottom: 25px; } /* Add logo img src if available */
+    .logo { text-align: center; margin-bottom: 25px; }
     .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #EEEEEE; }
     .header h1 { font-size: 28px; margin: 0; color: #2672FF; }
     .content { font-size: 16px; line-height: 1.6; margin-bottom: 35px; color: #555555; }
@@ -146,7 +142,7 @@ export function budgetAlertEmailTemp(
     categoryName: string;
     budgetedAmount: number;
     spentAmount: number;
-    period: string; // e.g., "August 2024"
+    period: string;
     currency: string;
   },
   alertType: 'approaching' | 'exceeded',
@@ -171,10 +167,9 @@ export function budgetAlertEmailTemp(
           1,
         )}%).`;
 
-  // Reusing a similar structure to other emails
   return `<!DOCTYPE html>
   <html>
-  <head> <meta charset="utf-8"> <title>${subject}</title> <style> /* Basic styles - copy from other templates if needed */ body { font-family: sans-serif; } .container { max-width: 600px; margin: 20px auto; padding: 20px; background-color: #f9f9f9; border-radius: 8px; } </style> </head>
+  <head> <meta charset="utf-8"> <title>${subject}</title> <style> body { font-family: sans-serif; } .container { max-width: 600px; margin: 20px auto; padding: 20px; background-color: #f9f9f9; border-radius: 8px; } </style> </head>
   <body>
     <div class="container">
       <h1>${subject}</h1>
@@ -197,7 +192,7 @@ export function goalReminderEmailTemp(
   username: string,
   goalDetails: {
     goalName: string;
-    targetDate: string; // Formatted date string
+    targetDate: string;
     remainingAmount: number;
     currency: string;
   },
@@ -207,7 +202,7 @@ export function goalReminderEmailTemp(
 
   return `<!DOCTYPE html>
   <html>
-  <head> <meta charset="utf-8"> <title>Saving Goal Reminder: ${goalName}</title> <style> /* Basic styles */ body { font-family: sans-serif; } .container { max-width: 600px; margin: 20px auto; padding: 20px; background-color: #f9f9f9; border-radius: 8px; } </style> </head>
+  <head> <meta charset="utf-8"> <title>Saving Goal Reminder: ${goalName}</title> <style> body { font-family: sans-serif; } .container { max-width: 600px; margin: 20px auto; padding: 20px; background-color: #f9f9f9; border-radius: 8px; } </style> </head>
   <body>
     <div class="container">
       <h1>Goal Reminder: ${goalName}</h1>
@@ -234,7 +229,7 @@ export function billReminderEmailTemp(
   billDetails: {
     description: string;
     amount: number;
-    dueDate: string; // Formatted date string
+    dueDate: string;
     currency: string;
   },
 ): string {
@@ -243,7 +238,7 @@ export function billReminderEmailTemp(
 
   return `<!DOCTYPE html>
   <html>
-  <head> <meta charset="utf-8"> <title>Bill Reminder: ${description}</title> <style> /* Basic styles */ body { font-family: sans-serif; } .container { max-width: 600px; margin: 20px auto; padding: 20px; background-color: #f9f9f9; border-radius: 8px; } </style> </head>
+  <head> <meta charset="utf-8"> <title>Bill Reminder: ${description}</title> <style> body { font-family: sans-serif; } .container { max-width: 600px; margin: 20px auto; padding: 20px; background-color: #f9f9f9; border-radius: 8px; } </style> </head>
   <body>
     <div class="container">
       <h1>Upcoming Bill Reminder</h1>

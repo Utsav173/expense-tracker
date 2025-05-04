@@ -1,4 +1,3 @@
-// src/services/debt.service.ts
 import { db } from '../database';
 import { Account, Debts, User } from '../database/schema';
 import {

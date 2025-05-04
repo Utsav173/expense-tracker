@@ -175,7 +175,6 @@ export class AccountService {
         .then((res) => res.rows),
     ]);
 
-    // Extracting overall data
     const overallData = dashboardDataQuery.length > 0 ? dashboardDataQuery[0] : {};
     const overallIncome = overallData.overall_income;
     const overallExpense = overallData.overall_expense;
@@ -211,7 +210,6 @@ export class AccountService {
     const searchNum = Number(searchTerm);
     const isNumericSearch = !isNaN(searchNum);
 
-    // Use Drizzle query builder for better type safety and maintainability
     const results = await db
       .select({
         id: Transaction.id,
@@ -245,7 +243,6 @@ export class AccountService {
         });
       });
 
-    // Ensure the return type matches expectations if needed, though Drizzle's select is typed
     return results;
   }
 
@@ -335,7 +332,6 @@ export class AccountService {
     const requiredHeaders = ['Text', 'Amount', 'Type', 'Transfer', 'Category', 'Date'];
     const fileHeaders = Object.keys(jsonData[0] as any);
 
-    // check if fileHeaders contains all requiredHeaders
     const containsAllHeaders = requiredHeaders.every((header) => fileHeaders.includes(header));
 
     if (!containsAllHeaders) {
@@ -366,13 +362,12 @@ export class AccountService {
         if (requiredHeaders.includes(key)) {
           switch (key.toLowerCase()) {
             case 'type':
-              temp['isIncome'] = item[key].toLowerCase() === 'income'; // simplified
+              temp['isIncome'] = item[key].toLowerCase() === 'income';
               break;
             case 'date':
               temp.createdAt = new Date(item[key]);
               break;
             case 'category':
-              // Utilize the map for efficient lookup
               let categoryId = categoryNameToIdMap.get(item[key]);
               if (!categoryId) {
                 categoryId = crypto.randomUUID();
@@ -391,9 +386,7 @@ export class AccountService {
       return temp;
     });
 
-    // Insert categories outside the loop
     const newCategoryNames = Array.from(categoryNameToIdMap.keys()).filter(
-      // Use Array.from here
       (name) => !existingCategories.some((cat) => cat.name === name),
     );
 
@@ -451,7 +444,7 @@ export class AccountService {
 
       transactionsToInsert.forEach((t) => {
         t.createdAt = t.createdAt ? new Date(t.createdAt) : new Date();
-        t.updatedAt = new Date(); // Set updatedAt to now during import confirmation
+        t.updatedAt = new Date();
         t.recurrenceEndDate = t.recurrenceEndDate ? new Date(t.recurrenceEndDate) : null;
         if (isNaN(t.createdAt.getTime())) throw new Error(`Invalid createdAt date: ${t.createdAt}`);
         if (t.recurrenceEndDate && isNaN(t.recurrenceEndDate.getTime()))
@@ -641,8 +634,6 @@ export class AccountService {
   }
 
   async getCustomAnalytics(accountId: string, userId: string, duration: string | undefined) {
-    // Allow duration to be undefined
-    // check if account belongs to user or it shared to user
     const accountAccess = await db
       .select({ id: Account.id })
       .from(Account)
@@ -709,12 +700,9 @@ export class AccountService {
         throw new HTTPException(500, { message: err.message });
       });
 
-    // The query returns an array with one object or an empty array
     const analyticsData = result[0];
 
     if (!analyticsData) {
-      // This case should ideally not happen if the account exists, but indicates no transactions
-      // Return default zero values if no transactions exist in the period or previous period
       return {
         income: 0,
         expense: 0,
@@ -744,7 +732,6 @@ export class AccountService {
     };
   }
 
-  // Renamed from getAccounts to avoid conflict
   async getAccountList(
     userId: string,
     page: number,
@@ -817,7 +804,6 @@ export class AccountService {
     return { accounts, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 
-  // Added simple list method for dropdowns etc.
   async getAccountListSimple(userId: string) {
     return db
       .select({
@@ -1092,7 +1078,7 @@ export class AccountService {
         await tx.delete(Analytics).where(eq(Analytics.account, accountId));
         await tx.delete(Debts).where(eq(Debts.account, accountId));
         await tx.delete(ImportData).where(eq(ImportData.account, accountId));
-        // Add other dependencies here
+
         await tx.delete(Account).where(eq(Account.id, accountId));
       });
     } catch (err: any) {
@@ -1191,7 +1177,7 @@ export class AccountService {
     });
     const balance = totalIncome - totalExpense;
     const incomePercentageChange = 0,
-      expensePercentageChange = 0; // Placeholders
+      expensePercentageChange = 0;
 
     const reportData = {
       accountName: accountAccess.name,
@@ -1233,7 +1219,6 @@ export class AccountService {
         if (browser) await browser.close();
       }
     } else {
-      // xlsx
       const transactionsSheetData = transactions.map((t) => ({
         Date: t.createdAt ? new Date(t.createdAt).toLocaleDateString() : 'N/A',
         Text: t.text,

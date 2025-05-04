@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-// Define the schema for environment variables
 const envSchema = z.object({
   DATABASE_URL_NEW: z.string().url().min(1, 'DATABASE_URL_NEW is required'),
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters long'),
@@ -12,7 +11,6 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().int().positive().default(1337),
 
-  // --- AI KEYS ---
   GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
   AI_API_KEY_ENCRYPTION_SECRET: z
@@ -20,7 +18,6 @@ const envSchema = z.object({
     .min(32, 'AI_API_KEY_ENCRYPTION_SECRET must be at least 32 bytes long for AES-256'),
 });
 
-// Validate environment variables
 const parsedEnv = envSchema.safeParse(process.env);
 
 if (!parsedEnv.success) {

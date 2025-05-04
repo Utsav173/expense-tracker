@@ -1,8 +1,6 @@
-// src/services/finance.service.ts
 import { HTTPException } from 'hono/http-exception';
 import { format as formatDateFn } from 'date-fns';
 
-// Define types for API responses for better clarity
 type YahooChartMeta = {
   currency?: string;
   symbol?: string;
@@ -15,11 +13,11 @@ type YahooChartMeta = {
   exchangeTimezoneName?: string;
   regularMarketPrice?: number;
   chartPreviousClose?: number;
-  previousClose?: number; // Sometimes used instead of chartPreviousClose
+  previousClose?: number;
   scale?: number;
   priceHint?: number;
-  currentTradingPeriod?: any; // Define further if needed
-  tradingPeriods?: any; // Define further if needed
+  currentTradingPeriod?: any;
+  tradingPeriods?: any;
   dataGranularity?: string;
   range?: string;
   validRanges?: string[];
@@ -28,9 +26,9 @@ type YahooChartMeta = {
   regularMarketDayHigh?: number;
   regularMarketDayLow?: number;
   regularMarketVolume?: number;
-  longName?: string; // Added for company name
-  shortName?: string; // Added for company name
-  marketState?: string; // Added market state
+  longName?: string;
+  shortName?: string;
+  marketState?: string;
 };
 
 type YahooChartQuote = {
@@ -71,10 +69,8 @@ type YahooSearchResultQuote = {
 
 type YahooSearchResponse = {
   quotes: YahooSearchResultQuote[];
-  // Other potential fields like news, explains, etc.
 };
 
-// Define return types for service methods
 export type StockSearchResult = {
   symbol: string;
   name: string;
@@ -101,8 +97,8 @@ export type StockPriceResult = {
 
 export type HistoricalPriceResult = {
   symbol: string;
-  date: string; // YYYY-MM-DD
-  price: number | null; // Closing price, can be null
+  date: string;
+  price: number | null;
   currency: string;
   exchange: string;
   companyName: string;
@@ -125,10 +121,8 @@ export class FinanceService {
         try {
           errorBody = await response.text();
           errorJson = JSON.parse(errorBody);
-        } catch (_) {
-          /* ignore */
-        }
-        // Handle Yahoo's "Data doesn't exist for startDate..." as 404
+        } catch (_) {}
+
         if (
           response.status === 400 &&
           errorJson?.chart?.error?.description?.includes("Data doesn't exist for startDate")
@@ -143,7 +137,7 @@ export class FinanceService {
             500,
           )}`,
         );
-        // Throw specific errors based on status code
+
         if (response.status === 404) {
           throw new HTTPException(404, {
             message: `Data not found for symbol '${symbolForLogging}' on Yahoo Finance.`,
@@ -156,7 +150,7 @@ export class FinanceService {
       }
       return await response.json();
     } catch (error: any) {
-      if (error instanceof HTTPException) throw error; // Re-throw known HTTP exceptions
+      if (error instanceof HTTPException) throw error;
       console.error(`Network or parsing error fetching from Yahoo for ${symbolForLogging}:`, error);
       throw new HTTPException(503, {
         message: `Could not connect to finance data provider: ${error.message}`,
@@ -176,7 +170,7 @@ export class FinanceService {
 
     if (!data.quotes || !Array.isArray(data.quotes)) {
       console.warn('Yahoo Search API returned unexpected format:', data);
-      return []; // Return empty array if no quotes found or format is wrong
+      return [];
     }
 
     return data.quotes
@@ -186,13 +180,12 @@ export class FinanceService {
         exchange: quote.exchange || 'N/A',
         type: quote.quoteType || 'N/A',
       }))
-      .filter((q) => q.symbol); // Ensure symbol exists
+      .filter((q) => q.symbol);
   }
 
   async getCurrentStockPrice(symbol: string): Promise<StockPriceResult> {
     if (!symbol) throw new HTTPException(400, { message: 'Symbol is required' });
 
-    // Fetch minimal data needed: 1 day range, 1 minute interval is often used for current price
     const url = `${this.yahooBaseUrl_Chart}/${encodeURIComponent(symbol)}?interval=1m&range=1d`;
     const data: YahooChartResponse = await this.fetchYahoo(url, symbol);
 
@@ -206,7 +199,7 @@ export class FinanceService {
     }
 
     const price = meta.regularMarketPrice;
-    const prevClose = meta.previousClose ?? meta.chartPreviousClose; // Check both possible fields
+    const prevClose = meta.previousClose ?? meta.chartPreviousClose;
     let change = null;
     let changePercent = null;
 
@@ -258,7 +251,7 @@ export class FinanceService {
     try {
       const period1 = Math.floor(startDate.getTime() / 1000);
       const period2EndDate = new Date(effectiveEndDate);
-      period2EndDate.setDate(period2EndDate.getDate() + 1); // Add buffer day for Yahoo query
+      period2EndDate.setDate(period2EndDate.getDate() + 1);
       const period2 = Math.floor(period2EndDate.getTime() / 1000);
 
       const url = `${this.yahooBaseUrl_Chart}/${encodeURIComponent(
@@ -285,13 +278,11 @@ export class FinanceService {
         const dateString = formatDateFn(date, 'yyyy-MM-dd');
         const currentDateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
-        // Ensure the date is within the *requested* range (inclusive)
         if (currentDateOnly >= startDate && currentDateOnly <= effectiveEndDate) {
-          priceMap.set(dateString, closePrices[i] ?? null); // Store price or null
+          priceMap.set(dateString, closePrices[i] ?? null);
         }
       }
     } catch (err) {
-      // Log error but don't necessarily throw from utility, allow partial data return
       console.error(
         `Failed to fetch historical data range for ${symbol}:`,
         err instanceof Error ? err.message : err,
@@ -305,24 +296,20 @@ export class FinanceService {
     if (isNaN(requestedDate.getTime()))
       throw new HTTPException(400, { message: 'Invalid date format. Use YYYY-MM-DD.' });
 
-    // Fetch data for a small range around the date to handle non-trading days potentially
     const startDate = new Date(requestedDate);
-    startDate.setDate(startDate.getDate() - 3); // Look back a few days
+    startDate.setDate(startDate.getDate() - 3);
     const endDate = new Date(requestedDate);
-    endDate.setDate(endDate.getDate() + 1); // Look forward one day
+    endDate.setDate(endDate.getDate() + 1);
 
     const priceMap = await this.fetchHistoricalPricesForSymbol(symbol, startDate, endDate);
-    const priceOnDate = priceMap.get(dateStr); // Get price for the specific requested date
+    const priceOnDate = priceMap.get(dateStr);
 
     if (priceOnDate === undefined) {
-      // Check if the date exists in the map
       throw new HTTPException(404, {
         message: `No historical data available for '${symbol}' on ${dateStr}. Market might have been closed.`,
       });
     }
 
-    // Fetch metadata separately (optional, could combine if API allows)
-    // For simplicity, we'll use the current price fetch for metadata, acknowledging it might slightly differ
     let meta: YahooChartMeta = {};
     try {
       const currentPriceData = await this.fetchYahoo(
@@ -340,14 +327,12 @@ export class FinanceService {
     return {
       symbol: symbol.toUpperCase(),
       date: dateStr,
-      price: priceOnDate, // Price for the specific day (can be null)
+      price: priceOnDate,
       currency: meta?.currency || 'N/A',
       exchange: meta?.exchangeName || 'N/A',
       companyName: meta?.longName || meta?.shortName || 'N/A',
-      // Note: Open, High, Low, Volume are not directly available from the map, would need modification to fetchHistoricalPricesForSymbol if required
     };
   }
 }
 
-// Export a singleton instance
 export const financeService = new FinanceService();

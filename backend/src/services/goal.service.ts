@@ -1,4 +1,3 @@
-// src/services/goal.service.ts
 import { db } from '../database';
 import { SavingGoal } from '../database/schema';
 import {
@@ -24,7 +23,7 @@ export class GoalService {
     sortBy: keyof InferSelectModel<typeof SavingGoal>,
     sortOrder: 'asc' | 'desc',
   ) {
-    const sortColumn = SavingGoal[sortBy] || SavingGoal.createdAt; // Default sort
+    const sortColumn = SavingGoal[sortBy] || SavingGoal.createdAt;
     const orderByClause =
       sortOrder === 'asc' ? asc(sortColumn as AnyColumn) : desc(sortColumn as AnyColumn);
 
@@ -77,7 +76,7 @@ export class GoalService {
         userId: userId,
         name: name,
         targetAmount: Number(targetAmount),
-        savedAmount: 0, // Initialize saved amount to 0
+        savedAmount: 0,
         targetDate: parsedTargetDate,
         createdAt: new Date(),
       })
@@ -105,7 +104,6 @@ export class GoalService {
   ) {
     const { name, targetAmount, targetDate, savedAmount } = payload;
 
-    // Verify user owns the goal
     const existingGoal = await db.query.SavingGoal.findFirst({
       where: and(eq(SavingGoal.id, goalId), eq(SavingGoal.userId, userId)),
     });
@@ -138,7 +136,6 @@ export class GoalService {
     }
 
     if (Object.keys(updateData).length === 1) {
-      // Only updatedAt
       return { message: 'No changes provided.', id: goalId };
     }
 
@@ -163,7 +160,6 @@ export class GoalService {
       throw new HTTPException(400, { message: 'Invalid amount to add. Must be positive.' });
     }
 
-    // Verify user owns the goal
     const existingGoal = await db.query.SavingGoal.findFirst({
       where: and(eq(SavingGoal.id, goalId), eq(SavingGoal.userId, userId)),
       columns: { id: true },
@@ -179,7 +175,7 @@ export class GoalService {
         updatedAt: new Date(),
       })
       .where(eq(SavingGoal.id, goalId))
-      .returning({ id: SavingGoal.id, savedAmount: SavingGoal.savedAmount }) // Return updated amount
+      .returning({ id: SavingGoal.id, savedAmount: SavingGoal.savedAmount })
       .catch((err) => {
         throw new HTTPException(500, { message: `DB Update Error: ${err.message}` });
       });
@@ -200,7 +196,6 @@ export class GoalService {
       throw new HTTPException(400, { message: 'Invalid amount to withdraw. Must be positive.' });
     }
 
-    // Verify user owns the goal and has sufficient saved amount
     const existingGoal = await db.query.SavingGoal.findFirst({
       where: and(eq(SavingGoal.id, goalId), eq(SavingGoal.userId, userId)),
       columns: { id: true, savedAmount: true },
@@ -236,7 +231,6 @@ export class GoalService {
   }
 
   async deleteGoal(goalId: string, userId: string) {
-    // Verify user owns the goal
     const existingGoal = await db.query.SavingGoal.findFirst({
       where: and(eq(SavingGoal.id, goalId), eq(SavingGoal.userId, userId)),
       columns: { id: true },

@@ -1,10 +1,9 @@
-// /home/utsav/coding/expense-tracker/frontend/src/hooks/useAiChat.ts
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { aiProcessPrompt } from '@/lib/endpoints/ai';
 import { toast } from 'react-hot-toast';
 import { useInvalidateQueries } from './useInvalidateQueries';
-import { safeJsonParse } from '@/lib/utils'; // Import from utils
+import { safeJsonParse } from '@/lib/utils';
 
 const STORAGE_KEY_MESSAGES = 'aiChatMessages';
 const STORAGE_KEY_SESSION_ID = 'aiChatSessionId';
@@ -33,8 +32,6 @@ interface UseAiChatReturn {
   sessionId: string | undefined;
   clearChat: () => void;
 }
-
-// Removed safeJsonParse helper function from here
 
 export const useAiChat = (): UseAiChatReturn => {
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
@@ -100,12 +97,12 @@ export const useAiChat = (): UseAiChatReturn => {
 
       if (data.toolResults && data.toolResults.length > 0) {
         const successfulAnalysisResult = data.toolResults.find((res) => {
-          const parsed = safeJsonParse(res.result); // Use imported function
+          const parsed = safeJsonParse(res.result);
           return parsed && parsed.success === true && parsed.data !== undefined;
         });
 
         if (successfulAnalysisResult) {
-          const parsed = safeJsonParse(successfulAnalysisResult.result); // Use imported function
+          const parsed = safeJsonParse(successfulAnalysisResult.result);
           const callingTool = data.toolCalls?.find(
             (tc) => tc.toolCallId === successfulAnalysisResult.toolCallId
           );
@@ -123,7 +120,7 @@ export const useAiChat = (): UseAiChatReturn => {
           }
         } else {
           const firstRelevantResult = data.toolResults[0];
-          const parsed = safeJsonParse(firstRelevantResult.result); // Use imported function
+          const parsed = safeJsonParse(firstRelevantResult.result);
           const callingTool = data.toolCalls?.find(
             (tc) => tc.toolCallId === firstRelevantResult.toolCallId
           );

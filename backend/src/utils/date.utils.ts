@@ -1,14 +1,10 @@
-// src/utils/date.utils.ts
 import {
-  add,
   differenceInDays,
-  differenceInMonths,
   differenceInYears,
   endOfDay,
   endOfMonth,
   endOfWeek,
   endOfYear,
-  format as formatDateFn, // Renamed to avoid conflict
   startOfDay,
   startOfMonth,
   startOfWeek,
@@ -18,9 +14,8 @@ import {
   format,
 } from 'date-fns';
 import { HTTPException } from 'hono/http-exception';
-import { db } from '../database'; // Needed for getIntervalValue 'all' case
-import { Transaction } from '../database/schema'; // Needed for getIntervalValue 'all' case
-import { sql } from 'drizzle-orm'; // Needed for getIntervalValue 'all' case
+import { db } from '../database';
+import { sql } from 'drizzle-orm';
 
 /**
  * Calculates the start and end dates of the interval immediately preceding the given interval.

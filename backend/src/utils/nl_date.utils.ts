@@ -1,4 +1,4 @@
-// /home/utsav/coding/expense-tracker/backend/src/utils/nl_date.utils.ts
+
 import {
   startOfDay,
   endOfDay,
@@ -56,7 +56,7 @@ export function parseNaturalLanguageDateRange(
   const lowerDesc = trimmedDesc.toLowerCase();
 
   try {
-    // --- Attempt 1: Check explicit keywords first ---
+    
     const todayStart = memoizedStartOfDay(zonedRefDate);
     const todayEnd = memoizedEndOfDay(zonedRefDate);
 
@@ -174,9 +174,9 @@ export function parseNaturalLanguageDateRange(
       }
     }
 
-    // --- Attempt 2: Use chrono-node as fallback (without forwardDate) ---
+    
     console.log(`No keyword match for "${trimmedDesc}", trying chrono-node...`);
-    // Pass the zonedRefDate to give chrono context, DO NOT use forwardDate: true for relative past terms
+    
     const chronoResults = chrono.parse(trimmedDesc, zonedRefDate);
 
     if (chronoResults && chronoResults.length > 0) {
@@ -184,18 +184,18 @@ export function parseNaturalLanguageDateRange(
 
       if (result.start) {
         const startDate = result.start.date();
-        const endDate = result.end ? result.end.date() : result.start.date(); // Default end to start if not present
+        const endDate = result.end ? result.end.date() : result.start.date(); 
 
         if (isValidDateFn(startDate) && isValidDateFn(endDate)) {
           let finalStartDate = memoizedStartOfDay(startDate);
           let finalEndDate = memoizedEndOfDay(endDate);
 
-          // Ensure single-day results from chrono become a proper day range
+          
           if (isEqual(startOfDay(startDate), startOfDay(endDate))) {
-            finalEndDate = memoizedEndOfDay(startDate); // Use end of *start* date
+            finalEndDate = memoizedEndOfDay(startDate); 
           }
 
-          // Swap if needed
+          
           if (finalStartDate > finalEndDate) {
             [finalStartDate, finalEndDate] = [finalEndDate, finalStartDate];
           }
@@ -215,14 +215,14 @@ export function parseNaturalLanguageDateRange(
     console.warn(
       `Could not parse date range description: "${description}" using keywords or chrono.`,
     );
-    return null; // Failed to parse
+    return null; 
   } catch (error) {
     console.error(`Critical error parsing date "${description}":`, error);
     return null;
   }
 }
 
-// --- Other helper functions remain the same ---
+
 
 export function formatDateRange(range: DateRange | null, formatStr: string = 'yyyy-MM-dd'): string {
   if (!range) return 'Invalid date range';

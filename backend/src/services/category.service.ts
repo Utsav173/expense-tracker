@@ -1,4 +1,3 @@
-// src/services/category.service.ts
 import { db } from '../database';
 import { Category, Transaction } from '../database/schema';
 import { SQL, and, asc, count, desc, eq, ilike, InferSelectModel } from 'drizzle-orm';
@@ -13,7 +12,6 @@ export class CategoryService {
     sortBy: keyof InferSelectModel<typeof Category>,
     sortOrder: 'asc' | 'desc',
   ) {
-    // Categories owned by the user OR shared categories (owner is null)
     let whereClause: SQL<unknown> | undefined = eq(Category.owner, userId);
 
     if (search) {
@@ -31,7 +29,7 @@ export class CategoryService {
     const total = totalResult[0]?.count ?? 0;
 
     const categories = await db.query.Category.findMany({
-      columns: { id: true, name: true, owner: true /* Include owner for debugging/info */ },
+      columns: { id: true, name: true, owner: true },
       where: whereClause,
       limit: limit,
       offset: limit * (page - 1),
@@ -47,7 +45,6 @@ export class CategoryService {
   }
 
   async createCategory(userId: string, name: string) {
-    // Check if category with the same name already exists for this user
     const existingCategory = await db.query.Category.findFirst({
       where: and(eq(Category.name, name), eq(Category.owner, userId)),
     });
@@ -72,7 +69,6 @@ export class CategoryService {
   }
 
   async updateCategory(categoryId: string, userId: string, name: string) {
-    // Verify the user owns the category they are trying to update
     const category = await db.query.Category.findFirst({
       where: and(eq(Category.id, categoryId), eq(Category.owner, userId)),
     });
@@ -83,7 +79,6 @@ export class CategoryService {
       });
     }
 
-    // Check if another category with the new name already exists for the user
     if (name !== category.name) {
       const existingCategory = await db.query.Category.findFirst({
         where: and(eq(Category.name, name), eq(Category.owner, userId)),
@@ -97,9 +92,9 @@ export class CategoryService {
 
     const result = await db
       .update(Category)
-      .set({ name, updatedAt: new Date() }) // Update timestamp
+      .set({ name, updatedAt: new Date() })
       .where(eq(Category.id, categoryId))
-      .returning({ id: Category.id }); // Return ID to confirm update
+      .returning({ id: Category.id });
 
     if (result.length === 0) {
       throw new HTTPException(500, { message: 'Failed to update category.' });
@@ -109,7 +104,6 @@ export class CategoryService {
   }
 
   async deleteCategory(categoryId: string, userId: string) {
-    // Verify ownership first
     const category = await db.query.Category.findFirst({
       where: and(eq(Category.id, categoryId), eq(Category.owner, userId)),
     });
@@ -120,11 +114,10 @@ export class CategoryService {
       });
     }
 
-    // Check if any transactions are associated with this category *for this user*
     const transactionCountResult = await db
       .select({ count: count() })
       .from(Transaction)
-      .where(and(eq(Transaction.category, categoryId), eq(Transaction.owner, userId))) // Ensure transactions belong to the user
+      .where(and(eq(Transaction.category, categoryId), eq(Transaction.owner, userId)))
       .catch((err) => {
         throw new HTTPException(500, { message: `DB Transaction Check Error: ${err.message}` });
       });
@@ -138,11 +131,10 @@ export class CategoryService {
       });
     }
 
-    // Proceed with deletion
     const deleteResult = await db
       .delete(Category)
       .where(eq(Category.id, categoryId))
-      .returning({ id: Category.id }); // Confirm deletion
+      .returning({ id: Category.id });
 
     if (deleteResult.length === 0) {
       throw new HTTPException(500, { message: 'Failed to delete category.' });
