@@ -1,7 +1,10 @@
+// /home/utsav/coding/expense-tracker/frontend/src/hooks/useAiChat.ts
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { aiProcessPrompt } from '@/lib/endpoints/ai';
 import { toast } from 'react-hot-toast';
+import { useInvalidateQueries } from './useInvalidateQueries';
+import { safeJsonParse } from '@/lib/utils'; // Import from utils
 
 const STORAGE_KEY_MESSAGES = 'aiChatMessages';
 const STORAGE_KEY_SESSION_ID = 'aiChatSessionId';
@@ -10,8 +13,14 @@ export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  toolCalls?: { toolCallId: string; toolName: string; args: any }[];
-  toolResults?: { toolCallId: string; result: any }[];
+  toolCalls?: any[];
+  toolResults?: any[];
+  toolData?: {
+    toolName: string;
+    data: any;
+    message?: string;
+    error?: string;
+  } | null;
   createdAt?: Date;
 }
 
@@ -24,6 +33,8 @@ interface UseAiChatReturn {
   sessionId: string | undefined;
   clearChat: () => void;
 }
+
+// Removed safeJsonParse helper function from here
 
 export const useAiChat = (): UseAiChatReturn => {
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
@@ -52,6 +63,8 @@ export const useAiChat = (): UseAiChatReturn => {
   });
 
   const [error, setError] = useState<Error | null>(null);
+  const invalidate = useInvalidateQueries();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -72,43 +85,99 @@ export const useAiChat = (): UseAiChatReturn => {
   const mutation = useMutation({
     mutationFn: async (prompt: string) => {
       setError(null);
-
       return aiProcessPrompt({ prompt, sessionId });
     },
     onSuccess: (data) => {
-      if (data?.response !== undefined) {
-        const assistantMessage: ChatMessage = {
-          id: crypto.randomUUID(),
-          role: 'assistant',
-          content: data.response ?? '',
-          toolCalls: data.toolCalls,
-          toolResults: data.toolResults,
-          createdAt: new Date()
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
-
-        if (data.sessionId && data.sessionId !== sessionId) {
-          setSessionId(data.sessionId);
-        }
-      } else {
-        console.warn('Received success response but no AI message content.');
-
-        setError(new Error('Received an empty response from the AI assistant.'));
-
+      if (!data) {
+        console.error('AI Processing Error: Received null or undefined data.');
+        setError(new Error('Received no response from the AI assistant.'));
         setMessages((prev) => prev.slice(0, -1));
+        return;
+      }
+
+      let processedToolData: ChatMessage['toolData'] = null;
+      let shouldInvalidateQueries = false;
+
+      if (data.toolResults && data.toolResults.length > 0) {
+        const successfulAnalysisResult = data.toolResults.find((res) => {
+          const parsed = safeJsonParse(res.result); // Use imported function
+          return parsed && parsed.success === true && parsed.data !== undefined;
+        });
+
+        if (successfulAnalysisResult) {
+          const parsed = safeJsonParse(successfulAnalysisResult.result); // Use imported function
+          const callingTool = data.toolCalls?.find(
+            (tc) => tc.toolCallId === successfulAnalysisResult.toolCallId
+          );
+          processedToolData = {
+            toolName: callingTool?.toolName || 'Unknown Analysis Tool',
+            data: parsed.data,
+            message: parsed.message
+          };
+          if (
+            !callingTool?.toolName?.startsWith('get') &&
+            !callingTool?.toolName?.startsWith('list') &&
+            !callingTool?.toolName?.startsWith('identify')
+          ) {
+            shouldInvalidateQueries = true;
+          }
+        } else {
+          const firstRelevantResult = data.toolResults[0];
+          const parsed = safeJsonParse(firstRelevantResult.result); // Use imported function
+          const callingTool = data.toolCalls?.find(
+            (tc) => tc.toolCallId === firstRelevantResult.toolCallId
+          );
+
+          processedToolData = {
+            toolName: callingTool?.toolName || 'Tool Execution',
+            data: parsed?.data,
+            message: parsed?.message,
+            error: parsed?.error
+          };
+          if (parsed?.confirmationNeeded || parsed?.clarificationNeeded) {
+            shouldInvalidateQueries = false;
+          } else if (
+            parsed?.success === true &&
+            !callingTool?.toolName?.startsWith('get') &&
+            !callingTool?.toolName?.startsWith('list') &&
+            !callingTool?.toolName?.startsWith('identify')
+          ) {
+            shouldInvalidateQueries = true;
+          }
+        }
+      }
+
+      const assistantMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: data.response ?? '',
+        toolCalls: data.toolCalls,
+        toolResults: data.toolResults,
+        toolData: processedToolData,
+        createdAt: new Date()
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+
+      if (data.sessionId && data.sessionId !== sessionId) {
+        setSessionId(data.sessionId);
+      }
+
+      if (shouldInvalidateQueries) {
+        invalidate(['dashboardData']);
+        invalidate(['transactions']);
+        invalidate(['accounts']);
+        invalidate(['budgets']);
+        invalidate(['goals']);
+        invalidate(['investments']);
+        invalidate(['investmentAccounts']);
+        invalidate(['debts']);
       }
     },
     onError: (err: Error) => {
-      console.error('AI processing error:', err);
+      console.error('AI processing mutation error:', err);
       setError(err);
-
-      setMessages((prev) => {
-        const lastUserIndex = prev.map((m) => m.role).lastIndexOf('user');
-        if (lastUserIndex > -1) {
-          return prev.slice(0, lastUserIndex);
-        }
-        return prev;
-      });
+      setMessages((prev) => prev.slice(0, -1));
     }
   });
 
@@ -125,7 +194,6 @@ export const useAiChat = (): UseAiChatReturn => {
       };
 
       setMessages((prev) => [...prev, userMessage]);
-
       await mutation.mutateAsync(prompt);
     },
     [mutation, sessionId]
@@ -135,7 +203,6 @@ export const useAiChat = (): UseAiChatReturn => {
     setMessages([]);
     setSessionId(undefined);
     setError(null);
-
     if (typeof window !== 'undefined') {
       localStorage.removeItem(STORAGE_KEY_MESSAGES);
       localStorage.removeItem(STORAGE_KEY_SESSION_ID);

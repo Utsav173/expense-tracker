@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react'; // Added useCallback
+import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import TransactionTable from '@/components/transactions-table';
@@ -15,11 +15,11 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import AddTransactionModal from '@/components/modals/add-transaction-modal';
-import { Filter, Import, X, Download, Loader2 } from 'lucide-react';
+import { Filter, Import, X, Download } from 'lucide-react';
 import { accountGetDropdown } from '@/lib/endpoints/accounts';
-import { categoryGetAll } from '@/lib/endpoints/category';
+
 import { useToast } from '@/lib/hooks/useToast';
-import { AccountDropdown, Category } from '@/lib/types';
+import { AccountDropdown } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { useTransactions } from '@/components/transactions/hooks/useTransactions';
 import DateRangePickerV2 from '@/components/date/date-range-picker-v2';
@@ -32,6 +32,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem
 } from '@/components/ui/dropdown-menu';
+import CategoryCombobox from '@/components/ui/category-combobox';
 
 const TransactionsPage = () => {
   const { showError, showSuccess, showInfo } = useToast();
@@ -47,7 +48,7 @@ const TransactionsPage = () => {
     refetch,
     page,
     handlePageChange,
-    filters, // Use filters from the hook
+    filters,
     debouncedSearchQuery,
     setSearchQuery,
     handleAccountChange,
@@ -57,23 +58,15 @@ const TransactionsPage = () => {
     handleClearDateRange,
     handleSort,
     resetFilters
-  } = useTransactions(); // Use the existing hook
+  } = useTransactions();
 
-  // Fetch accounts and categories for filters
   const { data: accountsData, isLoading: isLoadingAccounts } = useQuery({
     queryKey: ['accountsDropdown'],
     queryFn: accountGetDropdown
   });
 
-  const { data: categoriesData, isLoading: isLoadingCategories } = useQuery({
-    queryKey: ['categories'],
-    queryFn: () => categoryGetAll({ limit: 500 }) // Fetch more categories for filtering
-  });
-
   const [accounts, setAccounts] = useState<AccountDropdown[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
 
-  // Calculate active filters count based on the hook's state
   const activeFiltersCount = [
     filters.accountId !== undefined && filters.accountId !== 'all',
     filters.categoryId !== undefined && filters.categoryId !== 'all',
@@ -88,13 +81,6 @@ const TransactionsPage = () => {
     }
   }, [accountsData]);
 
-  useEffect(() => {
-    if (categoriesData?.categories) {
-      setCategories(categoriesData.categories);
-    }
-  }, [categoriesData?.categories]);
-
-  // Export Handler - adapted from AccountTransactionsSection
   const handleExport = useCallback(async () => {
     if (!transactionsData?.transactions || transactionsData.transactions.length === 0) {
       showError('No transactions available to export with the current filters.');
@@ -105,8 +91,6 @@ const TransactionsPage = () => {
 
     try {
       const params = new URLSearchParams();
-
-      // Use filters from the useTransactions hook
       if (filters.accountId && filters.accountId !== 'all')
         params.set('accountId', filters.accountId);
       if (debouncedSearchQuery) params.set('q', debouncedSearchQuery);
@@ -116,9 +100,6 @@ const TransactionsPage = () => {
       if (filters.dateRange?.from)
         params.set('dateFrom', format(filters.dateRange.from, 'yyyy-MM-dd'));
       if (filters.dateRange?.to) params.set('dateTo', format(filters.dateRange.to, 'yyyy-MM-dd'));
-      // Add amount filters if implemented in useTransactions hook
-      // if (filters.minAmount !== undefined) params.set('minAmount', String(filters.minAmount));
-      // if (filters.maxAmount !== undefined) params.set('maxAmount', String(filters.maxAmount));
       params.set('format', exportFormat);
 
       const exportUrl = `${API_BASE_URL}/transactions/export?${params.toString()}`;
@@ -126,9 +107,7 @@ const TransactionsPage = () => {
 
       const response = await fetch(exportUrl, {
         method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` }
       });
 
       if (!response.ok) {
@@ -136,9 +115,7 @@ const TransactionsPage = () => {
         try {
           const errorData = await response.json();
           errorMsg = errorData.message || errorMsg;
-        } catch (_) {
-          /* Ignore if response is not JSON */
-        }
+        } catch (_) {}
         throw new Error(errorMsg);
       }
 
@@ -147,9 +124,7 @@ const TransactionsPage = () => {
       if (disposition && disposition.indexOf('attachment') !== -1) {
         const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
         const matches = filenameRegex.exec(disposition);
-        if (matches != null && matches[1]) {
-          filename = matches[1].replace(/['"]/g, '');
-        }
+        if (matches != null && matches[1]) filename = matches[1].replace(/['"]/g, '');
       }
 
       const blob = await response.blob();
@@ -161,7 +136,6 @@ const TransactionsPage = () => {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(downloadUrl);
-
       showSuccess('Export started successfully!');
     } catch (error: any) {
       console.error('Export error:', error);
@@ -169,7 +143,15 @@ const TransactionsPage = () => {
     } finally {
       setIsExporting(false);
     }
-  }, [filters, exportFormat, showError, showSuccess, showInfo, transactionsData?.transactions]); // Dependencies
+  }, [
+    filters,
+    exportFormat,
+    showError,
+    showSuccess,
+    showInfo,
+    transactionsData?.transactions,
+    debouncedSearchQuery
+  ]);
 
   const handleExportWithFormat = async (format: 'xlsx' | 'csv') => {
     setExportFormat(format);
@@ -178,7 +160,7 @@ const TransactionsPage = () => {
 
   if (isError) {
     showError(`Failed to get Transaction Details: ${(error as Error).message}`);
-    return null; // Or show an error component
+    return null;
   }
 
   return (
@@ -217,7 +199,7 @@ const TransactionsPage = () => {
               placeholder='Search transactions...'
               value={filters.searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className='w-full pl-9' // Keep padding for potential icon
+              className='w-full pl-9'
             />
           </div>
 
@@ -276,28 +258,16 @@ const TransactionsPage = () => {
               </Select>
             </div>
 
-            {/* Category Filter */}
+            {/* Category Filter - REPLACED */}
             <div className='space-y-1'>
               <label className='mb-1 block text-xs font-medium sm:text-sm'>Category</label>
-              <Select onValueChange={handleCategoryChange} value={filters.categoryId || 'all'}>
-                <SelectTrigger className='h-9 w-full text-xs sm:h-10 sm:text-sm'>
-                  <SelectValue placeholder='All Categories' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='all'>All Categories</SelectItem>
-                  {isLoadingCategories ? (
-                    <SelectItem value='loading-categories' disabled>
-                      Loading categories...
-                    </SelectItem>
-                  ) : (
-                    categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+              <CategoryCombobox
+                value={filters.categoryId}
+                onChange={handleCategoryChange}
+                allowClear={true}
+                placeholder='All Categories'
+                className='h-9 text-xs sm:h-10 sm:text-sm'
+              />
             </div>
 
             {/* Type Filter */}
@@ -343,7 +313,7 @@ const TransactionsPage = () => {
               />
             </div>
 
-            {/* Export Controls - DropdownMenu Button */}
+            {/* Export Controls */}
             <div className='space-y-1 sm:ml-2'>
               <label className='mb-1 block text-xs font-medium sm:text-sm'>Export</label>
               <DropdownMenu>
@@ -385,7 +355,7 @@ const TransactionsPage = () => {
       </div>
 
       {/* Transaction Table */}
-      {!transactionsData ? (
+      {isLoading && !transactionsData ? (
         <Loader />
       ) : transactionsData?.transactions && transactionsData.transactions.length > 0 ? (
         <div className='my-2 mb-16 sm:mb-0'>

@@ -34,11 +34,11 @@ const NoData: React.FC<NoDataProps> = ({
 
   return (
     <div
-      className={`flex min-h-full flex-col items-center justify-center p-4 text-muted-foreground ${
+      className={`text-muted-foreground flex min-h-full flex-col items-center justify-center p-4 ${
         className || ''
       }`}
     >
-      {IconComponent && <IconComponent className='mb-4 h-16 w-16 text-muted-foreground' />}
+      {IconComponent && <IconComponent className='text-muted-foreground mb-4 h-16 w-16' />}
       <p className='text-center text-sm'>{message}</p>
     </div>
   );

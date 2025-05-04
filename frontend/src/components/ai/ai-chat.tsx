@@ -1,10 +1,9 @@
 'use client';
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useAiChat } from '@/hooks/useAiChat';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Send, Loader2, RefreshCcw, Bot, User, AlertTriangle, X, BrainCircuit } from 'lucide-react';
+import { Send, Loader2, RefreshCcw, Bot, AlertTriangle, X, BrainCircuit } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   AlertDialog,
@@ -23,12 +22,19 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { AnimatePresence, motion } from 'framer-motion';
 
-export const AiChat = ({ handleClose }: { handleClose?: () => void }) => {
+export const AiChat = ({
+  handleClose,
+  shouldFullHeight = false
+}: {
+  handleClose?: () => void;
+  shouldFullHeight?: boolean;
+}) => {
   const { messages, sendMessage, isLoading, error, clearChat, latestAssistantMessage } =
     useAiChat();
   const [input, setInput] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -41,6 +47,12 @@ export const AiChat = ({ handleClose }: { handleClose?: () => void }) => {
     }, 100);
     return () => clearTimeout(timer);
   }, [messages, isLoading]);
+
+  useEffect(() => {
+    if (Array.isArray(messages)) {
+      setIsInitialized(true);
+    }
+  }, [messages]);
 
   const handleSendMessage = async (e?: React.FormEvent<HTMLFormElement>) => {
     e?.preventDefault();
@@ -62,7 +74,15 @@ export const AiChat = ({ handleClose }: { handleClose?: () => void }) => {
   };
 
   return (
-    <div className='bg-background m-auto flex h-full max-h-[82dvh] w-full flex-col rounded-2xl max-sm:max-h-[85dvh]'>
+    <div
+      className={cn(
+        'bg-background m-auto flex h-full w-full flex-col rounded-2xl max-sm:max-h-[85dvh]',
+        {
+          'max-h-screen': shouldFullHeight,
+          'max-h-[85dvh]': !shouldFullHeight
+        }
+      )}
+    >
       {/* Header */}
       <div className='flex flex-shrink-0 items-center justify-between border-b p-4'>
         <div className='flex items-center space-x-3'>
@@ -120,7 +140,15 @@ export const AiChat = ({ handleClose }: { handleClose?: () => void }) => {
             transition={{ duration: 0.3 }}
             className='space-y-4 pb-4'
           >
-            {messages.length === 0 && !isLoading && !error && (
+            {/* Initializing State */}
+            {!isInitialized && (
+              <div className='flex h-40 items-center justify-center'>
+                <Loader2 className='text-muted-foreground h-6 w-6 animate-spin' />
+              </div>
+            )}
+
+            {/* Empty State */}
+            {isInitialized && messages.length === 0 && !isLoading && !error && (
               <div className='text-muted-foreground flex h-full flex-col items-center justify-center p-8 text-center'>
                 <BrainCircuit className='mb-4 h-12 w-12' />
                 <p>Ask me anything about your finances!</p>
@@ -130,20 +158,24 @@ export const AiChat = ({ handleClose }: { handleClose?: () => void }) => {
                 </p>
               </div>
             )}
-            {messages.map((message, index) => (
-              <motion.div
-                key={message.id}
-                layout
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, transition: { duration: 0.15 } }}
-                transition={{ duration: 0.3, delay: 0.05 }}
-              >
-                <ChatMessageBubble message={message} />
-              </motion.div>
-            ))}
+
+            {/* Messages */}
+            {isInitialized &&
+              messages.map((message, index) => (
+                <motion.div
+                  key={message.id}
+                  layout
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, transition: { duration: 0.15 } }}
+                  transition={{ duration: 0.3, delay: 0.05 }}
+                >
+                  <ChatMessageBubble message={message} />
+                </motion.div>
+              ))}
+
             {/* Loading Indicator */}
-            {isLoading && messages[messages.length - 1]?.role === 'user' && (
+            {isLoading && isInitialized && (
               <motion.div
                 key='loading'
                 layout
@@ -164,6 +196,7 @@ export const AiChat = ({ handleClose }: { handleClose?: () => void }) => {
                 </div>
               </motion.div>
             )}
+
             {/* Error Display */}
             {error && !isLoading && (
               <motion.div
@@ -179,9 +212,12 @@ export const AiChat = ({ handleClose }: { handleClose?: () => void }) => {
                       <AlertTriangle className='text-destructive h-4 w-4' />
                     </AvatarFallback>
                   </Avatar>
-                  <div className='bg-destructive/10 text-destructive border-destructive/30 max-w-[75%] space-y-1 rounded-lg border px-3 py-2 shadow-sm'>
-                    <p className='text-sm font-medium'>An error occurred:</p>
+                  <div className='bg-destructive/10 text-destructive border-destructive/30 max-w-[80%] space-y-1 rounded-lg border px-3 py-2 shadow-sm'>
+                    <p className='text-sm font-semibold'>Assistant Error</p>
                     <p className='text-xs leading-relaxed whitespace-pre-wrap'>{error.message}</p>
+                    <p className='pt-1 text-[10px] opacity-80'>
+                      Try rephrasing your request or contact support if the issue persists.
+                    </p>
                   </div>
                 </div>
               </motion.div>
@@ -200,18 +236,18 @@ export const AiChat = ({ handleClose }: { handleClose?: () => void }) => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder='Ask about finances or request actions...'
-            className='focus-visible:ring-ring flex-1 resize-none rounded-lg border p-2 pr-12 shadow-sm focus-visible:ring-1'
+            className='focus-visible:ring-ring flex-1 resize-none rounded-lg border p-2.5 pr-12 shadow-sm focus-visible:ring-1'
             rows={1}
             onKeyDown={handleKeyDown}
             disabled={isLoading}
             aria-label='Chat input'
-            style={{ maxHeight: '100px', overflowY: 'auto' }}
+            style={{ maxHeight: '150px', overflowY: 'auto' }}
           />
           <Button
             type='submit'
             size='icon'
             disabled={isLoading || !input.trim()}
-            className='absolute right-2 bottom-1.5 h-8 w-8 shrink-0 rounded-full'
+            className='absolute right-2.5 bottom-2.5 h-8 w-8 shrink-0 rounded-full'
             aria-label='Send message'
           >
             {isLoading ? (

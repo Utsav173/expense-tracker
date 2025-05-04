@@ -67,7 +67,7 @@ const ForgotPasswordPage = () => {
           <Button
             disabled={isLoading}
             type='submit'
-            className='mb-2 mt-6 w-full'
+            className='mt-6 mb-2 w-full'
             variant={'authButton'}
           >
             {isLoading ? 'Sending Mail...' : 'Send Reset Link'}{' '}

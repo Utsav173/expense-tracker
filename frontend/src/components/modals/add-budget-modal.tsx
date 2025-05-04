@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { budgetCreate } from '@/lib/endpoints/budget';
 import { useToast } from '@/lib/hooks/useToast';
 import { z } from 'zod';
@@ -18,13 +18,13 @@ import {
 import { Button } from '../ui/button';
 import AddModal from './add-modal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { categoryGetAll } from '@/lib/endpoints/category';
+
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { NumericInput } from '../ui/numeric-input';
 import { Loader2, PlusCircle, CalendarDays, Tag } from 'lucide-react';
 import { monthNames } from '@/lib/utils';
+import CategoryCombobox from '../ui/category-combobox';
 
-// Updated schema for stricter validation and number transformation
 export const budgetSchema = z.object({
   categoryId: z.string().uuid('Category is required.'),
   month: z
@@ -47,9 +47,7 @@ export const budgetSchema = z.object({
     })
 });
 
-// Type for the form data *before* API transformation
 type BudgetFormSchema = z.infer<typeof budgetSchema>;
-// Type for the data sent to the API
 type BudgetApiPayload = {
   categoryId: string;
   month: number;
@@ -57,25 +55,21 @@ type BudgetApiPayload = {
   amount: number;
 };
 
-const AddBudgetModal = ({
-  onBudgetAdded,
-  isOpen,
-  onOpenChange,
-  hideTriggerButton = false
-}: {
+interface AddBudgetModalProps {
   onBudgetAdded: () => void;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   hideTriggerButton?: boolean;
+}
+
+const AddBudgetModal: React.FC<AddBudgetModalProps> = ({
+  onBudgetAdded,
+  isOpen,
+  onOpenChange,
+  hideTriggerButton = false
 }) => {
   const { showSuccess, showError } = useToast();
   const invalidate = useInvalidateQueries();
-
-  const { data: categoriesData, isLoading: isLoadingCategories } = useQuery({
-    queryKey: ['categories'],
-    queryFn: () => categoryGetAll({ limit: 100 }),
-    staleTime: 5 * 60 * 1000
-  });
 
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
@@ -91,7 +85,6 @@ const AddBudgetModal = ({
     mode: 'onChange'
   });
 
-  // Reset form when modal opens/closes
   useEffect(() => {
     if (isOpen) {
       form.reset({
@@ -104,11 +97,10 @@ const AddBudgetModal = ({
   }, [isOpen, form, currentMonth, currentYear]);
 
   const createBudgetMutation = useMutation({
-    // Specify the type expected by the API function
     mutationFn: (data: BudgetApiPayload) => budgetCreate(data),
     onSuccess: async () => {
-      await invalidate(['budgets']); // Invalidate budget list query
-      await invalidate(['budgetSummaryDashboard']); // Invalidate relevant dashboard queries if needed
+      await invalidate(['budgets']);
+      await invalidate(['budgetSummaryDashboard']);
       showSuccess('Budget created successfully!');
       onBudgetAdded();
       onOpenChange(false);
@@ -120,14 +112,19 @@ const AddBudgetModal = ({
   });
 
   const handleCreate = (data: BudgetFormSchema) => {
-    // Transform data for the API call
     const apiPayload: BudgetApiPayload = {
       ...data,
       month: Number(data.month),
       year: Number(data.year)
-      // Amount is already transformed by the schema
     };
     createBudgetMutation.mutate(apiPayload);
+  };
+
+  const handleClose = () => {
+    if (!createBudgetMutation.isPending) {
+      form.reset();
+      onOpenChange(false);
+    }
   };
 
   const years = Array.from({ length: 10 }, (_, i) => currentYear - 5 + i);
@@ -144,10 +141,11 @@ const AddBudgetModal = ({
         )
       }
       isOpen={isOpen}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleClose}
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleCreate)} className='space-y-5 pt-2'>
+          {/* --- Use CategoryCombobox --- */}
           <FormField
             control={form.control}
             name='categoryId'
@@ -157,38 +155,20 @@ const AddBudgetModal = ({
                   <Tag className='text-muted-foreground h-4 w-4' />
                   Category*
                 </FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value}
-                  disabled={isLoadingCategories || createBudgetMutation.isPending}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder='Select a category' />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {isLoadingCategories ? (
-                      <SelectItem value='loading' disabled>
-                        Loading categories...
-                      </SelectItem>
-                    ) : categoriesData?.categories && categoriesData.categories.length > 0 ? (
-                      categoriesData.categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value='no-categories' disabled>
-                        No categories available
-                      </SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
+                <FormControl>
+                  <CategoryCombobox
+                    value={field.value}
+                    onChange={field.onChange}
+                    disabled={createBudgetMutation.isPending}
+                    placeholder='Search and select category...'
+                    allowClear={false}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
+          {/* --- End CategoryCombobox --- */}
 
           <div className='grid grid-cols-2 gap-4'>
             <FormField
@@ -263,16 +243,15 @@ const AddBudgetModal = ({
               <FormItem>
                 <FormLabel>Budget Amount*</FormLabel>
                 <FormControl>
-                  {/* Use NumericInput for consistent currency formatting */}
                   <NumericInput
                     placeholder='0.00'
                     className='w-full'
                     disabled={createBudgetMutation.isPending}
-                    value={String(field.value)} // NumericInput expects string/number
+                    value={String(field.value)}
                     onValueChange={(values: { value: any }) => {
-                      // Update form state with the string value
                       field.onChange(values.value);
                     }}
+                    ref={field.ref as React.Ref<HTMLInputElement>}
                   />
                 </FormControl>
                 <FormMessage />
@@ -284,14 +263,14 @@ const AddBudgetModal = ({
             <Button
               type='button'
               variant='outline'
-              onClick={() => onOpenChange(false)}
+              onClick={handleClose}
               disabled={createBudgetMutation.isPending}
             >
               Cancel
             </Button>
             <Button
               type='submit'
-              disabled={createBudgetMutation.isPending}
+              disabled={createBudgetMutation.isPending || !form.formState.isValid}
               className='min-w-[100px]'
             >
               {createBudgetMutation.isPending ? (

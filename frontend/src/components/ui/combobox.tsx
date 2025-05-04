@@ -121,7 +121,7 @@ export function Combobox({
           />
           <CommandList>
             {isLoading ? (
-              <div className='flex items-center justify-center p-2 text-sm text-muted-foreground'>
+              <div className='text-muted-foreground flex items-center justify-center p-2 text-sm'>
                 <Loader2 className='mr-2 h-4 w-4 animate-spin' />
                 {loadingPlaceholder}
               </div>

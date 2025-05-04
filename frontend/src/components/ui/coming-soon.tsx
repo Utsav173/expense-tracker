@@ -22,7 +22,7 @@ const ComingSoon: React.FC<ComingSoonProps> = ({
     >
       <div className='relative flex w-full max-w-lg flex-col items-center justify-center rounded-lg border border-gray-100 bg-white p-8 shadow-xs dark:border-gray-800 dark:bg-gray-900'>
         {/* Small decorative sparkles like in the screenshot */}
-        <div className='absolute -right-2 -top-2 text-gray-200 dark:text-gray-700'>
+        <div className='absolute -top-2 -right-2 text-gray-200 dark:text-gray-700'>
           <svg
             width='20'
             height='20'
@@ -36,7 +36,7 @@ const ComingSoon: React.FC<ComingSoonProps> = ({
             />
           </svg>
         </div>
-        <div className='absolute bottom-8 right-24 text-gray-200 dark:text-gray-700'>
+        <div className='absolute right-24 bottom-8 text-gray-200 dark:text-gray-700'>
           <svg
             width='16'
             height='16'
@@ -50,7 +50,7 @@ const ComingSoon: React.FC<ComingSoonProps> = ({
             />
           </svg>
         </div>
-        <div className='absolute left-12 top-12 text-gray-200 dark:text-gray-700'>
+        <div className='absolute top-12 left-12 text-gray-200 dark:text-gray-700'>
           <svg
             width='12'
             height='12'

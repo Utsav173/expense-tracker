@@ -7,17 +7,26 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatCurrency(amount: number, currencyCode: string = 'INR'): string {
+export function formatCurrency(
+  amount: number | null | undefined,
+  currencyCode: string = 'INR'
+): string {
+  const numAmount = Number(amount ?? 0);
+
   try {
+    if (isNaN(numAmount)) {
+      console.warn(`Invalid amount provided to formatCurrency: ${amount}`);
+      return `${currencyCode} 0.00`;
+    }
+
     return new Intl.NumberFormat('en-IN', {
-      // en-IN for Indian, en-US, etc.
       style: 'currency',
       currency: currencyCode
-    }).format(amount);
+    }).format(numAmount);
   } catch (error) {
-    // Fallback if Intl.NumberFormat isn't supported or currency is invalid.
     console.error('Error formatting currency:', error);
-    return `${currencyCode} ${amount.toFixed(2)}`;
+
+    return `${currencyCode} ${numAmount.toFixed(2)}`;
   }
 }
 
@@ -77,4 +86,24 @@ export const getTimestampsForRange = (
   const endTimestamp = endDate ? Math.floor(endDate.getTime() / 1000) : undefined;
 
   return { startTimestamp, endTimestamp };
+};
+
+/**
+ * Safely parses a string as JSON. If parsing fails or input is not a string,
+ * returns the original input or a default error object.
+ * @param input The value to parse.
+ * @returns The parsed object, the original input, or an error object.
+ */
+export const safeJsonParse = (input: any): any => {
+  if (typeof input === 'string') {
+    try {
+      return JSON.parse(input);
+    } catch (e) {
+      console.warn('safeJsonParse: Could not parse string as JSON:', input);
+
+      return { success: false, error: 'Received malformed tool result (not valid JSON).' };
+    }
+  }
+
+  return input;
 };
