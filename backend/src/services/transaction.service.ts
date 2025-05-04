@@ -56,6 +56,31 @@ type TransactionSelect = InferSelectModel<typeof Transaction> & {
   } | null;
 };
 
+type TransactionForAISelect = InferSelectModel<typeof Transaction> & {
+  category: { id: string | null; name: string | null } | null;
+
+  createdBy: { id: string; name: string; email: string; profilePic: string | null } | null;
+  updatedBy: {
+    id: string | null;
+    name: string | null;
+    email: string | null;
+    profilePic: string | null;
+  } | null;
+  account: { name: string; currency: string } | null;
+};
+
+type TransactionAIFilters = {
+  q?: string;
+  isIncome?: string;
+  categoryId?: string;
+  accountId?: string;
+  userId?: string;
+  minAmount?: number;
+  maxAmount?: number;
+  startDate?: Date;
+  endDate?: Date;
+};
+
 export class TransactionService {
   private getFilterConditions(filters: TransactionFilters): SQL<unknown> | undefined {
     const { q, isIncome, categoryId, startDate, endDate, accountId, userId, minAmount, maxAmount } =
@@ -105,6 +130,62 @@ export class TransactionService {
     ].filter((c) => c !== undefined);
 
     return conditions.length > 0 ? and(...conditions) : undefined;
+  }
+
+  private buildFilterConditionsAI(
+    filters: TransactionFilters | TransactionAIFilters,
+  ): SQL<unknown> | undefined {
+    const { q, isIncome, categoryId, accountId, userId, minAmount, maxAmount, startDate, endDate } =
+      filters;
+
+    const conditions: (SQL<unknown> | undefined)[] = [];
+
+    if (accountId) {
+      conditions.push(eq(Transaction.account, accountId));
+    } else if (userId) {
+      conditions.push(eq(Transaction.owner, userId));
+    } else {
+      throw new Error('Either accountId or userId must be provided for filtering transactions');
+    }
+
+    if (startDate) {
+      conditions.push(gte(Transaction.createdAt, startDate));
+    }
+    if (endDate) {
+      conditions.push(lte(Transaction.createdAt, endDate));
+    }
+
+    if (isIncome !== undefined && isIncome !== null && isIncome !== 'all') {
+      conditions.push(eq(Transaction.isIncome, isIncome === 'true'));
+    }
+
+    if (categoryId && categoryId !== 'all') {
+      conditions.push(eq(Transaction.category, categoryId));
+    }
+
+    if (minAmount !== undefined) {
+      conditions.push(gte(Transaction.amount, minAmount));
+    }
+    if (maxAmount !== undefined) {
+      conditions.push(lte(Transaction.amount, maxAmount));
+    }
+
+    if (q && q.length > 0) {
+      const searchNum = Number(q);
+      const isNumericSearch = !isNaN(searchNum);
+
+      conditions.push(
+        or(
+          ilike(Transaction.text, `%${q}%`),
+          ilike(Transaction.transfer, `%${q}%`),
+          isNumericSearch ? eq(Transaction.amount, searchNum) : undefined,
+          ilike(Category.name, `%${q}%`),
+        ),
+      );
+    }
+
+    const validConditions = conditions.filter((c): c is SQL<unknown> => c !== undefined);
+    return validConditions.length > 0 ? and(...validConditions) : undefined;
   }
 
   async getTransactions(
@@ -223,6 +304,51 @@ export class TransactionService {
       },
       dateRange: { minDate: dateRangeInfo.minDate, maxDate: dateRangeInfo.maxDate },
     };
+  }
+
+  async getTransactionsForAI(
+    filters: TransactionAIFilters,
+    limit: number = 10,
+  ): Promise<TransactionForAISelect[]> {
+    const filterConditions = this.buildFilterConditionsAI(filters);
+
+    const needsCategoryJoin = !!filters.q || !!filters.categoryId;
+
+    try {
+      let query = db
+        .select({
+          id: Transaction.id,
+          amount: Transaction.amount,
+          category: { id: Category.id, name: Category.name },
+          text: Transaction.text,
+          isIncome: Transaction.isIncome,
+          account: { name: Account.name, currency: Account.currency },
+          transfer: Transaction.transfer,
+          createdAt: Transaction.createdAt,
+          currency: Transaction.currency,
+        })
+        .from(Transaction);
+
+      if (needsCategoryJoin) {
+        query.leftJoin(Category, eq(Category.id, Transaction.category));
+      }
+
+      query
+        .leftJoin(Account, eq(Account.id, Transaction.account))
+        .where(filterConditions)
+        .limit(limit)
+        .orderBy(desc(Transaction.createdAt));
+
+      const transactionData = await query;
+
+      return transactionData as TransactionForAISelect[];
+    } catch (err: any) {
+      console.error('Error fetching transactions for AI:', err);
+      if (err instanceof HTTPException) throw err;
+      throw new HTTPException(500, {
+        message: `Failed to fetch transactions for AI: ${err.message}`,
+      });
+    }
   }
 
   async getTransactionById(id: string, userId: string): Promise<TransactionSelect> {

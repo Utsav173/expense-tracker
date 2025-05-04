@@ -1,4 +1,3 @@
-// src/services/account.service.ts
 import { db } from '../database';
 import {
   Account,
@@ -551,7 +550,6 @@ export class AccountService {
         whereClause,
         or(
           ilike(Account.name, `%${search}%`),
-          ilike(User.name, `%${search}%`),
           isNumericSearch ? eq(Account.balance, searchNum) : undefined,
           ilike(Account.currency, `%${search}%`),
         ),
@@ -642,7 +640,8 @@ export class AccountService {
     }
   }
 
-  async getCustomAnalytics(accountId: string, userId: string, duration: string) {
+  async getCustomAnalytics(accountId: string, userId: string, duration: string | undefined) {
+    // Allow duration to be undefined
     // check if account belongs to user or it shared to user
     const accountAccess = await db
       .select({ id: Account.id })
@@ -651,7 +650,10 @@ export class AccountService {
       .where(
         and(
           eq(Account.id, accountId),
-          or(eq(Account.owner, userId), eq(UserAccount.userId, userId)),
+          or(
+            eq(Account.owner, userId),
+            sql`${accountId} IN (SELECT ${UserAccount.accountId} FROM ${UserAccount} WHERE ${UserAccount.userId} = ${userId})`,
+          ),
         ),
       )
       .limit(1)
@@ -665,24 +667,24 @@ export class AccountService {
         sql.raw(`
       WITH CurrentPeriodData AS (
           SELECT
-              SUM(CASE WHEN "isIncome" = TRUE THEN amount ELSE 0 END) AS total_income,
-              SUM(CASE WHEN "isIncome" = FALSE THEN amount ELSE 0 END) AS total_expense,
-              SUM(CASE WHEN "isIncome" = TRUE THEN amount ELSE -amount END) AS total_balance
+              COALESCE(SUM(CASE WHEN "isIncome" = TRUE THEN amount ELSE 0 END), 0) AS total_income,
+              COALESCE(SUM(CASE WHEN "isIncome" = FALSE THEN amount ELSE 0 END), 0) AS total_expense,
+              COALESCE(SUM(CASE WHEN "isIncome" = TRUE THEN amount ELSE -amount END), 0) AS total_balance
           FROM transaction
           WHERE
               account = '${accountId}'
-              AND "createdAt" BETWEEN '${startDate}' AND '${endDate}'
+              AND "createdAt" BETWEEN '${startDate}'::timestamp AND '${endDate}'::timestamp
       ),
 
       PreviousPeriodData AS (
           SELECT
-              SUM(CASE WHEN "isIncome" = TRUE THEN amount ELSE 0 END) AS prev_total_income,
-              SUM(CASE WHEN "isIncome" = FALSE THEN amount ELSE 0 END) AS prev_total_expense,
-              SUM(CASE WHEN "isIncome" = TRUE THEN amount ELSE -amount END) AS prev_total_balance
+              COALESCE(SUM(CASE WHEN "isIncome" = TRUE THEN amount ELSE 0 END), 0) AS prev_total_income,
+              COALESCE(SUM(CASE WHEN "isIncome" = FALSE THEN amount ELSE 0 END), 0) AS prev_total_expense,
+              COALESCE(SUM(CASE WHEN "isIncome" = TRUE THEN amount ELSE -amount END), 0) AS prev_total_balance
           FROM transaction
           WHERE
               account = '${accountId}'
-              AND "createdAt" BETWEEN ${getSQLInterval(startDate, endDate)}
+              AND "createdAt" BETWEEN ${getSQLInterval(startDate, endDate)}::timestamp
       )
 
       SELECT
@@ -707,6 +709,22 @@ export class AccountService {
         throw new HTTPException(500, { message: err.message });
       });
 
+    // The query returns an array with one object or an empty array
+    const analyticsData = result[0];
+
+    if (!analyticsData) {
+      // This case should ideally not happen if the account exists, but indicates no transactions
+      // Return default zero values if no transactions exist in the period or previous period
+      return {
+        income: 0,
+        expense: 0,
+        balance: 0,
+        BalancePercentageChange: 0,
+        IncomePercentageChange: 0,
+        ExpensePercentageChange: 0,
+      };
+    }
+
     const {
       income,
       expense,
@@ -714,12 +732,12 @@ export class AccountService {
       BalancePercentageChange,
       IncomePercentageChange,
       ExpensePercentageChange,
-    } = result[0];
+    } = analyticsData;
 
     return {
-      income,
-      expense,
-      balance,
+      income: Number(income),
+      expense: Number(expense),
+      balance: Number(balance),
       BalancePercentageChange: +Number(BalancePercentageChange).toFixed(2),
       IncomePercentageChange: +Number(IncomePercentageChange).toFixed(2),
       ExpensePercentageChange: +Number(ExpensePercentageChange).toFixed(2),
@@ -854,16 +872,17 @@ export class AccountService {
         .insert(Analytics)
         .values({
           account: newAccount.id,
-          balance: openingBalance,
           user: userId,
           income: openingBalance >= 0 ? openingBalance : 0,
           expense: openingBalance < 0 ? -openingBalance : 0,
+          balance: openingBalance,
           previousIncome: 0,
           previousExpenses: 0,
           previousBalance: 0,
           incomePercentageChange: openingBalance > 0 ? 100 : 0,
           expensesPercentageChange: openingBalance < 0 ? 100 : 0,
           createdAt: new Date(),
+          updatedAt: new Date(),
         })
         .catch((err) => {
           throw new HTTPException(500, { message: `DB Insert Analytics Error: ${err.message}` });
