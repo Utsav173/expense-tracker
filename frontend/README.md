@@ -10,58 +10,62 @@ This is the frontend component of the Expense Tracker application, providing a u
 
 ### Authentication & User Management
 
-- Secure user registration (with profile picture) and login.
-- User profile management (name, email, profile picture, preferred currency, AI API Key management).
+- Secure user registration (with profile picture upload) and login.
+- User profile management (name, email, profile picture update, preferred currency selection, AI API Key management).
 - Logout functionality.
 - Forgot password and password reset flow.
 
 ### Account Management
 
-- Create, view, edit, and delete multiple financial accounts.
-- View account lists with balances and analytics previews.
-- Detailed account view with transaction history, filtering, sorting, pagination, and date range selection.
-- Account sharing with other users (grant/revoke).
-- View accounts shared with the user.
+- Create, view, edit (name only), and delete multiple financial accounts.
+- View account lists with balances and analytics previews (income/expense % change).
+- Detailed account view with transaction history, advanced filtering (search, category, type, date range), sorting, pagination.
+- Account sharing with other users (grant/revoke access).
+- View accounts shared with the user by others.
 
 ### Transaction Management
 
-- Add new income and expense transactions via modal.
+- Add new income and expense transactions via modal with date/time picker.
 - Categorize transactions using a searchable combobox (with inline category creation).
-- Set transaction date and time using a date-time picker.
-- View transaction list with advanced filtering (search, category, type, date range), sorting, and pagination.
-- Edit and delete existing transactions.
-- Import transactions from XLSX files (Excel).
-- Import transactions from PDF bank statements (using `unpdf` for parsing - basic structure supported).
-- Export transactions to XLSX or CSV based on current filters.
+- View transaction list within an account with filtering, sorting, pagination.
+- Edit transaction details (description, amount, type, category, date, transfer info).
+- Delete existing transactions.
+- **Import Transactions:**
+  - From XLSX files (Excel) using a predefined template.
+  - From PDF bank statements (basic parsing support using `unpdf`).
+  - Preview and confirm imported data before finalizing.
+- **Export Transactions:**
+  - Export transactions to XLSX or CSV format.
+  - Export based on the currently applied filters (account, date range, type, category, search).
 
 ### Budgeting & Goals
 
-- Create, view, edit, and delete budgets for specific categories (monthly/yearly).
-- View budget summaries comparing actual spending to budgeted amounts for selected periods.
-- Track progress for individual budgets (via modal or dashboard).
-- Create, view, edit, and delete saving goals (target amount, target date).
-- Track progress towards saving goals visually.
+- Create, view, edit (amount), and delete budgets for specific categories (monthly/yearly).
+- View budget summaries comparing actual spending to budgeted amounts for selected periods (month/year selector).
+- Track progress for individual budgets visually.
+- Create, view, edit (name, target amount, target date), and delete saving goals.
+- Track progress towards saving goals visually (progress bar, remaining amount).
 - Add/withdraw funds allocated to goals via modal.
 
 ### Investment Tracking
 
-- Create, view, edit, and delete investment accounts (brokerages).
-- Add, edit, and delete individual investment holdings (stocks).
+- Create, view, edit (name, platform), and delete investment accounts (brokerages).
+- Add, edit (shares, purchase price/date, dividend), and delete individual investment holdings (stocks).
 - View holdings within an investment account with pagination and sorting.
-- View investment account summaries (total invested, dividends, value).
-- View overall portfolio summary across all investment accounts (on Dashboard).
-- Search for stocks (integrated with backend finance API).
-- View current stock prices (integrated with backend finance API).
-- View historical portfolio value chart (7d, 30d, 90d, 1y, custom range).
-- Auto-fetch historical purchase price based on symbol and date (optional).
+- View investment account summaries (total invested, dividends, current value - _requires backend calculation_).
+- View overall portfolio summary across all investment accounts (on Dashboard - _requires backend calculation_).
+- Search for stocks (integrated with backend finance API via combobox).
+- View current stock prices (displayed when selecting symbol - _via backend API_).
+- View historical portfolio value chart (7d, 30d, 90d, 1y, custom range options).
+- Auto-fetch historical purchase price based on symbol and date (optional feature in Add/Edit Holding modal).
 
 ### Debt Management
 
-- Create, view, edit, and delete debt records (loans taken/given).
+- Create, view, edit (description, duration/frequency), and delete debt records (loans taken/given).
 - Track principal, premium, interest rate, type (simple/compound), associated account, counterparty.
-- Handle duration input via units (days, weeks, months, years + frequency) or custom date range.
+- Handle duration input via units (days, weeks, months, years + frequency) or custom date range picker.
 - Mark debts as paid.
-- Utility for calculating simple/compound interest within the UI.
+- Utility for calculating simple/compound interest (placeholder/coming soon).
 
 ### Analytics & Dashboard
 
@@ -69,45 +73,50 @@ This is the frontend component of the Expense Tracker application, providing a u
   - Financial Health Score estimation card.
   - Financial Snapshot card (Overall Balance, Income, Expense, Percentage Changes).
   - Financial Trend Charts (Line, Bar, Area options) with date range filter.
-  - Spending Breakdown chart (Pie, Donut, Column options) with period filter.
-  - Budget Progress summary card with period filter.
+  - Spending Breakdown chart (Pie, Donut, Column options) with period filter (Month, Year, All).
+  - Budget Progress summary card with period filter (Month/Year).
   - Saving Goal highlights card.
-  - Investment Summary card with historical sparkline chart and period filter.
+  - Investment Summary card with historical sparkline chart and period filter (7d, 30d, 90d, 1y, custom).
   - Debt Summary card (outstanding debts).
-  - Account Balance list summary.
+  - Account Balance list summary (Top 5).
   - Quick Stats card (highest/lowest income/expense).
-  - Customizable layout (show/hide sections).
+  - Customizable layout (show/hide sections via Options dropdown).
   - Manual refresh option.
-- **Account Details:** Specific analytics cards and charts for individual accounts based on selected duration.
-- **Statements:** Generate PDF or XLSX statements for accounts (via backend endpoint - triggers download).
+- **Account Details:** Specific analytics cards (Balance, Income, Expense, Net) and charts (Trends, Spending Breakdown) for individual accounts based on selected duration.
+- **Statements:** Generate PDF or XLSX statements for accounts (triggers download via backend).
 
 ### AI Assistant
 
-- **Chat Interface:** Accessible via a floating trigger button on most pages.
-- **Natural Language Processing:** Understands requests to add/list/update/delete data (transactions, accounts, etc.) and answer financial questions.
-- **Tool Integration:** Interacts with backend tools to perform requested actions securely.
-- **Conversation History:** Maintained per session (persisted in backend).
-- **Suggested Actions:** Provides contextual buttons for navigation or confirmation based on AI response.
-- **API Key Management:** Users can securely add/update/remove their personal AI API key (e.g., Google AI) in their profile.
+- **Chat Interface:** Accessible via a floating trigger button on allowed pages.
+- **Natural Language Processing:** Understands requests to add/list/update/delete data and answer financial questions.
+- **Tool Integration:** Interacts with backend tools securely. Displays tool activity (calls/results) in a collapsible section. Renders structured data from tools (e.g., transaction lists).
+- **Conversation History:** Maintained per session (persisted in backend, loaded on open).
+- **Suggested Actions:** Provides contextual buttons based on AI response (e.g., navigate to relevant page, confirm/cancel actions).
+- **API Key Management:** Users can securely add/update/remove their personal AI API key (e.g., Google AI) in their profile settings. Access to the AI assistant is disabled if no key is configured.
 
 ## Technology Stack
 
-- **Framework:** [Next.js](https://nextjs.org/) (App Router)
-- **UI Library:** [React](https://react.dev/)
-- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
-- **Component Library:** [Shadcn UI](https://ui.shadcn.com/)
-- **State Management/Data Fetching:** [TanStack Query (React Query)](https://tanstack.com/query/v4)
-- **Forms:** [React Hook Form](https://react-hook-form.com/)
-- **Schema Validation:** [Zod](https://zod.dev/)
+- **Framework:** [Next.js](https://nextjs.org/) (v15+, App Router)
+- **UI Library:** [React](https://react.dev/) (v19+)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/) (v4+)
+- **Component Library:** [Shadcn UI](https://ui.shadcn.com/) (based on Radix UI)
+- **State Management/Data Fetching:** [TanStack Query (React Query)](https://tanstack.com/query/v5) (v5+)
+- **Forms:** [React Hook Form](https://react-hook-form.com/) (v7+)
+- **Schema Validation:** [Zod](https://zod.dev/) (v3+)
 - **Icons:** [Lucide React](https://lucide.dev/icons/)
-- **Charting:** [Recharts](https://recharts.org/en-US/)
-- **File Handling:** [XLSX](https://sheetjs.com/) (SheetJS), [unpdf](https://unpdf.unjs.io/) (PDF parsing), [react-dropzone](https://react-dropzone.js.org/)
-- **Animation:** [Framer Motion](https://www.framer.com/motion/)
-- **Utilities:** [date-fns](https://date-fns.org/), [jwt-decode](https://www.npmjs.com/package/jwt-decode), [react-hot-toast](https://react-hot-toast.com/), [use-debounce](https://www.npmjs.com/package/use-debounce), [axios](https://axios-http.com/)
+- **Charting:** [Recharts](https://recharts.org/en-US/) (v2+)
+- **File Handling:**
+  - [XLSX](https://sheetjs.com/) (SheetJS - Excel parsing/generation)
+  - [unpdf](https://unpdf.unjs.io/) (PDF text extraction for import)
+  - [react-dropzone](https://react-dropzone.js.org/) (File uploads)
+  - [file-saver](https://github.com/eligrey/FileSaver.js/) (Triggering file downloads)
+- **Animation:** [Framer Motion](https://www.framer.com/motion/) (v12+)
+- **Utilities:** [date-fns](https://date-fns.org/) (v4+), [jwt-decode](https://www.npmjs.com/package/jwt-decode), [react-hot-toast](https://react-hot-toast.com/), [use-debounce](https://www.npmjs.com/package/use-debounce), [axios](https://axios-http.com/), [clsx](https://github.com/lukeed/clsx), [tailwind-merge](https://github.com/dcastil/tailwind-merge)
+- **Theming:** [next-themes](https://github.com/pacocoursey/next-themes)
 
 ## Getting Started
 
-1.  **Prerequisites:** Ensure the [Backend Service](../backend) is set up and running.
+1.  **Prerequisites:** Ensure the [Backend Service](../backend) is set up and running. Node.js (18+) and Bun (1+) are required.
 2.  **Clone the repository:**
     ```bash
     # If you haven't already cloned the main project
@@ -128,6 +137,7 @@ This is the frontend component of the Expense Tracker application, providing a u
     ```bash
     bun dev
     ```
+    _(Uses Next.js Turbopack for faster development builds)._
 6.  **Open in your browser:** Visit `http://localhost:3000` (or the port specified).
 
 ## Project Structure
@@ -137,28 +147,44 @@ frontend/
 ├── src/
 │   ├── app/              # Next.js App Router structure
 │   │   ├── (private)/    # Routes requiring authentication (Dashboard, Accounts, etc.)
+│   │   │   ├── layout.tsx    # Layout for private routes (includes Sidebar)
+│   │   │   └── page.tsx      # Default page (usually Account list)
+│   │   │   └── ...           # Feature route groups (dashboard, transactions, etc.)
 │   │   ├── (public)/     # Public routes (e.g., /auth/*)
-│   │   └── layout.tsx    # Root layout for authenticated routes
-│   │   └── globals.css   # Global styles
+│   │   │   └── auth/         # Authentication pages (login, signup, etc.)
+│   │   │   └── layout.tsx    # Layout for public auth routes
+│   │   └── globals.css   # Global styles & Tailwind directives
+│   │   └── layout.tsx    # Root layout (applies providers)
 │   ├── components/       # Reusable UI components
 │   │   ├── ui/           # Base UI components (Shadcn + custom like numeric-input)
 │   │   ├── modals/       # Dialog/Modal components (Add/Edit/Delete/Share/etc.)
 │   │   ├── dashboard/    # Dashboard specific components & cards
 │   │   ├── layout/       # Sidebar, Header components
 │   │   ├── ai/           # AI Chat interface components
-│   │   └── ...           # Feature-specific components (account, budget, transaction, etc.)
+│   │   ├── account/      # Account-specific components (details, transactions)
+│   │   ├── budget/       # Budget-specific components
+│   │   ├── category/     # Category-specific components
+│   │   ├── goal/         # Goal-specific components
+│   │   ├── investment/   # Investment-specific components
+│   │   ├── debt/         # Debt-specific components
+│   │   └── transactions/ # Transaction-specific components (table, import)
+│   │   └── date/         # Date/Time picker components
 │   ├── lib/              # Core logic, utilities, API endpoints
 │   │   ├── endpoints/    # API request functions (wrappers around apiFetch)
-│   │   ├── hooks/        # Custom React hooks (useAuth, useToast, usePagination, etc.)
+│   │   ├── hooks/        # Custom React hooks (useAuth, useToast, etc.)
 │   │   ├── utils/        # Utility functions (cn, formatCurrency) & Zod schemas
-│   │   └── api-client.ts # Axios instance configuration
-│   │   └── auth.ts       # Client-side auth helpers
-│   │   └── types.ts      # TypeScript type definitions
+│   │   ├── api-client.ts # Axios instance configuration & apiFetch utility
+│   │   ├── auth.ts       # Client-side auth helpers
+│   │   ├── types.ts      # TypeScript type definitions
+│   │   └── react-query.ts # TanStack Query client setup
 │   ├── config/           # Application configuration (e.g., dashboard layouts)
-├── public/             # Static assets (images, favicons, sample files)
+│   ├── hooks/            # General custom hooks (usePagination, useUrlState, etc.)
+├── public/             # Static assets (images, favicons)
 ├── package.json
 ├── tsconfig.json
-└── next.config.ts      # Next.js configuration
+├── next.config.ts      # Next.js configuration
+├── postcss.config.mjs  # PostCSS config for Tailwind v4
+└── tailwind.config.ts  # Tailwind CSS configuration
 ```
 
 ## Contributing
@@ -184,73 +210,42 @@ For optimal performance and experience, we recommend using the latest version of
 
 The application implements several performance optimizations:
 
-- **Code Splitting:**
-  - Next.js App Router automatically handles route-based code splitting.
-  - Dynamic imports (`next/dynamic`) used for heavy components like the AI Chat interface and PDF parsing logic.
-- **Asset Optimization:**
-  - Image optimization using `next/image`.
-  - Font optimization via `next/font`.
-  - CSS minification and purging via Tailwind CSS.
-- **Caching:**
-  - Server-side data fetching leverages React Server Components where applicable.
-  - Client-side data fetching caching managed by TanStack Query (React Query).
-  - Browser caching strategies applied via Next.js defaults.
-- **Rendering:**
-  - Primarily uses Client Components due to extensive interactivity, but leverages Server Components for layout and static parts where possible.
-  - Optimized re-renders using `React.memo`, `useCallback`, and `useMemo`.
-  - Skeleton loading states provide better perceived performance.
-- **Bundle Size:** Efforts made to keep dependencies minimal. Consider using `@next/bundle-analyzer` for detailed analysis if needed.
+- **Code Splitting:** Next.js App Router handles route-based code splitting. Dynamic imports (`next/dynamic`) are used for heavy components (AI Chat, Particles).
+- **Asset Optimization:** Image optimization (`next/image`), Font optimization (`next/font`), CSS minification/purging (Tailwind).
+- **Caching:** TanStack Query manages client-side data fetching caching. Next.js defaults handle browser caching.
+- **Rendering:** Primarily Client Components due to interactivity, leveraging Server Components where feasible. Memoization (`React.memo`, `useCallback`, `useMemo`) optimizes re-renders. Skeleton loading states enhance perceived performance.
+- **Bundle Size:** Dependencies are managed carefully.
 
 ## Development Guidelines
 
 ### Code Style
 
-- Follow the project's ESLint and Prettier configuration (`bun run format`).
-- Use TypeScript for all new code.
-- Adhere to React best practices and hooks guidelines.
-- Write clear, concise, and meaningful commit messages.
+- Follow ESLint/Prettier config (`bun run format`).
+- Use TypeScript.
+- Adhere to React best practices.
+- Write clear commit messages.
 
 ### Component Development
 
-1.  **Structure:**
-    - Organize components by feature within the `src/components` directory.
-    - Utilize `components/ui` for base, reusable primitives (often from Shadcn).
-    - Aim for focused, single-responsibility components.
-2.  **State Management:**
-    - Use TanStack Query for server state management (fetching, caching, mutations).
-    - Use React Context API (`useAuth`) for global UI state like authentication status.
-    - Use local component state (`useState`, `useReducer`) for UI-specific logic.
-    - Leverage custom hooks (`useAccountDetails`, `useTransactions`, `useUrlState`) to encapsulate complex state logic and data fetching related to specific features or views.
-3.  **Forms:**
-    - Use React Hook Form for form handling.
-    - Use Zod for schema definition and validation (both client-side and aligning with backend).
-4.  **Styling:**
-    - Primarily use Tailwind CSS utility classes.
-    - Utilize `cn` utility for conditional classes.
-    - Leverage CSS variables defined in `globals.css` for theme consistency (managed by Shadcn UI and `next-themes`).
-5.  **API Interaction:**
-    - Define API endpoint functions in `src/lib/endpoints`.
-    - Use the configured `apiFetch` utility (based on Axios) in `src/lib/api-client.ts` for consistent request handling, error reporting (via toasts), and authentication header injection.
-6.  **Testing:** (Setup Required)
-    - Consider adding unit tests (e.g., with Vitest/Jest) for utility functions and complex hooks.
-    - Implement integration tests (e.g., with React Testing Library) for key components and user flows.
-7.  **Documentation:**
-    - Document complex components and hooks with JSDoc comments.
-    - Ensure README files are kept up-to-date with features and setup instructions.
+- Organize by feature in `src/components`.
+- Use `components/ui` for primitives (Shadcn).
+- Use TanStack Query for server state, Context/local state for UI state.
+- Use custom hooks (`hooks/`, `lib/hooks/`) for encapsulating logic.
+- Use React Hook Form + Zod for forms.
+- Use Tailwind CSS utilities (+ `cn` helper).
+- Define API functions in `lib/endpoints/` using `apiFetch`.
 
 ### Performance Guidelines
 
-- Memoize expensive computations using `useMemo`.
-- Memoize callback functions passed to child components using `useCallback`.
-- Wrap components that re-render unnecessarily with `React.memo`.
-- Implement proper loading states (e.g., skeletons, spinners) for data fetching.
-- Use debouncing (`use-debounce`) for inputs that trigger frequent refetches (like search).
-- Analyze component re-renders using React DevTools if performance issues arise.
+- Memoize expensive computations/callbacks.
+- Use `React.memo` where appropriate.
+- Implement loading states (skeletons, spinners).
+- Use debouncing (`use-debounce`) for frequent refetches (e.g., search).
+- Analyze re-renders with React DevTools if needed.
 
 ### Accessibility
 
-- Use semantic HTML elements appropriately.
-- Ensure interactive elements are keyboard navigable and focusable.
-- Provide appropriate ARIA attributes where necessary.
-- Use Shadcn UI components, which generally follow accessibility best practices.
-- Test with screen readers periodically if possible.
+- Use semantic HTML.
+- Ensure keyboard navigation and focus states.
+- Provide ARIA attributes.
+- Leverage Shadcn UI's accessibility features.
