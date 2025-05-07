@@ -6,13 +6,10 @@ const IV_LENGTH = 12;
 async function getCryptoKey(): Promise<CryptoKey> {
   const secretBuffer = Buffer.from(config.AI_API_KEY_ENCRYPTION_SECRET, 'utf8');
   const derivedKeyBuffer = await crypto.subtle.digest('SHA-256', secretBuffer);
-  return crypto.subtle.importKey(
-    'raw',
-    derivedKeyBuffer,
-    { name: ALGORITHM },
-    false,
-    ['encrypt', 'decrypt'],
-  );
+  return crypto.subtle.importKey('raw', derivedKeyBuffer, { name: ALGORITHM }, false, [
+    'encrypt',
+    'decrypt',
+  ]);
 }
 
 /**

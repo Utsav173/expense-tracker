@@ -7,17 +7,31 @@ import { and, eq } from 'drizzle-orm';
 import { Budget } from '../../database/schema';
 import { db } from '../../database';
 import { formatCurrency } from '../../utils/currency.utils';
-import { createToolResponse, resolveCategoryId } from './shared';
+import { createErrorResponse, createToolResponse, resolveCategoryId } from './shared';
+import { parseNaturalLanguageDateRange } from '../../utils/nl_date.utils';
 
 export function createBudgetTools(userId: string) {
   return {
     createBudget: tool({
-      description: 'Creates a monthly budget for a specific expense category.',
+      description:
+        'Creates a monthly budget for a specific expense category. If month/year are omitted, defaults to the current month and year.',
       parameters: z.object({
         categoryIdentifier: z.string().min(1).describe('Category name or ID.'),
         amount: z.number().positive('Budget amount.'),
-        month: z.number().int().min(1).max(12).describe('Month number (1-12).'),
-        year: z.number().int().min(1900).max(2100).describe('Full year (e.g., 2024).'),
+        month: z
+          .number()
+          .int()
+          .min(1)
+          .max(12)
+          .optional()
+          .describe('Month number (1-12). Defaults to current month if omitted.'),
+        year: z
+          .number()
+          .int()
+          .min(1900)
+          .max(2100)
+          .optional()
+          .describe('Full year (e.g., 2024). Defaults to current year if omitted.'),
       }),
       execute: async ({ categoryIdentifier, amount, month, year }) => {
         try {
@@ -28,22 +42,29 @@ export function createBudgetTools(userId: string) {
             return createToolResponse({
               success: true,
               clarificationNeeded: true,
-              message: 'Which category?',
+              message: 'Which category do you want to set a budget for?',
               options: categoryRes.options,
             });
 
-          const payload = { category: categoryRes.id, amount, month, year };
+          const targetMonth = month || getMonth(new Date()) + 1;
+          const targetYear = year || getYear(new Date());
+
+          const payload = {
+            category: categoryRes.id,
+            amount,
+            month: targetMonth,
+            year: targetYear,
+          };
           const newBudget = await budgetService.createBudget(userId, payload as any);
           return createToolResponse({
             success: true,
-            message: `Budget set for ${month}/${year}.`,
+            message: `Budget of ${formatCurrency(amount)} set for ${
+              categoryRes.name || 'the selected category'
+            } for ${targetMonth}/${targetYear}.`,
             data: newBudget,
           });
         } catch (error: any) {
-          return createToolResponse({
-            success: false,
-            error: error instanceof HTTPException ? error.message : error.message,
-          });
+          return createErrorResponse(error, 'Failed to create budget.');
         }
       },
     }),
@@ -138,40 +159,41 @@ export function createBudgetTools(userId: string) {
 
     getBudgetSummary: tool({
       description:
-        'Retrieves the budget summary (budgeted vs actual spending) for a specified period.',
+        "Retrieves the budget summary (budgeted vs actual spending) for a specified period. Period can be natural language like 'this month', 'last month', or a specific month/year like 'August 2024'. Defaults to current month if unspecified.",
       parameters: z.object({
-        period: z
+        periodDescription: z
           .string()
           .optional()
           .describe(
-            "Period like 'this month', 'last month', '2024-08'. Defaults to current month.",
+            "Period like 'this month', 'last month', '2024-08', 'August 2023'. Defaults to current month.",
           ),
       }),
-      execute: async ({ period }) => {
+      execute: async ({ periodDescription }) => {
         try {
-          let queryParams: { month?: string; year?: string; duration?: string } = {
-            duration: period || 'thisMonth',
-          };
-          const now = new Date();
-          const currentMonth = getMonth(now) + 1;
-          const currentYear = getYear(now);
-          const yearMonthMatch = period?.match(/^(\d{4})-(\d{1,2})$/);
+          const effectivePeriodDesc = periodDescription || 'this month';
+          const parsedDateRange = parseNaturalLanguageDateRange(effectivePeriodDesc);
 
-          if (yearMonthMatch) {
-            queryParams = { year: yearMonthMatch[1], month: yearMonthMatch[2] };
-          } else if (period === 'this month' || !period) {
-            queryParams = { year: String(currentYear), month: String(currentMonth) };
+          if (!parsedDateRange || !parsedDateRange.startDate || !parsedDateRange.endDate) {
+            return createToolResponse({
+              success: false,
+              error: `Could not understand the period: "${effectivePeriodDesc}". Please try a common phrase or "Month YYYY".`,
+            });
           }
+
+          const queryParams = {
+            duration: `${parsedDateRange.startDate.toISOString().split('T')[0]},${
+              parsedDateRange.endDate.toISOString().split('T')[0]
+            }`,
+          };
 
           const summaryData = await budgetService.getBudgetSummary(userId, queryParams);
           const message =
-            summaryData.length > 0 ? `Budget summary loaded.` : `No budget data found.`;
+            summaryData.length > 0
+              ? `Budget summary for ${effectivePeriodDesc} loaded.`
+              : `No budget data found for ${effectivePeriodDesc}.`;
           return createToolResponse({ success: true, message, data: summaryData });
         } catch (error: any) {
-          return createToolResponse({
-            success: false,
-            error: error instanceof HTTPException ? error.message : error.message,
-          });
+          return createErrorResponse(error, 'Failed to retrieve budget summary.');
         }
       },
     }),
@@ -211,7 +233,9 @@ export function createBudgetTools(userId: string) {
           if (!budget)
             return createToolResponse({
               success: false,
-              error: `Budget not found for ${categoryRes.id} in ${month}/${year}.`,
+              error: `Budget not found for category "${
+                categoryRes.name || categoryIdentifier
+              }" in ${month}/${year}.`,
             });
 
           const details = `Budget for ${
@@ -222,13 +246,10 @@ export function createBudgetTools(userId: string) {
             confirmationNeeded: true,
             id: budget.id,
             details: details,
-            message: `Found ${details}. Confirm action (update amount or delete) and provide ID (${budget.id})?`,
+            message: `Found: ${details}. Please confirm the action (update amount or delete) by providing the ID: ${budget.id}.`,
           });
         } catch (error: any) {
-          return createToolResponse({
-            success: false,
-            error: error instanceof HTTPException ? error.message : error.message,
-          });
+          return createErrorResponse(error, 'Failed to identify budget.');
         }
       },
     }),
@@ -245,13 +266,10 @@ export function createBudgetTools(userId: string) {
           await budgetService.updateBudget(budgetId, userId, newAmount);
           return createToolResponse({
             success: true,
-            message: `Budget (ID: ${budgetId}) updated.`,
+            message: `Budget (ID: ${budgetId}) amount updated to ${formatCurrency(newAmount)}.`,
           });
         } catch (error: any) {
-          return createToolResponse({
-            success: false,
-            error: error instanceof HTTPException ? error.message : error.message,
-          });
+          return createErrorResponse(error, 'Failed to update budget.');
         }
       },
     }),
@@ -266,10 +284,7 @@ export function createBudgetTools(userId: string) {
           const result = await budgetService.deleteBudget(budgetId, userId);
           return createToolResponse({ success: true, message: result.message });
         } catch (error: any) {
-          return createToolResponse({
-            success: false,
-            error: error instanceof HTTPException ? error.message : error.message,
-          });
+          return createErrorResponse(error, 'Failed to delete budget.');
         }
       },
     }),

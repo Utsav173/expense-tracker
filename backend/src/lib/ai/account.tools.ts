@@ -11,7 +11,8 @@ import { createToolResponse, resolveAccountId } from './shared';
 export function createAccountTools(userId: string) {
   return {
     createAccount: tool({
-      description: 'Creates a new financial account (e.g., bank account, wallet) for the user.',
+      description:
+        'Creates a new financial account (e.g., bank account, wallet) for the user. only account name is required',
       parameters: z.object({
         accountName: z
           .string()
@@ -20,14 +21,16 @@ export function createAccountTools(userId: string) {
         initialBalance: z
           .number()
           .optional()
-          .describe('The starting balance (defaults to 0). Must be non-negative.'),
+          .describe('The starting balance (defaults to 0). Must be non-negative.')
+          .default(0),
         currency: z
           .string()
           .length(3)
           .optional()
           .describe(
             "The 3-letter currency code (e.g., INR, USD). Defaults to user's preferred currency or INR.",
-          ),
+          )
+          .default('INR'),
       }),
       execute: async ({ accountName, initialBalance = 0, currency }) => {
         if (initialBalance < 0) {
@@ -58,22 +61,32 @@ export function createAccountTools(userId: string) {
     }),
 
     listAccounts: tool({
-      description: "Lists the user's financial accounts, optionally filtering by name.",
+      description:
+        "Lists the user's financial accounts, optionally filtering by name. or list recent created nth accounts",
       parameters: z.object({
         searchName: z
           .string()
           .optional()
-          .describe('Optional: Filter accounts whose name contains this text.'),
+          .describe(
+            'Optional: Filter accounts whose name contains this text which similar to account related name.',
+          ),
+        recent: z
+          .number()
+          .optional()
+          .describe(
+            'Optional: List the most recent created nth accounts. If provided, overrides searchName.',
+          )
+          .default(0),
       }),
-      execute: async ({ searchName }) => {
+      execute: async ({ searchName, recent }) => {
         try {
           const result = await accountService.getAccountList(
             userId,
             1,
-            100,
-            'name',
-            'asc',
-            searchName || '',
+            recent > 0 ? recent : 100,
+            recent > 0 ? 'createdAt' : 'name',
+            recent > 0 ? 'desc' : 'asc',
+            recent > 0 ? '' : searchName || '',
           );
           const message =
             result.accounts.length > 0

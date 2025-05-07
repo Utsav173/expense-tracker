@@ -1,4 +1,3 @@
-
 import {
   startOfDay,
   endOfDay,
@@ -15,9 +14,10 @@ import {
   format,
   isValid as isValidDateFn,
   isEqual,
+  parseISO as dateFnsParseISO,
 } from 'date-fns';
 import memoize from 'lodash/memoize';
-import { fromZonedTime, toZonedTime } from 'date-fns-tz';
+import { toZonedTime } from 'date-fns-tz';
 import * as chrono from 'chrono-node';
 
 export interface DateRange {
@@ -32,19 +32,9 @@ const memoizedStartOfDay = memoize(
 );
 const memoizedEndOfDay = memoize((date: Date): Date => endOfDay(toZonedTime(date, APP_TIMEZONE)));
 
-/**
- * Parses natural language date descriptions or specific date formats into a date range.
- * Prioritizes known keywords ("this month", etc.) using date-fns for reliability.
- * Falls back to chrono-node for more flexible parsing of other phrases.
- *
- * @param description - The natural language or formatted date string
- * @param referenceDate - Optional reference date for relative parsing (defaults to now)
- * @param timezone - Optional timezone (defaults to APP_TIMEZONE)
- * @returns A DateRange object { startDate, endDate } or null if parsing fails
- */
 export function parseNaturalLanguageDateRange(
   description: string | undefined | null,
-  referenceDate: Date = new Date(),
+  referenceDateInput?: Date,
   timezone: string = APP_TIMEZONE,
 ): DateRange | null {
   if (!description) return null;
@@ -52,11 +42,11 @@ export function parseNaturalLanguageDateRange(
   const trimmedDesc = description.trim();
   if (trimmedDesc === '') return null;
 
+  const referenceDate = referenceDateInput || new Date();
   const zonedRefDate = toZonedTime(referenceDate, timezone);
   const lowerDesc = trimmedDesc.toLowerCase();
 
   try {
-    
     const todayStart = memoizedStartOfDay(zonedRefDate);
     const todayEnd = memoizedEndOfDay(zonedRefDate);
 
@@ -165,64 +155,72 @@ export function parseNaturalLanguageDateRange(
     if (naturalLanguageMap[lowerDesc]) {
       const range = naturalLanguageMap[lowerDesc]();
       if (range) {
-        console.log(
-          `Keyword matched "${lowerDesc}" as: ${formatISO(range.startDate)} to ${formatISO(
-            range.endDate,
-          )}`,
-        );
         return range;
       }
     }
 
-    
-    console.log(`No keyword match for "${trimmedDesc}", trying chrono-node...`);
-    
-    const chronoResults = chrono.parse(trimmedDesc, zonedRefDate);
+    const chronoResults = chrono.parse(trimmedDesc, zonedRefDate, { forwardDate: true });
 
     if (chronoResults && chronoResults.length > 0) {
       const result = chronoResults[0];
 
       if (result.start) {
         const startDate = result.start.date();
-        const endDate = result.end ? result.end.date() : result.start.date(); 
+        let endDate = result.end ? result.end.date() : result.start.date();
+
+        if (
+          !result.end &&
+          result.start.isCertain('day') &&
+          result.start.isCertain('month') &&
+          result.start.isCertain('year')
+        ) {
+          endDate = startDate;
+        }
 
         if (isValidDateFn(startDate) && isValidDateFn(endDate)) {
           let finalStartDate = memoizedStartOfDay(startDate);
           let finalEndDate = memoizedEndOfDay(endDate);
 
-          
           if (isEqual(startOfDay(startDate), startOfDay(endDate))) {
-            finalEndDate = memoizedEndOfDay(startDate); 
+            finalEndDate = memoizedEndOfDay(startDate);
           }
 
-          
           if (finalStartDate > finalEndDate) {
             [finalStartDate, finalEndDate] = [finalEndDate, finalStartDate];
           }
-
-          console.log(
-            `Chrono parsed "${trimmedDesc}" as: ${formatISO(finalStartDate)} to ${formatISO(
-              finalEndDate,
-            )}`,
-          );
           return { startDate: finalStartDate, endDate: finalEndDate };
-        } else {
-          console.warn(`Chrono produced invalid date objects for "${trimmedDesc}"`);
         }
       }
     }
 
-    console.warn(
-      `Could not parse date range description: "${description}" using keywords or chrono.`,
-    );
-    return null; 
+    const parts = trimmedDesc.split(',');
+    if (parts.length === 1 && /^\d{4}-\d{2}-\d{2}$/.test(parts[0])) {
+      const date = dateFnsParseISO(parts[0]);
+      if (isValidDateFn(date)) {
+        return { startDate: memoizedStartOfDay(date), endDate: memoizedEndOfDay(date) };
+      }
+    } else if (
+      parts.length === 2 &&
+      /^\d{4}-\d{2}-\d{2}$/.test(parts[0].trim()) &&
+      /^\d{4}-\d{2}-\d{2}$/.test(parts[1].trim())
+    ) {
+      const startDate = dateFnsParseISO(parts[0].trim());
+      const endDate = dateFnsParseISO(parts[1].trim());
+      if (isValidDateFn(startDate) && isValidDateFn(endDate)) {
+        let finalStartDate = memoizedStartOfDay(startDate);
+        let finalEndDate = memoizedEndOfDay(endDate);
+        if (finalStartDate > finalEndDate) {
+          [finalStartDate, finalEndDate] = [finalEndDate, finalStartDate];
+        }
+        return { startDate: finalStartDate, endDate: finalEndDate };
+      }
+    }
+    return null;
   } catch (error) {
     console.error(`Critical error parsing date "${description}":`, error);
     return null;
   }
 }
-
-
 
 export function formatDateRange(range: DateRange | null, formatStr: string = 'yyyy-MM-dd'): string {
   if (!range) return 'Invalid date range';

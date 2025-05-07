@@ -20,12 +20,7 @@ aiRouter.post('/process', authMiddleware, zValidator('json', aiPromptSchema), as
 
     const result = await aiService.processPrompt(userId, prompt, sessionId);
 
-    return c.json({
-      response: result.response,
-      sessionId: result.sessionId,
-      toolCalls: result.toolCalls,
-      toolResults: result.toolResults,
-    });
+    return c.json(result);
   } catch (error: any) {
     if (error instanceof HTTPException) {
       throw error;

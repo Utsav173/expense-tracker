@@ -5,6 +5,7 @@ import { accountService } from '../../services/account.service';
 import { HTTPException } from 'hono/http-exception';
 import { formatCurrency } from '../../utils/currency.utils';
 import { createToolResponse, resolveAccountId } from './shared';
+import { parseNaturalLanguageDateRange } from '../../utils/nl_date.utils';
 
 export function createAnalysisTools(userId: string) {
   return {
@@ -40,10 +41,12 @@ export function createAnalysisTools(userId: string) {
             accountId = accountRes.id;
           }
 
+          const updatedDateRange = parseNaturalLanguageDateRange(dateDescription);
+
           const result = await transactionService.getCategoryChartData(
             userId,
             accountId,
-            dateDescription,
+            `${updatedDateRange?.startDate.toISOString()},${updatedDateRange?.endDate.toISOString()}`,
           );
 
           const typedResult = result as {
@@ -140,10 +143,12 @@ export function createAnalysisTools(userId: string) {
             accountId = accountRes.id;
           }
 
+          const updatedDateRange = parseNaturalLanguageDateRange(dateDescription);
+
           const result = await transactionService.getIncomeExpenseChartData(
             userId,
             accountId,
-            dateDescription,
+            `${updatedDateRange?.startDate.toISOString()},${updatedDateRange?.endDate.toISOString()}`,
           );
 
           const typedResult = result as any;
@@ -200,12 +205,14 @@ export function createAnalysisTools(userId: string) {
             });
           const accountId = accountRes.id;
 
-          const duration = dateDescription || 'thisMonth';
+          const updatedDateRange = parseNaturalLanguageDateRange(dateDescription);
+
+          const duration = `${updatedDateRange?.startDate.toISOString()},${updatedDateRange?.endDate.toISOString()}`;
 
           const analytics = await accountService.getCustomAnalytics(accountId, userId, duration);
 
           if (!analytics) {
-            const period = duration;
+            const period = dateDescription;
             return createToolResponse({
               success: true,
               message: `No analytics data found for account "${accountIdentifier}" for ${period}.`,
@@ -215,7 +222,7 @@ export function createAnalysisTools(userId: string) {
           const accountDetails = await accountService.getAccountById(accountId, userId);
           const currency = accountDetails?.currency || 'INR';
 
-          const period = duration;
+          const period = dateDescription;
           const message = `Analytics for account "${accountIdentifier}" for ${period}: Income ${formatCurrency(
             analytics.income,
             currency,

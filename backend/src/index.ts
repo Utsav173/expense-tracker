@@ -21,6 +21,7 @@ import { StatusCode } from 'hono/utils/http-status';
 // --- Import Services for Cron ---
 import { recurringTransactionService } from './services/recurring.service';
 import { notificationService } from './services/notification.service';
+import contactRouter from './router/contact.routes';
 // -------------------------------
 
 const app = new Hono();
@@ -31,6 +32,7 @@ app.use(logger());
 
 // <---------------------------------------------- Routes ----------------------------------------------------->
 app.route('/auth', userRouter);
+app.route('/contact', contactRouter);
 app.route('/accounts', accountRouter);
 app.route('/interest', interestRouter);
 app.route('/transactions', transactionRouter);

@@ -6,9 +6,11 @@ import {
   userSchema,
   updateUserSchema,
   aiApiKeySchema,
+  contactFormSchema,
 } from '../utils/schema.validations';
 import authMiddleware from '../middleware';
 import { UpdatePayload, userService } from '../services/user.service';
+import { contactService } from '../services/contact.service';
 
 const userRouter = new Hono();
 
@@ -150,6 +152,23 @@ userRouter.post('/logout', authMiddleware, async (c) => {
   } catch (error: any) {
     if (error instanceof HTTPException) throw error;
     throw new HTTPException(500, { message: error.message });
+  }
+});
+
+userRouter.post('/contact', zValidator('json', contactFormSchema), async (c) => {
+  try {
+    const payload = c.req.valid('json');
+    const result = await contactService.handleContactSubmission(payload);
+    if (!result.success) {
+      throw new HTTPException(500, { message: result.message });
+    }
+    return c.json({ message: result.message });
+  } catch (error: any) {
+    if (error instanceof HTTPException) throw error;
+    console.error('Contact form error:', error);
+    throw new HTTPException(500, {
+      message: error.message || 'Failed to process contact request.',
+    });
   }
 });
 

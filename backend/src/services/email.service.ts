@@ -13,6 +13,7 @@ interface EmailOptions {
   to: string;
   subject: string;
   html: string;
+  replyTo?: string;
 }
 
 export class EmailService {
@@ -44,12 +45,16 @@ export class EmailService {
    * @param options - Email options (to, subject, html).
    */
   async sendMail(options: EmailOptions): Promise<void> {
-    const mailOptions = {
+    const mailOptions: Mail.Options = {
       from: `"Expense Tracker" <${config.GMAIL_USERNAME || 'noreply@example.com'}>`,
       to: options.to,
       subject: options.subject,
       html: options.html,
     };
+
+    if (options.replyTo) {
+      mailOptions['replyTo'] = options.replyTo;
+    }
 
     try {
       const info = await this.transporter.sendMail(mailOptions);
