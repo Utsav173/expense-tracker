@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
 import { NavItem } from '../app-sidebar';
+import TooltipElement from '@/components/ui/tooltip-element';
 
 export function NavMain({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
@@ -32,12 +33,14 @@ export function NavMain({ items }: { items: NavItem[] }) {
                 tooltip={item.disabled ? item.tooltip : item.title}
               >
                 {item.disabled ? (
-                  <span className='w-full cursor-not-allowed'>
-                    <LinkIcon className='h-4 w-4 shrink-0' />
-                    <span className='truncate group-data-[collapsible=icon]:hidden'>
-                      {item.title}
+                  <TooltipElement tooltipContent={item.tooltip}>
+                    <span className='flex w-full cursor-not-allowed items-center gap-2'>
+                      <LinkIcon className='h-4 w-4 shrink-0' />
+                      <span className='truncate group-data-[collapsible=icon]:hidden'>
+                        {item.title}
+                      </span>
                     </span>
-                  </span>
+                  </TooltipElement>
                 ) : (
                   <Link href={item.url} className='w-full'>
                     <LinkIcon className='h-4 w-4 shrink-0' />

@@ -1,12 +1,8 @@
 import React from 'react';
-import { Inter } from 'next/font/google';
 import { Metadata } from 'next';
-import '../globals.css';
-import ReactQueryProvider from '@/components/providers/provider';
 import SidebarLayout from '@/components/layout/sidebar-layout';
 import { AiChatWrapper } from '@/components/ai/ai-chat-wrapper';
-
-const inter = Inter({ subsets: ['latin'] });
+import '../globals.css';
 
 export const metadata: Metadata = {
   title: 'Expense Pro',
@@ -24,16 +20,11 @@ export const metadata: Metadata = {
   }
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function PrivateRoutesLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang='en'>
-      <body suppressHydrationWarning={true} className={inter.className}>
-        <ReactQueryProvider>
-          <SidebarLayout>{children}</SidebarLayout>
-          {/* Render the client-side wrapper which handles conditional rendering */}
-          <AiChatWrapper />
-        </ReactQueryProvider>
-      </body>
-    </html>
+    <>
+      <SidebarLayout>{children}</SidebarLayout>
+      <AiChatWrapper />
+    </>
   );
 }

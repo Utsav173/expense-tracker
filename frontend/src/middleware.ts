@@ -6,12 +6,15 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const authCookie = (await cookies()).get('token')?.value;
 
-  // public routes accessible without any token
   const publicRoutes = [
+    '/',
     '/auth/login',
     '/auth/signup',
     '/auth/forgot-password',
-    '/auth/reset-password'
+    '/auth/reset-password',
+    '/legal/privacy-policy',
+    '/legal/terms-of-service',
+    '/support/contact'
   ];
   const isPublicPath = publicRoutes.some((route) => path.startsWith(route));
 
@@ -19,6 +22,7 @@ export async function middleware(request: NextRequest) {
   if (!authCookie && !isPublicPath) {
     // Clear any existing auth cookies
     (await cookies()).delete('token');
+    (await cookies()).delete('user');
     return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
@@ -26,5 +30,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)']
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|favicon.svg|sitemap.xml|robots.txt).*)']
 };

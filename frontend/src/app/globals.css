@@ -5,83 +5,68 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  /* Base Colors */
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
 
-  /* Card Colors */
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
 
-  /* Popover Colors */
   --color-popover: hsl(var(--popover));
   --color-popover-foreground: hsl(var(--popover-foreground));
 
-  /* Primary Colors */
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
   --color-primary-hover: hsl(var(--primary-hover));
   --color-primary-active: hsl(var(--primary-active));
 
-  /* Secondary Colors */
   --color-secondary: hsl(var(--secondary));
   --color-secondary-foreground: hsl(var(--secondary-foreground));
   --color-secondary-hover: hsl(var(--secondary-hover));
   --color-secondary-active: hsl(var(--secondary-active));
 
-  /* Muted Colors */
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
   --color-muted-hover: hsl(var(--muted-hover));
   --color-muted-active: hsl(var(--muted-active));
 
-  /* Accent Colors */
   --color-accent: hsl(var(--accent));
   --color-accent-foreground: hsl(var(--accent-foreground));
   --color-accent-hover: hsl(var(--accent-hover));
   --color-accent-active: hsl(var(--accent-active));
 
-  /* Destructive Colors */
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
   --color-destructive-hover: hsl(var(--destructive-hover));
   --color-destructive-active: hsl(var(--destructive-active));
 
-  /* Success Colors */
   --color-success: hsl(var(--success));
   --color-success-foreground: hsl(var(--success-foreground));
   --color-success-hover: hsl(var(--success-hover));
   --color-success-active: hsl(var(--success-active));
 
-  /* Warning Colors */
   --color-warning: hsl(var(--warning));
   --color-warning-foreground: hsl(var(--warning-foreground));
   --color-warning-hover: hsl(var(--warning-hover));
   --color-warning-active: hsl(var(--warning-active));
 
-  /* Info Colors */
   --color-info: hsl(var(--info));
   --color-info-foreground: hsl(var(--info-foreground));
   --color-info-hover: hsl(var(--info-hover));
   --color-info-active: hsl(var(--info-active));
 
-  /* Border Colors */
   --color-border: hsl(var(--border));
   --color-border-hover: hsl(var(--border-hover));
   --color-border-active: hsl(var(--border-active));
 
-  /* Input Colors */
   --color-input: hsl(var(--input));
   --color-input-foreground: hsl(var(--input-foreground));
   --color-input-hover: hsl(var(--input-hover));
   --color-input-active: hsl(var(--input-active));
 
-  /* Ring Colors */
   --color-ring: hsl(var(--ring));
   --color-ring-hover: hsl(var(--ring-hover));
   --color-ring-active: hsl(var(--ring-active));
 
-  /* Chart Colors */
   --color-chart-1: hsl(var(--chart-1));
   --color-chart-2: hsl(var(--chart-2));
   --color-chart-3: hsl(var(--chart-3));
@@ -98,7 +83,6 @@
   --color-chart-investment: hsl(var(--chart-investment));
   --color-chart-debt: hsl(var(--chart-debt));
 
-  /* Sidebar Colors */
   --color-sidebar: hsl(var(--sidebar-background));
   --color-sidebar-foreground: hsl(var(--sidebar-foreground));
   --color-sidebar-primary: hsl(var(--sidebar-primary));
@@ -108,16 +92,13 @@
   --color-sidebar-border: hsl(var(--sidebar-border));
   --color-sidebar-ring: hsl(var(--sidebar-ring));
 
-  /* Radius */
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
 
-  /* Animations */
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
 
-  /* Financial Colors */
   --color-income: hsl(var(--income));
   --color-income-foreground: hsl(var(--income-foreground));
   --color-income-hover: hsl(var(--income-hover));
@@ -139,7 +120,6 @@
   --color-balance-muted: hsl(var(--balance-muted));
   --color-balance-muted-foreground: hsl(var(--balance-muted-foreground));
 
-  /* Financial Status Colors */
   --color-positive: hsl(var(--positive));
   --color-positive-foreground: hsl(var(--positive-foreground));
   --color-positive-hover: hsl(var(--positive-hover));
@@ -156,276 +136,56 @@
   --color-neutral-active: hsl(var(--neutral-active));
 }
 
-/*
-  The default border color has changed to `currentcolor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
-@layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
-  }
-}
-
-@utility dialog-overlay-open {
-  @media (min-width: 1024px) {
-    @apply bg-black/80;
-  }
-}
-
-@utility no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
-}
-
-@layer utilities {
-  body {
-    font-family: Arial, Helvetica, sans-serif;
-  }
-
-  html,
-  body {
-    scroll-behavior: smooth;
-    scrollbar-gutter: stable;
-    width: 100%;
-  }
-}
-
 @layer base {
   :root {
-    /* Base Colors */
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
-
-    /* Card Colors */
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
-
-    /* Popover Colors */
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
-
-    /* Primary Colors */
     --primary: 240 5.9% 10%;
     --primary-foreground: 0 0% 98%;
     --primary-hover: 240 4.9% 9.9%;
     --primary-active: 240 3.9% 9.8%;
-
-    /* Secondary Colors */
     --secondary: 240 4.8% 95.9%;
     --secondary-foreground: 240 5.9% 10%;
     --secondary-hover: 240 3.8% 94.9%;
     --secondary-active: 240 2.8% 93.9%;
-
-    /* Muted Colors */
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
     --muted-hover: 240 3.8% 94.9%;
     --muted-active: 240 2.8% 93.9%;
-
-    /* Accent Colors */
     --accent: 240 4.8% 95.9%;
     --accent-foreground: 240 5.9% 10%;
     --accent-hover: 240 3.8% 94.9%;
     --accent-active: 240 2.8% 93.9%;
-
-    /* Destructive Colors */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --destructive-hover: 0 74.2% 50.2%;
     --destructive-active: 0 64.2% 40.2%;
-
-    /* Success Colors */
     --success: 142 76% 36%;
     --success-foreground: 0 0% 98%;
     --success-hover: 142 66% 26%;
     --success-active: 142 56% 16%;
-
-    /* Warning Colors */
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 98%;
     --warning-hover: 38 82% 40%;
     --warning-active: 38 72% 30%;
-
-    /* Info Colors */
     --info: 199 89% 48%;
     --info-foreground: 0 0% 98%;
     --info-hover: 199 79% 38%;
     --info-active: 199 69% 28%;
-
-    /* Border Colors */
     --border: 240 5.9% 90%;
     --border-hover: 240 4.9% 89.9%;
     --border-active: 240 3.9% 89.8%;
-
-    /* Input Colors */
     --input: 240 5.9% 90%;
     --input-foreground: 240 5.9% 10%;
     --input-hover: 240 4.9% 89.9%;
     --input-active: 240 3.9% 89.8%;
-
-    /* Ring Colors */
     --ring: 240 10% 3.9%;
     --ring-hover: 240 9% 2.9%;
     --ring-active: 240 8% 1.9%;
-
-    /* Chart Colors */
-    --chart-1: 220 70% 50%; /* Blue */
-    --chart-2: 160 60% 45%; /* Teal */
-    --chart-3: 30 80% 55%; /* Orange */
-    --chart-4: 280 65% 60%; /* Purple */
-    --chart-5: 340 75% 55%; /* Pink */
-    --chart-6: 100 70% 40%; /* Lime */
-    --chart-7: 200 80% 50%; /* Sky Blue */
-    --chart-8: 50 90% 50%; /* Yellow */
-    --chart-other: 240 4% 60%; /* Gray */
-    --chart-income: 142 76% 36%; /* Green */
-    --chart-expense: 0 84% 60%; /* Red */
-    --chart-balance: 217 91% 60%; /* Indigo */
-    --chart-savings: 199 89% 48%; /* Bright Blue */
-    --chart-investment: 38 92% 50%; /* Gold */
-    --chart-debt: 0 62% 30%; /* Dark Red */
-
-    /* Sidebar Colors */
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-
-    /* Radius */
-    --radius: 0.5rem;
-
-    /* Financial Colors - Light Mode */
-    --income: 142 76% 36%;
-    --income-foreground: 0 0% 98%;
-    --income-hover: 142 66% 26%;
-    --income-active: 142 56% 16%;
-    --income-muted: 142 76% 36% / 0.1;
-    --income-muted-foreground: 142 76% 36%;
-
-    --expense: 0 84% 60%;
-    --expense-foreground: 0 0% 98%;
-    --expense-hover: 0 74% 50%;
-    --expense-active: 0 64% 40%;
-    --expense-muted: 0 84% 60% / 0.1;
-    --expense-muted-foreground: 0 84% 60%;
-
-    --balance: 217 91% 60%;
-    --balance-foreground: 0 0% 98%;
-    --balance-hover: 217 81% 50%;
-    --balance-active: 217 71% 40%;
-    --balance-muted: 217 91% 60% / 0.1;
-    --balance-muted-foreground: 217 91% 60%;
-
-    /* Financial Status Colors - Light Mode */
-    --positive: 142 76% 36%;
-    --positive-foreground: 0 0% 98%;
-    --positive-hover: 142 66% 26%;
-    --positive-active: 142 56% 16%;
-
-    --negative: 0 84% 60%;
-    --negative-foreground: 0 0% 98%;
-    --negative-hover: 0 74% 50%;
-    --negative-active: 0 64% 40%;
-
-    --neutral: 240 5% 65%;
-    --neutral-foreground: 0 0% 98%;
-    --neutral-hover: 240 4% 55%;
-    --neutral-active: 240 3% 45%;
-  }
-  .dark {
-    /* Base Colors */
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-
-    /* Card Colors */
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-
-    /* Popover Colors */
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-
-    /* Primary Colors */
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --primary-hover: 0 0% 88%;
-    --primary-active: 0 0% 78%;
-
-    /* Secondary Colors */
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --secondary-hover: 240 2.7% 14.9%;
-    --secondary-active: 240 1.7% 13.9%;
-
-    /* Muted Colors */
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --muted-hover: 240 2.7% 14.9%;
-    --muted-active: 240 1.7% 13.9%;
-
-    /* Accent Colors */
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --accent-hover: 240 2.7% 14.9%;
-    --accent-active: 240 1.7% 13.9%;
-
-    /* Destructive Colors */
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --destructive-hover: 0 52.8% 20.6%;
-    --destructive-active: 0 42.8% 10.6%;
-
-    /* Success Colors */
-    --success: 142 76% 36%;
-    --success-foreground: 0 0% 98%;
-    --success-hover: 142 66% 26%;
-    --success-active: 142 56% 16%;
-
-    /* Warning Colors */
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 98%;
-    --warning-hover: 38 82% 40%;
-    --warning-active: 38 72% 30%;
-
-    /* Info Colors */
-    --info: 199 89% 48%;
-    --info-foreground: 0 0% 98%;
-    --info-hover: 199 79% 38%;
-    --info-active: 199 69% 28%;
-
-    /* Border Colors */
-    --border: 240 3.7% 15.9%;
-    --border-hover: 240 2.7% 14.9%;
-    --border-active: 240 1.7% 13.9%;
-
-    /* Input Colors */
-    --input: 240 3.7% 15.9%;
-    --input-foreground: 0 0% 98%;
-    --input-hover: 240 2.7% 14.9%;
-    --input-active: 240 1.7% 13.9%;
-
-    /* Ring Colors */
-    --ring: 240 4.9% 83.9%;
-    --ring-hover: 240 3.9% 82.9%;
-    --ring-active: 240 2.9% 81.9%;
-
-    /* Chart Colors */
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
@@ -435,14 +195,145 @@
     --chart-7: 200 80% 50%;
     --chart-8: 50 90% 50%;
     --chart-other: 240 4% 60%;
+
     --chart-income: 142 76% 36%;
     --chart-expense: 0 84% 60%;
     --chart-balance: 217 91% 60%;
     --chart-savings: 199 89% 48%;
     --chart-investment: 38 92% 50%;
     --chart-debt: 0 62% 30%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+    --radius: 0.5rem;
+    --radius-lg: var(--radius);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-sm: calc(var(--radius) - 4px);
+    --income: 142 76% 36%;
+    --income-foreground: 0 0% 98%;
+    --income-hover: 142 66% 26%;
+    --income-active: 142 56% 16%;
+    --income-muted: 142 76% 36% / 0.1;
+    --income-muted-foreground: 142 76% 36%;
+    --expense: 0 84% 60%;
+    --expense-foreground: 0 0% 98%;
+    --expense-hover: 0 74% 50%;
+    --expense-active: 0 64% 40%;
+    --expense-muted: 0 84% 60% / 0.1;
+    --expense-muted-foreground: 0 84% 60%;
+    --balance: 217 91% 60%;
+    --balance-foreground: 0 0% 98%;
+    --balance-hover: 217 81% 50%;
+    --balance-active: 217 71% 40%;
+    --balance-muted: 217 91% 60% / 0.1;
+    --balance-muted-foreground: 217 91% 60%;
+    --positive: 142 76% 36%;
+    --positive-foreground: 0 0% 98%;
+    --positive-hover: 142 66% 26%;
+    --positive-active: 142 56% 16%;
+    --negative: 0 84% 60%;
+    --negative-foreground: 0 0% 98%;
+    --negative-hover: 0 74% 50%;
+    --negative-active: 0 64% 40%;
+    --neutral: 240 5% 65%;
+    --neutral-foreground: 0 0% 98%;
+    --neutral-hover: 240 4% 55%;
+    --neutral-active: 240 3% 45%;
 
-    /* Sidebar Colors */
+    --lp-bg-hero-light: linear-gradient(
+      160deg,
+      hsl(200, 100%, 97%) 0%,
+      hsl(220, 100%, 98%) 50%,
+      hsl(250, 100%, 99%) 100%
+    );
+    --lp-bg-dark-section-light: hsl(220, 30%, 12%);
+    --lp-bg-light-contrast-section-light: hsl(0, 0%, 100%);
+    --lp-bg-cta-section-light: linear-gradient(
+      to bottom,
+      hsl(220, 30%, 10%) 0%,
+      hsl(0, 0%, 0%) 100%
+    );
+    --lp-bg-footer-light: hsl(0, 0%, 0%);
+    --lp-text-hero-heading-light: hsl(220, 25%, 10%);
+    --lp-text-hero-paragraph-light: hsl(220, 15%, 35%);
+    --lp-text-dark-section-heading-light: hsl(0, 0%, 98%);
+    --lp-text-dark-section-paragraph-light: hsl(220, 15%, 85%);
+    --lp-text-light-contrast-section-heading-light: hsl(220, 25%, 15%);
+    --lp-text-light-contrast-section-paragraph-light: hsl(220, 15%, 40%);
+    --lp-text-cta-heading-light: hsl(0, 0%, 100%);
+    --lp-text-cta-paragraph-light: hsl(220, 15%, 85%);
+    --lp-text-footer-light: hsl(220, 15%, 60%);
+  }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --primary-hover: 0 0% 88%;
+    --primary-active: 0 0% 78%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --secondary-hover: 240 2.7% 14.9%;
+    --secondary-active: 240 1.7% 13.9%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --muted-hover: 240 2.7% 14.9%;
+    --muted-active: 240 1.7% 13.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --accent-hover: 240 2.7% 14.9%;
+    --accent-active: 240 1.7% 13.9%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --destructive-hover: 0 52.8% 20.6%;
+    --destructive-active: 0 42.8% 10.6%;
+    --success: 142 65% 45%;
+    --success-foreground: 0 0% 98%;
+    --success-hover: 142 55% 35%;
+    --success-active: 142 45% 25%;
+    --warning: 38 80% 55%;
+    --warning-foreground: 240 5.9% 10%;
+    --warning-hover: 38 70% 45%;
+    --warning-active: 38 60% 35%;
+    --info: 199 80% 55%;
+    --info-foreground: 0 0% 98%;
+    --info-hover: 199 70% 45%;
+    --info-active: 199 60% 35%;
+    --border: 240 3.7% 15.9%;
+    --border-hover: 240 2.7% 14.9%;
+    --border-active: 240 1.7% 13.9%;
+    --input: 240 3.7% 15.9%;
+    --input-foreground: 0 0% 98%;
+    --input-hover: 240 2.7% 14.9%;
+    --input-active: 240 1.7% 13.9%;
+    --ring: 240 4.9% 83.9%;
+    --ring-hover: 240 3.9% 82.9%;
+    --ring-active: 240 2.9% 81.9%;
+    --chart-1: 220 70% 60%;
+    --chart-2: 160 60% 55%;
+    --chart-3: 30 80% 65%;
+    --chart-4: 280 65% 70%;
+    --chart-5: 340 75% 65%;
+    --chart-6: 100 70% 50%;
+    --chart-7: 200 80% 60%;
+    --chart-8: 50 90% 60%;
+    --chart-other: 240 4% 50%;
+    --chart-income: 142 76% 36%;
+    --chart-expense: 0 84% 60%;
+    --chart-balance: 217 91% 60%;
+    --chart-savings: 199 89% 55%;
+    --chart-investment: 38 92% 58%;
+    --chart-debt: 0 70% 40%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -451,118 +342,281 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
-
-    /* Financial Colors - Dark Mode */
-    --income: 142 76% 36%;
+    --income: 142 65% 45%;
     --income-foreground: 0 0% 98%;
-    --income-hover: 142 66% 26%;
-    --income-active: 142 56% 16%;
-    --income-muted: 142 76% 36% / 0.2;
-    --income-muted-foreground: 142 76% 36%;
-
-    --expense: 0 84% 60%;
+    --income-hover: 142 55% 35%;
+    --income-active: 142 45% 25%;
+    --income-muted: 142 65% 45% / 0.2;
+    --income-muted-foreground: 142 65% 45%;
+    --expense: 0 70% 55%;
     --expense-foreground: 0 0% 98%;
-    --expense-hover: 0 74% 50%;
-    --expense-active: 0 64% 40%;
-    --expense-muted: 0 84% 60% / 0.2;
-    --expense-muted-foreground: 0 84% 60%;
-
-    --balance: 217 91% 60%;
+    --expense-hover: 0 60% 45%;
+    --expense-active: 0 50% 35%;
+    --expense-muted: 0 70% 55% / 0.2;
+    --expense-muted-foreground: 0 70% 55%;
+    --balance: 217 80% 65%;
     --balance-foreground: 0 0% 98%;
-    --balance-hover: 217 81% 50%;
-    --balance-active: 217 71% 40%;
-    --balance-muted: 217 91% 60% / 0.2;
-    --balance-muted-foreground: 217 91% 60%;
+    --balance-hover: 217 70% 55%;
+    --balance-active: 217 60% 45%;
+    --balance-muted: 217 80% 65% / 0.2;
+    --balance-muted-foreground: 217 80% 65%;
 
-    /* Financial Status Colors - Dark Mode */
-    --positive: 142 76% 36%;
-    --positive-foreground: 0 0% 98%;
-    --positive-hover: 142 66% 26%;
-    --positive-active: 142 56% 16%;
+    --positive: var(--income);
+    --positive-foreground: var(--income-foreground);
+    --positive-hover: var(--income-hover);
+    --positive-active: var(--income-active);
+    --negative: var(--expense);
+    --negative-foreground: var(--expense-foreground);
+    --negative-hover: var(--expense-hover);
+    --negative-active: var(--expense-active);
 
-    --negative: 0 84% 60%;
-    --negative-foreground: 0 0% 98%;
-    --negative-hover: 0 74% 50%;
-    --negative-active: 0 64% 40%;
-
-    --neutral: 240 5% 65%;
+    --neutral: 240 5% 50%;
     --neutral-foreground: 0 0% 98%;
-    --neutral-hover: 240 4% 55%;
-    --neutral-active: 240 3% 45%;
+    --neutral-hover: 240 4% 40%;
+    --neutral-active: 240 3% 30%;
+
+    --lp-bg-hero-dark: linear-gradient(
+      160deg,
+      hsl(220, 30%, 7%) 0%,
+      hsl(230, 25%, 5%) 60%,
+      hsl(240, 30%, 4%) 100%
+    );
+    --lp-bg-dark-section-dark: hsl(220, 25%, 5%);
+    --lp-bg-light-contrast-section-dark: hsl(220, 20%, 10%);
+    --lp-bg-cta-section-dark: linear-gradient(to bottom, hsl(220, 25%, 5%) 0%, hsl(0, 0%, 0%) 100%);
+    --lp-bg-footer-dark: hsl(0, 0%, 0%);
+    --lp-text-hero-heading-dark: hsl(0, 0%, 100%);
+    --lp-text-hero-paragraph-dark: hsl(220, 15%, 85%);
+    --lp-text-dark-section-heading-dark: hsl(0, 0%, 98%);
+    --lp-text-dark-section-paragraph-dark: hsl(220, 15%, 80%);
+    --lp-text-light-contrast-section-heading-dark: hsl(0, 0%, 95%);
+    --lp-text-light-contrast-section-paragraph-dark: hsl(220, 10%, 75%);
+    --lp-text-cta-heading-dark: hsl(0, 0%, 100%);
+    --lp-text-cta-paragraph-dark: hsl(220, 15%, 85%);
+    --lp-text-footer-dark: hsl(220, 15%, 55%);
   }
 }
 
 @layer base {
-  * {
-    @apply border-border;
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: hsl(var(--border));
   }
-  body {
-    @apply bg-background text-foreground;
-  }
-}
 
-@layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
+    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  }
+  html,
+  body {
+    scroll-behavior: smooth;
+    scrollbar-gutter: stable;
+    width: 100%;
   }
 }
 
 @layer utilities {
-  *::selection {
-    @apply bg-primary/20;
-  }
-
   .scrollbar {
     scrollbar-gutter: stable;
   }
-
   ::-webkit-scrollbar {
     width: 0.5rem;
     height: 0.5rem;
   }
-
   ::-webkit-scrollbar-track {
     @apply bg-transparent;
   }
-
   ::-webkit-scrollbar-thumb {
     @apply bg-muted-foreground/20 rounded-lg;
   }
-
   ::-webkit-scrollbar-button {
     display: none;
   }
-
   * {
     scrollbar-width: thin;
+
     scrollbar-color: hsl(var(--muted-foreground) / 0.2) transparent;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  *::selection {
+    @apply bg-primary/20;
+  }
+
+  .dialog-overlay-open {
+    @media (min-width: 1024px) {
+      @apply bg-black/80;
+    }
+  }
+
+  .lp-bg-hero {
+    background: var(--lp-bg-hero-light);
+  }
+  .dark .lp-bg-hero {
+    background: var(--lp-bg-hero-dark);
+  }
+  .lp-text-hero-heading {
+    color: var(--lp-text-hero-heading-light);
+  }
+  .dark .lp-text-hero-heading {
+    color: var(--lp-text-hero-heading-dark);
+  }
+  .lp-text-hero-paragraph {
+    color: var(--lp-text-hero-paragraph-light);
+  }
+  .dark .lp-text-hero-paragraph {
+    color: var(--lp-text-hero-paragraph-dark);
+  }
+
+  .lp-bg-dark-section {
+    background: var(--lp-bg-dark-section-light);
+  }
+  .dark .lp-bg-dark-section {
+    background: var(--lp-bg-dark-section-dark);
+  }
+  .lp-text-dark-section-heading {
+    color: var(--lp-text-dark-section-heading-light);
+  }
+  .dark .lp-text-dark-section-heading {
+    color: var(--lp-text-dark-section-heading-dark);
+  }
+  .lp-text-dark-section-paragraph {
+    color: var(--lp-text-dark-section-paragraph-light);
+  }
+  .dark .lp-text-dark-section-paragraph {
+    color: var(--lp-text-dark-section-paragraph-dark);
+  }
+
+  .lp-bg-light-contrast-section {
+    background: var(--lp-bg-light-contrast-section-light);
+  }
+  .dark .lp-bg-light-contrast-section {
+    background: var(--lp-bg-light-contrast-section-dark);
+  }
+  .lp-text-light-contrast-section-heading {
+    color: var(--lp-text-light-contrast-section-heading-light);
+  }
+  .dark .lp-text-light-contrast-section-heading {
+    color: var(--lp-text-light-contrast-section-heading-dark);
+  }
+  .lp-text-light-contrast-section-paragraph {
+    color: var(--lp-text-light-contrast-section-paragraph-light);
+  }
+  .dark .lp-text-light-contrast-section-paragraph {
+    color: var(--lp-text-light-contrast-section-paragraph-dark);
+  }
+
+  .lp-bg-cta-section {
+    background: var(--lp-bg-cta-section-light);
+  }
+  .dark .lp-bg-cta-section {
+    background: var(--lp-bg-cta-section-dark);
+  }
+  .lp-text-cta-heading {
+    color: var(--lp-text-cta-heading-light);
+  }
+  .dark .lp-text-cta-heading {
+    color: var(--lp-text-cta-heading-dark);
+  }
+  .lp-text-cta-paragraph {
+    color: var(--lp-text-cta-paragraph-light);
+  }
+  .dark .lp-text-cta-paragraph {
+    color: var(--lp-text-cta-paragraph-dark);
+  }
+
+  .lp-bg-footer {
+    background: var(--lp-bg-footer-light);
+  }
+  .dark .lp-bg-footer {
+    background: var(--lp-bg-footer-dark);
+  }
+  .lp-text-footer {
+    color: var(--lp-text-footer-light);
+  }
+  .dark .lp-text-footer {
+    color: var(--lp-text-footer-dark);
+  }
+
+  .hero-text-glow {
+    text-shadow:
+      0 0 10px rgba(56, 189, 248, 0.4),
+      0 0 20px rgba(34, 211, 238, 0.25);
+  }
+  .dark .hero-text-glow {
+    text-shadow:
+      0 0 25px rgba(125, 211, 252, 0.6),
+      0 0 50px rgba(103, 232, 249, 0.4),
+      0 0 75px rgba(34, 211, 238, 0.2);
+  }
+
+  .glassmorphism-nav {
+    background-color: hsl(var(--background) / 0.6);
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+  }
+
+  .perspective {
+    perspective: 1200px;
+  }
+
+  .transform-style-3d {
+    transform-style: preserve-3d;
+  }
+
+  .ai-reply-anim.animate-enter {
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+      opacity 0.3s ease-out,
+      transform 0.3s ease-out;
+    transition-delay: 1s;
+  }
+  .ai-reply-anim {
+    opacity: 0;
+    transform: translateY(10px);
   }
 }
 
 .recharts-tooltip-wrapper:focus,
-.recharts-tooltip-wrapper:focus-visible {
-  outline: none !important;
-  border: none !important;
-}
-
+.recharts-tooltip-wrapper:focus-visible,
 .recharts-wrapper:focus,
 .recharts-wrapper:focus-visible,
 .recharts-surface:focus,
-.recharts-surface:focus-visible {
-  outline: none !important;
-}
-
+.recharts-surface:focus-visible,
 .recharts-pie-sector:focus,
 .recharts-pie-sector:focus-visible,
 .recharts-cell:focus,
-.recharts-cell:focus-visible {
-  outline: none !important;
-}
-
+.recharts-cell:focus-visible,
 .recharts-active-shape:focus,
 .recharts-active-shape:focus-visible {
   outline: none !important;
+}
+@keyframes accordion-down {
+  from {
+    height: 0px;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0px;
+  }
 }

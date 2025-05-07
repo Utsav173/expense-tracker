@@ -107,7 +107,7 @@ export const AccountListSummary: React.FC<AccountListSummaryProps> = ({
       {!isLoading && accountsInfo && accountsInfo.length > 0 && (
         <div className='border-t p-3 text-center'>
           <Button variant='link' size='sm' asChild className='text-xs'>
-            <Link href='/'>View All Accounts</Link>
+            <Link href='/accounts'>View All Accounts</Link>
           </Button>
         </div>
       )}
