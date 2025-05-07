@@ -1,7 +1,6 @@
-// frontend/src/app/page.tsx
 'use client';
 
-import React, { useEffect, useRef, useLayoutEffect } from 'react';
+import { useEffect, useRef, useLayoutEffect } from 'react';
 import Link from 'next/link';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -12,9 +11,8 @@ import {
   Target,
   Sparkles,
   TrendingUp,
-  Coins,
   BrainCircuit,
-  PieChart,
+  PieChart as PieChartIcon,
   Send,
   Zap,
   CheckCircle,
@@ -29,7 +27,6 @@ import Loader from '@/components/ui/loader';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 
-// Landing Page Specific Components
 import { AnimatedFinancialElement } from '@/components/landing/animated-financial-element';
 import DashboardMockup from '@/components/landing/dashboard-mockup';
 import AnimatedFeatureCardV2 from '@/components/landing/animated-feature-card-v2';
@@ -37,12 +34,13 @@ import ProblemSolutionSection from '@/components/landing/problem-solution-sectio
 import HowItWorksSection from '@/components/landing/how-it-works-section';
 import TrustSecuritySection from '@/components/landing/trust-security-section';
 import TestimonialsSection from '@/components/landing/testimonials-section';
+import { ThemeProvider } from '@/components/providers/theme-provider';
 
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-const LandingPage = () => {
+const LandingPageContent = () => {
   const mainRef = useRef<HTMLDivElement>(null);
   const heroContentRef = useRef<HTMLDivElement>(null);
   const heroImageRef = useRef<HTMLDivElement>(null);
@@ -157,7 +155,7 @@ const LandingPage = () => {
         'Securely link banks, cards, and investments for a complete financial overview. No more app-switching!'
     },
     {
-      icon: <PieChart size={28} className='text-emerald-500 dark:text-emerald-400' />,
+      icon: <PieChartIcon size={28} className='text-emerald-500 dark:text-emerald-400' />,
       title: 'Insightful Analytics',
       description:
         'Understand your spending with beautiful charts, smart categorization, and trend reports.'
@@ -190,7 +188,7 @@ const LandingPage = () => {
 
   if (userIsLoading || (!userIsLoading && user)) {
     return (
-      <div className='flex h-screen items-center justify-center bg-slate-950'>
+      <div className='flex h-screen items-center justify-center bg-[--background]'>
         <Loader />
       </div>
     );
@@ -201,7 +199,7 @@ const LandingPage = () => {
       ref={mainRef}
       className={cn(
         'min-h-screen overflow-x-hidden antialiased',
-        'text-slate-900 dark:text-slate-50'
+        'bg-[--background] text-[--foreground]'
       )}
     >
       <header className='glassmorphism-nav fixed top-0 left-0 z-50 w-full px-4 py-4 backdrop-blur-sm sm:px-6'>
@@ -214,26 +212,26 @@ const LandingPage = () => {
               height={32}
               className='transition-transform duration-300 hover:rotate-12'
             />
-            <span className='bg-gradient-to-r from-sky-400 to-cyan-300 bg-clip-text text-transparent'>
+            <span className='bg-gradient-to-r from-sky-400 to-cyan-300 bg-clip-text text-transparent max-sm:text-sm'>
               Expense Pro
             </span>
           </Link>
           <nav className='hidden items-center gap-4 md:flex'>
             <Link
               href='#features'
-              className='text-sm font-medium text-slate-700 transition-colors hover:text-sky-600 dark:text-slate-300 dark:hover:text-sky-400'
+              className='text-sm font-medium text-[--muted-foreground] transition-colors hover:text-sky-600 dark:hover:text-sky-400'
             >
               Features
             </Link>
             <Link
               href='#how-it-works'
-              className='text-sm font-medium text-slate-700 transition-colors hover:text-sky-600 dark:text-slate-300 dark:hover:text-sky-400'
+              className='text-sm font-medium text-[--muted-foreground] transition-colors hover:text-sky-600 dark:hover:text-sky-400'
             >
               How It Works
             </Link>
             <Link
               href='/support/contact'
-              className='text-sm font-medium text-slate-700 transition-colors hover:text-sky-600 dark:text-slate-300 dark:hover:text-sky-400'
+              className='text-sm font-medium text-[--muted-foreground] transition-colors hover:text-sky-600 dark:hover:text-sky-400'
             >
               Contact
             </Link>
@@ -243,9 +241,7 @@ const LandingPage = () => {
               <Button
                 variant='ghost'
                 size='sm'
-                className={cn(
-                  'text-sm text-slate-700 transition-colors hover:bg-slate-200/60 hover:text-sky-600 dark:text-slate-300 dark:hover:bg-slate-800/60 dark:hover:text-sky-400'
-                )}
+                className='text-sm text-[--muted-foreground] transition-colors hover:bg-[--accent] hover:text-sky-600 dark:hover:text-sky-400'
               >
                 Login
               </Button>
@@ -293,7 +289,7 @@ const LandingPage = () => {
             <Link href='/auth/signup'>
               <Button
                 size='lg'
-                className='group bg-gradient-to-r from-sky-500 to-cyan-400 px-10 py-7 text-lg font-semibold text-white shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-sky-500/60 focus:ring-4 focus:ring-sky-400/50 focus:ring-offset-2 dark:focus:ring-offset-slate-950'
+                className='group bg-gradient-to-r from-sky-500 to-cyan-400 px-10 py-7 text-lg font-semibold text-white shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-sky-500/60 focus:ring-4 focus:ring-sky-400/50 focus:ring-offset-2 dark:focus:ring-offset-[--background]'
               >
                 Sign Up Free{' '}
                 <ArrowRight className='ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1' />
@@ -308,7 +304,7 @@ const LandingPage = () => {
             className='hero-scroll-indicator-anim mt-20 inline-block'
             aria-label='Scroll to dashboard showcase'
           >
-            <ChevronDown className='mx-auto h-10 w-10 animate-bounce text-slate-500 opacity-70 dark:text-slate-400' />
+            <ChevronDown className='mx-auto h-10 w-10 animate-bounce text-[--muted-foreground] opacity-70' />
           </a>
         </div>
       </section>
@@ -342,7 +338,7 @@ const LandingPage = () => {
                 title={feature.title}
                 description={feature.description}
                 delay={i * 0.08}
-                className='animated-card'
+                className='animated-card border-[--border] bg-[--card]/70 hover:border-sky-500/60 dark:hover:border-sky-400/50'
               />
             ))}
           </div>
@@ -370,9 +366,9 @@ const LandingPage = () => {
               <p className='lp-text-dark-section-paragraph mt-6 mb-10 text-lg leading-relaxed'>
                 Our cutting-edge AI assistant understands your financial queries and commands. Add
                 expenses, check budgets, or get insights, all through simple conversation. Securely
-                use your own API key.
+                use your own AI provider keys.
               </p>
-              <div className='dark:bg-slate-850/50 space-y-4 rounded-xl border border-slate-700/50 bg-slate-800/40 p-6 shadow-xl backdrop-blur-md dark:border-slate-600/50'>
+              <div className='space-y-4 rounded-xl border border-[--border-active] bg-[--card]/40 p-6 shadow-xl backdrop-blur-md'>
                 {[
                   {
                     text: "Log a ₹1200 dinner at 'The Great Eatery'",
@@ -389,7 +385,7 @@ const LandingPage = () => {
                 ].map((item, i) => (
                   <div
                     key={i}
-                    className='dark:bg-slate-750/60 flex items-center gap-4 rounded-lg bg-slate-700/50 p-3 shadow-sm transition-shadow hover:shadow-md'
+                    className='flex items-center gap-4 rounded-lg bg-[--muted]/50 p-3 shadow-sm transition-shadow hover:shadow-md'
                   >
                     <div className='flex h-10 w-10 items-center justify-center rounded-full bg-sky-500/10 dark:bg-sky-400/10'>
                       {item.icon}
@@ -403,12 +399,12 @@ const LandingPage = () => {
               className='section-content-anim relative mt-12 lg:mt-0'
               delay={0.15}
             >
-              <div className='bg-slate-850 relative mx-auto h-[450px] w-full max-w-md overflow-hidden rounded-2xl border border-slate-600/70 p-4 shadow-2xl backdrop-blur-sm'>
-                <div className='absolute inset-x-0 top-0 flex h-8 items-center bg-slate-700/80 px-3'>
+              <div className='relative mx-auto h-[450px] w-full max-w-md overflow-hidden rounded-2xl border border-[--border-active] bg-[--card]/80 p-4 shadow-2xl backdrop-blur-sm'>
+                <div className='absolute inset-x-0 top-0 flex h-8 items-center bg-[--muted]/80 px-3'>
                   <div className='flex gap-1.5'>
-                    <span className='h-2.5 w-2.5 rounded-full bg-slate-600'></span>
-                    <span className='h-2.5 w-2.5 rounded-full bg-slate-600'></span>
-                    <span className='h-2.5 w-2.5 rounded-full bg-slate-600'></span>
+                    <span className='h-2.5 w-2.5 rounded-full bg-[--border]'></span>
+                    <span className='h-2.5 w-2.5 rounded-full bg-[--border]'></span>
+                    <span className='h-2.5 w-2.5 rounded-full bg-[--border]'></span>
                   </div>
                 </div>
                 <div className='flex h-full flex-col pt-8'>
@@ -419,22 +415,22 @@ const LandingPage = () => {
                       </div>
                     </div>
                     <div className='flex justify-start'>
-                      <div className='max-w-[80%] rounded-xl rounded-bl-sm bg-slate-700 p-3 text-sm text-slate-100 shadow-md'>
+                      <div className='max-w-[80%] rounded-xl rounded-bl-sm bg-[--muted] p-3 text-sm text-[--foreground] shadow-md'>
                         <Loader2 className='mr-2 inline-block h-4 w-4 animate-spin' /> Thinking...
                       </div>
                     </div>
                     <div className='ai-reply-anim flex justify-start opacity-0'>
-                      <div className='max-w-[80%] rounded-xl rounded-bl-sm bg-slate-700 p-3 text-sm text-slate-100 shadow-md'>
+                      <div className='max-w-[80%] rounded-xl rounded-bl-sm bg-[--muted] p-3 text-sm text-[--foreground] shadow-md'>
                         You spent ₹8,570 on food last month. Your top category was 'Dining Out' at
                         ₹4,200.
                       </div>
                     </div>
                   </div>
-                  <div className='mt-auto flex items-center rounded-lg border border-slate-600 bg-slate-800/80 p-2'>
+                  <div className='mt-auto flex items-center rounded-lg border border-[--border-active] bg-[--input]/80 p-2'>
                     <input
                       type='text'
                       placeholder='Ask Expense Pro AI...'
-                      className='flex-1 bg-transparent text-sm text-slate-200 placeholder-slate-400 focus:outline-none'
+                      className='flex-1 bg-transparent text-sm text-[--input-foreground] placeholder:text-[--muted-foreground] focus:outline-none'
                       disabled
                     />
                     <Button size='icon' variant='ghost' className='text-sky-400' disabled>
@@ -476,7 +472,7 @@ const LandingPage = () => {
             <Link href='/auth/signup'>
               <Button
                 size='lg'
-                className='bg-gradient-to-r from-lime-400 to-green-500 px-12 py-4 text-xl font-semibold text-white shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-lime-500/50 focus:ring-4 focus:ring-lime-400/60 focus:ring-offset-2 dark:focus:ring-offset-black'
+                className='bg-gradient-to-r from-lime-400 to-green-500 px-12 py-4 text-xl font-semibold text-white shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-lime-500/50 focus:ring-4 focus:ring-lime-400/60 focus:ring-offset-2 dark:focus:ring-offset-[--background]'
               >
                 Sign Up Free & Take Control
               </Button>
@@ -517,6 +513,14 @@ const LandingPage = () => {
         </div>
       </footer>
     </div>
+  );
+};
+
+const LandingPage = () => {
+  return (
+    <ThemeProvider attribute='class' defaultTheme='system' enableSystem disableTransitionOnChange>
+      <LandingPageContent />
+    </ThemeProvider>
   );
 };
 
