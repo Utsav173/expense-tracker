@@ -35,7 +35,7 @@ export function NavUser({ user }: { user: User }) {
         localStorage.removeItem('token');
         await removeAuthToken();
         showSuccess('Successfully logged out!');
-        window.location.href = '/login';
+        window.location.href = '/auth/login';
       })
       .catch(() => {
         showError('Error in logging out');

@@ -39,7 +39,7 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (user && !userIsLoading && !userIsError) {
-      router.replace('/');
+      router.replace('/accounts');
     }
   }, [user, userIsLoading, userIsError, router]);
 

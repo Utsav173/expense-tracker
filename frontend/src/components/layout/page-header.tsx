@@ -13,7 +13,7 @@ import { Separator } from '../ui/separator';
 const getPageTitle = (pathname: string | null): string => {
   if (!pathname) return 'Loading...';
 
-  if (pathname === '/') return 'Accounts';
+  if (pathname === '/accounts') return 'Accounts';
   if (pathname.startsWith('/accounts/shares/')) return 'Account Shares';
   if (pathname.startsWith('/accounts/')) return 'Account Details';
   if (pathname.startsWith('/shared-accounts')) return 'Shared Accounts';
@@ -35,7 +35,7 @@ const getPageTitle = (pathname: string | null): string => {
 const PageHeader: React.FC = () => {
   const pathname = usePathname();
   const pageTitle = getPageTitle(pathname);
-  const isHomePage = pathname === '/';
+  const isHomePage = pathname === '/accounts';
   const isDashboard = pathname === '/dashboard';
   return isDashboard ? null : (
     <header className='flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12'>
@@ -43,7 +43,7 @@ const PageHeader: React.FC = () => {
         <SidebarTrigger className='-ml-1' />
         <Separator orientation='vertical' className='mr-2 h-4' />
         <div className='flex h-full w-full items-center gap-2'>
-          <Link href='/' aria-label='Go to Home'>
+          <Link href='/accounts' aria-label='Go to Home'>
             <Button variant='ghost' size='icon' className='h-7 w-7'>
               <Home
                 className={cn('h-4 w-4', isHomePage ? 'text-primary' : 'text-muted-foreground')}

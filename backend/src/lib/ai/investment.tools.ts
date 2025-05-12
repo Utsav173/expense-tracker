@@ -13,7 +13,7 @@ export function createInvestmentTools(userId: string) {
   return {
     addInvestment: tool({
       description:
-        'Records a new investment holding (e.g., stock purchase) within a specific investment account.',
+        'Records a new investment holding (e.g., stock purchase) within a specific investment account. if purchase date is not provided, you can utilized "getHistoricalStockPriceOnDate" tools and fetch the price for that date.',
       parameters: z.object({
         investmentAccountIdentifier: z
           .string()
@@ -22,9 +22,16 @@ export function createInvestmentTools(userId: string) {
         symbol: z
           .string()
           .min(1)
-          .describe("The stock ticker or mutual fund symbol (e.g., 'RELIANCE.NS', 'INFY')."),
+          .describe(
+            "The stock ticker or mutual fund symbol (e.g., 'RELIANCE.NS', 'INFY'). if found symbol is not accruate, you can utilized 'searchStockSymbols' tools to get correct stock symbol.",
+          ),
         shares: z.number().positive('Number of shares or units purchased.'),
-        purchasePrice: z.number().nonnegative().describe('Price per share/unit at purchase.'),
+        purchasePrice: z
+          .number()
+          .nonnegative()
+          .describe(
+            'Price per share/unit at purchase. if not provided, you can utilized "getHistoricalStockPriceOnDate" tools and fetch the price for that date.',
+          ),
         purchaseDateDescription: z
           .string()
           .describe("Date of purchase (e.g., 'today', '2024-01-15')."),

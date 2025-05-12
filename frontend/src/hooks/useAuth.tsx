@@ -1,7 +1,7 @@
 'use client';
 
 import { authGetMe, authLogin, authLogOut } from '@/lib/endpoints/auth';
-import { useMutation, useQuery, useQueryClient, UseQueryResult } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { storeAuthToken, storeUser, removeAuthToken } from '@/app/(public)/auth/actions';
 import { getAuthTokenClient } from '@/lib/auth';
 import { LoginResponse, User, ApiResponse } from '@/lib/types';
@@ -27,7 +27,7 @@ export const useAuth = (): UseAuthReturn => {
   const token = getAuthTokenClient();
   const queryClient = useQueryClient();
 
-  const userQueryResult: UseQueryResult<User, Error> = useQuery({
+  const userQueryResult = useQuery({
     queryKey: ['user'],
     queryFn: authGetMe,
     enabled: !!token,
@@ -86,7 +86,7 @@ export const useAuth = (): UseAuthReturn => {
   };
 
   return {
-    user,
+    user: user ?? undefined,
     login: loginAction,
     logoutAction: logoutAction,
     loginIsError,

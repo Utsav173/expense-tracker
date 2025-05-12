@@ -1,0 +1,168 @@
+import React from 'react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { ShieldAlert, ArrowLeft } from 'lucide-react';
+
+const PrivacyPolicyPage = () => {
+  return (
+    <div className='min-h-screen bg-slate-50 px-4 py-12 text-slate-900 sm:px-6 lg:px-8 dark:bg-slate-900 dark:text-slate-100'>
+      <div className='mx-auto max-w-3xl'>
+        <div className='mb-8'>
+          <Link href='/'>
+            <Button
+              variant='ghost'
+              className='text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
+            >
+              <ArrowLeft size={18} className='mr-2' />
+              Back to Home
+            </Button>
+          </Link>
+        </div>
+
+        <header className='mb-10 text-center'>
+          <ShieldAlert className='mx-auto mb-4 h-16 w-16 text-sky-500 dark:text-sky-400' />
+          <h1 className='text-4xl font-extrabold tracking-tight sm:text-5xl'>Privacy Policy</h1>
+          <p className='mt-3 text-lg text-slate-500 dark:text-slate-400'>
+            Last Updated:{' '}
+            {new Date().toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })}
+          </p>
+        </header>
+
+        <article className='prose prose-slate dark:prose-invert lg:prose-lg mx-auto'>
+          <p>
+            Welcome to Expense Pro! Your privacy is critically important to us. This Privacy Policy
+            document outlines the types of personal information that is received and collected by
+            Expense Pro and how it is used.
+          </p>
+
+          <h2>1. Information We Collect</h2>
+          <p>
+            <strong>a. Account Information:</strong> When you register for an account, we collect
+            information such as your name, email address, and password (stored securely hashed). You
+            may optionally provide a profile picture.
+          </p>
+          <p>
+            <strong>b. Financial Data:</strong> You provide financial data including account names,
+            balances, transaction details (description, amount, category, date), budget information,
+            savings goals, investment details, and debt information. This data is essential for the
+            functionality of the application.
+          </p>
+          <p>
+            <strong>c. AI API Keys:</strong> If you choose to use the AI Assistant feature, you may
+            provide your own API key (e.g., for Google AI). We store this key securely encrypted
+            using AES-GCM encryption and only decrypt it on the server when needed to process your
+            AI requests. We do not have access to the raw key after it's encrypted.
+          </p>
+          <p>
+            <strong>d. Usage Data:</strong> We may collect information on how the Service is
+            accessed and used ("Usage Data"). This UsageData may include information such as your
+            computer's Internet Protocol address (e.g. IP address), browser type, browser version,
+            the pages of our Service that you visit, the time and date of your visit, the time spent
+            on those pages, unique device identifiers and other diagnostic data.
+          </p>
+
+          <h2>2. How We Use Your Information</h2>
+          <p>We use the collected data for various purposes:</p>
+          <ul>
+            <li>To provide and maintain our Service</li>
+            <li>To notify you about changes to our Service</li>
+            <li>
+              To allow you to participate in interactive features of our Service when you choose to
+              do so
+            </li>
+            <li>To provide customer support</li>
+            <li>To gather analysis or valuable information so that we can improve our Service</li>
+            <li>To monitor the usage of our Service</li>
+            <li>To detect, prevent and address technical issues</li>
+            <li>
+              To process your financial data as per the application's functionality (e.g.,
+              calculating balances, generating reports).
+            </li>
+            <li>
+              If you provide an AI API Key, to use that key to interact with the respective AI
+              provider on your behalf for the AI Assistant feature.
+            </li>
+          </ul>
+
+          <h2>3. Data Security</h2>
+          <p>
+            The security of your data is important to us. We use industry-standard practices to
+            protect your information, including password hashing (bcrypt) for authentication
+            credentials and AES-GCM encryption for sensitive data like AI API keys. JWTs are used
+            for session management. However, remember that no method of transmission over the
+            Internet or method of electronic storage is 100% secure.
+          </p>
+
+          <h2>4. Data Sharing and Disclosure</h2>
+          <p>
+            Expense Pro will not rent or sell potentially personally-identifying and
+            personally-identifying information to anyone. We may disclose your Personal Information
+            only in the following circumstances:
+          </p>
+          <ul>
+            <li>
+              <strong>With Your Consent:</strong> For example, when you share an account with
+              another user.
+            </li>
+            <li>
+              <strong>Service Providers:</strong> We may employ third-party companies and
+              individuals to facilitate our Service, provide the Service on our behalf, or perform
+              Service-related services. These third parties have access to your Personal Information
+              only to perform these tasks on our behalf and are obligated not to disclose or use it
+              for any other purpose. (e.g., email provider for notifications).
+            </li>
+            <li>
+              <strong>For Legal Requirements:</strong> If required to do so by law or in response to
+              valid requests by public authorities.
+            </li>
+            <li>
+              <strong>AI Providers:</strong> If you use the AI Assistant, your prompts and relevant
+              (anonymized where possible) context data will be sent to the AI provider (e.g., Google
+              AI) using your provided API key. Their use of this data is governed by their
+              respective privacy policies.
+            </li>
+          </ul>
+
+          <h2>5. User Rights</h2>
+          <p>
+            You have the right to access, update, or delete your personal information. You can
+            manage your account information through your profile settings. For deletion of your
+            entire account and associated data, please contact us.
+          </p>
+
+          <h2>6. Cookies</h2>
+          <p>
+            We use cookies for session management and to ensure the proper functioning of our
+            application. Our primary use of cookies is for authentication (e.g., storing your JWT in
+            an HttpOnly cookie).
+          </p>
+
+          <h2>7. Changes to This Privacy Policy</h2>
+          <p>
+            We may update our Privacy Policy from time to time. We will notify you of any changes by
+            posting the new Privacy Policy on this page. You are advised to review this Privacy
+            Policy periodically for any changes.
+          </p>
+
+          <h2>8. Contact Us</h2>
+          <p>
+            If you have any questions about this Privacy Policy, please contact us through our{' '}
+            <Link
+              href='/support/contact'
+              className='text-sky-600 hover:underline dark:text-sky-400'
+            >
+              Contact Support page
+            </Link>
+            .
+          </p>
+        </article>
+      </div>
+    </div>
+  );
+};
+
+export default PrivacyPolicyPage;

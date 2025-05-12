@@ -12,7 +12,7 @@ export async function storeAuthToken(token: string) {
     secure: true,
     sameSite: 'strict',
     maxAge: 60 * 60 * 24 * 30,
-    path: '/'
+    path: '/accounts'
   });
 }
 
@@ -23,7 +23,7 @@ export async function storeUser(user: any) {
     secure: true,
     sameSite: 'strict',
     maxAge: 60 * 60 * 24 * 30,
-    path: '/'
+    path: '/accounts'
   });
 }
 

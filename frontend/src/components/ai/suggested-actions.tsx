@@ -46,14 +46,14 @@ const ACTION_DEFINITIONS: ActionDefinition[] = [
     entities: ['account'],
     label: 'View Accounts',
     icon: Wallet,
-    path: '/'
+    path: '/accounts'
   },
   {
     keywords: ['listed', 'showed', 'found', /here are your account/i],
     entities: ['accounts', 'account'],
     label: 'View Accounts',
     icon: Wallet,
-    path: '/'
+    path: '/accounts'
   },
   {
     keywords: [/ok.* created/, /added.* new/, /transaction added/i],

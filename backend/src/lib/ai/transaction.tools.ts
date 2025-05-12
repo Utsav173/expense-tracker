@@ -18,24 +18,33 @@ export function createTransactionTools(userId: string) {
   return {
     addTransaction: tool({
       description:
-        'Records a new financial transaction (income or expense) to a specified account.',
+        'Records a new financial transaction (income or expense). Account, category, and date can be inferred if not provided.',
       parameters: z.object({
         amount: z.number().positive('The transaction amount (always positive).'),
         description: z.string().min(1).describe("Description (e.g., 'Groceries', 'Salary')."),
         type: z.enum(['income', 'expense']).describe("Type: 'income' or 'expense'."),
         accountIdentifier: z
           .string()
-          .min(1)
-          .describe('Name or ID of the account for the transaction.'),
+          .optional()
+          .describe("Optional: Name or ID of the account. Defaults to user's default account."),
         categoryIdentifier: z
           .string()
           .optional()
-          .describe("Category name or ID (e.g., 'Food', 'Salary'). Optional."),
+          .describe(
+            'Optional: Category name or ID. AI will try to infer from description if omitted.',
+          ),
         dateDescription: z
           .string()
           .optional()
-          .describe("Date (e.g., 'today', 'yesterday', '2024-03-15'). Defaults to today."),
-        transferDetails: z.string().optional().describe('Source/recipient details (optional).'),
+          .describe(
+            "Optional: Date (e.g., 'today', 'yesterday', '2024-03-15'). Defaults to today.",
+          ),
+        transferDetails: z.string().optional().describe('Optional: Source/recipient details.'),
+        mentionedCurrency: z
+          .string()
+          .length(3)
+          .optional()
+          .describe('Optional: 3-letter currency code if mentioned by user (e.g., USD, EUR).'),
       }),
       execute: async ({
         amount,
@@ -45,54 +54,98 @@ export function createTransactionTools(userId: string) {
         categoryIdentifier,
         dateDescription,
         transferDetails,
+        mentionedCurrency,
       }) => {
         try {
           const accountRes = await resolveAccountId(userId, accountIdentifier);
           if ('error' in accountRes)
             return createToolResponse({ success: false, error: accountRes.error });
-          if ('clarificationNeeded' in accountRes)
+          if ('clarificationNeeded' in accountRes) {
             return createToolResponse({
               success: true,
               clarificationNeeded: true,
-              message: 'Which account do you mean?',
+              message: `Which account should I use for "${description}"?`,
               options: accountRes.options,
             });
+          }
+          const resolvedAccountId = accountRes.id;
+          const accountName = accountRes.name || 'the selected account';
+          const accountCurrency = accountRes.currency || 'INR';
 
-          let categoryId: string | undefined | null = null;
-          if (categoryIdentifier) {
-            const categoryRes = await resolveCategoryId(userId, categoryIdentifier);
-            if ('error' in categoryRes)
-              return createToolResponse({ success: false, error: categoryRes.error });
-            if ('clarificationNeeded' in categoryRes)
-              return createToolResponse({
-                success: true,
-                clarificationNeeded: true,
-                message: 'Which category do you mean?',
-                options: categoryRes.options,
-              });
-            categoryId = categoryRes.id;
+          if (
+            mentionedCurrency &&
+            mentionedCurrency.toUpperCase() !== accountCurrency.toUpperCase()
+          ) {
+            return createToolResponse({
+              success: false,
+              clarificationNeeded: true,
+              error: `You mentioned ${mentionedCurrency}, but ${accountName} is in ${accountCurrency}. Please clarify which currency to use or choose a different account.`,
+              options: [
+                { id: 'use_account_currency', name: `Use ${accountCurrency} (account's currency)` },
+                { id: 'change_account', name: 'Choose a different account' },
+              ],
+            });
+          }
+
+          const categoryRes = await resolveCategoryId(userId, categoryIdentifier, description);
+          let resolvedCategoryId: string | null = null;
+          let categoryName = 'Uncategorized';
+          let categoryClarificationMessage: string | undefined = undefined;
+
+          if ('error' in categoryRes) {
+            categoryClarificationMessage = categoryRes.error;
+          } else if ('clarificationNeeded' in categoryRes) {
+            return createToolResponse({
+              success: true,
+              clarificationNeeded: true,
+              message: `Which category for "${description}"?`,
+              options: categoryRes.options,
+            });
+          } else {
+            resolvedCategoryId = categoryRes.id;
+            categoryName = categoryRes.name || 'Uncategorized';
           }
 
           const dateRes = await resolveSingleDate(dateDescription, true);
-          if (dateRes.error) return createToolResponse({ success: false, error: dateRes.error });
+          if (dateRes.error || !dateRes.singleDate) {
+            return createToolResponse({
+              success: false,
+              error: dateRes.error || 'Invalid transaction date.',
+            });
+          }
           const transactionDate = dateRes.singleDate;
+          const dateUsed = dateDescription ? format(transactionDate, 'MMM d, yyyy') : 'today';
 
           const payload: InferInsertModel<typeof Transaction> = {
-            account: accountRes.id,
+            account: resolvedAccountId,
             amount: amount,
             isIncome: type === 'income',
             text: description,
-            category: categoryId,
+            category: resolvedCategoryId,
             transfer: transferDetails,
             createdAt: transactionDate,
             owner: userId,
             createdBy: userId,
+            currency: accountCurrency,
           };
 
           const result = await transactionService.createTransaction(userId, payload);
+
+          let successMessage = `Transaction added: ${type} of ${formatCurrency(
+            amount,
+            accountCurrency,
+          )} for "${description}" to account "${accountName}" on ${dateUsed}.`;
+          if (resolvedCategoryId) {
+            successMessage += ` Categorized as "${categoryName}".`;
+          } else if (categoryClarificationMessage) {
+            successMessage += ` ${categoryClarificationMessage} You can categorize it later.`;
+          } else {
+            successMessage += ` Please categorize it if needed.`;
+          }
+
           return createToolResponse({
             success: true,
-            message: `Transaction added.`,
+            message: successMessage,
             data: result.data,
           });
         } catch (error: any) {
@@ -114,9 +167,12 @@ export function createTransactionTools(userId: string) {
           .string()
           .optional()
           .describe(
-            "Date range ('today', 'last 7 days', 'this month', 'last Tuesday', 'YYYY-MM-DD', 'YYYY-MM-DD,YYYY-MM-DD').",
+            "Date range ('today', 'last 7 days', 'this month', 'last Tuesday', 'YYYY-MM-DD', 'YYYY-MM-DD,YYYY-MM-DD'). Defaults to 'this month' if unspecified.",
           ),
-        type: z.enum(['income', 'expense']).optional().describe("Filter by 'income' or 'expense'."),
+        type: z
+          .enum(['income', 'expense', 'all'])
+          .optional()
+          .describe("Filter by 'income', 'expense', or 'all'. Defaults to 'all'."),
         minAmount: z.number().optional().describe('Minimum amount.'),
         maxAmount: z.number().optional().describe('Maximum amount.'),
         searchText: z.string().optional().describe('Search text in description/transfer.'),
@@ -150,7 +206,7 @@ export function createTransactionTools(userId: string) {
 
           let categoryId: string | undefined = undefined;
           if (categoryIdentifier) {
-            const categoryRes = await resolveCategoryId(userId, categoryIdentifier);
+            const categoryRes = await resolveCategoryId(userId, categoryIdentifier, searchText);
             if ('error' in categoryRes)
               return createToolResponse({ success: false, error: categoryRes.error });
             if ('clarificationNeeded' in categoryRes)
@@ -163,15 +219,22 @@ export function createTransactionTools(userId: string) {
             categoryId = categoryRes.id;
           }
 
-          const dateRes = await resolveDateRangeForQuery(dateDescription, false);
+          const effectiveDateDescription = dateDescription || 'this month';
+          const dateRes = await resolveDateRangeForQuery(effectiveDateDescription, true);
           if (dateRes.error) return createToolResponse({ success: false, error: dateRes.error });
 
           const filters = {
             accountId: accountId ?? undefined,
             userId: accountId ? undefined : userId,
-            duration: `${dateRes.startDate},${dateRes.endDate}`,
+            duration:
+              dateRes.startDate && dateRes.endDate
+                ? `${format(dateRes.startDate, 'yyyy-MM-dd')},${format(
+                    dateRes.endDate,
+                    'yyyy-MM-dd',
+                  )}`
+                : undefined,
             q: searchText,
-            isIncome: type === undefined ? undefined : String(type === 'income'),
+            isIncome: type === 'all' || type === undefined ? undefined : String(type === 'income'),
             categoryId: categoryId ?? undefined,
             minAmount,
             maxAmount,

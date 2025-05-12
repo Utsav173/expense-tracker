@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 const AI_CHAT_ALLOWED_PATHS = [
   '/dashboard',
-  '/',
+  '/accounts',
   '/transactions',
   '/budget',
   '/goal',
