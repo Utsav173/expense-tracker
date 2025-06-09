@@ -12,4 +12,5 @@ dist
 postgres_data/
 
 # Drizzle
+drizzle
 /drizzle/meta/_journal.json
