@@ -58,12 +58,12 @@ The database schema is visualized below. For a more detailed view, you can use D
 - **Image Processing:** [Sharp](https://sharp.pixelplumbing.com/) (Profile picture compression)
 - **Date/Time:** [date-fns](https://date-fns.org/), [date-fns-tz](https://date-fns.org/v2/docs/Time-Zones), [chrono-node](https://github.com/wanasit/chrono) (Natural language date parsing)
 - **Utilities:** [Lodash](https://lodash.com/), [Chalk](https://github.com/chalk/chalk) (Console styling), [Chance](https://chancejs.com/) (Seeding), [cli-progress](https://github.com/npkg/cli-progress) (Seeding progress), [@supercharge/promise-pool](https://github.com/supercharge/promise-pool) (Seeding concurrency)
-- **Development:** [TypeScript](https://www.typescriptlang.org/), [Drizzle Kit](https://orm.drizzle.team/kit/overview) (Migrations/DB tooling), [Prettier](https://prettier.io/) (Code formatting)
+- **Development:** [TypeScript](https://www.typescriptlang.org/), [Drizzle Kit](https://orm.drizzle.team/kit/overview) (Migrations/DB tooling), [Prettier](https://prettier.io/) (Code formatting), [Docker](https://www.docker.com/) (Local DB setup)
 
 ## Prerequisites
 
 - **Bun:** Latest version ([https://bun.sh/](https://bun.sh/)).
-- **PostgreSQL:** A PostgreSQL database connection string (`DATABASE_URL_NEW` env variable). Neon is recommended.
+- **Docker & Docker Compose:** **Required** for the simplified local database setup script.
 - **Email Provider (Optional but Recommended):** For password reset, sharing, and notification emails (e.g., Gmail with App Password).
 - **AI Provider API Key (Optional):** Required **by the end-user** via frontend profile settings if using the AI Assistant feature (e.g., Google AI API Key).
 - **Strong Encryption Secret:** **Required** in backend `.env` if the AI feature will be used.
@@ -84,12 +84,12 @@ The database schema is visualized below. For a more detailed view, you can use D
     ```
 
 3.  **Set up environment variables:**
-    Create a `.env` file in the `backend` directory. Refer to `.env.example` (if available) or add the following, ensuring values are correct:
+    Create a `.env` file in the `backend` directory. Refer to `.env.example` (if available) or create one with the following structure. The `DATABASE_URL_NEW` will be provided by the setup script in the next step.
 
     ```dotenv
-    # Database (Required)
+    # Database (Required - The `db:create` script will provide this URL)
     # Make sure this var name matches drizzle.config.ts and src/config/index.ts
-    DATABASE_URL_NEW=postgres://user:password@host:port/database
+    DATABASE_URL_NEW=
 
     # JWT (Required - generate a strong, random secret!)
     JWT_SECRET=your_very_long_and_random_secret_key_at_least_32_chars
@@ -107,11 +107,6 @@ The database schema is visualized below. For a more detailed view, you can use D
     # Email Configuration (Optional - for password reset/sharing/notifications)
     GMAIL_USERNAME=your_email@gmail.com # Your Gmail (or other SMTP) username
     GMAIL_PASS=your_gmail_app_password # Your Gmail App Password (or SMTP password)
-    # Optional: Custom SMTP settings if not using Gmail service
-    # SMTP_HOST=your_smtp_host
-    # SMTP_PORT=your_smtp_port
-    # SMTP_USER=your_smtp_user
-    # SMTP_PASS=your_smtp_password
 
     # Node Environment & Port (Optional - Defaults provided)
     NODE_ENV=development # development, production, or test
@@ -120,22 +115,43 @@ The database schema is visualized below. For a more detailed view, you can use D
 
     **Security Notes:**
 
-    - **NEVER** commit your `.env` file. Add it to `.gitignore`.
-    - Use a **strong, unique** `JWT_SECRET` (at least 32 characters).
-    - Use a **strong, random 32-byte** `AI_API_KEY_ENCRYPTION_SECRET` if using the AI feature. Keep this secret secure; compromising it exposes user AI keys.
-    - Use **Gmail App Passwords** if using Gmail, as regular passwords may be blocked.
+    - **NEVER** commit your `.env` file.
+    - Use a **strong, unique** `JWT_SECRET`.
+    - Use a **strong, random 32-byte** `AI_API_KEY_ENCRYPTION_SECRET`.
 
 4.  **Database Setup:**
-    - **Migrations:** Create database tables based on `src/database/schema.ts`:
-      ```bash
-      bun run db:migrate
-      ```
-      _(This applies migrations located in the `drizzle` folder)._
-    - **Seeding (Optional):** Populate with initial data (default categories, test user with INR accounts, sample transactions, budgets, goals, investments, debts):
-      ```bash
-      bun run seed
-      ```
-      _(Use caution when seeding production databases. The seed script clears existing data first!)_
+
+    **Option 1: Using Docker (Recommended for Local Development)**
+
+    This is the easiest way to get a local PostgreSQL database running.
+
+    a. **Create the Database Container:**
+    `bash
+    bun run db:create
+    `
+    This command will start a PostgreSQL database in a Docker container, wait for it to be ready, and print the connection URL to your console.
+
+    b. **Update `.env` file:** Copy the URL printed in the console and paste it as the value for `DATABASE_URL_NEW` in your `.env` file.
+
+    c. **Apply Migrations:** Create the database tables based on the schema:
+    `bash
+    bun run db:migrate
+    `
+
+    d. **Seed Data (Optional):**
+    `bash
+    bun run seed
+    `
+    _(Use caution when seeding production databases. The seed script clears existing data first!)_
+
+    **Option 2: Manual Setup**
+
+    If you prefer to use your own PostgreSQL instance (e.g., from Neon, Supabase, or a local installation not managed by Docker Compose), follow these steps:
+
+    - Ensure your database is running and you have the connection string.
+    - Set the `DATABASE_URL_NEW` in your `.env` file to your connection string.
+    - Run migrations: `bun run db:migrate`
+    - (Optional) Seed data: `bun run seed`
 
 ## Running the Application
 
@@ -153,10 +169,10 @@ The database schema is visualized below. For a more detailed view, you can use D
       bun run generate:build
       ```
   2.  **Start:**
-      ```bash
+      ````bash
       bun run start
-      ```
-      (Ensure production environment variables are set correctly in your hosting environment).
+      ```      (Ensure production environment variables are set correctly in your hosting environment).
+      ````
 
 ## API Documentation
 
@@ -167,6 +183,9 @@ The API documentation is available via the Postman collection: [`expense-backend
 - `dev`: Start development server with hot-reloading (`bun run --hot src/index.ts`).
 - `start`: Start production server (`bun run dist/index.js`, requires build first).
 - `generate:build`: Build the application for production (`bun build ./src/index.ts ...`).
+- **`db:create`**: Starts a local PostgreSQL database using Docker and prints the connection URL.
+- **`db:stop`**: Stops the local PostgreSQL Docker container.
+- **`db:clean`**: Stops and removes the local PostgreSQL Docker container and its data volume (irreversible).
 - `db:pull`: Pull current DB schema into Drizzle Kit format (`bunx drizzle-kit pull`).
 - `db:push`: Push schema changes directly to DB (alternative to migrations, **use with extreme caution**, especially in production) (`bunx drizzle-kit push`).
 - `db:generate`: Generate SQL migration files based on schema changes (`bunx drizzle-kit generate`).

@@ -1,7 +1,15 @@
-node_modules
+# Environment variables
 .env
-data.json
-drizzle
+.env*.local
+
+# Node modules
+node_modules
+
+# Build output
 dist
-bun.lockb
-docs
+
+# Docker
+postgres_data/
+
+# Drizzle
+/drizzle/meta/_journal.json
