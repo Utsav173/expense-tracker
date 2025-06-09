@@ -88,7 +88,7 @@ expense-tracker/
 
 - **Bun:** Install Bun (version >= 1.0 recommended). See [https://bun.sh/](https://bun.sh/).
 - **Node.js:** Required for some frontend tooling (18+ recommended).
-- **PostgreSQL Database:** A PostgreSQL database URL connection string is required (e.g., from Neon, Supabase, or local setup).
+- **Docker & Docker Compose:** **Required** for the simplified local database setup.
 - **Gmail Account (Optional):** For sending welcome/reset/notification emails (requires App Password).
 - **Google AI API Key (Optional):** For using the AI Assistant feature. Users add this via their profile.
 - **Encryption Secret:** A strong, 32-byte secret key is **required** in the backend `.env` if the AI feature will be used.
@@ -97,35 +97,43 @@ expense-tracker/
 
 1.  Navigate to the backend directory: `cd backend`
 2.  Install dependencies: `bun install`
-3.  Create a `.env` file. Copy the contents from `.env.example` (if it exists) or create one with the following structure (replace placeholders with actual values):
+3.  Create a `.env` file from the example or with the following structure (you'll fill in `DATABASE_URL_NEW` in the next step):
 
     ```dotenv
     # --- REQUIRED ---
-    DATABASE_URL_NEW="your_postgres_connection_string"
+    DATABASE_URL_NEW=
     JWT_SECRET="your_super_strong_jwt_secret_at_least_32_chars"
-    FRONTEND_URL="http://localhost:3000" # Base URL of your frontend
-    LOGINPAGE="http://localhost:3000/auth/login" # Full URL to login page
-    RESETPAGE="http://localhost:3000/auth/reset-password" # Full URL to reset password page
+    FRONTEND_URL="http://localhost:3000"
+    LOGINPAGE="http://localhost:3000/auth/login"
+    RESETPAGE="http://localhost:3000/auth/reset-password"
 
     # --- REQUIRED IF USING AI ASSISTANT ---
-    # Generate a secure, random 32-byte key (e.g., using openssl rand -base64 32)
     AI_API_KEY_ENCRYPTION_SECRET="your_random_and_secure_32_byte_encryption_key"
 
     # --- OPTIONAL: EMAIL ---
-    # (Use App Password for Gmail if 2FA is enabled)
     GMAIL_USERNAME="your_email@gmail.com"
     GMAIL_PASS="your_gmail_app_password"
-
-    # --- OPTIONAL: SERVER ---
-    # PORT=1337
-    # NODE_ENV=development
     ```
 
-    **Important:** Generate secure secrets for `JWT_SECRET` and `AI_API_KEY_ENCRYPTION_SECRET`. **Never** commit your `.env` file.
+4.  **Create and start the local database** using Docker. This is the simplest method.
 
-4.  Run database migrations: `bun run db:migrate`
-5.  (Optional but Recommended for Demo) Seed the database: `bun run seed`
-    _(Note: The seed script clears existing data)_
+    ```bash
+    bun run db:create
+    ```
+
+    This script will start a PostgreSQL container and print the connection URL.
+
+5.  **Copy the database URL** from the terminal and paste it into your `.env` file for the `DATABASE_URL_NEW` variable.
+
+6.  Run database migrations to create the tables:
+    ```bash
+    bun run db:migrate
+    ```
+7.  (Optional but Recommended for Demo) Seed the database with sample data:
+    ```bash
+    bun run seed
+    ```
+    _Note: The seed script clears existing data. To stop the database container later, run `bun run db:stop`. To remove it completely (including all data), run `bun run db:clean`._
 
 ### 2. Frontend Setup
 
