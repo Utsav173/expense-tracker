@@ -55,15 +55,15 @@ interface ProcessedDataPoint {
 const trendsChartConfig = {
   income: {
     label: 'Income',
-    color: 'hsl(var(--chart-income))'
+    color: 'var(--chart-income)'
   },
   expense: {
     label: 'Expense',
-    color: 'hsl(var(--chart-expense))'
+    color: 'var(--chart-expense)'
   },
   balance: {
     label: 'Balance',
-    color: 'hsl(var(--chart-balance))'
+    color: 'var(--chart-balance)'
   }
 } satisfies ChartConfig;
 
@@ -176,13 +176,14 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               <CartesianGrid
                 strokeDasharray='3 3'
                 vertical={false}
-                stroke='hsl(var(--border)/0.5)'
+                stroke='var(--border)'
+                strokeOpacity={0.5}
               />
               <XAxis
                 dataKey='date'
                 tickLine={false}
                 axisLine={false}
-                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
                 interval='preserveStartEnd'
                 minTickGap={15}
               />
@@ -190,12 +191,12 @@ export const TrendChart: React.FC<TrendChartProps> = ({
                 tickFormatter={formatYaxis}
                 tickLine={false}
                 axisLine={false}
-                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
                 width={45}
               />
               {/* Use standardized ChartTooltip */}
               <ChartTooltip
-                cursor={{ fill: 'hsl(var(--muted))' }}
+                cursor={{ fill: 'var(--muted)' }}
                 content={
                   <ChartTooltipContent
                     formatter={(value) => formatCurrency(value as number, currency)}
@@ -250,13 +251,14 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               <CartesianGrid
                 strokeDasharray='3 3'
                 vertical={false}
-                stroke='hsl(var(--border)/0.5)'
+                stroke='var(--border)'
+                strokeOpacity={0.5}
               />
               <XAxis
                 dataKey='date'
                 tickLine={false}
                 axisLine={false}
-                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
                 interval='preserveStartEnd'
                 minTickGap={15}
               />
@@ -264,7 +266,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
                 tickFormatter={formatYaxis}
                 tickLine={false}
                 axisLine={false}
-                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
                 width={45}
               />
               {/* Use standardized ChartTooltip */}
@@ -318,13 +320,14 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               <CartesianGrid
                 strokeDasharray='3 3'
                 vertical={false}
-                stroke='hsl(var(--border)/0.5)'
+                stroke='var(--border)'
+                strokeOpacity={0.5}
               />
               <XAxis
                 dataKey='date'
                 tickLine={false}
                 axisLine={false}
-                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
                 interval='preserveStartEnd'
                 minTickGap={15}
               />
@@ -332,7 +335,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
                 tickFormatter={formatYaxis}
                 tickLine={false}
                 axisLine={false}
-                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
                 width={45}
               />
               {/* Use standardized ChartTooltip */}

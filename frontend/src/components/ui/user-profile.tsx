@@ -2,7 +2,7 @@
 
 import { useToast } from '@/lib/hooks/useToast';
 import { useAuth } from '@/hooks/useAuth';
-import React, { useEffect, useState, useCallback, useMemo } from 'react'; // Added useMemo
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { authUpdateUser, authUpdateUserAiApiKey } from '@/lib/endpoints/auth';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,7 +21,10 @@ import {
   EyeOff,
   BrainCircuit,
   Loader2,
-  Check
+  Check,
+  Edit3,
+  Shield,
+  ExternalLink
 } from 'lucide-react';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card';
@@ -33,7 +36,6 @@ import { Skeleton } from './skeleton';
 import { PasswordInput } from './password-input';
 import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
 import { Alert, AlertDescription, AlertTitle } from './alert';
-// Import Form components
 import {
   Form,
   FormControl,
@@ -43,6 +45,7 @@ import {
   FormMessage
 } from '@/components/ui/form';
 import { Label } from './label';
+import { Badge } from './badge';
 
 const profileUpdateSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters.').max(64).trim(),
@@ -64,7 +67,6 @@ const UserProfile = () => {
   const [isApiKeyRemoved, setIsApiKeyRemoved] = useState(false);
   const [isRemoveKeyConfirmOpen, setIsRemoveKeyConfirmOpen] = useState(false);
 
-  // FIX: Use useMemo import
   const hasAiApiKey = useMemo(
     () => user?.hasAiApiKey && !isApiKeyRemoved,
     [user?.hasAiApiKey, isApiKeyRemoved]
@@ -76,11 +78,11 @@ const UserProfile = () => {
   });
 
   const updateApiKeyMutation = useMutation({
-    mutationFn: (apiKeyData: string | null) => authUpdateUserAiApiKey(apiKeyData), // FIX: Correct variable name
+    mutationFn: (apiKeyData: string | null) => authUpdateUserAiApiKey(apiKeyData),
     onSuccess: async (data, variables) => {
       await invalidate(['user']);
       refetchUser?.();
-      showSuccess(data?.message || 'AI API Key updated!');
+      showSuccess(data?.message || 'AI API Key updated successfully!');
       setIsEditingApiKey(false);
       setApiKeyInput('');
       setIsApiKeyRemoved(variables === null);
@@ -131,6 +133,18 @@ const UserProfile = () => {
   const handleProfileFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        showError('Profile picture must be less than 5MB');
+        return;
+      }
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        showError('Please select a valid image file');
+        return;
+      }
+
       profileForm.setValue('profilePic', file, { shouldDirty: true });
       const url = URL.createObjectURL(file);
       if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -145,7 +159,10 @@ const UserProfile = () => {
       profilePic: undefined
     });
     setIsEditingProfile(false);
-    setPreviewUrl(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
   };
 
   const onProfileSubmit = (data: ProfileUpdateFormSchema) => {
@@ -156,18 +173,24 @@ const UserProfile = () => {
     }
     if (data.profilePic instanceof File) {
       formData.append('profilePic', data.profilePic);
-    } else if (data.profilePic === null) {
-      // Optional: Handle explicit null if needed by backend
     }
     updateProfileMutation.mutate(formData);
   };
 
   const handleSaveApiKey = () => {
-    if (!apiKeyInput.trim()) {
+    const trimmedKey = apiKeyInput.trim();
+    if (!trimmedKey) {
       showError('API Key cannot be empty.');
       return;
     }
-    updateApiKeyMutation.mutate(apiKeyInput);
+
+    // Basic validation for Google AI API key format
+    if (!trimmedKey.startsWith('AIza') && !trimmedKey.startsWith('AIza')) {
+      showError('Please enter a valid Google AI API Key (should start with "AIza").');
+      return;
+    }
+
+    updateApiKeyMutation.mutate(trimmedKey);
   };
 
   const handleRemoveApiKey = () => {
@@ -175,34 +198,53 @@ const UserProfile = () => {
     setIsRemoveKeyConfirmOpen(false);
   };
 
+  const handleCancelApiKeyEdit = () => {
+    setIsEditingApiKey(false);
+    setApiKeyInput('');
+  };
+
   if (userIsLoading) {
     return (
-      <div className='mx-auto flex max-w-2xl justify-center p-4 md:p-8'>
-        <Card className='w-full'>
-          <CardHeader>
-            <Skeleton className='h-8 w-48' />
-          </CardHeader>
-          <CardContent className='space-y-6'>
-            <div className='flex items-center gap-4'>
-              <Skeleton className='h-20 w-20 rounded-full' />
-              <div className='space-y-2'>
-                <Skeleton className='h-6 w-40' />
-                <Skeleton className='h-4 w-60' />
+      <div className='mx-auto max-w-4xl p-4 md:p-8'>
+        <div className='grid gap-6 md:grid-cols-1'>
+          <Card className='w-full'>
+            <CardHeader>
+              <Skeleton className='h-8 w-48' />
+              <Skeleton className='h-4 w-64' />
+            </CardHeader>
+            <CardContent className='space-y-8'>
+              <div className='flex items-center gap-6'>
+                <Skeleton className='h-24 w-24 rounded-full' />
+                <div className='flex-1 space-y-4'>
+                  <Skeleton className='h-10 w-full' />
+                  <Skeleton className='h-10 w-full' />
+                  <Skeleton className='h-10 w-2/3' />
+                </div>
               </div>
-            </div>
-            <Skeleton className='h-10 w-full' />
-            <Skeleton className='h-10 w-full' />
-          </CardContent>
-        </Card>
+              <div className='space-y-4'>
+                <Skeleton className='h-6 w-32' />
+                <Skeleton className='h-20 w-full' />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className='mx-auto flex max-w-2xl justify-center p-4 md:p-8'>
-        <Card className='w-full p-8 text-center'>
-          <p className='text-muted-foreground'>User not found. Please log in again.</p>
+      <div className='mx-auto max-w-4xl p-4 md:p-8'>
+        <Card className='w-full'>
+          <CardContent className='p-8 text-center'>
+            <div className='space-y-4'>
+              <UserIcon className='text-muted-foreground mx-auto h-12 w-12' />
+              <div>
+                <h3 className='text-lg font-semibold'>User Not Found</h3>
+                <p className='text-muted-foreground'>Please log in again to access your profile.</p>
+              </div>
+            </div>
+          </CardContent>
         </Card>
       </div>
     );
@@ -212,244 +254,315 @@ const UserProfile = () => {
   const isApiKeySubmitting = updateApiKeyMutation.isPending;
 
   return (
-    <div className='z-10 mx-auto flex max-w-2xl justify-center p-4 md:p-8'>
-      <Card className='w-full'>
-        <CardHeader>
-          <CardTitle className='text-2xl'>User Profile</CardTitle>
-          <CardDescription>Manage your personal information and settings.</CardDescription>
-        </CardHeader>
-        <CardContent className='space-y-8'>
-          <section className='space-y-4'>
-            <h3 className='mb-4 border-b pb-2 text-lg font-semibold'>Personal Information</h3>
-            <div className='flex flex-col items-center gap-4 sm:flex-row sm:items-start'>
-              <div className='relative shrink-0'>
-                <Avatar className='h-24 w-24 border'>
-                  <AvatarImage
-                    src={previewUrl || user.profilePic || undefined}
-                    alt={user.name}
-                    className='object-cover'
-                  />
-                  <AvatarFallback className='text-3xl uppercase'>
-                    {user.name?.charAt(0) || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-                {isEditingProfile && (
-                  <label
-                    htmlFor='profile-upload'
-                    className='bg-background hover:bg-accent absolute -right-1 -bottom-1 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border shadow-sm transition-colors'
-                  >
-                    <Camera size={16} className='text-muted-foreground' />
-                    <input
-                      id='profile-upload'
-                      type='file'
-                      onChange={handleProfileFileChange}
-                      accept='image/*'
-                      className='sr-only'
-                      disabled={isProfileSubmitting}
-                    />
-                  </label>
-                )}
+    <div className='mx-auto max-w-4xl p-4 md:p-8'>
+      <div className='space-y-8'>
+        {/* Header */}
+        <div className='space-y-2 text-center'>
+          <h1 className='text-3xl font-bold tracking-tight'>Profile Settings</h1>
+          <p className='text-muted-foreground'>
+            Manage your personal information and AI assistant preferences
+          </p>
+        </div>
+
+        {/* Profile Information Card */}
+        <Card>
+          <CardHeader className='pb-6'>
+            <div className='flex items-center justify-between'>
+              <div>
+                <CardTitle className='flex items-center gap-2'>
+                  <UserIcon className='h-5 w-5' />
+                  Profile Information
+                </CardTitle>
+                <CardDescription>Update your personal details and profile picture</CardDescription>
               </div>
-              <div className='flex-1 text-center sm:text-left'>
-                {/* FIX: Use Form component */}
-                <Form {...profileForm}>
-                  <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className='space-y-4'>
-                    {/* FIX: Use FormField */}
+              {!isEditingProfile && (
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => setIsEditingProfile(true)}
+                  className='shrink-0'
+                >
+                  <Edit3 className='mr-2 h-4 w-4' />
+                  Edit Profile
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Form {...profileForm}>
+              <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className='space-y-6'>
+                {/* Profile Picture Section */}
+                <div className='flex flex-col items-start gap-6 sm:flex-row'>
+                  <div className='flex flex-col items-center gap-3'>
+                    <div className='relative'>
+                      <Avatar className='h-24 w-24 border-2'>
+                        <AvatarImage
+                          src={previewUrl || user.profilePic || undefined}
+                          alt={user.name}
+                          className='object-cover'
+                        />
+                        <AvatarFallback className='text-2xl font-semibold'>
+                          {user.name?.charAt(0)?.toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      {isEditingProfile && (
+                        <label
+                          htmlFor='profile-upload'
+                          className='bg-background hover:bg-accent absolute -right-2 -bottom-2 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border-2 shadow-lg transition-colors'
+                        >
+                          <Camera className='text-muted-foreground h-4 w-4' />
+                          <input
+                            id='profile-upload'
+                            type='file'
+                            onChange={handleProfileFileChange}
+                            accept='image/*'
+                            className='sr-only'
+                            disabled={isProfileSubmitting}
+                          />
+                        </label>
+                      )}
+                    </div>
+                    {isEditingProfile && (
+                      <p className='text-muted-foreground max-w-32 text-center text-xs'>
+                        Click the camera icon to change your profile picture
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Form Fields */}
+                  <div className='w-full flex-1 space-y-4'>
                     <FormField
                       control={profileForm.control}
                       name='name'
                       render={({ field }) => (
-                        // FIX: Use FormItem
                         <FormItem>
-                          {/* FIX: Use FormLabel */}
-                          <FormLabel>Full Name</FormLabel>
-                          {/* FIX: Use FormControl */}
+                          <FormLabel>Full Name *</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder='Your Name'
+                              placeholder='Enter your full name'
                               {...field}
                               disabled={!isEditingProfile || isProfileSubmitting}
+                              className={!isEditingProfile ? 'bg-muted/50' : ''}
                             />
                           </FormControl>
-                          {/* FIX: Use FormMessage */}
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <div className='space-y-1'>
-                      {/* FIX: Use Label */}
-                      <Label className='text-sm'>Email</Label>
-                      <Input
-                        value={user.email}
-                        readOnly
-                        disabled
-                        className='bg-muted/50 cursor-not-allowed opacity-70'
-                      />
+
+                    <div className='space-y-2'>
+                      <Label className='text-sm font-medium'>Email Address</Label>
+                      <div className='flex items-center gap-2'>
+                        <Input
+                          value={user.email}
+                          readOnly
+                          disabled
+                          className='bg-muted/50 flex-1 cursor-not-allowed opacity-70'
+                        />
+                        <Badge variant='secondary' className='shrink-0'>
+                          Verified
+                        </Badge>
+                      </div>
+                      <p className='text-muted-foreground text-xs'>
+                        Email cannot be changed. Contact support if needed.
+                      </p>
                     </div>
-                    {/* FIX: Use FormField */}
+
                     <FormField
                       control={profileForm.control}
                       name='preferredCurrency'
                       render={({ field }) => (
-                        // FIX: Use FormItem
                         <FormItem>
-                          {/* FIX: Use FormLabel */}
                           <FormLabel>Preferred Currency</FormLabel>
                           <CurrencySelect
                             currencies={currencies}
-                            value={field.value ?? undefined} // Handle potential null value
+                            value={field.value ?? undefined}
                             onValueChange={field.onChange}
                             isLoading={isLoadingCurrencies}
                             disabled={!isEditingProfile || isProfileSubmitting}
                           />
-                          {/* FIX: Use FormMessage */}
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+                  </div>
+                </div>
 
-                    {isEditingProfile && (
-                      <div className='flex justify-end gap-2 pt-2'>
-                        <Button
-                          type='button'
-                          variant='ghost'
-                          onClick={handleProfileCancel}
-                          disabled={isProfileSubmitting}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          type='submit'
-                          disabled={
-                            isProfileSubmitting ||
-                            !profileForm.formState.isDirty ||
-                            !profileForm.formState.isValid
-                          }
-                        >
-                          {isProfileSubmitting ? (
-                            <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                          ) : (
-                            <Save className='mr-2 h-4 w-4' />
-                          )}
-                          Save Profile
-                        </Button>
-                      </div>
-                    )}
-                  </form>
-                </Form>
-                {!isEditingProfile && (
-                  <div className='flex justify-end pt-4'>
-                    <Button variant='outline' onClick={() => setIsEditingProfile(true)} size='sm'>
-                      <UserIcon size={16} className='mr-2' /> Edit Profile
+                {/* Action Buttons */}
+                {isEditingProfile && (
+                  <div className='flex justify-end gap-3 border-t pt-4'>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      onClick={handleProfileCancel}
+                      disabled={isProfileSubmitting}
+                    >
+                      <X className='mr-2 h-4 w-4' />
+                      Cancel
+                    </Button>
+                    <Button
+                      type='submit'
+                      disabled={
+                        isProfileSubmitting ||
+                        !profileForm.formState.isDirty ||
+                        !profileForm.formState.isValid
+                      }
+                    >
+                      {isProfileSubmitting ? (
+                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                      ) : (
+                        <Save className='mr-2 h-4 w-4' />
+                      )}
+                      Save Changes
                     </Button>
                   </div>
                 )}
-              </div>
-            </div>
-          </section>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
 
-          <Separator />
-
-          <section className='space-y-4'>
-            <h3 className='mb-4 flex items-center gap-2 border-b pb-2 text-lg font-semibold'>
+        {/* AI Assistant Settings Card */}
+        <Card>
+          <CardHeader className='pb-6'>
+            <CardTitle className='flex items-center gap-2'>
               <BrainCircuit className='text-primary h-5 w-5' />
               AI Assistant Settings
-            </h3>
-
-            <Alert variant='default' className='bg-muted/50'>
-              <KeyRound className='h-4 w-4' />
-              <AlertTitle>API Key Security</AlertTitle>
-              <AlertDescription className='text-xs'>
-                Your AI API key is stored securely encrypted in our database. It is only decrypted
-                temporarily on the server when you use the AI Assistant.
+            </CardTitle>
+            <CardDescription>
+              Configure your AI API key to enable the AI assistant features
+            </CardDescription>
+          </CardHeader>
+          <CardContent className='space-y-6'>
+            {/* Security Alert */}
+            <Alert className='bg-muted/50 border-muted'>
+              <Shield className='h-4 w-4' />
+              <AlertTitle>Security & Privacy</AlertTitle>
+              <AlertDescription className='text-sm'>
+                Your API key is encrypted and stored securely. It's only decrypted temporarily when
+                you use the AI Assistant.
               </AlertDescription>
             </Alert>
 
-            {hasAiApiKey && !isEditingApiKey && (
-              <div className='space-y-2'>
-                {/* FIX: Use Label */}
-                <Label>Your AI API Key</Label>
-                <div className='flex items-center gap-2'>
-                  <PasswordInput
-                    value='••••••••••••••••••••••••••'
-                    readOnly
-                    disabled
-                    className='bg-muted/50 flex-1 cursor-not-allowed opacity-70'
-                  />
-                  <Button variant='outline' size='sm' onClick={() => setIsEditingApiKey(true)}>
-                    Replace
-                  </Button>
-                  <Button
-                    variant='destructive'
-                    size='sm'
-                    onClick={() => setIsRemoveKeyConfirmOpen(true)}
-                  >
-                    Remove
-                  </Button>
+            {/* API Key Status */}
+            <div className='space-y-4'>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <Label className='text-base font-medium'>API Key Status</Label>
+                  <p className='text-muted-foreground mt-1 text-sm'>
+                    {hasAiApiKey
+                      ? 'Your AI assistant is ready to use'
+                      : 'Add an API key to enable AI features'}
+                  </p>
                 </div>
+                <Badge variant={hasAiApiKey ? 'default' : 'secondary'}>
+                  {hasAiApiKey ? (
+                    <>
+                      <Check className='mr-1 h-3 w-3' />
+                      Active
+                    </>
+                  ) : (
+                    'Not Set'
+                  )}
+                </Badge>
               </div>
-            )}
 
-            {(!hasAiApiKey || isEditingApiKey) && (
-              <div className='space-y-2'>
-                {/* FIX: Use Label */}
-                <Label htmlFor='ai-api-key'>Enter your Google AI API Key</Label>
-                <PasswordInput
-                  id='ai-api-key'
-                  placeholder='Enter your AI API Key (e.g., AIza...)'
-                  value={apiKeyInput}
-                  onChange={(e) => setApiKeyInput(e.target.value)}
-                  disabled={isApiKeySubmitting}
-                  autoComplete='off'
-                />
-                <p className='text-muted-foreground text-xs'>
-                  Get your key from{' '}
-                  <a
-                    href='https://aistudio.google.com/app/apikey'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    className='text-primary hover:text-primary/80 underline'
-                  >
-                    Google AI Studio
-                  </a>
-                  .
-                </p>
-                <div className='flex justify-end gap-2 pt-2'>
-                  {isEditingApiKey && (
+              {hasAiApiKey && !isEditingApiKey && (
+                <div className='space-y-3'>
+                  <div className='flex items-center gap-3'>
+                    <PasswordInput
+                      value='••••••••••••••••••••••••••••••••••••'
+                      readOnly
+                      disabled
+                      className='bg-muted/50 flex-1 cursor-not-allowed opacity-70'
+                    />
                     <Button
-                      type='button'
-                      variant='ghost'
-                      onClick={() => {
-                        setIsEditingApiKey(false);
-                        setApiKeyInput('');
-                      }}
+                      variant='outline'
+                      size='sm'
+                      onClick={() => setIsEditingApiKey(true)}
                       disabled={isApiKeySubmitting}
                     >
-                      Cancel
+                      <Edit3 className='mr-2 h-4 w-4' />
+                      Update
                     </Button>
-                  )}
-                  <Button
-                    type='button'
-                    onClick={handleSaveApiKey}
-                    disabled={isApiKeySubmitting || !apiKeyInput.trim()}
-                  >
-                    {isApiKeySubmitting ? (
-                      <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                    ) : (
-                      <Save className='mr-2 h-4 w-4' />
-                    )}
-                    {isEditingApiKey ? 'Replace Key' : 'Save Key'}
-                  </Button>
+                    <Button
+                      variant='destructive'
+                      size='sm'
+                      onClick={() => setIsRemoveKeyConfirmOpen(true)}
+                      disabled={isApiKeySubmitting}
+                    >
+                      <Trash2 className='mr-2 h-4 w-4' />
+                      Remove
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            )}
-          </section>
-        </CardContent>
-      </Card>
+              )}
 
+              {(!hasAiApiKey || isEditingApiKey) && (
+                <div className='space-y-4'>
+                  <div className='space-y-2'>
+                    <Label htmlFor='ai-api-key' className='text-sm font-medium'>
+                      Google AI API Key *
+                    </Label>
+                    <PasswordInput
+                      id='ai-api-key'
+                      placeholder='Enter your Google AI API Key (e.g., AIza...)'
+                      value={apiKeyInput}
+                      onChange={(e) => setApiKeyInput(e.target.value)}
+                      disabled={isApiKeySubmitting}
+                      autoComplete='off'
+                      className='font-mono'
+                    />
+                    <div className='text-muted-foreground flex items-center gap-2 text-xs'>
+                      <span>Get your free API key from</span>
+                      <a
+                        href='https://aistudio.google.com/app/apikey'
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='text-primary hover:text-primary/80 inline-flex items-center gap-1 font-medium underline'
+                      >
+                        Google AI Studio
+                        <ExternalLink className='h-3 w-3' />
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className='flex justify-end gap-3 pt-2'>
+                    {isEditingApiKey && (
+                      <Button
+                        type='button'
+                        variant='outline'
+                        onClick={handleCancelApiKeyEdit}
+                        disabled={isApiKeySubmitting}
+                      >
+                        <X className='mr-2 h-4 w-4' />
+                        Cancel
+                      </Button>
+                    )}
+                    <Button
+                      type='button'
+                      onClick={handleSaveApiKey}
+                      disabled={isApiKeySubmitting || !apiKeyInput.trim()}
+                    >
+                      {isApiKeySubmitting ? (
+                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                      ) : (
+                        <Save className='mr-2 h-4 w-4' />
+                      )}
+                      {isEditingApiKey ? 'Update Key' : 'Save Key'}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Delete Confirmation Modal */}
       <DeleteConfirmationModal
         title='Remove AI API Key'
-        description='Are you sure you want to remove your AI API Key? You will need to add it again to use the AI Assistant.'
+        description='Are you sure you want to remove your AI API Key? You will need to add it again to use the AI Assistant features.'
         onConfirm={handleRemoveApiKey}
         open={isRemoveKeyConfirmOpen}
         onOpenChange={setIsRemoveKeyConfirmOpen}

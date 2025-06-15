@@ -97,7 +97,7 @@ const renderActiveShape = (props: ActiveShapeProps) => {
           y={cy}
           dy={8}
           textAnchor='middle'
-          fill={'hsl(var(--foreground))'}
+          fill={'var(--foreground)'}
           className='text-base font-semibold'
         >
           {truncateLabel(payload.name, 15)}
@@ -125,17 +125,13 @@ const renderActiveShape = (props: ActiveShapeProps) => {
         className='opacity-90'
         onClick={(e) => e.stopPropagation()}
       />
-      <path
-        d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`}
-        stroke={'hsl(var(--foreground))'}
-        fill='none'
-      />
-      <circle cx={ex} cy={ey} r={2} fill={'hsl(var(--foreground))'} stroke='none' />
+      <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={'var(--foreground)'} fill='none' />
+      <circle cx={ex} cy={ey} r={2} fill={'var(--foreground)'} stroke='none' />
       <text
         x={ex + (cos >= 0 ? 1 : -1) * 12}
         y={ey}
         textAnchor={textAnchor}
-        fill='hsl(var(--foreground))'
+        fill='var(--foreground)'
         className='text-sm'
       >{`${formatCurrency(value)}`}</text>
       <text
@@ -143,7 +139,7 @@ const renderActiveShape = (props: ActiveShapeProps) => {
         y={ey}
         dy={18}
         textAnchor={textAnchor}
-        fill='hsl(var(--muted-foreground))'
+        fill='var(--muted-foreground)'
         className='text-xs'
       >
         {`(${(percent * 100).toFixed(1)}%)`}
@@ -213,7 +209,7 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
 
       config[configKey] = {
         label: item.name,
-        color: `hsl(var(--${colorVar}))`
+        color: `var(--${colorVar})`
       };
       return { ...item, fill: `var(--color-${configKey})`, configKey };
     });
@@ -263,7 +259,7 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
                 width={isMobile ? 80 : 100}
               />
               <ChartTooltip
-                cursor={{ fill: 'hsl(var(--muted))' }}
+                cursor={{ fill: 'var(--muted)' }}
                 content={
                   <ChartTooltipContent
                     nameKey='name'

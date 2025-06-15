@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import * as SelectPrimitive from '@radix-ui/react-select';
+import { Select as SelectPrimitive } from 'radix-ui';
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -64,7 +64,7 @@ function SelectContent({
       >
         <SelectScrollUpButton />
         <SelectPrimitive.Viewport
-          className={cn('p-1', position === 'popper' && 'h-[var(--radix-select-trigger-height)]')}
+          className={cn(position === 'popper' && 'h-[var(--radix-select-trigger-height)]')}
         >
           {children}
         </SelectPrimitive.Viewport>
@@ -93,7 +93,7 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot='select-item'
       className={cn(
-        'focus:bg-accent focus:text-accent-foreground relative flex w-full cursor-default items-center rounded py-1.5 ps-8 pe-2 text-sm outline-hidden select-none data-disabled:pointer-events-none data-disabled:opacity-50',
+        'focus:bg-accent focus:text-accent-foreground relative flex w-full cursor-default items-center rounded py-2 ps-9 pe-3 text-sm outline-hidden select-none data-disabled:pointer-events-none data-disabled:opacity-50',
         className
       )}
       {...props}

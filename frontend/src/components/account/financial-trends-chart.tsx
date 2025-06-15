@@ -39,15 +39,15 @@ interface FinancialTrendsChartProps {
 const trendsChartConfig = {
   income: {
     label: 'Income',
-    color: 'hsl(var(--chart-income))'
+    color: 'var(--chart-income)'
   },
   expense: {
     label: 'Expense',
-    color: 'hsl(var(--chart-expense))'
+    color: 'var(--chart-expense)'
   },
   balance: {
     label: 'Balance',
-    color: 'hsl(var(--chart-balance))'
+    color: 'var(--chart-balance)'
   }
 } satisfies ChartConfig;
 
@@ -91,7 +91,7 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
 
   const axisTickStyle = {
     fontSize: isMobile ? 10 : 12,
-    fill: 'hsl(var(--muted-foreground))'
+    fill: 'var(--muted-foreground)'
   };
   const yAxisWidth = isMobile ? 35 : 45;
   const barSize = isMobile ? 15 : 20;
@@ -128,12 +128,13 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
                   strokeDasharray='3 3'
                   vertical={false}
                   horizontal={false}
-                  stroke='hsl(var(--border)/0.5)'
+                  stroke='var(--border)'
+                  strokeOpacity={0.5}
                 />
                 <XAxis
                   dataKey='date'
                   tickLine={false}
-                  axisLine={{ stroke: 'hsl(var(--border))' }}
+                  axisLine={{ stroke: 'var(--border)' }}
                   tick={axisTickStyle}
                   interval='preserveStartEnd'
                   minTickGap={isMobile ? 20 : 15}
@@ -142,12 +143,12 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
                   tickFormatter={formatYaxis}
                   tickLine={true}
                   dx={-5}
-                  axisLine={{ stroke: 'hsl(var(--border))' }}
+                  axisLine={{ stroke: 'var(--border)' }}
                   tick={axisTickStyle}
                   width={yAxisWidth}
                 />
                 <ChartTooltip
-                  cursor={{ fill: 'hsl(var(--muted))' }}
+                  cursor={{ fill: 'var(--muted)' }}
                   content={
                     <ChartTooltipContent
                       formatter={(value) => formatCurrency(value as number, currency)}
@@ -183,12 +184,13 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
                   strokeDasharray='3 3'
                   vertical={false}
                   horizontal={false}
-                  stroke='hsl(var(--border)/0.5)'
+                  stroke='var(--border)'
+                  strokeOpacity={0.5}
                 />
                 <XAxis
                   dataKey='date'
                   tickLine={false}
-                  axisLine={{ stroke: 'hsl(var(--border))' }}
+                  axisLine={{ stroke: 'var(--border)' }}
                   tick={axisTickStyle}
                   interval='preserveStartEnd'
                   minTickGap={isMobile ? 20 : 15}
@@ -197,7 +199,7 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
                   tickFormatter={formatYaxis}
                   tickLine={true}
                   dx={-5}
-                  axisLine={{ stroke: 'hsl(var(--border))' }}
+                  axisLine={{ stroke: 'var(--border)' }}
                   tick={axisTickStyle}
                   width={yAxisWidth}
                 />

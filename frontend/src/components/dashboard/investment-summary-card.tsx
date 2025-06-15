@@ -67,7 +67,7 @@ const getAvailablePeriodOptions = (
 const sparklineChartConfig = {
   value: {
     label: 'Portfolio Value',
-    color: 'hsl(var(--chart-investment))'
+    color: 'var(--chart-investment)'
   }
 } satisfies ChartConfig;
 
@@ -318,7 +318,7 @@ export const InvestmentSummaryCard: React.FC<{
                       return null;
                     }}
                     cursor={{
-                      stroke: 'hsl(var(--border))',
+                      stroke: 'var(--border)',
                       strokeWidth: 1,
                       strokeDasharray: '3 3'
                     }}

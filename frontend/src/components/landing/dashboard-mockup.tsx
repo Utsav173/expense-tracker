@@ -208,19 +208,21 @@ const DashboardMockup = () => {
                   <path
                     d='M0 28 C10 18, 20 30, 30 20 S40 5, 50 12 S60 28, 70 18 S80 30, 90 20 S100 8, 100 8'
                     fill='none'
-                    stroke='hsl(var(--chart-balance))'
+                    stroke='var(--chart-balance)'
                     strokeWidth='0.8'
                   />
                   <path
                     d='M0 30 C15 25, 25 35, 40 25 S55 12, 65 20 S75 33, 85 23 S100 15, 100 15'
-                    fill='hsl(var(--chart-income)/0.03)'
-                    stroke='hsl(var(--chart-income))'
+                    fill='var(--chart-income)'
+                    fillOpacity={0.03}
+                    stroke='var(--chart-income)'
                     strokeWidth='0.6'
                   />
                   <path
                     d='M0 33 C20 30, 30 34, 45 27 S60 20, 70 25 S80 30, 90 33 S100 25, 100 25'
-                    fill='hsl(var(--chart-expense)/0.03)'
-                    stroke='hsl(var(--chart-expense))'
+                    fill='var(--chart-expense)'
+                    fillOpacity={0.03}
+                    stroke='var(--chart-expense)'
                     strokeWidth='0.6'
                   />
                 </svg>
@@ -246,7 +248,7 @@ const DashboardMockup = () => {
                     cy='18'
                     r='15.915'
                     fill='none'
-                    className='stroke-[hsl(var(--chart-1))]'
+                    className='stroke-[var(--chart-1)]'
                     strokeWidth='2.5'
                     strokeDasharray='60, 100'
                   ></circle>
@@ -255,7 +257,7 @@ const DashboardMockup = () => {
                     cy='18'
                     r='15.915'
                     fill='none'
-                    className='stroke-[hsl(var(--chart-2))]'
+                    className='stroke-[var(--chart-2)]'
                     strokeWidth='2.5'
                     strokeDasharray='25, 100'
                     strokeDashoffset='-60'
