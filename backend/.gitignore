@@ -14,7 +14,3 @@ postgres_data/
 # Drizzle
 drizzle
 /drizzle/meta/_journal.json
-
-# Bun dependencies
-bun.lockb
-bun.lock

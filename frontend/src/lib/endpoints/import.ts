@@ -13,7 +13,6 @@ export const importTransactions = async (formData: FormData) => {
   );
 };
 
-//confirm import
 export const confirmImport = async (id: string) => {
   return apiFetch<{ message: string }>(
     `/accounts/confirm/import/${id}`,
@@ -25,7 +24,6 @@ export const confirmImport = async (id: string) => {
   );
 };
 
-//get import data
 export const getImportData = async (id: string) => {
   return apiFetch<{ length: number; data: any[] }>(`/accounts/get/import/${id}`, 'GET');
 };

@@ -18,9 +18,7 @@ export async function middleware(request: NextRequest) {
   ];
   const isPublicPath = publicRoutes.some((route) => path.startsWith(route));
 
-  // If not authenticated and trying to access protected routes
   if (!authCookie && !isPublicPath) {
-    // Clear any existing auth cookies
     (await cookies()).delete('token');
     (await cookies()).delete('user');
     return NextResponse.redirect(new URL('/auth/login', request.url));

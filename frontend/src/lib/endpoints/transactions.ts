@@ -86,7 +86,7 @@ export const transactionDelete = (id: string, successMessage?: string, errorMess
   apiFetch(`/transactions/${id}`, 'DELETE', undefined, undefined, successMessage, errorMessage);
 
 export const transactionGetIncomeExpenseChart = (params: {
-  accountId?: string; // Made optional
+  accountId?: string;
   duration: string;
 }): Promise<ApiResponse<IncomeExpenseChartData>> =>
   apiFetch(

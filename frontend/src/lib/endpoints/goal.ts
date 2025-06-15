@@ -4,8 +4,8 @@ import apiFetch from '../api-client';
 export type GoalApiPayload = {
   name: string;
   targetAmount: number;
-  savedAmount?: number; // Optional number
-  targetDate?: string | null; // Optional ISO string or null
+  savedAmount?: number;
+  targetDate?: string | null;
 };
 
 export const goalCreate = (

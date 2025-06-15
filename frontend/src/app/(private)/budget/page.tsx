@@ -71,6 +71,7 @@ const BudgetPage = () => {
       </div>
 
       <CommonTable<Budget>
+        tableId='budgets-table'
         data={data?.data || []}
         columns={budgetColumns}
         loading={isLoading}

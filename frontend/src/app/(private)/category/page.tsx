@@ -66,6 +66,7 @@ const CategoryPage = () => {
       </div>
       {isError && <div>Error: {error.message}</div>}
       <CategoryList
+        tableId='categories-table'
         data={data}
         isLoading={isLoading}
         onSort={handleSort}

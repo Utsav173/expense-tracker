@@ -231,6 +231,7 @@ const InvestmentAccountDetailPage = () => {
         </CardHeader>
         <CardContent>
           <CommonTable<Investment>
+            tableId={`investment-holdings-${accountId}`}
             data={investments?.data || []}
             columns={investmentHoldingsColumns({ handleEdit, handleDeleteClick })}
             loading={isLoadingInvestments}

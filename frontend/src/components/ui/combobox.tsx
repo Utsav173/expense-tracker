@@ -70,7 +70,6 @@ export function Combobox({
     loadOptions();
   }, [open, debouncedSearchQuery, fetchOptions]);
 
-  // Update search query if the external value changes and doesn't match label
   React.useEffect(() => {
     if (value && value.label !== searchQuery && !open) {
       setSearchQuery(value.label);

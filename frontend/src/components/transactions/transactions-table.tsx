@@ -16,6 +16,7 @@ import { useMutation } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { SingleLineEllipsis } from '../ui/ellipsis-components';
+import { DataTableColumnHeader } from '../ui/column-header';
 
 interface TransactionTableProps {
   transactions: TransactionType[] | undefined;
@@ -28,6 +29,7 @@ interface TransactionTableProps {
   handlePageChange: (page: number) => void;
   refetchData: () => Promise<void>;
   isOwner?: boolean;
+  tableId: string; // Required for state persistence
 }
 
 const TransactionTable = ({
@@ -40,7 +42,8 @@ const TransactionTable = ({
   page,
   handlePageChange,
   refetchData,
-  isOwner = true
+  isOwner = true,
+  tableId
 }: TransactionTableProps) => {
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionType | null>(null);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
@@ -79,91 +82,75 @@ const TransactionTable = ({
     () => [
       {
         accessorKey: 'text',
-        header: 'Description / Transfer',
+        header: ({ column }) => <DataTableColumnHeader column={column} title='Description' />,
+        meta: { header: 'Description' },
         cell: ({ row }) => (
           <div className='flex flex-col space-y-1'>
             <SingleLineEllipsis
               showTooltip
-              className='text-sm font-medium max-md:max-w-[200px] md:max-w-[250px] md:text-base'
+              className='max-w-[200px] text-sm font-medium md:max-w-[250px]'
             >
               {row.original.text}
             </SingleLineEllipsis>
             {row.original.transfer && (
               <SingleLineEllipsis
                 showTooltip
-                className='text-muted-foreground text-xs max-md:max-w-[200px] md:max-w-[250px]'
+                className='text-muted-foreground max-w-[200px] text-xs md:max-w-[250px]'
               >
                 via {row.original.transfer}
               </SingleLineEllipsis>
             )}
           </div>
-        ),
-        enableSorting: true
+        )
       },
       {
         accessorKey: 'amount',
-        header: 'Amount',
+        header: ({ column }) => <DataTableColumnHeader column={column} title='Amount' />,
+        meta: { header: 'Amount' },
         cell: ({ row }) => {
           const transaction = row.original;
           const sign = transaction.isIncome ? '+' : '-';
           return (
-            <div className='flex items-center gap-2'>
-              <div
-                className={cn(
-                  'text-sm font-medium whitespace-nowrap md:text-base',
-                  transaction.isIncome ? 'text-success' : 'text-destructive'
-                )}
-              >
-                {sign}
-                {formatCurrency(transaction.amount, transaction.currency)}
-              </div>
-              <div className='flex items-center'>
-                {transaction.isIncome ? (
-                  <ArrowUpCircle className='text-success h-4 w-4' />
-                ) : (
-                  <ArrowDownCircle className='text-destructive h-4 w-4' />
-                )}
-              </div>
+            <div
+              className={cn(
+                'font-semibold whitespace-nowrap',
+                transaction.isIncome ? 'text-success' : 'text-destructive'
+              )}
+            >
+              {sign}
+              {formatCurrency(transaction.amount, transaction.currency)}
             </div>
           );
-        },
-        enableSorting: true
+        }
       },
       {
         accessorKey: 'category.name',
-        header: 'Category',
+        header: ({ column }) => <DataTableColumnHeader column={column} title='Category' />,
+        meta: { header: 'Category' },
         cell: ({ row }) => (
-          <Badge
-            variant='outline'
-            className='bg-muted/30 mx-auto max-w-[120px] truncate whitespace-nowrap md:max-w-[150px]'
-          >
-            <SingleLineEllipsis
-              showTooltip
-              className='max-w-[100px] truncate text-xs md:max-w-[130px]'
-            >
-              {row.original.category?.name ?? 'Uncategorized'}
-            </SingleLineEllipsis>
+          <Badge variant='outline' className='bg-muted/30 max-w-[120px] truncate md:max-w-[150px]'>
+            {row.original.category?.name ?? 'Uncategorized'}
           </Badge>
-        ),
-        enableSorting: true
+        )
       },
       {
         accessorKey: 'createdAt',
-        header: 'Date',
+        header: ({ column }) => <DataTableColumnHeader column={column} title='Date' />,
+        meta: { header: 'Date' },
         cell: ({ row }) => {
           const date = new Date(row.original.createdAt);
           return (
-            <div className='flex flex-col text-sm max-md:items-start'>
+            <div className='flex flex-col text-sm'>
               <span className='font-medium whitespace-nowrap'>{format(date, 'MMM d, yyyy')}</span>
               <span className='text-muted-foreground text-xs'>{format(date, 'h:mm a')}</span>
             </div>
           );
-        },
-        enableSorting: true
+        }
       },
       {
         accessorKey: 'isIncome',
-        header: 'Type',
+        header: ({ column }) => <DataTableColumnHeader column={column} title='Type' />,
+        meta: { header: 'Type' },
         cell: ({ row }) => (
           <div className='flex items-center gap-1.5'>
             {row.original.isIncome ? (
@@ -175,62 +162,13 @@ const TransactionTable = ({
               {row.original.isIncome ? 'Income' : 'Expense'}
             </span>
           </div>
-        ),
-        enableSorting: true
+        )
       },
-
       ...(isOwner
         ? [
             {
-              accessorKey: 'recurring',
-              header: 'Recurring',
-              cell: ({ row }: { row: any }) => {
-                const transaction = row.original;
-                if (!transaction.recurring) return null;
-
-                const tooltipContent = `Type: ${transaction.recurrenceType || 'N/A'} ${
-                  transaction.recurrenceEndDate
-                    ? ` | Ends: ${format(new Date(transaction.recurrenceEndDate), 'MMM d, yyyy')}`
-                    : ''
-                }`;
-
-                return (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className='flex items-center gap-1'>
-                          <Repeat className='text-primary h-4 w-4' />
-                          <span className='text-muted-foreground text-xs'>
-                            {transaction.recurrenceType}
-                          </span>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className='text-xs'>{tooltipContent}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                );
-              },
-              enableSorting: false
-            },
-            {
-              accessorKey: 'createdBy.name',
-              header: 'Created By',
-              cell: ({ row }: { row: any }) => (
-                <SingleLineEllipsis
-                  showTooltip
-                  className='text-muted-foreground max-w-[80px] text-sm md:max-w-[120px]'
-                >
-                  {row.original.createdBy?.name ?? 'N/A'}
-                </SingleLineEllipsis>
-              ),
-              enableSorting: false
-            },
-            {
-              id: 'actions',
-              header: () => 'Actions',
-              headerAlign: 'right',
+              id: 'actions' as const,
+              header: 'Actions',
               cell: ({ row }: { row: any }) => (
                 <div className='flex justify-end gap-2'>
                   <Button
@@ -281,7 +219,7 @@ const TransactionTable = ({
           ]
         : [])
     ],
-    [isOwner]
+    [isOwner, deleteTransactionId]
   );
 
   return (
@@ -307,6 +245,7 @@ const TransactionTable = ({
         tableClassName='bg-background'
         headerClassName='bg-muted'
         cellClassName='border-border'
+        tableId={tableId} // Pass the required tableId
       />
       <UpdateTransactionModal
         isOpen={isUpdateModalOpen}

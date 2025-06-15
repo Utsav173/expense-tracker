@@ -1,6 +1,5 @@
 'use client';
 
-// Сначала определяем класс Pixel
 class Pixel {
   width: number;
   height: number;
@@ -110,7 +109,6 @@ class Pixel {
   }
 }
 
-// Затем определяем веб-компонент
 // @ts-ignore
 class PixelCanvasElement extends HTMLElement {
   private canvas: HTMLCanvasElement;
@@ -302,7 +300,6 @@ class PixelCanvasElement extends HTMLElement {
   }
 }
 
-// React-компонент обертка
 import * as React from 'react';
 
 export interface PixelCanvasProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -316,7 +313,6 @@ export interface PixelCanvasProps extends React.HTMLAttributes<HTMLDivElement> {
 const PixelCanvas = React.forwardRef<HTMLDivElement, PixelCanvasProps>(
   ({ gap, speed, colors, variant, noFocus, style, ...props }, ref) => {
     React.useEffect(() => {
-      // Регистрируем веб-компонент при первом рендере
       if (typeof window !== 'undefined') {
         if (!customElements.get('pixel-canvas')) {
           customElements.define('pixel-canvas', PixelCanvasElement);

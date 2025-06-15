@@ -129,7 +129,6 @@ export const ResponsiveEllipsis: React.FC<ResponsiveEllipsisProps> = ({
 }) => {
   const content = text || (children as string);
 
-  // Hide on mobile, show on specified breakpoint and above
   const responsiveClasses: Record<string, string> = {
     sm: 'hidden sm:block',
     md: 'hidden md:block',
@@ -138,7 +137,6 @@ export const ResponsiveEllipsis: React.FC<ResponsiveEllipsisProps> = ({
     '2xl': 'hidden 2xl:block'
   };
 
-  // Show on mobile, hide on specified breakpoint and above
   const mobileClasses: Record<string, string> = {
     sm: 'sm:hidden',
     md: 'md:hidden',
@@ -195,7 +193,6 @@ export const DynamicEllipsis: React.FC<BaseEllipsisProps> = ({
 
     checkOverflow();
 
-    // Check on window resize
     window.addEventListener('resize', checkOverflow);
     return () => {
       window.removeEventListener('resize', checkOverflow);

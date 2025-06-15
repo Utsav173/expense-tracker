@@ -29,12 +29,10 @@ const AccountCard: React.FC<AccountCardProps> = React.forwardRef<
       ref={ref}
       href={href}
       className={cn(
-        // Frosted glass base styling
         'relative overflow-hidden rounded-xl transition-all duration-300 hover:scale-[1.02] focus:scale-[1.02]',
         'bg-background/10 border-border/20 border backdrop-blur-md',
         'shadow-lg hover:shadow-xl focus:shadow-xl',
         'focus:ring-primary/50 focus:ring-2 focus:ring-offset-2 focus:outline-none',
-        // Custom frosted glass border effect
         'before:absolute before:inset-0 before:rounded-xl before:border before:border-transparent',
         'before:from-border/30 before:to-border/10 before:bg-gradient-to-br',
         'before:mask-composite-subtract before:-z-10',
@@ -46,13 +44,11 @@ const AccountCard: React.FC<AccountCardProps> = React.forwardRef<
         WebkitBackdropFilter: 'blur(16px)'
       }}
     >
-      {/* Gradient overlay for depth */}
       <div className='from-background/20 to-background/5 pointer-events-none absolute inset-0 bg-gradient-to-br via-transparent' />
 
       <div
         className={cn(
           'relative p-5',
-          // Balance-based styling with glass effect
           balance > 0
             ? 'from-success/20 via-success/5 bg-gradient-to-br to-transparent'
             : balance < 0
@@ -60,7 +56,6 @@ const AccountCard: React.FC<AccountCardProps> = React.forwardRef<
               : 'from-muted/20 via-muted/5 bg-gradient-to-br to-transparent'
         )}
       >
-        {/* Credit card icon with glass effect */}
         <div className='absolute top-4 right-4 opacity-30'>
           <div className='bg-background/10 rounded-lg p-2 backdrop-blur-sm'>
             <CreditCard className='text-foreground/60 h-5 w-5' />
