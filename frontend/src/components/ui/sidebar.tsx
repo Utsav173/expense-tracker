@@ -501,7 +501,7 @@ const SidebarMenuButton = React.forwardRef<
     asChild?: boolean;
     isActive?: boolean;
     tooltip?: string | React.ComponentProps<typeof TooltipContent>;
-    noPadding?: boolean; // new prop
+    noPadding?: boolean;
   } & VariantProps<typeof sidebarMenuButtonVariants>
 >(
   (
@@ -512,7 +512,7 @@ const SidebarMenuButton = React.forwardRef<
       size = 'default',
       tooltip,
       className,
-      noPadding = false, // new prop default
+      noPadding = false,
       ...props
     },
     ref

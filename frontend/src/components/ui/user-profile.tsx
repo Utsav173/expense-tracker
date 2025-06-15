@@ -133,13 +133,11 @@ const UserProfile = () => {
   const handleProfileFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         showError('Profile picture must be less than 5MB');
         return;
       }
 
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         showError('Please select a valid image file');
         return;
@@ -184,7 +182,6 @@ const UserProfile = () => {
       return;
     }
 
-    // Basic validation for Google AI API key format
     if (!trimmedKey.startsWith('AIza') && !trimmedKey.startsWith('AIza')) {
       showError('Please enter a valid Google AI API Key (should start with "AIza").');
       return;

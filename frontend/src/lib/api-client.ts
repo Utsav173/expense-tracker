@@ -52,7 +52,6 @@ const apiFetch = async <T>(
 
     if (axios.isAxiosError(error)) {
       if (!error.response) {
-        // Network error occurred
         localStorage.removeItem('token');
         window.location.href = '/auth/login';
         toast.error('Network error. Please check your connection. Redirecting to login.');
@@ -61,7 +60,6 @@ const apiFetch = async <T>(
 
       message = error?.response?.data?.message || error.message;
       if (error.response?.status === 403) {
-        // Clear the token from localStorage
         localStorage.removeItem('token');
         window.location.href = '/auth/login';
         toast.error('Unauthorized or Server Error. Redirecting to login.');

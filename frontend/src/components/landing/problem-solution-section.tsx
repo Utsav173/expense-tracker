@@ -38,11 +38,9 @@ const ProblemSolutionSection = () => {
             <AnimatedFinancialElement
               key={index}
               delay={0.1 * index}
-              // Card background should be slightly lighter than the section's dark bg
               className='animated-card dark:bg-slate-850/70 rounded-xl border border-slate-700/50 bg-slate-800/60 p-6 shadow-lg backdrop-blur-sm dark:border-slate-600/50'
             >
               <div className='mb-4 flex justify-center'>{problem.icon}</div>
-              {/* Text color for card content on a dark card background */}
               <p className='text-center text-slate-300 dark:text-slate-300'>{problem.text}</p>
             </AnimatedFinancialElement>
           ))}

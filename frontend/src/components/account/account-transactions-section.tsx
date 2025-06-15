@@ -316,6 +316,7 @@ export const AccountTransactionsSection = ({
           </div>
         ) : (
           <TransactionTable
+            tableId='account-transactions-table'
             transactions={transactionsData?.transactions ?? []}
             onSort={handleSort}
             sortBy={filters.sortBy}

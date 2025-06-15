@@ -32,7 +32,7 @@ export default function PublicPagesLayout({ children }: { children: React.ReactN
                 Features
               </Link>
               <Link
-                href='/#pricing' // Placeholder, assuming you'll add pricing
+                href='/#pricing'
                 className='text-sm font-medium text-slate-700 transition-colors hover:text-sky-600 dark:text-slate-300 dark:hover:text-sky-400'
               >
                 Pricing

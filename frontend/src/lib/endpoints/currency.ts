@@ -22,7 +22,6 @@ export const COMMON_CURRENCIES: Record<string, string> = {
 };
 
 export const fetchCurrencies = async (): Promise<{ code: string; name: string }[]> => {
-  // Fallback to common currencies if all APIs fail
   return Object.entries(COMMON_CURRENCIES).map(([code, name]) => ({
     code,
     name

@@ -1,5 +1,6 @@
 'use client';
-import React, { useState, useEffect, useMemo } from 'react';
+
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   flexRender,
   getCoreRowModel,
@@ -8,8 +9,7 @@ import {
   getPaginationRowModel,
   SortingState,
   HeaderContext,
-  Row,
-  Column
+  getSortedRowModel
 } from '@tanstack/react-table';
 import {
   Table,
@@ -19,7 +19,6 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Select,
@@ -28,11 +27,13 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { ChevronDown, ChevronsUpDown, ChevronUp, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Loader from './loader';
 import EnhancedPagination from './enhance-pagination';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { DataTableResizer } from './data-table-resizer';
+import { useTableColumnResize } from '@/hooks/use-table-column-resize';
+import NoData from './no-data';
+import { Skeleton } from './skeleton';
 
 interface CommonTableProps<T extends object> {
   data: T[];
@@ -50,17 +51,8 @@ interface CommonTableProps<T extends object> {
   headerClassName?: string;
   cellClassName?: string;
   mobilePrimaryColumns?: string[];
-  paginationVariant?: 'default' | 'minimalist' | 'pill';
+  tableId: string;
 }
-
-const getHeaderInstance = <T extends object>(
-  table: ReturnType<typeof useReactTable<T>>,
-  columnId: string
-): HeaderContext<T, unknown> | undefined => {
-  const firstHeaderGroup = table.getHeaderGroups()[0];
-  const header = firstHeaderGroup?.headers.find((h) => h.column.id === columnId);
-  return header?.getContext();
-};
 
 const CommonTable = <T extends object>({
   data,
@@ -77,148 +69,118 @@ const CommonTable = <T extends object>({
   tableClassName,
   headerClassName,
   cellClassName,
-  mobilePrimaryColumns,
-  paginationVariant = 'default'
+  tableId
 }: CommonTableProps<T>) => {
   const isMobile = useIsMobile();
-  const [sorting, setSorting] = useState<SortingState>(() => {
-    if (sortBy && sortOrder) {
-      return [{ id: sortBy, desc: sortOrder === 'desc' }];
-    }
-    return [];
-  });
-  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+  const [internalSorting, setInternalSorting] = useState<SortingState>([]);
+  const [columnVisibility, setColumnVisibility] = useState({});
 
-  const toggleRowExpanded = (rowId: string) => {
-    setExpandedRows((prev) => ({
-      ...prev,
-      [rowId]: !prev[rowId]
-    }));
+  const { columnSizing, setColumnSizing } = useTableColumnResize(tableId);
+
+  useEffect(() => {
+    const propSorting: SortingState = sortBy ? [{ id: sortBy, desc: sortOrder === 'desc' }] : [];
+    setInternalSorting(propSorting);
+  }, [sortBy, sortOrder]);
+
+  const handleSortingChange = (updater: any) => {
+    const newSorting = typeof updater === 'function' ? updater(internalSorting) : updater;
+    setInternalSorting(newSorting);
+    if (onSortChange) {
+      onSortChange(newSorting);
+    }
+  };
+
+  const handlePaginationChange = (updater: any) => {
+    const newPagination =
+      typeof updater === 'function' ? updater(table.getState().pagination) : updater;
+    onPageChange(newPagination.pageIndex + 1);
   };
 
   const table = useReactTable({
     data,
     columns,
+    state: {
+      sorting: internalSorting,
+      columnVisibility,
+      columnSizing,
+      pagination: {
+        pageIndex: currentPage - 1,
+        pageSize: pageSize
+      }
+    },
+    onSortingChange: handleSortingChange,
+    onColumnVisibilityChange: setColumnVisibility,
+    onColumnSizingChange: setColumnSizing,
+    onPaginationChange: handlePaginationChange,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    onSortingChange: setSorting,
-    state: { sorting },
+    getSortedRowModel: getSortedRowModel(),
     manualPagination: true,
-    manualSorting: !!onSortChange,
-    pageCount: Math.ceil(totalRecords / pageSize)
+    manualSorting: true,
+    pageCount: Math.ceil(totalRecords / pageSize),
+    columnResizeMode: 'onChange'
   });
-
-  useEffect(() => {
-    if (onSortChange) {
-      const propSorting: SortingState =
-        sortBy && sortOrder ? [{ id: sortBy, desc: sortOrder === 'desc' }] : [];
-      const isDifferent =
-        sorting.length !== propSorting.length ||
-        (sorting.length > 0 &&
-          (sorting[0].id !== propSorting[0]?.id || sorting[0].desc !== propSorting[0]?.desc));
-      if (isDifferent) {
-        onSortChange(sorting);
-      }
-    }
-  }, [sorting, onSortChange, sortBy, sortOrder]);
-
-  useEffect(() => {
-    const propSorting: SortingState =
-      sortBy && sortOrder ? [{ id: sortBy, desc: sortOrder === 'desc' }] : [];
-    const currentInternalId = sorting[0]?.id;
-    const currentInternalDesc = sorting[0]?.desc;
-    const propId = propSorting[0]?.id;
-    const propDesc = propSorting[0]?.desc;
-    if (currentInternalId !== propId || currentInternalDesc !== propDesc) {
-      setSorting(propSorting);
-    }
-  }, [sortBy, sortOrder]);
 
   const sortOptions = useMemo(() => {
     return table
       .getAllLeafColumns()
       .filter((column) => column.getCanSort() && column.id !== 'actions')
-      .flatMap((column) => [
-        {
-          id: `${column.id}-asc`,
-          label: `Sort by ${column.columnDef.header?.toString() || column.id} (Asc)`,
-          value: `${column.id}-asc`
-        },
-        {
-          id: `${column.id}-desc`,
-          label: `Sort by ${column.columnDef.header?.toString() || column.id} (Desc)`,
-          value: `${column.id}-desc`
-        }
-      ]);
+      .flatMap((column) => {
+        const headerLabel = (column.columnDef.meta as { header?: string })?.header || column.id;
+        return [
+          {
+            id: `${column.id}-asc`,
+            label: `Sort by ${headerLabel} (Asc)`,
+            value: `${column.id}-asc`
+          },
+          {
+            id: `${column.id}-desc`,
+            label: `Sort by ${headerLabel} (Desc)`,
+            value: `${column.id}-desc`
+          }
+        ];
+      });
   }, [table]);
 
-  const primaryMobileCols = useMemo(() => {
-    const allCols = table.getAllLeafColumns().filter((col) => col.id !== 'actions');
-    if (mobilePrimaryColumns && mobilePrimaryColumns.length > 0) {
-      return allCols.filter((col) => mobilePrimaryColumns.includes(col.id));
-    }
-    return allCols.filter((col) => col.getCanSort()).slice(0, 1);
-  }, [table, mobilePrimaryColumns]);
-
-  const otherMobileCols = useMemo(() => {
-    return table
-      .getAllLeafColumns()
-      .filter(
-        (col) => col.id !== 'actions' && !primaryMobileCols.some((pCol) => pCol.id === col.id)
-      );
-  }, [table, primaryMobileCols]);
-
-  const actionColumn = useMemo(
-    () => table.getAllLeafColumns().find((col) => col.id === 'actions'),
-    [table]
-  );
-
-  if (loading) {
+  if (loading && (!data || data.length === 0)) {
     return (
       <div className='w-full'>
-        {isMobile ? (
-          <div className='w-full space-y-3'>
-            {Array.from({ length: 3 }).map((_, index) => (
-              <Card key={index} className='w-full animate-pulse overflow-hidden'>
-                <CardHeader className='flex flex-row items-start justify-between p-3 pb-2'>
-                  <div className='w-full flex-1 space-y-2 pr-2'>
-                    <div className='bg-muted h-4 w-3/4 rounded'></div>
-                    <div className='bg-muted h-3 w-1/2 rounded'></div>
-                  </div>
-                  <div className='bg-muted h-6 w-6 flex-shrink-0 rounded'></div>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <div className='flex h-64 w-full items-center justify-center'>
-            <Loader />
-          </div>
-        )}
+        <div className='flex h-64 w-full items-center justify-center'>
+          <Loader />
+        </div>
       </div>
     );
   }
 
   if (!data || data.length === 0) {
-    return <div className='text-muted-foreground py-8 text-center'>No results found.</div>;
+    return (
+      <div className='text-muted-foreground flex h-full min-h-[200px] w-full items-center justify-center'>
+        <NoData message='No results found.' />
+      </div>
+    );
   }
 
-  if (isMobile && columns.length > 2) {
-    return (
-      <>
-        {onSortChange && sortOptions.length > 0 && (
+  return (
+    <>
+      {/* Mobile Sort Dropdown */}
+      <div className='mb-3 flex justify-end'>
+        {isMobile && onSortChange && sortOptions.length > 0 && (
           <Select
-            value={sorting.length ? `${sorting[0].id}-${sorting[0].desc ? 'desc' : 'asc'}` : 'none'}
+            value={
+              internalSorting.length
+                ? `${internalSorting[0].id}-${internalSorting[0].desc ? 'desc' : 'asc'}`
+                : 'none'
+            }
             onValueChange={(value) => {
               if (value === 'none') {
-                setSorting([]);
+                handleSortingChange([]);
               } else if (value) {
                 const [id, order] = value.split('-');
-                setSorting([{ id, desc: order === 'desc' }]);
+                handleSortingChange([{ id, desc: order === 'desc' }]);
               }
             }}
           >
-            <SelectTrigger className='mb-3 w-full'>
+            <SelectTrigger className='w-full'>
               <SelectValue placeholder='Sort by...' />
             </SelectTrigger>
             <SelectContent>
@@ -231,128 +193,50 @@ const CommonTable = <T extends object>({
             </SelectContent>
           </Select>
         )}
+      </div>
 
-        <div className='w-full space-y-3'>
-          {table.getRowModel().rows.map((row: Row<T>) => {
-            const isExpanded = expandedRows[row.id] ?? false;
-            return (
-              <Card key={row.id} className='w-full overflow-hidden'>
-                <Collapsible open={isExpanded} onOpenChange={() => toggleRowExpanded(row.id)}>
-                  <CollapsibleTrigger className='w-full'>
-                    <CardHeader className='flex w-full flex-row items-center justify-between p-2'>
-                      <div className='mb-0 flex flex-1 flex-col gap-1 overflow-hidden pr-2'>
-                        {primaryMobileCols.map((col) => {
-                          const cell = row.getVisibleCells().find((c) => c.column.id === col.id);
-                          return cell ? (
-                            <CardTitle
-                              key={col.id}
-                              className='overflow-hidden text-sm leading-snug text-ellipsis whitespace-nowrap'
-                            >
-                              {flexRender(col.columnDef.cell, cell.getContext())}
-                            </CardTitle>
-                          ) : null;
-                        })}
-                      </div>
-                      <div className='flex flex-shrink-0 items-center space-x-1'>
-                        {actionColumn && (
-                          <div className='flex-shrink-0'>
-                            {flexRender(
-                              actionColumn.columnDef.cell,
-                              row
-                                .getVisibleCells()
-                                .find((c) => c.column.id === actionColumn.id)!
-                                .getContext()
-                            )}
-                          </div>
-                        )}
-                        <ChevronRight
-                          className={`h-4 w-4 flex-shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
-                        />
-                      </div>
-                    </CardHeader>
-                  </CollapsibleTrigger>
-
-                  <CollapsibleContent>
-                    <CardContent className='grid w-full grid-cols-[minmax(80px,auto)_1fr] gap-x-3 gap-y-3 overflow-x-auto p-4 pt-1 text-sm'>
-                      {otherMobileCols.map((col: Column<T, unknown>) => {
-                        const cell = row.getVisibleCells().find((c) => c.column.id === col.id);
-                        const headerContext = getHeaderInstance(table, col.id);
-                        const headerContent = headerContext
-                          ? flexRender(col.columnDef.header, headerContext)
-                          : col.id;
-
-                        return cell ? (
-                          <React.Fragment key={col.id}>
-                            <div className='text-muted-foreground text-xs font-medium'>
-                              {headerContent}:
-                            </div>
-                            <div className='overflow-hidden break-words'>
-                              {flexRender(col.columnDef.cell, cell.getContext())}
-                            </div>
-                          </React.Fragment>
-                        ) : null;
-                      })}
-                    </CardContent>
-                  </CollapsibleContent>
-                </Collapsible>
-              </Card>
-            );
-          })}
-        </div>
-
-        {enablePagination && totalRecords > pageSize && (
-          <div className='mt-4'>
-            <EnhancedPagination
-              totalRecords={totalRecords}
-              pageSize={pageSize}
-              currentPage={currentPage}
-              onPageChange={onPageChange}
-              variant={paginationVariant}
-              isMobile={isMobile}
-            />
-          </div>
-        )}
-      </>
-    );
-  }
-
-  return (
-    <>
       <div className='w-full overflow-x-auto rounded-lg border'>
-        <Table className={cn(tableClassName, 'min-w-full')}>
+        <Table className={cn('min-w-full', tableClassName)} style={{ width: table.getTotalSize() }}>
           <TableHeader className={headerClassName}>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
+                    colSpan={header.colSpan}
                     className={cn(
-                      'text-muted-foreground px-3 py-2 text-xs font-medium tracking-wider uppercase',
-                      header.column.getCanSort() && 'hover:bg-muted cursor-pointer',
+                      'group/th text-muted-foreground relative px-3 py-2 text-left text-xs font-medium tracking-wider uppercase',
+                      { 'whitespace-nowrap': !isMobile },
                       headerClassName
                     )}
-                    onClick={header.column.getToggleSortingHandler()}
+                    style={{
+                      width: header.getSize(),
+                      minWidth: isMobile ? 'auto' : header.getSize()
+                    }}
                   >
-                    <div className='flex items-center gap-2'>
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                      {header.column.getCanSort() && (
-                        <span className='opacity-50 group-hover:opacity-100'>
-                          {{
-                            asc: <ChevronUp className='h-3.5 w-3.5' />,
-                            desc: <ChevronDown className='h-3.5 w-3.5' />
-                          }[header.column.getIsSorted() as string] ?? (
-                            <ChevronsUpDown className='h-3.5 w-3.5' />
-                          )}
-                        </span>
-                      )}
-                    </div>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(header.column.columnDef.header, header.getContext())}
+                    {header.column.getCanResize() && !isMobile && (
+                      <DataTableResizer header={header} />
+                    )}
                   </TableHead>
                 ))}
               </TableRow>
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows.length ? (
+            {loading ? (
+              Array.from({ length: pageSize }).map((_, i) => (
+                <TableRow key={`loading-${i}`}>
+                  {columns.map((_col, j) => (
+                    <TableCell key={`skeleton-${i}-${j}`} className='p-3'>
+                      <Skeleton className='h-5 w-full' />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : table.getRowModel().rows.length > 0 ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
@@ -362,11 +246,8 @@ const CommonTable = <T extends object>({
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
-                      className={cn(
-                        'p-3 align-middle text-sm',
-                        cellClassName,
-                        'max-w-[200px] truncate'
-                      )}
+                      className={cn('truncate p-3 align-middle text-sm', cellClassName)}
+                      style={{ width: cell.column.getSize() }}
                     >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
@@ -375,7 +256,7 @@ const CommonTable = <T extends object>({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className='h-12 text-center'>
+                <TableCell colSpan={columns.length} className='h-24 text-center'>
                   No results found.
                 </TableCell>
               </TableRow>
@@ -391,7 +272,6 @@ const CommonTable = <T extends object>({
             pageSize={pageSize}
             currentPage={currentPage}
             onPageChange={onPageChange}
-            variant={paginationVariant}
             isMobile={isMobile}
           />
         </div>

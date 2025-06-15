@@ -72,6 +72,7 @@ const GoalPage = () => {
       </div>
 
       <CommonTable
+        tableId='goals-table'
         data={goals?.data || []}
         columns={goalColumns}
         loading={isLoading}

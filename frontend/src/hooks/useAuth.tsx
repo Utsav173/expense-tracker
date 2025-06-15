@@ -45,7 +45,6 @@ export const useAuth = (): UseAuthReturn => {
     refetch
   } = userQueryResult;
 
-  // Define the type for the login mutation result
   const {
     mutateAsync: loginMutateAsync,
     isPending: loginLoading,

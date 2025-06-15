@@ -11,6 +11,7 @@ import { useToast } from '@/lib/hooks/useToast';
 import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import CategoryActions from './category-actions';
+import { DataTableColumnHeader } from '../ui/column-header';
 
 interface CategoryListProps {
   data: CategoryListResponse | undefined;
@@ -21,6 +22,7 @@ interface CategoryListProps {
   page: number;
   handlePageChange: (page: number) => void;
   refetch: () => void;
+  tableId: string;
 }
 
 const CategoryList = React.memo(
@@ -32,7 +34,8 @@ const CategoryList = React.memo(
     sortOrder,
     page,
     handlePageChange,
-    refetch
+    refetch,
+    tableId
   }: CategoryListProps) => {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<Category | undefined>();
@@ -72,7 +75,7 @@ const CategoryList = React.memo(
       () => [
         {
           accessorKey: 'name',
-          header: 'Category'
+          header: ({ column }) => <DataTableColumnHeader column={column} title='Category' />
         },
         {
           id: 'actions',
@@ -102,6 +105,7 @@ const CategoryList = React.memo(
     return (
       <>
         <CommonTable
+          tableId={tableId}
           data={data?.categories || []}
           columns={columns}
           loading={isLoading}

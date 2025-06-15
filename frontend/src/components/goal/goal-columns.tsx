@@ -1,3 +1,5 @@
+'use client';
+
 import { ColumnDef } from '@tanstack/react-table';
 import { SavingGoal, User } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -13,6 +15,7 @@ import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { formatCurrency } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import AddWithdrawGoalAmountModal from '../modals/add-withdraw-goal-amount-modal';
+import { DataTableColumnHeader } from '../ui/column-header';
 
 interface GoalColumnsProps {
   user: User | undefined;
@@ -25,12 +28,14 @@ export const createGoalColumns = ({
 }: GoalColumnsProps): ColumnDef<SavingGoal>[] => [
   {
     accessorKey: 'name',
-    header: 'Goal Name',
+    header: ({ column }) => <DataTableColumnHeader column={column} title='Goal Name' />,
+    meta: { header: 'Goal Name' },
     cell: ({ row }) => <span className='font-medium'>{row.original.name}</span>
   },
   {
     accessorKey: 'targetAmount',
-    header: 'Target Amount',
+    header: ({ column }) => <DataTableColumnHeader column={column} title='Target Amount' />,
+    meta: { header: 'Target Amount' },
     cell: ({ row }) => (
       <span className='text-primary font-semibold'>
         {formatCurrency(row.original.targetAmount, user?.preferredCurrency || 'INR')}
@@ -39,14 +44,14 @@ export const createGoalColumns = ({
   },
   {
     accessorKey: 'savedAmount',
-    header: 'Saved Amount / Progress',
+    header: ({ column }) => <DataTableColumnHeader column={column} title='Progress' />,
+    meta: { header: 'Progress' },
     cell: ({ row }) => {
       const goal = row.original;
       const saved = goal.savedAmount || 0;
       const target = goal.targetAmount;
-      // Ensure progress doesn't exceed 100 and handle target being 0
       const progress = target > 0 ? Math.min((saved / target) * 100, 100) : 0;
-      const remaining = Math.max(0, target - saved); // Ensure remaining is not negative
+      const remaining = Math.max(0, target - saved);
 
       return (
         <div className='flex min-w-[150px] flex-col gap-1'>
@@ -63,22 +68,21 @@ export const createGoalColumns = ({
   },
   {
     accessorKey: 'targetDate',
-    header: 'Target Date',
+    header: ({ column }) => <DataTableColumnHeader column={column} title='Target Date' />,
+    meta: { header: 'Target Date' },
     cell: ({ row }) => {
       const date = row.original.targetDate;
-      // Use parseISO if date is a string, otherwise assume it's already a Date object
       const dateObj = typeof date === 'string' ? new Date(date) : date;
       return dateObj && !isNaN(dateObj.getTime()) ? format(dateObj, 'MMM d, yyyy') : 'N/A';
     }
   },
   {
     id: 'actions',
-    header: () => 'Actions',
+    header: 'Actions',
     cell: ({ row }) => {
       const goal = row.original;
       const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
       const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-      // State for the single add/withdraw modal
       const [isAddWithdrawModalOpen, setIsAddWithdrawModalOpen] = useState(false);
       const [addWithdrawMode, setAddWithdrawMode] = useState<'add' | 'withdraw'>('add');
 
@@ -93,9 +97,7 @@ export const createGoalColumns = ({
           setIsDeleteModalOpen(false);
           refetchGoals();
         },
-        onError: (error: any) => {
-          showError(error.message);
-        }
+        onError: (error: any) => showError(error.message)
       });
 
       const handleDelete = () => {
@@ -109,7 +111,6 @@ export const createGoalColumns = ({
 
       return (
         <div className='flex justify-end gap-1'>
-          {/* Add Amount Trigger */}
           <Button
             size='icon'
             variant='ghost'
@@ -120,8 +121,6 @@ export const createGoalColumns = ({
             <Target size={18} />
             <span className='sr-only'>Add Amount</span>
           </Button>
-
-          {/* Withdraw Amount Trigger */}
           <Button
             size='icon'
             variant='ghost'
@@ -145,8 +144,6 @@ export const createGoalColumns = ({
             </svg>
             <span className='sr-only'>Withdraw Amount</span>
           </Button>
-
-          {/* Edit Trigger */}
           <Button
             size='icon'
             variant='ghost'
@@ -156,8 +153,6 @@ export const createGoalColumns = ({
             <Pencil size={18} />
             <span className='sr-only'>Edit Goal</span>
           </Button>
-
-          {/* Delete Trigger */}
           <DeleteConfirmationModal
             title='Delete Goal'
             description={
@@ -182,8 +177,6 @@ export const createGoalColumns = ({
               </Button>
             }
           />
-
-          {/* Update Goal Modal (existing) */}
           {isUpdateModalOpen && (
             <UpdateGoalModal
               isOpen={isUpdateModalOpen}
@@ -192,9 +185,6 @@ export const createGoalColumns = ({
               onGoalUpdated={refetchGoals}
             />
           )}
-
-          {/* Single Add/Withdraw Modal */}
-          {/* *** CHANGE HERE: Use the correct modal component *** */}
           {isAddWithdrawModalOpen && (
             <AddWithdrawGoalAmountModal
               isOpen={isAddWithdrawModalOpen}
@@ -204,7 +194,7 @@ export const createGoalColumns = ({
               currentSavedAmount={goal.savedAmount || 0}
               currency={user?.preferredCurrency || 'INR'}
               mode={addWithdrawMode}
-              triggerButton={null} // Triggered by buttons above
+              triggerButton={null}
               onSuccess={refetchGoals}
             />
           )}

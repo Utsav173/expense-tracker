@@ -119,6 +119,7 @@ const DebtsPage = () => {
 
       <div className='w-full'>
         <CommonTable
+          tableId='debts-table'
           data={debts?.data || []}
           columns={debtColumns}
           loading={isLoading}

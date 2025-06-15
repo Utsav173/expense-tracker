@@ -20,7 +20,6 @@ const getPageTitle = (pathname: string | null): string => {
   if (pathname.startsWith('/transactions/import')) return 'Import Transactions';
   if (pathname.startsWith('/investment/')) return 'Investment Details';
 
-  // Fallback logic for other top-level routes
   const segments = pathname.split('/').filter(Boolean);
   if (segments.length === 0) return 'Home';
 

@@ -11,15 +11,18 @@ import UpdateBudgetModal from '../modals/update-budget-modal';
 import { useState } from 'react';
 import { formatCurrency } from '@/lib/utils';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
+import { DataTableColumnHeader } from '../ui/column-header';
 
 export const budgetColumns: ColumnDef<Budget>[] = [
   {
     accessorKey: 'category.name',
-    header: 'Category'
+    header: ({ column }) => <DataTableColumnHeader column={column} title='Category' />,
+    meta: { header: 'Category' }
   },
   {
     accessorKey: 'month',
-    header: 'Month',
+    header: ({ column }) => <DataTableColumnHeader column={column} title='Month' />,
+    meta: { header: 'Month' },
     cell: ({ row }) => {
       const month = row.original.month;
       const monthNames = [
@@ -41,11 +44,13 @@ export const budgetColumns: ColumnDef<Budget>[] = [
   },
   {
     accessorKey: 'year',
-    header: 'Year'
+    header: ({ column }) => <DataTableColumnHeader column={column} title='Year' />,
+    meta: { header: 'Year' }
   },
   {
     accessorKey: 'amount',
-    header: 'Amount',
+    header: ({ column }) => <DataTableColumnHeader column={column} title='Amount' />,
+    meta: { header: 'Amount' },
     cell: ({ row }) => {
       const budget = row.original;
       const currency = 'INR';
