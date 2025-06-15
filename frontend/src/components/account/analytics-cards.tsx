@@ -147,7 +147,7 @@ const StatCard = ({
     balance: {
       icon: <BarChart3 className='text-primary h-5 w-5' />,
       iconBg: 'bg-primary/20',
-      color: 'text-primary',
+      color: 'text-balance',
       gradientFrom: 'from-primary/10',
       gradientTo: 'to-primary/20'
     }
@@ -170,9 +170,14 @@ const StatCard = ({
     );
   };
 
-  const getChangeColor = () => {
+  const getChangeColor = (type: string) => {
     if (change === 0) return 'text-muted-foreground';
-    return isPositiveChange() ? 'text-success' : 'text-destructive';
+
+    return type === 'balance'
+      ? 'text-balance'
+      : isPositiveChange()
+        ? 'text-success'
+        : 'text-destructive';
   };
 
   return (
@@ -194,7 +199,7 @@ const StatCard = ({
             <TooltipTrigger asChild>
               <div className='bg-muted inline-flex items-center gap-1.5 rounded-md px-2 py-1'>
                 {getTrendIcon()}
-                <span className={cn('text-xs font-medium sm:text-sm', getChangeColor())}>
+                <span className={cn('text-xs font-medium sm:text-sm', getChangeColor(type))}>
                   {change > 0 ? '+' : ''}
                   {Math.abs(change).toFixed(2)}%
                 </span>

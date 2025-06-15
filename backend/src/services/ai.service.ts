@@ -173,7 +173,7 @@ export class AiService {
     }
 
     const google = createGoogleGenerativeAI({ apiKey: userApiKey });
-    const aiModel = google('gemini-1.5-flash-latest');
+    const aiModel = google('gemini-2.0-flash-001');
 
     const currentSessionId = sessionId || generateId();
     const history = await this.getHistory(userId, currentSessionId);
