@@ -1,16 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Mail, MessageSquare, User, ArrowLeft, Send, Loader2 } from 'lucide-react';
+import { Mail, MessageSquare, User, Send, Loader2, LifeBuoy, BookUser } from 'lucide-react';
 import { useToast } from '@/lib/hooks/useToast';
 import { submitContactForm } from '@/lib/endpoints/contact';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import InfoPageLayout from '@/components/landing/info-page-layout';
 
 const contactFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }).max(100),
@@ -48,36 +48,21 @@ const ContactSupportPage = () => {
   };
 
   return (
-    <div className='min-h-screen bg-slate-50 px-4 py-12 text-slate-900 sm:px-6 lg:px-8 dark:bg-slate-900 dark:text-slate-100'>
-      <div className='mx-auto max-w-xl'>
-        <div className='mb-8'>
-          <Link href='/'>
-            <Button
-              variant='ghost'
-              className='text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
-            >
-              <ArrowLeft size={18} className='mr-2' />
-              Back to Home
-            </Button>
-          </Link>
-        </div>
-
-        <header className='mb-10 text-center'>
-          <MessageSquare className='mx-auto mb-4 h-16 w-16 text-sky-500 dark:text-sky-400' />
-          <h1 className='text-4xl font-extrabold tracking-tight sm:text-5xl'>Contact Support</h1>
-          <p className='mt-3 text-lg text-slate-500 dark:text-slate-400'>
-            Have questions or need help? We're here for you.
-          </p>
-        </header>
-
-        <div className='rounded-lg border border-slate-200 bg-white p-6 shadow-xl sm:p-8 dark:border-slate-700/50 dark:bg-slate-800/50'>
+    <InfoPageLayout
+      title='Contact Support'
+      subtitle="Have questions or need help? We're here for you."
+      icon={<MessageSquare className='mx-auto mb-4 h-16 w-16 text-sky-500 dark:text-sky-400' />}
+    >
+      <div className='mx-auto mt-12 grid max-w-4xl grid-cols-1 gap-12 md:grid-cols-2'>
+        {/* Contact Form */}
+        <div className='border-border bg-card rounded-lg border p-6 shadow-lg sm:p-8'>
           <form onSubmit={handleSubmit(onSubmit)} className='space-y-6'>
             <div>
               <label htmlFor='name' className='mb-1 block text-sm font-medium'>
                 Your Name
               </label>
               <div className='relative'>
-                <User className='absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500' />
+                <User className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
                 <Input
                   id='name'
                   {...register('name')}
@@ -96,7 +81,7 @@ const ContactSupportPage = () => {
                 Your Email
               </label>
               <div className='relative'>
-                <Mail className='absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500' />
+                <Mail className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
                 <Input
                   id='email'
                   type='email'
@@ -151,7 +136,7 @@ const ContactSupportPage = () => {
             <div>
               <Button
                 type='submit'
-                className='w-full bg-sky-500 text-white hover:bg-sky-600 dark:bg-sky-600 dark:hover:bg-sky-700'
+                className='cta-gradient w-full text-white'
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
@@ -167,15 +152,38 @@ const ContactSupportPage = () => {
             </div>
           </form>
         </div>
-        <p className='mt-8 text-center text-sm text-slate-500 dark:text-slate-400'>
-          You can also find answers in our{' '}
-          <Link href='#' className='text-sky-600 hover:underline dark:text-sky-400'>
-            FAQ section
-          </Link>{' '}
-          (coming soon!).
-        </p>
+
+        {/* Info Block */}
+        <div className='space-y-8'>
+          <div className='border-border bg-card rounded-lg border p-6 shadow-lg'>
+            <h3 className='text-text-heading flex items-center gap-2 text-lg font-semibold'>
+              <LifeBuoy className='h-5 w-5 text-sky-500' />
+              Direct Contact
+            </h3>
+            <p className='text-text-body mt-2'>For urgent matters, you can reach us directly at:</p>
+            <a
+              href='mailto:support@expensepro.app'
+              className='mt-3 inline-block font-medium text-sky-600 hover:underline dark:text-sky-400'
+            >
+              support@expensepro.app
+            </a>
+          </div>
+          <div className='border-border bg-card rounded-lg border p-6 shadow-lg'>
+            <h3 className='text-text-heading flex items-center gap-2 text-lg font-semibold'>
+              <BookUser className='h-5 w-5 text-emerald-500' />
+              Looking for Answers?
+            </h3>
+            <p className='text-text-body mt-2'>
+              You might find what you're looking for in our FAQ section. We're building it out with
+              answers to common questions.
+            </p>
+            <Button variant='outline' className='mt-4' disabled>
+              Browse FAQs (Coming Soon)
+            </Button>
+          </div>
+        </div>
       </div>
-    </div>
+    </InfoPageLayout>
   );
 };
 

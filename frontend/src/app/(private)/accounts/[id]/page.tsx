@@ -1,19 +1,44 @@
 'use client';
 
 import { use, useMemo } from 'react';
-import { useToast } from '@/lib/hooks/useToast';
+import dynamic from 'next/dynamic';
 import { useAccountDetails } from '@/components/account/hooks/useAccountDetails';
 import { AccountDetailsHeader } from '@/components/account/account-details-header';
-import { AccountTransactionsSection } from '@/components/account/account-transactions-section';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { AnalyticsCards } from '@/components/account/analytics-cards';
-import { FinancialTrendsSection } from '@/components/account/financial-trends-section';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+
+// Dynamically import the heaviest components
+const AccountTransactionsSection = dynamic(
+  () => import('@/components/account/account-transactions-section'),
+  {
+    loading: () => <Skeleton className='h-96 w-full' />,
+    ssr: false
+  }
+);
+
+const AnalyticsCards = dynamic(
+  () => import('@/components/account/analytics-cards').then((mod) => mod.AnalyticsCards),
+  {
+    loading: () => <Skeleton className='h-48 w-full' />,
+    ssr: false
+  }
+);
+
+const FinancialTrendsSection = dynamic(
+  () =>
+    import('@/components/account/financial-trends-section').then(
+      (mod) => mod.FinancialTrendsSection
+    ),
+  {
+    loading: () => <Skeleton className='h-48 w-full' />,
+    ssr: false
+  }
+);
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -32,7 +57,6 @@ interface PageProps {
 const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
   const { id } = use(params);
   const parsedSearchParams = use(searchParams);
-  const { showError } = useToast();
   const isMobile = useIsMobile();
   const { user } = useAuth();
 

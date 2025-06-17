@@ -390,3 +390,10 @@ export interface HistoricalStockPriceResponse {
   low?: number;
   volume?: number;
 }
+
+export interface ParsedTransactionFromAI {
+  date: string;
+  description: string;
+  debit?: number;
+  credit?: number;
+}

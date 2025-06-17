@@ -2,26 +2,62 @@
 
 import { useToast } from '@/lib/hooks/useToast';
 import React, { useState, useMemo, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import NoData from '@/components/ui/no-data';
 import { Frown, LayoutGrid } from 'lucide-react';
-import { FinancialSnapshot } from '@/components/dashboard/financial-snapshot';
-import TrendChartWrapper from '@/components/dashboard/trend-chart-wrapper';
-import { BudgetProgress } from '@/components/dashboard/budget-progress';
-import { GoalHighlights } from '@/components/dashboard/goal-highlights';
-import { InvestmentSummaryCard } from '@/components/dashboard/investment-summary-card';
-import { DebtSummaryCard } from '@/components/dashboard/debt-summary-card';
-import { AccountListSummary } from '@/components/dashboard/account-list-summary';
-import { QuickStats } from '@/components/dashboard/quick-stats';
-import { SpendingBreakdown } from '@/components/dashboard/spending-breakdown';
 import { DashboardCardWrapper } from '@/components/dashboard/dashboard-card-wrapper';
-import FinancialHealth from '@/components/dashboard/financial-health';
 import { DASHBOARD_PRESETS, DASHBOARD_CARD_CONFIG } from '@/config/dashboard-config';
 import { DashboardControls } from '@/components/dashboard/dashboard-controls';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { useAuth } from '@/hooks/useAuth';
 import Loader from '@/components/ui/loader';
+
+// Dynamically import heavy components
+const FinancialSnapshot = dynamic(
+  () => import('@/components/dashboard/financial-snapshot').then((mod) => mod.FinancialSnapshot),
+  { ssr: false, loading: () => <Skeleton className='h-full min-h-[200px]' /> }
+);
+const TrendChartWrapper = dynamic(() => import('@/components/dashboard/trend-chart-wrapper'), {
+  ssr: false,
+  loading: () => <Skeleton className='h-full min-h-[400px]' />
+});
+const BudgetProgress = dynamic(
+  () => import('@/components/dashboard/budget-progress').then((mod) => mod.BudgetProgress),
+  { ssr: false, loading: () => <Skeleton className='h-full min-h-[300px]' /> }
+);
+const GoalHighlights = dynamic(
+  () => import('@/components/dashboard/goal-highlights').then((mod) => mod.GoalHighlights),
+  { ssr: false, loading: () => <Skeleton className='h-full min-h-[300px]' /> }
+);
+const InvestmentSummaryCard = dynamic(
+  () =>
+    import('@/components/dashboard/investment-summary-card').then(
+      (mod) => mod.InvestmentSummaryCard
+    ),
+  { ssr: false, loading: () => <Skeleton className='h-full min-h-[400px]' /> }
+);
+const DebtSummaryCard = dynamic(
+  () => import('@/components/dashboard/debt-summary-card').then((mod) => mod.DebtSummaryCard),
+  { ssr: false, loading: () => <Skeleton className='h-full min-h-[300px]' /> }
+);
+const AccountListSummary = dynamic(
+  () => import('@/components/dashboard/account-list-summary').then((mod) => mod.AccountListSummary),
+  { ssr: false, loading: () => <Skeleton className='h-full min-h-[200px]' /> }
+);
+const QuickStats = dynamic(
+  () => import('@/components/dashboard/quick-stats').then((mod) => mod.QuickStats),
+  { ssr: false, loading: () => <Skeleton className='h-full min-h-[200px]' /> }
+);
+const SpendingBreakdown = dynamic(
+  () => import('@/components/dashboard/spending-breakdown').then((mod) => mod.SpendingBreakdown),
+  { ssr: false, loading: () => <Skeleton className='h-full min-h-[400px]' /> }
+);
+const FinancialHealth = dynamic(() => import('@/components/dashboard/financial-health'), {
+  ssr: false,
+  loading: () => <Skeleton className='h-full min-h-[150px]' />
+});
 
 interface DashboardSettings {
   preset: string;

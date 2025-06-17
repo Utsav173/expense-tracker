@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, FileText, AlertCircle } from 'lucide-react';
+import { useState, useCallback, useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { FileText, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/lib/hooks/useToast';
 import {
@@ -24,113 +24,117 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
-import { extractTransactions } from './actions';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { extractTransactionsFromPdf } from './actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useDropzone } from 'react-dropzone';
 import { API_BASE_URL } from '@/lib/api-client';
+import ImportDropzone from '@/components/transactions/import-dropzone';
+import { ImportPreviewTable } from '@/components/transactions/import-preview-table';
+import { ColumnDef, RowSelectionState } from '@tanstack/react-table';
 
-const ImportTransactions = () => {
+const ImportTransactionsPage = () => {
   const [loading, setLoading] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
   const [accountId, setAccountId] = useState<string | undefined>(undefined);
   const [transactions, setTransactions] = useState<any[]>([]);
-  const [isFirstConfirmationOpen, setIsFirstConfirmationOpen] = useState(false);
-  const [isSecondConfirmationOpen, setIsSecondConfirmationOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [successId, setSuccessId] = useState<string | null>(null);
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
-  const { showError, showSuccess } = useToast();
+  const { showError, showSuccess, showInfo } = useToast();
 
   const { data: accountsData, isLoading: isLoadingAccounts } = useQuery({
     queryKey: ['accountsDropdown'],
     queryFn: accountGetDropdown
   });
 
-  const parseExcelFile = useCallback(
+  const previewColumns: ColumnDef<any>[] = useMemo(
+    () => [
+      { accessorKey: 'Date', header: 'Date' },
+      { accessorKey: 'Text', header: 'Description' },
+      { accessorKey: 'Amount', header: 'Amount' },
+      { accessorKey: 'Type', header: 'Type' },
+      { accessorKey: 'Category', header: 'Category' },
+      { accessorKey: 'Transfer', header: 'Transfer' }
+    ],
+    []
+  );
+
+  const parseAndShowConfirmation = useCallback(
     async (file: File) => {
+      if (!file) return;
+      setLoading(true);
+      showInfo(`Processing ${file.name}... This may take a moment.`);
       try {
-        const data = await file.arrayBuffer();
-        const workbook = XLSX.read(data, { type: 'buffer' });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        if (!worksheet) {
-          throw new Error('No sheet found in the workbook');
+        let parsedData;
+        if (file.type === 'application/pdf') {
+          const arrayBuffer = await file.arrayBuffer();
+          const result = await extractTransactionsFromPdf(arrayBuffer);
+          if ('error' in result) throw new Error(result.details || result.error);
+          parsedData = result.transactions.map((tx) => ({
+            Date: tx.date,
+            Text: tx.description,
+            Amount: tx.debit !== undefined ? tx.debit : tx.credit,
+            Type: tx.debit !== undefined ? 'expense' : 'income',
+            Transfer: '-',
+            Category: 'Uncategorized'
+          }));
+        } else {
+          const data = await file.arrayBuffer();
+          const workbook = XLSX.read(data, { type: 'buffer' });
+          const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+          if (!worksheet) throw new Error('No sheet found in the workbook');
+          parsedData = XLSX.utils.sheet_to_json(worksheet);
+          if (parsedData.length === 0) throw new Error('No data found in the sheet');
+          const headers = Object.keys(parsedData[0] as object);
+          const requiredHeaders = ['Date', 'Text', 'Amount', 'Type', 'Transfer', 'Category'];
+          const missing = requiredHeaders.filter((h) => !headers.includes(h));
+          if (missing.length > 0) throw new Error(`Missing headers: ${missing.join(', ')}`);
         }
-        const jsonData: { [key: string]: string }[] = XLSX.utils.sheet_to_json(worksheet);
-        if (jsonData.length === 0) {
-          throw new Error('No data found in the sheet');
-        }
-        const headers = Object.keys(jsonData[0]);
-        const requiredHeaders = ['Date', 'Text', 'Amount', 'Type', 'Transfer', 'Category'];
-        const missingHeaders = requiredHeaders.filter((h) => !headers.includes(h));
-        if (missingHeaders.length > 0) {
-          showError(`Missing required headers: ${missingHeaders.join(', ')}`);
+        if (parsedData.length === 0) {
+          showError('No transactions could be extracted from the file.');
           return;
         }
-        setTransactions(jsonData);
-        setIsFirstConfirmationOpen(true);
+        setTransactions(parsedData);
+        setRowSelection({}); // Reset selection
+        setIsConfirmOpen(true);
       } catch (error: any) {
-        showError(`Error parsing Excel file: ${error.message}`);
+        showError(`Error parsing file: ${error.message}`);
+      } finally {
+        setLoading(false);
       }
     },
-    [showError]
+    [showError, showInfo]
   );
 
-  const parsePdfFile = useCallback(
-    async (file: File) => {
-      try {
-        const arrayBuffer = await file.arrayBuffer();
-        const parsedTransactions = await extractTransactions(arrayBuffer);
-
-        if ('error' in parsedTransactions) {
-          throw new Error(parsedTransactions.details || parsedTransactions.error);
-        }
-        const transformedTransactions = parsedTransactions.map((tx) => ({
-          Date: tx.date,
-          Text: tx.description,
-          Amount: tx.debit > 0 ? tx.debit : tx.credit,
-          Type: tx.debit > 0 ? 'expense' : 'income',
-          Transfer: tx.reference || '-',
-          Category: 'Uncategorized'
-        }));
-        setTransactions(transformedTransactions);
-        setIsFirstConfirmationOpen(true);
-      } catch (error: any) {
-        showError(`Error parsing PDF file: ${error.message}`);
-      }
-    },
-    [showError]
-  );
-
-  const handleFirstConfirmation = async () => {
+  const handleConfirmAndStage = async () => {
     if (!accountId) {
       showError('Please select an account.');
       return;
     }
-    if (!transactions.length) {
-      showError('No transactions found to import.');
+
+    const selectedRows = Object.keys(rowSelection).map((index) => transactions[parseInt(index)]);
+
+    if (selectedRows.length === 0) {
+      showError('Please select at least one transaction to import.');
       return;
     }
 
     setLoading(true);
     try {
-      const ws = XLSX.utils.json_to_sheet(transactions);
+      const ws = XLSX.utils.json_to_sheet(selectedRows);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
       const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-
       const blob = new Blob([excelBuffer], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       });
-
       const formData = new FormData();
       formData.append('accountId', accountId);
       formData.append('document', new File([blob], 'transactions.xlsx'));
 
       const result = await importTransactions(formData);
       setSuccessId(result.successId);
-      setIsFirstConfirmationOpen(false);
-      setIsSecondConfirmationOpen(true);
+      setIsConfirmOpen(false);
+      showSuccess(`Staged ${result.totalRecords} transactions for import. Please confirm.`);
     } catch (error: any) {
       showError(error.message);
     } finally {
@@ -138,20 +142,15 @@ const ImportTransactions = () => {
     }
   };
 
-  const handleSecondConfirmation = async () => {
-    if (!successId) {
-      showError('No success ID found. Please try again.');
-      return;
-    }
+  const handleFinalImport = async () => {
+    if (!successId) return;
     setLoading(true);
     try {
       await confirmImport(successId);
       showSuccess('Data imported successfully!');
-      setIsSecondConfirmationOpen(false);
       setSuccessId(null);
-      setFile(null);
-      setAccountId(undefined);
       setTransactions([]);
+      setRowSelection({});
     } catch (error: any) {
       showError(error.message);
     } finally {
@@ -161,11 +160,11 @@ const ImportTransactions = () => {
 
   const handleDownloadSample = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/accounts/sampleFile/import`);
-      if (!response.ok) {
-        throw new Error(`Failed to download sample file: ${response.statusText}`);
-      }
-
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/accounts/sampleFile/import`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error(`Server error: ${response.statusText}`);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -173,63 +172,27 @@ const ImportTransactions = () => {
       a.download = 'sample_transactions.xlsx';
       document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
+      a.remove();
       window.URL.revokeObjectURL(url);
     } catch (error: any) {
-      showError(`Error downloading sample file: ${error.message}`);
+      showError(`Download failed: ${error.message}`);
     }
   };
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    accept: {
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-      'application/vnd.ms-excel': ['.xls'],
-      'application/pdf': ['.pdf']
-    },
-    maxSize: 5 * 1024 * 1024,
-    disabled: !accountId,
-    onDropRejected: (rejectedFiles) => {
-      rejectedFiles.forEach((fileRejection) => {
-        const file = fileRejection.file;
-        if (file.size > 5 * 1024 * 1024) {
-          showError('File size must be less than 5MB');
-        } else {
-          showError(`File rejected: ${fileRejection.errors[0]?.message || 'Unknown error'}`);
-        }
-      });
-    },
-    onDrop: async (acceptedFiles) => {
-      const droppedFile = acceptedFiles[0];
-      if (droppedFile) {
-        setFile(droppedFile);
-        setLoading(true);
-        try {
-          if (droppedFile.name.endsWith('.xlsx') || droppedFile.name.endsWith('.xls')) {
-            await parseExcelFile(droppedFile);
-          } else if (droppedFile.name.endsWith('.pdf')) {
-            await parsePdfFile(droppedFile);
-          }
-        } catch (error: any) {
-          showError(`Error processing file: ${error.message}`);
-        } finally {
-          setLoading(false);
-        }
-      }
-    }
-  });
+  const selectedRowCount = Object.keys(rowSelection).length;
 
   return (
     <div className='flex flex-1 justify-center p-4 md:p-8'>
       <Card className='max-h-fit w-full max-w-4xl'>
         <CardHeader className='space-y-1'>
           <CardTitle className='text-2xl font-bold'>Import Transactions</CardTitle>
-          <p className='text-muted-foreground text-sm'>
-            Upload your transaction file in Excel (.xlsx, .xls) or PDF format
-          </p>
+          <CardDescription className='text-muted-foreground text-sm'>
+            Upload your transaction file in Excel (.xlsx, .xls) or PDF format.
+          </CardDescription>
         </CardHeader>
         <CardContent className='space-y-6'>
           <div className='space-y-2'>
-            <label className='text-sm font-medium'>Select Account</label>
+            <label className='text-sm font-medium'>Select Account to Import Into *</label>
             <Select onValueChange={setAccountId} value={accountId}>
               <SelectTrigger className='w-full'>
                 <SelectValue
@@ -237,50 +200,20 @@ const ImportTransactions = () => {
                 />
               </SelectTrigger>
               <SelectContent>
-                {accountsData?.length ? (
-                  accountsData.map((acc) => (
-                    <SelectItem key={acc.id} value={acc.id}>
-                      {acc.name}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value='no-account' disabled>
-                    No accounts available
+                {accountsData?.map((acc) => (
+                  <SelectItem key={acc.id} value={acc.id}>
+                    {acc.name} ({acc.currency})
                   </SelectItem>
-                )}
+                ))}
               </SelectContent>
             </Select>
           </div>
 
-          <div
-            {...getRootProps()}
-            className={`relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors ${
-              isDragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
-            } ${!accountId ? 'cursor-not-allowed opacity-50' : ''}`}
-          >
-            <input {...getInputProps()} />
-            <Upload className='text-muted-foreground h-8 w-8' />
-            {!accountId ? (
-              <p className='text-muted-foreground mt-2 text-sm font-medium'>
-                Please select an account first
-              </p>
-            ) : (
-              <>
-                <p className='mt-2 text-sm font-medium'>
-                  Drag & drop your file here or{' '}
-                  <span className='text-primary cursor-pointer hover:underline'>browse</span>
-                </p>
-                <p className='text-muted-foreground text-xs'>
-                  Supported formats: Excel (.xlsx, .xls) or PDF (max 5MB)
-                </p>
-              </>
-            )}
-            {file && (
-              <div className='mt-4 text-sm'>
-                Selected: <span className='font-medium'>{file.name}</span>
-              </div>
-            )}
-          </div>
+          <ImportDropzone
+            onFileDrop={parseAndShowConfirmation}
+            isLoading={loading}
+            disabled={!accountId}
+          />
 
           <div className='flex flex-col gap-4 sm:flex-row sm:justify-between'>
             <Button
@@ -290,92 +223,76 @@ const ImportTransactions = () => {
               className='w-full sm:w-auto'
             >
               <FileText className='mr-2 h-4 w-4' />
-              Download Sample
+              Download Excel Sample
             </Button>
           </div>
 
-          <Alert variant='default' className='mt-4'>
+          <Alert variant='default'>
             <AlertCircle className='h-4 w-4' />
-            <AlertTitle>Format Instructions</AlertTitle>
+            <AlertTitle>Instructions</AlertTitle>
             <AlertDescription>
-              Make sure your file follows the required format. Download the sample file for
-              reference.
+              For best results, use the provided Excel sample. AI-powered PDF parsing is powerful
+              but may require a review before final import.
             </AlertDescription>
           </Alert>
         </CardContent>
       </Card>
 
-      <Dialog open={isFirstConfirmationOpen} onOpenChange={setIsFirstConfirmationOpen}>
-        <DialogContent className='!w-[90%] max-sm:!w-full'>
+      <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+        <DialogContent className='max-w-4xl'>
           <DialogHeader>
             <DialogTitle>Confirm Transactions</DialogTitle>
             <DialogDescription>
-              Please review the transactions below before proceeding to import.
+              Select the transactions you want to import. Deselect any rows you wish to exclude.
             </DialogDescription>
           </DialogHeader>
 
-          {transactions.length > 0 && (
-            <div className='mt-4'>
-              <p className='mb-2 text-sm font-medium'>Total Records: {transactions.length}</p>
-              <ScrollArea className='h-[400px] rounded-md border'>
-                <table className='w-full'>
-                  <thead className='bg-background sticky top-0'>
-                    <tr className='border-b'>
-                      {Object.keys(transactions[0]).map((key) => (
-                        <th key={key} className='p-2 text-left text-sm font-medium'>
-                          {key}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {transactions.map((tx, index) => (
-                      <tr key={index} className='hover:bg-muted/50 border-b last:border-0'>
-                        {Object.values(tx).map((value: any, idx) => (
-                          <td key={idx} className='p-2 text-xs'>
-                            {typeof value === 'number' ? value.toFixed(2) : value}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </ScrollArea>
-            </div>
-          )}
+          <ImportPreviewTable
+            columns={previewColumns}
+            data={transactions}
+            rowSelection={rowSelection}
+            setRowSelection={setRowSelection}
+          />
 
           <DialogFooter>
-            <Button
-              variant='secondary'
-              onClick={() => setIsFirstConfirmationOpen(false)}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleFirstConfirmation} disabled={loading || !accountId}>
-              {loading ? 'Processing...' : 'Proceed to Import'}
-            </Button>
+            <div className='flex w-full items-center justify-between'>
+              <p className='text-muted-foreground text-sm'>
+                {selectedRowCount} of {transactions.length} rows selected.
+              </p>
+              <div className='flex gap-2'>
+                <Button
+                  variant='outline'
+                  onClick={() => setIsConfirmOpen(false)}
+                  disabled={loading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleConfirmAndStage}
+                  disabled={loading || selectedRowCount === 0}
+                >
+                  {loading ? 'Processing...' : `Stage ${selectedRowCount} Transactions`}
+                </Button>
+              </div>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isSecondConfirmationOpen} onOpenChange={setIsSecondConfirmationOpen}>
+      <Dialog open={!!successId} onOpenChange={() => setSuccessId(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirm Final Import</DialogTitle>
+            <DialogTitle>Final Confirmation</DialogTitle>
             <DialogDescription>
-              Are you sure you want to import these transactions? This action cannot be undone.
+              {Object.keys(rowSelection).length} transactions are staged. This action will add them
+              to your account and cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant='secondary'
-              onClick={() => setIsSecondConfirmationOpen(false)}
-              disabled={loading}
-            >
+            <Button variant='outline' onClick={() => setSuccessId(null)} disabled={loading}>
               Cancel
             </Button>
-            <Button onClick={handleSecondConfirmation} disabled={loading}>
+            <Button onClick={handleFinalImport} disabled={loading}>
               {loading ? 'Importing...' : 'Confirm Import'}
             </Button>
           </DialogFooter>
@@ -385,4 +302,4 @@ const ImportTransactions = () => {
   );
 };
 
-export default ImportTransactions;
+export default ImportTransactionsPage;
