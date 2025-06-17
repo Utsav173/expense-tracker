@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useEffect, useLayoutEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useGSAP } from '@gsap/react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ChevronDown, Sparkles, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -22,13 +23,10 @@ import FeaturesSection from '@/components/landing/features-section';
 import TestimonialsSection from '@/components/landing/testimonials-section';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-if (typeof window !== 'undefined') {
-  gsap.registerPlugin(ScrollTrigger);
-}
+gsap.registerPlugin(useGSAP, ScrollTrigger);
 
-const LandingPage = () => {
+const LandingPageContent = () => {
   const mainRef = useRef<HTMLDivElement>(null);
-  const heroContentRef = useRef<HTMLDivElement>(null);
   const heroImageRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
@@ -41,104 +39,97 @@ const LandingPage = () => {
     }
   }, [user, userIsLoading, router]);
 
-  useLayoutEffect(() => {
-    if (userIsLoading || user || !mainRef.current) return;
+  const { contextSafe } = useGSAP({ scope: mainRef });
 
-    const ctx = gsap.context(() => {
-      // Animate headline words
-      if (heroContentRef.current) {
-        gsap
-          .timeline({ delay: 0.2 })
-          .fromTo(
-            heroContentRef.current.querySelector('.hero-badge-anim'),
-            { opacity: 0, y: -20, scale: 0.9 },
-            { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'back.out(1.7)' }
-          )
-          .fromTo(
-            '.hero-headline-word',
-            { opacity: 0, y: 40, filter: 'blur(5px)' },
-            {
-              opacity: 1,
-              y: 0,
-              filter: 'blur(0px)',
-              duration: 1,
-              ease: 'expo.out',
-              stagger: 0.15
-            },
-            '-=0.3'
-          )
-          .fromTo(
-            heroContentRef.current.querySelector('p.hero-subtext-anim'),
-            { opacity: 0, y: 25 },
-            { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' },
-            '-=0.7'
-          )
-          .fromTo(
-            heroContentRef.current.querySelector('.hero-buttons-anim'),
-            { opacity: 0, y: 15, scale: 0.95 },
-            { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: 'back.out(1.5)' },
-            '-=0.5'
-          )
-          .fromTo(
-            heroContentRef.current.querySelector('.hero-social-proof-mini'),
-            { opacity: 0, y: 10 },
-            { opacity: 1, y: 0, duration: 0.6, ease: 'power1.inOut' },
-            '-=0.4'
-          )
-          .fromTo(
-            heroContentRef.current.querySelector('.hero-scroll-indicator-anim'),
-            { opacity: 0, y: 10 },
-            { opacity: 1, y: 0, duration: 0.6, ease: 'power1.inOut', delay: 0.2 },
-            '-=0.2'
-          );
-      }
+  useGSAP(
+    () => {
+      if (userIsLoading || user) return;
 
-      // Animate dashboard mockup
-      if (heroImageRef.current) {
-        gsap.fromTo(
-          heroImageRef.current,
-          { opacity: 0, y: 60, scale: 0.9, filter: 'blur(8px)' },
+      gsap
+        .timeline({ delay: 0.2 })
+        .fromTo(
+          '.hero-badge-anim',
+          { opacity: 0, y: -20, scale: 0.9 },
+          { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'back.out(1.7)' }
+        )
+        .fromTo(
+          '.hero-headline-word',
+          { opacity: 0, y: 40, filter: 'blur(5px)' },
           {
             opacity: 1,
             y: 0,
-            scale: 1,
             filter: 'blur(0px)',
-            duration: 1.4,
+            duration: 1,
             ease: 'expo.out',
-            delay: 0.7
-          }
+            stagger: 0.15
+          },
+          '-=0.3'
+        )
+        .fromTo(
+          'p.hero-subtext-anim',
+          { opacity: 0, y: 25 },
+          { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' },
+          '-=0.7'
+        )
+        .fromTo(
+          '.hero-buttons-anim',
+          { opacity: 0, y: 15, scale: 0.95 },
+          { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: 'back.out(1.5)' },
+          '-=0.5'
+        )
+        .fromTo(
+          '.hero-social-proof-mini',
+          { opacity: 0, y: 10 },
+          { opacity: 1, y: 0, duration: 0.6, ease: 'power1.inOut' },
+          '-=0.4'
+        )
+        .fromTo(
+          '.hero-scroll-indicator-anim',
+          { opacity: 0, y: 10 },
+          { opacity: 1, y: 0, duration: 0.6, ease: 'power1.inOut', delay: 0.2 },
+          '-=0.2'
         );
-      }
 
-      // Add parallax only on non-mobile devices
+      gsap.fromTo(
+        heroImageRef.current,
+        { opacity: 0, y: 60, scale: 0.9, filter: 'blur(8px)' },
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          filter: 'blur(0px)',
+          duration: 1.4,
+          ease: 'expo.out',
+          delay: 0.7
+        }
+      );
+
       if (!isMobile) {
-        const handleMouseMove = (e: MouseEvent) => {
+        const handleMouseMove = contextSafe((e: MouseEvent) => {
           const { clientX, clientY } = e;
           const { innerWidth, innerHeight } = window;
           const xPercent = (clientX / innerWidth - 0.5) * 2;
           const yPercent = (clientY / innerHeight - 0.5) * 2;
 
-          if (heroImageRef.current) {
-            gsap.to(heroImageRef.current, {
-              duration: 1.5,
-              x: xPercent * 15,
-              y: yPercent * 10,
-              rotateX: yPercent * -3,
-              rotateY: xPercent * 3,
-              ease: 'power1.out'
-            });
-          }
-        };
-        window.addEventListener('mousemove', handleMouseMove);
-        return () => window.removeEventListener('mousemove', handleMouseMove);
-      }
-    }, mainRef);
+          gsap.to(heroImageRef.current, {
+            duration: 1.5,
+            x: xPercent * 15,
+            y: yPercent * 10,
+            rotateX: yPercent * -3,
+            rotateY: xPercent * 3,
+            ease: 'power1.out'
+          });
+        });
 
-    return () => {
-      ctx.revert();
-      ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
-    };
-  }, [userIsLoading, user, isMobile]);
+        window.addEventListener('mousemove', handleMouseMove);
+
+        return () => {
+          window.removeEventListener('mousemove', handleMouseMove);
+        };
+      }
+    },
+    { scope: mainRef, dependencies: [userIsLoading, user, isMobile] }
+  );
 
   if (userIsLoading || (!userIsLoading && user)) {
     return (
@@ -155,10 +146,7 @@ const LandingPage = () => {
     >
       <LandingPageHeader />
 
-      <section
-        ref={heroContentRef}
-        className='hero-content-wrapper hero-gradient relative flex min-h-screen items-center justify-center overflow-hidden pt-32 pb-24 text-center'
-      >
+      <section className='hero-content-wrapper hero-gradient relative flex min-h-screen items-center justify-center overflow-hidden pt-32 pb-24 text-center'>
         <div className='relative z-10 container mx-auto px-4'>
           <div className='hero-badge-anim mb-8'>
             <Badge
@@ -186,7 +174,8 @@ const LandingPage = () => {
             <Link href='/auth/signup'>
               <Button
                 size='lg'
-                className='group cta-gradient text-primary-foreground hover:shadow-primary/30 focus:ring-primary/50 dark:focus:ring-offset-background px-10 py-7 text-lg font-semibold shadow-xl transition-all duration-300 hover:scale-105 focus:ring-4 focus:ring-offset-2'
+                variant='cta'
+                className='group hover:shadow-primary/30 focus:ring-primary/50 dark:focus:ring-offset-background px-10 py-7 text-lg font-semibold shadow-xl transition-all duration-300 hover:scale-105 focus:ring-4 focus:ring-offset-2'
               >
                 Sign Up Free{' '}
                 <ArrowRight className='ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1' />
@@ -253,6 +242,10 @@ const LandingPage = () => {
       <LandingPageFooter />
     </div>
   );
+};
+
+const LandingPage = () => {
+  return <LandingPageContent />;
 };
 
 export default LandingPage;
