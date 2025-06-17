@@ -1,5 +1,5 @@
 import apiFetch from '../api-client';
-import { ApiResponse } from '../types';
+import { ApiResponse, ParsedTransactionFromAI } from '../types';
 
 interface AiProcessRequest {
   prompt: string;
@@ -32,4 +32,26 @@ export const aiProcessPrompt = (
     undefined,
     successMessage,
     errorMessage || 'Failed to process AI request.'
+  );
+
+interface AiProcessPdfRequest {
+  documentContent: string;
+}
+
+interface AiProcessPdfResponse {
+  transactions: ParsedTransactionFromAI[];
+}
+
+export const aiProcessTransactionPdf = (
+  body: AiProcessPdfRequest,
+  successMessage?: string,
+  errorMessage?: string
+): Promise<ApiResponse<AiProcessPdfResponse>> =>
+  apiFetch(
+    '/ai/process-pdf',
+    'POST',
+    body,
+    undefined,
+    successMessage,
+    errorMessage || 'Failed to parse PDF with AI.'
   );

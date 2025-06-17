@@ -1,8 +1,14 @@
 {
   "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "node",
     "strict": true,
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "lib": ["ESNext", "DOM"]
   }
 }

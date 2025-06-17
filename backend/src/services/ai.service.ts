@@ -1,7 +1,7 @@
 import { db } from '../database';
-import { AiConversationHistory, User } from '../database/schema';
-import { eq, and, desc } from 'drizzle-orm';
-import { generateText, CoreMessage, CoreAssistantMessage, generateId } from 'ai';
+import { AiConversationHistory, Category, User } from '../database/schema';
+import { eq, and, desc, or, isNull } from 'drizzle-orm';
+import { generateText, CoreMessage, CoreAssistantMessage, generateId, generateObject } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { HTTPException } from 'hono/http-exception';
 import {
@@ -20,6 +20,7 @@ import { InferInsertModel } from 'drizzle-orm';
 import { decryptApiKey } from '../utils/crypto.utils';
 import { format as formatDateFn } from 'date-fns';
 import { config } from '../config';
+import { z } from 'zod';
 
 const MAX_HISTORY_MESSAGES = 10;
 
@@ -98,6 +99,47 @@ Maintain a helpful, professional, and efficient tone.
 `;
 }
 
+function createPdfParsingSystemPrompt(userCategories: string[]): string {
+  const categoryList = userCategories.length > 0 ? userCategories.join(', ') : 'None';
+
+  return `You are an expert financial data extraction and categorization bot. Your purpose is to read raw text from a bank statement, structure it into JSON, and intelligently assign a category to each transaction.
+
+**User's Existing Categories:**
+${categoryList}
+
+**Core Instructions:**
+1.  Analyze the provided text to identify individual transaction lines.
+2.  For each transaction, extract the following information:
+    - \`date\`: The transaction date in "YYYY-MM-DD" format.
+    - \`description\`: The full transaction description.
+    - \`debit\` or \`credit\`: The transaction amount.
+    - \`category\`: The most appropriate category for the transaction.
+3.  **Critical Categorization Logic:**
+    - **First, try to match** the transaction to one of the user's existing categories. Use common sense (e.g., "ZOMATO" -> "Eating Out").
+    - **If no existing category is a good fit, create a new, logical category name.** For example, for "NETFLIX.COM", a good new category would be "Subscriptions". For "INDIGO FLIGHTS", suggest "Travel".
+    - **Only if you cannot determine a logical category**, use the string "Uncategorized".
+    - Do NOT create a new category if a similar one already exists (e.g., if "Food" exists, don't create "Groceries").
+4.  Ignore all non-transactional text.
+5.  Strictly output ONLY a valid JSON array of transaction objects.`;
+}
+
+// UPGRADED SCHEMA: The category description is updated.
+const transactionExtractionSchema = z.object({
+  transactions: z.array(
+    z.object({
+      date: z.string().describe('The transaction date in "YYYY-MM-DD" format.'),
+      description: z.string().describe('The full transaction description.'),
+      debit: z.number().optional().describe('The outgoing amount.'),
+      credit: z.number().optional().describe('The incoming amount.'),
+      category: z
+        .string()
+        .describe(
+          "The assigned category. This can be an existing user category, a sensible new one, or 'Uncategorized'.",
+        ),
+    }),
+  ),
+});
+
 export class AiService {
   private async getHistory(userId: string, sessionId: string): Promise<CoreMessage[]> {
     try {
@@ -144,6 +186,59 @@ export class AiService {
       await db.insert(AiConversationHistory).values(messagesToSave);
     } catch (error: any) {
       console.error(`Error saving AI history for session ${sessionId}:`, error);
+    }
+  }
+
+  private async getApiKey(userId: string): Promise<string> {
+    try {
+      const userData = await db.query.User.findFirst({
+        where: eq(User.id, userId),
+        columns: { aiApiKeyEncrypted: true },
+      });
+
+      if (!userData?.aiApiKeyEncrypted) {
+        throw new HTTPException(403, {
+          message:
+            'AI API key not configured for this user. Please add it in your profile settings.',
+        });
+      }
+      return await decryptApiKey(userData.aiApiKeyEncrypted);
+    } catch (dbError: any) {
+      console.error(`Error fetching/decrypting user API key for user ${userId}:`, dbError);
+      if (dbError instanceof HTTPException) throw dbError;
+      throw new HTTPException(500, { message: 'Failed to retrieve AI configuration.' });
+    }
+  }
+
+  async processTransactionPdf(userId: string, documentContent: string) {
+    const userApiKey = await this.getApiKey(userId);
+    const google = createGoogleGenerativeAI({ apiKey: userApiKey });
+    const aiModel = google('gemini-2.0-flash-001');
+
+    const userCategories = await db.query.Category.findMany({
+      where: eq(Category.owner, userId),
+      columns: { name: true },
+    });
+    const categoryNames = userCategories.map((cat) => cat.name);
+
+    const systemPrompt = createPdfParsingSystemPrompt(categoryNames);
+
+    try {
+      const { object: transactionsObject } = await generateObject({
+        model: aiModel,
+        schema: transactionExtractionSchema,
+        system: systemPrompt,
+        prompt: `Here is the text from a bank statement PDF. Please extract and categorize the transactions based on my category list provided in the system instructions:\n\n${documentContent}`,
+      });
+
+      return { transactions: transactionsObject.transactions };
+    } catch (aiError: any) {
+      console.error(`AI PDF Parsing Error (User: ${userId}):`, aiError);
+      throw new HTTPException(502, {
+        message: `AI processing failed: ${
+          aiError.message || 'The AI model could not structure the data from this PDF.'
+        }`,
+      });
     }
   }
 

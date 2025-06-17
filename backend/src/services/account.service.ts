@@ -338,15 +338,32 @@ export class AccountService {
       throw new HTTPException(400, { message: 'Missing required headers' });
     }
 
+    // START: Logic for handling dynamic category creation (identical to original)
+    const categoryNamesFromImport = [
+      ...new Set(jsonData.map((item) => item.Category).filter(Boolean)),
+    ];
+
     const existingCategories = await db.query.Category.findMany({
-      where: inArray(
-        Category.name,
-        jsonData.map((item) => item.Category),
-      ),
+      where: and(eq(Category.owner, userId), inArray(Category.name, categoryNamesFromImport)),
     });
+
     const categoryNameToIdMap = new Map(
       existingCategories.map((category) => [category.name, category.id]),
     );
+
+    const newCategoryNames = categoryNamesFromImport.filter(
+      (name) => !categoryNameToIdMap.has(name),
+    );
+
+    if (newCategoryNames.length > 0) {
+      const newCategoriesToInsert = newCategoryNames.map((name) => ({
+        name,
+        owner: userId,
+      }));
+      const inserted = await db.insert(Category).values(newCategoriesToInsert).returning();
+      inserted.forEach((cat) => categoryNameToIdMap.set(cat.name, cat.id));
+    }
+    // END: Logic for handling dynamic category creation
 
     const finalArray = jsonData.map((item) => {
       const typedItem = item as Record<string, any>;
@@ -368,12 +385,8 @@ export class AccountService {
               temp.createdAt = new Date(item[key]);
               break;
             case 'category':
-              let categoryId = categoryNameToIdMap.get(item[key]);
-              if (!categoryId) {
-                categoryId = crypto.randomUUID();
-                categoryNameToIdMap.set(item[key], categoryId);
-              }
-              temp.category = categoryId;
+              // Use the map to get the ID for the category name
+              temp.category = categoryNameToIdMap.get(item[key]) || null;
               break;
             case 'amount':
               temp.amount = parseFloat(item[key]);
@@ -385,20 +398,6 @@ export class AccountService {
       }
       return temp;
     });
-
-    const newCategoryNames = Array.from(categoryNameToIdMap.keys()).filter(
-      (name) => !existingCategories.some((cat) => cat.name === name),
-    );
-
-    if (newCategoryNames.length > 0) {
-      await db.insert(Category).values(
-        newCategoryNames.map((name) => ({
-          name,
-          owner: userId,
-          id: categoryNameToIdMap.get(name),
-        })),
-      );
-    }
 
     const totalRecords = jsonData.length;
     const successId = await db

@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import dynamic from 'next/dynamic';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useCallback, useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { FileText, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/lib/hooks/useToast';
@@ -25,17 +24,12 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
-import { extractTransactions } from './actions';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { extractTransactionsFromPdf } from './actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { API_BASE_URL } from '@/lib/api-client';
-import { Skeleton } from '@/components/ui/skeleton';
-
-// Dynamically import the entire functionality to a client component
-const ImportDropzone = dynamic(() => import('@/components/transactions/import-dropzone'), {
-  loading: () => <Skeleton className='h-48 w-full' />,
-  ssr: false
-});
+import ImportDropzone from '@/components/transactions/import-dropzone';
+import { ImportPreviewTable } from '@/components/transactions/import-preview-table';
+import { ColumnDef, RowSelectionState } from '@tanstack/react-table';
 
 const ImportTransactionsPage = () => {
   const [loading, setLoading] = useState(false);
@@ -43,6 +37,7 @@ const ImportTransactionsPage = () => {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [successId, setSuccessId] = useState<string | null>(null);
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   const { showError, showSuccess, showInfo } = useToast();
 
@@ -51,22 +46,35 @@ const ImportTransactionsPage = () => {
     queryFn: accountGetDropdown
   });
 
+  const previewColumns: ColumnDef<any>[] = useMemo(
+    () => [
+      { accessorKey: 'Date', header: 'Date' },
+      { accessorKey: 'Text', header: 'Description' },
+      { accessorKey: 'Amount', header: 'Amount' },
+      { accessorKey: 'Type', header: 'Type' },
+      { accessorKey: 'Category', header: 'Category' },
+      { accessorKey: 'Transfer', header: 'Transfer' }
+    ],
+    []
+  );
+
   const parseAndShowConfirmation = useCallback(
     async (file: File) => {
+      if (!file) return;
       setLoading(true);
-      showInfo(`Processing ${file.name}...`);
+      showInfo(`Processing ${file.name}... This may take a moment.`);
       try {
         let parsedData;
-        if (file.name.endsWith('.pdf')) {
+        if (file.type === 'application/pdf') {
           const arrayBuffer = await file.arrayBuffer();
-          const result = await extractTransactions(arrayBuffer);
+          const result = await extractTransactionsFromPdf(arrayBuffer);
           if ('error' in result) throw new Error(result.details || result.error);
-          parsedData = result.map((tx) => ({
+          parsedData = result.transactions.map((tx) => ({
             Date: tx.date,
             Text: tx.description,
-            Amount: tx.debit > 0 ? tx.debit : tx.credit,
-            Type: tx.debit > 0 ? 'expense' : 'income',
-            Transfer: tx.reference || '-',
+            Amount: tx.debit !== undefined ? tx.debit : tx.credit,
+            Type: tx.debit !== undefined ? 'expense' : 'income',
+            Transfer: '-',
             Category: 'Uncategorized'
           }));
         } else {
@@ -81,7 +89,12 @@ const ImportTransactionsPage = () => {
           const missing = requiredHeaders.filter((h) => !headers.includes(h));
           if (missing.length > 0) throw new Error(`Missing headers: ${missing.join(', ')}`);
         }
+        if (parsedData.length === 0) {
+          showError('No transactions could be extracted from the file.');
+          return;
+        }
         setTransactions(parsedData);
+        setRowSelection({}); // Reset selection
         setIsConfirmOpen(true);
       } catch (error: any) {
         showError(`Error parsing file: ${error.message}`);
@@ -93,10 +106,21 @@ const ImportTransactionsPage = () => {
   );
 
   const handleConfirmAndStage = async () => {
-    if (!accountId || !transactions.length) return;
+    if (!accountId) {
+      showError('Please select an account.');
+      return;
+    }
+
+    const selectedRows = Object.keys(rowSelection).map((index) => transactions[parseInt(index)]);
+
+    if (selectedRows.length === 0) {
+      showError('Please select at least one transaction to import.');
+      return;
+    }
+
     setLoading(true);
     try {
-      const ws = XLSX.utils.json_to_sheet(transactions);
+      const ws = XLSX.utils.json_to_sheet(selectedRows);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
       const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
@@ -109,8 +133,7 @@ const ImportTransactionsPage = () => {
 
       const result = await importTransactions(formData);
       setSuccessId(result.successId);
-      setIsConfirmOpen(false); // Close first dialog
-      // This logic will be moved to the final confirmation step after API returns successId
+      setIsConfirmOpen(false);
       showSuccess(`Staged ${result.totalRecords} transactions for import. Please confirm.`);
     } catch (error: any) {
       showError(error.message);
@@ -125,8 +148,9 @@ const ImportTransactionsPage = () => {
     try {
       await confirmImport(successId);
       showSuccess('Data imported successfully!');
-      setSuccessId(null); // This will close the final dialog
+      setSuccessId(null);
       setTransactions([]);
+      setRowSelection({});
     } catch (error: any) {
       showError(error.message);
     } finally {
@@ -141,7 +165,6 @@ const ImportTransactionsPage = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!response.ok) throw new Error(`Server error: ${response.statusText}`);
-
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -156,14 +179,16 @@ const ImportTransactionsPage = () => {
     }
   };
 
+  const selectedRowCount = Object.keys(rowSelection).length;
+
   return (
     <div className='flex flex-1 justify-center p-4 md:p-8'>
       <Card className='max-h-fit w-full max-w-4xl'>
         <CardHeader className='space-y-1'>
           <CardTitle className='text-2xl font-bold'>Import Transactions</CardTitle>
-          <p className='text-muted-foreground text-sm'>
+          <CardDescription className='text-muted-foreground text-sm'>
             Upload your transaction file in Excel (.xlsx, .xls) or PDF format.
-          </p>
+          </CardDescription>
         </CardHeader>
         <CardContent className='space-y-6'>
           <div className='space-y-2'>
@@ -206,45 +231,61 @@ const ImportTransactionsPage = () => {
             <AlertCircle className='h-4 w-4' />
             <AlertTitle>Instructions</AlertTitle>
             <AlertDescription>
-              For best results, use the provided Excel sample. PDF parsing is experimental and works
-              best with standard bank statement formats.
+              For best results, use the provided Excel sample. AI-powered PDF parsing is powerful
+              but may require a review before final import.
             </AlertDescription>
           </Alert>
         </CardContent>
       </Card>
 
-      {/* Preview Dialog */}
       <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-        <DialogContent className='max-w-3xl'>
+        <DialogContent className='max-w-4xl'>
           <DialogHeader>
             <DialogTitle>Confirm Transactions</DialogTitle>
             <DialogDescription>
-              Review the parsed transactions. If correct, proceed to stage them for import.
+              Select the transactions you want to import. Deselect any rows you wish to exclude.
             </DialogDescription>
           </DialogHeader>
-          <p className='text-sm font-medium'>Total Records: {transactions.length}</p>
-          <ScrollArea className='h-[400px] rounded-md border'>
-            <pre className='p-4 text-xs'>{JSON.stringify(transactions, null, 2)}</pre>
-          </ScrollArea>
+
+          <ImportPreviewTable
+            columns={previewColumns}
+            data={transactions}
+            rowSelection={rowSelection}
+            setRowSelection={setRowSelection}
+          />
+
           <DialogFooter>
-            <Button variant='outline' onClick={() => setIsConfirmOpen(false)} disabled={loading}>
-              Cancel
-            </Button>
-            <Button onClick={handleConfirmAndStage} disabled={loading}>
-              {loading ? 'Processing...' : 'Proceed'}
-            </Button>
+            <div className='flex w-full items-center justify-between'>
+              <p className='text-muted-foreground text-sm'>
+                {selectedRowCount} of {transactions.length} rows selected.
+              </p>
+              <div className='flex gap-2'>
+                <Button
+                  variant='outline'
+                  onClick={() => setIsConfirmOpen(false)}
+                  disabled={loading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleConfirmAndStage}
+                  disabled={loading || selectedRowCount === 0}
+                >
+                  {loading ? 'Processing...' : `Stage ${selectedRowCount} Transactions`}
+                </Button>
+              </div>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Final Confirmation Dialog */}
       <Dialog open={!!successId} onOpenChange={() => setSuccessId(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Final Confirmation</DialogTitle>
             <DialogDescription>
-              {transactions.length} transactions are staged. This action will add them to your
-              account and cannot be undone.
+              {Object.keys(rowSelection).length} transactions are staged. This action will add them
+              to your account and cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
