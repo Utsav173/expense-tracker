@@ -301,35 +301,33 @@ export const AccountTransactionsSection = ({
         )}
       </div>
 
-      <ScrollArea className='flex-1'>
-        {transactionsData?.transactions.length === 0 ? (
-          <div className='text-muted-foreground flex h-full items-center justify-center p-8 text-center'>
-            No transactions found for the selected filters.
-            {Object.values(filters).some(
-              (val) => val !== undefined && val !== '' && val !== 'createdAt' && val !== 'desc'
-            ) &&
-              isOwner && (
-                <Button variant='link' className='ml-1' onClick={handleResetFilters}>
-                  Clear filters
-                </Button>
-              )}
-          </div>
-        ) : (
-          <TransactionTable
-            tableId='account-transactions-table'
-            transactions={transactionsData?.transactions ?? []}
-            onSort={handleSort}
-            sortBy={filters.sortBy}
-            sortOrder={filters.sortOrder}
-            loading={isTransactionLoading ?? false}
-            totalRecords={transactionsData?.pagination.total ?? 0}
-            page={page}
-            handlePageChange={handlePageChange}
-            refetchData={refetchData}
-            isOwner={isOwner}
-          />
-        )}
-      </ScrollArea>
+      {transactionsData?.transactions.length === 0 ? (
+        <div className='text-muted-foreground flex h-full items-center justify-center p-8 text-center'>
+          No transactions found for the selected filters.
+          {Object.values(filters).some(
+            (val) => val !== undefined && val !== '' && val !== 'createdAt' && val !== 'desc'
+          ) &&
+            isOwner && (
+              <Button variant='link' className='ml-1' onClick={handleResetFilters}>
+                Clear filters
+              </Button>
+            )}
+        </div>
+      ) : (
+        <TransactionTable
+          tableId='account-transactions-table'
+          transactions={transactionsData?.transactions ?? []}
+          onSort={handleSort}
+          sortBy={filters.sortBy}
+          sortOrder={filters.sortOrder}
+          loading={isTransactionLoading ?? false}
+          totalRecords={transactionsData?.pagination.total ?? 0}
+          page={page}
+          handlePageChange={handlePageChange}
+          refetchData={refetchData}
+          isOwner={isOwner}
+        />
+      )}
     </div>
   );
 };

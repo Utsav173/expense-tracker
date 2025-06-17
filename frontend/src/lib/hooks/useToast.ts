@@ -9,7 +9,7 @@ export const useToast = () => {
     toast.success(message, options);
   };
   const showError = (message: string, options?: ToastOptions) => {
-    toast.error(message, options);
+    toast(message, { ...options, icon: '🚨' });
   };
   const showInfo = (message: string, options?: ToastOptions) => {
     toast(message, options);

@@ -57,7 +57,7 @@ export const DashboardControls: React.FC<DashboardControlsProps> = ({
 
       {/* Controls Row: horizontally scrollable on mobile */}
       <div
-        className='scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent flex flex-nowrap items-center gap-2 overflow-x-auto py-1 max-sm:mx-auto sm:flex-wrap sm:overflow-x-visible'
+        className='scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent flex flex-nowrap items-center gap-2 overflow-x-auto py-1 max-sm:mx-auto max-sm:px-2 sm:flex-wrap sm:overflow-x-visible'
         tabIndex={-1}
       >
         {/* Preset Dropdown */}

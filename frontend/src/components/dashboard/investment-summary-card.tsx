@@ -176,7 +176,7 @@ export const InvestmentSummaryCard: React.FC<{
         </CardHeader>
         <CardContent className='space-y-4'>
           <Skeleton className='h-4 w-3/5' />
-          <Skeleton className='h-[180px] w-full' />
+          <Skeleton className='h-[160px] w-full sm:h-[180px]' />
           <div className='grid gap-4'>
             <Skeleton className='h-8 w-full' />
             <Skeleton className='h-8 w-full' />
@@ -244,25 +244,45 @@ export const InvestmentSummaryCard: React.FC<{
 
   return (
     <Card className={cn('col-span-1 flex flex-col md:col-span-1', className)}>
-      <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-        <CardDescription className='text-xs'>
-          {numberOfHoldings} holding(s) across {numberOfAccounts} account(s)
-          {valueIsEstimate && (
-            <TooltipElement tooltipContent='Values are estimated due to mixed currencies or missing price data.'>
-              <AlertTriangle className='ml-1 inline-block h-3 w-3 text-amber-500' />
-            </TooltipElement>
-          )}
-        </CardDescription>
+      {/* Mobile-optimized Header */}
+      <CardHeader className='pb-3'>
+        <div className='flex items-start justify-between gap-2'>
+          <div className='min-w-0 flex-1'>
+            <CardTitle className='mb-1 text-base font-semibold sm:text-lg'>
+              Investment Summary
+            </CardTitle>
+            <CardDescription className='text-xs leading-relaxed'>
+              <span className='block sm:inline'>
+                {numberOfHoldings} holding(s) across {numberOfAccounts} account(s)
+              </span>
+              {valueIsEstimate && (
+                <TooltipElement tooltipContent='Values are estimated due to mixed currencies or missing price data.'>
+                  <span className='ml-1 inline-flex items-center text-amber-500'>
+                    <AlertTriangle className='mr-1 h-3 w-3' />
+                    <span className='hidden text-xs sm:inline'>Est.</span>
+                  </span>
+                </TooltipElement>
+              )}
+            </CardDescription>
+          </div>
+          <WalletCards className='text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0' />
+        </div>
       </CardHeader>
-      <CardContent className='space-y-4'>
-        <div className='flex items-center gap-2 max-sm:flex-col max-sm:justify-center'>
-          <Tabs value={selectedPeriod} onValueChange={handlePeriodChange} className='w-fit'>
-            <TabsList className='h-7 p-1'>
+
+      <CardContent className='flex-1 space-y-4'>
+        {/* Mobile-optimized Controls */}
+        <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-2'>
+          <Tabs
+            value={selectedPeriod}
+            onValueChange={handlePeriodChange}
+            className='w-full sm:w-fit'
+          >
+            <TabsList className='grid h-8 w-full grid-cols-5 p-0.5 sm:flex sm:h-7 sm:w-auto sm:p-1'>
               {availablePeriodOptions.map((option) => (
                 <TabsTrigger
                   key={option.value}
                   value={option.value}
-                  className='px-2 py-0.5 text-xs'
+                  className='px-1 py-1 text-xs sm:px-2 sm:py-0.5'
                 >
                   {option.label}
                 </TabsTrigger>
@@ -273,7 +293,7 @@ export const InvestmentSummaryCard: React.FC<{
             <DateRangePickerV2
               date={dateRange}
               onDateChange={setDateRange}
-              className='w-[260px]'
+              className='w-full sm:w-[260px]'
               placeholder='Select dates'
               noLabel
               minDate={oldestDate}
@@ -282,10 +302,11 @@ export const InvestmentSummaryCard: React.FC<{
           )}
         </div>
 
+        {/* Mobile-optimized Chart */}
         {isHistoricalLoading ? (
-          <Skeleton className='h-[180px] w-full' />
+          <Skeleton className='h-[140px] w-full sm:h-[180px]' />
         ) : sparklineData.length > 1 ? (
-          <div className='h-[180px] w-full'>
+          <div className='h-[140px] w-full sm:h-[180px]'>
             <ChartContainer
               config={sparklineChartConfig}
               className='h-full w-full'
@@ -307,7 +328,7 @@ export const InvestmentSummaryCard: React.FC<{
                       if (active && payload && payload.length) {
                         const data = payload[0].payload;
                         return (
-                          <div className='bg-background/95 rounded-lg border px-3 py-2 text-sm shadow-lg backdrop-blur-sm'>
+                          <div className='bg-background/95 rounded-lg border px-2 py-1.5 text-xs shadow-lg backdrop-blur-sm sm:px-3 sm:py-2 sm:text-sm'>
                             <div className='font-medium'>{format(data.date, 'MMM d, yyyy')}</div>
                             <div className='text-muted-foreground'>
                               {formatCurrency(data.value, currency)}
@@ -336,49 +357,68 @@ export const InvestmentSummaryCard: React.FC<{
             </ChartContainer>
           </div>
         ) : (
-          <div className='text-muted-foreground flex h-[180px] items-center justify-center text-sm'>
+          <div className='text-muted-foreground flex h-[140px] items-center justify-center text-xs sm:h-[180px] sm:text-sm'>
             Not enough data for trendline.
           </div>
         )}
 
-        <div className='grid gap-4'>
-          <div className='grid grid-cols-2 gap-4'>
-            <div>
-              <div className='text-muted-foreground text-sm font-medium'>Current Value</div>
-              <div className='text-2xl font-bold'>
+        {/* Mobile-optimized Values Grid */}
+        <div className='space-y-4'>
+          {/* Current Value & Total Invested - Responsive Grid */}
+          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+            <div className='text-center sm:text-left'>
+              <div className='text-muted-foreground mb-1 text-xs font-medium sm:text-sm'>
+                Current Value
+              </div>
+              <div className='text-xl leading-tight font-bold break-all sm:text-2xl'>
                 {formatCurrency(currentMarketValue, currency)}
               </div>
             </div>
-            <div>
-              <div className='text-muted-foreground text-sm font-medium'>Total Invested</div>
-              <div className='text-2xl font-bold'>
+            <div className='text-center sm:text-left'>
+              <div className='text-muted-foreground mb-1 text-xs font-medium sm:text-sm'>
+                Total Invested
+              </div>
+              <div className='text-xl leading-tight font-bold break-all sm:text-2xl'>
                 {formatCurrency(totalInvestedAmount, currency)}
               </div>
             </div>
           </div>
 
-          <div className='grid grid-cols-2 gap-4 rounded-lg border p-3'>
-            <div>
-              <div className={`flex items-center gap-1 text-sm font-medium ${gainLossColor}`}>
-                <GainLossIcon className='h-4 w-4' />
-                Total Return
+          {/* Returns & Dividends - Mobile Optimized */}
+          <div className='bg-muted/30 space-y-3 rounded-lg p-3 sm:space-y-0'>
+            <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4'>
+              <div className='text-center sm:text-left'>
+                <div
+                  className={`mb-1 flex items-center justify-center gap-1 text-xs font-medium sm:justify-start sm:text-sm ${gainLossColor}`}
+                >
+                  <GainLossIcon className='h-3 w-3 sm:h-4 sm:w-4' />
+                  Total Return
+                </div>
+                <div className={`font-bold ${gainLossColor}`}>
+                  <div className='text-base leading-tight break-all sm:text-lg'>
+                    {formatCurrency(overallGainLoss, currency)}
+                  </div>
+                  <div className='text-xs opacity-90 sm:text-sm'>
+                    ({overallGainLossPercentage?.toFixed(1)}%)
+                  </div>
+                </div>
               </div>
-              <div className={`text-lg font-bold ${gainLossColor}`}>
-                {formatCurrency(overallGainLoss, currency)}
-                <span className='text-sm'> ({overallGainLossPercentage?.toFixed(1)}%)</span>
-              </div>
-            </div>
-            <div>
-              <div className='text-muted-foreground text-sm font-medium'>Total Dividends</div>
-              <div className='text-lg font-bold text-green-600'>
-                {formatCurrency(totalDividends, currency)}
+              <div className='border-t pt-3 text-center sm:border-t-0 sm:pt-0 sm:text-left'>
+                <div className='text-muted-foreground mb-1 text-xs font-medium sm:text-sm'>
+                  Total Dividends
+                </div>
+                <div className='text-base leading-tight font-bold break-all text-green-600 sm:text-lg'>
+                  {formatCurrency(totalDividends, currency)}
+                </div>
               </div>
             </div>
           </div>
         </div>
       </CardContent>
+
+      {/* Footer */}
       <div className='mt-auto border-t p-3 text-center'>
-        <Button variant='link' size='sm' asChild className='text-xs font-medium'>
+        <Button variant='link' size='sm' asChild className='w-full text-xs font-medium sm:w-auto'>
           <Link href='/investment'>Manage Investments</Link>
         </Button>
       </div>

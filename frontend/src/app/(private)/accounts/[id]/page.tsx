@@ -172,25 +172,23 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
       )}
 
       {/* Transactions Section */}
-      <Card className='overflow-hidden pb-3'>
-        <AccountTransactionsSection
-          transactionsData={transactionsData ?? undefined}
-          isTransactionLoading={isTransactionLoading}
-          filters={filters}
-          handleSort={handleSort}
-          page={page}
-          handlePageChange={handlePageChange}
-          categories={categories ?? undefined}
-          setSearchQuery={setSearchQuery}
-          handleCategoryChange={handleCategoryChange}
-          handleIncomeTypeChange={handleIncomeTypeChange}
-          handleDateRangeSelect={handleDateRangeSelect}
-          handleClearDateRange={handleClearDateRange}
-          handleResetFilters={handleResetFilters}
-          refetchData={refetchData}
-          isOwner={isOwner}
-        />
-      </Card>
+      <AccountTransactionsSection
+        transactionsData={transactionsData ?? undefined}
+        isTransactionLoading={isTransactionLoading}
+        filters={filters}
+        handleSort={handleSort}
+        page={page}
+        handlePageChange={handlePageChange}
+        categories={categories ?? undefined}
+        setSearchQuery={setSearchQuery}
+        handleCategoryChange={handleCategoryChange}
+        handleIncomeTypeChange={handleIncomeTypeChange}
+        handleDateRangeSelect={handleDateRangeSelect}
+        handleClearDateRange={handleClearDateRange}
+        handleResetFilters={handleResetFilters}
+        refetchData={refetchData}
+        isOwner={isOwner}
+      />
     </div>
   );
 };
