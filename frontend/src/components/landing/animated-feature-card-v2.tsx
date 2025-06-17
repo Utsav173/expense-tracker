@@ -46,6 +46,20 @@ const AnimatedFeatureCardV2: React.FC<AnimatedFeatureCardProps> = ({
           }
         }
       );
+
+      const handleMouseMove = (e: MouseEvent) => {
+        const rect = el.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        el.style.setProperty('--mouse-x', `${x}px`);
+        el.style.setProperty('--mouse-y', `${y}px`);
+      };
+
+      el.addEventListener('mousemove', handleMouseMove);
+
+      return () => {
+        el.removeEventListener('mousemove', handleMouseMove);
+      };
     }
   }, [delay]);
 
@@ -53,10 +67,10 @@ const AnimatedFeatureCardV2: React.FC<AnimatedFeatureCardProps> = ({
     <div
       ref={cardRef}
       className={cn(
-        'feature-card group relative overflow-hidden rounded-xl border p-6 shadow-lg transition-all duration-300 ease-out',
-
-        'dark:bg-slate-850/70 border-slate-700/50 bg-slate-800/60 backdrop-blur-sm dark:border-slate-700',
-        'hover:bg-slate-750/70 hover:-translate-y-2 hover:border-sky-500/60 hover:shadow-2xl hover:shadow-sky-500/20 dark:hover:border-sky-400/50 dark:hover:bg-slate-800/80 dark:hover:shadow-sky-400/15',
+        'feature-card group relative overflow-hidden rounded-xl p-6 shadow-lg transition-all duration-300 ease-out',
+        'border-slate-700/50 bg-slate-800/60 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/60',
+        'hover:-translate-y-2 hover:shadow-2xl',
+        'before:pointer-events-none before:absolute before:-inset-px before:rounded-xl before:opacity-0 before:transition-opacity before:duration-300 before:content-[""] before:[background:radial-gradient(400px_circle_at_var(--mouse-x)_var(--mouse-y),_rgba(34,211,238,0.3),_transparent_40%)] group-hover:before:opacity-100',
         className
       )}
     >
@@ -64,10 +78,8 @@ const AnimatedFeatureCardV2: React.FC<AnimatedFeatureCardProps> = ({
         <div className='mb-5 flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-sky-500 to-cyan-400 text-white shadow-md transition-all duration-300 group-hover:scale-110 group-hover:shadow-sky-400/50 dark:from-sky-400 dark:to-cyan-300'>
           {icon}
         </div>
-        {/* Use specific text color class for headings inside these dark cards */}
-        <h3 className='lp-text-dark-section-heading mb-3 text-xl font-bold'>{title}</h3>
-        {/* Use specific text color class for paragraphs inside these dark cards */}
-        <p className='lp-text-dark-section-paragraph text-sm leading-relaxed'>{description}</p>
+        <h3 className='mb-3 text-xl font-bold text-white'>{title}</h3>
+        <p className='text-sm leading-relaxed text-slate-300'>{description}</p>
       </div>
     </div>
   );

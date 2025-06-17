@@ -51,6 +51,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.10",
+    "@tailwindcss/typography": "^0.5.16",
     "@types/file-saver": "^2.0.7",
     "@types/node": "^20.19.0",
     "@types/papaparse": "^5.3.16",
