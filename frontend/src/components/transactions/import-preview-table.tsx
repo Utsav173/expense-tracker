@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   ColumnDef,
   flexRender,
@@ -33,9 +33,40 @@ export function ImportPreviewTable<TData>({
   rowSelection,
   setRowSelection
 }: ImportPreviewTableProps<TData>) {
+  const memoizedColumns = useMemo<ColumnDef<TData>[]>(
+    () => [
+      {
+        id: 'select',
+        header: ({ table }) => (
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && 'indeterminate')
+            }
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            aria-label='Select all'
+            className='translate-y-[2px]'
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label='Select row'
+            className='translate-y-[2px]'
+          />
+        ),
+        enableSorting: false,
+        enableHiding: false
+      },
+      ...columns
+    ],
+    [columns]
+  );
+
   const table = useReactTable({
     data,
-    columns,
+    columns: memoizedColumns,
     state: {
       rowSelection
     },
@@ -45,35 +76,8 @@ export function ImportPreviewTable<TData>({
     enableRowSelection: true
   });
 
-  // This column definition is added internally to the table for the selection checkboxes
-  const selectionColumn: ColumnDef<TData> = {
-    id: 'select',
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label='Select all'
-        className='translate-y-[2px]'
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label='Select row'
-        className='translate-y-[2px]'
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false
-  };
-
-  const tableColumns = useMemo(() => [selectionColumn, ...columns], [columns, selectionColumn]);
-
   return (
-    <ScrollArea className='h-[400px] rounded-md border'>
+    <ScrollArea className='max-h-[65dvh] rounded-md border'>
       <Table>
         <TableHeader className='bg-muted sticky top-0'>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -101,7 +105,7 @@ export function ImportPreviewTable<TData>({
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={tableColumns.length} className='h-24 text-center'>
+              <TableCell colSpan={memoizedColumns.length} className='h-24 text-center'>
                 No data to display.
               </TableCell>
             </TableRow>

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { FileText, AlertCircle } from 'lucide-react';
+import { FileText, AlertCircle, KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/lib/hooks/useToast';
 import {
@@ -24,12 +24,18 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
-import { extractTransactionsFromPdf } from './actions';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { API_BASE_URL } from '@/lib/api-client';
 import ImportDropzone from '@/components/transactions/import-dropzone';
 import { ImportPreviewTable } from '@/components/transactions/import-preview-table';
 import { ColumnDef, RowSelectionState } from '@tanstack/react-table';
+import { aiProcessTransactionPdf } from '@/lib/endpoints/ai';
+
+// --- CSS Imports for React-PDF (these are safe) ---
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
 
 const ImportTransactionsPage = () => {
   const [loading, setLoading] = useState(false);
@@ -39,12 +45,28 @@ const ImportTransactionsPage = () => {
   const [successId, setSuccessId] = useState<string | null>(null);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+
   const { showError, showSuccess, showInfo } = useToast();
 
   const { data: accountsData, isLoading: isLoadingAccounts } = useQuery({
     queryKey: ['accountsDropdown'],
     queryFn: accountGetDropdown
   });
+
+  // --- React-PDF Worker Setup ---
+  // This useEffect runs ONLY on the client, after the component mounts.
+  useEffect(() => {
+    import('react-pdf').then(({ pdfjs }) => {
+      pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+        'pdfjs-dist/build/pdf.worker.min.mjs',
+        import.meta.url
+      ).toString();
+    });
+  }, []);
 
   const previewColumns: ColumnDef<any>[] = useMemo(
     () => [
@@ -58,24 +80,55 @@ const ImportTransactionsPage = () => {
     []
   );
 
-  const parseAndShowConfirmation = useCallback(
-    async (file: File) => {
-      if (!file) return;
+  const processFile = useCallback(
+    async (file: File, filePassword?: string) => {
       setLoading(true);
-      showInfo(`Processing ${file.name}... This may take a moment.`);
+      setPasswordError(null);
+      if (!filePassword) {
+        showInfo(`Processing ${file.name}... This may take a moment.`);
+      }
+
       try {
         let parsedData;
         if (file.type === 'application/pdf') {
+          // DYNAMICALLY import react-pdf here, when needed.
+          const { pdfjs } = await import('react-pdf');
+
           const arrayBuffer = await file.arrayBuffer();
-          const result = await extractTransactionsFromPdf(arrayBuffer);
-          if ('error' in result) throw new Error(result.details || result.error);
-          parsedData = result.transactions.map((tx) => ({
+
+          const pdf = await pdfjs.getDocument({ data: arrayBuffer, password: filePassword })
+            .promise;
+
+          let fullText = '';
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map((item: any) => item.str).join(' ');
+            fullText += pageText + '\n';
+          }
+
+          if (!fullText || fullText.trim().length < 50) {
+            throw new Error(
+              'Could not extract sufficient text from the PDF. The document might be empty or image-based.'
+            );
+          }
+
+          const aiResponse = await aiProcessTransactionPdf({ documentContent: fullText });
+
+          if (!aiResponse || !Array.isArray(aiResponse.transactions)) {
+            throw new Error('AI processing failed to return valid transaction data.');
+          }
+
+          setIsPasswordDialogOpen(false);
+          setPendingFile(null);
+
+          parsedData = aiResponse.transactions.map((tx) => ({
             Date: tx.date,
             Text: tx.description,
             Amount: tx.debit !== undefined ? tx.debit : tx.credit,
             Type: tx.debit !== undefined ? 'expense' : 'income',
-            Transfer: '-',
-            Category: 'Uncategorized'
+            Transfer: tx.transfer || '-',
+            Category: tx.category || 'Uncategorized'
           }));
         } else {
           const data = await file.arrayBuffer();
@@ -89,21 +142,46 @@ const ImportTransactionsPage = () => {
           const missing = requiredHeaders.filter((h) => !headers.includes(h));
           if (missing.length > 0) throw new Error(`Missing headers: ${missing.join(', ')}`);
         }
+
         if (parsedData.length === 0) {
           showError('No transactions could be extracted from the file.');
           return;
         }
         setTransactions(parsedData);
-        setRowSelection({}); // Reset selection
+        setRowSelection({});
         setIsConfirmOpen(true);
       } catch (error: any) {
-        showError(`Error parsing file: ${error.message}`);
+        if (error.name === 'PasswordException') {
+          setPendingFile(file);
+          if (error.message.includes('Invalid')) {
+            setPasswordError('The provided password was incorrect.');
+          } else {
+            setIsPasswordDialogOpen(true);
+          }
+        } else {
+          showError(`Error parsing file: ${error.message}`);
+        }
       } finally {
         setLoading(false);
       }
     },
     [showError, showInfo]
   );
+
+  const onFileDrop = useCallback(
+    (file: File) => {
+      if (!file) return;
+      setPendingFile(null);
+      setPasswordError(null);
+      processFile(file);
+    },
+    [processFile]
+  );
+
+  const handlePasswordSubmit = async () => {
+    if (!pendingFile || !password) return;
+    await processFile(pendingFile, password);
+  };
 
   const handleConfirmAndStage = async () => {
     if (!accountId) {
@@ -209,11 +287,7 @@ const ImportTransactionsPage = () => {
             </Select>
           </div>
 
-          <ImportDropzone
-            onFileDrop={parseAndShowConfirmation}
-            isLoading={loading}
-            disabled={!accountId}
-          />
+          <ImportDropzone onFileDrop={onFileDrop} isLoading={loading} disabled={!accountId} />
 
           <div className='flex flex-col gap-4 sm:flex-row sm:justify-between'>
             <Button
@@ -294,6 +368,55 @@ const ImportTransactionsPage = () => {
             </Button>
             <Button onClick={handleFinalImport} disabled={loading}>
               {loading ? 'Importing...' : 'Confirm Import'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+        <DialogContent onCloseAutoFocus={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle className='flex items-center'>
+              <KeyRound className='mr-2 h-5 w-5' />
+              Password Required
+            </DialogTitle>
+            <DialogDescription>
+              The file "{pendingFile?.name}" is encrypted. Please enter the password to unlock it.
+            </DialogDescription>
+          </DialogHeader>
+          <div className='grid gap-4 py-4'>
+            <div className='grid grid-cols-4 items-center gap-4'>
+              <Label htmlFor='password-input' className='text-right'>
+                Password
+              </Label>
+              <Input
+                id='password-input'
+                type='password'
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handlePasswordSubmit();
+                }}
+                className='col-span-3'
+                autoFocus
+              />
+            </div>
+            {passwordError && (
+              <p className='col-span-4 pl-[95px] text-sm text-red-500'>{passwordError}</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => {
+                setIsPasswordDialogOpen(false);
+              }}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handlePasswordSubmit} disabled={loading || !password}>
+              {loading ? 'Unlocking...' : 'Unlock & Continue'}
             </Button>
           </DialogFooter>
         </DialogContent>

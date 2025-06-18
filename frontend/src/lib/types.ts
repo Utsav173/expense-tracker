@@ -394,6 +394,8 @@ export interface HistoricalStockPriceResponse {
 export interface ParsedTransactionFromAI {
   date: string;
   description: string;
-  debit?: number;
-  credit?: number;
+  category: string;
+  debit?: number | undefined;
+  credit?: number | undefined;
+  transfer?: string | undefined;
 }
