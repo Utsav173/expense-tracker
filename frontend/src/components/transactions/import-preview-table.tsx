@@ -18,7 +18,6 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ImportPreviewTableProps<TData> {
   data: TData[];
@@ -77,7 +76,7 @@ export function ImportPreviewTable<TData>({
   });
 
   return (
-    <ScrollArea className='max-h-[65dvh] rounded-md border'>
+    <div className='max-h-[65dvh] overflow-scroll rounded-md border'>
       <Table>
         <TableHeader className='bg-muted sticky top-0'>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -112,6 +111,6 @@ export function ImportPreviewTable<TData>({
           )}
         </TableBody>
       </Table>
-    </ScrollArea>
+    </div>
   );
 }

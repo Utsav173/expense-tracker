@@ -124,7 +124,7 @@ export const createGoalColumns = ({
           <Button
             size='icon'
             variant='ghost'
-            className='text-warning hover:text-warning/80'
+            className='text-orange-400 hover:text-orange-400/80'
             onClick={() => handleOpenAddWithdrawModal('withdraw')}
             aria-label='Withdraw Amount from Goal'
           >
