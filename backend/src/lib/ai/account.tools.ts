@@ -17,18 +17,18 @@ export function createAccountTools(userId: string) {
         accountName: z
           .string()
           .min(1)
-          .describe("The desired name for the new account (e.g., 'ICICI Salary', 'Paytm Wallet')."),
+          .describe("The desired name for the new account (e.g., 'ICICI Salary', 'Paytm Wallet'). Example: "My Savings Account""),
         initialBalance: z
           .number()
           .optional()
-          .describe('The starting balance (defaults to 0). Must be non-negative.')
+          .describe('The starting balance (defaults to 0). Must be non-negative. Example: 1000.50')
           .default(0),
         currency: z
           .string()
           .length(3)
           .optional()
           .describe(
-            "The 3-letter currency code (e.g., INR, USD). Defaults to user's preferred currency or INR.",
+            "The 3-letter currency code (e.g., INR, USD). Defaults to user's preferred currency or INR. Example: "USD"",
           )
           .default('INR'),
       }),
@@ -68,13 +68,13 @@ export function createAccountTools(userId: string) {
           .string()
           .optional()
           .describe(
-            'Optional: Filter accounts whose name contains this text which similar to account related name.',
+            'Optional: Filter accounts whose name contains this text which similar to account related name. Example: "Savings" or "Cash"',
           ),
         recent: z
           .number()
           .optional()
           .describe(
-            'Optional: List the most recent created nth accounts. If provided, overrides searchName.',
+            'Optional: List the most recent created nth accounts. If provided, overrides searchName. Example: 5',
           )
           .default(0),
       }),
@@ -108,7 +108,7 @@ export function createAccountTools(userId: string) {
         accountIdentifier: z
           .string()
           .min(1)
-          .describe('The name or ID of the account to check the balance for.'),
+          .describe('The name or ID of the account to check the balance for. Example: "My Bank Account" or "acc_xyz123"'),
       }),
       execute: async ({ accountIdentifier }) => {
         try {
@@ -143,7 +143,7 @@ export function createAccountTools(userId: string) {
       description:
         'Identifies a specific account by name or ID for a potential update or deletion action. Requires user confirmation before proceeding.',
       parameters: z.object({
-        accountIdentifier: z.string().min(1).describe('The name or ID of the account.'),
+        accountIdentifier: z.string().min(1).describe('The name or ID of the account. Example: "Savings Account" or "acc_abc456"'),
       }),
       execute: async ({ accountIdentifier }) => {
         try {
@@ -189,7 +189,7 @@ export function createAccountTools(userId: string) {
         accountId: z
           .string()
           .describe(
-            'The exact unique ID of the account to delete (obtained from the identification step).',
+            'The exact unique ID of the account to delete (obtained from the identification step). Example: "acc_xyz789"',
           ),
       }),
       execute: async ({ accountId }) => {
@@ -212,9 +212,9 @@ export function createAccountTools(userId: string) {
         accountId: z
           .string()
           .describe(
-            'The unique ID of the account to rename (obtained from the identification step).',
+            'The unique ID of the account to rename (obtained from the identification step). Example: "acc_xyz789"',
           ),
-        newAccountName: z.string().min(1).describe('The desired new name for the account.'),
+        newAccountName: z.string().min(1).describe('The desired new name for the account. Example: "My New Bank Account"'),
       }),
       execute: async ({ accountId, newAccountName }) => {
         try {
