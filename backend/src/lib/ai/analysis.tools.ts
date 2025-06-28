@@ -17,7 +17,7 @@ export function createAnalysisTools(userId: string) {
           .string()
           .optional()
           .describe(
-            "Date range (e.g., 'this month', 'last quarter', '2023-07,2023-09'). Defaults to this month. Example: "last month" or "this year"",
+            "Date range (e.g., 'this month', 'last quarter', '2023-07,2023-09'). Defaults to this month. Example: \"last month\" or \"this year\"",
           ),
         accountIdentifier: z
           .string()
@@ -120,11 +120,15 @@ export function createAnalysisTools(userId: string) {
         dateDescription: z
           .string()
           .optional()
-          .describe("Date range (e.g., 'last year', 'this quarter'). Defaults to this month. Example: "last 6 months" or "2023-01,2023-12""),
+          .describe(
+            'Date range (e.g., \'last year\', \'this quarter\'). Defaults to this month. Example: "last 6 months" or "2023-01,2023-12"',
+          ),
         accountIdentifier: z
           .string()
           .optional()
-          .describe('Optional: Filter by account name or ID. Example: "Investment Account" or "acc_456"'),
+          .describe(
+            'Optional: Filter by account name or ID. Example: "Investment Account" or "acc_456"',
+          ),
       }),
       execute: async ({ dateDescription, accountIdentifier }) => {
         try {
@@ -185,11 +189,16 @@ export function createAnalysisTools(userId: string) {
       description:
         'Retrieves key financial analytics (total income, total expense, balance, and percentage changes) for a specific account over a specified date range.',
       parameters: z.object({
-        accountIdentifier: z.string().min(1).describe('The name or ID of the account. Example: "My Checking Account" or "acc_789"'),
+        accountIdentifier: z
+          .string()
+          .min(1)
+          .describe('The name or ID of the account. Example: "My Checking Account" or "acc_789"'),
         dateDescription: z
           .string()
           .optional()
-          .describe("Date range (e.g., 'this month', 'last quarter'). Defaults to this month. Example: "this quarter" or "last year""),
+          .describe(
+            'Date range (e.g., \'this month\', \'last quarter\'). Defaults to this month. Example: "this quarter" or "last year"',
+          ),
       }),
       execute: async ({ accountIdentifier, dateDescription }) => {
         try {

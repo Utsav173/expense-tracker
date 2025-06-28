@@ -20,31 +20,30 @@ export function createTransactionTools(userId: string) {
       description:
         'Records a new financial transaction (income or expense). Account, category, and date can be inferred if not provided.',
       parameters: z.object({
-        amount: z.number().positive('The transaction amount (always positive).'),
-        description: z.string().min(1).describe("Description (e.g., 'Groceries', 'Salary')."),
-        type: z.enum(['income', 'expense']).describe("Type: 'income' or 'expense'."),
+        amount: z.number().positive('The transaction amount (always positive). Example: 50.75'),
+        description: z.string().min(1).describe("Description (e.g., 'Groceries', 'Salary'). Example: "Coffee at Starbucks""),
+        type: z.enum(['income', 'expense']).describe("Type: 'income' or 'expense'. Example: "expense""),
         accountIdentifier: z
           .string()
           .optional()
-          .describe("Optional: Name or ID of the account. Defaults to user's default account."),
+          .describe("Optional: Name or ID of the account. Defaults to user's default account. Example: "Cash" or "acc_123""),
         categoryIdentifier: z
           .string()
           .optional()
           .describe(
-            'Optional: Category name or ID. AI will try to infer from description if omitted.',
+            'Optional: Category name or ID. AI will try to infer from description if omitted. Example: "Food" or "cat_456"',
           ),
         dateDescription: z
           .string()
           .optional()
           .describe(
-            "Optional: Date (e.g., 'today', 'yesterday', '2024-03-15'). Defaults to today.",
-          ),
-        transferDetails: z.string().optional().describe('Optional: Source/recipient details.'),
+            "Optional: Date (e.g., 'today', 'yesterday', '2024-03-15'). Defaults to today. Example: "last Friday" or "2024-07-01""),
+        transferDetails: z.string().optional().describe('Optional: Source/recipient details. Example: "From John Doe" or "To Utility Company"'),
         mentionedCurrency: z
           .string()
           .length(3)
           .optional()
-          .describe('Optional: 3-letter currency code if mentioned by user (e.g., USD, EUR).'),
+          .describe('Optional: 3-letter currency code if mentioned by user (e.g., USD, EUR). Example: "USD"'),
       }),
       execute: async ({
         amount,
@@ -161,22 +160,22 @@ export function createTransactionTools(userId: string) {
       description:
         'Lists transactions based on filters like account, category, date range, type, amount range, or text search.',
       parameters: z.object({
-        accountIdentifier: z.string().optional().describe('Filter by account name or ID.'),
-        categoryIdentifier: z.string().optional().describe('Filter by category name or ID.'),
+        accountIdentifier: z.string().optional().describe('Filter by account name or ID. Example: "Savings" or "acc_789"'),
+        categoryIdentifier: z.string().optional().describe('Filter by category name or ID. Example: "Utilities" or "cat_abc"'),
         dateDescription: z
           .string()
           .optional()
           .describe(
-            "Date range ('today', 'last 7 days', 'this month', 'last Tuesday', 'YYYY-MM-DD', 'YYYY-MM-DD,YYYY-MM-DD'). Defaults to 'this month' if unspecified.",
+            "Date range ('today', 'last 7 days', 'this month', 'last Tuesday', 'YYYY-MM-DD', 'YYYY-MM-DD,YYYY-MM-DD'). Defaults to 'this month' if unspecified. Example: "last month" or "2024-01-01,2024-01-31"
           ),
         type: z
           .enum(['income', 'expense', 'all'])
           .optional()
-          .describe("Filter by 'income', 'expense', or 'all'. Defaults to 'all'."),
-        minAmount: z.number().optional().describe('Minimum amount.'),
-        maxAmount: z.number().optional().describe('Maximum amount.'),
-        searchText: z.string().optional().describe('Search text in description/transfer.'),
-        limit: z.number().int().positive().optional().default(10).describe('Max results.'),
+          .describe("Filter by 'income', 'expense', or 'all'. Defaults to 'all'. Example: "expense""),
+        minAmount: z.number().optional().describe('Minimum amount. Example: 100'),
+        maxAmount: z.number().optional().describe('Maximum amount. Example: 500'),
+        searchText: z.string().optional().describe('Search text in description/transfer. Example: "coffee" or "rent payment"'),
+        limit: z.number().int().positive().optional().default(10).describe('Max results. Example: 5'),
       }),
       execute: async ({
         accountIdentifier,
@@ -269,13 +268,13 @@ export function createTransactionTools(userId: string) {
         identifier: z
           .string()
           .min(3)
-          .describe("Keywords to find the transaction (e.g., 'groceries yesterday')."),
-        accountIdentifier: z.string().optional().describe('Account name or ID (optional).'),
+          .describe("Keywords to find the transaction (e.g., 'groceries yesterday'). Example: "Starbucks coffee" or "electricity bill""),
+        accountIdentifier: z.string().optional().describe('Account name or ID (optional). Example: "Checking" or "acc_123"'),
         dateDescription: z
           .string()
           .optional()
-          .describe("Approximate date or range (e.g., 'last week')."),
-        amountHint: z.number().optional().describe('Approximate amount (optional).'),
+          .describe("Approximate date or range (e.g., 'last week'). Example: "yesterday" or "last month""),
+        amountHint: z.number().optional().describe('Approximate amount (optional). Example: 25.50'),
       }),
       execute: async ({ identifier, accountIdentifier, dateDescription, amountHint }) => {
         try {
@@ -357,16 +356,16 @@ export function createTransactionTools(userId: string) {
       description:
         'Updates specific fields of a transaction AFTER user confirmation, using its unique ID.',
       parameters: z.object({
-        transactionId: z.string().describe('The exact unique ID of the transaction.'),
-        newAmount: z.number().positive().optional().describe('Updated positive amount.'),
-        newDescription: z.string().min(1).optional().describe('Updated description.'),
-        newType: z.enum(['income', 'expense']).optional().describe('Updated type.'),
+        transactionId: z.string().describe('The exact unique ID of the transaction. Example: "txn_abc123"'),
+        newAmount: z.number().positive().optional().describe('Updated positive amount. Example: 60.00'),
+        newDescription: z.string().min(1).optional().describe('Updated description. Example: "Updated coffee expense"'),
+        newType: z.enum(['income', 'expense']).optional().describe('Updated type. Example: "income"'),
         newCategoryIdentifier: z
           .string()
           .optional()
-          .describe('Updated category name or ID (or empty/null to remove).'),
-        newDateDescription: z.string().optional().describe("Updated date (e.g., 'today')."),
-        newTransferDetails: z.string().optional().describe('Updated transfer details.'),
+          .describe('Updated category name or ID (or empty/null to remove). Example: "Dining Out" or "cat_456"'),
+        newDateDescription: z.string().optional().describe("Updated date (e.g., 'today'). Example: "tomorrow" or "2024-07-15""),
+        newTransferDetails: z.string().optional().describe('Updated transfer details. Example: "From Jane Doe"'),
       }),
       execute: async (updates) => {
         const { transactionId, ...newValues } = updates;
@@ -435,7 +434,7 @@ export function createTransactionTools(userId: string) {
         transactionId: z
           .string()
           .describe(
-            'The exact unique ID of the transaction to delete (obtained from identification step).',
+            'The exact unique ID of the transaction to delete (obtained from identification step). Example: "txn_def456"',
           ),
       }),
       execute: async ({ transactionId }) => {
@@ -457,15 +456,15 @@ export function createTransactionTools(userId: string) {
       parameters: z.object({
         type: z
           .enum(['highest_income', 'lowest_income', 'highest_expense', 'lowest_expense'])
-          .describe('The type of extreme transaction to find.'),
+          .describe('The type of extreme transaction to find. Example: "highest_expense"'),
         dateDescription: z
           .string()
           .optional()
-          .describe("Date range (e.g., 'this month', 'last year'). Defaults to all time."),
+          .describe("Date range (e.g., 'this month', 'last year'). Defaults to all time. Example: "this quarter" or "2023-01-01,2023-12-31""),
         accountIdentifier: z
           .string()
           .optional()
-          .describe('Optional: Filter by account name or ID.'),
+          .describe('Optional: Filter by account name or ID. Example: "Main Account" or "acc_789"'),
       }),
       execute: async ({ type, dateDescription, accountIdentifier }) => {
         try {

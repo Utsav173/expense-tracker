@@ -21,12 +21,17 @@ export function createGoalTools(userId: string) {
     createSavingGoal: tool({
       description: 'Creates a new saving goal.',
       parameters: z.object({
-        goalName: z.string().min(1).describe("Name of the goal (e.g., 'Vacation Fund'). Example: "New Car Fund""),
+        goalName: z
+          .string()
+          .min(1)
+          .describe('Name of the goal (e.g., \'Vacation Fund\'). Example: "New Car Fund"'),
         targetAmount: z.number().positive('Target amount to save. Example: 15000'),
         targetDateDescription: z
           .string()
           .optional()
-          .describe("Optional target date (e.g., 'end of year', '2025-12-31'). Example: "next year" or "2026-06-30""),
+          .describe(
+            'Optional target date (e.g., \'end of year\', \'2025-12-31\'). Example: "next year" or "2026-06-30"',
+          ),
       }),
       execute: async ({ goalName, targetAmount, targetDateDescription }) => {
         try {
@@ -83,7 +88,10 @@ export function createGoalTools(userId: string) {
       description:
         'Identifies a specific saving goal by name for potential action (update, delete, add/withdraw). Requires confirmation.',
       parameters: z.object({
-        goalIdentifier: z.string().min(1).describe('Name or part of the name of the goal. Example: "Vacation" or "goal_abc123"'),
+        goalIdentifier: z
+          .string()
+          .min(1)
+          .describe('Name or part of the name of the goal. Example: "Vacation" or "goal_abc123"'),
       }),
       execute: async ({ goalIdentifier }) => {
         try {
@@ -128,12 +136,16 @@ export function createGoalTools(userId: string) {
         'Updates target amount or date of a saving goal AFTER confirmation, using its unique ID.',
       parameters: z.object({
         goalId: z.string().describe('Exact unique ID of the goal. Example: "goal_def456"'),
-        newTargetAmount: z.number().positive().optional().describe('New target amount (optional). Example: 20000'),
+        newTargetAmount: z
+          .number()
+          .positive()
+          .optional()
+          .describe('New target amount (optional). Example: 20000'),
         newTargetDateDescription: z
           .string()
           .optional()
           .describe(
-            "New target date (e.g., '2026-01-01', 'end of next year') (optional). Use 'null' or empty string to remove date. Example: "2027-12-31" or "null"",
+            "New target date (e.g., '2026-01-01', 'end of next year') (optional). Use 'null' or empty string to remove date. Example: \"2027-12-31\" or \"null\"",
           ),
       }),
       execute: async ({ goalId, newTargetAmount, newTargetDateDescription }) => {
@@ -180,7 +192,9 @@ export function createGoalTools(userId: string) {
     executeAddAmountToGoalById: tool({
       description: 'Adds an amount to a specific saving goal using its unique ID.',
       parameters: z.object({
-        goalId: z.string().describe('The exact unique ID of the saving goal. Example: "goal_ghi789"'),
+        goalId: z
+          .string()
+          .describe('The exact unique ID of the saving goal. Example: "goal_ghi789"'),
         amountToAdd: z.number().positive('The amount to add. Example: 500'),
       }),
       execute: async ({ goalId, amountToAdd }) => {
@@ -202,7 +216,9 @@ export function createGoalTools(userId: string) {
     executeWithdrawAmountFromGoalById: tool({
       description: 'Withdraws an amount from a specific saving goal using its unique ID.',
       parameters: z.object({
-        goalId: z.string().describe('The exact unique ID of the saving goal. Example: "goal_jkl012"'),
+        goalId: z
+          .string()
+          .describe('The exact unique ID of the saving goal. Example: "goal_jkl012"'),
         amountToWithdraw: z.number().positive('The amount to withdraw. Example: 100'),
       }),
       execute: async ({ goalId, amountToWithdraw }) => {
@@ -224,7 +240,9 @@ export function createGoalTools(userId: string) {
     executeConfirmedDeleteGoal: tool({
       description: 'Deletes a specific saving goal AFTER confirmation, using its unique ID.',
       parameters: z.object({
-        goalId: z.string().describe('The exact unique ID of the goal to delete. Example: "goal_mno345"'),
+        goalId: z
+          .string()
+          .describe('The exact unique ID of the goal to delete. Example: "goal_mno345"'),
       }),
       execute: async ({ goalId }) => {
         try {

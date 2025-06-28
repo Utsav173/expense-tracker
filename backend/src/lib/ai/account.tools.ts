@@ -17,7 +17,9 @@ export function createAccountTools(userId: string) {
         accountName: z
           .string()
           .min(1)
-          .describe("The desired name for the new account (e.g., 'ICICI Salary', 'Paytm Wallet'). Example: "My Savings Account""),
+          .describe(
+            "The desired name for the new account (e.g., 'ICICI Salary', 'Paytm Wallet'). Example: \"My Savings Account\"",
+          ),
         initialBalance: z
           .number()
           .optional()
@@ -28,7 +30,7 @@ export function createAccountTools(userId: string) {
           .length(3)
           .optional()
           .describe(
-            "The 3-letter currency code (e.g., INR, USD). Defaults to user's preferred currency or INR. Example: "USD"",
+            'The 3-letter currency code (e.g., INR, USD). Defaults to user\'s preferred currency or INR. Example: "INR"',
           )
           .default('INR'),
       }),
@@ -108,7 +110,9 @@ export function createAccountTools(userId: string) {
         accountIdentifier: z
           .string()
           .min(1)
-          .describe('The name or ID of the account to check the balance for. Example: "My Bank Account" or "acc_xyz123"'),
+          .describe(
+            'The name or ID of the account to check the balance for. Example: "My Bank Account" or "acc_xyz123"',
+          ),
       }),
       execute: async ({ accountIdentifier }) => {
         try {
@@ -143,7 +147,10 @@ export function createAccountTools(userId: string) {
       description:
         'Identifies a specific account by name or ID for a potential update or deletion action. Requires user confirmation before proceeding.',
       parameters: z.object({
-        accountIdentifier: z.string().min(1).describe('The name or ID of the account. Example: "Savings Account" or "acc_abc456"'),
+        accountIdentifier: z
+          .string()
+          .min(1)
+          .describe('The name or ID of the account. Example: "Savings Account" or "acc_abc456"'),
       }),
       execute: async ({ accountIdentifier }) => {
         try {
@@ -214,7 +221,10 @@ export function createAccountTools(userId: string) {
           .describe(
             'The unique ID of the account to rename (obtained from the identification step). Example: "acc_xyz789"',
           ),
-        newAccountName: z.string().min(1).describe('The desired new name for the account. Example: "My New Bank Account"'),
+        newAccountName: z
+          .string()
+          .min(1)
+          .describe('The desired new name for the account. Example: "My New Bank Account"'),
       }),
       execute: async ({ accountId, newAccountName }) => {
         try {
