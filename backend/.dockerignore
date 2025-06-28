@@ -15,7 +15,7 @@ helm-charts
 .idea
 coverage*
 # Ignore source files and scripts not needed in final image
-src/
+
 scripts/
 test/
 __tests__/
