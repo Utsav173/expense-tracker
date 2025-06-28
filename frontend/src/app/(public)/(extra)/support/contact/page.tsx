@@ -174,8 +174,8 @@ const ContactSupportPage = () => {
               Looking for Answers?
             </h3>
             <p className='text-text-body mt-2'>
-              You might find what you're looking for in our FAQ section. We're building it out with
-              answers to common questions.
+              You might find what you&apos;re looking for in our FAQ section. We&apos;re building it
+              out with answers to common questions.
             </p>
             <Button variant='outline' className='mt-4' disabled>
               Browse FAQs (Coming Soon)

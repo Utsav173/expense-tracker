@@ -122,7 +122,7 @@ const UserProfile = () => {
       });
       setIsApiKeyRemoved(false);
     }
-  }, [user, profileForm.reset]);
+  }, [user, profileForm]);
 
   useEffect(() => {
     return () => {

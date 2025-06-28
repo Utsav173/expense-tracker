@@ -44,7 +44,7 @@ export const useDateRangeFilter = ({
         });
       }
     }
-  }, [searchParams]);
+  }, [searchParams, urlPersistence]);
 
   const handleDateChange = useCallback(
     (newDate: DateRange | undefined) => {
@@ -61,7 +61,7 @@ export const useDateRangeFilter = ({
         router.push(`?${params.toString()}`);
       }
     },
-    [onDateChange, router, searchParams]
+    [onDateChange, router, searchParams, urlPersistence]
   );
 
   const handleClear = useCallback(() => {
@@ -87,7 +87,7 @@ export const useDateRangeFilter = ({
         maxDate={maxDate}
       />
     ),
-    [dateRange, handleDateChange, handleClear, label, className]
+    [dateRange, handleDateChange, handleClear, label, className, minDate, maxDate]
   );
 
   return {

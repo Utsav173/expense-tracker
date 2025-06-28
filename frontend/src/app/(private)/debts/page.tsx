@@ -74,7 +74,7 @@ const DebtsPage = () => {
 
   useEffect(() => {
     handlePageChange(1);
-  }, [debouncedSearch, type]);
+  }, [debouncedSearch, type, handlePageChange]);
 
   if (isLoading || !user) {
     return <Loader />;

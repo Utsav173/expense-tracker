@@ -153,8 +153,8 @@ export const AiChat = ({
                 <BrainCircuit className='mb-4 h-12 w-12' />
                 <p>Ask me anything about your finances!</p>
                 <p className='mt-1 text-xs'>
-                  E.g., "Add 500 expense for groceries", "Show my budget for travel", "List my
-                  savings accounts"
+                  E.g., &quot;Add 500 expense for groceries&quot;, &quot;Show my budget for travel&quot;, &quot;List my
+                  savings accounts&quot;
                 </p>
               </div>
             )}

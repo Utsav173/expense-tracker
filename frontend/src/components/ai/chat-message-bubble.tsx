@@ -33,7 +33,7 @@ import { ScrollArea } from '../ui/scroll-area';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
-import 'highlight.js/styles/github-dark.css'; // Or any other theme you prefer
+import 'highlight.js/styles/github-dark.css';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { useToast } from '@/lib/hooks/useToast';
@@ -42,6 +42,7 @@ import { Separator } from '../ui/separator';
 import { Transaction } from '@/lib/types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import ChartRenderer from './ChartRenderer';
+import { TransactionListSummary } from './transaction-list-summary';
 
 interface ChatMessageBubbleProps {
   message: ChatMessage;
@@ -99,19 +100,38 @@ const getToolIcon = (toolName: string): React.ElementType => {
 };
 
 const ToolDataSummary: React.FC<{ toolData: ChatMessage['toolData'] }> = ({ toolData }) => {
-  if (!toolData || !toolData.data) return null;
+  const [showAll, setShowAll] = useState(false);
+
+  React.useEffect(() => {
+    if (toolData && toolData.toolName === 'listTransactions' && Array.isArray(toolData.data) && toolData.data.length > 0) {
+      const transactions = toolData.data as Transaction[];
+      const MAX_INITIAL_DISPLAY = 5;
+      if (transactions.length <= MAX_INITIAL_DISPLAY) {
+        setShowAll(true);
+      } else {
+        setShowAll(false); // Reset if data changes and is no longer small
+      }
+    } else {
+      setShowAll(false); // Reset if toolData is not for transactions list
+    }
+  }, [toolData]);
+
+  if (!toolData || !toolData.data) {
+    return null;
+  }
 
   const { toolName, data } = toolData;
+
+  let content = null;
 
   if (toolName === 'listTransactions' && Array.isArray(data) && data.length > 0) {
     const transactions = data as Transaction[];
     const MAX_INITIAL_DISPLAY = 5;
-    const [showAll, setShowAll] = useState(transactions.length <= MAX_INITIAL_DISPLAY);
     const displayedTransactions = showAll
       ? transactions
       : transactions.slice(0, MAX_INITIAL_DISPLAY);
 
-    return (
+    content = (
       <div className='border-border/50 mt-2 space-y-1 border-t pt-2'>
         <p className='mb-1.5 text-[11px] font-semibold opacity-80'>
           Found {transactions.length} Transaction{transactions.length > 1 ? 's' : ''}:
@@ -185,9 +205,7 @@ const ToolDataSummary: React.FC<{ toolData: ChatMessage['toolData'] }> = ({ tool
         </ScrollArea>
       </div>
     );
-  }
-
-  if (toolName === 'getSpendingByCategory' && data.name && data.totalExpense) {
+  } else if (toolName === 'getSpendingByCategory' && data.name && data.totalExpense) {
     const spending = data.name
       .map((name: string, index: number) => ({
         name: name,
@@ -198,7 +216,7 @@ const ToolDataSummary: React.FC<{ toolData: ChatMessage['toolData'] }> = ({ tool
 
     if (spending.length === 0) return null;
 
-    return (
+    content = (
       <div className='border-border/50 mt-2 space-y-1 border-t pt-2'>
         <p className='text-[11px] font-semibold opacity-80'>Spending Summary:</p>
         <ul className='list-disc space-y-0.5 pl-4 text-[10px] opacity-90'>
@@ -211,9 +229,7 @@ const ToolDataSummary: React.FC<{ toolData: ChatMessage['toolData'] }> = ({ tool
         </ul>
       </div>
     );
-  }
-
-  if (toolName === 'getIncomeExpenseTrends') {
+  } else if (toolName === 'getIncomeExpenseTrends') {
     const firstBalance = data.balance?.[0];
     const lastBalance = data.balance?.[data.balance.length - 1];
     const trendMessage =
@@ -221,7 +237,7 @@ const ToolDataSummary: React.FC<{ toolData: ChatMessage['toolData'] }> = ({ tool
         ? `Balance trend from ${formatCurrency(firstBalance)} to ${formatCurrency(lastBalance)}`
         : 'Trend data retrieved';
 
-    return (
+    content = (
       <div className='border-border/50 mt-2 space-y-1 border-t pt-2'>
         <p className='flex items-center gap-1 text-[11px] font-semibold opacity-80'>
           <BarChart3 className='h-3 w-3' /> {trendMessage}
@@ -229,10 +245,8 @@ const ToolDataSummary: React.FC<{ toolData: ChatMessage['toolData'] }> = ({ tool
         <p className='text-[10px] italic opacity-70'>(Chart visualization available on frontend)</p>
       </div>
     );
-  }
-
-  if (toolName === 'getAccountAnalyticsSummary') {
-    return (
+  } else if (toolName === 'getAccountAnalyticsSummary') {
+    content = (
       <div className='border-border/50 mt-2 space-y-1 border-t pt-2 text-[10px] opacity-90'>
         <p className='mb-1 text-[11px] font-semibold opacity-80'>Period Summary:</p>
         <p>
@@ -246,42 +260,38 @@ const ToolDataSummary: React.FC<{ toolData: ChatMessage['toolData'] }> = ({ tool
         </p>
       </div>
     );
-  }
-
-  if (toolName === 'getExtremeTransaction' && data.id) {
+  } else if (toolName === 'getExtremeTransaction' && data.id) {
     const typeLabel = data.isIncome ? 'Income' : 'Expense';
     const dateFormatted = data.createdAt ? format(parseISO(data.createdAt), 'MMM d, yyyy') : 'N/A';
-    return (
+    content = (
       <div className='border-border/50 mt-2 space-y-1 border-t pt-2'>
         <p className='text-[11px] font-semibold opacity-80'>Found Transaction:</p>
         <p className='text-[10px] opacity-90'>
-          "{data.text}" ({typeLabel}) - {formatCurrency(data.amount, data.currency)} on{' '}
+          &quot;{data.text}&quot; ({typeLabel}) - {formatCurrency(data.amount, data.currency)} on{' '}
           {dateFormatted}
         </p>
       </div>
     );
-  }
-
-  if (toolData.message) {
-    return (
+  } else if (toolData.message) {
+    content = (
       <div className='border-border/50 mt-2 border-t pt-2'>
         <p className='text-[11px] italic opacity-70'>{toolData.message}</p>
       </div>
     );
   }
 
-  return null;
+  return content;
 };
 
 const ToolInfo: React.FC<{
   toolCalls?: ChatMessage['toolCalls'];
   toolResults?: ChatMessage['toolResults'];
 }> = ({ toolCalls, toolResults }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
   const hasMeaningfulContent =
     (toolCalls && toolCalls.length > 0) || (toolResults && toolResults.length > 0);
   if (!hasMeaningfulContent) return null;
-
-  const [isOpen, setIsOpen] = useState(false);
 
   let overallStatus: 'error' | 'pending' | 'success' | 'info' | 'confirm' | 'clarify' = 'info';
 

@@ -104,7 +104,7 @@ const AccountSharesPage = ({ params }: PageProps) => {
             <Share2 className='text-muted-foreground h-12 w-12' />
             <h3 className='text-lg font-medium'>No shares found</h3>
             <p className='text-muted-foreground'>
-              This account hasn't been shared with anyone yet.
+              This account hasn&apos;t been shared with anyone yet.
             </p>
             <ShareAccountModal
               accountId={id}

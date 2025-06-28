@@ -9,6 +9,7 @@ import { formatCurrency } from '@/lib/utils';
 import React, { useState } from 'react';
 import ComingSoonModal from '../modals/comming-soon-modal';
 import { DataTableColumnHeader } from '../ui/column-header';
+import { InvestmentHoldingActions } from './investment-holding-actions';
 
 interface InvestmentHoldingsColumnsProps {
   handleEdit: (investment: Investment) => void;
@@ -68,46 +69,12 @@ export const investmentHoldingsColumns = ({
   {
     id: 'actions',
     header: 'Actions',
-    cell: ({ row }) => {
-      const investment = row.original;
-      const [isInsightModalOpen, setIsInsightModalOpen] = useState(false);
-
-      return (
-        <div className='flex justify-end gap-1'>
-          <Button
-            size='icon'
-            variant='ghost'
-            className='hover:text-primary h-8 w-8'
-            onClick={() => setIsInsightModalOpen(true)}
-            aria-label='View Investment Insight'
-          >
-            <Eye size={16} />
-          </Button>
-          <Button
-            size='icon'
-            variant='ghost'
-            className='h-8 w-8 hover:text-blue-600'
-            onClick={() => handleEdit(investment)}
-            aria-label='Edit Investment'
-          >
-            <Pencil size={16} />
-          </Button>
-          <Button
-            size='icon'
-            variant='ghost'
-            className='text-destructive hover:text-destructive h-8 w-8'
-            onClick={() => handleDeleteClick(investment.id)}
-            aria-label='Delete Investment'
-          >
-            <Trash2 size={16} />
-          </Button>
-          <ComingSoonModal
-            isOpen={isInsightModalOpen}
-            onOpenChange={setIsInsightModalOpen}
-            featureName='Investment Insight & Details'
-          />
-        </div>
-      );
-    }
+    cell: ({ row }) => (
+      <InvestmentHoldingActions
+        investment={row.original}
+        handleEdit={handleEdit}
+        handleDeleteClick={handleDeleteClick}
+      />
+    )
   }
 ];

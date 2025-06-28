@@ -76,7 +76,7 @@ export function Combobox({
     } else if (!value && !open) {
       setSearchQuery('');
     }
-  }, [value, open]);
+  }, [value, open, searchQuery]);
 
   const handleSelect = (currentValue: string) => {
     const selectedOption = options.find(
