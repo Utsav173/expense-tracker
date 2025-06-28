@@ -33,17 +33,45 @@ const apiFetch = async <T>(
   errorMessage?: string
 ): Promise<T> => {
   try {
-    const response: ApiResponse<T> = await api.request({
+    const response = await api.request<T>({
       url,
       method,
       data: body,
+      responseType: config?.responseType || 'json',
       ...config
     });
 
+    if (config?.responseType === 'blob') {
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = 'download';
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename\*?=(?:UTF-8'')?"?([^"]*)"?/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = decodeURIComponent(filenameMatch[1]);
+        }
+      } else if (config?.params?.exportType) {
+        filename = `statement.${config.params.exportType}`;
+      }
+
+      const url = window.URL.createObjectURL(new Blob([response.data as any]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      if (successMessage) {
+        toast.success(successMessage);
+      }
+      return response.data;
+    }
+
     if (successMessage) {
       toast.success(successMessage);
-    } else if (response?.message) {
-      toast.success(response.message);
+    } else if ((response.data as ApiResponse<T>)?.message) {
+      toast.success((response.data as ApiResponse<T>).message || '');
     }
 
     return response?.data;
@@ -69,7 +97,7 @@ const apiFetch = async <T>(
     if (errorMessage) {
       toast.error(errorMessage);
     } else {
-      toast.error(message);
+      toast.error(message || '');
     }
 
     throw new Error(message);

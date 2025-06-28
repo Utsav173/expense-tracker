@@ -85,7 +85,7 @@ const LoginPage = () => {
               placeholder='you@example.com'
               {...register('email')}
               disabled={loginLoading}
-              className='border-input bg-background focus:bg-card focus:ring-primary w-full rounded-lg border px-4 py-2 transition-all duration-200 focus:border-transparent focus:ring-2'
+              className='border-border bg-background focus:bg-card focus:ring-primary w-full rounded-lg border px-4 py-2 transition-all duration-200 focus:border-transparent focus:ring-2'
             />
             {errors.email && (
               <p className='text-destructive py-1 text-xs'> {errors.email.message}</p>
@@ -101,7 +101,7 @@ const LoginPage = () => {
               placeholder='••••••••'
               {...register('password')}
               disabled={loginLoading}
-              className='border-input bg-background focus:bg-card focus:ring-primary w-full rounded-lg border px-4 py-2 transition-all duration-200 focus:border-transparent focus:ring-2'
+              className='border-border bg-background focus:bg-card focus:ring-primary w-full rounded-lg border px-4 py-2 transition-all duration-200 focus:border-transparent focus:ring-2'
             />
             {errors.password && (
               <p className='text-destructive py-1 text-xs'> {errors.password.message}</p>

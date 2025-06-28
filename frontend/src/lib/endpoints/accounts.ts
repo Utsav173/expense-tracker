@@ -49,13 +49,27 @@ export const accountGetById = (
 ): Promise<ApiResponse<AccountDetails>> =>
   apiFetch(`/accounts/${id}`, 'GET', undefined, undefined, successMessage, errorMessage);
 
+type getStatementParams = {
+  startDate?: string;
+  endDate?: string;
+  numTransactions?: string;
+  exportType?: string;
+};
+
 export const accountGetStatement = (
   id: string,
-  params: any,
+  params: getStatementParams,
   successMessage?: string,
   errorMessage?: string
 ) =>
-  apiFetch(`/accounts/${id}/statement`, 'GET', undefined, { params }, successMessage, errorMessage);
+  apiFetch(
+    `/accounts/${id}/statement`,
+    'GET',
+    undefined,
+    { params, responseType: 'blob' },
+    successMessage,
+    errorMessage
+  );
 
 export const accountGetDashboard = (
   params: { duration?: string; startDate?: string; endDate?: string } = {},

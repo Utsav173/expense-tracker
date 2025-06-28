@@ -2,7 +2,7 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "start": "bun run dist/index.js",
-    "generate:build": "bun build ./src/index.ts --outdir ./dist --target bun --external puppeteer",
+    "generate:build": "bun build ./src/index.ts --outdir ./dist --target bun",
     "db:create": "bash ./scripts/db-setup.sh",
     "db:stop": "docker-compose down",
     "db:clean": "docker-compose down -v",
@@ -38,7 +38,6 @@
     "papaparse": "^5.5.2",
     "pg": "^8.11.5",
     "postgres": "^3.4.4",
-    "puppeteer": "^22.6.5",
     "xlsx": "^0.18.5",
     "zod": "^3.24.3"
   },

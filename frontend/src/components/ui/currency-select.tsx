@@ -72,7 +72,7 @@ const CurrencySelect: React.FC<CurrencySelectProps> = ({
       ) : (
         trigger
       )}
-      <SelectContent className='border-input w-full p-0'>
+      <SelectContent className='border-border w-full p-0'>
         <SelectGroup>
           {currencies.map((currency) => (
             <SelectItem
