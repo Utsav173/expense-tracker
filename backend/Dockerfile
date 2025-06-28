@@ -33,6 +33,7 @@ RUN bun install --ci --production
 
 # Copy the built application
 COPY --from=build /usr/src/app/dist ./dist
+COPY --from=build /usr/src/app/public ./public
 
 # Change ownership of the app directory
 RUN chown -R bun:bun /usr/src/app
