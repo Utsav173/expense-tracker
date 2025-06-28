@@ -150,7 +150,7 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
         setMonth(initialDefaultMonth || new Date());
       }
     }
-  }, [date, initialDefaultMonth, month, tempDate]);
+  }, [date, initialDefaultMonth]);
 
   const isSameRange = (a?: DateRange, b?: DateRange): boolean => {
     if (!a && !b) return true;
