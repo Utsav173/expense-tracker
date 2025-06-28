@@ -96,7 +96,10 @@ export function Combobox({
           role='combobox'
           aria-expanded={open}
           disabled={disabled}
-          className={cn('bg-input border-border w-full justify-between font-normal', className)}
+          className={cn(
+            'border-border w-full justify-between bg-transparent font-normal',
+            className
+          )}
         >
           <span className='truncate'>{value?.label || placeholder}</span>
           <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />

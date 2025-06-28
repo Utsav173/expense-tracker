@@ -130,11 +130,6 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
     };
   }, [initialMinDate, initialMaxDate, startYearOffset, endYearOffset]);
 
-  const disabledDatesSet = useMemo(
-    () => new Set(disabledDates?.map((d) => format(d, 'yyyy-MM-dd'))),
-    [disabledDates]
-  );
-
   useEffect(() => {
     if (!isSameRange(date, tempDate)) {
       setTempDate(date);
@@ -333,7 +328,7 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
                 type='button'
                 variant='outline'
                 className={cn(
-                  'bg-input border-border w-full justify-between px-3 font-normal',
+                  'border-border w-full justify-between bg-transparent px-3 font-normal',
                   !(tempDate?.from || date?.from) && 'text-muted-foreground',
                   disabled && 'cursor-not-allowed opacity-50',
                   buttonClassName
