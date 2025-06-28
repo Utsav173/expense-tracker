@@ -54,7 +54,7 @@ const ResetPasswordPage = () => {
     }
     setIsLoading(true);
     try {
-      await authResetPassword(data, 'Password updated', 'Failed to reset password');
+      await authResetPassword(data);
       showSuccess('Password Reset Successfully');
       router.push('/auth/login');
     } catch (e: any) {

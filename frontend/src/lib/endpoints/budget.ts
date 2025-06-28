@@ -1,8 +1,7 @@
 import apiFetch from '../api-client';
 import { Budget, Pagination, ApiResponse, BudgetSummaryItem } from '../types';
 
-export const budgetCreate = (body: any, successMessage?: string, errorMessage?: string) =>
-  apiFetch('/budget', 'POST', body, undefined, successMessage, errorMessage);
+export const budgetCreate = (body: any) => apiFetch('/budget', 'POST', body);
 
 export const budgetGetAll = (
   id: string,
@@ -11,43 +10,24 @@ export const budgetGetAll = (
     limit?: number;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
-  },
-  successMessage?: string,
-  errorMessage?: string
+  }
 ): Promise<ApiResponse<{ data: Budget[]; pagination: Pagination }>> =>
-  apiFetch(`/budget/${id}/all`, 'GET', undefined, { params }, successMessage, errorMessage);
+  apiFetch(`/budget/${id}/all`, 'GET', undefined, { params });
 
-export const budgetUpdate = (
-  id: string,
-  body: any,
-  successMessage?: string,
-  errorMessage?: string
-) => apiFetch(`/budget/${id}`, 'PUT', body, undefined, successMessage, errorMessage);
+export const budgetUpdate = (id: string, body: any) => apiFetch(`/budget/${id}`, 'PUT', body);
 
-export const budgetDelete = (id: string, successMessage?: string, errorMessage?: string) =>
-  apiFetch(`/budget/${id}`, 'DELETE', undefined, undefined, successMessage, errorMessage);
+export const budgetDelete = (id: string) => apiFetch(`/budget/${id}`, 'DELETE');
 
 export const budgetGetSummary = (
   month: number,
-  year: number,
-  successMessage?: string,
-  errorMessage?: string
+  year: number
 ): Promise<ApiResponse<BudgetSummaryItem[]>> => {
   const params = { month, year };
-  return apiFetch(
-    '/budget/summary',
-    'GET',
-    undefined,
-    { params },
-    successMessage,
-    errorMessage || 'Failed to get budget summary'
-  );
+  return apiFetch('/budget/summary', 'GET', undefined, { params });
 };
 
 export const budgetGetProgress = (
-  id: string,
-  successMessage?: string,
-  errorMessage?: string
+  id: string
 ): Promise<
   ApiResponse<{
     budgetId: string;
@@ -56,4 +36,4 @@ export const budgetGetProgress = (
     remainingAmount: number;
     progress: number;
   }>
-> => apiFetch(`/budget/${id}/progress`, 'GET', undefined, undefined, successMessage, errorMessage);
+> => apiFetch(`/budget/${id}/progress`, 'GET');

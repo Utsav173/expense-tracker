@@ -32,40 +32,13 @@ export const apiFetchDebts = async (
   return apiFetch('/interest/debts', 'GET', undefined, { params });
 };
 
-export const debtsMarkAsPaid = (
-  id: string,
-  successMessage?: string,
-  errorMessage?: string
-): Promise<ApiResponse<{ message: string }>> =>
-  apiFetch(
-    `/interest/debts/${id}/mark-paid`,
-    'PUT',
-    undefined,
-    undefined,
-    successMessage || 'Debt marked as paid',
-    errorMessage
-  );
+export const debtsMarkAsPaid = (id: string): Promise<ApiResponse<{ message: string }>> =>
+  apiFetch(`/interest/debts/${id}/mark-paid`, 'PUT');
 
-export const apiCreateDebt = (
-  body: any,
-  successMessage?: string,
-  errorMessage?: string
-): Promise<ApiResponse<{ message: string; data: Debts }>> =>
-  apiFetch(
-    '/interest/debts',
-    'POST',
-    body,
-    undefined,
-    successMessage || 'Debt created successfully',
-    errorMessage
-  );
+export const apiCreateDebt = (body: any): Promise<ApiResponse<{ message: string; data: Debts }>> =>
+  apiFetch('/interest/debts', 'POST', body);
 
-export const apiUpdateDebt = (
-  id: string,
-  body: any,
-  successMessage?: string,
-  errorMessage?: string
-): Promise<ApiResponse<{ message: string }>> => {
+export const apiUpdateDebt = (id: string, body: any): Promise<ApiResponse<{ message: string }>> => {
   const payload = {
     description: body.description,
     duration: body.duration,
@@ -73,53 +46,18 @@ export const apiUpdateDebt = (
     isPaid: body.isPaid
   };
 
-  return apiFetch(
-    `/interest/debts/${id}`,
-    'PUT',
-    payload,
-    undefined,
-    successMessage || 'Debt updated successfully',
-    errorMessage
-  );
+  return apiFetch(`/interest/debts/${id}`, 'PUT', payload);
 };
 
-export const apiDeleteDebt = (
-  id: string,
-  successMessage?: string,
-  errorMessage?: string
-): Promise<ApiResponse<{ message: string }>> =>
-  apiFetch(
-    `/interest/debts/${id}`,
-    'DELETE',
-    undefined,
-    undefined,
-    successMessage || 'Debt deleted successfully',
-    errorMessage
-  );
+export const apiDeleteDebt = (id: string): Promise<ApiResponse<{ message: string }>> =>
+  apiFetch(`/interest/debts/${id}`, 'DELETE');
 
-export const getOutstandingDebts = (
-  successMessage?: string,
-  errorMessage?: string
-): Promise<OutstandingDebtsResponse> =>
-  apiFetch(
-    '/interest/debts',
-    'GET',
-    undefined,
-    { params: { type: 'taken', isPaid: 'false', pageSize: 100 } },
-    successMessage,
-    errorMessage || 'Failed to fetch outstanding debts'
-  );
+export const getOutstandingDebts = (): Promise<OutstandingDebtsResponse> =>
+  apiFetch('/interest/debts', 'GET', undefined, {
+    params: { type: 'taken', isPaid: 'false', pageSize: 100 }
+  });
 
 export const interestCreate = (
-  data: any,
-  successMessage?: string,
-  errorMessage?: string
+  data: any
 ): Promise<ApiResponse<{ interest: number; totalAmount: number }>> =>
-  apiFetch(
-    '/interest/create',
-    'POST',
-    data,
-    undefined,
-    successMessage,
-    errorMessage || 'Failed to calculate interest'
-  );
+  apiFetch('/interest/create', 'POST', data);

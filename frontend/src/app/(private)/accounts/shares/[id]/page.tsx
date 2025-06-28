@@ -42,12 +42,7 @@ const AccountSharesPage = ({ params }: PageProps) => {
   });
 
   const revokeShareMutation = useMutation({
-    mutationFn: (userId: string) =>
-      accountRevokeShare(
-        { accountId: id, userId },
-        'Access revoked successfully!',
-        'Failed to revoke access.'
-      ),
+    mutationFn: (userId: string) => accountRevokeShare({ accountId: id, userId }),
     onSuccess: () => {
       invalidate(['accountShares']);
       showSuccess('Access revoked successfully!');

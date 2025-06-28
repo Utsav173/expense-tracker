@@ -33,7 +33,7 @@ const ForgotPasswordPage = () => {
   const handleForgotPassword = async (data: ForgotPasswordSchemaType) => {
     setIsLoading(true);
     try {
-      await authForgotPassword(data, undefined, 'Could not send password link, please try again');
+      await authForgotPassword(data);
       router.push('/auth/forgot-password-sent');
     } catch (e: any) {
       showError(e.message);

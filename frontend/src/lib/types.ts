@@ -399,3 +399,23 @@ export interface ParsedTransactionFromAI {
   credit?: number | undefined;
   transfer?: string | undefined;
 }
+
+export interface AiProcessRequest {
+  prompt: string;
+  sessionId?: string;
+}
+
+export interface AiProcessResponse {
+  response: string;
+  sessionId: string;
+  toolCalls?: any[];
+  toolResults?: any[];
+}
+
+export interface AiProcessPdfRequest {
+  documentContent: string;
+}
+
+export interface AiProcessPdfResponse {
+  transactions: ParsedTransactionFromAI[];
+}

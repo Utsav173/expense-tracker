@@ -56,8 +56,7 @@ const ShareAccountModal = ({
   const { showError, showSuccess } = useToast();
 
   const shareAccountMutation = useMutation({
-    mutationFn: (data: ShareAccountFormSchema) =>
-      accountShare(data, 'Account shared successfully!', 'Failed to share account.'),
+    mutationFn: (data: ShareAccountFormSchema) => accountShare(data),
     onSuccess: async () => {
       await invalidate(['accounts', 'accountShares']);
       showSuccess('Account shared successfully!');

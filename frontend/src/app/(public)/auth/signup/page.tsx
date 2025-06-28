@@ -46,7 +46,7 @@ const SignupPage = () => {
         formData.append('profilePic', data.profilePic);
       }
 
-      await authSignup(formData, 'Registration successfull!', 'Registration failed');
+      await authSignup(formData);
       push('/auth/login');
     } catch (e: any) {
       showError(e.message);
