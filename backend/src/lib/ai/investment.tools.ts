@@ -18,23 +18,27 @@ export function createInvestmentTools(userId: string) {
         investmentAccountIdentifier: z
           .string()
           .min(1)
-          .describe('Name or ID of the investment account holding this investment.'),
+          .describe(
+            'Name or ID of the investment account holding this investment. Example: "My Brokerage" or "inv_acc_123"',
+          ),
         symbol: z
           .string()
           .min(1)
           .describe(
-            "The stock ticker or mutual fund symbol (e.g., 'RELIANCE.NS', 'INFY'). if found symbol is not accruate, you can utilized 'searchStockSymbols' tools to get correct stock symbol.",
+            "The stock ticker or mutual fund symbol (e.g., 'RELIANCE.NS', 'INFY'). if found symbol is not accruate, you can utilized 'searchStockSymbols' tools to get correct stock symbol. Example: \"TCS\"",
           ),
-        shares: z.number().positive('Number of shares or units purchased.'),
+        shares: z.number().positive('Number of shares or units purchased. Example: 10'),
         purchasePrice: z
           .number()
           .nonnegative()
           .describe(
-            'Price per share/unit at purchase. if not provided, you can utilized "getHistoricalStockPriceOnDate" tools and fetch the price for that date.',
+            'Price per share/unit at purchase. if not provided, you can utilized "getHistoricalStockPriceOnDate" tools and fetch the price for that date. Example: 150.75',
           ),
         purchaseDateDescription: z
           .string()
-          .describe("Date of purchase (e.g., 'today', '2024-01-15')."),
+          .describe(
+            'Date of purchase (e.g., \'today\', \'2024-01-15\'). Example: "yesterday" or "2023-11-20"',
+          ),
       }),
       execute: async ({
         investmentAccountIdentifier,
@@ -90,8 +94,16 @@ export function createInvestmentTools(userId: string) {
         investmentAccountIdentifier: z
           .string()
           .min(1)
-          .describe('Name or ID of the investment account.'),
-        limit: z.number().int().positive().optional().default(20).describe('Max results.'),
+          .describe(
+            'Name or ID of the investment account. Example: "My Brokerage" or "inv_acc_123"',
+          ),
+        limit: z
+          .number()
+          .int()
+          .positive()
+          .optional()
+          .default(20)
+          .describe('Max results. Example: 10'),
       }),
       execute: async ({ investmentAccountIdentifier, limit = 20 }) => {
         try {
@@ -135,8 +147,10 @@ export function createInvestmentTools(userId: string) {
         investmentAccountIdentifier: z
           .string()
           .min(1)
-          .describe('Name or ID of the investment account.'),
-        symbol: z.string().min(1).describe('Stock ticker or fund symbol.'),
+          .describe(
+            'Name or ID of the investment account. Example: "My Brokerage" or "inv_acc_123"',
+          ),
+        symbol: z.string().min(1).describe('Stock ticker or fund symbol. Example: "AAPL"'),
       }),
       execute: async ({ investmentAccountIdentifier, symbol }) => {
         try {
@@ -212,17 +226,23 @@ export function createInvestmentTools(userId: string) {
       description:
         'Updates purchase details (shares, price, date) of an investment AFTER confirmation, using its unique ID.',
       parameters: z.object({
-        investmentId: z.string().describe('Exact unique ID of the investment.'),
-        newShares: z.number().positive().optional().describe('New number of shares (optional).'),
+        investmentId: z
+          .string()
+          .describe('Exact unique ID of the investment. Example: "inv_abc123"'),
+        newShares: z
+          .number()
+          .positive()
+          .optional()
+          .describe('New number of shares (optional). Example: 15'),
         newPurchasePrice: z
           .number()
           .nonnegative()
           .optional()
-          .describe('New purchase price per share (optional).'),
+          .describe('New purchase price per share (optional). Example: 160.25'),
         newPurchaseDateDescription: z
           .string()
           .optional()
-          .describe("New purchase date (e.g., '2024-02-10') (optional)."),
+          .describe('New purchase date (e.g., \'2024-02-10\') (optional). Example: "2024-03-01"'),
       }),
       execute: async ({
         investmentId,
@@ -270,8 +290,13 @@ export function createInvestmentTools(userId: string) {
       description:
         'Updates the total dividend received for an investment AFTER confirmation, using its unique ID.',
       parameters: z.object({
-        investmentId: z.string().describe('Exact unique ID of the investment.'),
-        newTotalDividend: z.number().nonnegative().describe('New total dividend amount received.'),
+        investmentId: z
+          .string()
+          .describe('Exact unique ID of the investment. Example: "inv_def456"'),
+        newTotalDividend: z
+          .number()
+          .nonnegative()
+          .describe('New total dividend amount received. Example: 50.00'),
       }),
       execute: async ({ investmentId, newTotalDividend }) => {
         try {
@@ -292,7 +317,9 @@ export function createInvestmentTools(userId: string) {
     executeConfirmedDeleteInvestment: tool({
       description: 'Deletes a specific investment holding AFTER confirmation, using its unique ID.',
       parameters: z.object({
-        investmentId: z.string().describe('Exact unique ID of the investment to delete.'),
+        investmentId: z
+          .string()
+          .describe('Exact unique ID of the investment to delete. Example: "inv_ghi789"'),
       }),
       execute: async ({ investmentId }) => {
         try {

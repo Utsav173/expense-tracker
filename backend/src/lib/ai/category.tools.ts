@@ -15,7 +15,9 @@ export function createCategoryTools(userId: string) {
         categoryName: z
           .string()
           .min(1)
-          .describe("The name for the new category (e.g., 'Freelance Income', 'Office Lunch')."),
+          .describe(
+            "The name for the new category (e.g., 'Freelance Income', 'Office Lunch'). Example: \"New Category Name\"",
+          ),
       }),
       execute: async ({ categoryName }) => {
         try {
@@ -40,7 +42,9 @@ export function createCategoryTools(userId: string) {
         searchName: z
           .string()
           .optional()
-          .describe('Optional: Filter categories whose name contains this text.'),
+          .describe(
+            'Optional: Filter categories whose name contains this text. Example: "Food" or "Travel"',
+          ),
       }),
       execute: async ({ searchName }) => {
         try {
@@ -70,7 +74,10 @@ export function createCategoryTools(userId: string) {
       description:
         'Identifies a custom category by name for a potential update or deletion. Fails if transactions are associated with deletion attempt. Requires confirmation.',
       parameters: z.object({
-        categoryIdentifier: z.string().min(1).describe('The name or ID of the custom category.'),
+        categoryIdentifier: z
+          .string()
+          .min(1)
+          .describe('The name or ID of the custom category. Example: "Groceries" or "cat_abc123"'),
       }),
       execute: async ({ categoryIdentifier }) => {
         try {
@@ -115,7 +122,7 @@ export function createCategoryTools(userId: string) {
         categoryId: z
           .string()
           .describe(
-            'The exact unique ID of the category to delete (obtained from identification step).',
+            'The exact unique ID of the category to delete (obtained from identification step). Example: "cat_xyz789"',
           ),
       }),
       execute: async ({ categoryId }) => {
@@ -138,9 +145,12 @@ export function createCategoryTools(userId: string) {
         categoryId: z
           .string()
           .describe(
-            'The unique ID of the custom category to rename (obtained from identification step).',
+            'The unique ID of the custom category to rename (obtained from identification step). Example: "cat_xyz789"',
           ),
-        newCategoryName: z.string().min(1).describe('The desired new name.'),
+        newCategoryName: z
+          .string()
+          .min(1)
+          .describe('The desired new name. Example: "New Category Name"'),
       }),
       execute: async ({ categoryId, newCategoryName }) => {
         try {

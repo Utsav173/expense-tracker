@@ -32,6 +32,12 @@ interface ToolResponse {
   details?: string;
   clarificationNeeded?: boolean;
   options?: { id: string; name?: string; description?: string; details?: string }[];
+  chart?: {
+    type: 'bar' | 'line' | 'pie' | 'donut';
+    data: any;
+    options?: any;
+    title?: string;
+  };
 }
 
 export const createToolResponse = (response: ToolResponse): string => {

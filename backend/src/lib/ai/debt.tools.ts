@@ -25,33 +25,52 @@ export function createDebtTools(userId: string) {
     addDebt: tool({
       description: 'Records a new debt (money borrowed or lent). Requires associated account.',
       parameters: z.object({
-        amount: z.number().positive('Principal amount.'),
-        type: z.enum(['given', 'taken']).describe("'given' (lent) or 'taken' (borrowed)."),
+        amount: z.number().positive('Principal amount. Example: 5000'),
+        type: z
+          .enum(['given', 'taken'])
+          .describe("'given' (lent) or 'taken' (borrowed). Example: \"taken\""),
         involvedUserIdentifier: z
           .string()
           .min(1)
-          .describe('Name or email of the other person involved.'),
-        description: z.string().optional().describe('Brief description (optional).'),
+          .describe(
+            'Name or email of the other person involved. Example: "John Doe" or "john.doe@example.com"',
+          ),
+        description: z
+          .string()
+          .optional()
+          .describe('Brief description (optional). Example: "Loan for car repair"'),
         interestRate: z
           .number()
           .nonnegative()
           .optional()
           .default(0)
-          .describe('Annual interest rate % (default 0).'),
-        interestType: z.enum(['simple', 'compound']).default('simple').describe('Interest type.'),
-        accountIdentifier: z.string().min(1).describe('Name or ID of the associated account.'),
-        durationType: z.enum(['year', 'month', 'week', 'day', 'custom']).describe('Duration type.'),
+          .describe('Annual interest rate % (default 0). Example: 5.5'),
+        interestType: z
+          .enum(['simple', 'compound'])
+          .default('simple')
+          .describe('Interest type. Example: "compound"'),
+        accountIdentifier: z
+          .string()
+          .min(1)
+          .describe(
+            'Name or ID of the associated account. Example: "My Bank Account" or "acc_123"',
+          ),
+        durationType: z
+          .enum(['year', 'month', 'week', 'day', 'custom'])
+          .describe('Duration type. Example: "month"'),
         frequency: z
           .number()
           .int()
           .positive()
           .optional()
-          .describe("Number of duration units (required if durationType is not 'custom')."),
+          .describe(
+            "Number of duration units (required if durationType is not 'custom'). Example: 12",
+          ),
         customDateRangeDescription: z
           .string()
           .optional()
           .describe(
-            "Specific date range 'YYYY-MM-DD,YYYY-MM-DD' (required if durationType is 'custom').",
+            "Specific date range 'YYYY-MM-DD,YYYY-MM-DD' (required if durationType is 'custom'). Example: \"2024-01-01,2024-12-31\"",
           ),
       }),
       execute: async (args) => {
@@ -149,7 +168,10 @@ export function createDebtTools(userId: string) {
     listDebts: tool({
       description: 'Lists debts (given or taken). Can filter by type.',
       parameters: z.object({
-        type: z.enum(['given', 'taken']).optional().describe("Filter by 'given' or 'taken'."),
+        type: z
+          .enum(['given', 'taken'])
+          .optional()
+          .describe("Filter by 'given' or 'taken'. Example: \"given\""),
       }),
       execute: async ({ type }) => {
         try {
@@ -173,7 +195,9 @@ export function createDebtTools(userId: string) {
         debtIdentifier: z
           .string()
           .min(1)
-          .describe("Information to identify the debt (e.g., 'loan from john')."),
+          .describe(
+            'Information to identify the debt (e.g., \'loan from john\'). Example: "loan to Sarah" or "debt_abc123"',
+          ),
       }),
       execute: async ({ debtIdentifier }) => {
         try {
@@ -216,7 +240,9 @@ export function createDebtTools(userId: string) {
       description:
         'Marks a specific debt as paid AFTER user confirmation, using its exact unique ID.',
       parameters: z.object({
-        debtId: z.string().describe('The exact unique ID of the debt to mark paid.'),
+        debtId: z
+          .string()
+          .describe('The exact unique ID of the debt to mark paid. Example: "debt_abc123"'),
       }),
       execute: async ({ debtId }) => {
         try {
@@ -238,7 +264,9 @@ export function createDebtTools(userId: string) {
         debtIdentifier: z
           .string()
           .min(1)
-          .describe("Information to identify the debt (e.g., 'loan from john')."),
+          .describe(
+            'Information to identify the debt (e.g., \'loan from john\'). Example: "loan from Jane" or "debt_def456"',
+          ),
       }),
       execute: async ({ debtIdentifier }) => {
         try {
@@ -281,23 +309,28 @@ export function createDebtTools(userId: string) {
       description:
         'Updates description or duration/frequency of a debt AFTER confirmation, using its unique ID.',
       parameters: z.object({
-        debtId: z.string().describe('Exact unique ID of the debt.'),
-        newDescription: z.string().optional().describe('New description (optional).'),
+        debtId: z.string().describe('Exact unique ID of the debt. Example: "debt_def456"'),
+        newDescription: z
+          .string()
+          .optional()
+          .describe('New description (optional). Example: "Updated loan description"'),
         newDurationType: z
           .enum(['year', 'month', 'week', 'day', 'custom'])
           .optional()
-          .describe('New duration type (optional).'),
+          .describe('New duration type (optional). Example: "month"'),
         newFrequency: z
           .number()
           .int()
           .positive()
           .optional()
-          .describe("New number of duration units (required if newDurationType is not 'custom')."),
+          .describe(
+            "New number of duration units (required if newDurationType is not 'custom'). Example: 6",
+          ),
         newCustomDateRangeDescription: z
           .string()
           .optional()
           .describe(
-            "New date range 'YYYY-MM-DD,YYYY-MM-DD' (required if newDurationType is 'custom').",
+            "New date range 'YYYY-MM-DD,YYYY-MM-DD' (required if newDurationType is 'custom'). Example: \"2025-01-01,2025-06-30\"",
           ),
       }),
       execute: async (args) => {
@@ -375,7 +408,9 @@ export function createDebtTools(userId: string) {
     executeConfirmedDeleteDebt: tool({
       description: 'Deletes a specific debt AFTER confirmation, using its unique ID.',
       parameters: z.object({
-        debtId: z.string().describe('Exact unique ID of the debt to delete.'),
+        debtId: z
+          .string()
+          .describe('Exact unique ID of the debt to delete. Example: "debt_ghi789"'),
       }),
       execute: async ({ debtId }) => {
         try {

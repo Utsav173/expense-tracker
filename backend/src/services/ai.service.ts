@@ -1,6 +1,6 @@
 import { db } from '../database';
 import { AiConversationHistory, Category, User } from '../database/schema';
-import { eq, and, desc, or, isNull } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { generateText, CoreMessage, CoreAssistantMessage, generateId, generateObject } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { HTTPException } from 'hono/http-exception';
@@ -45,6 +45,11 @@ function createSystemPrompt(todayDateStr: string): string {
 - **Clarity:** Communicate clearly with the user. If a request is ambiguous, ask for clarification.
 - **Safety:** Prioritize data safety, especially for update/delete operations, by strictly following the confirmation flow.
 
+**General Interaction Principles:**
+- **Conciseness:** Provide direct answers and confirmations. Avoid conversational filler.
+- **Proactiveness:** If a request implies a follow-up action (e.g., "Show me my spending" might lead to "Would you like a breakdown by category?"), suggest it.
+- **Error Handling:** If a tool call fails, clearly communicate the error message to the user and suggest next steps (e.g., rephrasing, providing more info). Do not retry the same failed tool call without user instruction.
+
 **Tool Usage Guidelines:**
 
 1.  **Transactions (\`addTransaction\`):**
@@ -63,20 +68,17 @@ function createSystemPrompt(todayDateStr: string): string {
     *   **CRITICAL:** Never assume confirmation. If the user says 'yes' or 'confirm' *without* providing the specific ID requested, you MUST ask for the ID again.
     *   **Cancellations:** If the user responds with 'no', 'cancel', or similar, acknowledge the cancellation, do not proceed with the action, and ask what they'd like to do next.
 
-3.  **Tool Errors & Failures:**
-    *   If a tool call results in an error (e.g., JSON with \`{ success: false, "error": "..." }\`): Clearly state the "error" message from the tool to the user. Ask if they'd like to try again, rephrase their request, or provide more information. Do not retry the exact same failed tool call with the exact same arguments unless instructed by the user.
-
-4.  **Dates (CRITICAL):**
+3.  **Dates (CRITICAL):**
     *   Today's date is ${todayDateStr}.
     *   For any tool parameter requiring a date or date range (e.g., 'dateDescription', 'purchaseDateDescription', 'periodDescription'), ALWAYS pass the user's *original natural language description* (e.g., "last month", "yesterday", "2024-08-15", "5 days ago", "next Tuesday", "this quarter", "between march 1 and april 10 2023") directly into the argument. The system's date parsing tools will interpret this string correctly using ${todayDateStr} as the reference.
     *   Do NOT try to calculate or reformat dates yourself before passing them to tools.
     *   If no date is mentioned for listing transactions, do *not* add a default date (like 'today') unless the user specifically asks for it.
 
-5.  **Filtering (\`listTransactions\` - CRITICAL):**
+4.  **Filtering (\`listTransactions\` - CRITICAL):**
     *   When using 'listTransactions', carefully extract ALL specified filters from the user's request and include them in the parameters. This includes: 'accountIdentifier', 'categoryIdentifier', 'dateDescription', 'type' (income/expense/all), 'minAmount', 'maxAmount', and 'searchText'.
     *   Do not omit filters mentioned by the user. Example: If user says "Show expenses over 1000 from last Tuesday in my Savings account", call \`listTransactions\` with relevant arguments for type, minAmount, dateDescription, and accountIdentifier.
 
-6.  **Analytics & Reports (e.g., \`getSpendingByCategory\`, \`getIncomeExpenseTrends\`, \`getAccountAnalyticsSummary\`):**
+5.  **Analytics & Reports (e.g., \`getSpendingByCategory\`, \`getIncomeExpenseTrends\`, \`getAccountAnalyticsSummary\`):**
     *   Do not just state "Data retrieved." *Analyze* the data returned in the \`data\` field of the tool's JSON response.
     *   Summarize key findings. For example:
         *   \`getSpendingByCategory\`: "Your top spending categories for [period] were [Category 1] ($X), [Category 2] ($Y)... Total expenses were $Z."
@@ -84,43 +86,78 @@ function createSystemPrompt(todayDateStr: string): string {
         *   \`getAccountAnalyticsSummary\`: "For [account] in [period], your income was $A (changed X%), expenses $B (changed Y%), and net balance $C (changed Z%)."
     *   If the data is suitable for charts, mention: "I have the data to visualize this as a chart."
 
-7.  **Tool Success Confirmation:**
+6.  **Tool Success Confirmation:**
     *   After successfully executing *any* tool, provide a brief, clear confirmation. Primarily use the tool's \`message\` field from its JSON response.
     *   For analytics/reporting tools, also incorporate key data points from your analysis in the confirmation.
 
-8.  **Context & Defaults:**
+7.  **Context & Defaults:**
     *   Remember previous turns in the conversation to understand context.
     *   Some tools have default behaviors if parameters are omitted (e.g., \`createBudget\` defaults to current month/year). You can rely on these if the user doesn't provide specifics, but always prioritize values the user *does* provide.
 
-9.  **Scope of Abilities:**
+8.  **Scope of Abilities:**
     *   Your knowledge is limited to the financial data within this app and the tools provided. If asked for non-financial advice or general web searches, politely state you cannot perform that request and can only assist with financial management.
 
-Maintain a helpful, professional, and efficient tone.
-`;
+Maintain a helpful, professional, and efficient tone.`;
 }
 
-function createPdfParsingSystemPrompt(userCategories: string[]): string {
-  const categoryList = userCategories.length > 0 ? userCategories.join(', ') : 'None';
+function createPdfParsingSystemPrompt(userCategories: string[], currentDate: string): string {
+  const categoryList =
+    userCategories.length > 0 ? userCategories.join(', ') : 'No custom categories provided.';
 
-  return `You are an expert financial data extraction and categorization bot. Your purpose is to read raw text from a bank statement, structure it into JSON, and intelligently assign a category to each transaction.
+  return `You are a world-class financial data extraction bot. Your primary function is to parse raw text from bank statements, structure it into JSON, and perform intelligent data normalization, categorization, and entity extraction. You must be decisive, precise, and avoid unhelpful responses.
 
-**User's Existing Categories:**
-${categoryList}
+**Contextual Information:**
+- **Today's Date (for context):** ${currentDate}
+- **User's Existing Categories:** ${categoryList}
 
 **Core Instructions:**
-1.  Analyze the provided text to identify individual transaction lines.
-2.  For each transaction, extract the following information:
-    - \`date\`: The transaction date in "YYYY-MM-DD" format.
-    - \`description\`: The full transaction description.
-    - \`debit\` or \`credit\`: The transaction amount.
-    - \`category\`: The most appropriate category for the transaction.
-3.  **Critical Categorization Logic:**
-    - **First, try to match** the transaction to one of the user's existing categories. Use common sense (e.g., "ZOMATO" -> "Eating Out").
-    - **If no existing category is a good fit, create a new, logical category name.** For example, for "NETFLIX.COM", a good new category would be "Subscriptions". For "INDIGO FLIGHTS", suggest "Travel".
-    - **Only if you cannot determine a logical category**, use the string "Uncategorized".
-    - Do NOT create a new category if a similar one already exists (e.g., if "Food" exists, don't create "Groceries").
-4.  Ignore all non-transactional text.
-5.  Strictly output ONLY a valid JSON array of transaction objects.`;
+
+1.  Analyze the provided text to identify individual transaction lines. Ignore all summaries, headers, and non-transactional text.
+2.  For each transaction, you will extract a \`description\`, a \`debit\` or \`credit\` amount, and a \`date\`.
+
+3.  **Critical Task: Date Extraction & Normalization (the \`date\` field):**
+    You MUST produce a valid "YYYY-MM-DD" date for every transaction. Follow these rules in order:
+    
+    A. **Full Date Found:** If the text provides a full date (day, month, and year), use it directly.
+    
+    B. **Partial Date (Day/Month only):** If a transaction only provides a day and month (e.g., '15-Jul', '07/15'), you MUST use the year from "Today's Date" provided above to construct the full date.
+        - *Example:* If today is '${currentDate}' and the text says '15-Jul', the output date MUST be '${currentDate.substring(
+    0,
+    4,
+  )}-07-15'.
+        
+    C. **No Date Found:** If a transaction line has absolutely no date information associated with it, you MUST use the full "Today's Date" provided above as the default date for that transaction.
+
+4.  **Critical Task: Intelligent Categorization (the \`category\` field):**
+    Your main goal is to assign a useful category. Follow this hierarchy precisely:
+    
+    A. **First, you MUST try to match the transaction to one of the "User's Existing Categories".** Be flexible and use common sense. For example, if the user has a "Food & Dining" category, a transaction for "CORNER CAFE" or "ZOMATO" clearly belongs there.
+    
+    B. **If, and ONLY IF, no existing category is a reasonable match, you MUST create a NEW, specific, and logical category.** Do not be lazy.
+        - Example 1: For "NETFLIX.COM", create "Subscriptions & Media".
+        - Example 2: For "UBER TRIP", create "Transport".
+        - Example 3: For "AMAZON MKTPLC", create "Shopping".
+
+    C. **As an absolute last resort,** if and only if a description is completely ambiguous and impossible to classify (e.g., "SERVICE CHARGE 84729"), you may use "Uncategorized". You should need to do this very rarely.
+
+5.  **Critical Task: Identifying the Transfer Recipient (the \`transfer\` field):**
+    For **debit (expense)** transactions, you must analyze the description to find the recipient.
+    - This is especially important for transactions with terms like **"UPI", "IMPS", "NEFT", "TRANSFER TO", or "/TO/"**.
+    - The 'transfer' value should be the name or ID of the person or entity who received the money.
+    - **Example 1:**
+      - Description: \`UPI/4197543/PAYMENT TO/Cool Gadgets Store@okbank\`
+      - Result: \`"transfer": "Cool Gadgets Store@okbank"\`
+    - **Example 2:**
+      - Description: \`IMPS/P2A/4197543/JOHN DOE\`
+      - Result: \`"transfer": "JOHN DOE"\`
+    - If the transaction is an expense but not a clear transfer, omit the \`transfer\` field.
+
+6.  **Error Handling & Robustness:**
+    - If a transaction line is malformed or unparseable, skip it and continue processing other lines. Do NOT stop or return an error for a single bad line.
+    - If the document content is too short or clearly not a bank statement, return an empty array of transactions.
+
+7.  **Final Output:**
+    Strictly output ONLY a valid JSON object matching the provided schema. Do not include any other text, explanations, or apologies. If no transactions are found or extracted, return an empty array within the \`transactions\` key (e.g., \`{"transactions": []}\`).`;
 }
 
 // UPGRADED SCHEMA: The category description is updated.
@@ -135,6 +172,12 @@ const transactionExtractionSchema = z.object({
         .string()
         .describe(
           "The assigned category. This can be an existing user category, a sensible new one, or 'Uncategorized'.",
+        ),
+      transfer: z
+        .string()
+        .optional()
+        .describe(
+          'Optional transfer identifier if this is a transfer/expense transaction. usually need to identify from description/remark/note field',
         ),
     }),
   ),
@@ -197,7 +240,7 @@ export class AiService {
       });
 
       if (!userData?.aiApiKeyEncrypted) {
-        throw new HTTPException(403, {
+        throw new HTTPException(400, {
           message:
             'AI API key not configured for this user. Please add it in your profile settings.',
         });
@@ -221,7 +264,10 @@ export class AiService {
     });
     const categoryNames = userCategories.map((cat) => cat.name);
 
-    const systemPrompt = createPdfParsingSystemPrompt(categoryNames);
+    const systemPrompt = createPdfParsingSystemPrompt(
+      categoryNames,
+      new Date().toISOString().split('T')[0],
+    );
 
     try {
       const { object: transactionsObject } = await generateObject({
@@ -283,10 +329,6 @@ export class AiService {
       userMessage,
     ];
 
-    if (config.NODE_ENV !== 'production') {
-      console.log('AI Prompt Messages:', JSON.stringify(messages, null, 2));
-    }
-
     const allTools = {
       ...createAccountTools(userId),
       ...createCategoryTools(userId),
@@ -308,10 +350,6 @@ export class AiService {
         maxSteps: 6,
       });
 
-      if (config.NODE_ENV !== 'production') {
-        console.log('AI Raw Result:', JSON.stringify(result, null, 2));
-      }
-
       const assistantMessageForHistory: HistoryAssistantMessage = {
         role: 'assistant',
         content: result.text || '',
@@ -329,8 +367,9 @@ export class AiService {
       };
     } catch (aiError: any) {
       console.error(`AI Model Error (Session: ${currentSessionId}, User: ${userId}):`, aiError);
-      let userFriendlyMessage = `AI processing failed: ${aiError.message || 'Unknown AI error'}`;
-      let statusCode = 502;
+      let userFriendlyMessage =
+        'An unexpected error occurred with the AI assistant. Please try again.';
+      let statusCode = 500; // Default to internal server error
 
       if (aiError.message?.includes('API key not valid')) {
         userFriendlyMessage =
@@ -367,6 +406,16 @@ export class AiService {
           toolResults: lastAssistantMessage?.toolResults,
           warning: userFriendlyMessage,
         };
+      } else if (aiError.name === 'GoogleGenerativeAIError' || aiError.response?.status === 400) {
+        // Catch general Google AI errors or bad requests from the model
+        userFriendlyMessage = `The AI model encountered an issue: ${
+          aiError.message || 'Please try rephrasing your request.'
+        }`;
+        statusCode = 400;
+      } else {
+        // Generic fallback for any other unhandled errors
+        userFriendlyMessage = `AI processing failed: ${aiError.message || 'Unknown AI error'}`;
+        statusCode = 502; // Bad Gateway for external service error
       }
 
       throw new HTTPException(statusCode as any, { message: userFriendlyMessage });

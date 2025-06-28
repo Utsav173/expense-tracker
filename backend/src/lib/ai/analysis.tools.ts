@@ -17,12 +17,12 @@ export function createAnalysisTools(userId: string) {
           .string()
           .optional()
           .describe(
-            "Date range (e.g., 'this month', 'last quarter', '2023-07,2023-09'). Defaults to this month.",
+            "Date range (e.g., 'this month', 'last quarter', '2023-07,2023-09'). Defaults to this month. Example: \"last month\" or \"this year\"",
           ),
         accountIdentifier: z
           .string()
           .optional()
-          .describe('Optional: Filter by account name or ID.'),
+          .describe('Optional: Filter by account name or ID. Example: "Cash Account" or "acc_123"'),
       }),
       execute: async ({ dateDescription, accountIdentifier }) => {
         try {
@@ -99,10 +99,25 @@ export function createAnalysisTools(userId: string) {
             message += ` No spending recorded.`;
           }
 
+          const chartData = typedResult.name
+            .map((name, index) => ({
+              name,
+              value: typedResult.totalExpense[index] || 0,
+            }))
+            .filter((item) => item.value > 0);
+
           return createToolResponse({
             success: true,
             message: message,
             data: typedResult,
+            chart:
+              chartData.length > 0
+                ? {
+                    type: 'pie',
+                    data: chartData,
+                    title: `Spending by Category for ${dateDescription || 'this month'}`,
+                  }
+                : undefined,
           });
         } catch (error: any) {
           return createToolResponse({
@@ -120,11 +135,15 @@ export function createAnalysisTools(userId: string) {
         dateDescription: z
           .string()
           .optional()
-          .describe("Date range (e.g., 'last year', 'this quarter'). Defaults to this month."),
+          .describe(
+            'Date range (e.g., \'last year\', \'this quarter\'). Defaults to this month. Example: "last 6 months" or "2023-01,2023-12"',
+          ),
         accountIdentifier: z
           .string()
           .optional()
-          .describe('Optional: Filter by account name or ID.'),
+          .describe(
+            'Optional: Filter by account name or ID. Example: "Investment Account" or "acc_456"',
+          ),
       }),
       execute: async ({ dateDescription, accountIdentifier }) => {
         try {
@@ -167,10 +186,25 @@ export function createAnalysisTools(userId: string) {
           const accountMsg = accountId ? ` for account "${accountIdentifier}"` : '';
           const message = `Trend data for income, expense, and balance over ${period}${accountMsg} retrieved.`;
 
+          const trendChartData = typedResult.date.map((date: string, index: number) => ({
+            date,
+            Income: typedResult.income[index] || 0,
+            Expense: typedResult.expense[index] || 0,
+            Balance: typedResult.balance[index] || 0,
+          }));
+
           return createToolResponse({
             success: true,
             message: message,
             data: typedResult,
+            chart:
+              trendChartData.length > 0
+                ? {
+                    type: 'line',
+                    data: trendChartData,
+                    title: `Income vs. Expense Trend for ${dateDescription || 'this month'}`,
+                  }
+                : undefined,
           });
         } catch (error: any) {
           return createToolResponse({
@@ -185,11 +219,16 @@ export function createAnalysisTools(userId: string) {
       description:
         'Retrieves key financial analytics (total income, total expense, balance, and percentage changes) for a specific account over a specified date range.',
       parameters: z.object({
-        accountIdentifier: z.string().min(1).describe('The name or ID of the account.'),
+        accountIdentifier: z
+          .string()
+          .min(1)
+          .describe('The name or ID of the account. Example: "My Checking Account" or "acc_789"'),
         dateDescription: z
           .string()
           .optional()
-          .describe("Date range (e.g., 'this month', 'last quarter'). Defaults to this month."),
+          .describe(
+            'Date range (e.g., \'this month\', \'last quarter\'). Defaults to this month. Example: "this quarter" or "last year"',
+          ),
       }),
       execute: async ({ accountIdentifier, dateDescription }) => {
         try {

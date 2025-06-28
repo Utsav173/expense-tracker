@@ -31,6 +31,9 @@ import { format, parseISO } from 'date-fns';
 import { CardContent } from '../ui/card';
 import { ScrollArea } from '../ui/scroll-area';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
+import 'highlight.js/styles/github-dark.css'; // Or any other theme you prefer
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { useToast } from '@/lib/hooks/useToast';
@@ -38,6 +41,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Separator } from '../ui/separator';
 import { Transaction } from '@/lib/types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import ChartRenderer from './ChartRenderer';
 
 interface ChatMessageBubbleProps {
   message: ChatMessage;
@@ -511,11 +515,16 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message })
           )}
           {/* Render AI's text content */}
           <div className='prose prose-sm dark:prose-invert prose-p:before:content-none prose-p:after:content-none prose-p:my-1 max-w-none pt-1 break-words'>
-            <ReactMarkdown components={{}}>{message.content || ''}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+              {message.content || ''}
+            </ReactMarkdown>
           </div>
 
           {/* Render Tool Data Summary */}
           {!isUser && <ToolDataSummary toolData={message.toolData} />}
+
+          {/* Render Chart if available */}
+          {!isUser && message.chart && <ChartRenderer chartData={message.chart} />}
 
           {/* Render Raw Tool Calls/Results Collapsible */}
           {!isUser && (message.toolCalls || message.toolResults) && (
