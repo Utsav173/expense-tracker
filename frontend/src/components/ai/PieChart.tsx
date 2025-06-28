@@ -8,12 +8,12 @@ interface PieChartProps {
 }
 
 const COLORS = [
-  'hsl(var(--chart-1))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
-  'hsl(var(--chart-6))'
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-5)',
+  'var(--chart-6)'
 ];
 
 export const PieChartComponent: React.FC<PieChartProps> = ({ data }) => {
@@ -24,10 +24,10 @@ export const PieChartComponent: React.FC<PieChartProps> = ({ data }) => {
       <PieChart>
         <Tooltip
           contentStyle={{
-            backgroundColor: 'hsl(var(--background))',
-            border: '1px solid hsl(var(--border))'
+            backgroundColor: 'var(--background)',
+            border: '1px solid var(--border)'
           }}
-          labelStyle={{ color: 'hsl(var(--foreground))' }}
+          labelStyle={{ color: 'var(--foreground)' }}
         />
         <Legend iconSize={10} />
         <Pie

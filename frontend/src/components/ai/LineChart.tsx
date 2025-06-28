@@ -24,16 +24,16 @@ export const LineChartComponent: React.FC<LineChartProps> = ({ data }) => {
   return (
     <ResponsiveContainer width='100%' height={300}>
       <LineChart data={data} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-        <CartesianGrid strokeDasharray='3 3' stroke='hsl(var(--border))' />
+        <CartesianGrid strokeDasharray='3 3' stroke='var(--border)' />
         <XAxis
           dataKey='date'
-          stroke='hsl(var(--muted-foreground))'
+          stroke='var(--muted-foreground)'
           fontSize={12}
           tickLine={false}
           axisLine={false}
         />
         <YAxis
-          stroke='hsl(var(--muted-foreground))'
+          stroke='var(--muted-foreground)'
           fontSize={12}
           tickLine={false}
           axisLine={false}
@@ -41,10 +41,10 @@ export const LineChartComponent: React.FC<LineChartProps> = ({ data }) => {
         />
         <Tooltip
           contentStyle={{
-            backgroundColor: 'hsl(var(--background))',
-            border: '1px solid hsl(var(--border))'
+            backgroundColor: 'var(--background)',
+            border: '1px solid var(--border)'
           }}
-          labelStyle={{ color: 'hsl(var(--foreground))' }}
+          labelStyle={{ color: 'var(--foreground)' }}
         />
         <Legend iconSize={10} />
         {keys.map((key, index) => (
@@ -52,7 +52,7 @@ export const LineChartComponent: React.FC<LineChartProps> = ({ data }) => {
             key={key}
             type='monotone'
             dataKey={key}
-            stroke={`hsl(var(--chart-${index + 1}))`}
+            stroke={`var(--chart-${index + 1})`}
             strokeWidth={2}
             dot={false}
           />

@@ -3,18 +3,20 @@ import { Investment } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Eye, Pencil, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
-import ComingSoonModal from '../modals/comming-soon-modal';
+import InvestmentInsightModal from '../modals/investment-insight-modal';
 
 interface InvestmentHoldingActionsProps {
   investment: Investment;
   handleEdit: (investment: Investment) => void;
   handleDeleteClick: (id: string) => void;
+  accountCurrency: string;
 }
 
 export function InvestmentHoldingActions({
   investment,
   handleEdit,
-  handleDeleteClick
+  handleDeleteClick,
+  accountCurrency
 }: InvestmentHoldingActionsProps) {
   const [isInsightModalOpen, setIsInsightModalOpen] = useState(false);
 
@@ -47,11 +49,15 @@ export function InvestmentHoldingActions({
       >
         <Trash2 size={16} />
       </Button>
-      <ComingSoonModal
-        isOpen={isInsightModalOpen}
-        onOpenChange={setIsInsightModalOpen}
-        featureName='Investment Insight & Details'
-      />
+
+      {isInsightModalOpen && (
+        <InvestmentInsightModal
+          isOpen={isInsightModalOpen}
+          onOpenChange={setIsInsightModalOpen}
+          investment={investment}
+          accountCurrency={accountCurrency}
+        />
+      )}
     </div>
   );
 }

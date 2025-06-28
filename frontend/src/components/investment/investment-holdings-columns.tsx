@@ -2,23 +2,21 @@
 
 import { ColumnDef } from '@tanstack/react-table';
 import { Investment } from '@/lib/types';
-import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
-import { Eye, Pencil, Trash2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
-import React, { useState } from 'react';
-import ComingSoonModal from '../modals/comming-soon-modal';
 import { DataTableColumnHeader } from '../ui/column-header';
 import { InvestmentHoldingActions } from './investment-holding-actions';
 
 interface InvestmentHoldingsColumnsProps {
   handleEdit: (investment: Investment) => void;
   handleDeleteClick: (id: string) => void;
+  accountCurrency: string;
 }
 
 export const investmentHoldingsColumns = ({
   handleEdit,
-  handleDeleteClick
+  handleDeleteClick,
+  accountCurrency
 }: InvestmentHoldingsColumnsProps): ColumnDef<Investment>[] => [
   {
     accessorKey: 'symbol',
@@ -36,7 +34,7 @@ export const investmentHoldingsColumns = ({
     meta: { header: 'Purchase Price' },
     cell: ({ row }) => {
       const inv = row.original;
-      return <span>{formatCurrency(inv.purchasePrice || 0, 'INR')}</span>;
+      return <span>{formatCurrency(inv.purchasePrice || 0, accountCurrency)}</span>;
     }
   },
   {
@@ -54,7 +52,7 @@ export const investmentHoldingsColumns = ({
     meta: { header: 'Invested Amount' },
     cell: ({ row }) => {
       const inv = row.original;
-      return <span>{formatCurrency(inv.investedAmount || 0, 'INR')}</span>;
+      return <span>{formatCurrency(inv.investedAmount || 0, accountCurrency)}</span>;
     }
   },
   {
@@ -63,7 +61,7 @@ export const investmentHoldingsColumns = ({
     meta: { header: 'Dividend' },
     cell: ({ row }) => {
       const inv = row.original;
-      return <span>{formatCurrency(inv.dividend || 0, 'INR')}</span>;
+      return <span>{formatCurrency(inv.dividend || 0, accountCurrency)}</span>;
     }
   },
   {
@@ -74,6 +72,8 @@ export const investmentHoldingsColumns = ({
         investment={row.original}
         handleEdit={handleEdit}
         handleDeleteClick={handleDeleteClick}
+        accountCurrency={accountCurrency}
+        key={row.original.id}
       />
     )
   }

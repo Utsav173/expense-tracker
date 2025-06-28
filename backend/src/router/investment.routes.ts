@@ -5,7 +5,6 @@ import { historicalPortfolioQuerySchema, investmentSchema } from '../utils/schem
 import { HTTPException } from 'hono/http-exception';
 import { investmentService } from '../services/investment.service';
 import { Investment } from '../database/schema';
-import { StatusCode } from 'hono/utils/http-status';
 import { InferSelectModel } from 'drizzle-orm';
 
 const investmentRouter = new Hono();
@@ -82,12 +81,13 @@ investmentRouter.get(
   async (c) => {
     try {
       const userId = await c.get('userId');
-      const { period, startDate, endDate } = c.req.valid('query');
+      const { period, startDate, endDate, symbol } = c.req.valid('query');
       const result = await investmentService.getHistoricalPortfolioValue(
         userId,
         period,
         startDate,
         endDate,
+        symbol,
       );
       return c.json(result);
     } catch (err: any) {

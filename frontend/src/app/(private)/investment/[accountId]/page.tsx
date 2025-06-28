@@ -34,7 +34,7 @@ import { investmentHoldingsColumns } from '@/components/investment/investment-ho
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { useUrlState } from '@/hooks/useUrlState';
 import { SortingState } from '@tanstack/react-table';
-import { DynamicEllipsis, SingleLineEllipsis } from '@/components/ui/ellipsis-components';
+import { SingleLineEllipsis } from '@/components/ui/ellipsis-components';
 
 const InvestmentAccountDetailPage = () => {
   const params = useParams();
@@ -141,6 +141,12 @@ const InvestmentAccountDetailPage = () => {
     }
   };
 
+  const columns = investmentHoldingsColumns({
+    handleEdit,
+    handleDeleteClick,
+    accountCurrency: account?.currency || 'INR'
+  });
+
   if (isLoadingAccount) {
     return <Loader />;
   }
@@ -233,7 +239,7 @@ const InvestmentAccountDetailPage = () => {
           <CommonTable<Investment>
             tableId={`investment-holdings-${accountId}`}
             data={investments?.data || []}
-            columns={investmentHoldingsColumns({ handleEdit, handleDeleteClick })}
+            columns={columns}
             loading={isLoadingInvestments}
             totalRecords={investments?.pagination?.total || 0}
             pageSize={10}

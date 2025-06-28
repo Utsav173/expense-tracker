@@ -12,6 +12,7 @@ import {
   InferSelectModel,
   AnyColumn,
   InferInsertModel,
+  lte,
 } from 'drizzle-orm';
 import { HTTPException } from 'hono/http-exception';
 import { PromisePool } from '@supercharge/promise-pool';
@@ -221,6 +222,7 @@ export class InvestmentService {
     period?: string,
     customStartDate?: string,
     customEndDate?: string,
+    symbol?: string,
   ): Promise<HistoricalPortfolioResult> {
     let startDate: Date;
     let endDate: Date;
@@ -257,74 +259,95 @@ export class InvestmentService {
       where: eq(InvestmentAccount.userId, userId),
       columns: { id: true, currency: true },
     });
-    if (accounts.length === 0) return { data: [], currency: 'USD', valueIsEstimate: false };
-    const accountIds = accounts.map((acc) => acc.id);
 
-    const investments = await db.query.Investment.findMany({
-      where: inArray(Investment.account, accountIds),
-      columns: {
-        symbol: true,
-        shares: true,
-        investedAmount: true,
-        account: true,
-        purchaseDate: true,
-      },
+    const userPrefs = await db.query.User.findFirst({
+      where: eq(User.id, userId),
+      columns: { preferredCurrency: true },
     });
-    if (investments.length === 0)
-      return { data: [], currency: accounts[0].currency, valueIsEstimate: false };
+    const preferredCurrency = userPrefs?.preferredCurrency || 'USD';
 
-    const marketDays = eachDayOfInterval({ start: startDate, end: endDate }).filter(
-      (d) => !isWeekend(d),
-    );
-    const uniqueSymbols = Array.from(new Set(investments.map((inv) => inv.symbol)));
+    const symbolsToFetch = symbol ? [symbol] : await this.getSymbolsForUser(userId);
+    if (symbolsToFetch.length === 0) {
+      return { data: [], currency: preferredCurrency, valueIsEstimate: false };
+    }
+
     const allPricesMap = new Map<string, Map<string, number | null>>();
     let valueIsEstimate = accounts.some((acc, i, arr) => i > 0 && acc.currency !== arr[0].currency);
 
-    const { results: priceResults } = await PromisePool.for(uniqueSymbols)
+    const { results: priceResults } = await PromisePool.for(symbolsToFetch)
       .withConcurrency(5)
-      .handleError(async (error, symbol) =>
-        console.error(`Hist. Portfolio Pool: Failed for ${symbol}:`, error),
+      .handleError(async (error, sym) =>
+        console.error(`Hist. Portfolio Pool: Failed for ${sym}:`, error),
       )
-      .process(async (symbol) => ({
-        symbol,
-        prices: await financeService.fetchHistoricalPricesForSymbol(symbol, startDate, endDate),
+      .process(async (sym) => ({
+        symbol: sym,
+        prices: await financeService.fetchHistoricalPricesForSymbol(sym, startDate, endDate),
       }));
 
     priceResults.forEach((result) => {
       if (result) allPricesMap.set(result.symbol, result.prices);
     });
 
-    const portfolioValues = marketDays
-      .map((date) => {
-        const dateString = formatDateFn(date, 'yyyy-MM-dd');
-        let dailyTotalValue = 0;
-        let pricesAvailableForDay = false;
+    let portfolioValues: HistoricalPortfolioPoint[] = [];
 
-        investments.forEach((inv) => {
-          if (inv.purchaseDate && inv.purchaseDate <= date) {
-            const pricesForSymbol = allPricesMap.get(inv.symbol);
-            const priceOnDate = pricesForSymbol?.get(dateString);
-            if (priceOnDate !== undefined && priceOnDate !== null && inv.shares) {
-              dailyTotalValue += inv.shares * priceOnDate;
-              pricesAvailableForDay = true;
+    if (symbol) {
+      const prices = allPricesMap.get(symbol);
+      if (prices) {
+        portfolioValues = Array.from(prices.entries())
+          .map(([date, value]) => ({ date, value: value ?? 0 }))
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      }
+    } else {
+      const investments = await db.query.Investment.findMany({
+        where: inArray(
+          Investment.account,
+          accounts.map((a) => a.id),
+        ),
+        columns: { symbol: true, shares: true, purchaseDate: true },
+      });
+
+      const marketDays = eachDayOfInterval({ start: startDate, end: endDate }).filter(
+        (d) => !isWeekend(d),
+      );
+
+      portfolioValues = marketDays
+        .map((date) => {
+          const dateString = formatDateFn(date, 'yyyy-MM-dd');
+          let dailyTotalValue = 0;
+          let pricesAvailableForDay = false;
+
+          investments.forEach((inv) => {
+            if (inv.purchaseDate && inv.purchaseDate <= date) {
+              const pricesForSymbol = allPricesMap.get(inv.symbol);
+              const priceOnDate = pricesForSymbol?.get(dateString);
+              if (priceOnDate !== undefined && priceOnDate !== null && inv.shares) {
+                dailyTotalValue += inv.shares * priceOnDate;
+                pricesAvailableForDay = true;
+              }
             }
-          }
-        });
-        return pricesAvailableForDay
-          ? { date: dateString, value: parseFloat(dailyTotalValue.toFixed(2)) }
-          : null;
-      })
-      .filter((point): point is HistoricalPortfolioPoint => point !== null && point.value >= 0);
-
-    const preferredCurrency =
-      (
-        await db.query.User.findFirst({
-          where: eq(User.id, userId),
-          columns: { preferredCurrency: true },
+          });
+          return pricesAvailableForDay
+            ? { date: dateString, value: parseFloat(dailyTotalValue.toFixed(2)) }
+            : null;
         })
-      )?.preferredCurrency || 'USD';
+        .filter((point): point is HistoricalPortfolioPoint => point !== null && point.value >= 0);
+    }
 
     return { data: portfolioValues, currency: preferredCurrency, valueIsEstimate };
+  }
+
+  private async getSymbolsForUser(userId: string): Promise<string[]> {
+    const investments = await db.query.Investment.findMany({
+      where: inArray(
+        Investment.account,
+        db
+          .select({ id: InvestmentAccount.id })
+          .from(InvestmentAccount)
+          .where(eq(InvestmentAccount.userId, userId)),
+      ),
+      columns: { symbol: true },
+    });
+    return Array.from(new Set(investments.map((inv) => inv.symbol)));
   }
 
   async getInvestmentDetails(

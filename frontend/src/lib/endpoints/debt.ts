@@ -57,7 +57,7 @@ export const getOutstandingDebts = (): Promise<OutstandingDebtsResponse> =>
     params: { type: 'taken', isPaid: 'false', pageSize: 100 }
   });
 
-export const interestCreate = (
+export const interestCalculate = (
   data: any
 ): Promise<ApiResponse<{ interest: number; totalAmount: number }>> =>
-  apiFetch('/interest/create', 'POST', data);
+  apiFetch('/interest/calculate', 'POST', data);

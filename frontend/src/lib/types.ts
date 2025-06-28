@@ -184,13 +184,13 @@ export interface Investment {
   id: string;
   account: string;
   symbol: string;
-  shares?: number;
-  purchasePrice?: number;
-  purchaseDate?: string;
-  dividend: number;
-  investedAmount: number;
-  createdAt: string;
-  updatedAt?: string;
+  shares: number | null;
+  purchasePrice: number | null;
+  purchaseDate: Date | null;
+  dividend: number | null;
+  investedAmount: number | null;
+  createdAt: Date | null;
+  updatedAt: Date | null;
 }
 
 // SavingGoal Interface
@@ -418,4 +418,15 @@ export interface AiProcessPdfRequest {
 
 export interface AiProcessPdfResponse {
   transactions: ParsedTransactionFromAI[];
+}
+
+export interface Payment {
+  date: Date;
+  status: 'settled' | 'due' | 'upcoming';
+  installmentAmount: number;
+  principalForPeriod: number;
+  interestForPeriod: number;
+  cumulativePrincipalPaid: number;
+  cumulativeInterestPaid: number;
+  remainingPrincipal: number;
 }

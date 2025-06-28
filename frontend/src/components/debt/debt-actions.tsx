@@ -9,7 +9,7 @@ import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
 import { useState } from 'react';
 import UpdateDebtModal from '../modals/update-debt-modal';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
-import ComingSoonModal from '../modals/comming-soon-modal';
+import DebtInsightModal from '../modals/debt-insight-modal';
 
 interface DebtActionsProps {
   debt: DebtWithDetails;
@@ -19,7 +19,7 @@ interface DebtActionsProps {
 export function DebtActions({ debt, refetchDebts }: DebtActionsProps) {
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isBreakdownModalOpen, setIsBreakdownModalOpen] = useState(false);
+  const [isInsightModalOpen, setIsInsightModalOpen] = useState(false);
   const invalidate = useInvalidateQueries();
   const { showSuccess, showError } = useToast();
 
@@ -62,8 +62,8 @@ export function DebtActions({ debt, refetchDebts }: DebtActionsProps) {
         size='icon'
         variant='ghost'
         className='hover:text-primary h-8 w-8'
-        onClick={() => setIsBreakdownModalOpen(true)}
-        aria-label='View Debt Breakdown'
+        onClick={() => setIsInsightModalOpen(true)}
+        aria-label='View Debt Insight'
       >
         <Eye size={16} />
       </Button>
@@ -80,8 +80,8 @@ export function DebtActions({ debt, refetchDebts }: DebtActionsProps) {
         title='Delete Debt'
         description={
           <>
-            Are you sure you want to delete the debt "<b>{debt.debts.description}</b>"? This
-            action cannot be undone.
+            Are you sure you want to delete the debt "<b>{debt.debts.description}</b>"? This action
+            cannot be undone.
           </>
         }
         onConfirm={() => deleteDebtMutation.mutate(debt.debts.id)}
@@ -107,11 +107,13 @@ export function DebtActions({ debt, refetchDebts }: DebtActionsProps) {
           onDebtUpdated={refetchDebts}
         />
       )}
-      <ComingSoonModal
-        isOpen={isBreakdownModalOpen}
-        onOpenChange={setIsBreakdownModalOpen}
-        featureName='Debt Breakdown & Details'
-      />
+      {isInsightModalOpen && (
+        <DebtInsightModal
+          isOpen={isInsightModalOpen}
+          onOpenChange={setIsInsightModalOpen}
+          debt={debt}
+        />
+      )}
     </div>
   );
 }

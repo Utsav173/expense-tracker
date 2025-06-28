@@ -178,9 +178,10 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
         investment?.purchasePrice !== undefined && investment?.purchasePrice !== null
           ? String(investment.purchasePrice)
           : '',
-      purchaseDate: investment?.purchaseDate
-        ? parseISO(investment.purchaseDate)
-        : getMostRecentValidDate()
+      purchaseDate:
+        typeof investment?.purchaseDate === 'string' && investment?.purchaseDate
+          ? parseISO(investment.purchaseDate)
+          : getMostRecentValidDate()
     }
   });
 
@@ -294,9 +295,10 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
       detailsForm.reset({
         shares: String(investment.shares || ''),
         purchasePrice: String(investment.purchasePrice || ''),
-        purchaseDate: investment.purchaseDate
-          ? parseISO(investment.purchaseDate)
-          : getMostRecentValidDate()
+        purchaseDate:
+          typeof investment.purchaseDate === 'string' && investment.purchaseDate
+            ? parseISO(investment.purchaseDate)
+            : getMostRecentValidDate()
       });
       dividendForm.reset({
         dividend: String(investment.dividend || '0')

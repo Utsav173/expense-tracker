@@ -17,7 +17,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { interestSchema, type InterestFormSchema } from '@/lib/utils/schema.validations';
 import { useMutation } from '@tanstack/react-query';
-import { interestCreate } from '@/lib/endpoints/debt';
+import { interestCalculate } from '@/lib/endpoints/debt';
 import { useToast } from '@/lib/hooks/useToast';
 
 interface InterestResponse {
@@ -46,7 +46,7 @@ const InterestCalculator = () => {
     Error,
     InterestFormSchema
   >({
-    mutationFn: (data: InterestFormSchema) => interestCreate(data),
+    mutationFn: (data: InterestFormSchema) => interestCalculate(data),
     onSuccess: (data) => {
       if (data) {
         setResult({ interest: data.interest, totalAmount: data.totalAmount });
