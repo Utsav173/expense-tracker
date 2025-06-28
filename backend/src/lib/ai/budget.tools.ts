@@ -16,22 +16,22 @@ export function createBudgetTools(userId: string) {
       description:
         'Creates a monthly budget for a specific expense category. If month/year are omitted, defaults to the current month and year.',
       parameters: z.object({
-        categoryIdentifier: z.string().min(1).describe('Category name or ID.'),
-        amount: z.number().positive('Budget amount.'),
+        categoryIdentifier: z.string().min(1).describe('Category name or ID. Example: "Groceries" or "cat_abc123"'),
+        amount: z.number().positive('Budget amount. Example: 500'),
         month: z
           .number()
           .int()
           .min(1)
           .max(12)
           .optional()
-          .describe('Month number (1-12). Defaults to current month if omitted.'),
+          .describe('Month number (1-12). Defaults to current month if omitted. Example: 7 for July'),
         year: z
           .number()
           .int()
           .min(1900)
           .max(2100)
           .optional()
-          .describe('Full year (e.g., 2024). Defaults to current year if omitted.'),
+          .describe('Full year (e.g., 2024). Defaults to current year if omitted. Example: 2024'),
       }),
       execute: async ({ categoryIdentifier, amount, month, year }) => {
         try {
@@ -72,8 +72,8 @@ export function createBudgetTools(userId: string) {
     listBudgets: tool({
       description: 'Lists existing budgets, optionally filtering by month and year.',
       parameters: z.object({
-        month: z.number().int().min(1).max(12).optional().describe('Filter by month (1-12).'),
-        year: z.number().int().min(1900).max(2100).optional().describe('Filter by year.'),
+        month: z.number().int().min(1).max(12).optional().describe('Filter by month (1-12). Example: 6 for June'),
+        year: z.number().int().min(1900).max(2100).optional().describe('Filter by year. Example: 2023'),
       }),
       execute: async ({ month, year }) => {
         try {
@@ -98,21 +98,21 @@ export function createBudgetTools(userId: string) {
       description:
         'Retrieves spending progress against budget for a specific category in a given month/year (defaults to current).',
       parameters: z.object({
-        categoryIdentifier: z.string().min(1).describe('Category name or ID.'),
+        categoryIdentifier: z.string().min(1).describe('Category name or ID. Example: "Utilities" or "cat_def456"'),
         month: z
           .number()
           .int()
           .min(1)
           .max(12)
           .optional()
-          .describe('Month (1-12), defaults to current.'),
+          .describe('Month (1-12), defaults to current. Example: 8 for August'),
         year: z
           .number()
           .int()
           .min(1900)
           .max(2100)
           .optional()
-          .describe('Year, defaults to current.'),
+          .describe('Year, defaults to current. Example: 2024'),
       }),
       execute: async ({ categoryIdentifier, month, year }) => {
         try {
@@ -165,7 +165,7 @@ export function createBudgetTools(userId: string) {
           .string()
           .optional()
           .describe(
-            "Period like 'this month', 'last month', '2024-08', 'August 2023'. Defaults to current month.",
+            "Period like 'this month', 'last month', '2024-08', 'August 2023'. Defaults to current month. Example: "last quarter" or "September 2024"",
           ),
       }),
       execute: async ({ periodDescription }) => {
@@ -202,9 +202,9 @@ export function createBudgetTools(userId: string) {
       description:
         'Identifies a specific budget by category, month, and year for potential update or deletion. Requires confirmation.',
       parameters: z.object({
-        categoryIdentifier: z.string().min(1).describe('Category name or ID.'),
-        month: z.number().int().min(1).max(12).describe('Month (1-12).'),
-        year: z.number().int().min(1900).max(2100).describe('Year (e.g., 2024).'),
+        categoryIdentifier: z.string().min(1).describe('Category name or ID. Example: "Rent" or "cat_ghi789"'),
+        month: z.number().int().min(1).max(12).describe('Month (1-12). Example: 1 for January'),
+        year: z.number().int().min(1900).max(2100).describe('Year (e.g., 2024). Example: 2023'),
       }),
       execute: async ({ categoryIdentifier, month, year }) => {
         try {
@@ -258,8 +258,8 @@ export function createBudgetTools(userId: string) {
       description:
         'Updates the amount of a specific budget AFTER confirmation, using its unique ID.',
       parameters: z.object({
-        budgetId: z.string().describe('Exact unique ID of the budget.'),
-        newAmount: z.number().positive('New positive budget amount.'),
+        budgetId: z.string().describe('Exact unique ID of the budget. Example: "bud_123xyz"'),
+        newAmount: z.number().positive('New positive budget amount. Example: 750.00'),
       }),
       execute: async ({ budgetId, newAmount }) => {
         try {
@@ -277,7 +277,7 @@ export function createBudgetTools(userId: string) {
     executeConfirmedDeleteBudget: tool({
       description: 'Deletes a specific budget AFTER confirmation, using its unique ID.',
       parameters: z.object({
-        budgetId: z.string().describe('Exact unique ID of the budget to delete.'),
+        budgetId: z.string().describe('Exact unique ID of the budget to delete. Example: "bud_456abc"'),
       }),
       execute: async ({ budgetId }) => {
         try {
