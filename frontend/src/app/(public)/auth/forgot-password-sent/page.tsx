@@ -15,11 +15,11 @@ const ForgotPasswordSentPage = () => {
       </CardHeader>
       <CardContent className='space-y-4 p-0 pb-4 text-center'>
         <p className='text-sm text-gray-600'>
-          We've sent a password reset link to your email address. Please check your inbox (and spam
+          We&apos;ve sent a password reset link to your email address. Please check your inbox (and spam
           folder) to proceed.
         </p>
         <p className='text-xs text-gray-500'>
-          If you don't receive the email within a few minutes, please try again or contact support.
+          If you don&apos;t receive the email within a few minutes, please try again or contact support.
         </p>
         <Button asChild variant={'link'} className='mt-4'>
           <Link href='/auth/login'>Back to Login</Link>

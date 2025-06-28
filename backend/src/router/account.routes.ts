@@ -298,9 +298,12 @@ accountRouter.get('/:id/statement', authMiddleware, async (c) => {
       exportType,
     );
 
-    c.header('Content-Type', result.contentType);
-    c.header('Content-Disposition', `attachment; filename=${result.filename}`);
-    return c.body(result.buffer);
+    return new Response(result.buffer, {
+      headers: {
+        'Content-Type': result.contentType,
+        'Content-Disposition': `attachment; filename=${result.filename}`,
+      },
+    });
   } catch (err: any) {
     if (err instanceof HTTPException) throw err;
     console.error('Statement Generation Error:', err);

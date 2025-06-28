@@ -63,11 +63,11 @@ const TransactionTable = ({
     }
   });
 
-  const handleDelete = async () => {
+  const handleDelete = React.useCallback(async () => {
     if (deleteTransactionId) {
-      deleteMutation.mutateAsync(deleteTransactionId);
+      await deleteMutation.mutateAsync(deleteTransactionId);
     }
-  };
+  }, [deleteTransactionId, deleteMutation]);
 
   const handleEditClick = (transaction: TransactionType) => {
     setSelectedTransaction(transaction);
@@ -219,7 +219,7 @@ const TransactionTable = ({
           ]
         : [])
     ],
-    [isOwner, deleteTransactionId]
+    [isOwner, deleteTransactionId, handleDelete]
   );
 
   return (

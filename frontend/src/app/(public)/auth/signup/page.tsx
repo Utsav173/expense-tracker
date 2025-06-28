@@ -79,7 +79,7 @@ const SignupPage = () => {
               placeholder='John Doe'
               {...register('name')}
               disabled={loading}
-              className='border-input bg-background focus:bg-card focus:ring-primary w-full rounded-lg border px-4 py-2 transition-all duration-200 focus:border-transparent focus:ring-2'
+              className='border-border bg-background focus:bg-card focus:ring-primary w-full rounded-lg border px-4 py-2 transition-all duration-200 focus:border-transparent focus:ring-2'
             />
             {formState.errors.name && (
               <p className='text-destructive py-1 text-xs'> {formState.errors.name.message}</p>
@@ -96,7 +96,7 @@ const SignupPage = () => {
               placeholder='you@example.com'
               {...register('email')}
               disabled={loading}
-              className='border-input bg-background focus:bg-card focus:ring-primary w-full rounded-lg border px-4 py-2 transition-all duration-200 focus:border-transparent focus:ring-2'
+              className='border-border bg-background focus:bg-card focus:ring-primary w-full rounded-lg border px-4 py-2 transition-all duration-200 focus:border-transparent focus:ring-2'
             />
             {formState.errors.email && (
               <p className='text-destructive py-1 text-xs'> {formState.errors.email.message}</p>
@@ -112,7 +112,7 @@ const SignupPage = () => {
               placeholder='••••••••'
               {...register('password')}
               disabled={loading}
-              className='border-input bg-background focus:bg-card focus:ring-primary w-full rounded-lg border px-4 py-2 transition-all duration-200 focus:border-transparent focus:ring-2'
+              className='border-border bg-background focus:bg-card focus:ring-primary w-full rounded-lg border px-4 py-2 transition-all duration-200 focus:border-transparent focus:ring-2'
             />
             {formState.errors.password && (
               <p className='text-destructive py-1 text-xs'> {formState.errors.password.message}</p>
@@ -121,7 +121,7 @@ const SignupPage = () => {
 
           <div className='space-y-2'>
             <label className='text-foreground text-sm font-medium'>Profile Picture</label>
-            <div className='border-input bg-background hover:border-primary mt-1 flex justify-center rounded-lg border-2 border-dashed px-2 pt-5 pb-6 transition-colors duration-200'>
+            <div className='border-border bg-background hover:border-primary mt-1 flex justify-center rounded-lg border-2 border-dashed px-2 pt-5 pb-6 transition-colors duration-200'>
               <div className='w-full max-w-xs space-y-1 text-center'>
                 <svg
                   className='text-muted-foreground mx-auto h-12 w-12'

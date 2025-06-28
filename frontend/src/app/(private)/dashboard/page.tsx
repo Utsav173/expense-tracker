@@ -219,7 +219,7 @@ const DashboardPage = () => {
       <Frown className='h-4 w-4' />
       <AlertTitle>Oops! Something went wrong.</AlertTitle>
       <AlertDescription>
-        We couldn't load your dashboard data. Please check your connection and try refreshing.
+        We couldn&apos;t load your dashboard data. Please check your connection and try refreshing.
         {error && (
           <div className='text-muted-foreground mt-2 text-xs'>
             Error: {(error as Error).message}

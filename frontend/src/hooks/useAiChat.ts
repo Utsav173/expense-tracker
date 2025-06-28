@@ -203,7 +203,7 @@ export const useAiChat = (): UseAiChatReturn => {
       setMessages((prev) => [...prev, userMessage]);
       await mutation.mutateAsync(prompt);
     },
-    [mutation, sessionId]
+    [mutation]
   );
 
   const clearChat = useCallback(() => {

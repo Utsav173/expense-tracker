@@ -16,6 +16,7 @@ const envSchema = z.object({
   AI_API_KEY_ENCRYPTION_SECRET: z
     .string()
     .min(32, 'AI_API_KEY_ENCRYPTION_SECRET must be at least 32 bytes long for AES-256'),
+  CLOUDFLARE_WORKER_PDF_URL: z.string().url().optional(),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

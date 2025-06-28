@@ -583,7 +583,7 @@ const ImportTransactionsPage = () => {
               Password Required
             </DialogTitle>
             <DialogDescription>
-              <span className='text-foreground font-medium'>{pendingFile?.name}</span>" is
+              <span className='text-foreground font-medium'>{pendingFile?.name}</span>&quot; is
               encrypted. Please enter the password to unlock it.
             </DialogDescription>
           </DialogHeader>

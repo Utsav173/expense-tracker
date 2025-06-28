@@ -13,7 +13,8 @@ import {
   Wallet,
   Users,
   BrainCircuit,
-  Lock
+  Lock,
+  Download
 } from 'lucide-react';
 
 import { NavMain } from '@/components/layout/nav/nav-main';
@@ -53,6 +54,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       { title: 'Budgets', url: '/budget', icon: BookOpen },
       { title: 'Goals', url: '/goal', icon: PiggyBank },
       { title: 'Investments', url: '/investment', icon: BarChart3 },
+      { title: 'Statement', url: '/accounts/statement', icon: Download },
       { title: 'Debts', url: '/debts', icon: Coins },
       {
         title: 'AI Assistant',

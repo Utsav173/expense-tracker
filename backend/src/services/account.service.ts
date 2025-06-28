@@ -31,11 +31,12 @@ import { HTTPException } from 'hono/http-exception';
 import { read, utils, write } from 'xlsx';
 import { BunFile } from 'bun';
 import path from 'path';
-import puppeteer from 'puppeteer';
+
 import ejs from 'ejs';
 import { analyticsService } from './analytics.service';
 import { getIntervalValue, getSQLInterval } from '../utils/date.utils';
 import { emailService } from './email.service';
+import { pdfService } from './pdf.service';
 
 type AccountInsert = InferInsertModel<typeof Account>;
 type AccountSelect = InferSelectModel<typeof Account>;
@@ -642,7 +643,13 @@ export class AccountService {
           eq(Account.id, accountId),
           or(
             eq(Account.owner, userId),
-            sql`${accountId} IN (SELECT ${UserAccount.accountId} FROM ${UserAccount} WHERE ${UserAccount.userId} = ${userId})`,
+            inArray(
+              Account.id,
+              db
+                .select({ accountId: UserAccount.accountId })
+                .from(UserAccount)
+                .where(eq(UserAccount.userId, userId)),
+            ),
           ),
         ),
       )
@@ -1104,7 +1111,13 @@ export class AccountService {
         eq(Account.id, accountId),
         or(
           eq(Account.owner, userId),
-          sql`${accountId} IN (SELECT ${UserAccount.accountId} FROM ${UserAccount} WHERE ${UserAccount.userId} = ${userId})`,
+          inArray(
+            Account.id,
+            db
+              .select({ accountId: UserAccount.accountId })
+              .from(UserAccount)
+              .where(eq(UserAccount.userId, userId)),
+          ),
         ),
       ),
       columns: { id: true, name: true, currency: true },
@@ -1199,24 +1212,15 @@ export class AccountService {
           message: `Failed to render statement template: ${renderError.message}`,
         });
       });
-      let browser = null;
-      try {
-        browser = await puppeteer.launch({
-          headless: true,
-          args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        });
-        const page = await browser.newPage();
-        await page.setContent(html, { waitUntil: 'networkidle0' });
-        const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
-        await browser.close();
-        browser = null;
-        return { buffer: pdfBuffer, contentType: 'application/pdf', filename: 'statement.pdf' };
-      } catch (pdfError: any) {
-        console.error('PDF Generation Error:', pdfError);
-        throw new HTTPException(500, { message: `Failed to generate PDF: ${pdfError.message}` });
-      } finally {
-        if (browser) await browser.close();
-      }
+      const pdfBuffer = await pdfService.generatePdfFromHtml(html, {
+        format: 'A4',
+        printBackground: true,
+      });
+      return {
+        buffer: Buffer.from(pdfBuffer), // Convert pdfBuffer,
+        contentType: 'application/pdf',
+        filename: 'statement.pdf',
+      };
     } else {
       const transactionsSheetData = transactions.map((t) => ({
         Date: t.createdAt ? new Date(t.createdAt).toLocaleDateString() : 'N/A',

@@ -12,8 +12,8 @@ const TermsOfServicePage = () => {
       <article className='prose prose-slate dark:prose-invert lg:prose-lg mx-auto'>
         <h2>1. Acceptance of Terms</h2>
         <p>
-          By accessing or using Expense Pro (the "Service"), you agree to be bound by these Terms of
-          Service ("Terms"). If you disagree with any part of the terms, then you may not access the
+          By accessing or using Expense Pro (the &quot;Service&quot;), you agree to be bound by these Terms of
+          Service (&quot;Terms&quot;). If you disagree with any part of the terms, then you may not access the
           Service.
         </p>
 
@@ -58,7 +58,7 @@ const TermsOfServicePage = () => {
 
         <h2>6. Disclaimer of Warranties</h2>
         <p>
-          The Service is provided on an "AS IS" and "AS AVAILABLE" basis. Expense Pro makes no
+          The Service is provided on an &quot;AS IS&quot; and &quot;AS AVAILABLE&quot; basis. Expense Pro makes no
           warranties, expressed or implied, and hereby disclaims and negates all other warranties
           including, without limitation, implied warranties or conditions of merchantability,
           fitness for a particular purpose, or non-infringement of intellectual property or other
@@ -90,7 +90,7 @@ const TermsOfServicePage = () => {
         <h2>10. Changes to Terms</h2>
         <p>
           We reserve the right, at our sole discretion, to modify or replace these Terms at any
-          time. If a revision is material we will try to provide at least 30 days' notice prior to
+          time. If a revision is material we will try to provide at least 30 days&apos; notice prior to
           any new terms taking effect.
         </p>
 

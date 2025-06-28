@@ -2,7 +2,6 @@
 import { useState, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import TransactionTable from '@/components/transactions/transactions-table';
 import DateRangePickerV2 from '@/components/date/date-range-picker-v2';
 import {
@@ -159,7 +158,7 @@ export const AccountTransactionsSection = ({
   }, [filters, exportFormat, showError, showSuccess, showInfo, transactionsData?.transactions]);
 
   return (
-    <div className='flex h-full flex-col'>
+    <div className='flex h-auto flex-col'>
       <div className='border-b p-4'>
         {/* Search and Filter Toggle */}
         <div className='flex items-center gap-2'>
@@ -302,7 +301,7 @@ export const AccountTransactionsSection = ({
       </div>
 
       {transactionsData?.transactions.length === 0 ? (
-        <div className='text-muted-foreground flex h-full items-center justify-center p-8 text-center'>
+        <div className='text-muted-foreground flex h-auto items-center justify-center p-8 text-center'>
           No transactions found for the selected filters.
           {Object.values(filters).some(
             (val) => val !== undefined && val !== '' && val !== 'createdAt' && val !== 'desc'

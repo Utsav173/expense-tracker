@@ -63,6 +63,18 @@ export const AccountDetailsHeader = ({
               {!isMobile && 'Export'}
             </Button>
 
+            <Link href={`/accounts/statement`} className='shrink-0'>
+              <Button
+                variant='outline'
+                size='sm'
+                className='hover:bg-muted h-8 gap-1.5 text-xs transition-all duration-200 hover:scale-105 md:h-9 md:gap-2 md:text-sm'
+              >
+                <Download className='h-3.5 w-3.5 md:h-4 md:w-4' />
+                <span className='hidden md:inline'>Statement</span>
+                <span className='md:hidden'>Statement</span>
+              </Button>
+            </Link>
+
             <Link href={`/accounts/shares/${account?.id}`} className='shrink-0'>
               <Button
                 variant='outline'

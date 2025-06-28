@@ -76,7 +76,7 @@ export function Combobox({
     } else if (!value && !open) {
       setSearchQuery('');
     }
-  }, [value, open]);
+  }, [value, open, searchQuery]);
 
   const handleSelect = (currentValue: string) => {
     const selectedOption = options.find(
@@ -96,7 +96,7 @@ export function Combobox({
           role='combobox'
           aria-expanded={open}
           disabled={disabled}
-          className={cn('w-full justify-between font-normal', className)}
+          className={cn('bg-input border-border w-full justify-between font-normal', className)}
         >
           <span className='truncate'>{value?.label || placeholder}</span>
           <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />

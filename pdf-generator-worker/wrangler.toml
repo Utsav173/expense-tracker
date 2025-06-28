@@ -1,0 +1,8 @@
+name = "pdf-generator-worker"
+compatibility_date = "2024-06-28"
+compatibility_flags = [ "nodejs_compat" ]
+main = "src/index.ts"
+
+[browser]
+binding = "MYBROWSER"
+

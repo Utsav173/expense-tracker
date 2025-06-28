@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { ShieldAlert, ArrowLeft } from 'lucide-react';
+import { ShieldAlert } from 'lucide-react';
 import InfoPageLayout from '@/components/landing/info-page-layout';
 
 const PrivacyPolicyPage = () => {
@@ -32,14 +32,14 @@ const PrivacyPolicyPage = () => {
           <strong>c. AI API Keys:</strong> If you choose to use the AI Assistant feature, you may
           provide your own API key (e.g., for Google AI). We store this key securely encrypted using
           AES-GCM encryption and only decrypt it on the server when needed to process your AI
-          requests. We do not have access to the raw key after it's encrypted.
+          requests. We do not have access to the raw key after it&apos;s encrypted.
         </p>
         <p>
           <strong>d. Usage Data:</strong> We may collect information on how the Service is accessed
-          and used ("Usage Data"). This UsageData may include information such as your computer's
-          Internet Protocol address (e.g. IP address), browser type, browser version, the pages of
-          our Service that you visit, the time and date of your visit, the time spent on those
-          pages, unique device identifiers and other diagnostic data.
+          and used (&quot;Usage Data&quot;). This UsageData may include information such as your
+          computer&apos;s Internet Protocol address (e.g. IP address), browser type, browser
+          version, the pages of our Service that you visit, the time and date of your visit, the
+          time spent on those pages, unique device identifiers and other diagnostic data.
         </p>
 
         <h2>2. How We Use Your Information</h2>
@@ -56,8 +56,8 @@ const PrivacyPolicyPage = () => {
           <li>To monitor the usage of our Service</li>
           <li>To detect, prevent and address technical issues</li>
           <li>
-            To process your financial data as per the application's functionality (e.g., calculating
-            balances, generating reports).
+            To process your financial data as per the application&apos;s functionality (e.g.,
+            calculating balances, generating reports).
           </li>
           <li>
             If you provide an AI API Key, to use that key to interact with the respective AI

@@ -150,7 +150,7 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
         setMonth(initialDefaultMonth || new Date());
       }
     }
-  }, [date, initialDefaultMonth]);
+  }, [date, initialDefaultMonth, month, tempDate]);
 
   const isSameRange = (a?: DateRange, b?: DateRange): boolean => {
     if (!a && !b) return true;
@@ -333,7 +333,7 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
                 type='button'
                 variant='outline'
                 className={cn(
-                  'w-full justify-between px-3 font-normal',
+                  'bg-input border-border w-full justify-between px-3 font-normal',
                   !(tempDate?.from || date?.from) && 'text-muted-foreground',
                   disabled && 'cursor-not-allowed opacity-50',
                   buttonClassName
