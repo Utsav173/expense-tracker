@@ -99,10 +99,25 @@ export function createAnalysisTools(userId: string) {
             message += ` No spending recorded.`;
           }
 
+          const chartData = typedResult.name
+            .map((name, index) => ({
+              name,
+              value: typedResult.totalExpense[index] || 0,
+            }))
+            .filter((item) => item.value > 0);
+
           return createToolResponse({
             success: true,
             message: message,
             data: typedResult,
+            chart:
+              chartData.length > 0
+                ? {
+                    type: 'pie',
+                    data: chartData,
+                    title: `Spending by Category for ${dateDescription || 'this month'}`,
+                  }
+                : undefined,
           });
         } catch (error: any) {
           return createToolResponse({
@@ -171,10 +186,25 @@ export function createAnalysisTools(userId: string) {
           const accountMsg = accountId ? ` for account "${accountIdentifier}"` : '';
           const message = `Trend data for income, expense, and balance over ${period}${accountMsg} retrieved.`;
 
+          const trendChartData = typedResult.date.map((date: string, index: number) => ({
+            date,
+            Income: typedResult.income[index] || 0,
+            Expense: typedResult.expense[index] || 0,
+            Balance: typedResult.balance[index] || 0,
+          }));
+
           return createToolResponse({
             success: true,
             message: message,
             data: typedResult,
+            chart:
+              trendChartData.length > 0
+                ? {
+                    type: 'line',
+                    data: trendChartData,
+                    title: `Income vs. Expense Trend for ${dateDescription || 'this month'}`,
+                  }
+                : undefined,
           });
         } catch (error: any) {
           return createToolResponse({

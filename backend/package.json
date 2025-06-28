@@ -2,7 +2,7 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "start": "bun run dist/index.js",
-    "generate:build": "bun build ./src/index.ts --outdir ./dist --target bun -e aws-sdk -e mock-aws-s3 -e nock",
+    "generate:build": "bun build ./src/index.ts --outdir ./dist --target bun",
     "db:create": "bash ./scripts/db-setup.sh",
     "db:stop": "docker-compose down",
     "db:clean": "docker-compose down -v",
@@ -31,6 +31,7 @@
     "drizzle-orm": "^0.38.2",
     "ejs": "^3.1.10",
     "hono": "^4.2.3",
+    "jimp": "^1.6.0",
     "lodash": "^4.17.21",
     "node-cron": "^3.0.3",
     "nodemailer": "^6.9.13",
@@ -38,7 +39,6 @@
     "pg": "^8.11.5",
     "postgres": "^3.4.4",
     "puppeteer": "^22.6.5",
-    "sharp": "^0.33.3",
     "xlsx": "^0.18.5",
     "zod": "^3.24.3"
   },

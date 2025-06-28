@@ -329,10 +329,6 @@ export class AiService {
       userMessage,
     ];
 
-    if (config.NODE_ENV !== 'production') {
-      console.log('AI Prompt Messages:', JSON.stringify(messages, null, 2));
-    }
-
     const allTools = {
       ...createAccountTools(userId),
       ...createCategoryTools(userId),
@@ -354,10 +350,6 @@ export class AiService {
         maxSteps: 6,
       });
 
-      if (config.NODE_ENV !== 'production') {
-        console.log('AI Raw Result:', JSON.stringify(result, null, 2));
-      }
-
       const assistantMessageForHistory: HistoryAssistantMessage = {
         role: 'assistant',
         content: result.text || '',
@@ -375,8 +367,9 @@ export class AiService {
       };
     } catch (aiError: any) {
       console.error(`AI Model Error (Session: ${currentSessionId}, User: ${userId}):`, aiError);
-      let userFriendlyMessage = `AI processing failed: ${aiError.message || 'Unknown AI error'}`;
-      let statusCode = 502;
+      let userFriendlyMessage =
+        'An unexpected error occurred with the AI assistant. Please try again.';
+      let statusCode = 500; // Default to internal server error
 
       if (aiError.message?.includes('API key not valid')) {
         userFriendlyMessage =
@@ -413,6 +406,16 @@ export class AiService {
           toolResults: lastAssistantMessage?.toolResults,
           warning: userFriendlyMessage,
         };
+      } else if (aiError.name === 'GoogleGenerativeAIError' || aiError.response?.status === 400) {
+        // Catch general Google AI errors or bad requests from the model
+        userFriendlyMessage = `The AI model encountered an issue: ${
+          aiError.message || 'Please try rephrasing your request.'
+        }`;
+        statusCode = 400;
+      } else {
+        // Generic fallback for any other unhandled errors
+        userFriendlyMessage = `AI processing failed: ${aiError.message || 'Unknown AI error'}`;
+        statusCode = 502; // Bad Gateway for external service error
       }
 
       throw new HTTPException(statusCode as any, { message: userFriendlyMessage });

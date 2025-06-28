@@ -1,9 +1,9 @@
-import sharp from 'sharp';
+import { Jimp } from 'jimp';
 import { HTTPException } from 'hono/http-exception';
 
 /**
- * Compresses an image buffer using Sharp.
- * Resizes to fit within 250x250, converts to WebP with quality 80.
+ * Compresses an image buffer using Jimp.
+ * Resizes to fit within 250x250, converts to JPEG with quality 80.
  * Throws HTTPException if input is invalid, format unsupported, or compressed size exceeds 2MB.
  * @param imageData - The image data object (expected to have arrayBuffer method, like BunFile).
  * @returns Object with { error: boolean, data: string (base64 data URL or error message) }.
@@ -21,26 +21,41 @@ export async function compressImage(imageData: any): Promise<{ error: boolean; d
       throw new HTTPException(400, { message: 'Empty image buffer received.' });
     }
 
-    const sharpInstance = sharp(Buffer.from(buffer));
-    const metadata = await sharpInstance.metadata();
-    const format = metadata.format;
+    // Load image with Jimp
+    const image = await Jimp.fromBuffer(Buffer.from(buffer));
 
-    const allowedFormats = ['jpeg', 'jpg', 'png', 'gif', 'webp', 'avif', 'tiff'];
-    if (!format || !allowedFormats.includes(format)) {
+    // Get original format info
+    const mimeType = image.mime;
+    const allowedMimeTypes = [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'image/bmp',
+      'image/tiff',
+    ];
+
+    if (!allowedMimeTypes.includes(mimeType!)) {
       console.error(
-        `compressImage: Invalid image format: ${format}. Allowed: ${allowedFormats.join(', ')}.`,
+        `compressImage: Invalid image format: ${mimeType}. Allowed: ${allowedMimeTypes.join(
+          ', ',
+        )}.`,
       );
       throw new HTTPException(400, {
-        message: `Invalid image format: ${format}. Allowed: ${allowedFormats.join(', ')}.`,
+        message: `Invalid image format: ${mimeType}. Allowed: ${allowedMimeTypes.join(', ')}.`,
       });
     }
 
-    const reducedFile = await sharpInstance
-      .resize(250, 250, { fit: 'inside', withoutEnlargement: true })
-      .webp({ quality: 80 })
-      .toBuffer();
+    // Resize image to fit within 250x250 while maintaining aspect ratio
+    image.scaleToFit({ w: 250, h: 250 });
 
-    const sizeInMB = reducedFile.length / (1024 * 1024);
+    // Set quality to 80 and get buffer
+    // Note: Jimp doesn't support WebP output natively, so we'll use JPEG with quality 80
+    // If WebP is specifically needed, you might need to use a different library or sharp
+    const compressedBuffer = await image.getBuffer('image/jpeg', { quality: 80 });
+
+    const sizeInMB = compressedBuffer.length / (1024 * 1024);
     const sizeLimitMB = 2;
 
     if (sizeInMB > sizeLimitMB) {
@@ -56,10 +71,15 @@ export async function compressImage(imageData: any): Promise<{ error: boolean; d
 
     return {
       error: false,
-      data: `data:image/webp;base64,${reducedFile.toString('base64')}`,
+      data: `data:image/jpeg;base64,${compressedBuffer.toString('base64')}`,
     };
   } catch (error: any) {
     console.error('Image compression error:', error);
+
+    // Handle Jimp-specific errors
+    if (error.message && error.message.includes('Could not find MIME')) {
+      throw new HTTPException(400, { message: 'Unsupported image format.' });
+    }
 
     if (error instanceof HTTPException) {
       throw error;

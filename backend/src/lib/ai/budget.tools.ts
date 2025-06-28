@@ -211,7 +211,26 @@ export function createBudgetTools(userId: string) {
             summaryData.length > 0
               ? `Budget summary for ${effectivePeriodDesc} loaded.`
               : `No budget data found for ${effectivePeriodDesc}.`;
-          return createToolResponse({ success: true, message, data: summaryData });
+
+          const chartData = summaryData.map((item: any) => ({
+            name: item.categoryName,
+            Budgeted: item.budgetedAmount,
+            Actual: item.actualSpend,
+          }));
+
+          return createToolResponse({
+            success: true,
+            message,
+            data: summaryData,
+            chart:
+              chartData.length > 0
+                ? {
+                    type: 'bar',
+                    data: chartData,
+                    title: `Budget vs. Actual for ${effectivePeriodDesc}`,
+                  }
+                : undefined,
+          });
         } catch (error: any) {
           return createErrorResponse(error, 'Failed to retrieve budget summary.');
         }

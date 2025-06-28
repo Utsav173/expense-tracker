@@ -20,6 +20,12 @@ export interface ChatMessage {
     message?: string;
     error?: string;
   } | null;
+  chart?: {
+    type: 'bar' | 'line' | 'pie' | 'donut';
+    data: any;
+    options?: any;
+    title?: string;
+  };
   createdAt?: Date;
 }
 
@@ -93,12 +99,13 @@ export const useAiChat = (): UseAiChatReturn => {
       }
 
       let processedToolData: ChatMessage['toolData'] = null;
+      let chartData: ChatMessage['chart'] | undefined = undefined;
       let shouldInvalidateQueries = false;
 
       if (data.toolResults && data.toolResults.length > 0) {
         const successfulAnalysisResult = data.toolResults.find((res) => {
           const parsed = safeJsonParse(res.result);
-          return parsed && parsed.success === true && parsed.data !== undefined;
+          return parsed && parsed.success === true && (parsed.data !== undefined || parsed.chart);
         });
 
         if (successfulAnalysisResult) {
@@ -111,6 +118,7 @@ export const useAiChat = (): UseAiChatReturn => {
             data: parsed.data,
             message: parsed.message
           };
+          chartData = parsed.chart;
           if (
             !callingTool?.toolName?.startsWith('get') &&
             !callingTool?.toolName?.startsWith('list') &&
@@ -131,6 +139,7 @@ export const useAiChat = (): UseAiChatReturn => {
             message: parsed?.message,
             error: parsed?.error
           };
+          chartData = parsed.chart;
           if (parsed?.confirmationNeeded || parsed?.clarificationNeeded) {
             shouldInvalidateQueries = false;
           } else if (
@@ -151,6 +160,7 @@ export const useAiChat = (): UseAiChatReturn => {
         toolCalls: data.toolCalls,
         toolResults: data.toolResults,
         toolData: processedToolData,
+        chart: chartData,
         createdAt: new Date()
       };
 

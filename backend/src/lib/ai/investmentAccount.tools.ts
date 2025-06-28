@@ -12,9 +12,20 @@ export function createInvestmentAccountTools(userId: string) {
     createInvestmentAccount: tool({
       description: 'Creates a new account for tracking investments (e.g., brokerage account).',
       parameters: z.object({
-        accountName: z.string().min(1).describe("Name for the account (e.g., 'Zerodha Stocks'). Example: "My Fidelity Account""),
-        platform: z.string().optional().describe("Broker/platform name (e.g., 'Zerodha'). Example: "Vanguard""),
-        currency: z.string().length(3).describe('3-letter currency code (e.g., INR, USD). Example: "USD"'),
+        accountName: z
+          .string()
+          .min(1)
+          .describe(
+            'Name for the account (e.g., \'Zerodha Stocks\'). Example: "My Fidelity Account"',
+          ),
+        platform: z
+          .string()
+          .optional()
+          .describe('Broker/platform name (e.g., \'Zerodha\'). Example: "Vanguard"'),
+        currency: z
+          .string()
+          .length(3)
+          .describe('3-letter currency code (e.g., INR, USD). Example: "USD"'),
       }),
       execute: async ({ accountName, platform, currency }) => {
         try {
@@ -67,7 +78,12 @@ export function createInvestmentAccountTools(userId: string) {
       description:
         'Identifies a specific investment account by name or ID for potential update or deletion. Requires confirmation.',
       parameters: z.object({
-        accountIdentifier: z.string().min(1).describe('Name or ID of the investment account. Example: "My Brokerage" or "inv_acc_123"'),
+        accountIdentifier: z
+          .string()
+          .min(1)
+          .describe(
+            'Name or ID of the investment account. Example: "My Brokerage" or "inv_acc_123"',
+          ),
       }),
       execute: async ({ accountIdentifier }) => {
         try {
@@ -110,9 +126,19 @@ export function createInvestmentAccountTools(userId: string) {
       description:
         'Updates name or platform of an investment account AFTER confirmation, using its unique ID.',
       parameters: z.object({
-        accountId: z.string().describe('Exact unique ID of the investment account. Example: "inv_acc_456"'),
-        newName: z.string().min(1).optional().describe('New name (optional). Example: "Updated Brokerage Account"'),
-        newPlatform: z.string().min(1).optional().describe('New platform/broker (optional). Example: "Robinhood"'),
+        accountId: z
+          .string()
+          .describe('Exact unique ID of the investment account. Example: "inv_acc_456"'),
+        newName: z
+          .string()
+          .min(1)
+          .optional()
+          .describe('New name (optional). Example: "Updated Brokerage Account"'),
+        newPlatform: z
+          .string()
+          .min(1)
+          .optional()
+          .describe('New platform/broker (optional). Example: "Robinhood"'),
       }),
       execute: async ({ accountId, newName, newPlatform }) => {
         try {
