@@ -1,5 +1,5 @@
 # Use a specific and slim version of the Bun image
-FROM oven/bun:1.1.20-slim as base
+FROM oven/bun:1.2.15-slim as base
 WORKDIR /usr/src/app
 ENV NODE_ENV="production"
 
