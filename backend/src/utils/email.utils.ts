@@ -209,8 +209,8 @@ export function goalReminderEmailTemp(
       <p>Hi ${safeUsername},</p>
       <p>Just a friendly reminder that your saving goal "<strong>${goalName}</strong>" is approaching its target date of <strong>${targetDate}</strong>.</p>
       <p>You still need to save <strong>${currency}${remainingAmount.toFixed(
-    2,
-  )}</strong> to reach your target.</p>
+        2,
+      )}</strong> to reach your target.</p>
       <p>Keep up the great work!</p>
       <p>Thank you,<br/>Expense Tracker Team</p>
     </div>
@@ -244,8 +244,8 @@ export function billReminderEmailTemp(
       <h1>Upcoming Bill Reminder</h1>
       <p>Hi ${safeUsername},</p>
       <p>This is a reminder that your recurring payment for "<strong>${description}</strong>" of <strong>${currency}${amount.toFixed(
-    2,
-  )}</strong> is due soon, around <strong>${dueDate}</strong>.</p>
+        2,
+      )}</strong> is due soon, around <strong>${dueDate}</strong>.</p>
       <p>Please ensure you have sufficient funds available.</p>
       <p>Thank you,<br/>Expense Tracker Team</p>
     </div>

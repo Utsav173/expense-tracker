@@ -14,5 +14,4 @@ interface ContactFormResponse {
 
 export const submitContactForm = (
   body: ContactFormPayload
-): Promise<ApiResponse<ContactFormResponse>> =>
-  apiFetch('/contact', 'POST', body);
+): Promise<ApiResponse<ContactFormResponse>> => apiFetch('/contact', 'POST', body);

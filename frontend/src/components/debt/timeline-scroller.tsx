@@ -229,6 +229,7 @@ export const TimelineScroller: React.FC<TimelineScrollerProps> = ({
               {formatCurrency(schedule[selectedIndex].interestForPeriod)}
             </div>
           </div>
+
           <div className='space-y-1'>
             <div className='text-muted-foreground text-xs'>Remaining Balance</div>
             <div className='font-medium'>

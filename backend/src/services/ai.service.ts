@@ -122,9 +122,9 @@ function createPdfParsingSystemPrompt(userCategories: string[], currentDate: str
     
     B. **Partial Date (Day/Month only):** If a transaction only provides a day and month (e.g., '15-Jul', '07/15'), you MUST use the year from "Today's Date" provided above to construct the full date.
         - *Example:* If today is '${currentDate}' and the text says '15-Jul', the output date MUST be '${currentDate.substring(
-    0,
-    4,
-  )}-07-15'.
+          0,
+          4,
+        )}-07-15'.
         
     C. **No Date Found:** If a transaction line has absolutely no date information associated with it, you MUST use the full "Today's Date" provided above as the default date for that transaction.
 

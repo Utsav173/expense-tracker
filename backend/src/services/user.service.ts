@@ -249,7 +249,7 @@ export class UserService {
       ) {
         throw new Error('Invalid token payload structure');
       }
-      payload = unknownPayload as UserJwtPayload;
+      payload = unknownPayload as unknown as UserJwtPayload;
     } catch (e: any) {
       throw new HTTPException(401, {
         message: `Invalid or expired reset password token: ${e.message}`,

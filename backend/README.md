@@ -121,37 +121,41 @@ The database schema is visualized below. For a more detailed view, you can use D
 
 4.  **Database Setup:**
 
-    **Option 1: Using Docker (Recommended for Local Development)**
+        **Option 1: Using Docker (Recommended for Local Development)**
 
-    This is the easiest way to get a local PostgreSQL database running.
+        This is the easiest way to get a local PostgreSQL database running.
 
-    a. **Create the Database Container:**
-    `bash
-    bun run db:create
-    `
-    This command will start a PostgreSQL database in a Docker container, wait for it to be ready, and print the connection URL to your console.
+        a. **Create the Database Container:**
+        ```bash
+          bun run db:create
+          ```
+        This command will start a PostgreSQL database in a Docker container, wait for it to be ready, and print the connection URL to your console.
 
-    b. **Update `.env` file:** Copy the URL printed in the console and paste it as the value for `DATABASE_URL_NEW` in your `.env` file.
+        b. **Update `.env` file:** Copy the URL printed in the console and paste it as the value for `DATABASE_URL_NEW` in your `.env` file.
 
-    c. **Apply Migrations:** Create the database tables based on the schema:
-    `bash
+        c. **Apply Migrations:** Create the database tables based on the schema:
+        ```bash
+
     bun run db:migrate
-    `
 
-    d. **Seed Data (Optional):**
-    `bash
+    ````
+
+        d. **Seed Data (Optional):**
+        ```bash
+
     bun run seed
-    `
+    ````
+
     _(Use caution when seeding production databases. The seed script clears existing data first!)_
 
-    **Option 2: Manual Setup**
+        **Option 2: Manual Setup**
 
-    If you prefer to use your own PostgreSQL instance (e.g., from Neon, Supabase, or a local installation not managed by Docker Compose), follow these steps:
+        If you prefer to use your own PostgreSQL instance (e.g., from Neon, Supabase, or a local installation not managed by Docker Compose), follow these steps:
 
-    - Ensure your database is running and you have the connection string.
-    - Set the `DATABASE_URL_NEW` in your `.env` file to your connection string.
-    - Run migrations: `bun run db:migrate`
-    - (Optional) Seed data: `bun run seed`
+        - Ensure your database is running and you have the connection string.
+        - Set the `DATABASE_URL_NEW` in your `.env` file to your connection string.
+        - Run migrations: `bun run db:migrate`
+        - (Optional) Seed data: `bun run seed`
 
 ## Running the Application
 

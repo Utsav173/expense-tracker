@@ -6,7 +6,7 @@ export class PdfService {
       const workerUrl = process.env.CLOUDFLARE_WORKER_PDF_URL;
 
       if (!workerUrl) {
-        throw new Error("CLOUDFLARE_WORKER_PDF_URL environment variable is not set.");
+        throw new Error('CLOUDFLARE_WORKER_PDF_URL environment variable is not set.');
       }
 
       const response = await fetch(`${workerUrl}/generate-pdf`, {

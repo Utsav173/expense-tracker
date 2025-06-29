@@ -429,6 +429,8 @@ export interface Payment {
   cumulativePrincipalPaid: number;
   cumulativeInterestPaid: number;
   remainingPrincipal: number;
+  totalPrincipalPaid?: number;
+  totalInterestPaid?: number;
 }
 
 export interface InvestmentPerformanceData {

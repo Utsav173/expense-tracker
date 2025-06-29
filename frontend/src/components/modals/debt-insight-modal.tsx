@@ -36,7 +36,6 @@ interface DebtInsightModalProps {
 const COLORS = {
   'Principal Paid': 'var(--primary)',
   'Interest Paid': 'var(--destructive)',
-  'Premium/Fees': 'var(--warning)',
   'Remaining Principal': 'var(--muted)'
 };
 
@@ -111,18 +110,13 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
     const calculatedTotalInterest =
       paymentSchedule?.reduce((sum, p) => sum + p.interestForPeriod, 0) || 0;
     const totalPrincipal = debt.debts.amount || 0;
-    const totalPremium = debt.debts.premiumAmount || 0;
-    const totalPayable = totalPrincipal + calculatedTotalInterest + totalPremium;
+    const totalPayable = totalPrincipal + calculatedTotalInterest;
     const selectedInstallmentData = paymentSchedule?.[selectedIndex] || null;
 
     const bd = selectedInstallmentData
       ? {
           principalPaid: selectedInstallmentData.cumulativePrincipalPaid,
           interestPaid: selectedInstallmentData.cumulativeInterestPaid,
-          premiumPaid:
-            paymentSchedule && paymentSchedule.length > 0
-              ? (totalPremium / paymentSchedule.length) * (selectedIndex + 1)
-              : 0,
           remainingPrincipal: selectedInstallmentData.remainingPrincipal,
           totalPayable,
           statusAsOfDate: selectedInstallmentData.date
@@ -130,7 +124,6 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
       : {
           principalPaid: debt.debts.isPaid ? totalPrincipal : 0,
           interestPaid: debt.debts.isPaid ? calculatedTotalInterest : 0,
-          premiumPaid: debt.debts.isPaid ? totalPremium : 0,
           remainingPrincipal: debt.debts.isPaid ? 0 : totalPrincipal,
           totalPayable,
           statusAsOfDate: debt.debts.dueDate ? parseISO(debt.debts.dueDate) : new Date()
@@ -139,11 +132,14 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
     const cd = [
       { name: 'Principal Paid', value: bd.principalPaid },
       { name: 'Interest Paid', value: bd.interestPaid },
-      { name: 'Premium/Fees', value: bd.premiumPaid },
       { name: 'Remaining Principal', value: bd.remainingPrincipal }
     ].filter((item) => item.value > 0);
 
-    return { breakdownData: bd, chartData: cd, totalInterest: calculatedTotalInterest };
+    return {
+      breakdownData: bd,
+      chartData: cd,
+      totalInterest: calculatedTotalInterest
+    };
   }, [selectedIndex, paymentSchedule, debt.debts]);
 
   const isOverdue =
@@ -222,18 +218,6 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
               <DialogDescription className='text-base'>
                 {debt.debts.description || 'Debt tracking and payment analysis'}
               </DialogDescription>
-            </div>
-            <div
-              className={cn(
-                'mr-4 flex items-center gap-2 rounded-lg border p-3 max-sm:mr-0 max-sm:p-1',
-                statusConfig.bgColor,
-                statusConfig.borderColor
-              )}
-            >
-              <StatusIcon className={cn('h-5 w-5 max-sm:h-3 max-sm:w-3', statusConfig.color)} />
-              <div className='text-sm leading-none font-medium'>
-                {debt.debts.type === 'given' ? 'Money Lent' : 'Money Borrowed'}
-              </div>
             </div>
           </div>
         </DialogHeader>
@@ -321,6 +305,7 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                       ) : (
                         <div className='space-y-4'>
                           <div className='relative h-[200px]'>
+                            {/* Pie Chart */}
                             <ResponsiveContainer width='100%' height='100%'>
                               <PieChart>
                                 <Tooltip
@@ -382,11 +367,6 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                             label: 'Interest Paid',
                             value: breakdownData.interestPaid,
                             color: 'bg-destructive'
-                          },
-                          {
-                            label: 'Premium/Fees',
-                            value: breakdownData.premiumPaid,
-                            color: 'bg-warning'
                           },
                           {
                             label: 'Remaining Principal',
@@ -475,14 +455,6 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                           <span className='text-muted-foreground'>Duration:</span>
                           <span className='font-medium capitalize'>{debt.debts.duration}</span>
                         </div>
-                        {debt.debts.premiumAmount > 0 && (
-                          <div className='flex justify-between'>
-                            <span className='text-muted-foreground'>Premium/Fees:</span>
-                            <span className='font-medium'>
-                              {formatCurrency(debt.debts.premiumAmount)}
-                            </span>
-                          </div>
-                        )}
                       </div>
                     </CardContent>
                   </Card>

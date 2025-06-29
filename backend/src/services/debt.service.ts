@@ -37,6 +37,8 @@ interface Payment {
   cumulativePrincipalPaid: number;
   cumulativeInterestPaid: number;
   remainingPrincipal: number;
+  totalPrincipalPaid?: number;
+  totalInterestPaid?: number;
 }
 
 type DebtFilters = {
@@ -154,68 +156,77 @@ export class DebtService {
       throw new HTTPException(400, { message: 'Invalid date format in debt record.' });
     }
 
-    const formattedCreatedAt = formatDateFn(startDate, 'yyyy-MM-dd');
-    const formattedDueDate = formatDateFn(endDate, 'yyyy-MM-dd');
-
-    const totalInterestResult = this.calculateInterest(
-      amount,
-      percentage,
-      `${formattedCreatedAt},${formattedDueDate}`,
-      interestType,
-      12,
-    );
-
-    const totalInterest = totalInterestResult.interest;
     const numInstallments = parseInt(frequency, 10);
 
     if (isNaN(numInstallments) || numInstallments <= 0) {
       throw new HTTPException(400, { message: 'Invalid frequency for schedule generation.' });
     }
 
-    const schedule: Payment[] = [];
-    let remainingPrincipal = amount;
-    let cumulativeInterest = 0;
-    let cumulativePrincipal = 0;
-    const today = new Date();
+    let schedule: Payment[] = [];
+    let totalPrincipalPaid = 0;
+    let totalInterestPaid = 0;
 
     if (interestType === 'compound' && percentage > 0) {
+      let remainingPrincipal = amount;
+      let cumulativeInterest = 0;
+      let cumulativePrincipal = 0;
       const periodicInterestRate = percentage / 100 / 12; // Assuming monthly installments for compound
+
+      // Calculate fixed monthly payment for compound interest
       const installmentAmount =
         (amount * (periodicInterestRate * Math.pow(1 + periodicInterestRate, numInstallments))) /
         (Math.pow(1 + periodicInterestRate, numInstallments) - 1);
 
       if (isNaN(installmentAmount) || !isFinite(installmentAmount)) {
-        return this.generateSimpleInterestSchedule(debtRecord);
-      }
+        // Fallback to simple interest if compound calculation results in invalid number
+        schedule = this.generateSimpleInterestSchedule(debtRecord);
+      } else {
+        const today = new Date();
+        for (let i = 1; i <= numInstallments; i++) {
+          const interestForPeriod = remainingPrincipal * periodicInterestRate;
+          let principalForPeriod = installmentAmount - interestForPeriod;
 
-      for (let i = 1; i <= numInstallments; i++) {
-        const interestForPeriod = remainingPrincipal * periodicInterestRate;
-        const principalForPeriod = installmentAmount - interestForPeriod;
-        remainingPrincipal -= principalForPeriod;
-        cumulativeInterest += interestForPeriod;
-        cumulativePrincipal += principalForPeriod;
+          // Adjust last payment to account for rounding
+          if (i === numInstallments) {
+            principalForPeriod = remainingPrincipal;
+          }
 
-        const installmentDate = addMonths(startDate, i);
-        const status: Payment['status'] = isPaid
-          ? 'settled'
-          : isAfter(today, installmentDate)
-          ? 'due'
-          : 'upcoming';
+          remainingPrincipal -= principalForPeriod;
+          cumulativeInterest += interestForPeriod;
+          cumulativePrincipal += principalForPeriod;
 
-        schedule.push({
-          date: installmentDate,
-          status,
-          installmentAmount,
-          principalForPeriod,
-          interestForPeriod,
-          cumulativePrincipalPaid: cumulativePrincipal,
-          cumulativeInterestPaid: cumulativeInterest,
-          remainingPrincipal: Math.max(0, remainingPrincipal),
-        });
+          const installmentDate = addMonths(startDate, i);
+          const status: Payment['status'] = isPaid
+            ? 'settled'
+            : isAfter(today, installmentDate)
+              ? 'due'
+              : 'upcoming';
+
+          schedule.push({
+            date: installmentDate,
+            status,
+            installmentAmount: parseFloat(installmentAmount.toFixed(2)),
+            principalForPeriod: parseFloat(principalForPeriod.toFixed(2)),
+            interestForPeriod: parseFloat(interestForPeriod.toFixed(2)),
+            cumulativePrincipalPaid: parseFloat(cumulativePrincipal.toFixed(2)),
+            cumulativeInterestPaid: parseFloat(cumulativeInterest.toFixed(2)),
+            remainingPrincipal: parseFloat(Math.max(0, remainingPrincipal).toFixed(2)),
+          });
+        }
       }
     } else {
       // Handles Simple interest
-      return this.generateSimpleInterestSchedule(debtRecord);
+      schedule = this.generateSimpleInterestSchedule(debtRecord);
+    }
+
+    // Calculate total principal and interest paid from the generated schedule
+    totalPrincipalPaid = schedule.reduce((sum, p) => sum + p.principalForPeriod, 0);
+    totalInterestPaid = schedule.reduce((sum, p) => sum + p.interestForPeriod, 0);
+
+    // Add total principal and interest paid to the last payment in the schedule
+    if (schedule.length > 0) {
+      schedule[schedule.length - 1].totalPrincipalPaid = parseFloat(totalPrincipalPaid.toFixed(2));
+      schedule[schedule.length - 1].totalInterestPaid = parseFloat(totalInterestPaid.toFixed(2));
     }
 
     return schedule;
@@ -270,8 +281,8 @@ export class DebtService {
       const status: Payment['status'] = isPaid
         ? 'settled'
         : isAfter(today, installmentDate)
-        ? 'due'
-        : 'upcoming';
+          ? 'due'
+          : 'upcoming';
 
       cumulativePrincipal += principalPerInstallment;
       cumulativeInterest += interestPerInstallment;
@@ -279,14 +290,25 @@ export class DebtService {
       schedule.push({
         date: installmentDate,
         status,
-        installmentAmount,
-        principalForPeriod: principalPerInstallment,
-        interestForPeriod: interestPerInstallment,
-        cumulativePrincipalPaid: cumulativePrincipal,
-        cumulativeInterestPaid: cumulativeInterest,
-        remainingPrincipal: Math.max(0, amount! - cumulativePrincipal),
+        installmentAmount: parseFloat(installmentAmount.toFixed(2)),
+        principalForPeriod: parseFloat(principalPerInstallment.toFixed(2)),
+        interestForPeriod: parseFloat(interestPerInstallment.toFixed(2)),
+        cumulativePrincipalPaid: parseFloat(cumulativePrincipal.toFixed(2)),
+        cumulativeInterestPaid: parseFloat(cumulativeInterest.toFixed(2)),
+        remainingPrincipal: parseFloat(Math.max(0, amount! - cumulativePrincipal).toFixed(2)),
       });
     }
+
+    // Calculate total principal and interest paid for simple interest
+    const totalPrincipalPaid = schedule.reduce((sum, p) => sum + p.principalForPeriod, 0);
+    const totalInterestPaid = schedule.reduce((sum, p) => sum + p.interestForPeriod, 0);
+
+    // Add total principal and interest paid to the last payment in the schedule
+    if (schedule.length > 0) {
+      schedule[schedule.length - 1].totalPrincipalPaid = parseFloat(totalPrincipalPaid.toFixed(2));
+      schedule[schedule.length - 1].totalInterestPaid = parseFloat(totalInterestPaid.toFixed(2));
+    }
+
     return schedule;
   }
 

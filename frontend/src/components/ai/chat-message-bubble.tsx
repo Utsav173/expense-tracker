@@ -103,7 +103,12 @@ const ToolDataSummary: React.FC<{ toolData: ChatMessage['toolData'] }> = ({ tool
   const [showAll, setShowAll] = useState(false);
 
   React.useEffect(() => {
-    if (toolData && toolData.toolName === 'listTransactions' && Array.isArray(toolData.data) && toolData.data.length > 0) {
+    if (
+      toolData &&
+      toolData.toolName === 'listTransactions' &&
+      Array.isArray(toolData.data) &&
+      toolData.data.length > 0
+    ) {
       const transactions = toolData.data as Transaction[];
       const MAX_INITIAL_DISPLAY = 5;
       if (transactions.length <= MAX_INITIAL_DISPLAY) {

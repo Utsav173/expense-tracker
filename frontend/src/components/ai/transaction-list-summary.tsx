@@ -20,9 +20,7 @@ export const TransactionListSummary: React.FC<TransactionListSummaryProps> = ({ 
     setShowAll(transactions.length <= MAX_INITIAL_DISPLAY);
   }, [transactions.length]);
 
-  const displayedTransactions = showAll
-    ? transactions
-    : transactions.slice(0, MAX_INITIAL_DISPLAY);
+  const displayedTransactions = showAll ? transactions : transactions.slice(0, MAX_INITIAL_DISPLAY);
 
   return (
     <div className='border-border/50 mt-2 space-y-1 border-t pt-2'>

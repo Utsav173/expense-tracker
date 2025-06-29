@@ -304,8 +304,8 @@ export class BudgetService {
       budgetedAmount > 0
         ? Math.max(0, Math.min((totalSpentValue / budgetedAmount) * 100, 100))
         : totalSpentValue > 0
-        ? 100
-        : 0;
+          ? 100
+          : 0;
 
     return {
       budgetId: budget.id,
