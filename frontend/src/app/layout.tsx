@@ -8,32 +8,41 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Expense Pro: AI-Powered Expense Tracker & Smart Finance Manager',
+  title: 'Expense Tracker - Master Your Money. Effortlessly.',
   description:
-    'Take control of your finances with Expense Pro. Track expenses, manage budgets, monitor investments, and get AI-driven insights. Sign up free today!',
-  keywords:
-    'expense tracker, budget app, personal finance, investment tracking, AI finance, money management, financial planning, savings goals, debt management',
+    'Expense Pro is your intelligent partner for mastering personal finance. Automate tracking, gain deep understanding, and achieve your financial goals with unprecedented ease.',
+  keywords: [
+    'expense tracker',
+    'personal finance',
+    'budgeting app',
+    'financial management',
+    'AI finance',
+    'money management'
+  ],
   openGraph: {
-    title: 'Expense Pro: AI-Powered Expense Tracker & Smart Finance Manager',
+    title: 'Expense Tracker - Master Your Money. Effortlessly.',
     description:
-      'Simplify your financial life. Track, budget, invest, and get AI insights with Expense Pro.',
+      'Expense Pro: Your intelligent partner for mastering personal finance. Automate tracking, gain deep understanding, and achieve your financial goals with unprecedented ease.',
+    url: 'https://expense-pro.vercel.app/',
     type: 'website',
-    url: 'https://pro-expense.vercel.app',
     images: [
       {
-        url: 'https://pro-expense.vercel.app/og-image.png',
+        url: 'https://expense-pro.vercel.app/og-image-home.png',
         width: 1200,
         height: 630,
-        alt: 'Expense Pro Dashboard'
+        alt: 'Expense Tracker Dashboard Mockup'
       }
     ]
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Expense Pro: AI-Powered Expense Tracker & Smart Finance Manager',
+    title: 'Expense Tracker - Master Your Money. Effortlessly.',
     description:
-      'Simplify your financial life. Track, budget, invest, and get AI insights with Expense Pro.',
-    images: ['https://pro-expense.vercel.app/og-image.png']
+      'Expense Pro: Your intelligent partner for mastering personal finance. Automate tracking, gain deep understanding, and achieve your financial goals with unprecedented ease.',
+    images: ['https://expense-pro.vercel.app/og-image-home.png']
+  },
+  verification: {
+    google: '4b4H3hr3KG4V1J6eRzWhNZDf84yIPAcR1x32o0EpF8U'
   },
   icons: [
     { rel: 'icon', type: 'image/png', sizes: '96x96', url: '/favicon-96x96.png' },
