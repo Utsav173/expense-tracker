@@ -152,7 +152,7 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
   onOpenChange,
   hideTriggerButton = false
 }) => {
-  const { showSuccess, showError } = useToast();
+  const { showError } = useToast();
   const invalidate = useInvalidateQueries();
   const { user } = useAuth();
 
@@ -210,7 +210,6 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
     mutationFn: (data: DebtApiPayload) => apiCreateDebt(data),
     onSuccess: async () => {
       await invalidate(['debts', 'accounts']);
-      showSuccess('Debt created successfully!');
       onDebtAdded();
       onOpenChange(false);
     },

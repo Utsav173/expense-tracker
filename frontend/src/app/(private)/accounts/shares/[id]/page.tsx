@@ -28,7 +28,7 @@ interface PageProps {
 const AccountSharesPage = ({ params }: PageProps) => {
   const unwrappedParams = use(params);
   const { id } = unwrappedParams;
-  const { showError, showSuccess } = useToast();
+  const { showError } = useToast();
   const invalidate = useInvalidateQueries();
 
   const {
@@ -45,7 +45,6 @@ const AccountSharesPage = ({ params }: PageProps) => {
     mutationFn: (userId: string) => accountRevokeShare({ accountId: id, userId }),
     onSuccess: () => {
       invalidate(['accountShares']);
-      showSuccess('Access revoked successfully!');
     },
     onError: (error: any) => {
       showError(error.message);

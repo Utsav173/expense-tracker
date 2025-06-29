@@ -157,7 +157,7 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
   debt,
   onDebtUpdated
 }) => {
-  const { showSuccess, showError } = useToast();
+  const { showError } = useToast();
   const invalidate = useInvalidateQueries();
 
   const initialDurationState = useMemo(() => parseInitialDuration(debt), [debt]);
@@ -189,7 +189,6 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
       apiUpdateDebt(id, data),
     onSuccess: async () => {
       await invalidate(['debts']);
-      showSuccess('Debt updated successfully!');
       onDebtUpdated();
       handleClose();
     },

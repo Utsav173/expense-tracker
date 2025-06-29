@@ -48,13 +48,12 @@ const TransactionTable = ({
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionType | null>(null);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [deleteTransactionId, setDeleteTransactionId] = useState<string | null>(null);
-  const { showSuccess, showError } = useToast();
+  const { showError } = useToast();
 
   const deleteMutation = useMutation({
     mutationFn: transactionDelete,
     onSuccess: async () => {
       await refetchData();
-      showSuccess('Transaction deleted successfully!');
       setDeleteTransactionId(null);
     },
     onError: (error: any) => {

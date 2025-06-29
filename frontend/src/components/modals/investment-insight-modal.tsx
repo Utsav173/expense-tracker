@@ -56,10 +56,12 @@ const CustomTooltip = ({
   currency: string;
   chartType: 'market' | 'holding';
   data: any[];
+  purchasePrice?: number | null;
 }) => {
   // FIX: Added robust checks to ensure payload and its data exist before processing.
-  if (active && payload && payload.length > 0 && payload[0].payload) {
+  if (active && payload && payload.length > 0) {
     const currentData = payload[0].payload;
+    if (!currentData) return null;
     const currentIndex = data.findIndex((d) => d.date === currentData.date);
     const prevData = currentIndex > 0 ? data[currentIndex - 1] : null;
 
@@ -73,6 +75,8 @@ const CustomTooltip = ({
       value = currentData.positive !== null ? currentData.positive : currentData.negative;
       valueLabel = value !== null && value >= 0 ? 'Gain' : 'Loss';
     }
+
+    const purchasePrice = chartType === 'market' ? payload[0].payload.purchasePrice : null;
 
     if (value === null) return null;
 
@@ -105,6 +109,12 @@ const CustomTooltip = ({
             <span className='text-muted-foreground'>{valueLabel}:</span>
             <span className='font-semibold'>{formatCurrency(value, currency)}</span>
           </div>
+          {chartType === 'market' && purchasePrice !== undefined && purchasePrice !== null && (
+            <div className='flex items-center justify-between'>
+              <span className='text-muted-foreground'>Entry Price:</span>
+              <span className='font-semibold'>{formatCurrency(purchasePrice, currency)}</span>
+            </div>
+          )}
           {change !== null && percentageChange !== null && (
             <div className='flex items-center justify-between'>
               <span className='text-muted-foreground'>Change:</span>
@@ -323,7 +333,7 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
             <Tabs defaultValue='market' className='w-full'>
               <TabsList className='grid w-full grid-cols-2'>
                 <TabsTrigger value='market'>Market Performance</TabsTrigger>
-                <TabsTrigger value='holding'>My Holding's Value</TabsTrigger>
+                <TabsTrigger value='holding'>My Holding's Performance</TabsTrigger>
               </TabsList>
               <TabsContent value='market'>
                 <div className='h-[300px] w-full pt-4'>
@@ -379,6 +389,7 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                                 currency={accountCurrency}
                                 data={performanceData.marketPerformance}
                                 chartType='market'
+                                purchasePrice={investment.purchasePrice}
                               />
                             }
                           />

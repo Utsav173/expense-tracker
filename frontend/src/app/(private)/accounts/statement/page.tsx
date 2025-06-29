@@ -29,7 +29,7 @@ const StatementPage = () => {
   });
   const [numTransactions, setNumTransactions] = useState('');
 
-  const { showSuccess, showError } = useToast();
+  const { showError } = useToast();
 
   const handleGenerateStatement = async () => {
     if (!accountId) {
@@ -56,7 +56,6 @@ const StatementPage = () => {
         numTransactions: numTransactionsParam,
         exportType
       });
-      showSuccess('Statement generated successfully.');
     } catch (error) {
       showError('Failed to generate statement.');
     } finally {

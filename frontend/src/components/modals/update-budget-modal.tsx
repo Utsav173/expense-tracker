@@ -59,7 +59,7 @@ const UpdateBudgetModal: React.FC<UpdateBudgetModalProps> = ({
   budget,
   onBudgetUpdated
 }) => {
-  const { showSuccess, showError } = useToast();
+  const { showError } = useToast();
   const invalidate = useInvalidateQueries();
 
   const form = useForm<BudgetUpdateFormSchema>({
@@ -81,7 +81,6 @@ const UpdateBudgetModal: React.FC<UpdateBudgetModalProps> = ({
     onSuccess: async () => {
       await invalidate(['budgets']);
       await invalidate(['budgetSummaryDashboard']);
-      showSuccess('Budget updated successfully!');
       onBudgetUpdated();
       handleClose();
     },

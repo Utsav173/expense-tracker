@@ -34,7 +34,7 @@ const AccountListPage = () => {
   });
 
   const [selectedItem, setSelectedItem] = useState<Account | undefined>();
-  const { showError, showSuccess } = useToast();
+  const { showError } = useToast();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [deleteAccountId, setDeleteAccountId] = useState<string | null>(null);
 
@@ -42,7 +42,6 @@ const AccountListPage = () => {
     mutationFn: (id: string) => accountDelete(id),
     onSuccess: () => {
       refetch();
-      showSuccess('Account deleted successfully!');
       setDeleteAccountId(null);
     },
     onError: (error: any) => {

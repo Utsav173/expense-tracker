@@ -53,13 +53,12 @@ const ShareAccountModal = ({
     queryFn: usersGetDropdown
   });
 
-  const { showError, showSuccess } = useToast();
+  const { showError } = useToast();
 
   const shareAccountMutation = useMutation({
     mutationFn: (data: ShareAccountFormSchema) => accountShare(data),
     onSuccess: async () => {
       await invalidate(['accounts', 'accountShares']);
-      showSuccess('Account shared successfully!');
       setIsOpen(false);
       form.reset();
     },

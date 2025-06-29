@@ -24,13 +24,12 @@ export function GoalActions({ goal, user, refetchGoals }: GoalActionsProps) {
   const [addWithdrawMode, setAddWithdrawMode] = useState<'add' | 'withdraw'>('add');
 
   const invalidate = useInvalidateQueries();
-  const { showSuccess, showError } = useToast();
+  const { showError } = useToast();
 
   const deleteGoalMutation = useMutation({
     mutationFn: (id: string) => goalDelete(id),
     onSuccess: async () => {
       await invalidate(['goals']);
-      showSuccess('Goal deleted successfully!');
       setIsDeleteModalOpen(false);
       refetchGoals();
     },

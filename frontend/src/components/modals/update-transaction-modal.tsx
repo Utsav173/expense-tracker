@@ -93,7 +93,7 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
   onUpdate,
   queryKey
 }) => {
-  const { showError, showSuccess } = useToast();
+  const { showError } = useToast();
   const invalidate = useInvalidateQueries();
   const [categoryComboboxLoading, setCategoryComboboxLoading] = useState(false);
   const [categoryComboboxError, setCategoryComboboxError] = useState<string | null>(null);
@@ -190,7 +190,6 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
         const res = await categoryCreate({ name });
         if (res && res.data.id) {
           await refetchCategories();
-          showSuccess('Category created!');
           return { value: res.data.id, label: res.data.name };
         }
         throw new Error('Invalid response');
@@ -199,7 +198,7 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
         return null;
       }
     },
-    [refetchCategories, showSuccess, showError]
+    [refetchCategories, showError]
   );
 
   const handleCategoryComboboxChange = useCallback(
@@ -228,7 +227,6 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
     mutationFn: ({ id, data }: { id: string; data: TransactionApiPayload }) =>
       transactionUpdate(id, data),
     onSuccess: async () => {
-      showSuccess('Transaction updated successfully!');
       const cacheKeysToInvalidate = [
         ['accountTransactions', transaction?.account],
         ['dashboardData'],

@@ -41,13 +41,12 @@ const CategoryList = React.memo(
     const [selectedCategory, setSelectedCategory] = useState<Category | undefined>();
     const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null);
     const invalidate = useInvalidateQueries();
-    const { showSuccess, showError } = useToast();
+    const { showError } = useToast();
 
     const deleteCategoryMutation = useMutation({
       mutationFn: (id: string) => categoryDelete(id),
       onSuccess: async () => {
         await invalidate(['categories']);
-        showSuccess('Category deleted successfully!');
         refetch();
         setDeleteCategoryId(null);
       },

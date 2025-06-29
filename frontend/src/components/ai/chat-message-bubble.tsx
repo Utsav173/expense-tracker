@@ -473,7 +473,6 @@ const ToolInfo: React.FC<{
 
 export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message }) => {
   const isUser = message.role === 'user';
-  const Icon = isUser ? User : Bot;
   const { showSuccess } = useToast();
   const [copied, setCopied] = useState(false);
 

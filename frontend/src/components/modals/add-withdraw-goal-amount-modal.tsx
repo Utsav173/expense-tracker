@@ -77,7 +77,7 @@ const AddWithdrawGoalAmountModal: React.FC<AddWithdrawGoalAmountModalProps> = ({
   triggerButton,
   onSuccess
 }) => {
-  const { showSuccess, showError } = useToast();
+  const { showError } = useToast();
   const invalidate = useInvalidateQueries();
 
   const amountSchema = useMemo(
@@ -105,7 +105,6 @@ const AddWithdrawGoalAmountModal: React.FC<AddWithdrawGoalAmountModalProps> = ({
     mutationFn: ({ id, data }: { id: string; data: { amount: number } }) => mutationFn(id, data),
     onSuccess: async () => {
       await invalidate(['goals']);
-      showSuccess(successMessage);
       onSuccess();
       handleClose();
     },

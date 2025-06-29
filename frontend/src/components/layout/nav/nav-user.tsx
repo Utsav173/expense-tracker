@@ -27,14 +27,13 @@ import { User } from '@/lib/types';
 export function NavUser({ user }: { user: User }) {
   const { isMobile } = useSidebar();
 
-  const { showError, showSuccess } = useToast();
+  const { showError } = useToast();
 
   const handleLogout = () => {
     authLogOut()
       .then(async () => {
         localStorage.removeItem('token');
         await removeAuthToken();
-        showSuccess('Successfully logged out!');
         window.location.href = '/auth/login';
       })
       .catch(() => {

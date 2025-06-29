@@ -40,7 +40,7 @@ const InvestmentAccountDetailPage = () => {
   const params = useParams();
   const router = useRouter();
   const accountId = params.accountId as string;
-  const { showError, showSuccess } = useToast();
+  const { showError } = useToast();
   const invalidate = useInvalidateQueries();
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -100,7 +100,6 @@ const InvestmentAccountDetailPage = () => {
       await invalidate(['investments', accountId, state.page, state.sortBy, state.sortOrder]);
       await invalidate(['investmentAccountSummary', accountId]);
       await invalidate(['investmentPortfolioSummaryDashboard']);
-      showSuccess('Investment deleted successfully!');
       setDeleteInvestmentId(null);
       refetchInvestments();
     },

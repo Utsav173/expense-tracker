@@ -1,5 +1,6 @@
 import { db } from '../database';
-import { Account, Debts, User } from '../database/schema';
+import { Account, Debts, User, Transaction } from '../database/schema';
+import { transactionService } from './transaction.service';
 import {
   InferInsertModel,
   SQL,
@@ -199,8 +200,8 @@ export class DebtService {
           const status: Payment['status'] = isPaid
             ? 'settled'
             : isAfter(today, installmentDate)
-              ? 'due'
-              : 'upcoming';
+            ? 'due'
+            : 'upcoming';
 
           schedule.push({
             date: installmentDate,
@@ -281,8 +282,8 @@ export class DebtService {
       const status: Payment['status'] = isPaid
         ? 'settled'
         : isAfter(today, installmentDate)
-          ? 'due'
-          : 'upcoming';
+        ? 'due'
+        : 'upcoming';
 
       cumulativePrincipal += principalPerInstallment;
       cumulativeInterest += interestPerInstallment;
@@ -653,7 +654,20 @@ export class DebtService {
   async markDebtAsPaid(debtId: string, userId: string) {
     const existingDebt = await db.query.Debts.findFirst({
       where: and(eq(Debts.id, debtId), or(eq(Debts.createdBy, userId), eq(Debts.userId, userId))),
-      columns: { id: true },
+      columns: {
+        id: true,
+        amount: true,
+        premiumAmount: true,
+        type: true,
+        description: true,
+        isPaid: true,
+        account: true,
+      },
+      with: {
+        account: {
+          columns: { currency: true, id: true },
+        },
+      },
     });
 
     if (!existingDebt) {
@@ -662,17 +676,50 @@ export class DebtService {
       });
     }
 
-    const updated = await db
-      .update(Debts)
-      .set({ isPaid: true, updatedAt: new Date() })
-      .where(eq(Debts.id, debtId))
-      .returning({ id: Debts.id });
-
-    if (updated.length === 0) {
-      throw new HTTPException(500, { message: 'Failed to mark debt as paid.' });
+    if (existingDebt.isPaid) {
+      throw new HTTPException(400, { message: 'Debt is already marked as paid.' });
     }
 
-    return { message: 'Debt marked as paid' };
+    const totalAmount = (existingDebt.amount ?? 0) + (existingDebt.premiumAmount ?? 0);
+    const isIncomeTransaction = existingDebt.type === 'given'; // If we lent money, it's income when paid back
+
+    await db.transaction(async (tx) => {
+      // 1. Mark debt as paid
+      const updatedDebt = await tx
+        .update(Debts)
+        .set({ isPaid: true, updatedAt: new Date() })
+        .where(eq(Debts.id, debtId))
+        .returning({ id: Debts.id });
+
+      if (updatedDebt.length === 0) {
+        throw new HTTPException(500, { message: 'Failed to mark debt as paid.' });
+      }
+
+      // 2. Create a corresponding transaction
+      if (existingDebt.account) {
+        await transactionService.createTransaction(
+          userId,
+          {
+            amount: totalAmount,
+            isIncome: isIncomeTransaction,
+            text: `Debt settlement: ${existingDebt.description || 'N/A'}`,
+            account: existingDebt.account?.id,
+            currency: existingDebt.account?.currency || 'INR',
+            createdAt: new Date(),
+            owner: userId,
+            createdBy: userId,
+          },
+          true, // Internal bypass owner check
+        );
+      } else {
+        // If no account is associated, just mark as paid without creating a transaction
+        console.warn(
+          `Debt ${debtId} marked as paid but no account linked, skipping transaction creation.`,
+        );
+      }
+    });
+
+    return { message: 'Debt marked as paid and transaction created successfully.' };
   }
 }
 

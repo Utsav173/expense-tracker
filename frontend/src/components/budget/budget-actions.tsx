@@ -17,14 +17,13 @@ interface BudgetActionsProps {
 export function BudgetActions({ budget }: BudgetActionsProps) {
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const invalidate = useInvalidateQueries();
-  const { showError, showSuccess } = useToast();
+  const { showError } = useToast();
   const [deleteBudgetId, setDeleteBudgetId] = useState<string | null>(null);
 
   const deleteBudgetMutation = useMutation({
     mutationFn: (id: string) => budgetDelete(id),
     onSuccess: async () => {
       await invalidate(['budgets']);
-      showSuccess('Budget deleted successfully!');
       setDeleteBudgetId(null);
     },
     onError: (error: any) => {

@@ -46,7 +46,7 @@ type AccountFormSchema = z.infer<typeof accountSchema>;
 const AddAccountModal = () => {
   const invalidate = useInvalidateQueries();
   const [isOpen, setIsOpen] = useState(false);
-  const { showError, showSuccess } = useToast();
+  const { showError } = useToast();
 
   const form = useForm<AccountFormSchema>({
     resolver: zodResolver(accountSchema),
@@ -75,7 +75,6 @@ const AddAccountModal = () => {
     onSuccess: async () => {
       await invalidate(['accounts']);
       await invalidate(['dashboardData']);
-      showSuccess('Account created successfully!');
       setIsOpen(false);
       form.reset();
     },

@@ -24,7 +24,7 @@ const InvestmentPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const { showError, showSuccess } = useToast();
+  const { showError } = useToast();
   const invalidate = useInvalidateQueries();
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -64,7 +64,6 @@ const InvestmentPage = () => {
     onSuccess: async () => {
       await invalidate(['investmentAccounts', page]);
       await invalidate(['investmentPortfolioSummaryDashboard']);
-      showSuccess('Investment account deleted successfully!');
       setDeleteAccountId(null);
       refetch();
     },

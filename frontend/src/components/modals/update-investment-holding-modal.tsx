@@ -160,7 +160,7 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
   onInvestmentUpdated,
   getStockPriceFn
 }) => {
-  const { showSuccess, showError, showInfo } = useToast();
+  const { showSuccess, showError } = useToast();
   const invalidate = useInvalidateQueries();
   const [activeTab, setActiveTab] = useState('details');
   const [isHistoricalPriceLoading, setIsHistoricalPriceLoading] = useState(false);
@@ -376,7 +376,6 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
       await invalidate(['investmentAccountSummary', investment.account]);
       await invalidate(['investmentPortfolioSummaryDashboard']);
       await invalidate(['dashboardData']);
-      showSuccess('Dividend updated successfully!');
       onInvestmentUpdated();
       onOpenChange(false);
     },

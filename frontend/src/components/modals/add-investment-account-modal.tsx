@@ -52,7 +52,7 @@ const AddInvestmentAccountModal: React.FC<AddInvestmentAccountModalProps> = ({
   onOpenChange,
   hideTriggerButton = false
 }) => {
-  const { showSuccess, showError } = useToast();
+  const { showError } = useToast();
   const invalidate = useInvalidateQueries();
 
   const { data: currencies, isLoading: isLoadingCurrencies } = useQuery({
@@ -82,7 +82,6 @@ const AddInvestmentAccountModal: React.FC<AddInvestmentAccountModalProps> = ({
     onSuccess: async () => {
       await invalidate(['investmentAccounts']);
       await invalidate(['investmentPortfolioSummaryDashboard']);
-      showSuccess('Investment account created successfully!');
       onAccountAdded();
       handleClose();
     },

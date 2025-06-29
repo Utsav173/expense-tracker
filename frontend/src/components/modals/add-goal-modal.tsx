@@ -56,7 +56,7 @@ const AddGoalModal: React.FC<AddGoalModalProps> = ({
   onOpenChange,
   hideTriggerButton = false
 }) => {
-  const { showSuccess, showError } = useToast();
+  const { showError } = useToast();
   const invalidate = useInvalidateQueries();
 
   const form = useForm<GoalFormSchema>({
@@ -73,7 +73,6 @@ const AddGoalModal: React.FC<AddGoalModalProps> = ({
     mutationFn: (data: GoalApiPayload) => goalCreate(data),
     onSuccess: async () => {
       await invalidate(['goals']);
-      showSuccess('Goal created successfully!');
       onGoalAdded();
       handleClose();
     },

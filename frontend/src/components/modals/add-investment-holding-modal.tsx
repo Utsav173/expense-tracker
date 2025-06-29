@@ -246,7 +246,6 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
       await invalidate(['investmentAccountSummary', accountId]);
       await invalidate(['investmentPortfolioSummaryDashboard']);
       await invalidate(['dashboardData']);
-      showSuccess('Investment added successfully!');
       onInvestmentAdded();
       handleClose();
     },

@@ -60,7 +60,7 @@ export function UpdateAccountModal({
   initialValues,
   onAccountUpdated
 }: UpdateAccountModalProps) {
-  const { showSuccess, showError } = useToast();
+  const { showError } = useToast();
   const invalidate = useInvalidateQueries();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -86,7 +86,6 @@ export function UpdateAccountModal({
       await invalidate(['accounts']);
       await invalidate(['account', accountId]);
       await invalidate(['dashboardData']);
-      showSuccess('Account name updated successfully!');
       onAccountUpdated();
       onOpenChange(false);
     },

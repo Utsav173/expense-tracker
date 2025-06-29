@@ -21,13 +21,12 @@ export function DebtActions({ debt, refetchDebts }: DebtActionsProps) {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isInsightModalOpen, setIsInsightModalOpen] = useState(false);
   const invalidate = useInvalidateQueries();
-  const { showSuccess, showError } = useToast();
+  const { showError } = useToast();
 
   const markAsPaidMutation = useMutation({
     mutationFn: (id: string) => debtsMarkAsPaid(id),
     onSuccess: async () => {
       await invalidate(['debts']);
-      showSuccess('Debt marked as paid!');
       refetchDebts();
     },
     onError: (error: any) => showError(error.message)
@@ -37,7 +36,6 @@ export function DebtActions({ debt, refetchDebts }: DebtActionsProps) {
     mutationFn: (id: string) => apiDeleteDebt(id),
     onSuccess: async () => {
       await invalidate(['debts']);
-      showSuccess('Debt deleted successfully!');
       setIsDeleteModalOpen(false);
       refetchDebts();
     },
@@ -46,18 +44,16 @@ export function DebtActions({ debt, refetchDebts }: DebtActionsProps) {
 
   return (
     <div className='flex justify-end gap-1'>
-      {!debt.debts.isPaid && (
-        <Button
-          size='icon'
-          variant='ghost'
-          onClick={() => markAsPaidMutation.mutate(debt.debts.id)}
-          disabled={markAsPaidMutation.isPending}
-          className='h-8 w-8 text-green-600 hover:text-green-700'
-          aria-label='Mark as Paid'
-        >
-          <Check size={18} />
-        </Button>
-      )}
+      <Button
+        size='icon'
+        variant='ghost'
+        onClick={() => markAsPaidMutation.mutate(debt.debts.id)}
+        disabled={debt.debts.isPaid || markAsPaidMutation.isPending}
+        className='h-8 w-8 text-green-600 hover:text-green-700'
+        aria-label='Mark as Paid'
+      >
+        <Check size={18} />
+      </Button>
       <Button
         size='icon'
         variant='ghost'
@@ -73,6 +69,7 @@ export function DebtActions({ debt, refetchDebts }: DebtActionsProps) {
         onClick={() => setIsUpdateModalOpen(true)}
         className='h-8 w-8 hover:text-blue-600'
         aria-label='Edit Debt'
+        disabled={debt.debts.isPaid}
       >
         <Pencil size={16} />
       </Button>

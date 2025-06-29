@@ -73,7 +73,7 @@ const UpdateGoalModal: React.FC<UpdateGoalModalProps> = ({
   goal,
   onGoalUpdated
 }) => {
-  const { showSuccess, showError } = useToast();
+  const { showError } = useToast();
   const invalidate = useInvalidateQueries();
 
   const form = useForm<GoalFormSchema>({
@@ -102,7 +102,6 @@ const UpdateGoalModal: React.FC<UpdateGoalModalProps> = ({
     mutationFn: ({ id, data }: { id: string; data: GoalApiPayload }) => goalUpdate(id, data),
     onSuccess: async () => {
       await invalidate(['goals']);
-      showSuccess('Goal updated successfully!');
       onGoalUpdated();
       handleClose();
     },

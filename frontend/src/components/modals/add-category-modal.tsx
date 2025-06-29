@@ -45,7 +45,7 @@ const AddCategoryModal: React.FC<CreateCategoryModalProps> = ({
   triggerButton,
   noTriggerButton
 }) => {
-  const { showSuccess, showError } = useToast();
+  const { showError } = useToast();
   const invalidate = useInvalidateQueries();
 
   const {
@@ -75,7 +75,6 @@ const AddCategoryModal: React.FC<CreateCategoryModalProps> = ({
     },
     onSuccess: async () => {
       await invalidate(['categories']);
-      showSuccess(categoryId ? 'Category updated successfully!' : 'Category created successfully!');
       handleModalClose();
     },
     onError: (error: Error) => {

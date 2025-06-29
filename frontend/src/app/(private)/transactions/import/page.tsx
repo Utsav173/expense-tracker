@@ -223,7 +223,6 @@ const ImportTransactionsPage = () => {
       setSuccessId(result.successId);
       setCurrentStep(3);
       setIsConfirmOpen(false);
-      showSuccess(`Staged ${result.totalRecords} transactions for import. Please confirm.`);
     } catch (error: any) {
       showError(error.message);
     } finally {
@@ -236,7 +235,6 @@ const ImportTransactionsPage = () => {
     setLoading(true);
     try {
       await confirmImport(successId);
-      showSuccess('Data imported successfully!');
       setSuccessId(null);
       setTransactions([]);
       setRowSelection({});

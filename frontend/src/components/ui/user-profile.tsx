@@ -97,7 +97,6 @@ const UserProfile = () => {
     onSuccess: async () => {
       await invalidate(['user']);
       refetchUser?.();
-      showSuccess('Profile updated successfully!');
       setIsEditingProfile(false);
       setPreviewUrl(null);
     },

@@ -60,7 +60,7 @@ const UpdateInvestmentAccountModal: React.FC<UpdateInvestmentAccountModalProps> 
   account,
   onAccountUpdated
 }) => {
-  const { showSuccess, showError } = useToast();
+  const { showError } = useToast();
   const invalidate = useInvalidateQueries();
 
   const { data: currencies, isLoading: isLoadingCurrencies } = useQuery({
@@ -100,7 +100,6 @@ const UpdateInvestmentAccountModal: React.FC<UpdateInvestmentAccountModalProps> 
       await invalidate(['investmentAccounts']);
       await invalidate(['investmentAccount', account.id]);
       await invalidate(['investmentPortfolioSummaryDashboard']);
-      showSuccess('Investment account updated successfully!');
       onAccountUpdated();
       handleClose();
     },

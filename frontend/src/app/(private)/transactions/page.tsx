@@ -34,7 +34,7 @@ import {
 import CategoryCombobox from '@/components/ui/category-combobox';
 
 const TransactionsPage = () => {
-  const { showError, showSuccess, showInfo } = useToast();
+  const { showError, showInfo } = useToast();
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -134,7 +134,6 @@ const TransactionsPage = () => {
         a.click();
         a.remove();
         window.URL.revokeObjectURL(downloadUrl);
-        showSuccess('Export started successfully!');
       } catch (error: any) {
         console.error('Export error:', error);
         showError(error.message || 'Failed to export transactions.');
@@ -142,14 +141,7 @@ const TransactionsPage = () => {
         setIsExporting(false);
       }
     },
-    [
-      filters,
-      showError,
-      showSuccess,
-      showInfo,
-      transactionsData?.transactions,
-      debouncedSearchQuery
-    ]
+    [filters, showError, showInfo, transactionsData?.transactions, debouncedSearchQuery]
   );
 
   if (isError) {

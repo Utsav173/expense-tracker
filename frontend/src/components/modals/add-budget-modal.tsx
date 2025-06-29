@@ -68,7 +68,7 @@ const AddBudgetModal: React.FC<AddBudgetModalProps> = ({
   onOpenChange,
   hideTriggerButton = false
 }) => {
-  const { showSuccess, showError } = useToast();
+  const { showError } = useToast();
   const invalidate = useInvalidateQueries();
 
   const currentYear = new Date().getFullYear();
@@ -101,7 +101,6 @@ const AddBudgetModal: React.FC<AddBudgetModalProps> = ({
     onSuccess: async () => {
       await invalidate(['budgets']);
       await invalidate(['budgetSummaryDashboard']);
-      showSuccess('Budget created successfully!');
       onBudgetAdded();
       onOpenChange(false);
     },

@@ -23,7 +23,7 @@ const ResetPasswordPage = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token');
-  const { showSuccess, showError } = useToast();
+  const { showError } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
   const {
@@ -55,7 +55,6 @@ const ResetPasswordPage = () => {
     setIsLoading(true);
     try {
       await authResetPassword(data);
-      showSuccess('Password Reset Successfully');
       router.push('/auth/login');
     } catch (e: any) {
       showError(e.message);

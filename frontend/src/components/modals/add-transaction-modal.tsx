@@ -61,7 +61,7 @@ const AddTransactionModal = ({
   const [categoryComboboxLoading, setCategoryComboboxLoading] = useState(false);
   const [categoryComboboxError, setCategoryComboboxError] = useState<string | null>(null);
 
-  const { showError, showSuccess } = useToast();
+  const { showError } = useToast();
 
   const { data: categoriesData, isLoading: isLoadingCategory } = useQuery({
     queryKey: ['categories'],
@@ -188,7 +188,6 @@ const AddTransactionModal = ({
       };
 
       await transactionCreate(transactionData);
-      showSuccess('Transaction created successfully!');
       setIsOpen(false);
       reset();
       onTransactionAdded();
@@ -231,7 +230,6 @@ const AddTransactionModal = ({
         if (res && res.data.id) {
           setCategories((prev) => [...prev, res.data]);
           setValue('categoryId', res.data.id);
-          showSuccess('Category created!');
           return { value: res.data.id, label: res.data.name };
         }
         throw new Error('Invalid response');
@@ -240,7 +238,7 @@ const AddTransactionModal = ({
         return null;
       }
     },
-    [setCategories, setValue, showSuccess, showError]
+    [setCategories, setValue, showError]
   );
 
   const handleCategoryComboboxChange = useCallback(
