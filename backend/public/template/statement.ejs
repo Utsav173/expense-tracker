@@ -55,7 +55,7 @@
     .header {
       background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
       color: white;
-      padding: 20px 24px 16px;
+      padding: 24px;
       text-align: center;
       position: relative;
     }
@@ -73,7 +73,7 @@
     .header h1 {
       font-size: 1.75rem;
       font-weight: 700;
-      margin-bottom: 2px;
+      margin-bottom: 4px;
       letter-spacing: -0.025em;
     }
 
@@ -85,11 +85,11 @@
 
     .account-info {
       background: var(--color-background-light);
-      padding: 16px 24px;
+      padding: 20px 24px;
       border-bottom: 1px solid var(--color-border);
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 12px;
+      gap: 16px;
     }
 
     .account-detail {
@@ -117,7 +117,7 @@
       font-weight: 500;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-bottom: 1px;
+      margin-bottom: 2px;
     }
 
     .account-detail .info p {
@@ -127,20 +127,20 @@
     }
 
     .main-content {
-      padding: 20px 24px;
+      padding: 24px;
       flex-grow: 1;
     }
 
     .analytics-header {
       text-align: center;
-      margin-bottom: 18px;
+      margin-bottom: 24px;
     }
 
     .analytics-header h2 {
       font-size: 1.5rem;
       font-weight: 600;
       color: var(--color-text-header);
-      margin-bottom: 2px;
+      margin-bottom: 4px;
       letter-spacing: -0.025em;
     }
 
@@ -149,21 +149,26 @@
       font-size: 0.85rem;
     }
 
+    /* Fixed 2x2 grid layout to match screenshot */
     .analytics-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 14px;
-      margin-bottom: 24px;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 32px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .stat-card {
-      border: 1px solid var(--color-border);
-      border-top: 3px solid var(--card-accent);
-      border-radius: 6px;
-      padding: 12px;
+      border: 2px solid var(--card-accent);
+      border-radius: 8px;
+      padding: 20px;
       text-align: center;
       background: linear-gradient(to bottom, #ffffff, #fefefe);
       transition: transform 0.1s ease, box-shadow 0.1s ease;
+      position: relative;
     }
 
     .stat-card:hover {
@@ -173,34 +178,54 @@
 
     .stat-card.income {
       --card-accent: var(--accent-income);
+      background: linear-gradient(to bottom, #f0fdf4, #ffffff);
     }
 
     .stat-card.expense {
       --card-accent: var(--accent-expense);
+      background: linear-gradient(to bottom, #fef2f2, #ffffff);
     }
 
     .stat-card.balance {
       --card-accent: var(--accent-balance);
+      background: linear-gradient(to bottom, #f0f9ff, #ffffff);
     }
 
     .stat-card.change {
       --card-accent: var(--accent-change);
+      background: linear-gradient(to bottom, #faf5ff, #ffffff);
     }
 
     .stat-card h3 {
-      font-size: 0.7rem;
+      font-size: 0.75rem;
       color: var(--color-text-muted);
-      font-weight: 500;
-      margin-bottom: 6px;
+      font-weight: 600;
+      margin-bottom: 8px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
 
     .stat-card .amount {
-      font-size: 1.3rem;
+      font-size: 1.5rem;
       font-weight: 700;
-      line-height: 1.1;
-      margin-bottom: 2px;
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+
+    .stat-card.income .amount {
+      color: var(--accent-income);
+    }
+
+    .stat-card.expense .amount {
+      color: var(--accent-expense);
+    }
+
+    .stat-card.balance .amount {
+      color: var(--accent-balance);
+    }
+
+    .stat-card.change .amount {
+      color: var(--accent-change);
     }
 
     .stat-card .currency {
@@ -213,8 +238,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
-      padding-bottom: 6px;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
       border-bottom: 2px solid var(--color-border);
     }
 
@@ -228,7 +253,7 @@
     .transaction-count {
       background: linear-gradient(135deg, #eef2ff, #e0e7ff);
       color: var(--color-primary);
-      padding: 3px 8px;
+      padding: 4px 12px;
       border-radius: 12px;
       font-size: 0.75rem;
       font-weight: 600;
@@ -238,7 +263,7 @@
     .table-container {
       width: 100%;
       border: 1px solid var(--color-border);
-      border-radius: 6px;
+      border-radius: 8px;
       overflow: hidden;
       box-shadow: var(--shadow-soft);
     }
@@ -253,7 +278,7 @@
     }
 
     th {
-      padding: 8px 10px;
+      padding: 12px 10px;
       text-align: left;
       font-weight: 600;
       color: var(--color-text-muted);
@@ -264,25 +289,25 @@
     }
 
     th:nth-child(1) {
-      width: 11%;
+      width: 12%;
     }
 
     th:nth-child(2) {
-      width: 36%;
+      width: 35%;
     }
 
     th:nth-child(3) {
-      width: 17%;
+      width: 18%;
     }
 
     th:nth-child(4),
     th:nth-child(5) {
-      width: 12%;
+      width: 13%;
       text-align: right;
     }
 
     th:nth-child(6) {
-      width: 12%;
+      width: 9%;
       text-align: center;
     }
 
@@ -295,7 +320,7 @@
     }
 
     td {
-      padding: 8px 10px;
+      padding: 12px 10px;
       border-bottom: 1px solid #f1f5f9;
       font-size: 0.8rem;
       vertical-align: middle;
@@ -316,8 +341,8 @@
       display: inline-block;
       background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
       color: #3730a3;
-      padding: 3px 6px;
-      border-radius: 4px;
+      padding: 4px 8px;
+      border-radius: 6px;
       font-size: 0.7rem;
       font-weight: 500;
       line-height: 1.2;
@@ -350,8 +375,8 @@
     .transfer-badge {
       background: linear-gradient(135deg, #fef3c7, #fde68a);
       color: #92400e;
-      padding: 3px 6px;
-      border-radius: 4px;
+      padding: 4px 8px;
+      border-radius: 6px;
       font-size: 0.7rem;
       font-weight: 500;
       border: 1px solid #f3d057;
@@ -359,18 +384,19 @@
 
     .no-transactions {
       text-align: center;
-      padding: 32px;
+      padding: 40px;
       color: var(--color-text-muted);
     }
 
     .no-transactions h3 {
       color: var(--color-text-header);
-      margin-bottom: 4px;
+      margin-bottom: 8px;
+      font-size: 1.1rem;
     }
 
     .footer {
       background: var(--color-background-light);
-      padding: 14px 24px;
+      padding: 16px 24px;
       text-align: center;
       border-top: 1px solid var(--color-border);
       font-size: 0.75rem;
@@ -380,14 +406,14 @@
     .footer p:last-child {
       font-size: 0.7rem;
       color: #94a3b8;
-      margin-top: 2px;
+      margin-top: 4px;
     }
 
     /* Print optimizations */
     @media print {
       body {
         background: white;
-        font-size: 9pt;
+        font-size: 10pt;
       }
 
       .container {
@@ -402,11 +428,6 @@
         margin: 0.6in;
       }
 
-      .analytics-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-      }
-
       .stat-card:hover {
         transform: none;
         box-shadow: none;
@@ -419,42 +440,43 @@
       }
 
       .header {
-        padding: 16px 20px 12px;
+        padding: 16px 20px;
       }
 
       .main-content,
       .account-info {
-        padding: 14px 20px;
+        padding: 16px 20px;
       }
     }
 
     /* Responsive design */
     @media (max-width: 900px) {
-      .analytics-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-      }
-
       .container {
         margin: 8px;
+      }
+      
+      .analytics-grid {
+        max-width: 100%;
+        gap: 12px;
       }
     }
 
     @media (max-width: 600px) {
       .account-info {
         grid-template-columns: 1fr;
-        gap: 10px;
+        gap: 12px;
+        padding: 16px;
       }
 
       .analytics-grid {
         grid-template-columns: 1fr;
-        gap: 10px;
+        gap: 12px;
+        margin-bottom: 24px;
       }
 
       .main-content,
-      .account-info,
       .header {
-        padding: 12px 16px;
+        padding: 16px;
       }
 
       .transactions-header {
@@ -465,11 +487,21 @@
 
       .table-container {
         font-size: 0.75rem;
+        overflow-x: auto;
       }
 
       th,
       td {
-        padding: 6px 8px;
+        padding: 8px 6px;
+        font-size: 0.75rem;
+      }
+
+      th:nth-child(2) {
+        width: 30%;
+      }
+
+      th:nth-child(3) {
+        width: 15%;
       }
     }
 
@@ -544,7 +576,7 @@
         <div class="analytics-grid">
           <div class="stat-card income">
             <h3>Total Income</h3>
-            <div class="amount income-amount">
+            <div class="amount">
               <%= (typeof totalIncome !=='undefined' ? totalIncome : 0).toLocaleString('en-IN', { minimumFractionDigits:
                 2, maximumFractionDigits: 2 }) %>
             </div>
@@ -555,7 +587,7 @@
 
           <div class="stat-card expense">
             <h3>Total Expenses</h3>
-            <div class="amount expense-amount">
+            <div class="amount">
               <%= (typeof totalExpense !=='undefined' ? totalExpense : 0).toLocaleString('en-IN', {
                 minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
             </div>
@@ -566,8 +598,7 @@
 
           <div class="stat-card balance">
             <h3>Net Balance</h3>
-            <div
-              class="amount <%= (typeof balance !== 'undefined' && balance >= 0) ? 'income-amount' : 'expense-amount' %>">
+            <div class="amount">
               <%= (typeof balance !=='undefined' ? balance : 0).toLocaleString('en-IN', { minimumFractionDigits: 2,
                 maximumFractionDigits: 2 }) %>
             </div>
@@ -578,8 +609,7 @@
 
           <div class="stat-card change">
             <h3>Income Change</h3>
-            <div
-              class="amount <%= (typeof incomePercentageChange !== 'undefined' && incomePercentageChange >= 0) ? 'income-amount' : 'expense-amount' %>">
+            <div class="amount">
               <%= (typeof incomePercentageChange !=='undefined' ? incomePercentageChange : 0).toFixed(1) %>%
             </div>
             <div class="currency">vs Previous Period</div>
@@ -613,7 +643,7 @@
                   <tr>
                     <td>
                       <%= transaction.createdAt ? new Date(transaction.createdAt).toLocaleDateString('en-GB', {
-                        month: 'short' , day: 'numeric' , year: 'numeric' }) : 'N/A' %>
+                        day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A' %>
                     </td>
                     <td>
                       <div class="transaction-text">
