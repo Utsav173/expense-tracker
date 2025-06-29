@@ -1,10 +1,11 @@
 import React from 'react';
 import { Inter } from 'next/font/google';
-import { Metadata } from 'next';
-import Script from 'next/script'; // Import Script component
+import { Metadata, Viewport } from 'next';
+import Script from 'next/script';
 import ReactQueryProvider from '@/components/providers/provider';
 import { cn } from '@/lib/utils';
 import './globals.css';
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -68,14 +69,15 @@ export const metadata: Metadata = {
   manifest: '/site.webmanifest',
   appleWebApp: {
     title: 'Expense Pro'
-  },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-    viewportFit: 'cover'
   }
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover'
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -99,6 +101,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className={cn(inter.className, 'bg-background text-foreground')}>
         <ReactQueryProvider>{children}</ReactQueryProvider>
       </body>
+      <GoogleAnalytics gaId='GTM-NRXZ2WPR' />
     </html>
   );
 }

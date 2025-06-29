@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import InfoPageLayout from '@/components/landing/info-page-layout';
 import { ContactPage, WithContext } from 'schema-dts';
+import Script from 'next/script';
 
 const contactFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }).max(100),
@@ -58,9 +59,10 @@ const ContactSupportPage = () => {
 
   return (
     <>
-      <script
+      <Script
         type='application/ld+json'
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        id='json-ld'
       />
       <InfoPageLayout
         title='Contact Support'

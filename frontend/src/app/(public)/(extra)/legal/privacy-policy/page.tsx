@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ShieldAlert } from 'lucide-react';
 import InfoPageLayout from '@/components/landing/info-page-layout';
 import { WebPage, WithContext } from 'schema-dts';
+import Script from 'next/script';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy - Expense Tracker',
@@ -52,9 +53,10 @@ const jsonLd: WithContext<WebPage> = {
 const PrivacyPolicyPage = () => {
   return (
     <>
-      <script
+      <Script
         type='application/ld+json'
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        id='json-ld'
       />
       <InfoPageLayout
         title='Privacy Policy'

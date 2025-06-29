@@ -5,21 +5,24 @@ import Link from 'next/link';
 import { FileText } from 'lucide-react';
 import InfoPageLayout from '@/components/landing/info-page-layout';
 import { WebPage, WithContext } from 'schema-dts';
+import Script from 'next/script';
 
 const jsonLd: WithContext<WebPage> = {
   '@context': 'https://schema.org',
   '@type': 'WebPage',
   name: 'Terms of Service',
   url: 'https://expense-pro.vercel.app/legal/terms-of-service',
-  description: 'Official terms of service for Expense Tracker, detailing user agreements and service usage.',
+  description:
+    'Official terms of service for Expense Tracker, detailing user agreements and service usage.'
 };
 
 const TermsOfServicePage = () => {
   return (
     <>
-      <script
-        type="application/ld+json"
+      <Script
+        type='application/ld+json'
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        id='json-ld'
       />
       <InfoPageLayout
         title='Terms of Service'
@@ -61,15 +64,16 @@ const TermsOfServicePage = () => {
             </li>
           </ul>
           <p>
-            If using the AI Assistant feature, you are responsible for the API key you provide and its
-            usage limits with the third-party AI provider (e.g., Google AI). Expense Pro is not
+            If using the AI Assistant feature, you are responsible for the API key you provide and
+            its usage limits with the third-party AI provider (e.g., Google AI). Expense Pro is not
             responsible for any charges incurred from your AI provider.
           </p>
 
           <h2>5. Intellectual Property</h2>
           <p>
-            The Service and its original content (excluding Content provided by users), features, and
-            functionality are and will remain the exclusive property of Expense Pro and its licensors.
+            The Service and its original content (excluding Content provided by users), features,
+            and functionality are and will remain the exclusive property of Expense Pro and its
+            licensors.
           </p>
 
           <h2>6. Disclaimer of Warranties</h2>
@@ -83,11 +87,11 @@ const TermsOfServicePage = () => {
 
           <h2>7. Limitation of Liability</h2>
           <p>
-            In no event shall Expense Pro, nor its directors, employees, partners, agents, suppliers,
-            or affiliates, be liable for any indirect, incidental, special, consequential or punitive
-            damages, including without limitation, loss of profits, data, use, goodwill, or other
-            intangible losses, resulting from your access to or use of or inability to access or use
-            the Service.
+            In no event shall Expense Pro, nor its directors, employees, partners, agents,
+            suppliers, or affiliates, be liable for any indirect, incidental, special, consequential
+            or punitive damages, including without limitation, loss of profits, data, use, goodwill,
+            or other intangible losses, resulting from your access to or use of or inability to
+            access or use the Service.
           </p>
 
           <h2>8. Termination</h2>
@@ -99,21 +103,24 @@ const TermsOfServicePage = () => {
 
           <h2>9. Governing Law</h2>
           <p>
-            These Terms shall be governed and construed in accordance with the laws of India, without
-            regard to its conflict of law provisions.
+            These Terms shall be governed and construed in accordance with the laws of India,
+            without regard to its conflict of law provisions.
           </p>
 
           <h2>10. Changes to Terms</h2>
           <p>
             We reserve the right, at our sole discretion, to modify or replace these Terms at any
-            time. If a revision is material we will try to provide at least 30 days&apos; notice prior
-            to any new terms taking effect.
+            time. If a revision is material we will try to provide at least 30 days&apos; notice
+            prior to any new terms taking effect.
           </p>
 
           <h2>11. Contact Us</h2>
           <p>
             If you have any questions about these Terms, please contact us via our{' '}
-            <Link href='/support/contact' className='text-sky-600 hover:underline dark:text-sky-400'>
+            <Link
+              href='/support/contact'
+              className='text-sky-600 hover:underline dark:text-sky-400'
+            >
               Contact Support page
             </Link>
             .

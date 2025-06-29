@@ -6,20 +6,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MailCheck } from 'lucide-react';
 import { WebPage, WithContext } from 'schema-dts';
+import { GoogleAnalytics } from '@next/third-parties/google';
+import Script from 'next/script';
 
 const jsonLd: WithContext<WebPage> = {
   '@context': 'https://schema.org',
   '@type': 'WebPage',
   name: 'Password Reset Email Sent Page - Expense Tracker',
   description: 'Confirmation page after sending a password reset email.',
-  url: 'https://expense-pro.vercel.app/auth/forgot-password-sent',
+  url: 'https://expense-pro.vercel.app/auth/forgot-password-sent'
 };
 
 const ForgotPasswordSentPage = () => {
   return (
     <>
-      <script
-        type="application/ld+json"
+      <Script
+        id='json-ld'
+        type='application/ld+json'
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <Card className='w-full border-0 p-0 shadow-none'>
@@ -31,8 +34,8 @@ const ForgotPasswordSentPage = () => {
         </CardHeader>
         <CardContent className='space-y-4 p-0 pb-4 text-center'>
           <p className='text-sm text-gray-600'>
-            We&apos;ve sent a password reset link to your email address. Please check your inbox (and
-            spam folder) to proceed.
+            We&apos;ve sent a password reset link to your email address. Please check your inbox
+            (and spam folder) to proceed.
           </p>
           <p className='text-xs text-gray-500'>
             If you don&apos;t receive the email within a few minutes, please try again or contact
@@ -43,6 +46,7 @@ const ForgotPasswordSentPage = () => {
           </Button>
         </CardContent>
       </Card>
+      <GoogleAnalytics gaId='GTM-NRXZ2WPR' />
     </>
   );
 };

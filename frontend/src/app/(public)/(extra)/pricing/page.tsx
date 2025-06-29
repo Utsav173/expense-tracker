@@ -15,6 +15,7 @@ import { useToast } from '@/lib/hooks/useToast';
 import { AnimatedFinancialElement } from '@/components/landing/animated-financial-element';
 import { Badge } from '@/components/ui/badge';
 import { Product, WithContext } from 'schema-dts';
+import Script from 'next/script';
 
 const jsonLd: WithContext<Product> = {
   '@context': 'https://schema.org',
@@ -69,9 +70,10 @@ const PricingPage = () => {
 
   return (
     <>
-      <script
+      <Script
         type='application/ld+json'
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        id='json-ld'
       />
       <div className='bg-background min-h-screen px-4 py-16'>
         <div className='container mx-auto max-w-6xl'>

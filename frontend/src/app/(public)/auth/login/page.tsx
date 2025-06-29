@@ -13,6 +13,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { PasswordInput } from '@/components/ui/password-input';
 import { WebPage, WithContext } from 'schema-dts';
+import { GoogleAnalytics } from '@next/third-parties/google';
+import Script from 'next/script';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -75,7 +77,8 @@ const LoginPage = () => {
 
   return (
     <>
-      <script
+      <Script
+        id='json-ld'
         type='application/ld+json'
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
@@ -143,6 +146,7 @@ const LoginPage = () => {
           </Link>
         </CardFooter>
       </Card>
+      <GoogleAnalytics gaId='GTM-NRXZ2WPR' />
     </>
   );
 };

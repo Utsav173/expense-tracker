@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { WebPage, WithContext } from 'schema-dts';
+import { GoogleAnalytics } from '@next/third-parties/google';
+import Script from 'next/script';
 
 const resetPasswordSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters long').max(255),
@@ -27,7 +29,7 @@ const jsonLd: WithContext<WebPage> = {
   '@type': 'WebPage',
   name: 'Reset Password Page - Expense Tracker',
   description: 'Reset password page for Expense Tracker application.',
-  url: 'https://expense-pro.vercel.app/auth/reset-password',
+  url: 'https://expense-pro.vercel.app/auth/reset-password'
 };
 
 const ResetPasswordPage = () => {
@@ -80,7 +82,8 @@ const ResetPasswordPage = () => {
 
   return (
     <>
-      <script
+      <Script
+        id='json-ld'
         type='application/ld+json'
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
@@ -125,6 +128,7 @@ const ResetPasswordPage = () => {
           </Link>
         </CardFooter>
       </Card>
+      <GoogleAnalytics gaId='GTM-NRXZ2WPR' />
     </>
   );
 };

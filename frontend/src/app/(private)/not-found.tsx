@@ -4,11 +4,11 @@ import Link from 'next/link';
 export default function NotFound() {
   return (
     <div className='flex min-h-full flex-col items-center justify-center text-center'>
-      <h1 className='mb-4 text-5xl font-bold text-primary'>404 - Page Not Found</h1>
+      <h1 className='text-primary mb-4 text-5xl font-bold'>404 - Page Not Found</h1>
       <p className='mb-8 text-lg text-gray-600'>
         Oops! The page you are looking for does not exist.
       </p>
-      <p className='mb-8 text-md text-gray-500'>
+      <p className='text-md mb-8 text-gray-500'>
         It might have been moved or deleted. Please check the URL or try one of the links below.
       </p>
       <div className='flex space-x-4'>

@@ -23,6 +23,7 @@ import TestimonialsSection from '@/components/landing/testimonials-section';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { WebSite, WithContext } from 'schema-dts';
 import Image from 'next/image';
+import Script from 'next/script';
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
@@ -131,9 +132,10 @@ const LandingPageContent = () => {
 
   return (
     <>
-      <script
+      <Script
         type='application/ld+json'
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        id='json-ld'
       />
       <div
         ref={mainRef}

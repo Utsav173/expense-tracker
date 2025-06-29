@@ -16,7 +16,13 @@ interface FinancialTrendsSectionProps {
   duration: string;
 }
 
-export const FinancialTrendsSection: React.FC<FinancialTrendsSectionProps> = ({ chartData, isChartLoading, currency, accountId, duration }) => {
+export const FinancialTrendsSection: React.FC<FinancialTrendsSectionProps> = ({
+  chartData,
+  isChartLoading,
+  currency,
+  accountId,
+  duration
+}) => {
   const [activeTab, setActiveTab] = useState('trends');
 
   return (

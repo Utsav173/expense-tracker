@@ -13,6 +13,8 @@ import { PasswordInput } from '@/components/ui/password-input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { WebPage, WithContext } from 'schema-dts';
+import { GoogleAnalytics } from '@next/third-parties/google';
+import Script from 'next/script';
 
 const signUpSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters long').max(64).trim(),
@@ -71,7 +73,8 @@ const SignupPage = () => {
 
   return (
     <>
-      <script
+      <Script
+        id='json-ld'
         type='application/ld+json'
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
@@ -197,6 +200,7 @@ const SignupPage = () => {
           </Link>
         </CardFooter>
       </Card>
+      <GoogleAnalytics gaId='GTM-NRXZ2WPR' />
     </>
   );
 };

@@ -12,6 +12,8 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { WebPage, WithContext } from 'schema-dts';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { GoogleAnalytics } from '@next/third-parties/google';
+import Script from 'next/script';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email address')
@@ -52,9 +54,10 @@ const ForgotPasswordPage = () => {
 
   return (
     <>
-      <script
+      <Script
         type='application/ld+json'
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        id='json-ld'
       />
       <Card className='w-full border-0 p-0 shadow-none'>
         <CardHeader className='py-4'>
@@ -96,6 +99,7 @@ const ForgotPasswordPage = () => {
           </Link>
         </CardFooter>
       </Card>
+      <GoogleAnalytics gaId='GTM-NRXZ2WPR' />
     </>
   );
 };

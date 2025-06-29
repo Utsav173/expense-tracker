@@ -78,20 +78,24 @@ const CurrentBalanceCard = ({ account, isLoading }: { account: any; isLoading?: 
       <div className='flex h-full flex-col justify-between p-6 sm:p-8'>
         <div className='flex items-start justify-between gap-4'>
           <div className='flex flex-col gap-2'>
-            <div className='mb-2 flex items-center gap-2 text-foreground/80'>
+            <div className='text-foreground/80 mb-2 flex items-center gap-2'>
               <CreditCard className='h-5 w-5' />
               <h3 className='text-lg font-semibold'>Current Balance</h3>
             </div>
             <div className='flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1'>
               <p
-                className='font-bold tracking-tight text-foreground'
+                className='text-foreground font-bold tracking-tight'
                 style={{ fontSize: dynamicFontSize }}
               >
                 {formattedBalance}
               </p>
               <Badge
                 variant={isPositive ? 'default' : 'destructive'}
-                className={cn('h-fit w-fit font-medium', isPositive && 'border-transparent bg-success text-success-foreground shadow-sm hover:bg-success/80')}
+                className={cn(
+                  'h-fit w-fit font-medium',
+                  isPositive &&
+                    'bg-success text-success-foreground hover:bg-success/80 border-transparent shadow-sm'
+                )}
               >
                 {isPositive ? 'Positive' : 'Negative'}
               </Badge>
@@ -201,13 +205,13 @@ const StatCard = ({
     >
       <div className='flex h-full flex-col justify-between p-4 sm:p-6'>
         <div className='flex items-start justify-between'>
-          <span className='text-sm font-medium text-foreground/80 sm:text-base'>{title}</span>
+          <span className='text-foreground/80 text-sm font-medium sm:text-base'>{title}</span>
           <div className={cn('rounded-full p-2', config.iconBg)}>{config.icon}</div>
         </div>
 
         <div className='mt-2'>
           <p
-            className='font-bold tracking-tight text-foreground'
+            className='text-foreground font-bold tracking-tight'
             style={{ fontSize: dynamicFontSize }}
           >
             {formattedValue}
