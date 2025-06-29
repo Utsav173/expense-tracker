@@ -3,7 +3,7 @@
 import { AccountDetails, CustomAnalytics } from '@/lib/types';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatCurrency } from '@/lib/utils';
+import { getDynamicFontSize, formatCurrency } from '@/lib/utils';
 import {
   TrendingDown,
   TrendingUp,
@@ -26,69 +26,90 @@ interface AnalyticsCardsProps {
   account?: ApiResponse<AccountDetails>;
 }
 
+const ShimmeringCard = ({
+  children,
+  className
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => (
+  <div
+    className={cn(
+      'bg-background relative overflow-hidden rounded-lg border shadow-md',
+      'before:border-primary/20 before:via-primary/10 before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_2s_infinite] before:border-t before:bg-gradient-to-r before:from-transparent before:to-transparent',
+      className
+    )}
+  >
+    {children}
+  </div>
+);
+
 const CurrentBalanceCard = ({ account, isLoading }: { account: any; isLoading?: boolean }) => {
   if (isLoading) {
     return (
-      <Card className='h-full overflow-hidden border-none shadow-md'>
-        <div className='from-primary/10 to-primary/20 bg-gradient-to-br p-6'>
+      <ShimmeringCard className='h-full'>
+        <div className='p-6 sm:p-8'>
           <div className='space-y-3'>
             <Skeleton className='h-5 w-32' />
             <Skeleton className='h-12 w-64' />
             <Skeleton className='h-4 w-40' />
           </div>
         </div>
-      </Card>
+      </ShimmeringCard>
     );
   }
 
   const isPositive = account?.balance && account?.balance > 0;
-  const bgColorClass = 'from-blue-100/10 to-blue-400/20';
+  const bgColorClass = isPositive
+    ? 'from-blue-500/10 to-blue-500/20 dark:from-blue-900/10 dark:to-blue-900/20'
+    : 'from-red-500/10 to-red-500/20 dark:from-red-900/10 dark:to-red-900/20';
+
+  const formattedBalance = formatCurrency(account?.balance ?? 0, account?.currency);
+  const dynamicFontSize = getDynamicFontSize(formattedBalance);
 
   return (
-    <Card className='group relative h-full overflow-hidden border-none shadow-md transition-all duration-300 hover:shadow-lg'>
-      <PixelCanvas
-        gap={10}
-        speed={25}
-        colors={
-          typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
-            ? ['#e0f2fe', '#7dd3fc', '#0ea5e9']
-            : ['#0c1a2f', '#1e293b', '#334155']
-        }
-      />
-
-      <div
-        className={`flex h-full w-full flex-col justify-between bg-gradient-to-br ${bgColorClass} p-6 sm:p-8`}
-      >
+    <Card
+      className={cn(
+        'group relative h-full overflow-hidden border-none shadow-lg transition-all duration-300 hover:shadow-xl',
+        'bg-gradient-to-br',
+        bgColorClass
+      )}
+    >
+      <div className='flex h-full flex-col justify-between p-6 sm:p-8'>
         <div className='flex items-start justify-between gap-4'>
           <div className='flex flex-col gap-2'>
-            <div className='mb-2 flex items-center gap-2'>
-              <CreditCard className='z-10 h-5 w-5 transition-colors duration-300 group-hover:text-[var(--active-color)]' />
-              <h3 className='z-10 text-lg font-semibold transition-colors duration-300 group-hover:text-[var(--active-color)]'>
-                Current Balance
-              </h3>
+            <div className='mb-2 flex items-center gap-2 text-foreground/80'>
+              <CreditCard className='h-5 w-5' />
+              <h3 className='text-lg font-semibold'>Current Balance</h3>
             </div>
-            <div className='flex min-w-0 flex-wrap items-center gap-3'>
-              <SingleLineEllipsis className='z-10 text-3xl font-bold tracking-tight transition-colors duration-300 group-hover:text-[var(--active-color)] sm:text-4xl xl:text-5xl'>
-                {formatCurrency(account?.balance ?? 0, account?.currency)}
-              </SingleLineEllipsis>
+            <div className='flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1'>
+              <p
+                className='font-bold tracking-tight text-foreground'
+                style={{ fontSize: dynamicFontSize }}
+              >
+                {formattedBalance}
+              </p>
               <Badge
                 variant={isPositive ? 'default' : 'destructive'}
-                className='z-10 h-fit w-fit font-medium'
+                className={cn('h-fit w-fit font-medium', isPositive && 'border-transparent bg-success text-success-foreground shadow-sm hover:bg-success/80')}
               >
                 {isPositive ? 'Positive' : 'Negative'}
               </Badge>
             </div>
           </div>
-          <div className='z-10 hidden sm:block'>
-            {isPositive ? (
-              <div className='bg-success/20 group-hover:bg-success/30 rounded-full p-3 backdrop-blur-sm transition-colors duration-300'>
+          <div className='hidden sm:block'>
+            <div
+              className={cn(
+                'rounded-full p-3 transition-colors duration-300',
+                isPositive ? 'bg-success/20' : 'bg-destructive/20'
+              )}
+            >
+              {isPositive ? (
                 <TrendingUp className='text-success h-6 w-6' />
-              </div>
-            ) : (
-              <div className='bg-destructive/20 group-hover:bg-destructive/30 rounded-full p-3 backdrop-blur-sm transition-colors duration-300'>
+              ) : (
                 <TrendingDown className='text-destructive h-6 w-6' />
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
         <p className='text-muted-foreground mt-4 text-sm'>
@@ -117,7 +138,7 @@ const StatCard = ({
 }) => {
   if (isLoading) {
     return (
-      <Card className='overflow-hidden border-none shadow-md'>
+      <ShimmeringCard>
         <div className='p-6'>
           <div className='space-y-3'>
             <Skeleton className='h-5 w-20' />
@@ -125,41 +146,32 @@ const StatCard = ({
             <Skeleton className='h-4 w-24' />
           </div>
         </div>
-      </Card>
+      </ShimmeringCard>
     );
   }
 
   const cardConfig = {
     income: {
       icon: <ArrowUpCircle className='text-success h-5 w-5' />,
-      iconBg: 'bg-success/20',
-      color: 'text-success',
-      gradientFrom: 'from-success/10',
-      gradientTo: 'to-success/20'
+      iconBg: 'bg-success/10 dark:bg-success/20',
+      gradientFrom: 'from-green-500/10',
+      gradientTo: 'to-green-500/20'
     },
     expense: {
       icon: <ArrowDownCircle className='text-destructive h-5 w-5' />,
-      iconBg: 'bg-destructive/20',
-      color: 'text-destructive',
-      gradientFrom: 'from-destructive/10',
-      gradientTo: 'to-destructive/20'
+      iconBg: 'bg-destructive/10 dark:bg-destructive/20',
+      gradientFrom: 'from-red-500/10',
+      gradientTo: 'to-red-500/20'
     },
     balance: {
       icon: <BarChart3 className='text-primary h-5 w-5' />,
-      iconBg: 'bg-primary/20',
-      color: 'text-balance',
-      gradientFrom: 'from-primary/10',
-      gradientTo: 'to-primary/20'
+      iconBg: 'bg-primary/10 dark:bg-primary/20',
+      gradientFrom: 'from-blue-500/10',
+      gradientTo: 'to-blue-500/20'
     }
   };
 
   const config = cardConfig[type];
-
-  const isPositiveChange = () => {
-    if (type === 'expense') return change < 0;
-
-    return change > 0;
-  };
 
   const getTrendIcon = () => {
     if (change === 0) return <Minus className='text-muted-foreground h-4 w-4' />;
@@ -170,46 +182,56 @@ const StatCard = ({
     );
   };
 
-  const getChangeColor = (type: string) => {
+  const getChangeColor = () => {
     if (change === 0) return 'text-muted-foreground';
-
-    return type === 'balance'
-      ? 'text-balance'
-      : isPositiveChange()
-        ? 'text-success'
-        : 'text-destructive';
+    return change > 0 ? 'text-success' : 'text-destructive';
   };
 
+  const formattedValue = formatCurrency(value, currency);
+  const dynamicFontSize = getDynamicFontSize(formattedValue, 2, 1.2, 10);
+
   return (
-    <Card className='h-full overflow-hidden border-none shadow-md transition-all duration-300 hover:shadow-lg'>
-      <div className={`bg-gradient-to-br ${config.gradientFrom} ${config.gradientTo} h-full p-6`}>
-        <div className='mb-4 flex items-center justify-between'>
-          <span className={`${config.color} text-sm font-medium sm:text-base`}>{title}</span>
-          <div className={`rounded-full p-2 ${config.iconBg}`}>{config.icon}</div>
+    <Card
+      className={cn(
+        'h-full overflow-hidden border-none shadow-lg transition-all duration-300 hover:shadow-xl',
+        'bg-gradient-to-br',
+        config.gradientFrom,
+        config.gradientTo
+      )}
+    >
+      <div className='flex h-full flex-col justify-between p-4 sm:p-6'>
+        <div className='flex items-start justify-between'>
+          <span className='text-sm font-medium text-foreground/80 sm:text-base'>{title}</span>
+          <div className={cn('rounded-full p-2', config.iconBg)}>{config.icon}</div>
         </div>
 
-        <div className='mb-4 min-w-0'>
-          <SingleLineEllipsis className='block text-xl font-bold tracking-tight sm:text-3xl'>
-            {formatCurrency(value, currency)}
-          </SingleLineEllipsis>
+        <div className='mt-2'>
+          <p
+            className='font-bold tracking-tight text-foreground'
+            style={{ fontSize: dynamicFontSize }}
+          >
+            {formattedValue}
+          </p>
         </div>
 
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className='bg-muted inline-flex items-center gap-1.5 rounded-md px-2 py-1'>
-                {getTrendIcon()}
-                <span className={cn('text-xs font-medium sm:text-sm', getChangeColor(type))}>
-                  {change > 0 ? '+' : ''}
-                  {Math.abs(change).toFixed(2)}%
-                </span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Change from last period</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <div className='mt-4 flex items-center gap-1.5'>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className='bg-background/50 dark:bg-background/30 inline-flex items-center gap-1.5 rounded-md px-2 py-1'>
+                  {getTrendIcon()}
+                  <span className={cn('text-xs font-medium sm:text-sm', getChangeColor())}>
+                    {change > 0 ? '+' : ''}
+                    {Math.abs(change).toFixed(2)}%
+                  </span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Change from last period</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </div>
     </Card>
   );
@@ -219,37 +241,35 @@ export const AnalyticsCards = ({ analytics, isLoading, account }: AnalyticsCards
   if (!analytics && !isLoading) return null;
 
   return (
-    <TooltipProvider>
-      <div className='flex flex-col gap-4 select-none'>
-        <CurrentBalanceCard account={account} isLoading={isLoading} />
+    <div className='flex flex-col gap-4 sm:gap-6'>
+      <CurrentBalanceCard account={account} isLoading={isLoading} />
 
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5'>
-          <StatCard
-            title='Income'
-            value={analytics?.income ?? 0}
-            change={analytics?.IncomePercentageChange ?? 0}
-            type='income'
-            currency={account?.currency ?? 'INR'}
-            isLoading={isLoading}
-          />
-          <StatCard
-            title='Expenses'
-            value={analytics?.expense ?? 0}
-            change={analytics?.ExpensePercentageChange ?? 0}
-            type='expense'
-            currency={account?.currency ?? 'INR'}
-            isLoading={isLoading}
-          />
-          <StatCard
-            title='Net Balance'
-            value={analytics?.balance ?? 0}
-            change={analytics?.BalancePercentageChange ?? 0}
-            type='balance'
-            currency={account?.currency ?? 'INR'}
-            isLoading={isLoading}
-          />
-        </div>
+      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3'>
+        <StatCard
+          title='Income'
+          value={analytics?.income ?? 0}
+          change={analytics?.IncomePercentageChange ?? 0}
+          type='income'
+          currency={account?.currency ?? 'INR'}
+          isLoading={isLoading}
+        />
+        <StatCard
+          title='Expenses'
+          value={analytics?.expense ?? 0}
+          change={analytics?.ExpensePercentageChange ?? 0}
+          type='expense'
+          currency={account?.currency ?? 'INR'}
+          isLoading={isLoading}
+        />
+        <StatCard
+          title='Net Balance'
+          value={analytics?.balance ?? 0}
+          change={analytics?.BalancePercentageChange ?? 0}
+          type='balance'
+          currency={account?.currency ?? 'INR'}
+          isLoading={isLoading}
+        />
       </div>
-    </TooltipProvider>
+    </div>
   );
 };
