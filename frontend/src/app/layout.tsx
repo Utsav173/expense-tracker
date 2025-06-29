@@ -1,6 +1,7 @@
 import React from 'react';
 import { Inter } from 'next/font/google';
 import { Metadata } from 'next';
+import Script from 'next/script'; // Import Script component
 import ReactQueryProvider from '@/components/providers/provider';
 import { cn } from '@/lib/utils';
 import './globals.css';
@@ -17,20 +18,31 @@ export const metadata: Metadata = {
     'budgeting app',
     'financial management',
     'AI finance',
-    'money management'
+    'money management',
+    'budget planner',
+    'spending tracker',
+    'financial goals',
+    'investment tracker',
+    'debt management'
   ],
   openGraph: {
     title: 'Expense Tracker - Master Your Money. Effortlessly.',
     description:
       'Expense Pro: Your intelligent partner for mastering personal finance. Automate tracking, gain deep understanding, and achieve your financial goals with unprecedented ease.',
     url: 'https://expense-pro.vercel.app/',
-    type: 'website',
+    siteName: 'Expense Tracker',
     images: [
       {
         url: 'https://expense-pro.vercel.app/og-image-home.png',
         width: 1200,
         height: 630,
         alt: 'Expense Tracker Dashboard Mockup'
+      },
+      {
+        url: 'https://expense-pro.vercel.app/og-image-dashboard-desktop.png',
+        width: 1200,
+        height: 630,
+        alt: 'Expense Tracker Dashboard'
       }
     ]
   },
@@ -39,7 +51,10 @@ export const metadata: Metadata = {
     title: 'Expense Tracker - Master Your Money. Effortlessly.',
     description:
       'Expense Pro: Your intelligent partner for mastering personal finance. Automate tracking, gain deep understanding, and achieve your financial goals with unprecedented ease.',
-    images: ['https://expense-pro.vercel.app/og-image-home.png']
+    images: [
+      'https://expense-pro.vercel.app/og-image-home.png',
+      'https://expense-pro.vercel.app/og-image-dashboard-desktop.png'
+    ]
   },
   verification: {
     google: '4b4H3hr3KG4V1J6eRzWhNZDf84yIPAcR1x32o0EpF8U'
@@ -53,12 +68,34 @@ export const metadata: Metadata = {
   manifest: '/site.webmanifest',
   appleWebApp: {
     title: 'Expense Pro'
+  },
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    viewportFit: 'cover'
   }
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang='en' suppressHydrationWarning>
+      <head>
+        {/* Google Analytics */}
+        <Script
+          src='https://www.googletagmanager.com/gtag/js?id=GTM-NRXZ2WPR'
+          strategy='afterInteractive'
+        />
+        <Script id='google-analytics' strategy='afterInteractive'>
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'GTM-NRXZ2WPR');
+          `}
+        </Script>
+      </head>
       <body className={cn(inter.className, 'bg-background text-foreground')}>
         <ReactQueryProvider>{children}</ReactQueryProvider>
       </body>
