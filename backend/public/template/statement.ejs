@@ -10,16 +10,18 @@
   <style>
     :root {
       --color-primary: #4f46e5;
-      --color-primary-dark: #7c3aed;
-      --color-text-header: #1e293b;
-      --color-text-body: #374151;
+      --color-primary-dark: #3730a3;
+      --color-text-header: #0f172a;
+      --color-text-body: #334155;
       --color-text-muted: #64748b;
-      --color-border: #e5e7eb;
+      --color-border: #e2e8f0;
       --color-background-light: #f8fafc;
-      --accent-income: #10b981;
-      --accent-expense: #ef4444;
-      --accent-balance: #3b82f6;
-      --accent-change: #8b5cf6;
+      --accent-income: #059669;
+      --accent-expense: #dc2626;
+      --accent-balance: #0369a1;
+      --accent-change: #7c3aed;
+      --shadow-soft: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+      --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
 
     * {
@@ -34,15 +36,18 @@
       font-family: 'Inter', sans-serif;
       background: #f1f5f9;
       color: var(--color-text-body);
-      line-height: 1.5;
+      line-height: 1.4;
+      font-size: 14px;
     }
 
     .container {
       max-width: 8.27in;
       min-height: 11.69in;
-      margin: 20px auto;
+      margin: 16px auto;
       background: white;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      box-shadow: var(--shadow-medium);
+      border-radius: 8px;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
     }
@@ -50,101 +55,120 @@
     .header {
       background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
       color: white;
-      padding: 24px 32px;
+      padding: 20px 24px 16px;
       text-align: center;
+      position: relative;
+    }
+
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
     }
 
     .header h1 {
-      font-size: 2rem;
+      font-size: 1.75rem;
       font-weight: 700;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
+      letter-spacing: -0.025em;
     }
 
     .header .subtitle {
-      font-size: 1rem;
-      opacity: 0.9;
+      font-size: 0.9rem;
+      opacity: 0.85;
       font-weight: 400;
     }
 
     .account-info {
       background: var(--color-background-light);
-      padding: 20px 32px;
+      padding: 16px 24px;
       border-bottom: 1px solid var(--color-border);
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
     }
 
     .account-detail {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
     .account-detail .icon {
-      width: 36px;
-      height: 36px;
+      width: 32px;
+      height: 32px;
       background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
-      border-radius: 8px;
+      border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
-      font-size: 1.2rem;
+      font-size: 1rem;
       flex-shrink: 0;
     }
 
     .account-detail .info h3 {
-      font-size: 0.8rem;
+      font-size: 0.7rem;
       color: var(--color-text-muted);
       font-weight: 500;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      margin-bottom: 1px;
     }
 
     .account-detail .info p {
-      font-size: 1rem;
+      font-size: 0.9rem;
       font-weight: 600;
       color: var(--color-text-header);
     }
 
     .main-content {
-      padding: 24px 32px;
+      padding: 20px 24px;
       flex-grow: 1;
     }
 
     .analytics-header {
       text-align: center;
-      margin-bottom: 24px;
+      margin-bottom: 18px;
     }
 
     .analytics-header h2 {
-      font-size: 1.75rem;
+      font-size: 1.5rem;
       font-weight: 600;
       color: var(--color-text-header);
-      margin-bottom: 4px;
+      margin-bottom: 2px;
+      letter-spacing: -0.025em;
     }
 
     .analytics-header p {
       color: var(--color-text-muted);
-      font-size: 1rem;
-      max-width: 600px;
-      margin: 0 auto;
+      font-size: 0.85rem;
     }
 
     .analytics-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
-      margin-bottom: 32px;
+      gap: 14px;
+      margin-bottom: 24px;
     }
 
     .stat-card {
       border: 1px solid var(--color-border);
-      border-top: 4px solid var(--card-accent);
-      border-radius: 8px;
-      padding: 16px;
+      border-top: 3px solid var(--card-accent);
+      border-radius: 6px;
+      padding: 12px;
       text-align: center;
+      background: linear-gradient(to bottom, #ffffff, #fefefe);
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-medium);
     }
 
     .stat-card.income {
@@ -164,53 +188,59 @@
     }
 
     .stat-card h3 {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       color: var(--color-text-muted);
       font-weight: 500;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .stat-card .amount {
-      font-size: 1.5rem;
-      font-weight: 600;
-      line-height: 1.2;
+      font-size: 1.3rem;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 2px;
     }
 
     .stat-card .currency {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       color: var(--color-text-muted);
+      font-weight: 500;
     }
 
     .transactions-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
+      padding-bottom: 6px;
       border-bottom: 2px solid var(--color-border);
-      padding-bottom: 8px;
     }
 
     .transactions-header h2 {
-      font-size: 1.5rem;
+      font-size: 1.3rem;
       font-weight: 600;
       color: var(--color-text-header);
+      letter-spacing: -0.025em;
     }
 
     .transaction-count {
-      background: #eef2ff;
+      background: linear-gradient(135deg, #eef2ff, #e0e7ff);
       color: var(--color-primary);
-      padding: 4px 10px;
-      border-radius: 16px;
-      font-size: 0.8rem;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
       font-weight: 600;
+      border: 1px solid #c7d2fe;
     }
 
     .table-container {
       width: 100%;
       border: 1px solid var(--color-border);
-      border-radius: 8px;
+      border-radius: 6px;
       overflow: hidden;
+      box-shadow: var(--shadow-soft);
     }
 
     table {
@@ -219,30 +249,30 @@
     }
 
     thead tr {
-      background-color: var(--color-background-light);
+      background: linear-gradient(to right, var(--color-background-light), #f1f5f9);
     }
 
     th {
-      padding: 10px 12px;
+      padding: 8px 10px;
       text-align: left;
       font-weight: 600;
       color: var(--color-text-muted);
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      border-bottom: 1px solid var(--color-border);
+      border-bottom: 2px solid var(--color-border);
     }
 
     th:nth-child(1) {
-      width: 12%;
+      width: 11%;
     }
 
     th:nth-child(2) {
-      width: 34%;
+      width: 36%;
     }
 
     th:nth-child(3) {
-      width: 18%;
+      width: 17%;
     }
 
     th:nth-child(4),
@@ -257,13 +287,17 @@
     }
 
     tbody tr:nth-of-type(even) {
-      background-color: #f9fafb;
+      background-color: #fafbfc;
+    }
+
+    tbody tr:hover {
+      background-color: #f0f4f8;
     }
 
     td {
-      padding: 10px 12px;
-      border-bottom: 1px solid #f3f4f6;
-      font-size: 0.875rem;
+      padding: 8px 10px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.8rem;
       vertical-align: middle;
       word-break: break-word;
     }
@@ -275,23 +309,24 @@
     .transaction-text {
       font-weight: 500;
       color: var(--color-text-header);
+      line-height: 1.3;
     }
 
     .transaction-category {
       display: inline-block;
-      background: #e0e7ff;
+      background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
       color: #3730a3;
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 0.75rem;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 0.7rem;
       font-weight: 500;
-      line-height: 1.3;
+      line-height: 1.2;
       text-align: center;
-      /* REMOVED max-width and text-overflow to allow wrapping */
+      border: 1px solid #a5b4fc;
     }
 
     .amount {
-      font-family: 'Menlo', 'Monaco', monospace;
+      font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
       font-weight: 600;
     }
 
@@ -313,86 +348,151 @@
     }
 
     .transfer-badge {
-      background: #fef3c7;
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
       color: #92400e;
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 0.75rem;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 0.7rem;
       font-weight: 500;
+      border: 1px solid #f3d057;
     }
 
     .no-transactions {
       text-align: center;
-      padding: 40px;
+      padding: 32px;
       color: var(--color-text-muted);
     }
 
-    /* --- Footer --- */
+    .no-transactions h3 {
+      color: var(--color-text-header);
+      margin-bottom: 4px;
+    }
+
     .footer {
       background: var(--color-background-light);
-      padding: 20px 32px;
+      padding: 14px 24px;
       text-align: center;
       border-top: 1px solid var(--color-border);
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       color: var(--color-text-muted);
     }
 
     .footer p:last-child {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       color: #94a3b8;
+      margin-top: 2px;
     }
 
-    /* --- Print-specific styles --- */
+    /* Print optimizations */
     @media print {
       body {
         background: white;
-        font-size: 10pt;
+        font-size: 9pt;
       }
 
       .container {
         box-shadow: none;
         margin: 0;
         max-width: 100%;
+        border-radius: 0;
       }
 
       @page {
         size: A4;
-        margin: 0.75in;
+        margin: 0.6in;
       }
 
       .analytics-grid {
         grid-template-columns: repeat(2, 1fr);
-        /* 2x2 grid for printing */
+        gap: 12px;
+      }
+
+      .stat-card:hover {
+        transform: none;
+        box-shadow: none;
       }
 
       tbody tr:nth-of-type(even) {
-        background-color: #f9fafb;
+        background-color: #fafbfc;
         -webkit-print-color-adjust: exact;
-        /* Ensures background color prints */
         print-color-adjust: exact;
+      }
+
+      .header {
+        padding: 16px 20px 12px;
+      }
+
+      .main-content,
+      .account-info {
+        padding: 14px 20px;
       }
     }
 
+    /* Responsive design */
     @media (max-width: 900px) {
       .analytics-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+
+      .container {
+        margin: 8px;
       }
     }
 
     @media (max-width: 600px) {
       .account-info {
         grid-template-columns: 1fr;
+        gap: 10px;
       }
 
       .analytics-grid {
         grid-template-columns: 1fr;
+        gap: 10px;
       }
 
       .main-content,
       .account-info,
       .header {
-        padding: 16px;
+        padding: 12px 16px;
       }
+
+      .transactions-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .table-container {
+        font-size: 0.75rem;
+      }
+
+      th,
+      td {
+        padding: 6px 8px;
+      }
+    }
+
+    /* Enhanced visual feedback */
+    .stat-card {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .stat-card:hover::before {
+      opacity: 1;
     }
   </style>
 </head>
