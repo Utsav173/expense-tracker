@@ -22,6 +22,7 @@ import {
   format as formatDateFn,
   subDays,
   eachDayOfInterval,
+  isWeekend,
 } from 'date-fns';
 
 import {
@@ -72,6 +73,47 @@ export class InvestmentService {
       });
 
     return result[0]?.purchaseDate?.toISOString().split('T')[0] ?? null;
+  }
+
+  async getInvestmentPerformance(investmentId: string, userId: string) {
+    const investment = await this.getInvestmentDetails(investmentId, userId);
+    if (!investment) {
+      throw new HTTPException(404, { message: 'Investment not found or access denied.' });
+    }
+
+    const { purchaseDate, symbol, shares, purchasePrice } = investment;
+    const today = new Date();
+
+    if (!purchaseDate) {
+      throw new HTTPException(400, { message: 'Investment is missing a purchase date.' });
+    }
+
+    const [currentPriceInfo, historicalPriceMap] = await Promise.all([
+      financeService.getCurrentStockPrice(symbol).catch(() => null),
+      financeService.fetchHistoricalPricesForSymbol(symbol, new Date(purchaseDate), today),
+    ]);
+
+    const historicalData = Array.from(historicalPriceMap.entries()).map(([date, value]) => ({
+      date,
+      value,
+    }));
+
+    const holdingPerformance = historicalData.map((point) => {
+      const price = point.value ?? 0;
+      const gainLoss = (price - (purchasePrice ?? 0)) * (shares ?? 0);
+      return {
+        date: point.date,
+        holdingValue: price * (shares ?? 0),
+        gainLoss: gainLoss,
+      };
+    });
+
+    return {
+      investmentDetails: investment,
+      currentMarketData: currentPriceInfo,
+      marketPerformance: historicalData,
+      holdingPerformance,
+    };
   }
 
   async getPortfolioSummary(userId: string): Promise<PortfolioSummary> {
@@ -353,31 +395,23 @@ export class InvestmentService {
   async getInvestmentDetails(
     investmentId: string,
     userId: string,
-  ): Promise<Omit<InferSelectModel<typeof Investment>, 'account'>> {
-    const result = await db
-      .select({
-        investment: {
-          id: Investment.id,
-          createdAt: Investment.createdAt,
-          updatedAt: Investment.updatedAt,
-          symbol: Investment.symbol,
-          shares: Investment.shares,
-          purchasePrice: Investment.purchasePrice,
-          purchaseDate: Investment.purchaseDate,
-          dividend: Investment.dividend,
-          investedAmount: Investment.investedAmount,
-        },
-      })
-      .from(Investment)
-      .innerJoin(InvestmentAccount, eq(Investment.account, InvestmentAccount.id))
-      .where(and(eq(Investment.id, investmentId), eq(InvestmentAccount.userId, userId)))
-      .catch((err) => {
-        throw new HTTPException(500, { message: `DB Fetch Error: ${err.message}` });
-      });
+  ): Promise<InferSelectModel<typeof Investment>> {
+    const result = await db.query.Investment.findFirst({
+      where: and(
+        eq(Investment.id, investmentId),
+        inArray(
+          Investment.account,
+          db
+            .select({ id: InvestmentAccount.id })
+            .from(InvestmentAccount)
+            .where(eq(InvestmentAccount.userId, userId)),
+        ),
+      ),
+    });
 
-    if (!result || result.length === 0)
+    if (!result)
       throw new HTTPException(404, { message: 'Investment data not found or access denied.' });
-    return result[0].investment;
+    return result;
   }
 
   async updateInvestmentDividend(
@@ -624,8 +658,3 @@ export class InvestmentService {
 }
 
 export const investmentService = new InvestmentService();
-
-function isWeekend(date: Date): boolean {
-  const day = date.getDay();
-  return day === 0 || day === 6;
-}

@@ -3,7 +3,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import {
-  DollarSign,
+  IndianRupee,
   TrendingUp,
   PieChart as PieChartIcon,
   Users,
@@ -182,7 +182,7 @@ const DashboardMockup = () => {
               title='Overall Net Balance'
               value='₹1,30,816'
               description='+2.5% this month'
-              icon={DollarSign}
+              icon={IndianRupee}
               iconBgColor='bg-primary/10'
               valueColor='text-primary'
               trend='+₹3,200'

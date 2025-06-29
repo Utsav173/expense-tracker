@@ -35,7 +35,7 @@ import {
   ArrowUpCircle,
   Clock,
   CreditCard,
-  DollarSign,
+  IndianRupee,
   Info,
   Loader2,
   Pencil,
@@ -338,7 +338,7 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
               </div>
               <div className='space-y-1'>
                 <Label className='text-muted-foreground flex items-center gap-1.5 text-xs'>
-                  <DollarSign size={14} /> Currency
+                  <IndianRupee size={14} /> Currency
                 </Label>
                 <p className='text-sm font-medium'>{transaction?.currency ?? 'N/A'}</p>
               </div>

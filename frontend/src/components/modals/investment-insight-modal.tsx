@@ -10,8 +10,8 @@ import {
   DialogTitle,
   DialogClose
 } from '@/components/ui/dialog';
-import { Investment } from '@/lib/types';
-import { investmentStockPrice, investmentGetPortfolioHistorical } from '@/lib/endpoints/investment';
+import { Investment, InvestmentPerformanceData } from '@/lib/types';
+import { investmentGetPerformance } from '@/lib/endpoints/investment';
 import {
   AreaChart as RechartsAreaChart,
   Area,
@@ -38,10 +38,88 @@ import {
   X
 } from 'lucide-react';
 import NoData from '../ui/no-data';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+
+// --- Custom Tooltip Component with FIX ---
+const CustomTooltip = ({
+  active,
+  payload,
+  currency,
+  chartType,
+  data
+}: {
+  active?: boolean;
+  payload?: any[];
+  currency: string;
+  chartType: 'market' | 'holding';
+  data: any[];
+}) => {
+  // FIX: Added robust checks to ensure payload and its data exist before processing.
+  if (active && payload && payload.length > 0 && payload[0].payload) {
+    const currentData = payload[0].payload;
+    const currentIndex = data.findIndex((d) => d.date === currentData.date);
+    const prevData = currentIndex > 0 ? data[currentIndex - 1] : null;
+
+    let value: number | null = null;
+    let valueLabel = 'Value';
+
+    if (chartType === 'market') {
+      value = currentData.value;
+      valueLabel = 'Price';
+    } else {
+      value = currentData.positive !== null ? currentData.positive : currentData.negative;
+      valueLabel = value !== null && value >= 0 ? 'Gain' : 'Loss';
+    }
+
+    if (value === null) return null;
+
+    const prevValue =
+      chartType === 'market'
+        ? prevData?.value
+        : prevData?.positive !== null
+          ? prevData.positive
+          : prevData?.negative;
+
+    let change: number | null = null;
+    let percentageChange: number | null = null;
+    if (prevValue !== null && prevValue !== undefined && prevValue !== 0) {
+      change = value - prevValue;
+      percentageChange = (change / Math.abs(prevValue)) * 100;
+    }
+
+    const isPositiveChange = change !== null && change >= 0;
+    const changeColor = isPositiveChange ? 'text-success' : 'text-destructive';
+    const ChangeIcon = isPositiveChange ? TrendingUp : TrendingDown;
+
+    return (
+      <div className='bg-background/90 text-foreground min-w-[180px] rounded-lg border p-3 shadow-lg backdrop-blur-sm'>
+        <p className='text-muted-foreground mb-2 text-sm font-bold'>
+          {format(parseISO(currentData.date), 'MMM d, yyyy')}
+        </p>
+        <Separator />
+        <div className='mt-2 space-y-1.5 text-sm'>
+          <div className='flex items-center justify-between'>
+            <span className='text-muted-foreground'>{valueLabel}:</span>
+            <span className='font-semibold'>{formatCurrency(value, currency)}</span>
+          </div>
+          {change !== null && percentageChange !== null && (
+            <div className='flex items-center justify-between'>
+              <span className='text-muted-foreground'>Change:</span>
+              <span className={cn('flex items-center gap-1 font-semibold', changeColor)}>
+                <ChangeIcon className='h-3.5 w-3.5' />
+                {formatCurrency(change, currency)} ({percentageChange.toFixed(2)}%)
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
 
 interface InvestmentInsightModalProps {
   isOpen: boolean;
@@ -85,11 +163,15 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
   investment,
   accountCurrency
 }) => {
-  const { data: currentPriceInfo, isLoading: isPriceLoading } = useQuery({
-    queryKey: ['stockPrice', investment.symbol],
-    queryFn: () => investmentStockPrice(investment.symbol),
+  const {
+    data: performanceData,
+    isLoading,
+    isError
+  } = useQuery<InvestmentPerformanceData | null>({
+    queryKey: ['investmentPerformance', investment.id],
+    queryFn: () => investmentGetPerformance(investment.id),
     enabled: isOpen,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1
   });
 
@@ -103,25 +185,12 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
     };
   }, [investment.purchaseDate]);
 
-  const { data: historicalData, isLoading: isHistoricalLoading } = useQuery({
-    queryKey: ['stockHistoricalPrice', investment.symbol, investment.purchaseDate],
-    queryFn: () =>
-      investmentGetPortfolioHistorical({
-        startDate: format(purchaseDate, 'yyyy-MM-dd'),
-        endDate: format(today, 'yyyy-MM-dd')
-      }),
-    enabled: isOpen,
-    staleTime: Infinity,
-    retry: 1
-  });
-
   const performanceMetrics = useMemo(() => {
-    if (!currentPriceInfo?.price || !investment) return null;
+    if (!performanceData?.currentMarketData?.price || !investment) return null;
 
     const shares = investment.shares ?? 0;
     const investedAmount = investment.investedAmount ?? 0;
-    const totalDividends = investment.dividend ?? 0;
-    const currentMarketValue = currentPriceInfo.price * shares;
+    const currentMarketValue = performanceData.currentMarketData.price * shares;
     const totalGainLoss = currentMarketValue - investedAmount;
     const gainLossPercentage = investedAmount > 0 ? (totalGainLoss / investedAmount) * 100 : 0;
 
@@ -131,31 +200,29 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
       gainLossPercentage,
       holdingDuration: formatDistanceStrict(today, purchaseDate)
     };
-  }, [currentPriceInfo, investment, today, purchaseDate]);
+  }, [performanceData, investment, today, purchaseDate]);
 
   const gainLossChartData = useMemo(() => {
-    if (!historicalData?.data || investment.shares == null || investment.purchasePrice == null) {
+    if (!performanceData?.holdingPerformance) {
       return [];
     }
-    return historicalData.data.map((point) => {
-      const price = point.value ?? 0;
-      const gainLoss = (price - (investment.purchasePrice ?? 0)) * (investment.shares ?? 0);
+    return performanceData.holdingPerformance.map((point) => {
+      const gainLoss = point.gainLoss ?? 0;
       return {
         date: point.date,
         positive: gainLoss >= 0 ? gainLoss : null,
         negative: gainLoss < 0 ? gainLoss : null
       };
     });
-  }, [historicalData, investment.shares, investment.purchasePrice]);
-
-  const isLoading = isPriceLoading || isHistoricalLoading;
+  }, [performanceData]);
 
   const yAxisFormatter = (tick: number) => {
     const num = Number(tick);
-    if (Math.abs(num) >= 10000000) return `${(num / 10000000).toFixed(1)}Cr`;
-    if (Math.abs(num) >= 100000) return `${(num / 100000).toFixed(1)}L`;
-    if (Math.abs(num) >= 1000) return `${(num / 1000).toFixed(1)}K`;
-    return num.toString();
+    return new Intl.NumberFormat('en-IN', {
+      notation: 'compact',
+      compactDisplay: 'short',
+      maximumFractionDigits: 1
+    }).format(num);
   };
 
   return (
@@ -165,7 +232,9 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
           <DialogTitle>
             Stock Insight: {investment.symbol}
             <span className='text-muted-foreground ml-2 text-base font-normal'>
-              - {currentPriceInfo?.companyName || (isLoading ? 'Loading...' : 'N/A')}
+              -{' '}
+              {performanceData?.currentMarketData?.companyName ||
+                (isLoading ? 'Loading...' : 'N/A')}
             </span>
           </DialogTitle>
           <DialogDescription>Performance and details for your holding.</DialogDescription>
@@ -220,9 +289,7 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                 isLoading={false}
               />
             </div>
-
             <Separator />
-
             <div className='grid grid-cols-2 gap-3'>
               <KPICard
                 title='Holding Period'
@@ -262,10 +329,10 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                 <div className='h-[300px] w-full pt-4'>
                   {isLoading ? (
                     <Skeleton className='h-full w-full' />
-                  ) : historicalData && historicalData.data.length > 1 ? (
+                  ) : performanceData && performanceData.marketPerformance.length > 1 ? (
                     <ChartContainer config={{}} className='h-full w-full'>
                       <ResponsiveContainer>
-                        <RechartsAreaChart data={historicalData.data}>
+                        <RechartsAreaChart data={performanceData.marketPerformance}>
                           <defs>
                             <linearGradient id='insightChartFill' x1='0' y1='0' x2='0' y2='1'>
                               <stop
@@ -302,19 +369,16 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                             tickLine={false}
                           />
                           <ChartTooltip
+                            cursor={{
+                              stroke: 'var(--border)',
+                              strokeWidth: 1.5,
+                              strokeDasharray: '4 4'
+                            }}
                             content={
-                              <ChartTooltipContent
-                                indicator='dot'
-                                formatter={(value, name, item) => (
-                                  <div className='flex flex-col'>
-                                    <span className='text-xs'>
-                                      {format(parseISO(item.payload.date), 'MMM dd, yyyy')}
-                                    </span>
-                                    <span className='font-semibold'>
-                                      {formatCurrency(value as number, accountCurrency)}
-                                    </span>
-                                  </div>
-                                )}
+                              <CustomTooltip
+                                currency={accountCurrency}
+                                data={performanceData.marketPerformance}
+                                chartType='market'
                               />
                             }
                           />
@@ -404,15 +468,16 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                             allowDataOverflow={true}
                           />
                           <ChartTooltip
+                            cursor={{
+                              stroke: 'var(--border)',
+                              strokeWidth: 1.5,
+                              strokeDasharray: '4 4'
+                            }}
                             content={
-                              <ChartTooltipContent
-                                indicator='dot'
-                                formatter={(value, name) => (
-                                  <span className='font-semibold'>
-                                    {name === 'positive' ? 'Gain: ' : 'Loss: '}
-                                    {formatCurrency(value as number, accountCurrency)}
-                                  </span>
-                                )}
+                              <CustomTooltip
+                                currency={accountCurrency}
+                                data={gainLossChartData}
+                                chartType='holding'
                               />
                             }
                           />

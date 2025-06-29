@@ -27,7 +27,9 @@ import {
   Layers,
   Search,
   PlusCircle,
-  TrendingDown
+  TrendingDown,
+  BarChart3,
+  IndianRupee
 } from 'lucide-react';
 import { Combobox, ComboboxOption } from '../ui/combobox';
 import { Card, CardContent, CardDescription, CardHeader } from '../ui/card';
@@ -45,6 +47,7 @@ import { NumericInput } from '../ui/numeric-input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import DatePicker from '../date/date-picker';
 import { Skeleton } from '../ui/skeleton';
+import { Badge } from '../ui/badge';
 
 const investmentHoldingSchema = z.object({
   symbol: z
@@ -318,10 +321,10 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
   return (
     <AddModal
       title='Add Investment Holding'
-      description={`Add a new stock or asset to ${accountCurrency} account.`}
+      description={`Add a new stock or asset to your ${accountCurrency} account`}
       triggerButton={
         hideTriggerButton ? null : (
-          <Button>
+          <Button className='w-full sm:w-auto'>
             <PlusCircle className='mr-2 h-4 w-4' /> Add Holding
           </Button>
         )
@@ -329,218 +332,254 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
       isOpen={isOpen}
       onOpenChange={handleClose}
     >
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(handleCreate)}
-          className='grid grid-cols-1 gap-5 pt-2 md:grid-cols-2'
-        >
-          <FormField
-            control={form.control}
-            name='symbol'
-            render={({ field }) => (
-              <FormItem className='md:col-span-2'>
-                <FormLabel className='flex items-center gap-1.5'>
-                  <Search className='text-muted-foreground h-4 w-4' />
-                  Stock Symbol / Ticker*
-                </FormLabel>
-                <FormControl>
-                  <Combobox
-                    value={field.value}
-                    onChange={(option) => {
-                      field.onChange(option);
-                      form.setValue('purchasePrice', '', { shouldValidate: true });
-                    }}
-                    fetchOptions={fetchStocks}
-                    placeholder='Search (e.g., AAPL, MSFT)'
-                    loadingPlaceholder='Searching stocks...'
-                    noOptionsMessage='No stocks found. Try a different term.'
-                    className='w-full'
-                    disabled={createInvestmentMutation.isPending}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+      <div className='space-y-6'>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleCreate)} className='space-y-6'>
+            {/* Stock Symbol Search */}
+            <FormField
+              control={form.control}
+              name='symbol'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className='flex items-center gap-2 text-sm font-medium'>
+                    <Search className='text-muted-foreground h-4 w-4' />
+                    Stock Symbol
+                  </FormLabel>
+                  <FormControl>
+                    <Combobox
+                      value={field.value}
+                      onChange={(option) => {
+                        field.onChange(option);
+                        form.setValue('purchasePrice', '', { shouldValidate: true });
+                      }}
+                      fetchOptions={fetchStocks}
+                      placeholder='Search stocks (e.g., AAPL, MSFT, GOOGL)'
+                      loadingPlaceholder='Searching stocks...'
+                      noOptionsMessage='No stocks found. Try a different term.'
+                      className='w-full'
+                      disabled={createInvestmentMutation.isPending}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          {/* Display Current Price Info Card */}
-          {selectedSymbolOption?.value && (
-            <Card className='border-border/50 bg-muted/30 md:col-span-2'>
-              <CardHeader className='flex flex-row items-center justify-between p-3'>
-                <div className='space-y-0.5'>
-                  <CardDescription className='text-xs'>
-                    Current Market Info ({selectedSymbolOption.value})
-                  </CardDescription>
-                  <div className='text-lg font-bold'>
-                    {isPriceLoading ? (
-                      <Skeleton className='h-6 w-24' />
-                    ) : currentPriceInfo?.price !== null &&
-                      currentPriceInfo?.price !== undefined ? (
-                      formatCurrency(
-                        currentPriceInfo.price,
-                        currentPriceInfo.currency ?? accountCurrency
-                      )
-                    ) : (
-                      <span className='text-muted-foreground text-sm'>N/A</span>
+            {/* Current Market Info Card */}
+            {selectedSymbolOption?.value && (
+              <Card className='border-muted bg-muted/20'>
+                <CardHeader className='py-3'>
+                  <div className='flex items-center justify-between'>
+                    <div className='space-y-1'>
+                      <div className='flex items-center gap-2'>
+                        <BarChart3 className='text-muted-foreground h-4 w-4' />
+                        <CardDescription className='text-xs font-medium tracking-wide uppercase'>
+                          Current Market Price
+                        </CardDescription>
+                      </div>
+                      <div className='flex items-center gap-2'>
+                        <Badge variant='secondary' className='text-xs'>
+                          {selectedSymbolOption.value}
+                        </Badge>
+                        <div className='text-lg font-bold'>
+                          {isPriceLoading ? (
+                            <Skeleton className='h-6 w-20' />
+                          ) : currentPriceInfo?.price !== null &&
+                            currentPriceInfo?.price !== undefined ? (
+                            formatCurrency(
+                              currentPriceInfo.price,
+                              currentPriceInfo.currency ?? accountCurrency
+                            )
+                          ) : (
+                            <span className='text-muted-foreground text-sm'>Price unavailable</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    {priceComparison && (
+                      <div className='text-right'>
+                        <div
+                          className={cn(
+                            'flex items-center justify-end gap-1.5 text-sm font-semibold',
+                            priceComparison.isPositive
+                              ? 'text-green-600 dark:text-green-400'
+                              : 'text-red-600 dark:text-red-400'
+                          )}
+                        >
+                          {priceComparison.isPositive ? (
+                            <TrendingUp className='h-4 w-4' />
+                          ) : (
+                            <TrendingDown className='h-4 w-4' />
+                          )}
+                          <span>
+                            {priceComparison.percentage > 0 ? '+' : ''}
+                            {priceComparison.percentage.toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className='text-muted-foreground mt-1 text-xs'>vs Purchase Price</div>
+                      </div>
                     )}
                   </div>
-                </div>
-                {priceComparison && (
-                  <div className='text-right'>
-                    <div
-                      className={cn(
-                        'flex items-center justify-end gap-1 text-sm font-medium',
-                        priceComparison.isPositive ? 'text-success' : 'text-destructive'
-                      )}
-                    >
-                      {priceComparison.isPositive ? (
-                        <TrendingUp className='h-4 w-4' />
-                      ) : (
-                        <TrendingDown className='h-4 w-4' />
-                      )}
-                      <span>{priceComparison.percentage.toFixed(1)}%</span>
-                    </div>
-                    <div className='text-muted-foreground text-xs'>vs Purchase</div>
-                  </div>
-                )}
-              </CardHeader>
-            </Card>
-          )}
+                </CardHeader>
+              </Card>
+            )}
 
-          {/* Purchase Date */}
-          <FormField
-            control={form.control}
-            name='purchaseDate'
-            render={({ field }) => (
-              <FormItem className='flex flex-col md:col-span-2'>
-                <FormLabel className='flex items-center gap-1.5'>
-                  <Calendar className='text-muted-foreground h-4 w-4' />
-                  Purchase Date*
-                </FormLabel>
-                <FormControl>
-                  <DatePicker
-                    value={field.value}
-                    onChange={(newDate) => {
-                      if (newDate) {
-                        const validDate = getMostRecentValidDate(newDate);
-                        if (!isSameDay(validDate, field.value)) {
-                          field.onChange(validDate);
-                          form.setValue('purchasePrice', '', { shouldValidate: true });
+            {/* Purchase Date */}
+            <FormField
+              control={form.control}
+              name='purchaseDate'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className='flex items-center gap-2 text-sm font-medium'>
+                    <Calendar className='text-muted-foreground h-4 w-4' />
+                    Purchase Date
+                  </FormLabel>
+                  <FormControl>
+                    <DatePicker
+                      value={field.value}
+                      onChange={(newDate) => {
+                        if (newDate) {
+                          const validDate = getMostRecentValidDate(newDate);
+                          if (!isSameDay(validDate, field.value)) {
+                            field.onChange(validDate);
+                            form.setValue('purchasePrice', '', { shouldValidate: true });
+                          }
                         }
-                      }
-                    }}
-                    disabled={disabledDates}
-                    buttonDisabled={isPending}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Shares */}
-          <FormField
-            control={form.control}
-            name='shares'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className='flex items-center gap-1.5'>
-                  <Layers className='text-muted-foreground h-4 w-4' />
-                  Number of Shares*
-                </FormLabel>
-                <FormControl>
-                  <NumericInput
-                    placeholder='e.g., 10.5'
-                    className='w-full'
-                    value={field.value}
-                    onValueChange={(values: { value: string }) => field.onChange(values.value)}
-                    disabled={isPending}
-                    ref={field.ref as React.Ref<HTMLInputElement>}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Purchase Price */}
-          <FormField
-            control={form.control}
-            name='purchasePrice'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className='flex items-center gap-1.5'>
-                  Purchase Price / Share*{' '}
-                  {isHistoricalPriceLoading && (
-                    <TooltipProvider delayDuration={100}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className='cursor-help'>
-                            <Loader2 className='text-primary h-3 w-3 animate-spin' />
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Fetching price...</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                </FormLabel>
-                <FormControl>
-                  <NumericInput
-                    placeholder='e.g., 150.75'
-                    className='w-full pr-10'
-                    value={field.value}
-                    onValueChange={(values: { value: string }) => field.onChange(values.value)}
-                    disabled={isPending || isHistoricalPriceLoading}
-                    suffix={` ${accountCurrency}`}
-                    ref={field.ref as React.Ref<HTMLInputElement>}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Total Investment Cost Card */}
-          {totalValue !== null && totalValue > 0 && (
-            <Card className='border-primary/20 bg-muted/30 md:col-span-2'>
-              <CardContent className='p-3'>
-                <div className='flex items-center justify-between text-sm'>
-                  <span className='text-muted-foreground'>Total Investment Cost</span>
-                  <span className='font-semibold'>
-                    {formatCurrency(totalValue, accountCurrency)}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Actions */}
-          <div className='flex justify-end gap-2 pt-4 md:col-span-2'>
-            <Button type='button' variant='outline' onClick={handleClose} disabled={isPending}>
-              Cancel
-            </Button>
-            <Button
-              type='submit'
-              disabled={isPending || !form.formState.isValid}
-              className='min-w-[120px]'
-            >
-              {createInvestmentMutation.isPending ? (
-                <>
-                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                  Adding...
-                </>
-              ) : (
-                <>
-                  <PlusCircle className='mr-2 h-4 w-4' />
-                  Add Holding
-                </>
+                      }}
+                      disabled={disabledDates}
+                      buttonDisabled={isPending}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-            </Button>
-          </div>
-        </form>
-      </Form>
+            />
+
+            {/* Shares and Purchase Price - Side by side on desktop, stacked on mobile */}
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+              {/* Number of Shares */}
+              <FormField
+                control={form.control}
+                name='shares'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className='flex items-center gap-2 text-sm font-medium'>
+                      <Layers className='text-muted-foreground h-4 w-4' />
+                      Shares
+                    </FormLabel>
+                    <FormControl>
+                      <NumericInput
+                        placeholder='e.g., 10.5'
+                        className='w-full'
+                        value={field.value}
+                        onValueChange={(values: { value: string }) => field.onChange(values.value)}
+                        disabled={isPending}
+                        ref={field.ref as React.Ref<HTMLInputElement>}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Purchase Price */}
+              <FormField
+                control={form.control}
+                name='purchasePrice'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className='flex items-center gap-2 text-sm font-medium'>
+                      <IndianRupee className='text-muted-foreground h-4 w-4' />
+                      Price per Share
+                      {isHistoricalPriceLoading && (
+                        <TooltipProvider delayDuration={100}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Loader2 className='text-primary h-3 w-3 animate-spin' />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Auto-filling historical price...</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </FormLabel>
+                    <FormControl>
+                      <NumericInput
+                        placeholder='e.g., 150.75'
+                        className='w-full'
+                        value={field.value}
+                        onValueChange={(values: { value: string }) => field.onChange(values.value)}
+                        disabled={isPending || isHistoricalPriceLoading}
+                        suffix={` ${accountCurrency}`}
+                        ref={field.ref as React.Ref<HTMLInputElement>}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Total Investment Cost Card */}
+            {totalValue !== null && totalValue > 0 && (
+              <Card className='border-primary/30 bg-primary/5'>
+                <CardContent className='p-4'>
+                  <div className='flex items-center justify-between'>
+                    <div className='flex items-center gap-2'>
+                      <div className='bg-primary/10 rounded-full p-2'>
+                        <BarChart3 className='text-primary h-4 w-4' />
+                      </div>
+                      <div>
+                        <p className='text-sm font-medium'>Total Investment</p>
+                        <p className='text-muted-foreground text-xs'>
+                          {parseFloat(sharesStr) || 0} shares ×{' '}
+                          {formatCurrency(parseFloat(purchasePriceStr) || 0, accountCurrency)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className='text-right'>
+                      <p className='text-primary text-lg font-bold'>
+                        {formatCurrency(totalValue, accountCurrency)}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Action Buttons */}
+            <div className='flex flex-col-reverse gap-3 pt-4 sm:flex-row sm:justify-end'>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={handleClose}
+                disabled={isPending}
+                className='w-full sm:w-auto'
+              >
+                Cancel
+              </Button>
+              <Button
+                type='submit'
+                disabled={isPending || !form.formState.isValid}
+                className='w-full sm:w-auto sm:min-w-[140px]'
+              >
+                {createInvestmentMutation.isPending ? (
+                  <>
+                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                    Adding...
+                  </>
+                ) : (
+                  <>
+                    <PlusCircle className='mr-2 h-4 w-4' />
+                    Add Holding
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </div>
     </AddModal>
   );
 };

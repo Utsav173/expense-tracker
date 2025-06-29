@@ -15,13 +15,35 @@ import {
   AnyColumn,
 } from 'drizzle-orm';
 import { HTTPException } from 'hono/http-exception';
-import { differenceInDays, parseISO, isValid as isValidDate } from 'date-fns';
+import {
+  differenceInDays,
+  parseISO,
+  isValid as isValidDate,
+  addDays,
+  addMonths,
+  addWeeks,
+  addYears,
+  isAfter,
+  format as formatDateFn,
+} from 'date-fns';
 import { getIntervalValue } from '../utils/date.utils';
+
+interface Payment {
+  date: Date;
+  status: 'settled' | 'due' | 'upcoming';
+  installmentAmount: number;
+  principalForPeriod: number;
+  interestForPeriod: number;
+  cumulativePrincipalPaid: number;
+  cumulativeInterestPaid: number;
+  remainingPrincipal: number;
+}
 
 type DebtFilters = {
   duration?: string;
   q?: string;
   type?: 'given' | 'taken';
+  isPaid?: 'true' | 'false';
 };
 
 export class DebtService {
@@ -30,7 +52,8 @@ export class DebtService {
     percentage: number,
     duration: any,
     type: 'simple' | 'compound',
-    compoundingFrequency = 1,
+    compoundingFrequency: number = 12,
+    frequency?: number,
   ) {
     const amountValue = Number(amount);
     const percentageValue = Number(percentage);
@@ -60,16 +83,29 @@ export class DebtService {
       typeof duration === 'string' &&
       ['year', 'month', 'week', 'day'].includes(duration)
     ) {
-      // Need a frequency (number of units) to calculate duration from simple string like 'year'
-      throw new HTTPException(400, {
-        message: 'Frequency number is required when duration is a unit (year, month, etc.).',
-      });
-      // If frequency was passed separately, you'd use it here:
-      // const freqNum = Number(frequency); // Assuming frequency was passed
-      // if (isNaN(freqNum) || freqNum <= 0) throw new HTTPException(400, { message: 'Invalid frequency number.' });
-      // switch (duration) { /* calculate timeDiffInYears based on freqNum */ }
+      const freqNum = Number(frequency);
+      if (isNaN(freqNum) || freqNum <= 0) {
+        throw new HTTPException(400, {
+          message: 'Frequency number is required when duration is a unit (year, month, etc.).',
+        });
+      }
+      switch (duration) {
+        case 'year':
+          timeDiffInYears = freqNum;
+          break;
+        case 'month':
+          timeDiffInYears = freqNum / 12;
+          break;
+        case 'week':
+          timeDiffInYears = (freqNum * 7) / 365.25;
+          break;
+        case 'day':
+          timeDiffInYears = freqNum / 365.25;
+          break;
+        default:
+          timeDiffInYears = 0;
+      }
     } else if (typeof duration === 'number') {
-      // Assume duration is number of years if just a number
       timeDiffInYears = duration;
     } else {
       throw new HTTPException(400, { message: 'Invalid or missing duration.' });
@@ -82,8 +118,7 @@ export class DebtService {
       interest = amountValue * (percentageValue / 100) * timeDiffInYears;
       totalAmount = amountValue + interest;
     } else {
-      // compound
-      const n = compoundingFrequency; // Use the provided frequency
+      const n = compoundingFrequency;
       totalAmount = amountValue * Math.pow(1 + percentageValue / 100 / n, n * timeDiffInYears);
       interest = totalAmount - amountValue;
     }
@@ -94,6 +129,168 @@ export class DebtService {
     };
   }
 
+  async getDebtAmortizationSchedule(debtId: string, userId: string): Promise<Payment[]> {
+    const debtRecord = await db.query.Debts.findFirst({
+      where: and(eq(Debts.id, debtId), or(eq(Debts.createdBy, userId), eq(Debts.userId, userId))),
+    });
+
+    if (!debtRecord) {
+      throw new HTTPException(404, { message: 'Debt record not found or access denied.' });
+    }
+
+    const { amount, percentage, interestType, createdAt, dueDate, frequency, duration, isPaid } =
+      debtRecord;
+
+    if (!createdAt || !dueDate || !frequency || !duration) {
+      throw new HTTPException(400, {
+        message: 'Debt record is missing necessary details for schedule generation.',
+      });
+    }
+
+    const startDate = new Date(createdAt);
+    const endDate = new Date(dueDate);
+
+    if (!isValidDate(startDate) || !isValidDate(endDate)) {
+      throw new HTTPException(400, { message: 'Invalid date format in debt record.' });
+    }
+
+    const formattedCreatedAt = formatDateFn(startDate, 'yyyy-MM-dd');
+    const formattedDueDate = formatDateFn(endDate, 'yyyy-MM-dd');
+
+    const totalInterestResult = this.calculateInterest(
+      amount,
+      percentage,
+      `${formattedCreatedAt},${formattedDueDate}`,
+      interestType,
+      12,
+    );
+
+    const totalInterest = totalInterestResult.interest;
+    const numInstallments = parseInt(frequency, 10);
+
+    if (isNaN(numInstallments) || numInstallments <= 0) {
+      throw new HTTPException(400, { message: 'Invalid frequency for schedule generation.' });
+    }
+
+    const schedule: Payment[] = [];
+    let remainingPrincipal = amount;
+    let cumulativeInterest = 0;
+    let cumulativePrincipal = 0;
+    const today = new Date();
+
+    if (interestType === 'compound' && percentage > 0) {
+      const periodicInterestRate = percentage / 100 / 12; // Assuming monthly installments for compound
+      const installmentAmount =
+        (amount * (periodicInterestRate * Math.pow(1 + periodicInterestRate, numInstallments))) /
+        (Math.pow(1 + periodicInterestRate, numInstallments) - 1);
+
+      if (isNaN(installmentAmount) || !isFinite(installmentAmount)) {
+        return this.generateSimpleInterestSchedule(debtRecord);
+      }
+
+      for (let i = 1; i <= numInstallments; i++) {
+        const interestForPeriod = remainingPrincipal * periodicInterestRate;
+        const principalForPeriod = installmentAmount - interestForPeriod;
+        remainingPrincipal -= principalForPeriod;
+        cumulativeInterest += interestForPeriod;
+        cumulativePrincipal += principalForPeriod;
+
+        const installmentDate = addMonths(startDate, i);
+        const status: Payment['status'] = isPaid
+          ? 'settled'
+          : isAfter(today, installmentDate)
+          ? 'due'
+          : 'upcoming';
+
+        schedule.push({
+          date: installmentDate,
+          status,
+          installmentAmount,
+          principalForPeriod,
+          interestForPeriod,
+          cumulativePrincipalPaid: cumulativePrincipal,
+          cumulativeInterestPaid: cumulativeInterest,
+          remainingPrincipal: Math.max(0, remainingPrincipal),
+        });
+      }
+    } else {
+      // Handles Simple interest
+      return this.generateSimpleInterestSchedule(debtRecord);
+    }
+
+    return schedule;
+  }
+
+  private generateSimpleInterestSchedule(debtRecord: InferInsertModel<typeof Debts>): Payment[] {
+    const { amount, percentage, createdAt, dueDate, frequency, isPaid } = debtRecord;
+    const totalInterestResult = this.calculateInterest(
+      amount!,
+      percentage!,
+      `${formatDateFn(new Date(createdAt!), 'yyyy-MM-dd')},${formatDateFn(
+        new Date(dueDate!),
+        'yyyy-MM-dd',
+      )}`,
+      'simple',
+    );
+
+    const totalInterest = totalInterestResult.interest;
+    const numInstallments = parseInt(frequency!, 10);
+
+    if (isNaN(numInstallments) || numInstallments <= 0) return [];
+
+    const interestPerInstallment = totalInterest > 0 ? totalInterest / numInstallments : 0;
+    const principalPerInstallment = amount! / numInstallments;
+    const installmentAmount = principalPerInstallment + interestPerInstallment;
+
+    const schedule: Payment[] = [];
+    let cumulativePrincipal = 0;
+    let cumulativeInterest = 0;
+    const today = new Date();
+    const startDate = new Date(createdAt!);
+
+    for (let i = 1; i <= numInstallments; i++) {
+      let installmentDate: Date;
+      const durationType = debtRecord.duration;
+      switch (durationType) {
+        case 'daily':
+          installmentDate = addDays(startDate, i);
+          break;
+        case 'weekly':
+          installmentDate = addWeeks(startDate, i);
+          break;
+        case 'yearly':
+          installmentDate = addYears(startDate, i);
+          break;
+        case 'monthly':
+        default:
+          installmentDate = addMonths(startDate, i);
+          break;
+      }
+
+      const status: Payment['status'] = isPaid
+        ? 'settled'
+        : isAfter(today, installmentDate)
+        ? 'due'
+        : 'upcoming';
+
+      cumulativePrincipal += principalPerInstallment;
+      cumulativeInterest += interestPerInstallment;
+
+      schedule.push({
+        date: installmentDate,
+        status,
+        installmentAmount,
+        principalForPeriod: principalPerInstallment,
+        interestForPeriod: interestPerInstallment,
+        cumulativePrincipalPaid: cumulativePrincipal,
+        cumulativeInterestPaid: cumulativeInterest,
+        remainingPrincipal: Math.max(0, amount! - cumulativePrincipal),
+      });
+    }
+    return schedule;
+  }
+
+  // ... (rest of the service remains the same)
   async createDebt(
     ownerId: string,
     payload: {
@@ -122,7 +319,6 @@ export class DebtService {
       account,
     } = payload;
 
-    // --- Input Validation ---
     const amountValue = Number(amount);
     const premiumAmountValue = Number(premiumAmount);
     const percentageValue = Number(percentage);
@@ -134,7 +330,6 @@ export class DebtService {
     if (isNaN(percentageValue) || percentageValue < 0)
       throw new HTTPException(400, { message: 'Invalid percentage.' });
 
-    // --- Date & Duration Logic ---
     let calculatedDueDate: Date | null = null;
     let durationValue: string | null = null;
     let frequencyValue: string | null = null;
@@ -147,8 +342,8 @@ export class DebtService {
         throw new HTTPException(400, { message: 'Invalid date range format or order.' });
       }
       calculatedDueDate = endDate;
-      durationValue = duration; // Store the range string
-      frequencyValue = null; // Frequency doesn't apply to a range
+      durationValue = duration;
+      frequencyValue = null;
     } else if (
       duration &&
       typeof duration === 'string' &&
@@ -161,7 +356,7 @@ export class DebtService {
         });
       }
       frequencyValue = String(freqNum);
-      durationValue = duration; // Store the unit 'year', 'month', etc.
+      durationValue = duration;
       const now = new Date();
       switch (duration) {
         case 'year':
@@ -181,7 +376,6 @@ export class DebtService {
       throw new HTTPException(400, { message: 'Invalid duration format.' });
     }
 
-    // --- Existence Checks ---
     const involvedUserExists = await db.query.User.findFirst({
       where: eq(User.id, involvedUserId),
       columns: { id: true },
@@ -189,7 +383,6 @@ export class DebtService {
     if (!involvedUserExists) throw new HTTPException(404, { message: 'Involved user not found.' });
 
     if (account) {
-      // Account is optional for debts
       const accountExists = await db.query.Account.findFirst({
         where: and(eq(Account.id, account), eq(Account.owner, ownerId)),
         columns: { id: true },
@@ -200,7 +393,6 @@ export class DebtService {
         });
     }
 
-    // --- Database Insertion ---
     const newDebt = await db
       .insert(Debts)
       .values({
@@ -210,14 +402,14 @@ export class DebtService {
         premiumAmount: premiumAmountValue,
         type,
         userId: involvedUserId,
-        account: account ?? null, // Handle optional account
+        account: account ?? null,
         description,
-        dueDate: calculatedDueDate?.toISOString().split('T')[0], // Format date
+        dueDate: calculatedDueDate?.toISOString().split('T')[0],
         duration: durationValue,
         frequency: frequencyValue,
         interestType,
-        isPaid: false, // Default isPaid to false
-        createdAt: new Date(), // Set creation time
+        isPaid: false,
+        createdAt: new Date(),
       })
       .returning()
       .catch((err) => {
@@ -268,10 +460,8 @@ export class DebtService {
     const sortDirection = sortOrder.toLowerCase() === 'asc' ? asc : desc;
     const orderByClause = sortDirection(sortColumn as AnyColumn | SQL);
 
-    // Base query: fetch debts created by the user OR where the user is the involved party
     let query: SQL<unknown> | undefined = or(eq(Debts.createdBy, userId), eq(Debts.userId, userId));
 
-    // Apply Duration Filter
     if (filters.duration && filters.duration.trim().length > 0) {
       try {
         const { endDate, startDate } = await getIntervalValue(filters.duration);
@@ -284,7 +474,6 @@ export class DebtService {
       }
     }
 
-    // Apply Search Filter (q)
     if (filters.q && filters.q.trim().length > 0) {
       const searchNum = Number(filters.q);
       const amountFilter = !isNaN(searchNum)
@@ -294,35 +483,34 @@ export class DebtService {
         query,
         or(
           ilike(Debts.description, `%${filters.q}%`),
-          // Consider searching involved user's name (requires join)
-          ilike(User.name, `%${filters.q}%`), // Join with User table on Debts.userId
-          // Consider searching account name (requires join)
-          ilike(Account.name, `%${filters.q}%`), // Join with Account table on Debts.account
+          ilike(User.name, `%${filters.q}%`),
+          ilike(Account.name, `%${filters.q}%`),
           amountFilter,
         ),
       );
     }
 
-    // Apply Type Filter
     if (filters.type && (filters.type === 'given' || filters.type === 'taken')) {
       query = and(query, eq(Debts.type, filters.type));
     }
 
+    if (filters.isPaid) {
+      query = and(query, eq(Debts.isPaid, filters.isPaid === 'true'));
+    }
+
     const finalQuery = query;
 
-    // Count total matching records
     const totalCountResult = await db
       .select({ count: count() })
       .from(Debts)
-      .leftJoin(User, eq(Debts.userId, User.id)) // Joined for search/sort
-      .leftJoin(Account, eq(Debts.account, Account.id)) // Joined for search/sort
+      .leftJoin(User, eq(Debts.userId, User.id))
+      .leftJoin(Account, eq(Debts.account, Account.id))
       .where(finalQuery)
       .catch((err) => {
         throw new HTTPException(500, { message: `DB Count Error: ${err.message}` });
       });
     const totalCount = totalCountResult[0]?.count ?? 0;
 
-    // Fetch paginated data
     const debts = await db
       .select({
         debts: Debts,
@@ -340,7 +528,7 @@ export class DebtService {
       })
       .from(Debts)
       .leftJoin(Account, eq(Debts.account, Account.id))
-      .leftJoin(User, eq(Debts.userId, User.id)) // Renamed alias for clarity
+      .leftJoin(User, eq(Debts.userId, User.id))
       .where(finalQuery)
       .limit(pageSize)
       .offset(pageSize * (page - 1))
@@ -369,15 +557,13 @@ export class DebtService {
 
     const existingDebt = await db.query.Debts.findFirst({
       where: eq(Debts.id, debtId),
-      columns: { createdBy: true, userId: true }, // Need userId to check if involved party can mark paid
+      columns: { createdBy: true, userId: true },
     });
 
     if (!existingDebt) {
       throw new HTTPException(404, { message: 'Debt record not found.' });
     }
 
-    // Authorization: Only creator can modify description, duration, frequency
-    // Either creator OR involved user can mark as paid
     const canModifyDetails = existingDebt.createdBy === userId;
     const canMarkPaid = existingDebt.createdBy === userId || existingDebt.userId === userId;
 
@@ -391,13 +577,12 @@ export class DebtService {
     if (duration !== undefined) {
       if (!canModifyDetails)
         throw new HTTPException(403, { message: 'Permission denied to modify duration.' });
-      // Add validation for duration format if necessary
       updateData.duration = duration;
     }
     if (frequency !== undefined) {
       if (!canModifyDetails)
         throw new HTTPException(403, { message: 'Permission denied to modify frequency.' });
-      updateData.frequency = String(frequency); // Ensure it's stored as string if needed
+      updateData.frequency = String(frequency);
     }
     if (isPaid !== undefined) {
       if (!canMarkPaid)
@@ -406,8 +591,7 @@ export class DebtService {
     }
 
     if (Object.keys(updateData).length === 1) {
-      // Only updatedAt
-      return { message: 'No changes provided.' }; // Or return current state?
+      return { message: 'No changes provided.' };
     }
 
     const updated = await db
@@ -424,10 +608,9 @@ export class DebtService {
   }
 
   async deleteDebt(debtId: string, userId: string) {
-    // Verify the user created the debt before deleting
     const existingDebt = await db.query.Debts.findFirst({
       where: and(eq(Debts.id, debtId), eq(Debts.createdBy, userId)),
-      columns: { id: true }, // Just need to confirm existence and ownership
+      columns: { id: true },
     });
 
     if (!existingDebt) {
@@ -439,7 +622,6 @@ export class DebtService {
     const deleted = await db.delete(Debts).where(eq(Debts.id, debtId)).returning({ id: Debts.id });
 
     if (deleted.length === 0) {
-      // This should theoretically not happen if the check above passed, but good to have
       throw new HTTPException(500, { message: 'Failed to delete debt record.' });
     }
 
@@ -447,10 +629,9 @@ export class DebtService {
   }
 
   async markDebtAsPaid(debtId: string, userId: string) {
-    // Verify the user is either the creator or the involved party
     const existingDebt = await db.query.Debts.findFirst({
       where: and(eq(Debts.id, debtId), or(eq(Debts.createdBy, userId), eq(Debts.userId, userId))),
-      columns: { id: true }, // Just need to confirm existence and authorization
+      columns: { id: true },
     });
 
     if (!existingDebt) {

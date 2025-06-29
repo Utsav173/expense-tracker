@@ -6,7 +6,8 @@ import {
   Pagination,
   StockSearchResult,
   StockPriceResult,
-  HistoricalStockPriceResponse
+  HistoricalStockPriceResponse,
+  InvestmentPerformanceData
 } from '../types';
 
 export const investmentCreate = (
@@ -34,8 +35,14 @@ export const investmentUpdate = (
 export const investmentDelete = (id: string): Promise<ApiResponse<{ message: string }>> =>
   apiFetch(`/investment/${id}`, 'DELETE');
 
-export const investmentGetDetails = (id: string): Promise<ApiResponse<Investment>> =>
-  apiFetch(`/investment/details/${id}`, 'GET');
+export const investmentGetDetails = (
+  id: string
+): Promise<ApiResponse<{ investment: Investment }>> => apiFetch(`/investment/details/${id}`, 'GET');
+
+export const investmentGetPerformance = (
+  id: string
+): Promise<ApiResponse<InvestmentPerformanceData>> =>
+  apiFetch(`/investment/details/${id}/performance`, 'GET');
 
 export const investmentUpdateDividend = (
   id: string,

@@ -11,23 +11,14 @@ import {
   DialogClose
 } from '@/components/ui/dialog';
 import { DebtWithDetails, Debts, Payment } from '@/lib/types';
-import { interestCalculate } from '@/lib/endpoints/debt';
+import { getDebtSchedule } from '@/lib/endpoints/debt';
 import { Skeleton } from '../ui/skeleton';
 import { Alert, AlertDescription } from '../ui/alert';
-import { CheckCircle, X, TrendingUp, Clock, DollarSign, User, AlertTriangle } from 'lucide-react';
+import { CheckCircle, X, TrendingUp, Clock, IndianRupee, User, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Separator } from '../ui/separator';
 import { Badge } from '../ui/badge';
-import {
-  format,
-  parseISO,
-  isAfter,
-  addDays,
-  addWeeks,
-  addMonths,
-  addYears,
-  differenceInDays
-} from 'date-fns';
+import { format, parseISO, isAfter, isValid } from 'date-fns';
 import { formatCurrency, cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Button } from '../ui/button';
@@ -49,116 +40,66 @@ const COLORS = {
   'Remaining Principal': 'var(--muted)'
 };
 
-const generatePaymentSchedule = (debt: Debts, totalInterest: number = 0): Payment[] => {
-  if (!debt.createdAt || !debt.dueDate || !debt.frequency || !debt.duration) return [];
-
-  const startDate = parseISO(debt.createdAt);
-  const endDate = parseISO(debt.dueDate);
-  const totalPrincipal = debt.amount || 0;
-  const numInstallments = parseInt(debt.frequency, 10);
-  const today = new Date();
-
-  if (isNaN(numInstallments) || numInstallments <= 0) return [];
-
-  const interestPerInstallment = totalInterest > 0 ? totalInterest / numInstallments : 0;
-  const principalPerInstallment = totalPrincipal / numInstallments;
-  const installmentAmount = principalPerInstallment + interestPerInstallment;
-
-  const schedule: Payment[] = [];
-  let cumulativePrincipal = 0;
-  let cumulativeInterest = 0;
-
-  for (let i = 1; i <= numInstallments; i++) {
-    let installmentDate: Date;
-    switch (debt.duration) {
-      case 'daily':
-        installmentDate = addDays(startDate, i);
-        break;
-      case 'weekly':
-        installmentDate = addWeeks(startDate, i);
-        break;
-      case 'monthly':
-        installmentDate = addMonths(startDate, i);
-        break;
-      case 'yearly':
-        installmentDate = addYears(startDate, i);
-        break;
-      default:
-        const totalDays = differenceInDays(endDate, startDate);
-        installmentDate = addDays(startDate, Math.round((totalDays / numInstallments) * i));
-        break;
-    }
-
-    if (isAfter(installmentDate, addDays(endDate, 1))) break;
-
-    let status: Payment['status'];
-    if (debt.isPaid) {
-      status = 'settled';
-    } else if (isAfter(today, installmentDate)) {
-      status = 'due';
-    } else {
-      status = 'upcoming';
-    }
-
-    cumulativePrincipal += principalPerInstallment;
-    cumulativeInterest += interestPerInstallment;
-
-    schedule.push({
-      date: installmentDate,
-      status: status,
-      installmentAmount: installmentAmount,
-      principalForPeriod: principalPerInstallment,
-      interestForPeriod: interestPerInstallment,
-      cumulativePrincipalPaid: cumulativePrincipal,
-      cumulativeInterestPaid: cumulativeInterest,
-      remainingPrincipal: totalPrincipal - cumulativePrincipal
-    });
-  }
-  return schedule;
+const KPICard = ({
+  title,
+  value,
+  icon,
+  isLoading,
+  subValue,
+  className = ''
+}: {
+  title: string;
+  value: React.ReactNode;
+  icon: React.ElementType;
+  isLoading: boolean;
+  subValue?: string;
+  className?: string;
+}) => {
+  const Icon = icon;
+  return (
+    <div className='flex items-center gap-3 rounded-lg border p-3'>
+      <div className={cn('bg-muted rounded-full p-2', className)}>
+        <Icon className={cn('h-4 w-4', className)} />
+      </div>
+      <div className='min-w-0 flex-1'>
+        <div className='text-muted-foreground text-xs'>{title}</div>
+        {isLoading ? (
+          <Skeleton className='h-5 w-16' />
+        ) : (
+          <div className='font-semibold'>{value}</div>
+        )}
+        {subValue && <div className='text-muted-foreground text-xs'>{subValue}</div>}
+      </div>
+    </div>
+  );
 };
 
 const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChange, debt }) => {
   const {
-    data: interestData,
+    data: paymentSchedule,
     isLoading,
     isError,
     error
-  } = useQuery({
-    queryKey: ['debtInterestCalculation', debt.debts.id],
-    queryFn: () => {
-      const { amount, percentage, interestType, createdAt, dueDate } = debt.debts;
-      if (!dueDate || !createdAt) {
-        return Promise.reject(
-          new Error('Cannot calculate interest without creation and due dates.')
-        );
-      }
-      return interestCalculate({
-        amount,
-        percentage,
-        type: interestType,
-        duration: `${format(parseISO(createdAt), 'yyyy-MM-dd')},${format(
-          parseISO(dueDate),
-          'yyyy-MM-dd'
-        )}`
-      });
+  } = useQuery<Payment[]>({
+    queryKey: ['debtSchedule', debt.debts.id],
+    queryFn: async () => {
+      const data = await getDebtSchedule(debt.debts.id);
+      // The API returns dates as strings, we need to convert them back to Date objects
+      return data?.map((p) => ({ ...p, date: parseISO(p.date as any) })) ?? [];
     },
-    enabled: isOpen && !!debt.debts.dueDate && !!debt.debts.createdAt,
-    staleTime: Infinity,
-    retry: false
+    enabled: isOpen && !!debt.debts.id,
+    staleTime: 5 * 60 * 1000,
+    retry: 1
   });
 
-  const paymentSchedule = useMemo(
-    () => generatePaymentSchedule(debt.debts, interestData?.interest),
-    [debt.debts, interestData]
-  );
-
   const getDefaultIndex = useCallback(() => {
+    if (!paymentSchedule || paymentSchedule.length === 0) return 0;
     if (debt.debts.isPaid) return Math.max(0, paymentSchedule.length - 1);
-    const firstUpcoming = paymentSchedule.findIndex((p) => p.status === 'upcoming');
+    const firstUpcoming = paymentSchedule.findIndex((p: Payment) => p.status === 'upcoming');
     return firstUpcoming !== -1 ? firstUpcoming : Math.max(0, paymentSchedule.length - 1);
   }, [debt.debts.isPaid, paymentSchedule]);
 
-  const [selectedIndex, setSelectedIndex] = useState<number>(getDefaultIndex());
+  const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
   useEffect(() => {
     if (isOpen) {
@@ -166,86 +107,81 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
     }
   }, [isOpen, getDefaultIndex]);
 
-  const breakdownData = useMemo(() => {
-    const selectedInstallmentData = paymentSchedule[selectedIndex] || null;
+  const { breakdownData, chartData, totalInterest } = useMemo(() => {
+    const calculatedTotalInterest =
+      paymentSchedule?.reduce((sum, p) => sum + p.interestForPeriod, 0) || 0;
     const totalPrincipal = debt.debts.amount || 0;
     const totalPremium = debt.debts.premiumAmount || 0;
-    const totalInterest = interestData?.interest || 0;
-    const totalPayable = totalPrincipal + totalInterest + totalPremium;
+    const totalPayable = totalPrincipal + calculatedTotalInterest + totalPremium;
+    const selectedInstallmentData = paymentSchedule?.[selectedIndex] || null;
 
-    if (!selectedInstallmentData) {
-      return {
-        principalPaid: debt.debts.isPaid ? totalPrincipal : 0,
-        interestPaid: debt.debts.isPaid ? totalInterest : 0,
-        premiumPaid: debt.debts.isPaid ? totalPremium : 0,
-        remainingPrincipal: debt.debts.isPaid ? 0 : totalPrincipal,
-        totalPayable,
-        statusAsOfDate: debt.debts.dueDate ? parseISO(debt.debts.dueDate) : new Date()
-      };
-    }
-    return {
-      principalPaid: selectedInstallmentData.cumulativePrincipalPaid,
-      interestPaid: selectedInstallmentData.cumulativeInterestPaid,
-      premiumPaid: (totalPremium / paymentSchedule.length) * (selectedIndex + 1),
-      remainingPrincipal: selectedInstallmentData.remainingPrincipal,
-      totalPayable,
-      statusAsOfDate: selectedInstallmentData.date
-    };
-  }, [selectedIndex, paymentSchedule, debt.debts, interestData]);
+    const bd = selectedInstallmentData
+      ? {
+          principalPaid: selectedInstallmentData.cumulativePrincipalPaid,
+          interestPaid: selectedInstallmentData.cumulativeInterestPaid,
+          premiumPaid:
+            paymentSchedule && paymentSchedule.length > 0
+              ? (totalPremium / paymentSchedule.length) * (selectedIndex + 1)
+              : 0,
+          remainingPrincipal: selectedInstallmentData.remainingPrincipal,
+          totalPayable,
+          statusAsOfDate: selectedInstallmentData.date
+        }
+      : {
+          principalPaid: debt.debts.isPaid ? totalPrincipal : 0,
+          interestPaid: debt.debts.isPaid ? calculatedTotalInterest : 0,
+          premiumPaid: debt.debts.isPaid ? totalPremium : 0,
+          remainingPrincipal: debt.debts.isPaid ? 0 : totalPrincipal,
+          totalPayable,
+          statusAsOfDate: debt.debts.dueDate ? parseISO(debt.debts.dueDate) : new Date()
+        };
 
-  const chartData = useMemo(() => {
-    const data = [
-      { name: 'Principal Paid', value: breakdownData.principalPaid },
-      { name: 'Interest Paid', value: breakdownData.interestPaid },
-      { name: 'Premium/Fees', value: breakdownData.premiumPaid },
-      { name: 'Remaining Principal', value: breakdownData.remainingPrincipal }
-    ];
-    return data.filter((item) => item.value > 0);
-  }, [breakdownData]);
+    const cd = [
+      { name: 'Principal Paid', value: bd.principalPaid },
+      { name: 'Interest Paid', value: bd.interestPaid },
+      { name: 'Premium/Fees', value: bd.premiumPaid },
+      { name: 'Remaining Principal', value: bd.remainingPrincipal }
+    ].filter((item) => item.value > 0);
+
+    return { breakdownData: bd, chartData: cd, totalInterest: calculatedTotalInterest };
+  }, [selectedIndex, paymentSchedule, debt.debts]);
 
   const isOverdue =
     !debt.debts.isPaid && debt.debts.dueDate && isAfter(new Date(), parseISO(debt.debts.dueDate));
 
   const debtStatus = debt.debts.isPaid ? 'paid' : isOverdue ? 'overdue' : 'active';
 
-  const getStatusConfig = () => {
-    switch (debtStatus) {
-      case 'paid':
-        return {
-          icon: CheckCircle,
-          color: 'text-green-600',
-          bgColor: 'bg-green-50',
-          borderColor: 'border-green-200',
-          badge: { variant: 'default' as const, className: 'bg-green-600 hover:bg-green-700' }
-        };
-      case 'overdue':
-        return {
-          icon: AlertTriangle,
-          color: 'text-red-600',
-          bgColor: 'bg-red-50',
-          borderColor: 'border-red-200',
-          badge: { variant: 'destructive' as const, className: '' }
-        };
-      default:
-        return {
-          icon: Clock,
-          color: 'text-blue-600',
-          bgColor: 'bg-blue-50',
-          borderColor: 'border-blue-200',
-          badge: { variant: 'outline' as const, className: 'border-blue-200' }
-        };
+  const statusConfig = {
+    paid: {
+      icon: CheckCircle,
+      color: 'text-green-600',
+      bgColor: 'bg-green-50',
+      borderColor: 'border-green-200',
+      badge: { variant: 'default' as const, className: 'bg-green-600 hover:bg-green-700' }
+    },
+    overdue: {
+      icon: AlertTriangle,
+      color: 'text-red-600',
+      bgColor: 'bg-red-50',
+      borderColor: 'border-red-200',
+      badge: { variant: 'destructive' as const, className: '' }
+    },
+    active: {
+      icon: Clock,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-200',
+      badge: { variant: 'outline' as const, className: 'border-blue-200' }
     }
-  };
+  }[debtStatus];
 
-  const statusConfig = getStatusConfig();
   const StatusIcon = statusConfig.icon;
 
-  // Key metrics for quick overview
   const keyMetrics = [
     {
       label: 'Principal Amount',
       value: formatCurrency(debt.debts.amount || 0),
-      icon: DollarSign,
+      icon: IndianRupee,
       color: 'text-blue-600'
     },
     {
@@ -257,7 +193,7 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
     },
     {
       label: 'Total Interest',
-      value: formatCurrency(interestData?.interest || 0),
+      value: formatCurrency(totalInterest || 0),
       icon: TrendingUp,
       color: 'text-red-600',
       loading: isLoading
@@ -265,7 +201,7 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
     {
       label: 'Final Amount',
       value: formatCurrency(breakdownData.totalPayable),
-      icon: DollarSign,
+      icon: IndianRupee,
       color: 'text-green-600',
       loading: isLoading
     }
@@ -275,7 +211,7 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent hideClose className='max-h-[95dvh] w-[98vw] max-w-7xl overflow-y-auto p-0'>
         <DialogHeader className='bg-muted/30 border-b px-6 py-4'>
-          <div className='flex items-start justify-between'>
+          <div className='flex items-start justify-between gap-2 max-sm:flex-col max-sm:items-center'>
             <div className='space-y-2'>
               <div className='flex items-center gap-3'>
                 <DialogTitle className='text-xl'>Debt Analysis</DialogTitle>
@@ -289,13 +225,13 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
             </div>
             <div
               className={cn(
-                'mr-4 flex items-center gap-2 rounded-lg border p-3 max-sm:mt-6 max-sm:mr-0 max-sm:p-1',
+                'mr-4 flex items-center gap-2 rounded-lg border p-3 max-sm:mr-0 max-sm:p-1',
                 statusConfig.bgColor,
                 statusConfig.borderColor
               )}
             >
               <StatusIcon className={cn('h-5 w-5 max-sm:h-3 max-sm:w-3', statusConfig.color)} />
-              <div className='text-sm font-medium'>
+              <div className='text-sm leading-none font-medium'>
                 {debt.debts.type === 'given' ? 'Money Lent' : 'Money Borrowed'}
               </div>
             </div>
@@ -303,30 +239,19 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
         </DialogHeader>
 
         <div className='flex-1 overflow-y-auto'>
-          {/* Key Metrics Bar */}
           <div className='bg-background border-b p-4'>
             <div className='grid grid-cols-2 gap-4 lg:grid-cols-4'>
-              {keyMetrics.map((metric, index) => {
-                const MetricIcon = metric.icon;
-                return (
-                  <div key={index} className='flex items-center gap-3 rounded-lg border p-3'>
-                    <div className={cn('bg-muted rounded-full p-2', metric.color)}>
-                      <MetricIcon className={`h-4 w-4 ${metric.color}`} />
-                    </div>
-                    <div className='min-w-0 flex-1'>
-                      <div className='text-muted-foreground text-xs'>{metric.label}</div>
-                      {metric.loading ? (
-                        <Skeleton className='h-5 w-16' />
-                      ) : (
-                        <div className='font-semibold'>{metric.value}</div>
-                      )}
-                      {metric.subValue && (
-                        <div className='text-muted-foreground text-xs'>{metric.subValue}</div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+              {keyMetrics.map((metric, index) => (
+                <KPICard
+                  key={index}
+                  title={metric.label}
+                  value={metric.value}
+                  icon={metric.icon}
+                  isLoading={metric.loading ?? false}
+                  subValue={metric.subValue}
+                  className={metric.color}
+                />
+              ))}
             </div>
           </div>
 
@@ -343,7 +268,6 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                   Debt Details
                 </TabsTrigger>
               </TabsList>
-
               <TabsContent value='timeline' className='space-y-4'>
                 <Card>
                   <CardHeader>
@@ -353,7 +277,14 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {paymentSchedule.length > 0 ? (
+                    {isLoading ? (
+                      <Skeleton className='h-40 w-full' />
+                    ) : isError || !paymentSchedule ? (
+                      <NoData
+                        message={`Could not generate schedule. ${error?.message || ''}`}
+                        icon='x-circle'
+                      />
+                    ) : paymentSchedule.length > 0 ? (
                       <TimelineScroller
                         schedule={paymentSchedule}
                         selectedIndex={selectedIndex}
@@ -365,7 +296,6 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                   </CardContent>
                 </Card>
               </TabsContent>
-
               <TabsContent value='breakdown' className='space-y-4'>
                 <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
                   <Card>
@@ -373,17 +303,19 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                       <CardTitle>Payment Composition</CardTitle>
                       <CardDescription>
                         Financial breakdown as of{' '}
-                        {format(breakdownData.statusAsOfDate, 'MMMM d, yyyy')}
+                        {isValid(breakdownData.statusAsOfDate)
+                          ? format(breakdownData.statusAsOfDate, 'MMMM d, yyyy')
+                          : 'N/A'}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
                       {isLoading ? (
-                        <Skeleton className='h-[200px] w-full' />
-                      ) : isError || !interestData ? (
+                        <Skeleton className='mx-auto h-[200px] w-[200px] rounded-full' />
+                      ) : isError ? (
                         <Alert>
                           <AlertTriangle className='h-4 w-4' />
                           <AlertDescription>
-                            Unable to calculate financial breakdown. {error?.message}
+                            Unable to calculate financial breakdown.
                           </AlertDescription>
                         </Alert>
                       ) : (
@@ -433,7 +365,6 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                       )}
                     </CardContent>
                   </Card>
-
                   <Card>
                     <CardHeader>
                       <CardTitle>Amount Breakdown</CardTitle>
@@ -481,7 +412,6 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                   </Card>
                 </div>
               </TabsContent>
-
               <TabsContent value='details' className='space-y-4'>
                 <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
                   <Card>
@@ -503,11 +433,9 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                           </div>
                         </div>
                       </div>
-
                       <div className='grid grid-cols-2 gap-y-3 text-sm'>
                         <div className='text-muted-foreground'>Account:</div>
                         <div className='font-medium'>{debt.account?.name || 'Not specified'}</div>
-
                         <div className='text-muted-foreground'>Transaction Type:</div>
                         <div>
                           <Badge variant={debt.debts.type === 'given' ? 'outline' : 'default'}>
@@ -517,7 +445,6 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                       </div>
                     </CardContent>
                   </Card>
-
                   <Card>
                     <CardHeader>
                       <CardTitle>Terms & Timeline</CardTitle>
@@ -532,7 +459,6 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                               : 'Unknown'}
                           </span>
                         </div>
-
                         <div className='flex justify-between'>
                           <span className='text-muted-foreground'>Due Date:</span>
                           <span className='font-medium'>
@@ -541,18 +467,15 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                               : 'Not set'}
                           </span>
                         </div>
-
                         <div className='flex justify-between'>
                           <span className='text-muted-foreground'>Payment Frequency:</span>
                           <span className='font-medium'>{debt.debts.frequency} installments</span>
                         </div>
-
                         <div className='flex justify-between'>
                           <span className='text-muted-foreground'>Duration:</span>
                           <span className='font-medium capitalize'>{debt.debts.duration}</span>
                         </div>
-
-                        {debt.debts.premiumAmount && debt.debts.premiumAmount > 0 && (
+                        {debt.debts.premiumAmount > 0 && (
                           <div className='flex justify-between'>
                             <span className='text-muted-foreground'>Premium/Fees:</span>
                             <span className='font-medium'>
@@ -568,7 +491,6 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
             </Tabs>
           </div>
         </div>
-
         <DialogClose asChild>
           <Button
             type='button'

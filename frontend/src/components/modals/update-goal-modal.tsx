@@ -30,7 +30,7 @@ import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { NumericInput } from '../ui/numeric-input';
 import DateTimePicker from '../date/date-time-picker';
 import { Input } from '../ui/input';
-import { Loader2, Pencil, Target, DollarSign, CalendarDays, Coins } from 'lucide-react';
+import { Loader2, Pencil, Target, IndianRupee, CalendarDays, Coins } from 'lucide-react';
 
 const goalSchema = z.object({
   name: z
@@ -173,7 +173,7 @@ const UpdateGoalModal: React.FC<UpdateGoalModalProps> = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className='flex items-center gap-1.5'>
-                    <DollarSign className='text-muted-foreground h-4 w-4' />
+                    <IndianRupee className='text-muted-foreground h-4 w-4' />
                     Target Amount*
                   </FormLabel>
                   <FormControl>

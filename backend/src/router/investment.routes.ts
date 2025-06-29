@@ -98,12 +98,25 @@ investmentRouter.get(
   },
 );
 
+investmentRouter.get('/details/:id/performance', authMiddleware, async (c) => {
+  try {
+    const investmentId = c.req.param('id');
+    const userId = await c.get('userId');
+    const performanceData = await investmentService.getInvestmentPerformance(investmentId, userId);
+    return c.json(performanceData);
+  } catch (err: any) {
+    if (err instanceof HTTPException) throw err;
+    console.error('Get Investment Performance Error:', err);
+    throw new HTTPException(500, { message: 'Failed to fetch investment performance.' });
+  }
+});
+
 investmentRouter.get('/details/:id', authMiddleware, async (c) => {
   try {
     const investmentId = c.req.param('id');
     const userId = await c.get('userId');
     const investmentData = await investmentService.getInvestmentDetails(investmentId, userId);
-    return c.json(investmentData);
+    return c.json({ investment: investmentData });
   } catch (err: any) {
     if (err instanceof HTTPException) throw err;
     console.error('Get Investment Details Error:', err);

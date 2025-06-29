@@ -26,8 +26,6 @@ export const TimelineScroller: React.FC<TimelineScrollerProps> = ({
     const container = scrollContainerRef.current;
 
     if (element && container) {
-      const elementRect = element.getBoundingClientRect();
-      const containerRect = container.getBoundingClientRect();
       const elementCenter = element.offsetLeft + element.offsetWidth / 2;
       const containerCenter = container.offsetWidth / 2;
       const scrollPosition = elementCenter - containerCenter;

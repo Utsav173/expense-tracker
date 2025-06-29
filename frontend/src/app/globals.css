@@ -378,7 +378,7 @@
   html,
   body {
     scroll-behavior: smooth;
-    scrollbar-gutter: stable;
+    /* scrollbar-gutter: stable; */
     width: 100%;
   }
 }

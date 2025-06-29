@@ -1,5 +1,5 @@
 import apiFetch from '../api-client';
-import { Debts, ApiResponse, DebtWithDetails } from '../types';
+import { Debts, ApiResponse, DebtWithDetails, Payment } from '../types';
 
 type DebtsPaginatedResponse = ApiResponse<{
   data: DebtWithDetails[];
@@ -61,3 +61,6 @@ export const interestCalculate = (
   data: any
 ): Promise<ApiResponse<{ interest: number; totalAmount: number }>> =>
   apiFetch('/interest/calculate', 'POST', data);
+
+export const getDebtSchedule = (id: string): Promise<ApiResponse<Payment[]>> =>
+  apiFetch(`/interest/debts/${id}/schedule`, 'GET');

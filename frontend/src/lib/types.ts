@@ -430,3 +430,10 @@ export interface Payment {
   cumulativeInterestPaid: number;
   remainingPrincipal: number;
 }
+
+export interface InvestmentPerformanceData {
+  investmentDetails: Investment;
+  currentMarketData: StockPriceResult | null;
+  marketPerformance: { date: string; value: number | null }[];
+  holdingPerformance: { date: string; holdingValue: number; gainLoss: number }[];
+}

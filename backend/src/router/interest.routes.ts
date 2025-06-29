@@ -9,19 +9,34 @@ const interestRouter = new Hono();
 
 interestRouter.post('/calculate', zValidator('json', interestSchema), async (c) => {
   try {
-    const { amount, percentage, type, duration, compoundingFrequency } = await c.req.json();
+    const { amount, percentage, type, duration, compoundingFrequency, frequency } =
+      await c.req.json();
     const result = debtService.calculateInterest(
       amount,
       percentage,
       duration,
       type,
       compoundingFrequency,
+      frequency,
     );
     return c.json(result);
   } catch (err: any) {
     if (err instanceof HTTPException) throw err;
     console.error('Interest Calculation Error:', err);
     throw new HTTPException(500, { message: 'Failed to calculate interest.' });
+  }
+});
+
+interestRouter.get('/debts/:id/schedule', authMiddleware, async (c) => {
+  try {
+    const { id } = c.req.param();
+    const userId = await c.get('userId');
+    const schedule = await debtService.getDebtAmortizationSchedule(id, userId);
+    return c.json(schedule);
+  } catch (err: any) {
+    if (err instanceof HTTPException) throw err;
+    console.error('Get Debt Schedule Error:', err);
+    throw new HTTPException(500, { message: 'Failed to generate debt schedule.' });
   }
 });
 
@@ -50,6 +65,7 @@ interestRouter.get('/debts', authMiddleware, async (c) => {
       pageSize = '10',
       sortBy = 'createdAt',
       sortOrder = 'desc',
+      isPaid,
     } = c.req.query();
 
     const pageNum = parseInt(page);
@@ -63,7 +79,12 @@ interestRouter.get('/debts', authMiddleware, async (c) => {
     if (type && type !== 'given' && type !== 'taken')
       throw new HTTPException(400, { message: 'Invalid type filter (given/taken).' });
 
-    const filters = { duration, q, type: type as 'given' | 'taken' | undefined };
+    const filters = {
+      duration,
+      q,
+      type: type as 'given' | 'taken' | undefined,
+      isPaid: isPaid as 'true' | 'false' | undefined,
+    };
     const result = await debtService.getDebts(
       userId,
       filters,
