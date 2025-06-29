@@ -10,7 +10,7 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { CheckCircle, CircleDashed, Mail } from 'lucide-react';
+import { CheckCircle, Clock, Mail, Star } from 'lucide-react';
 import { useToast } from '@/lib/hooks/useToast';
 import { AnimatedFinancialElement } from '@/components/landing/animated-financial-element';
 import { Badge } from '@/components/ui/badge';
@@ -35,19 +35,21 @@ const PricingPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const freeFeatures = [
-    'Unlimited Accounts',
-    'Transaction Tracking',
-    'Standard Budgeting',
-    'Savings Goals',
-    'Standard Analytics Dashboard'
+    'Unlimited expense tracking',
+    'Basic budget creation',
+    'Monthly spending reports',
+    'Simple savings goals',
+    'Mobile & web access'
   ];
 
   const proFeatures = [
-    'Everything in Free, plus:',
-    'Advanced AI Insights & Automation',
-    'Custom Report Builder',
-    'Multi-user Account Sharing',
-    'Unlimited API Integrations'
+    'Everything in Free',
+    'AI-powered spending insights',
+    'Advanced budget analytics',
+    'Custom expense categories',
+    'Multi-account management',
+    'Export to Excel/PDF',
+    'Priority email support'
   ];
 
   const handleNotifySubmit = (e: React.FormEvent) => {
@@ -59,7 +61,7 @@ const PricingPage = () => {
     setIsSubmitting(true);
     // Simulate API call
     setTimeout(() => {
-      showSuccess("You're on the list! We'll notify you when Pro is available.");
+      showSuccess("You're on the list! We'll notify you when Pro launches.");
       setEmail('');
       setIsSubmitting(false);
     }, 1000);
@@ -71,98 +73,150 @@ const PricingPage = () => {
         type='application/ld+json'
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <div className='bg-bg-default text-text-body min-h-screen px-4 py-24'>
-        <div className='container mx-auto max-w-4xl text-center'>
+      <div className='bg-background min-h-screen px-4 py-16'>
+        <div className='container mx-auto max-w-6xl'>
+          {/* Header Section */}
           <AnimatedFinancialElement>
-            <h1 className='text-text-heading text-4xl font-extrabold sm:text-5xl'>
-              Choose Your Plan
-            </h1>
-            <p className='text-text-body mt-4 text-lg'>
-              Start for free and unlock powerful features as you grow.
-            </p>
+            <div className='mb-16 text-center'>
+              <h1 className='text-foreground mb-4 text-4xl font-bold md:text-5xl'>
+                Simple, Transparent Pricing
+              </h1>
+              <p className='text-muted-foreground mx-auto max-w-2xl text-xl'>
+                Start free and upgrade when you need more powerful features. No hidden fees, cancel
+                anytime.
+              </p>
+            </div>
           </AnimatedFinancialElement>
 
-          <div className='mt-16 grid grid-cols-1 gap-8 md:grid-cols-2'>
+          {/* Pricing Cards */}
+          <div className='mx-auto grid max-w-4xl gap-8 lg:grid-cols-2'>
+            {/* Free Plan */}
             <AnimatedFinancialElement delay={0.1}>
-              <Card className='flex h-full flex-col border-2 border-sky-500 shadow-2xl shadow-sky-500/10'>
-                <CardHeader>
-                  <CardTitle className='text-2xl font-bold text-sky-500'>Free</CardTitle>
-                  <CardDescription>
-                    For individuals starting to track their finances.
+              <Card className='relative border-2 transition-shadow duration-300 hover:shadow-lg'>
+                <CardHeader className='pb-8 text-center'>
+                  <CardTitle className='text-foreground text-2xl font-bold'>Free Forever</CardTitle>
+                  <CardDescription className='mt-2 text-base'>
+                    Perfect for getting started with expense tracking
                   </CardDescription>
+                  <div className='mt-6'>
+                    <span className='text-foreground text-5xl font-bold'>$0</span>
+                    <span className='text-muted-foreground ml-2'>/month</span>
+                  </div>
                 </CardHeader>
-                <CardContent className='flex-grow space-y-4'>
-                  <p className='text-text-heading text-4xl font-bold'>
-                    $0<span className='text-text-body text-base font-normal'>/month</span>
-                  </p>
-                  <ul className='space-y-3 text-left'>
-                    {freeFeatures.map((feature) => (
-                      <li key={feature} className='flex items-start'>
-                        <CheckCircle className='mr-3 h-5 w-5 flex-shrink-0 text-green-500' />
-                        <span>{feature}</span>
-                      </li>
+
+                <CardContent className='space-y-6'>
+                  <div className='space-y-4'>
+                    {freeFeatures.map((feature, index) => (
+                      <div key={index} className='flex items-start gap-3'>
+                        <CheckCircle className='text-primary mt-0.5 h-5 w-5 flex-shrink-0' />
+                        <span className='text-foreground'>{feature}</span>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 </CardContent>
-                <CardFooter>
-                  <Button size='lg' className='cta-gradient w-full text-base font-semibold'>
-                    Get Started for Free
+
+                <CardFooter className='pt-6'>
+                  <Button
+                    size='lg'
+                    className='bg-primary hover:bg-primary/90 text-primary-foreground w-full font-semibold'
+                  >
+                    Start Free Today
                   </Button>
                 </CardFooter>
               </Card>
             </AnimatedFinancialElement>
 
+            {/* Pro Plan */}
             <AnimatedFinancialElement delay={0.2}>
-              <Card className='border-border/50 flex h-full flex-col bg-slate-100 dark:bg-slate-900'>
-                <CardHeader>
-                  <CardTitle className='text-text-heading flex items-center justify-center gap-2 text-2xl font-bold'>
+              <Card className='border-primary bg-card relative border-2 transition-shadow duration-300 hover:shadow-lg'>
+                {/* Popular Badge */}
+                <div className='absolute -top-4 left-1/2 -translate-x-1/2 transform'>
+                  <Badge className='bg-primary text-primary-foreground px-4 py-1 text-sm font-medium'>
+                    <Star className='mr-1 h-3 w-3' />
+                    Most Popular
+                  </Badge>
+                </div>
+
+                <CardHeader className='pt-8 pb-8 text-center'>
+                  <CardTitle className='text-foreground flex items-center justify-center gap-2 text-2xl font-bold'>
                     Pro
-                    <Badge variant='outline' className='border-amber-500 text-amber-500'>
+                    <Badge variant='secondary' className='text-xs'>
+                      <Clock className='mr-1 h-3 w-3' />
                       Coming Soon
                     </Badge>
                   </CardTitle>
-                  <CardDescription>
-                    For power users who want advanced insights and automation.
+                  <CardDescription className='mt-2 text-base'>
+                    Advanced features for serious financial management
                   </CardDescription>
+                  <div className='mt-6'>
+                    <span className='text-foreground text-5xl font-bold'>$9</span>
+                    <span className='text-muted-foreground ml-2'>/month</span>
+                  </div>
+                  <p className='text-muted-foreground mt-2 text-sm'>
+                    Billed monthly • Cancel anytime
+                  </p>
                 </CardHeader>
-                <CardContent className='flex-grow space-y-4'>
-                  <p className='text-text-heading text-4xl font-bold'>$9/month</p>
-                  <ul className='space-y-3 text-left'>
-                    {proFeatures.map((feature) => (
-                      <li key={feature} className='text-text-body/80 flex items-start'>
-                        <CircleDashed className='mr-3 h-5 w-5 flex-shrink-0' />
-                        <span>{feature}</span>
-                      </li>
+
+                <CardContent className='space-y-6'>
+                  <div className='space-y-4'>
+                    {proFeatures.map((feature, index) => (
+                      <div key={index} className='flex items-start gap-3'>
+                        <CheckCircle className='text-primary mt-0.5 h-5 w-5 flex-shrink-0' />
+                        <span className='text-foreground font-medium'>{feature}</span>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 </CardContent>
-                <CardFooter>
-                  <form onSubmit={handleNotifySubmit} className='w-full space-y-3'>
-                    <div className='relative'>
-                      <Mail className='text-text-body/50 absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
-                      <Input
-                        type='email'
-                        placeholder='Enter your email'
-                        className='pl-10'
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
+
+                <CardFooter className='pt-6'>
+                  <div className='w-full space-y-4'>
+                    <form onSubmit={handleNotifySubmit} className='space-y-3'>
+                      <div className='relative'>
+                        <Mail className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
+                        <Input
+                          type='email'
+                          placeholder='Enter your email for early access'
+                          className='h-12 pl-10'
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required
+                          disabled={isSubmitting}
+                        />
+                      </div>
+                      <Button
+                        type='submit'
+                        size='lg'
+                        variant='outline'
+                        className='border-primary text-primary hover:bg-primary hover:text-primary-foreground h-12 w-full font-semibold'
                         disabled={isSubmitting}
-                      />
-                    </div>
-                    <Button
-                      type='submit'
-                      variant='secondary'
-                      className='w-full'
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? 'Submitting...' : 'Notify Me'}
-                    </Button>
-                  </form>
+                      >
+                        {isSubmitting ? 'Adding you to the list...' : 'Get Notified When Available'}
+                      </Button>
+                    </form>
+                    <p className='text-muted-foreground text-center text-xs'>
+                      Be the first to know when Pro features launch
+                    </p>
+                  </div>
                 </CardFooter>
               </Card>
             </AnimatedFinancialElement>
           </div>
+
+          {/* Bottom CTA Section */}
+          <AnimatedFinancialElement delay={0.3}>
+            <div className='bg-muted/50 mt-16 rounded-lg p-8 text-center'>
+              <h3 className='text-foreground mb-4 text-2xl font-bold'>
+                Questions about our pricing?
+              </h3>
+              <p className='text-muted-foreground mx-auto mb-6 max-w-2xl'>
+                Our Free plan includes everything you need to start tracking expenses. Upgrade to
+                Pro when you're ready for advanced analytics and automation.
+              </p>
+              <Button variant='outline' size='lg'>
+                Contact Support
+              </Button>
+            </div>
+          </AnimatedFinancialElement>
         </div>
       </div>
     </>

@@ -13,7 +13,6 @@ import { useRouter } from 'next/navigation';
 import Loader from '@/components/ui/loader';
 import { Badge } from '@/components/ui/badge';
 import { AnimatedFinancialElement } from '@/components/landing/animated-financial-element';
-import DashboardMockup from '@/components/landing/dashboard-mockup';
 import ProblemSolutionSection from '@/components/landing/problem-solution-section';
 import HowItWorksSection from '@/components/landing/how-it-works-section';
 import TrustSecuritySection from '@/components/landing/trust-security-section';
@@ -23,6 +22,7 @@ import FeaturesSection from '@/components/landing/features-section';
 import TestimonialsSection from '@/components/landing/testimonials-section';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { WebSite, WithContext } from 'schema-dts';
+import Image from 'next/image';
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
@@ -41,7 +41,7 @@ const jsonLd: WithContext<WebSite> = {
 
 const LandingPageContent = () => {
   const mainRef = useRef<HTMLDivElement>(null);
-  const heroImageRef = useRef<HTMLDivElement>(null);
+  const heroImageRef = useRef(null);
   const isMobile = useIsMobile();
 
   const { user, userIsLoading } = useAuth();
@@ -117,30 +117,6 @@ const LandingPageContent = () => {
           delay: 0.7
         }
       );
-
-      if (!isMobile) {
-        const handleMouseMove = contextSafe((e: MouseEvent) => {
-          const { clientX, clientY } = e;
-          const { innerWidth, innerHeight } = window;
-          const xPercent = (clientX / innerWidth - 0.5) * 2;
-          const yPercent = (clientY / innerHeight - 0.5) * 2;
-
-          gsap.to(heroImageRef.current, {
-            duration: 1.5,
-            x: xPercent * 15,
-            y: yPercent * 10,
-            rotateX: yPercent * -3,
-            rotateY: xPercent * 3,
-            ease: 'power1.out'
-          });
-        });
-
-        window.addEventListener('mousemove', handleMouseMove);
-
-        return () => {
-          window.removeEventListener('mousemove', handleMouseMove);
-        };
-      }
     },
     { scope: mainRef, dependencies: [userIsLoading, user, isMobile] }
   );
@@ -214,10 +190,15 @@ const LandingPageContent = () => {
           </div>
         </section>
 
-        <section id='dashboard-showcase' className='relative bg-slate-900 px-4 py-16 md:py-24'>
-          <div ref={heroImageRef} className='perspective container mx-auto'>
-            <DashboardMockup />
-          </div>
+        <section id='dashboard-showcase' className='relative mb-16 h-[75dvh] bg-slate-900'>
+          <Image
+            src='/og-image-dashboard-desktop.png'
+            alt='Expense Pro Dashboard Mockup'
+            fill
+            className='rounded-lg border-2 border-white/10 shadow-2xl shadow-black/40'
+            priority
+            ref={heroImageRef}
+          />
         </section>
 
         <ProblemSolutionSection />
