@@ -10,10 +10,14 @@
 	"devDependencies": {
 		"@cloudflare/puppeteer": "^1.0.3",
 		"@cloudflare/workers-types": "^3.19.0",
+		"@types/react": "^19.1.8",
+		"@types/react-dom": "^19.1.6",
 		"bun-types": "^0.1.11",
 		"wrangler": "4"
 	},
 	"dependencies": {
-		"hono": "^2.7.8"
+		"hono": "^2.7.8",
+		"react": "^19.1.0",
+		"react-dom": "^19.1.0"
 	}
 }

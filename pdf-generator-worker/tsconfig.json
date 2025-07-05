@@ -1,14 +1,28 @@
 {
-  "compilerOptions": {
-    "lib": ["ESNext"],
-    "module": "esnext",
-    "target": "esnext",
-    "moduleResolution": "node",
+	"compilerOptions": {
+		/* Base Options */
+		"target": "esnext",
+		"module": "esnext",
 
-    // so that if your project isn't using TypeScript, it still has autocomplete
-    "allowJs": true,
+		/* THE FIX: Add "dom" to the library array */
+		"lib": ["esnext", "dom"],
 
-    // "bun-types" is the important part
-    "types": ["bun-types", "@cloudflare/workers-types"]
-  }
+		"moduleResolution": "node",
+
+		/* JSX Support */
+		"jsx": "react-jsx",
+		"jsxImportSource": "react",
+
+		/* Strictness and Code Quality */
+		"strict": true,
+		"allowJs": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"noEmit": true,
+
+		/* Type Definitions */
+		"types": ["@cloudflare/workers-types", "bun-types"]
+	},
+	"include": ["src"]
 }
