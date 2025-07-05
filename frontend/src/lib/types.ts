@@ -137,6 +137,8 @@ export interface AccountDetails {
   } | null;
   analytics: Analytics | null;
   currency: string;
+  oldestTransactionDate?: Date | null;
+  recentDateAsToday?: Date | null;
 }
 
 export interface AccountDropdown {

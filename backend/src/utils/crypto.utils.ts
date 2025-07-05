@@ -1,4 +1,5 @@
 import { config } from '../config';
+import { randomBytes } from 'crypto';
 
 const ALGORITHM = 'AES-GCM';
 const IV_LENGTH = 12;
@@ -74,4 +75,15 @@ export async function decryptApiKey(encryptedData: string): Promise<string> {
     console.error('Decryption failed:', error);
     throw new Error(`Failed to decrypt API key: ${error.message}`);
   }
+}
+
+/**
+ * Generates a random string of a specified length.
+ * @param length The desired length of the random string.
+ * @returns A cryptographically secure random string.
+ */
+export function generateRandomString(length: number): string {
+  return randomBytes(Math.ceil(length / 2))
+    .toString('hex')
+    .slice(0, length);
 }

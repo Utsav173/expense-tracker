@@ -178,9 +178,7 @@ export function budgetAlertEmailTemp(
     .container { max-width: 600px; margin: 20px auto; padding: 30px; background-color: #FFFFFF; border-radius: 12px; box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1); }
     .logo { text-align: center; margin-bottom: 25px; }
     .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #EEEEEE; }
-    .header h1 { font-size: 32px; margin: 0; color: ${
-      alertType === 'exceeded' ? '#FF4444' : '#FFB400'
-    }; }
+    .header h1 { font-size: 32px; margin: 0; color: #2672FF; }
     .content { font-size: 16px; line-height: 1.6; margin-bottom: 35px; color: #555555; }
     .content p { margin-bottom: 15px; }
     .budget-details { background-color: ${
@@ -417,6 +415,70 @@ export function billReminderEmailTemp(
     <div class="footer">
       <p>This email was sent to <strong>${safeUsername}</strong>.</p>
       <p>To manage your bill reminders, log in to your account settings.</p>
+      <p>© ${new Date().getFullYear()} Expense Manager | <a href="#" style="color: #999999;">Privacy Policy</a> | <a href="#" style="color: #999999;">Contact Support</a></p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+/**
+ * Generates the HTML content for an invitation email.
+ * @param inviterName - The name of the person sending the invite.
+ * @param invitationLink - The registration link for the invitee.
+ * @param toEmail - The email address of the invitee.
+ * @returns HTML string for the email body.
+ */
+export function invitationEmailTemp(
+  inviterName: string,
+  invitationLink: string,
+  toEmail: string,
+): string {
+  const safeInviter = inviterName || 'A friend';
+  const safeLink = invitationLink || '#';
+  const safeEmail = toEmail || 'your email address';
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You're Invited to Expense Manager!</title>
+  <style>
+    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #F5F7FA; margin: 0; padding: 0; color: #333333; }
+    .container { max-width: 600px; margin: 20px auto; padding: 30px; background-color: #FFFFFF; border-radius: 12px; box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1); }
+    .logo { text-align: center; margin-bottom: 25px; }
+    .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #EEEEEE; }
+    .header h1 { font-size: 32px; margin: 0; color: #2672FF; }
+    .content { font-size: 16px; line-height: 1.6; margin-bottom: 35px; color: #555555; }
+    .content p { margin-bottom: 15px; }
+    .invite-details { background-color: #F7FAFF; border-radius: 8px; padding: 20px; margin-bottom: 30px; }
+    .invite-details h3 { color: #2672FF; margin-top: 0; }
+    .invite-details p { margin-bottom: 10px; }
+    .button-container { text-align: center; margin: 30px 0; }
+    .button { display: inline-block; background-color: #2672FF; color: white !important; text-align: center; font-size: 16px; font-weight: bold; padding: 12px 30px; border-radius: 6px; text-decoration: none; transition: background-color 0.2s ease; }
+    .button:hover { background-color: #1E5CC7; }
+    .footer { font-size: 14px; color: #999999; text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #EEEEEE; }
+    .footer p { margin: 5px 0; }
+    @media only screen and (max-width: 600px) { .container { padding: 20px; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo"></div>
+    <div class="header"><h1>You're Invited!</h1></div>
+    <div class="content">
+      <p>Hi there,</p>
+      <div class="invite-details">
+        <h3>Join Expense Manager</h3>
+        <p><strong>${safeInviter}</strong> has invited you to join Expense Manager.</p>
+        <p>Click the button below to register and start managing your finances:</p>
+        <div class="button-container"><a href="${safeLink}" class="button">Accept Invitation</a></div>
+        <p>This invitation will expire in 24 hours.</p>
+      </div>
+      <p>If you have any questions or need help getting started, our support team is here for you!</p>
+    </div>
+    <div class="footer">
+      <p>This invitation was sent to <strong>${safeEmail}</strong>.</p>
       <p>© ${new Date().getFullYear()} Expense Manager | <a href="#" style="color: #999999;">Privacy Policy</a> | <a href="#" style="color: #999999;">Contact Support</a></p>
     </div>
   </div>

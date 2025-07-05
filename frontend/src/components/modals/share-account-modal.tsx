@@ -7,9 +7,8 @@ import { z } from 'zod';
 import { useToast } from '@/lib/hooks/useToast';
 import { Button } from '../ui/button';
 import AddModal from './add-modal';
-import { accountShare, usersGetDropdown } from '@/lib/endpoints/accounts';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { accountShare } from '@/lib/endpoints/accounts';
+import { useMutation } from '@tanstack/react-query';
 import {
   Form,
   FormControl,
@@ -20,12 +19,14 @@ import {
 } from '@/components/ui/form';
 import { Input } from '../ui/input';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
-import { DropdownUser } from '@/lib/types';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { InvitationCombobox } from '../invitation/InvitationCombobox';
 
 const shareAccountSchema = z.object({
   accountId: z.string().uuid(),
-  userId: z.string().uuid()
+  user: z.object({
+    value: z.string().uuid(),
+    label: z.string().email()
+  })
 });
 
 type ShareAccountFormSchema = z.infer<typeof shareAccountSchema>;
@@ -44,19 +45,17 @@ const ShareAccountModal = ({
     resolver: zodResolver(shareAccountSchema),
     defaultValues: {
       accountId: accountId,
-      userId: ''
+      user: {
+        value: '',
+        label: ''
+      }
     }
-  });
-
-  const { data: usersData, isLoading } = useQuery({
-    queryKey: ['userDropdown'],
-    queryFn: usersGetDropdown
   });
 
   const { showError } = useToast();
 
   const shareAccountMutation = useMutation({
-    mutationFn: (data: ShareAccountFormSchema) => accountShare(data),
+    mutationFn: (data: { accountId: string; userId: string }) => accountShare(data),
     onSuccess: async () => {
       await invalidate(['accounts', 'accountShares']);
       setIsOpen(false);
@@ -68,8 +67,16 @@ const ShareAccountModal = ({
   });
 
   const handleShareAccount = async (data: ShareAccountFormSchema) => {
-    await shareAccountMutation.mutate(data);
+    if (!data.user || !data.user.value) return;
+    if (data.user.value.startsWith('invite:')) {
+      return;
+    }
+    const payload = { accountId: data.accountId, userId: data.user.value };
+    await shareAccountMutation.mutate(payload);
   };
+
+  // Keep form userId in sync with selectedUser
+  const handleUserChange = (option: { label: string; value: string }) => {};
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
@@ -77,7 +84,10 @@ const ShareAccountModal = ({
     if (open) {
       form.reset();
       form.setValue('accountId', accountId);
-      form.setValue('userId', '');
+      form.setValue('user', {
+        value: '',
+        label: ''
+      });
     }
   };
 
@@ -107,35 +117,16 @@ const ShareAccountModal = ({
 
           <FormField
             control={form.control}
-            name='userId'
+            name='user'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Select User</FormLabel>
                 <FormControl>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger>
-                      <SelectValue placeholder='Select a user to share with' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {usersData?.map((user: DropdownUser) => (
-                        <SelectItem key={user.id} value={user.id}>
-                          <div className='flex items-center gap-2'>
-                            <Avatar>
-                              <AvatarImage src={user.profilePic || undefined} />
-                              <AvatarFallback>
-                                {user.name
-                                  .split(' ')
-                                  .map((n) => n[0])
-                                  .join('')}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span>{user.name}</span>
-                            <span className='text-muted-foreground'>({user.email})</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <InvitationCombobox
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder='Select a user to share with or invite by email'
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

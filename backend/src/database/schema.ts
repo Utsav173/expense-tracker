@@ -19,6 +19,7 @@ export const roleEnum = pgEnum('role', ['user', 'admin']);
 export const DebtType = pgEnum('DebtType', ['given', 'taken']);
 export const InterestType = pgEnum('InterestType', ['simple', 'compound']);
 export const RecurrenceType = pgEnum('recurrence_type', ['daily', 'weekly', 'monthly', 'yearly']);
+export const InvitationStatus = pgEnum('invitation_status', ['pending', 'accepted', 'expired']);
 
 const commonFields = {
   id: varchar('id', { length: 64 })
@@ -273,6 +274,25 @@ export const AiConversationHistory = pgTable(
   ],
 );
 
+export const Invitation = pgTable(
+  'invitation',
+  {
+    ...commonFields,
+    inviterId: varchar('inviterId', { length: 64 })
+      .notNull()
+      .references(() => User.id, { onDelete: 'cascade' }),
+    inviteeEmail: varchar('inviteeEmail', { length: 64 }).notNull(),
+    token: varchar('token', { length: 255 }).notNull(),
+    status: InvitationStatus('status').default('pending').notNull(),
+    expiresAt: timestamp('expiresAt').notNull(),
+  },
+  (table) => [
+    uniqueIndex('inviteeEmailIndex').on(table.inviteeEmail),
+    uniqueIndex('invitationTokenIndex').on(table.token),
+    index('inviterIdIndex').on(table.inviterId),
+  ],
+);
+
 export const usersRelations = relations(User, ({ many }) => ({
   accounts: many(Account),
   transactions: many(Transaction, { relationName: 'owner' }),
@@ -372,4 +392,8 @@ export const aiConversationHistoryRelations = relations(AiConversationHistory, (
     fields: [AiConversationHistory.userId],
     references: [User.id],
   }),
+}));
+
+export const invitationRelations = relations(Invitation, ({ one }) => ({
+  inviter: one(User, { fields: [Invitation.inviterId], references: [User.id] }),
 }));

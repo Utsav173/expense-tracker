@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useCallback, useMemo } from 'react';
+import React, { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { accountGetAll, accountGetById } from '@/lib/endpoints/accounts';
 import { Combobox, ComboboxOption } from '@/components/ui/combobox';
 import { Account } from '@/lib/types';
 import { Skeleton } from './skeleton';
 import { cn } from '@/lib/utils';
+import { DateRange } from 'react-day-picker';
 
 interface AccountComboboxProps {
   value: string | undefined | null;
@@ -16,7 +17,7 @@ interface AccountComboboxProps {
   className?: string;
   allowClear?: boolean;
   clearLabel?: string;
-  userId?: string;
+  setDateRange?: Dispatch<SetStateAction<DateRange | undefined>>;
 }
 
 const AccountCombobox: React.FC<AccountComboboxProps> = ({
@@ -27,7 +28,7 @@ const AccountCombobox: React.FC<AccountComboboxProps> = ({
   className,
   allowClear = false,
   clearLabel = 'All Accounts',
-  userId
+  setDateRange
 }) => {
   const { data: initialAccountData, isLoading: isLoadingInitial } = useQuery({
     queryKey: ['accountById', value],
@@ -37,6 +38,14 @@ const AccountCombobox: React.FC<AccountComboboxProps> = ({
       }
 
       const result = await accountGetById(value);
+
+      if (setDateRange && result?.oldestTransactionDate && result?.recentDateAsToday) {
+        setDateRange?.({
+          from: new Date(result.oldestTransactionDate),
+          to: new Date(result.recentDateAsToday)
+        });
+      }
+
       return result ?? null;
     },
     enabled: !!value && value !== 'all',

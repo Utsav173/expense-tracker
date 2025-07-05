@@ -1,9 +1,9 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { aiProcessPrompt } from '@/lib/endpoints/ai';
-import { toast } from 'react-hot-toast';
 import { useInvalidateQueries } from './useInvalidateQueries';
 import { safeJsonParse } from '@/lib/utils';
+import { useToast } from '@/lib/hooks/useToast';
 
 const STORAGE_KEY_MESSAGES = 'aiChatMessages';
 const STORAGE_KEY_SESSION_ID = 'aiChatSessionId';
@@ -67,7 +67,7 @@ export const useAiChat = (): UseAiChatReturn => {
 
   const [error, setError] = useState<Error | null>(null);
   const invalidate = useInvalidateQueries();
-  const queryClient = useQueryClient();
+  const { showSuccess } = useToast();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -214,8 +214,8 @@ export const useAiChat = (): UseAiChatReturn => {
       localStorage.removeItem(STORAGE_KEY_MESSAGES);
       localStorage.removeItem(STORAGE_KEY_SESSION_ID);
     }
-    toast.success('Chat history cleared.');
-  }, []);
+    showSuccess('Chat history cleared.');
+  }, [showSuccess]);
 
   const latestAssistantMessage = useMemo(() => {
     return messages.filter((msg) => msg.role === 'assistant').pop() || null;

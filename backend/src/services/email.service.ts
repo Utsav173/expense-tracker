@@ -6,6 +6,7 @@ import {
   budgetAlertEmailTemp,
   forgotPasswordTemp,
   goalReminderEmailTemp,
+  invitationEmailTemp, // <-- add import
 } from '../utils/email.utils';
 import { config } from '../config';
 
@@ -167,6 +168,20 @@ export class EmailService {
       to: userEmail,
       subject: `Upcoming Bill Reminder: ${billDetails.description}`,
       html: html,
+    });
+  }
+
+  async sendInvitationEmail(
+    to: string,
+    inviterName: string,
+    invitationLink: string,
+  ): Promise<void> {
+    const subject = `You're Invited to Expense Tracker!`;
+    const html = invitationEmailTemp(inviterName, invitationLink, to);
+    await this.sendMail({
+      to,
+      subject,
+      html,
     });
   }
 }

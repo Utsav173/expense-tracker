@@ -1,7 +1,11 @@
 import { HTTPException } from 'hono/http-exception';
 
 export class PdfService {
-  async generatePdfFromTemplate(templateName: string, data: any, pdfOptions?: any): Promise<ArrayBuffer> {
+  async generatePdfFromTemplate(
+    templateName: string,
+    data: any,
+    pdfOptions?: any,
+  ): Promise<ArrayBuffer> {
     try {
       const workerUrl = process.env.CLOUDFLARE_WORKER_PDF_URL;
 

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -17,7 +17,8 @@ const signUpSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters long').max(64).trim(),
   email: z.string().email('Invalid email format'),
   password: z.string().min(8, 'Password must be at least 8 characters long').max(255),
-  profilePic: z.any().optional()
+  profilePic: z.any().optional(),
+  token: z.string().optional()
 });
 
 type SignUpSchemaType = z.infer<typeof signUpSchema>;
@@ -25,13 +26,22 @@ type SignUpSchemaType = z.infer<typeof signUpSchema>;
 const SignupPage = () => {
   const [loading, setLoading] = useState(false);
   const { push } = useRouter();
+  const searchParams = useSearchParams();
   const { showError } = useToast();
   const { register, handleSubmit, formState, setValue, watch } = useForm<SignUpSchemaType>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
-      profilePic: null
+      profilePic: null,
+      token: searchParams.get('token') || undefined
     }
   });
+
+  useEffect(() => {
+    const token = searchParams.get('token');
+    if (token) {
+      setValue('token', token);
+    }
+  }, [searchParams, setValue]);
 
   const profilePic = watch('profilePic');
 
@@ -44,6 +54,9 @@ const SignupPage = () => {
       formData.append('password', data.password);
       if (data.profilePic) {
         formData.append('profilePic', data.profilePic);
+      }
+      if (data.token) {
+        formData.append('token', data.token);
       }
 
       await authSignup(formData);

@@ -136,7 +136,7 @@ The database schema is visualized below. For a more detailed view, you can use D
         c. **Apply Migrations:** Create the database tables based on the schema:
         ```bash
 
-    bun run db:migrate
+    bun run db:push
 
     ````
 
@@ -154,7 +154,7 @@ The database schema is visualized below. For a more detailed view, you can use D
 
         - Ensure your database is running and you have the connection string.
         - Set the `DATABASE_URL_NEW` in your `.env` file to your connection string.
-        - Run migrations: `bun run db:migrate`
+        - Run migrations: `bun run db:push`
         - (Optional) Seed data: `bun run seed`
 
 ## Running the Application
@@ -193,7 +193,6 @@ The API documentation is available via the Postman collection: [`expense-backend
 - `db:pull`: Pull current DB schema into Drizzle Kit format (`bunx drizzle-kit pull`).
 - `db:push`: Push schema changes directly to DB (alternative to migrations, **use with extreme caution**, especially in production) (`bunx drizzle-kit push`).
 - `db:generate`: Generate SQL migration files based on schema changes (`bunx drizzle-kit generate`).
-- `db:migrate`: Apply pending database migrations from the `drizzle` folder (`bun src/database/migrate.ts`).
 - `db:studio`: Open Drizzle Studio GUI to browse data (`bunx drizzle-kit studio`).
 - `db:check`: Check schema against the database for discrepancies (`bunx drizzle-kit check`).
 - `seed`: Run the database seeding script (`bun run src/database/seed.ts`).
@@ -256,7 +255,7 @@ Common issues and their solutions:
     - Verify `GMAIL_USERNAME` and `GMAIL_PASS` (App Password for Gmail) or SMTP credentials in `.env`.
     - Check SMTP host/port if using custom provider.
     - Ensure the email provider isn't blocking requests (check spam, security settings, sending limits).
-4.  **Migration Errors (`bun run db:migrate`):**
+4.  **Migration Errors (`bun run db:push`):**
     - Run `bunx drizzle-kit check` to compare schema against the database.
     - Ensure the `drizzle` folder contains valid migration files. Run `bunx drizzle-kit generate` if schema changes were made without generating migrations.
     - Check database user permissions for DDL operations (ALTER TABLE, CREATE TABLE, etc.).

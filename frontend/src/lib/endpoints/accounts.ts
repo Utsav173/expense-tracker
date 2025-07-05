@@ -64,9 +64,6 @@ export const accountGetPreviousShares = (
 ): Promise<ApiResponse<PreviousShareAccount[]>> =>
   apiFetch(`/accounts/previous/share/${id}`, 'GET');
 
-export const usersGetDropdown = (): Promise<ApiResponse<DropdownUser[]>> =>
-  apiFetch('/accounts/dropdown/user', 'GET');
-
 export const accountGetSharedWithMe = (
   params: any
 ): Promise<ApiResponse<{ data: Account[]; pagination: any }>> =>

@@ -9,11 +9,13 @@ import { compressImage } from '../utils/image.utils';
 import { emailService } from './email.service';
 import { config } from '../config';
 import { encryptApiKey } from '../utils/crypto.utils';
+import { invitationService } from './invitation.service';
 
 type UserInsert = InferInsertModel<typeof User>;
 type LoginPayload = Pick<UserInsert, 'email' | 'password'>;
 type SignupPayload = Pick<UserInsert, 'name' | 'email' | 'password'> & {
   profilePic?: any;
+  token?: string;
 };
 export type UpdatePayload = Partial<Pick<UserInsert, 'name' | 'preferredCurrency'>> & {
   profilePic?: any;
@@ -115,7 +117,15 @@ export class UserService {
   }
 
   async signup(payload: SignupPayload) {
-    const { name, email, password, profilePic } = payload;
+    const { name, email, password, profilePic, token } = payload;
+
+    if (token) {
+      // If a token is provided, verify it first
+      const invitation = await invitationService.verifyInvitation(token);
+      if (invitation.inviteeEmail !== email) {
+        throw new HTTPException(400, { message: 'Email does not match invitation.' });
+      }
+    }
 
     const findUser = await db.query.User.findFirst({
       where: eq(User.email, email),
@@ -197,6 +207,10 @@ export class UserService {
             message: `Default category creation failed: ${err.message}`,
           });
         });
+
+      if (token) {
+        await invitationService.acceptInvitation(token, newUser.id, email);
+      }
 
       return newUser;
     });

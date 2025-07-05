@@ -200,8 +200,8 @@ export class DebtService {
           const status: Payment['status'] = isPaid
             ? 'settled'
             : isAfter(today, installmentDate)
-            ? 'due'
-            : 'upcoming';
+              ? 'due'
+              : 'upcoming';
 
           schedule.push({
             date: installmentDate,
@@ -282,8 +282,8 @@ export class DebtService {
       const status: Payment['status'] = isPaid
         ? 'settled'
         : isAfter(today, installmentDate)
-        ? 'due'
-        : 'upcoming';
+          ? 'due'
+          : 'upcoming';
 
       cumulativePrincipal += principalPerInstallment;
       cumulativeInterest += interestPerInstallment;

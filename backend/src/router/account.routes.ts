@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import authMiddleware from '../middleware';
 import { zValidator } from '@hono/zod-validator';
-import { accountSchema } from '../utils/schema.validations';
+import { accountSchema, searchUserSchema } from '../utils/schema.validations';
 import { HTTPException } from 'hono/http-exception';
 import { BunFile } from 'bun';
 import { accountService } from '../services/account.service';
@@ -33,17 +33,23 @@ accountRouter.get('/searchTerm', authMiddleware, async (c) => {
   }
 });
 
-accountRouter.get('/dropdown/user', authMiddleware, async (c) => {
-  try {
-    const userId = c.get('userId');
-    const users = await accountService.getUsersForDropdown(userId);
-    return c.json(users);
-  } catch (err: any) {
-    if (err instanceof HTTPException) throw err;
-    console.error('User Dropdown Error:', err);
-    throw new HTTPException(500, { message: 'Failed to fetch users.' });
-  }
-});
+accountRouter.get(
+  '/dropdown/user',
+  authMiddleware,
+  zValidator('query', searchUserSchema),
+  async (c) => {
+    try {
+      const userId = c.get('userId');
+      const { query } = c.req.valid('query');
+      const users = await accountService.getUsersForDropdown(userId, query);
+      return c.json(users);
+    } catch (err: any) {
+      if (err instanceof HTTPException) throw err;
+      console.error('User Dropdown Error:', err);
+      throw new HTTPException(500, { message: 'Failed to fetch users.' });
+    }
+  },
+);
 
 accountRouter.post('/share', authMiddleware, async (c) => {
   try {

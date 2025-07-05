@@ -128,7 +128,7 @@ export function createAccountTools(userId: string) {
             });
 
           const account = await accountService.getAccountById(resolved.id, userId);
-          const formattedBalance = formatCurrency(account.balance ?? 0, account.currency);
+          const formattedBalance = formatCurrency(Number(account.balance ?? 0), account.currency);
           return createToolResponse({
             success: true,
             message: `Balance for ${account.name} is ${formattedBalance}.`,

@@ -66,7 +66,7 @@ for i in {1..30}; do
     echo -e "Please copy this URL and paste it into your ${YELLOW}.env${NC} file for the ${YELLOW}DATABASE_URL_NEW${NC} variable."
     echo -e "\nNext steps:"
     echo -e "1. Add the URL to your .env file."
-    echo -e "2. Run ${YELLOW}bun run db:migrate${NC} to set up the tables."
+    echo -e "2. Run ${YELLOW}bun run db:push${NC} to set up the tables."
     echo -e "3. (Optional) Run ${YELLOW}bun run seed${NC} to add sample data."
     exit 0
   fi

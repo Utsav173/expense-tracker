@@ -40,3 +40,9 @@ export const dividendUpdateSchema = z.object({
     message: 'Dividend must be a non-negative number'
   })
 });
+
+export const inviteUserSchema = z.object({
+  email: z.string().email({ message: 'Invalid email address.' })
+});
+
+export type InviteUserFormSchema = z.infer<typeof inviteUserSchema>;

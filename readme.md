@@ -127,7 +127,7 @@ expense-tracker/
 
 6.  Run database migrations to create the tables:
     ```bash
-    bun run db:migrate
+    bun run db:push
     ```
 7.  (Optional but Recommended for Demo) Seed the database with sample data:
     ```bash

@@ -246,9 +246,20 @@ export class AccountService {
     return results;
   }
 
-  async getUsersForDropdown(currentUserId: string) {
+  async getUsersForDropdown(currentUserId: string, search: string | undefined) {
+    let whereQuery;
+    const query = search || '';
+    if (query === '' || !query) {
+      whereQuery = and(eq(User.role, 'user'), ne(User.id, currentUserId));
+    } else {
+      whereQuery = and(
+        and(eq(User.role, 'user'), ne(User.id, currentUserId)),
+        or(ilike(User.name, `%${query}%`), ilike(User.email, `%${query}%`)),
+      );
+    }
+
     return db.query.User.findMany({
-      where: and(eq(User.role, 'user'), ne(User.id, currentUserId)),
+      where: whereQuery,
       columns: {
         id: true,
         name: true,
@@ -972,6 +983,10 @@ export class AccountService {
           expensesPercentageChange: Analytics.expensesPercentageChange,
         },
         currency: Account.currency,
+        oldestTransactionDate: sql<Date>`(SELECT MIN(${
+          Transaction.createdAt
+        }) FROM ${Transaction} WHERE ${eq(Transaction.account, accountId)})`,
+        recentDateAsToday: sql<Date>`CURRENT_DATE`,
       })
       .from(Account)
       .leftJoin(Analytics, eq(Analytics.account, Account.id))

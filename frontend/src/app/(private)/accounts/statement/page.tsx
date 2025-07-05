@@ -8,22 +8,20 @@ import { Download, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
 import AccountCombobox from '@/components/ui/account-combobox';
 import DatePickerWithRange from '@/components/date/date-range-picker-v2';
 import { DateRange } from 'react-day-picker';
+import { Switch } from '@/components/ui/switch';
 
 const StatementPage = () => {
   const [accountId, setAccountId] = useState<string | undefined>(undefined);
   const [isGeneratingStatement, setIsGeneratingStatement] = useState(false);
   const [exportType, setExportType] = useState('pdf');
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: undefined,
+    to: undefined
+  });
+  const [accountDateRange, setAccountDateRange] = useState<DateRange | undefined>({
     from: undefined,
     to: undefined
   });
@@ -76,27 +74,38 @@ const StatementPage = () => {
               value={accountId}
               onChange={setAccountId}
               placeholder='Select an account'
+              setDateRange={setAccountDateRange}
             />
 
-            <div className='flex flex-col space-y-1.5'>
+            <div className='flex items-center justify-between'>
               <Label htmlFor='exportType'>Export Type</Label>
-              <Select value={exportType} onValueChange={setExportType}>
-                <SelectTrigger id='exportType'>
-                  <SelectValue placeholder='Select export type' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='pdf'>PDF</SelectItem>
-                  <SelectItem value='xlsx'>XLSX</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className='flex items-center gap-4'>
+                <span
+                  className={`text-sm font-medium ${exportType === 'pdf' ? 'text-primary' : 'text-muted-foreground'}`}
+                >
+                  PDF
+                </span>
+                <Switch
+                  id='exportType'
+                  checked={exportType === 'xlsx'}
+                  onCheckedChange={(checked) => setExportType(checked ? 'xlsx' : 'pdf')}
+                  aria-label='Toggle export type'
+                />
+                <span
+                  className={`text-sm font-medium ${exportType === 'xlsx' ? 'text-primary' : 'text-muted-foreground'}`}
+                >
+                  XLSX
+                </span>
+              </div>
             </div>
 
             <div className='flex flex-col space-y-1.5'>
-              <Label htmlFor='dateRange'>Date Range</Label>
               <DatePickerWithRange
                 date={dateRange}
                 onDateChange={setDateRange}
                 disabled={!!numTransactions}
+                minDate={accountDateRange?.from}
+                maxDate={accountDateRange?.to}
               />
             </div>
 

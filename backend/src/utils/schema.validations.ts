@@ -184,3 +184,20 @@ export const contactFormSchema = z.object({
   subject: z.string().min(5, { message: 'Subject must be at least 5 characters.' }).max(150),
   message: z.string().min(10, { message: 'Message must be at least 10 characters.' }).max(2000),
 });
+
+export const inviteSchema = z.object({
+  email: z.string().email({ message: 'Please enter a valid email address.' }),
+});
+
+export const verifyInvitationSchema = z.object({
+  token: z.string().min(1, { message: 'Token is required.' }),
+});
+
+export const acceptInvitationSchema = z.object({
+  token: z.string().min(1, { message: 'Token is required.' }),
+  email: z.string().email({ message: 'Email is required.' }),
+});
+
+export const searchUserSchema = z.object({
+  query: z.string().optional(),
+});

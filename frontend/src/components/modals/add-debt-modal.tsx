@@ -18,7 +18,8 @@ import {
   FormMessage
 } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { accountGetDropdown, usersGetDropdown } from '@/lib/endpoints/accounts';
+import { accountGetDropdown } from '@/lib/endpoints/accounts';
+import { InvitationCombobox } from '@/components/invitation/InvitationCombobox';
 import { apiCreateDebt } from '@/lib/endpoints/debt';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { useAuth } from '@/hooks/useAuth';
@@ -50,7 +51,10 @@ const debtFormSchema = z
         }
       ),
     account: z.string().uuid('Account selection is required.'),
-    counterparty: z.string().uuid('Counterparty selection is required.'),
+    counterparty: z.object({
+      label: z.string().email('Counterparty email is required.'),
+      value: z.string()
+    }),
     type: z.enum(['given', 'taken'], { required_error: 'Debt type is required.' }),
     interestType: z.enum(['simple', 'compound'], {
       required_error: 'Interest type is required.'
@@ -162,12 +166,6 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
     staleTime: 5 * 60 * 1000
   });
 
-  const { data: usersData, isLoading: isLoadingUsers } = useQuery({
-    queryKey: ['usersDropdown'],
-    queryFn: usersGetDropdown,
-    staleTime: 5 * 60 * 1000
-  });
-
   const form = useForm<DebtFormValues>({
     resolver: zodResolver(debtFormSchema),
     defaultValues: {
@@ -179,7 +177,10 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
       percentage: '',
       frequency: '',
       account: '',
-      counterparty: '',
+      counterparty: {
+        label: '',
+        value: ''
+      },
       durationType: 'year',
       customDateRange: undefined
     },
@@ -199,7 +200,10 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
         percentage: '',
         frequency: '',
         account: '',
-        counterparty: '',
+        counterparty: {
+          label: '',
+          value: ''
+        },
         durationType: 'year',
         customDateRange: undefined
       });
@@ -256,7 +260,7 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
         formData.durationType !== 'custom' && formData.frequency
           ? String(formData.frequency)
           : undefined,
-      user: formData.counterparty,
+      user: formData.counterparty?.value,
       type: formData.type,
       interestType: formData.interestType,
       account: formData.account
@@ -353,7 +357,7 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
             control={form.control}
             name='account'
             render={({ field }) => (
-              <FormItem>
+              <FormItem className='md:col-span-2'>
                 <FormLabel>Associated Account*</FormLabel>
                 <Select
                   onValueChange={field.onChange}
@@ -392,38 +396,16 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
             control={form.control}
             name='counterparty'
             render={({ field }) => (
-              <FormItem>
+              <FormItem className='md:col-span-2'>
                 <FormLabel>Counterparty*</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value}
-                  disabled={isLoadingUsers || createDebtMutation.isPending}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder='Select user...' />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {isLoadingUsers ? (
-                      <SelectItem value='loading' disabled>
-                        Loading users...
-                      </SelectItem>
-                    ) : usersData && usersData.length > 0 ? (
-                      usersData
-                        .filter((u) => u.id !== user?.id)
-                        .map((u) => (
-                          <SelectItem key={u.id} value={u.id}>
-                            {u.name} ({u.email})
-                          </SelectItem>
-                        ))
-                    ) : (
-                      <SelectItem value='no-users' disabled>
-                        No users found
-                      </SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
+                <FormControl>
+                  <InvitationCombobox
+                    value={field.value}
+                    onChange={field.onChange}
+                    disabled={createDebtMutation.isPending}
+                    placeholder='Select or invite user...'
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
