@@ -145,6 +145,8 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
         setMonth(initialDefaultMonth || new Date());
       }
     }
+    // we keep only date and initialDefaultMonth as dependency so user can select end date also
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date, initialDefaultMonth]);
 
   const isSameRange = (a?: DateRange, b?: DateRange): boolean => {

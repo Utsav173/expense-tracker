@@ -148,17 +148,20 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
 
       {/* Analytics Cards + Chart Section */}
       {isOwner && (
-        <div className={cn('grid gap-6', hasTransactions && 'lg:grid-cols-[1fr_1.5fr]')}>
-          {/* Analytics Cards */}
+        <div
+          className={cn(
+            'grid grid-cols-1 gap-6',
+            hasTransactions && 'lg:grid-cols-2 xl:grid-cols-[1fr_1.5fr]'
+          )}
+        >
           <AnalyticsCards
             analytics={customAnalytics}
             isLoading={isAnalyticsLoading}
             account={account}
           />
 
-          {/* Chart Section */}
           {hasTransactions && (
-            <Card className='overflow-hidden'>
+            <Card className='overflow-hidden rounded-lg shadow-lg'>
               <FinancialTrendsSection
                 chartData={transformedChartData}
                 isChartLoading={isChartLoading}

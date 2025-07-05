@@ -1,6 +1,7 @@
 import React from 'react';
 import Loader from '@/components/ui/loader';
 import { Suspense } from 'react';
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 const AuthLayout = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -13,6 +14,7 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
           {children}
         </div>
       </div>
+      <GoogleAnalytics gaId='GTM-NRXZ2WPR' />
     </Suspense>
   );
 };

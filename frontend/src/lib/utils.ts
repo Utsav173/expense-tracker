@@ -19,16 +19,32 @@ export function formatCurrency(
       return `${currencyCode} 0.00`;
     }
 
-    return new Intl.NumberFormat('en-IN', {
+    const options: Intl.NumberFormatOptions = {
       style: 'currency',
-      currency: currencyCode
-    }).format(numAmount);
+      currency: currencyCode,
+      maximumFractionDigits: 2
+    };
+
+    if (Math.abs(numAmount) >= 999_999_999) {
+      options.notation = 'compact';
+      options.compactDisplay = 'short';
+    }
+
+    return new Intl.NumberFormat('en-IN', options).format(numAmount);
   } catch (error) {
     console.error('Error formatting currency:', error);
-
     return `${currencyCode} ${numAmount.toFixed(2)}`;
   }
 }
+
+export const getDynamicFontSize = (text: string, baseSize = 3, minSize = 1.5, maxLength = 12) => {
+  const length = text.length;
+  if (length <= maxLength) {
+    return `${baseSize}rem`;
+  }
+  const newSize = baseSize - (length - maxLength) * 0.15;
+  return `${Math.max(newSize, minSize)}rem`;
+};
 
 export const monthNames = [
   'January',
