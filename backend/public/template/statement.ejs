@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Financial Statement - <%= accountName %>
+  <title>Statement - <%= accountName %>
   </title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -20,8 +20,6 @@
       --accent-expense: #dc2626;
       --accent-balance: #0369a1;
       --accent-change: #7c3aed;
-      --shadow-soft: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-      --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
 
     * {
@@ -36,323 +34,275 @@
       font-family: 'Inter', sans-serif;
       background: #f1f5f9;
       color: var(--color-text-body);
-      line-height: 1.4;
-      font-size: 14px;
+      line-height: 1.2;
+      font-size: 10px;
     }
 
     .container {
       max-width: 8.27in;
       min-height: 11.69in;
-      margin: 16px auto;
+      margin: 0 auto;
       background: white;
-      box-shadow: var(--shadow-medium);
-      border-radius: 8px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
     }
 
     .header {
       background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
       color: white;
-      padding: 24px;
+      padding: 12px 16px;
       text-align: center;
       position: relative;
     }
 
-    .header::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    }
-
     .header h1 {
-      font-size: 1.75rem;
+      font-size: 1.3rem;
       font-weight: 700;
-      margin-bottom: 4px;
+      margin-bottom: 1px;
       letter-spacing: -0.025em;
     }
 
     .header .subtitle {
-      font-size: 0.9rem;
-      opacity: 0.85;
-      font-weight: 400;
+      font-size: 0.7rem;
+      opacity: 0.9;
     }
 
     .account-info {
       background: var(--color-background-light);
-      padding: 20px 24px;
+      padding: 8px 16px;
       border-bottom: 1px solid var(--color-border);
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
     }
 
     .account-detail {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 6px;
     }
 
     .account-detail .icon {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 1rem;
+      width: 20px;
+      height: 20px;
+      border-radius: 3px;
+      font-size: 0.7rem;
       flex-shrink: 0;
     }
 
     .account-detail .info h3 {
-      font-size: 0.7rem;
+      font-size: 0.55rem;
+      margin-bottom: 0px;
       color: var(--color-text-muted);
-      font-weight: 500;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 2px;
+      letter-spacing: 0.3px;
     }
 
     .account-detail .info p {
-      font-size: 0.9rem;
+      font-size: 0.7rem;
       font-weight: 600;
-      color: var(--color-text-header);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .main-content {
-      padding: 24px;
+      padding: 12px 16px;
       flex-grow: 1;
     }
 
     .analytics-header {
       text-align: center;
-      margin-bottom: 24px;
+      margin-bottom: 10px;
     }
 
     .analytics-header h2 {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: var(--color-text-header);
-      margin-bottom: 4px;
-      letter-spacing: -0.025em;
+      font-size: 1.1rem;
+      margin-bottom: 1px;
     }
 
     .analytics-header p {
+      font-size: 0.65rem;
       color: var(--color-text-muted);
-      font-size: 0.85rem;
     }
 
-    /* Fixed 2x2 grid layout to match screenshot */
     .analytics-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 32px;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
     }
 
     .stat-card {
-      border: 2px solid var(--card-accent);
-      border-radius: 8px;
-      padding: 20px;
+      border: 1px solid var(--color-border);
+      border-top: 2px solid var(--card-accent);
+      border-radius: 4px;
+      padding: 8px;
       text-align: center;
-      background: linear-gradient(to bottom, #ffffff, #fefefe);
-      transition: transform 0.1s ease, box-shadow 0.1s ease;
-      position: relative;
-    }
-
-    .stat-card:hover {
-      transform: translateY(-1px);
-      box-shadow: var(--shadow-medium);
     }
 
     .stat-card.income {
       --card-accent: var(--accent-income);
-      background: linear-gradient(to bottom, #f0fdf4, #ffffff);
     }
 
     .stat-card.expense {
       --card-accent: var(--accent-expense);
-      background: linear-gradient(to bottom, #fef2f2, #ffffff);
     }
 
     .stat-card.balance {
       --card-accent: var(--accent-balance);
-      background: linear-gradient(to bottom, #f0f9ff, #ffffff);
     }
 
     .stat-card.change {
       --card-accent: var(--accent-change);
-      background: linear-gradient(to bottom, #faf5ff, #ffffff);
     }
 
     .stat-card h3 {
-      font-size: 0.75rem;
+      font-size: 0.55rem;
+      margin-bottom: 3px;
       color: var(--color-text-muted);
-      font-weight: 600;
-      margin-bottom: 8px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3px;
     }
 
     .stat-card .amount {
-      font-size: 1.5rem;
+      font-size: 0.95rem;
       font-weight: 700;
-      line-height: 1.2;
-      margin-bottom: 4px;
-    }
-
-    .stat-card.income .amount {
-      color: var(--accent-income);
-    }
-
-    .stat-card.expense .amount {
-      color: var(--accent-expense);
-    }
-
-    .stat-card.balance .amount {
-      color: var(--accent-balance);
-    }
-
-    .stat-card.change .amount {
-      color: var(--accent-change);
+      line-height: 1.1;
+      margin-bottom: 1px;
     }
 
     .stat-card .currency {
-      font-size: 0.75rem;
+      font-size: 0.6rem;
       color: var(--color-text-muted);
-      font-weight: 500;
     }
 
     .transactions-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 16px;
-      padding-bottom: 8px;
-      border-bottom: 2px solid var(--color-border);
+      margin-bottom: 8px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--color-border);
     }
 
     .transactions-header h2 {
-      font-size: 1.3rem;
-      font-weight: 600;
-      color: var(--color-text-header);
-      letter-spacing: -0.025em;
+      font-size: 1rem;
     }
 
     .transaction-count {
-      background: linear-gradient(135deg, #eef2ff, #e0e7ff);
-      color: var(--color-primary);
-      padding: 4px 12px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      border: 1px solid #c7d2fe;
+      padding: 2px 6px;
+      border-radius: 8px;
+      font-size: 0.6rem;
+      background: var(--color-background-light);
+      color: var(--color-text-muted);
     }
 
     .table-container {
       width: 100%;
       border: 1px solid var(--color-border);
-      border-radius: 8px;
+      border-radius: 4px;
       overflow: hidden;
-      box-shadow: var(--shadow-soft);
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
+      font-size: 0.65rem;
+      table-layout: fixed;
     }
 
-    thead tr {
-      background: linear-gradient(to right, var(--color-background-light), #f1f5f9);
+    th,
+    td {
+      padding: 4px 6px;
+      text-align: left;
+      border-bottom: 1px solid #f1f5f9;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }
 
     th {
-      padding: 12px 10px;
-      text-align: left;
       font-weight: 600;
       color: var(--color-text-muted);
-      font-size: 0.7rem;
+      font-size: 0.55rem;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      border-bottom: 2px solid var(--color-border);
+      letter-spacing: 0.3px;
+      background: var(--color-background-light);
     }
 
-    th:nth-child(1) {
-      width: 12%;
+    /* Fixed column widths */
+    th:nth-child(1),
+    td:nth-child(1) {
+      width: 10%;
     }
 
-    th:nth-child(2) {
-      width: 35%;
+    /* Date */
+    th:nth-child(2),
+    td:nth-child(2) {
+      width: 30%;
     }
 
-    th:nth-child(3) {
-      width: 18%;
+    /* Description */
+    th:nth-child(3),
+    td:nth-child(3) {
+      width: 15%;
     }
 
+    /* Category */
     th:nth-child(4),
-    th:nth-child(5) {
-      width: 13%;
+    td:nth-child(4) {
+      width: 15%;
       text-align: right;
     }
 
-    th:nth-child(6) {
-      width: 9%;
+    /* Credit */
+    th:nth-child(5),
+    td:nth-child(5) {
+      width: 15%;
+      text-align: right;
+    }
+
+    /* Debit */
+    th:nth-child(6),
+    td:nth-child(6) {
+      width: 15%;
       text-align: center;
     }
 
-    tbody tr:nth-of-type(even) {
-      background-color: #fafbfc;
-    }
-
-    tbody tr:hover {
-      background-color: #f0f4f8;
-    }
+    /* Transfer */
 
     td {
-      padding: 12px 10px;
-      border-bottom: 1px solid #f1f5f9;
-      font-size: 0.8rem;
+      font-size: 0.65rem;
       vertical-align: middle;
-      word-break: break-word;
-    }
-
-    tbody tr:last-child td {
-      border-bottom: none;
     }
 
     .transaction-text {
       font-weight: 500;
-      color: var(--color-text-header);
-      line-height: 1.3;
+      line-height: 1.1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
-    .transaction-category {
+    .transaction-category,
+    .transfer-badge {
+      padding: 1px 4px;
+      border-radius: 2px;
+      font-size: 0.55rem;
+      background: var(--color-background-light);
+      color: var(--color-text-muted);
       display: inline-block;
-      background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
-      color: #3730a3;
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 0.7rem;
-      font-weight: 500;
-      line-height: 1.2;
-      text-align: center;
-      border: 1px solid #a5b4fc;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .amount {
-      font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
       font-weight: 600;
+      font-size: 0.7rem;
     }
 
     .income-amount {
@@ -363,57 +313,36 @@
       color: var(--accent-expense);
     }
 
-    td:nth-child(4),
-    td:nth-child(5) {
-      text-align: right;
-    }
-
-    td:nth-child(6) {
-      text-align: center;
-    }
-
-    .transfer-badge {
-      background: linear-gradient(135deg, #fef3c7, #fde68a);
-      color: #92400e;
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 0.7rem;
-      font-weight: 500;
-      border: 1px solid #f3d057;
-    }
-
     .no-transactions {
+      padding: 16px;
+      font-size: 0.7rem;
       text-align: center;
-      padding: 40px;
       color: var(--color-text-muted);
     }
 
     .no-transactions h3 {
-      color: var(--color-text-header);
-      margin-bottom: 8px;
-      font-size: 1.1rem;
+      font-size: 0.85rem;
+      margin-bottom: 4px;
     }
 
     .footer {
       background: var(--color-background-light);
-      padding: 16px 24px;
+      padding: 8px 16px;
       text-align: center;
       border-top: 1px solid var(--color-border);
-      font-size: 0.75rem;
+      font-size: 0.6rem;
       color: var(--color-text-muted);
     }
 
     .footer p:last-child {
-      font-size: 0.7rem;
-      color: #94a3b8;
-      margin-top: 4px;
+      font-size: 0.55rem;
+      margin-top: 1px;
     }
 
-    /* Print optimizations */
     @media print {
       body {
         background: white;
-        font-size: 10pt;
+        font-size: 7pt;
       }
 
       .container {
@@ -421,110 +350,125 @@
         margin: 0;
         max-width: 100%;
         border-radius: 0;
+        border: none;
       }
 
       @page {
         size: A4;
-        margin: 0.6in;
+        margin: 0.3in;
       }
 
-      .stat-card:hover {
-        transform: none;
-        box-shadow: none;
+      .analytics-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
       }
 
-      tbody tr:nth-of-type(even) {
-        background-color: #fafbfc;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
+      .stat-card {
+        padding: 6px;
+      }
+
+      th,
+      td {
+        padding: 3px 4px;
       }
 
       .header {
-        padding: 16px 20px;
+        padding: 8px 12px;
       }
 
       .main-content,
       .account-info {
-        padding: 16px 20px;
+        padding: 8px 12px;
+      }
+
+      .footer {
+        padding: 6px 12px;
       }
     }
 
-    /* Responsive design */
     @media (max-width: 900px) {
-      .container {
-        margin: 8px;
-      }
-      
       .analytics-grid {
-        max-width: 100%;
-        gap: 12px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+      }
+
+      .container {
+        margin: 4px;
+      }
+
+      .account-info {
+        grid-template-columns: 1fr;
+        gap: 6px;
       }
     }
 
     @media (max-width: 600px) {
+      body {
+        font-size: 9px;
+      }
+
       .account-info {
         grid-template-columns: 1fr;
-        gap: 12px;
-        padding: 16px;
+        gap: 6px;
       }
 
       .analytics-grid {
-        grid-template-columns: 1fr;
-        gap: 12px;
-        margin-bottom: 24px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
       }
 
       .main-content,
-      .header {
-        padding: 16px;
+      .account-info,
+      .header,
+      .footer {
+        padding: 8px 10px;
       }
 
       .transactions-header {
         flex-direction: column;
         align-items: flex-start;
-        gap: 8px;
+        gap: 4px;
       }
 
-      .table-container {
-        font-size: 0.75rem;
-        overflow-x: auto;
+      table {
+        font-size: 0.6rem;
       }
 
       th,
       td {
-        padding: 8px 6px;
-        font-size: 0.75rem;
+        padding: 3px 4px;
       }
 
-      th:nth-child(2) {
-        width: 30%;
+      .stat-card .amount {
+        font-size: 0.85rem;
       }
 
-      th:nth-child(3) {
+      /* Stack table columns on mobile */
+      th:nth-child(3),
+      td:nth-child(3) {
+        display: none;
+      }
+
+      /* Hide category on mobile */
+      th:nth-child(1),
+      td:nth-child(1) {
         width: 15%;
       }
-    }
 
-    /* Enhanced visual feedback */
-    .stat-card {
-      position: relative;
-      overflow: hidden;
-    }
+      th:nth-child(2),
+      td:nth-child(2) {
+        width: 40%;
+      }
 
-    .stat-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
+      th:nth-child(4),
+      td:nth-child(4) {
+        width: 22.5%;
+      }
 
-    .stat-card:hover::before {
-      opacity: 1;
+      th:nth-child(5),
+      td:nth-child(5) {
+        width: 22.5%;
+      }
     }
   </style>
 </head>
@@ -570,13 +514,13 @@
       <section class="analytics-section">
         <div class="analytics-header">
           <h2>Financial Overview</h2>
-          <p>Summary of your financial activity for the selected period</p>
+          <p>Summary of your financial activity</p>
         </div>
 
         <div class="analytics-grid">
           <div class="stat-card income">
             <h3>Total Income</h3>
-            <div class="amount">
+            <div class="amount income-amount">
               <%= (typeof totalIncome !=='undefined' ? totalIncome : 0).toLocaleString('en-IN', { minimumFractionDigits:
                 2, maximumFractionDigits: 2 }) %>
             </div>
@@ -587,7 +531,7 @@
 
           <div class="stat-card expense">
             <h3>Total Expenses</h3>
-            <div class="amount">
+            <div class="amount expense-amount">
               <%= (typeof totalExpense !=='undefined' ? totalExpense : 0).toLocaleString('en-IN', {
                 minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
             </div>
@@ -598,7 +542,8 @@
 
           <div class="stat-card balance">
             <h3>Net Balance</h3>
-            <div class="amount">
+            <div
+              class="amount <%= (typeof balance !== 'undefined' && balance >= 0) ? 'income-amount' : 'expense-amount' %>">
               <%= (typeof balance !=='undefined' ? balance : 0).toLocaleString('en-IN', { minimumFractionDigits: 2,
                 maximumFractionDigits: 2 }) %>
             </div>
@@ -609,10 +554,11 @@
 
           <div class="stat-card change">
             <h3>Income Change</h3>
-            <div class="amount">
+            <div
+              class="amount <%= (typeof incomePercentageChange !== 'undefined' && incomePercentageChange >= 0) ? 'income-amount' : 'expense-amount' %>">
               <%= (typeof incomePercentageChange !=='undefined' ? incomePercentageChange : 0).toFixed(1) %>%
             </div>
-            <div class="currency">vs Previous Period</div>
+            <div class="currency">vs Prev. Period</div>
           </div>
         </div>
       </section>
@@ -643,7 +589,7 @@
                   <tr>
                     <td>
                       <%= transaction.createdAt ? new Date(transaction.createdAt).toLocaleDateString('en-GB', {
-                        day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A' %>
+                        month: 'short' , day: 'numeric' , year: 'numeric' }) : 'N/A' %>
                     </td>
                     <td>
                       <div class="transaction-text">

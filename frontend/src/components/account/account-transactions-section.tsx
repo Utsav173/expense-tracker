@@ -159,7 +159,7 @@ export const AccountTransactionsSection = ({
 
   return (
     <div className='flex h-auto flex-col'>
-      <div className='border-b p-4'>
+      <div className='border-b p-4 max-sm:mb-4'>
         {/* Search and Filter Toggle */}
         <div className='flex items-center gap-2'>
           <div className='relative flex-1'>

@@ -13,6 +13,7 @@
     "db:studio": "bunx drizzle-kit studio",
     "db:check": "bunx drizzle-kit check",
     "seed": "bun run src/database/seed.ts",
+    "reseed": "bun run src/database/reseed.ts",
     "format": "prettier . --write"
   },
   "dependencies": {

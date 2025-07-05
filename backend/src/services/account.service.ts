@@ -1215,6 +1215,7 @@ export class AccountService {
       const pdfBuffer = await pdfService.generatePdfFromHtml(html, {
         format: 'A4',
         printBackground: true,
+        fullPage: true,
       });
       return {
         buffer: Buffer.from(pdfBuffer), // Convert pdfBuffer,
