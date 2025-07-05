@@ -60,7 +60,7 @@ Detailed feature lists can be found in the respective README files:
 - **AI:** [@ai-sdk/google](https://sdk.vercel.ai/)
 - **Scheduling:** [node-cron](https://www.npmjs.com/package/node-cron)
 - **Email:** [Nodemailer](https://nodemailer.com/about/)
-- **File Handling:** [XLSX](https://sheetjs.com/), [Puppeteer](https://pptr.dev/) (PDF generation)
+- **File Handling:** [XLSX](https://sheetjs.com/), PDF generation handled by `pdf-generator-worker` (using Puppeteer and EJS for templates)
 - **Other:** [Zod](https://zod.dev/), [date-fns-tz](https://date-fns.org/v2/docs/Time-Zones), [Sharp](https://sharp.pixelplumbing.com/) (Image processing), [crypto.subtle](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto) (for AES-GCM)
 
 ## Project Structure

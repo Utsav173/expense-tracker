@@ -1,7 +1,7 @@
 import { db } from '../database';
-import { Budget, SavingGoal, Transaction, User, Category } from '../database/schema';
+import { Budget, SavingGoal, Transaction } from '../database/schema';
 import { emailService } from './email.service';
-import { and, eq, gt, isNull, lte, sql, gte, sum, ne, or, desc, isNotNull } from 'drizzle-orm';
+import { and, eq, gt, isNull, lte, sql, gte, or, desc, isNotNull } from 'drizzle-orm';
 import {
   startOfMonth,
   endOfMonth,
@@ -15,15 +15,7 @@ import {
   isBefore,
   isEqual,
   isAfter,
-  parseISO,
 } from 'date-fns';
-import {
-  budgetAlertEmailTemp,
-  goalReminderEmailTemp,
-  billReminderEmailTemp,
-} from '../utils/email.utils';
-import { recurringTransactionService } from './recurring.service';
-import { HTTPException } from 'hono/http-exception';
 
 const BUDGET_ALERT_THRESHOLD = 0.9;
 const GOAL_REMINDER_DAYS = 7;

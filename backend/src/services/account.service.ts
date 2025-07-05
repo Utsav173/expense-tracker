@@ -32,7 +32,6 @@ import { read, utils, write } from 'xlsx';
 import { BunFile } from 'bun';
 import path from 'path';
 
-import ejs from 'ejs';
 import { analyticsService } from './analytics.service';
 import { getIntervalValue, getSQLInterval } from '../utils/date.utils';
 import { emailService } from './email.service';
@@ -1205,14 +1204,7 @@ export class AccountService {
     };
 
     if (exportType === 'pdf') {
-      const templatePath = path.join(process.cwd(), 'public/template/statement.ejs');
-      let html = await ejs.renderFile(templatePath, reportData).catch((renderError) => {
-        console.error('EJS Template Rendering Error:', renderError);
-        throw new HTTPException(500, {
-          message: `Failed to render statement template: ${renderError.message}`,
-        });
-      });
-      const pdfBuffer = await pdfService.generatePdfFromHtml(html, {
+      const pdfBuffer = await pdfService.generatePdfFromTemplate('statement', reportData, {
         format: 'A4',
         printBackground: true,
         fullPage: true,

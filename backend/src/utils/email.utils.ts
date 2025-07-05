@@ -89,11 +89,11 @@ export function forgotPasswordTemp(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Reset Your Password - Expense Manager</title>
   <style>
-     body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #F5F7FA; margin: 0; padding: 0; color: #333333; }
+    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #F5F7FA; margin: 0; padding: 0; color: #333333; }
     .container { max-width: 600px; margin: 20px auto; padding: 30px; background-color: #FFFFFF; border-radius: 12px; box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1); }
     .logo { text-align: center; margin-bottom: 25px; }
     .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #EEEEEE; }
-    .header h1 { font-size: 28px; margin: 0; color: #2672FF; }
+    .header h1 { font-size: 32px; margin: 0; color: #2672FF; }
     .content { font-size: 16px; line-height: 1.6; margin-bottom: 35px; color: #555555; }
     .content p { margin-bottom: 15px; }
     .security-notice { background-color: #FFF8E6; border-left: 4px solid #FFB400; padding: 15px; margin: 20px 0; border-radius: 4px; }
@@ -168,18 +168,87 @@ export function budgetAlertEmailTemp(
         )}%).`;
 
   return `<!DOCTYPE html>
-  <html>
-  <head> <meta charset="utf-8"> <title>${subject}</title> <style> body { font-family: sans-serif; } .container { max-width: 600px; margin: 20px auto; padding: 20px; background-color: #f9f9f9; border-radius: 8px; } </style> </head>
-  <body>
-    <div class="container">
-      <h1>${subject}</h1>
-      <p>Hi ${safeUsername},</p>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject} - Expense Manager</title>
+  <style>
+    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #F5F7FA; margin: 0; padding: 0; color: #333333; }
+    .container { max-width: 600px; margin: 20px auto; padding: 30px; background-color: #FFFFFF; border-radius: 12px; box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1); }
+    .logo { text-align: center; margin-bottom: 25px; }
+    .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #EEEEEE; }
+    .header h1 { font-size: 32px; margin: 0; color: ${
+      alertType === 'exceeded' ? '#FF4444' : '#FFB400'
+    }; }
+    .content { font-size: 16px; line-height: 1.6; margin-bottom: 35px; color: #555555; }
+    .content p { margin-bottom: 15px; }
+    .budget-details { background-color: ${
+      alertType === 'exceeded' ? '#FFE6E6' : '#FFF8E6'
+    }; border-left: 4px solid ${
+    alertType === 'exceeded' ? '#FF4444' : '#FFB400'
+  }; padding: 20px; margin: 20px 0; border-radius: 8px; }
+    .budget-details h3 { color: ${
+      alertType === 'exceeded' ? '#CC0000' : '#7A5800'
+    }; margin-top: 0; margin-bottom: 15px; }
+    .budget-details p { margin: 8px 0; color: ${alertType === 'exceeded' ? '#CC0000' : '#7A5800'}; }
+    .budget-stats { display: flex; justify-content: space-between; margin-top: 15px; }
+    .stat-item { text-align: center; flex: 1; }
+    .stat-item strong { display: block; font-size: 18px; margin-bottom: 5px; }
+    .stat-item span { font-size: 14px; color: #777777; }
+    .button-container { text-align: center; margin: 30px 0; }
+    .button { display: inline-block; background-color: #2672FF; color: white !important; text-align: center; font-size: 16px; font-weight: bold; padding: 12px 30px; border-radius: 6px; text-decoration: none; transition: background-color 0.2s ease; }
+    .button:hover { background-color: #1E5CC7; }
+    .footer { font-size: 14px; color: #999999; text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #EEEEEE; }
+    .footer p { margin: 5px 0; }
+    @media only screen and (max-width: 600px) { 
+      .container { padding: 20px; } 
+      .budget-stats { flex-direction: column; gap: 15px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo"></div>
+    <div class="header"><h1>${
+      alertType === 'exceeded' ? '⚠️ Budget Exceeded' : '📊 Budget Alert'
+    }</h1></div>
+    <div class="content">
+      <p>Hi <strong>${safeUsername}</strong>,</p>
       <p>${message}</p>
-      <p>Consider reviewing your spending in this category.</p>
-      <p>Thank you,<br/>Expense Tracker Team</p>
+      <div class="budget-details">
+        <h3>Budget Summary - ${categoryName}</h3>
+        <div class="budget-stats">
+          <div class="stat-item">
+            <strong>${currency}${budgetedAmount.toFixed(2)}</strong>
+            <span>Budgeted</span>
+          </div>
+          <div class="stat-item">
+            <strong>${currency}${spentAmount.toFixed(2)}</strong>
+            <span>Spent</span>
+          </div>
+          <div class="stat-item">
+            <strong>${percentageSpent.toFixed(1)}%</strong>
+            <span>Used</span>
+          </div>
+        </div>
+        <p><strong>Period:</strong> ${period}</p>
+      </div>
+      <p>${
+        alertType === 'exceeded'
+          ? 'Consider reviewing your recent expenses in this category to get back on track.'
+          : 'Consider reviewing your spending in this category to stay within your budget.'
+      }</p>
+      <div class="button-container"><a href="#" class="button">View Expense Details</a></div>
     </div>
-  </body>
-  </html>`;
+    <div class="footer">
+      <p>This email was sent to <strong>${safeUsername}</strong>.</p>
+      <p>To manage your budget alerts, log in to your account settings.</p>
+      <p>© ${new Date().getFullYear()} Expense Manager | <a href="#" style="color: #999999;">Privacy Policy</a> | <a href="#" style="color: #999999;">Contact Support</a></p>
+    </div>
+  </div>
+</body>
+</html>`;
 }
 
 /**
@@ -201,21 +270,69 @@ export function goalReminderEmailTemp(
   const { goalName, targetDate, remainingAmount, currency } = goalDetails;
 
   return `<!DOCTYPE html>
-  <html>
-  <head> <meta charset="utf-8"> <title>Saving Goal Reminder: ${goalName}</title> <style> body { font-family: sans-serif; } .container { max-width: 600px; margin: 20px auto; padding: 20px; background-color: #f9f9f9; border-radius: 8px; } </style> </head>
-  <body>
-    <div class="container">
-      <h1>Goal Reminder: ${goalName}</h1>
-      <p>Hi ${safeUsername},</p>
-      <p>Just a friendly reminder that your saving goal "<strong>${goalName}</strong>" is approaching its target date of <strong>${targetDate}</strong>.</p>
-      <p>You still need to save <strong>${currency}${remainingAmount.toFixed(
-        2,
-      )}</strong> to reach your target.</p>
-      <p>Keep up the great work!</p>
-      <p>Thank you,<br/>Expense Tracker Team</p>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saving Goal Reminder - Expense Manager</title>
+  <style>
+    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #F5F7FA; margin: 0; padding: 0; color: #333333; }
+    .container { max-width: 600px; margin: 20px auto; padding: 30px; background-color: #FFFFFF; border-radius: 12px; box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1); }
+    .logo { text-align: center; margin-bottom: 25px; }
+    .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #EEEEEE; }
+    .header h1 { font-size: 32px; margin: 0; color: #2672FF; }
+    .content { font-size: 16px; line-height: 1.6; margin-bottom: 35px; color: #555555; }
+    .content p { margin-bottom: 15px; }
+    .goal-details { background-color: #E8F5E8; border-left: 4px solid #28A745; padding: 20px; margin: 20px 0; border-radius: 8px; }
+    .goal-details h3 { color: #1E7E34; margin-top: 0; margin-bottom: 15px; }
+    .goal-details p { margin: 8px 0; color: #1E7E34; }
+    .goal-stats { display: flex; justify-content: space-between; margin-top: 15px; }
+    .stat-item { text-align: center; flex: 1; }
+    .stat-item strong { display: block; font-size: 18px; margin-bottom: 5px; }
+    .stat-item span { font-size: 14px; color: #777777; }
+    .button-container { text-align: center; margin: 30px 0; }
+    .button { display: inline-block; background-color: #2672FF; color: white !important; text-align: center; font-size: 16px; font-weight: bold; padding: 12px 30px; border-radius: 6px; text-decoration: none; transition: background-color 0.2s ease; }
+    .button:hover { background-color: #1E5CC7; }
+    .footer { font-size: 14px; color: #999999; text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #EEEEEE; }
+    .footer p { margin: 5px 0; }
+    @media only screen and (max-width: 600px) { 
+      .container { padding: 20px; } 
+      .goal-stats { flex-direction: column; gap: 15px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo"></div>
+    <div class="header"><h1>🎯 Goal Reminder</h1></div>
+    <div class="content">
+      <p>Hi <strong>${safeUsername}</strong>,</p>
+      <p>Just a friendly reminder about your saving goal that's approaching its target date!</p>
+      <div class="goal-details">
+        <h3>Goal: ${goalName}</h3>
+        <div class="goal-stats">
+          <div class="stat-item">
+            <strong>${currency}${remainingAmount.toFixed(2)}</strong>
+            <span>Remaining</span>
+          </div>
+          <div class="stat-item">
+            <strong>${targetDate}</strong>
+            <span>Target Date</span>
+          </div>
+        </div>
+      </div>
+      <p>You're doing great! Keep up the momentum and you'll reach your goal in no time. Every small contribution brings you closer to achieving your financial objective.</p>
+      <div class="button-container"><a href="#" class="button">View Goal Progress</a></div>
+      <p>Remember, consistent saving habits are the key to financial success. You've got this!</p>
     </div>
-  </body>
-  </html>`;
+    <div class="footer">
+      <p>This email was sent to <strong>${safeUsername}</strong>.</p>
+      <p>To manage your goal reminders, log in to your account settings.</p>
+      <p>© ${new Date().getFullYear()} Expense Manager | <a href="#" style="color: #999999;">Privacy Policy</a> | <a href="#" style="color: #999999;">Contact Support</a></p>
+    </div>
+  </div>
+</body>
+</html>`;
 }
 
 /**
@@ -237,18 +354,72 @@ export function billReminderEmailTemp(
   const { description, amount, dueDate, currency } = billDetails;
 
   return `<!DOCTYPE html>
-  <html>
-  <head> <meta charset="utf-8"> <title>Bill Reminder: ${description}</title> <style> body { font-family: sans-serif; } .container { max-width: 600px; margin: 20px auto; padding: 20px; background-color: #f9f9f9; border-radius: 8px; } </style> </head>
-  <body>
-    <div class="container">
-      <h1>Upcoming Bill Reminder</h1>
-      <p>Hi ${safeUsername},</p>
-      <p>This is a reminder that your recurring payment for "<strong>${description}</strong>" of <strong>${currency}${amount.toFixed(
-        2,
-      )}</strong> is due soon, around <strong>${dueDate}</strong>.</p>
-      <p>Please ensure you have sufficient funds available.</p>
-      <p>Thank you,<br/>Expense Tracker Team</p>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bill Reminder - Expense Manager</title>
+  <style>
+    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #F5F7FA; margin: 0; padding: 0; color: #333333; }
+    .container { max-width: 600px; margin: 20px auto; padding: 30px; background-color: #FFFFFF; border-radius: 12px; box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1); }
+    .logo { text-align: center; margin-bottom: 25px; }
+    .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #EEEEEE; }
+    .header h1 { font-size: 32px; margin: 0; color: #2672FF; }
+    .content { font-size: 16px; line-height: 1.6; margin-bottom: 35px; color: #555555; }
+    .content p { margin-bottom: 15px; }
+    .bill-details { background-color: #FFF3E0; border-left: 4px solid #FF9800; padding: 20px; margin: 20px 0; border-radius: 8px; }
+    .bill-details h3 { color: #E65100; margin-top: 0; margin-bottom: 15px; }
+    .bill-details p { margin: 8px 0; color: #E65100; }
+    .bill-stats { display: flex; justify-content: space-between; margin-top: 15px; }
+    .stat-item { text-align: center; flex: 1; }
+    .stat-item strong { display: block; font-size: 18px; margin-bottom: 5px; }
+    .stat-item span { font-size: 14px; color: #777777; }
+    .button-container { text-align: center; margin: 30px 0; }
+    .button { display: inline-block; background-color: #2672FF; color: white !important; text-align: center; font-size: 16px; font-weight: bold; padding: 12px 30px; border-radius: 6px; text-decoration: none; transition: background-color 0.2s ease; }
+    .button:hover { background-color: #1E5CC7; }
+    .reminder-notice { background-color: #F0F8FF; border-left: 4px solid #2672FF; padding: 15px; margin: 20px 0; border-radius: 4px; }
+    .reminder-notice p { margin: 0; color: #1E5CC7; }
+    .footer { font-size: 14px; color: #999999; text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #EEEEEE; }
+    .footer p { margin: 5px 0; }
+    @media only screen and (max-width: 600px) { 
+      .container { padding: 20px; } 
+      .bill-stats { flex-direction: column; gap: 15px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo"></div>
+    <div class="header"><h1>📅 Bill Reminder</h1></div>
+    <div class="content">
+      <p>Hi <strong>${safeUsername}</strong>,</p>
+      <p>This is a friendly reminder about your upcoming bill payment that's due soon.</p>
+      <div class="bill-details">
+        <h3>Upcoming Payment</h3>
+        <div class="bill-stats">
+          <div class="stat-item">
+            <strong>${currency}${amount.toFixed(2)}</strong>
+            <span>Amount Due</span>
+          </div>
+          <div class="stat-item">
+            <strong>${dueDate}</strong>
+            <span>Due Date</span>
+          </div>
+        </div>
+        <p><strong>Description:</strong> ${description}</p>
+      </div>
+      <div class="reminder-notice">
+        <p><strong>Pro Tip:</strong> Set up automatic payments to never miss a due date and avoid late fees.</p>
+      </div>
+      <p>Please ensure you have sufficient funds available in your account to cover this payment.</p>
+      <div class="button-container"><a href="#" class="button">View All Bills</a></div>
     </div>
-  </body>
-  </html>`;
+    <div class="footer">
+      <p>This email was sent to <strong>${safeUsername}</strong>.</p>
+      <p>To manage your bill reminders, log in to your account settings.</p>
+      <p>© ${new Date().getFullYear()} Expense Manager | <a href="#" style="color: #999999;">Privacy Policy</a> | <a href="#" style="color: #999999;">Contact Support</a></p>
+    </div>
+  </div>
+</body>
+</html>`;
 }
