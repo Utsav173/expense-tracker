@@ -15,8 +15,7 @@ import { Search, Filter, X, Download, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Category, Transaction } from '@/lib/types';
 import { DateRange } from 'react-day-picker';
-import { API_BASE_URL } from '@/lib/api-client';
-import { getAuthTokenClient } from '@/lib/auth';
+import * as XLSX from 'xlsx';
 import { useToast } from '@/lib/hooks/useToast';
 import { format } from 'date-fns';
 
@@ -87,75 +86,54 @@ export const AccountTransactionsSection = ({
   const [isExporting, setIsExporting] = useState(false);
   const { showError, showSuccess, showInfo } = useToast();
 
-  const handleExport = useCallback(async () => {
+  const handleExport = useCallback(() => {
     if (!transactionsData?.transactions || transactionsData.transactions.length === 0) {
       showError('No transactions available to export with the current filters.');
       return;
     }
-
     setIsExporting(true);
     showInfo('Preparing your export...');
-
     try {
-      const params = new URLSearchParams();
-
-      if (filters.accountId) params.set('accountId', filters.accountId);
-      if (filters.debouncedSearchQuery) params.set('q', filters.debouncedSearchQuery);
-      if (filters.categoryId && filters.categoryId !== 'all')
-        params.set('categoryId', filters.categoryId);
-      if (filters.isIncome !== undefined) params.set('isIncome', String(filters.isIncome));
-      if (filters.dateRange?.from)
-        params.set('dateFrom', format(filters.dateRange.from, 'yyyy-MM-dd'));
-      if (filters.dateRange?.to) params.set('dateTo', format(filters.dateRange.to, 'yyyy-MM-dd'));
-      params.set('format', exportFormat);
-
-      const exportUrl = `${API_BASE_URL}/transactions/export?${params.toString()}`;
-      const token = getAuthTokenClient();
-
-      const response = await fetch(exportUrl, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`
+      const transactions = transactionsData.transactions;
+      // Ensure category column is present and is the category name
+      const exportData = transactions.map((tx) => ({
+        ...tx,
+        category:
+          typeof tx.category === 'object' && tx.category?.name ? tx.category.name : tx.category
+      }));
+      if (exportFormat === 'csv') {
+        // CSV Export
+        const headers = Object.keys(exportData[0] || {});
+        const csvRows = [headers.join(',')];
+        for (const tx of exportData) {
+          csvRows.push(headers.map((h) => JSON.stringify((tx as any)[h] ?? '')).join(','));
         }
-      });
-
-      if (!response.ok) {
-        let errorMsg = `Export failed with status: ${response.status}`;
-        try {
-          const errorData = await response.json();
-          errorMsg = errorData.message || errorMsg;
-        } catch (_) {}
-        throw new Error(errorMsg);
+        const csvContent = csvRows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'transactions.csv';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        showSuccess('CSV export started successfully!');
+      } else {
+        // XLSX Export
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
+        XLSX.writeFile(wb, 'transactions.xlsx');
+        showSuccess('Excel export started successfully!');
       }
-
-      const disposition = response.headers.get('content-disposition');
-      let filename = `transactions.${exportFormat}`;
-      if (disposition && disposition.indexOf('attachment') !== -1) {
-        const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-        const matches = filenameRegex.exec(disposition);
-        if (matches != null && matches[1]) {
-          filename = matches[1].replace(/['"]/g, '');
-        }
-      }
-
-      const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = downloadUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(downloadUrl);
-
-      showSuccess('Export started successfully!');
     } catch (error: any) {
       console.error('Export error:', error);
       showError(error.message || 'Failed to export transactions.');
     } finally {
       setIsExporting(false);
     }
-  }, [filters, exportFormat, showError, showSuccess, showInfo, transactionsData?.transactions]);
+  }, [transactionsData?.transactions, exportFormat, showError, showSuccess, showInfo]);
 
   return (
     <div className='flex h-auto flex-col'>
