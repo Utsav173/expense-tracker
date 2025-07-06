@@ -276,77 +276,74 @@ const ImportTransactionsPage = () => {
   ];
 
   return (
-    <div className='min-h-screen p-8 max-sm:p-2'>
-      <div className='mx-auto max-w-6xl'>
+    <div className='min-h-screen p-2 max-sm:p-0'>
+      <div className='mx-auto max-w-6xl max-sm:max-w-full'>
         {/* Header Section */}
-        <div className='mb-8 text-center'>
-          <div className='bg-primary mb-4 inline-flex items-center justify-center rounded-full p-3'>
-            <Database className='text-primary-foreground h-8 w-8' />
+        <div className='mb-6 text-center max-sm:mb-3'>
+          <div className='bg-primary mb-3 inline-flex items-center justify-center rounded-full p-2 max-sm:p-1'>
+            <Database className='text-primary-foreground h-8 w-8 max-sm:h-6 max-sm:w-6' />
           </div>
-          <h1 className='text-foreground mb-2 text-4xl font-bold'>Import Transactions</h1>
-          <p className='text-foreground/80 mx-auto max-w-2xl text-lg'>
+          <h1 className='text-foreground mb-2 text-3xl font-bold max-sm:text-2xl'>
+            Import Transactions
+          </h1>
+          <p className='text-foreground/80 mx-auto max-w-2xl text-base max-sm:max-w-xs max-sm:text-sm'>
             Seamlessly import your financial data with AI-powered processing and intelligent
             categorization
           </p>
         </div>
 
         {/* Progress Steps */}
-        <div className='mb-8'>
-          <div className='flex flex-wrap items-center justify-center space-x-4 md:space-x-8'>
+        <div className='mb-6 max-sm:mb-3'>
+          <div className='flex flex-wrap items-center justify-center space-x-4 max-sm:space-x-2 md:space-x-8'>
             {steps.map((step, index) => (
-              <div key={step.id} className='flex items-center'>
-                <div className='flex flex-col items-center'>
-                  <div
-                    className={`flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-300 ${
-                      currentStep >= step.id
-                        ? 'border-primary bg-primary text-primary-foreground shadow-lg'
-                        : 'border-border bg-card text-muted-foreground'
-                    } `}
-                  >
-                    <step.icon className='h-6 w-6' />
-                  </div>
-                  <div className='mt-2 text-center'>
-                    <p
-                      className={`text-sm font-medium ${currentStep >= step.id ? 'text-primary' : 'text-muted-foreground'}`}
-                    >
-                      {step.name}
-                    </p>
-                    <p className='text-muted-foreground text-xs'>{step.description}</p>
-                  </div>
+              <div key={step.id} className='flex flex-col items-center'>
+                <div
+                  className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all duration-300 max-sm:h-8 max-sm:w-8 ${
+                    currentStep >= step.id
+                      ? 'border-primary bg-primary text-primary-foreground shadow-lg'
+                      : 'border-border bg-card text-muted-foreground'
+                  } `}
+                >
+                  <step.icon className='h-5 w-5 max-sm:h-4 max-sm:w-4' />
                 </div>
-                {index < steps.length - 1 && (
-                  <ArrowRight
-                    className={`mx-2 h-5 w-5 md:mx-4 ${currentStep > step.id ? 'text-primary' : 'text-border'}`}
-                  />
-                )}
+                <div className='mt-1 text-center'>
+                  <p
+                    className={`text-xs font-medium max-sm:text-[11px] ${currentStep >= step.id ? 'text-primary' : 'text-muted-foreground'}`}
+                  >
+                    {step.name}
+                  </p>
+                  <p className='text-muted-foreground text-[10px] max-sm:text-[9px]'>
+                    {step.description}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
         </div>
 
         {/* Main Content */}
-        <div className='grid gap-8 lg:grid-cols-3'>
+        <div className='grid gap-6 max-sm:grid-cols-1 max-sm:gap-3 lg:grid-cols-3'>
           {/* Left Column - Form */}
-          <div className='lg:col-span-2'>
-            <Card className='bg-card/70 border-0 shadow-xl backdrop-blur-sm'>
-              <CardHeader className='pb-6'>
-                <CardTitle className='text-foreground flex items-center text-2xl font-bold'>
-                  <Sparkles className='text-primary mr-3 h-6 w-6' />
+          <div className='max-sm:col-span-1 lg:col-span-2'>
+            <Card className='bg-card/70 border-0 shadow-xl backdrop-blur-sm max-sm:shadow-md'>
+              <CardHeader className='pb-4 max-sm:pb-2'>
+                <CardTitle className='text-foreground flex items-center text-xl font-bold max-sm:text-lg'>
+                  <Sparkles className='text-primary mr-2 h-5 w-5 max-sm:h-4 max-sm:w-4' />
                   Upload & Process
                 </CardTitle>
-                <CardDescription className='text-foreground/80'>
+                <CardDescription className='text-foreground/80 max-sm:text-xs'>
                   Support for Excel (.xlsx, .xls) and PDF formats with AI-powered extraction
                 </CardDescription>
               </CardHeader>
-              <CardContent className='space-y-6'>
+              <CardContent className='space-y-4 max-sm:space-y-2'>
                 {/* Account Selection */}
-                <div className='space-y-3'>
-                  <label className='text-foreground/80 flex items-center text-sm font-semibold'>
-                    <Database className='mr-2 h-4 w-4' />
+                <div className='space-y-2'>
+                  <label className='text-foreground/80 flex items-center text-sm font-semibold max-sm:text-xs'>
+                    <Database className='mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
                     Destination Account *
                   </label>
                   <Select onValueChange={setAccountId} value={accountId}>
-                    <SelectTrigger className='border-border bg-card/50 hover:border-primary/50 focus:border-primary h-12 border-2 backdrop-blur-sm transition-all duration-200'>
+                    <SelectTrigger className='border-border bg-card/50 hover:border-primary/50 focus:border-primary h-10 border-2 backdrop-blur-sm transition-all duration-200 max-sm:h-9'>
                       <SelectValue
                         placeholder={isLoadingAccounts ? 'Loading accounts...' : 'Select account'}
                       />
@@ -365,7 +362,7 @@ const ImportTransactionsPage = () => {
                 </div>
 
                 {/* File Upload */}
-                <div className='border-primary/20 bg-primary/10 rounded-lg border-2 border-dashed p-4 md:p-6'>
+                <div className='border-primary/20 bg-primary/10 rounded-lg border-2 border-dashed p-3 max-sm:p-2 md:p-4'>
                   <ImportDropzone
                     onFileDrop={onFileDrop}
                     isLoading={loading}
@@ -379,9 +376,9 @@ const ImportTransactionsPage = () => {
                     onClick={handleDownloadSample}
                     variant='outline'
                     disabled={loading}
-                    className='border-primary/20 bg-card/50 text-primary hover:border-primary/30 hover:bg-primary/10 backdrop-blur-sm transition-all duration-200'
+                    className='border-primary/20 bg-card/50 text-primary hover:border-primary/30 hover:bg-primary/10 backdrop-blur-sm transition-all duration-200 max-sm:px-2 max-sm:py-1 max-sm:text-xs'
                   >
-                    <FileText className='mr-2 h-4 w-4' />
+                    <FileText className='mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
                     Download Excel Template
                   </Button>
                 </div>
@@ -390,27 +387,29 @@ const ImportTransactionsPage = () => {
           </div>
 
           {/* Right Column - Info Cards */}
-          <div className='space-y-6'>
+          <div className='space-y-4 max-sm:space-y-2'>
             {/* AI Features Card */}
-            <Card className='from-primary/10 to-info/10 border-0 bg-gradient-to-br shadow-lg backdrop-blur-sm'>
-              <CardContent className='p-6'>
-                <div className='mb-4 flex items-center'>
-                  <div className='bg-primary/10 mr-3 rounded-full p-2'>
-                    <Sparkles className='text-primary h-5 w-5' />
+            <Card className='from-primary/10 to-info/10 border-0 bg-gradient-to-br shadow-lg backdrop-blur-sm max-sm:rounded-lg max-sm:border max-sm:border-zinc-200 max-sm:bg-white max-sm:shadow-none max-sm:dark:border-zinc-700 max-sm:dark:bg-zinc-900'>
+              <CardContent className='p-4 max-sm:p-3 max-sm:pr-2 max-sm:pl-4'>
+                <div className='mb-2 flex items-center max-sm:mb-1'>
+                  <div className='bg-primary/10 dark:bg-primary/20 mr-2 rounded-full p-1 max-sm:p-0.5'>
+                    <Sparkles className='text-primary h-5 w-5 max-sm:h-4 max-sm:w-4' />
                   </div>
-                  <h3 className='text-foreground font-semibold'>AI-Powered Processing</h3>
+                  <h3 className='text-foreground font-semibold max-sm:text-left max-sm:text-base max-sm:font-bold dark:text-zinc-100'>
+                    AI-Powered Processing
+                  </h3>
                 </div>
-                <ul className='text-foreground/80 space-y-2 text-sm'>
-                  <li className='flex items-center'>
-                    <CheckCircle2 className='text-success mr-2 h-4 w-4' />
+                <ul className='text-foreground/80 space-y-1 text-xs max-sm:space-y-0.5 max-sm:pl-7 max-sm:text-[13px] dark:text-zinc-300'>
+                  <li className='flex items-center max-sm:mb-1'>
+                    <CheckCircle2 className='text-success mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
                     Intelligent PDF text extraction
                   </li>
-                  <li className='flex items-center'>
-                    <CheckCircle2 className='text-success mr-2 h-4 w-4' />
+                  <li className='flex items-center max-sm:mb-1'>
+                    <CheckCircle2 className='text-success mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
                     Automatic transaction categorization
                   </li>
                   <li className='flex items-center'>
-                    <CheckCircle2 className='text-success mr-2 h-4 w-4' />
+                    <CheckCircle2 className='text-success mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
                     Smart data validation
                   </li>
                 </ul>
@@ -418,25 +417,27 @@ const ImportTransactionsPage = () => {
             </Card>
 
             {/* Security Card */}
-            <Card className='from-success/10 to-success/10 border-0 bg-gradient-to-br shadow-lg backdrop-blur-sm'>
-              <CardContent className='p-6'>
-                <div className='mb-4 flex items-center'>
-                  <div className='bg-success/10 mr-3 rounded-full p-2'>
-                    <Shield className='text-success h-5 w-5' />
+            <Card className='from-success/10 to-success/10 border-0 bg-gradient-to-br shadow-lg backdrop-blur-sm max-sm:rounded-lg max-sm:border max-sm:border-zinc-200 max-sm:bg-white max-sm:shadow-none max-sm:dark:border-zinc-700 max-sm:dark:bg-zinc-900'>
+              <CardContent className='p-4 max-sm:p-3 max-sm:pr-2 max-sm:pl-4'>
+                <div className='mb-2 flex items-center max-sm:mb-1'>
+                  <div className='bg-success/10 dark:bg-success/20 mr-2 rounded-full p-1 max-sm:p-0.5'>
+                    <Shield className='text-success h-5 w-5 max-sm:h-4 max-sm:w-4' />
                   </div>
-                  <h3 className='text-foreground font-semibold'>Secure & Private</h3>
+                  <h3 className='text-foreground font-semibold max-sm:text-left max-sm:text-base max-sm:font-bold dark:text-zinc-100'>
+                    Secure & Private
+                  </h3>
                 </div>
-                <ul className='text-foreground/80 space-y-2 text-sm'>
-                  <li className='flex items-center'>
-                    <CheckCircle2 className='text-success mr-2 h-4 w-4' />
+                <ul className='text-foreground/80 space-y-1 text-xs max-sm:space-y-0.5 max-sm:pl-7 max-sm:text-[13px] dark:text-zinc-300'>
+                  <li className='flex items-center max-sm:mb-1'>
+                    <CheckCircle2 className='text-success mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
                     End-to-end encryption
                   </li>
-                  <li className='flex items-center'>
-                    <CheckCircle2 className='text-success mr-2 h-4 w-4' />
+                  <li className='flex items-center max-sm:mb-1'>
+                    <CheckCircle2 className='text-success mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
                     Password-protected files supported
                   </li>
                   <li className='flex items-center'>
-                    <CheckCircle2 className='text-success mr-2 h-4 w-4' />
+                    <CheckCircle2 className='text-success mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
                     No data stored permanently
                   </li>
                 </ul>
@@ -444,10 +445,12 @@ const ImportTransactionsPage = () => {
             </Card>
 
             {/* Instructions */}
-            <Alert className='border-warning/20 bg-warning/10 backdrop-blur-sm'>
-              <AlertCircle className='h-4 w-4 text-orange-200' />
-              <AlertTitle className='text-orange-300'>Pro Tips</AlertTitle>
-              <AlertDescription className='text-orange-500/60'>
+            <Alert className='border-warning/20 bg-warning/10 max-sm:rounded-lg max-sm:border max-sm:border-zinc-200 max-sm:bg-white max-sm:p-3 max-sm:text-[13px] dark:bg-zinc-900 max-sm:dark:border-zinc-700 max-sm:dark:bg-zinc-900'>
+              <AlertCircle className='h-4 w-4 text-orange-200 max-sm:h-3 max-sm:w-3' />
+              <AlertTitle className='text-orange-300 max-sm:text-xs max-sm:font-bold dark:text-orange-200'>
+                Pro Tips
+              </AlertTitle>
+              <AlertDescription className='text-orange-500/60 max-sm:text-xs max-sm:font-normal dark:text-orange-300'>
                 For best results, use our Excel template. PDF processing is powered by AI but may
                 require review before final import.
               </AlertDescription>
@@ -458,13 +461,13 @@ const ImportTransactionsPage = () => {
 
       {/* Preview Dialog */}
       <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-        <DialogContent className='bg-card/95 max-h-[90vh] max-w-full backdrop-blur-sm sm:max-w-lg md:max-w-xl lg:max-w-6xl'>
+        <DialogContent className='bg-card/95 max-h-[90vh] max-w-full backdrop-blur-sm max-sm:p-2 sm:max-w-lg md:max-w-xl lg:max-w-6xl'>
           <DialogHeader>
-            <DialogTitle className='flex items-center text-xl'>
-              <FileText className='text-primary mr-2 h-5 w-5' />
+            <DialogTitle className='flex items-center text-lg max-sm:text-base'>
+              <FileText className='text-primary mr-2 h-5 w-5 max-sm:h-4 max-sm:w-4' />
               Review Transactions
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className='max-sm:text-xs'>
               Select the transactions you want to import. Deselect any rows you wish to exclude.
             </DialogDescription>
           </DialogHeader>
@@ -478,16 +481,16 @@ const ImportTransactionsPage = () => {
             />
           </div>
 
-          <DialogFooter className='bg-muted/50 border-t p-4 md:p-6'>
+          <DialogFooter className='bg-muted/50 border-t p-4 max-sm:p-2 md:p-6'>
             <div className='flex w-full items-center justify-between max-sm:flex-col max-sm:items-center max-sm:space-y-2'>
               <div className='flex items-center space-x-4 max-sm:flex-col max-sm:items-center max-sm:space-y-2'>
-                <p className='text-muted-foreground text-sm'>
+                <p className='text-muted-foreground text-xs max-sm:text-[11px]'>
                   <span className='text-primary font-semibold'>{selectedRowCount}</span> of{' '}
                   {transactions.length} rows selected
                 </p>
                 {selectedRowCount > 0 && (
-                  <div className='bg-success/10 rounded-full px-3 py-1'>
-                    <span className='text-success-foreground text-xs font-medium'>
+                  <div className='bg-success/10 rounded-full px-3 py-1 max-sm:px-2 max-sm:py-0.5'>
+                    <span className='text-success-foreground text-xs font-medium max-sm:text-[10px]'>
                       Ready to import
                     </span>
                   </div>
@@ -498,24 +501,24 @@ const ImportTransactionsPage = () => {
                   variant='outline'
                   onClick={() => setIsConfirmOpen(false)}
                   disabled={loading}
-                  className='bg-card/50'
+                  className='bg-card/50 max-sm:text-xs'
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={handleConfirmAndStage}
                   disabled={loading || selectedRowCount === 0}
-                  className='from-primary to-info text-primary-foreground bg-gradient-to-r shadow-lg transition-all duration-200 hover:shadow-xl'
+                  className='from-primary to-info text-primary-foreground bg-gradient-to-r shadow-lg transition-all duration-200 hover:shadow-xl max-sm:px-2 max-sm:py-1 max-sm:text-xs'
                 >
                   {loading ? (
                     <>
-                      <div className='border-primary-foreground mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent'></div>
+                      <div className='border-primary-foreground mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent max-sm:h-3 max-sm:w-3'></div>
                       Processing...
                     </>
                   ) : (
                     <>
                       Stage {selectedRowCount} Transactions
-                      <ArrowRight className='ml-2 h-4 w-4' />
+                      <ArrowRight className='ml-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
                     </>
                   )}
                 </Button>
@@ -527,13 +530,13 @@ const ImportTransactionsPage = () => {
 
       {/* Final Confirmation Dialog */}
       <Dialog open={!!successId} onOpenChange={() => setSuccessId(null)}>
-        <DialogContent className='bg-card/95 backdrop-blur-sm'>
+        <DialogContent className='bg-card/95 backdrop-blur-sm max-sm:p-2'>
           <DialogHeader>
-            <DialogTitle className='flex items-center text-xl'>
-              <CheckCircle2 className='text-success mr-2 h-5 w-5' />
+            <DialogTitle className='flex items-center text-lg max-sm:text-base'>
+              <CheckCircle2 className='text-success mr-2 h-5 w-5 max-sm:h-4 max-sm:w-4' />
               Final Confirmation
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className='max-sm:text-xs'>
               <span className='text-primary font-semibold'>{Object.keys(rowSelection).length}</span>{' '}
               transactions are staged and ready. This action will add them to your account and
               cannot be undone.
@@ -544,23 +547,23 @@ const ImportTransactionsPage = () => {
               variant='outline'
               onClick={() => setSuccessId(null)}
               disabled={loading}
-              className='bg-card/50 max-sm:mb-4'
+              className='bg-card/50 max-sm:mb-2 max-sm:text-xs'
             >
               Cancel
             </Button>
             <Button
               onClick={handleFinalImport}
               disabled={loading}
-              className='from-success to-success text-success-foreground bg-gradient-to-r shadow-lg transition-all duration-200 hover:shadow-xl'
+              className='from-success to-success text-success-foreground bg-gradient-to-r shadow-lg transition-all duration-200 hover:shadow-xl max-sm:px-2 max-sm:py-1 max-sm:text-xs'
             >
               {loading ? (
                 <>
-                  <div className='border-success-foreground mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent'></div>
+                  <div className='border-success-foreground mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent max-sm:h-3 max-sm:w-3'></div>
                   Importing...
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className='mr-2 h-4 w-4' />
+                  <CheckCircle2 className='mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
                   Confirm Import
                 </>
               )}
@@ -573,21 +576,21 @@ const ImportTransactionsPage = () => {
       <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
         <DialogContent
           onCloseAutoFocus={(e) => e.preventDefault()}
-          className='bg-card/95 max-w-full backdrop-blur-sm sm:max-w-lg md:max-w-xl'
+          className='bg-card/95 max-w-full backdrop-blur-sm max-sm:p-2 sm:max-w-lg md:max-w-xl'
         >
           <DialogHeader>
-            <DialogTitle className='flex items-center'>
-              <KeyRound className='text-primary mr-2 h-5 w-5' />
+            <DialogTitle className='flex items-center text-lg max-sm:text-base'>
+              <KeyRound className='text-primary mr-2 h-5 w-5 max-sm:h-4 max-sm:w-4' />
               Password Required
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className='max-sm:text-xs'>
               <span className='text-foreground font-medium'>{pendingFile?.name}</span>&quot; is
               encrypted. Please enter the password to unlock it.
             </DialogDescription>
           </DialogHeader>
-          <div className='grid gap-4 py-4'>
-            <div className='space-y-2'>
-              <Label htmlFor='password-input' className='text-sm font-medium'>
+          <div className='grid gap-3 py-3 max-sm:gap-2 max-sm:py-2'>
+            <div className='space-y-1'>
+              <Label htmlFor='password-input' className='text-xs font-medium'>
                 Password
               </Label>
               <Input
@@ -598,13 +601,13 @@ const ImportTransactionsPage = () => {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handlePasswordSubmit();
                 }}
-                className='border-border bg-card/50 focus:border-primary h-12 border-2 backdrop-blur-sm transition-all duration-200'
+                className='border-border bg-card/50 focus:border-primary h-10 border-2 backdrop-blur-sm transition-all duration-200 max-sm:h-9 max-sm:text-xs'
                 placeholder='Enter file password'
                 autoFocus
               />
             </div>
             {passwordError && (
-              <p className='bg-destructive/10 text-destructive rounded p-2 text-sm'>
+              <p className='bg-destructive/10 text-destructive rounded p-2 text-xs max-sm:text-[11px]'>
                 {passwordError}
               </p>
             )}
@@ -614,23 +617,23 @@ const ImportTransactionsPage = () => {
               variant='outline'
               onClick={() => setIsPasswordDialogOpen(false)}
               disabled={loading}
-              className='bg-card/50'
+              className='bg-card/50 max-sm:text-xs'
             >
               Cancel
             </Button>
             <Button
               onClick={handlePasswordSubmit}
               disabled={loading || !password}
-              className='from-primary to-info text-primary-foreground bg-gradient-to-r max-sm:mb-2'
+              className='from-primary to-info text-primary-foreground bg-gradient-to-r max-sm:mb-2 max-sm:px-2 max-sm:py-1 max-sm:text-xs'
             >
               {loading ? (
                 <>
-                  <div className='border-primary-foreground mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent'></div>
+                  <div className='border-primary-foreground mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent max-sm:h-3 max-sm:w-3'></div>
                   Unlocking...
                 </>
               ) : (
                 <>
-                  <KeyRound className='mr-2 h-4 w-4' />
+                  <KeyRound className='mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
                   Unlock & Continue
                 </>
               )}

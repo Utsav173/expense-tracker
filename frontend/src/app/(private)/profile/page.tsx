@@ -19,7 +19,7 @@ const ProfilePage = () => {
         color={theme.theme === 'dark' ? '#fff' : '#000'}
         refresh
       />
-      <div className='z-20 mx-auto my-auto p-4'>
+      <div className='z-20 mx-auto my-auto p-4 max-sm:p-1'>
         <UserProfile />
       </div>
     </>

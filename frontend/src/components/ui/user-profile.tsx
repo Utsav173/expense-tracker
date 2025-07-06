@@ -201,7 +201,7 @@ const UserProfile = () => {
 
   if (userIsLoading) {
     return (
-      <div className='mx-auto max-w-4xl p-4 md:p-8'>
+      <div className='mx-auto max-w-4xl p-4 max-sm:p-1 md:p-8'>
         <div className='grid gap-6 md:grid-cols-1'>
           <Card className='w-full'>
             <CardHeader>
@@ -230,7 +230,7 @@ const UserProfile = () => {
 
   if (!user) {
     return (
-      <div className='mx-auto max-w-4xl p-4 md:p-8'>
+      <div className='mx-auto max-w-4xl p-4 max-sm:p-1 md:p-8'>
         <Card className='w-full'>
           <CardContent className='p-8 text-center'>
             <div className='space-y-4'>
@@ -250,7 +250,7 @@ const UserProfile = () => {
   const isApiKeySubmitting = updateApiKeyMutation.isPending;
 
   return (
-    <div className='mx-auto max-w-4xl p-4 md:p-8'>
+    <div className='mx-auto max-w-4xl p-4 max-sm:p-1 md:p-8'>
       <div className='space-y-8'>
         {/* Header */}
         <div className='space-y-2 text-center'>
@@ -263,13 +263,15 @@ const UserProfile = () => {
         {/* Profile Information Card */}
         <Card>
           <CardHeader className='pb-6'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <CardTitle className='flex items-center gap-2'>
+            <div className='flex items-center justify-between max-sm:flex-col max-sm:gap-2'>
+              <div className='max-sm:space-y-2'>
+                <CardTitle className='flex items-center gap-2 max-sm:mx-auto max-sm:w-fit'>
                   <UserIcon className='h-5 w-5' />
                   Profile Information
                 </CardTitle>
-                <CardDescription>Update your personal details and profile picture</CardDescription>
+                <CardDescription className='max-sm:text-center'>
+                  Update your personal details and profile picture
+                </CardDescription>
               </div>
               {!isEditingProfile && (
                 <Button
@@ -451,7 +453,7 @@ const UserProfile = () => {
                       : 'Add an API key to enable AI features'}
                   </p>
                 </div>
-                <Badge variant={hasAiApiKey ? 'default' : 'secondary'}>
+                <Badge className='shrink-0' variant={hasAiApiKey ? 'default' : 'secondary'}>
                   {hasAiApiKey ? (
                     <>
                       <Check className='mr-1 h-3 w-3' />
