@@ -338,7 +338,7 @@
     --shadow-xl:
       0px 2px 0px 0px oklch(0.6723 0.1606 244.9955 / 0),
       0px 8px 10px -1px oklch(0.6723 0.1606 244.9955 / 0);
-    --shadow-2xl: 0px 2px 0px 0px oklch(0.6723 0.1606 244.9955 / 0);
+    --shadow-2xl: 0px 2px 0px 0px oklch(67.23% 0.1607 245.017 / 0.076);
 
     --income: oklch(0.4 0.12 160);
     --income-foreground: oklch(1 0 0);
@@ -356,6 +356,7 @@
 }
 
 @layer base {
+
   *,
   ::after,
   ::before,
@@ -388,11 +389,9 @@
   }
 
   .hero-gradient {
-    background: linear-gradient(
-      160deg,
-      oklch(from var(--background) l c h / 0) 0%,
-      oklch(from var(--primary) l c h / 0.15) 100%
-    );
+    background: linear-gradient(160deg,
+        oklch(from var(--background) l c h / 0) 0%,
+        oklch(from var(--primary) l c h / 0.15) 100%);
   }
 
   .scrollbar {

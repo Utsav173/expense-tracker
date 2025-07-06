@@ -1,19 +1,21 @@
 import React from 'react';
 import { InvestmentAccount } from '@/lib/types';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash, TrendingUp, ChevronRight } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+import { motion, Variants } from 'framer-motion';
+
+const cardVariants: Variants = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 1, 0.5, 1] } },
+  hover: { y: -6, transition: { duration: 0.3, ease: [0.25, 1, 0.5, 1] } }
+};
 
 interface InvestmentAccountCardProps {
-  account: InvestmentAccount & {
-    performancePercentage?: number;
-    lastUpdated?: string;
-  };
+  account: InvestmentAccount & { lastUpdated?: string };
   onEdit: (account: InvestmentAccount) => void;
   onDelete: (id: string) => void;
   className?: string;
@@ -25,114 +27,108 @@ const InvestmentAccountCard: React.FC<InvestmentAccountCardProps> = ({
   onDelete,
   className
 }) => {
-  const performanceColor =
-    account.performancePercentage && account.performancePercentage >= 0
-      ? 'text-green-500'
-      : 'text-red-500';
-  const performanceIcon =
-    account.performancePercentage && account.performancePercentage >= 0 ? '↑' : '↓';
-  const performanceValue = account.performancePercentage
-    ? Math.abs(account.performancePercentage)
-    : 0;
+  const formatDate = (dateString?: string) => {
+    if (!dateString || isNaN(new Date(dateString).getTime())) return null;
+    return new Date(dateString).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  };
+
+  const lastUpdated = formatDate(account.updatedAt);
 
   return (
-    <Card
+    <motion.div
+      variants={cardVariants}
+      initial='initial'
+      animate='animate'
+      whileHover='hover'
       className={cn(
-        'group relative flex h-full flex-col overflow-hidden transition-all duration-300 hover:shadow-md',
+        'group bg-card relative flex h-full flex-col overflow-hidden rounded-xl border shadow-sm',
         className
       )}
     >
-      <CardHeader className='pb-2'>
-        <div className='flex items-start justify-between'>
-          <div className='flex-1 pr-8'>
-            <CardTitle className='line-clamp-1 text-xl font-bold'>{account.name}</CardTitle>
-            <div className='mt-1.5 flex items-center gap-2'>
-              {account.platform && (
-                <Badge
-                  variant='outline'
-                  className='bg-primary/10 text-primary px-2 py-0.5 text-xs font-medium'
-                >
-                  {account.platform}
-                </Badge>
-              )}
-              <span className='text-muted-foreground text-xs font-medium'>{account.currency}</span>
-            </div>
-          </div>
-          <div className='absolute top-3 right-3 flex gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100'>
-            <Button
-              size='icon'
-              variant='ghost'
-              className='bg-background/80 hover:bg-background h-8 w-8 rounded-full backdrop-blur-xs'
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                onEdit(account);
-              }}
-            >
-              <Edit size={15} />
-            </Button>
-            <Button
-              size='icon'
-              variant='ghost'
-              className='bg-background/80 text-destructive hover:bg-destructive/10 h-8 w-8 rounded-full backdrop-blur-xs'
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                onDelete(account.id);
-              }}
-            >
-              <Trash size={15} />
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
+      <div className='pointer-events-none absolute -inset-px rounded-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100'>
+        <div className='via-primary/10 absolute inset-0 rounded-xl bg-gradient-to-t from-transparent to-transparent' />
+      </div>
 
-      <CardContent className='grow pt-2 pb-4'>
-        <div className='space-y-4'>
-          <div className='flex items-center gap-1.5'>
-            <TrendingUp className='text-primary h-5 w-5' />
+      <div className='flex items-start justify-between p-4'>
+        <div className='flex-1'>
+          <h3 className='text-foreground mb-1 line-clamp-1 font-semibold'>{account.name}</h3>
+          {account.platform && (
+            <Badge className='border-transparent bg-amber-100 text-amber-800 transition-colors hover:bg-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:hover:bg-amber-900'>
+              {account.platform}
+            </Badge>
+          )}
+        </div>
+        <div className='flex scale-90 items-center gap-1 opacity-0 transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 max-sm:opacity-100'>
+          <Button
+            size='icon'
+            variant='ghost'
+            className='h-7 w-7 rounded-md'
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onEdit(account);
+            }}
+          >
+            <Edit size={13} />
+          </Button>
+          <Button
+            size='icon'
+            variant='ghost'
+            className='hover:bg-destructive/10 hover:text-destructive h-7 w-7 rounded-md'
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onDelete(account.id);
+            }}
+          >
+            <Trash size={13} />
+          </Button>
+        </div>
+      </div>
+
+      <div className='flex flex-grow flex-col justify-center px-4 pb-4'>
+        <div className='flex items-center gap-3'>
+          <div className='bg-primary/10 text-primary flex h-9 w-9 items-center justify-center rounded-lg transition-transform duration-300 group-hover:scale-110'>
+            <TrendingUp className='h-5 w-5' />
+          </div>
+          <div className='flex-1'>
+            <p className='text-muted-foreground text-xs font-medium'>Current Balance</p>
             <p className='text-foreground text-2xl font-bold tracking-tight'>
               {formatCurrency(account.balance || 0, account.currency)}
             </p>
           </div>
-          <p className='text-muted-foreground mt-0.5 text-xs'>Current Balance</p>
-
-          {account.performancePercentage !== undefined && (
-            <div className='space-y-2'>
-              <div className='flex items-center justify-between text-sm'>
-                <span className='text-muted-foreground'>Performance</span>
-                <span className={cn('font-medium', performanceColor)}>
-                  {performanceIcon} {performanceValue}%
-                </span>
-              </div>
-              <Progress
-                value={performanceValue}
-                className={cn(
-                  'h-2',
-                  account.performancePercentage >= 0 ? 'bg-green-100' : 'bg-red-100'
-                )}
-              />
-            </div>
-          )}
-
-          {account.lastUpdated && (
-            <div className='text-muted-foreground text-xs'>
-              Last updated: {new Date(account.lastUpdated).toLocaleDateString()}
-            </div>
-          )}
         </div>
-      </CardContent>
+      </div>
 
-      <CardFooter className='mt-auto block p-0'>
-        <Link
-          href={`/investment/${account.id}`}
-          className='bg-primary/10 text-primary hover:bg-primary/20 flex w-full items-center justify-between rounded-b-lg px-4 py-3 text-sm font-medium transition-colors'
-        >
-          <span>View Details & Holdings</span>
-          <ChevronRight size={16} />
-        </Link>
-      </CardFooter>
-    </Card>
+      <div className='bg-background/30 mt-auto border-t p-4'>
+        <div className='flex items-center justify-between'>
+          <div className='text-muted-foreground flex items-center gap-2 text-xs'>
+            <motion.div
+              className='h-2 w-2 rounded-full bg-green-500'
+              animate={{ scale: [1, 1.2, 1], opacity: [1, 0.7, 1] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <span>Active</span>
+            {lastUpdated && (
+              <>
+                <span className='text-muted-foreground/50'>•</span>
+                <span>Updated {lastUpdated}</span>
+              </>
+            )}
+          </div>
+          <Link
+            href={`/investment/${account.id}`}
+            className='group/link text-primary flex items-center gap-1 text-sm font-medium'
+          >
+            <span className='underline-offset-4 group-hover/link:underline'>View Details</span>
+            <ChevronRight
+              size={14}
+              className='transition-transform duration-200 group-hover/link:translate-x-0.5'
+            />
+          </Link>
+        </div>
+      </div>
+    </motion.div>
   );
 };
 

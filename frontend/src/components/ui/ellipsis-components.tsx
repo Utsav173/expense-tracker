@@ -129,14 +129,6 @@ export const ResponsiveEllipsis: React.FC<ResponsiveEllipsisProps> = ({
 }) => {
   const content = text || (children as string);
 
-  const responsiveClasses: Record<string, string> = {
-    sm: 'hidden sm:block',
-    md: 'hidden md:block',
-    lg: 'hidden lg:block',
-    xl: 'hidden xl:block',
-    '2xl': 'hidden 2xl:block'
-  };
-
   const mobileClasses: Record<string, string> = {
     sm: 'sm:hidden',
     md: 'md:hidden',

@@ -19,6 +19,17 @@ import DeleteConfirmationModal from '@/components/modals/delete-confirmation-mod
 import { Card } from '@/components/ui/card';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import InvestmentAccountCard from '@/components/investment/investment-account-card';
+import { motion } from 'framer-motion';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
 
 const InvestmentPage = () => {
   const router = useRouter();
@@ -113,7 +124,12 @@ const InvestmentPage = () => {
       </div>
 
       {accounts?.data && accounts.data.length > 0 ? (
-        <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3'>
+        <motion.div
+          className='grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3'
+          variants={containerVariants}
+          initial='hidden'
+          animate='visible'
+        >
           {accounts.data.map((account) => (
             <InvestmentAccountCard
               key={account.id}
@@ -122,7 +138,7 @@ const InvestmentPage = () => {
               onDelete={handleDeleteClick}
             />
           ))}
-        </div>
+        </motion.div>
       ) : (
         <Card className='flex flex-col items-center justify-center p-10 text-center'>
           <div className='bg-muted rounded-full p-6'>

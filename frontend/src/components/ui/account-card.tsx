@@ -2,216 +2,185 @@
 
 import Link from 'next/link';
 import * as React from 'react';
-import { CreditCard, ArrowUp, ArrowDown, Minus, Edit, Trash } from 'lucide-react';
+import { CreditCard, ArrowUp, ArrowDown, Edit, Trash } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils';
 import Image from 'next/image';
 import { Button } from './button';
 import { Account } from '@/lib/types';
 import { SingleLineEllipsis } from './ellipsis-components';
+import { motion, Variants } from 'framer-motion';
 
-interface AccountCardProps extends React.ComponentPropsWithoutRef<'a'> {
+const cardVariants: Variants = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.4, 0, 0.2, 1] } },
+  hover: { y: -6, transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] } }
+};
+
+interface AccountCardProps {
   href: string;
   account: Account;
-  onEdit: (account: AccountCardProps['account']) => void;
+  onEdit: (account: Account) => void;
   onDelete: (id: string) => void;
   showActions?: boolean;
+  className?: string;
 }
 
-const AccountCard: React.FC<AccountCardProps> = React.forwardRef<
-  HTMLAnchorElement,
-  AccountCardProps
->(({ className, href, account, onEdit, onDelete, showActions = true, ...props }, ref) => {
-  const { balance, currency, analytics, owner, name, createdAt } = account;
+const AccountCard = React.forwardRef<HTMLDivElement, AccountCardProps>(
+  ({ className, href, account, onEdit, onDelete, showActions = true }, ref) => {
+    const { balance, currency, analytics, owner, name, createdAt } = account;
 
-  const getChangeIcon = (change: number) => {
-    if (change > 0) return <ArrowUp className='h-3 w-3' />;
-    if (change < 0) return <ArrowDown className='h-3 w-3' />;
-    return <Minus className='h-3 w-3' />;
-  };
+    const ChangePill: React.FC<{ change: number; isExpense?: boolean }> = ({
+      change,
+      isExpense = false
+    }) => {
+      if (change === 0) return null;
+      const isPositive = isExpense ? change < 0 : change > 0;
+      const displayChange = Math.abs(change);
+      return (
+        <div
+          className={cn(
+            'flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold',
+            isPositive ? 'bg-positive/10 text-positive' : 'bg-negative/10 text-negative'
+          )}
+        >
+          {isPositive ? <ArrowUp className='h-3 w-3' /> : <ArrowDown className='h-3 w-3' />}
+          <span>{displayChange.toFixed(2)}%</span>
+        </div>
+      );
+    };
 
-  const getChangeColor = (change: number, isExpense = false) => {
-    if (change === 0) return 'text-foreground/60';
-    if (isExpense) {
-      return change > 0 ? 'text-destructive' : 'text-success';
-    }
-    return change > 0 ? 'text-success' : 'text-destructive';
-  };
-
-  return (
-    <Link
-      ref={ref}
-      href={href}
-      className={cn(
-        'relative block overflow-hidden rounded-xl transition-all duration-300',
-        'hover:scale-[1.02] focus:scale-[1.02]',
-        'bg-background/10 border-border/20 border backdrop-blur-md',
-        'shadow-lg hover:shadow-xl focus:shadow-xl',
-        'focus:ring-primary/50 focus:ring-2 focus:ring-offset-2 focus:outline-none',
-        'w-full',
-        className
-      )}
-      style={{
-        background: 'rgba(255, 255, 255, 0.05)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)'
-      }}
-      {...props}
-    >
-      {/* Background gradient */}
-      <div className='from-background/20 to-background/5 pointer-events-none absolute inset-0 bg-gradient-to-br via-transparent' />
-
-      <div
-        className={cn(
-          'relative p-4',
-          balance > 0
-            ? 'from-success/20 via-success/5 bg-gradient-to-br to-transparent'
-            : balance < 0
-              ? 'from-destructive/20 via-destructive/5 bg-gradient-to-br to-transparent'
-              : 'from-muted/20 via-muted/5 bg-gradient-to-br to-transparent'
-        )}
+    return (
+      <motion.div
+        ref={ref}
+        variants={cardVariants}
+        initial='initial'
+        animate='animate'
+        whileHover='hover'
+        className={cn('group relative h-full shadow-2xl', className)}
       >
-        {/* Header with profile and card icon */}
-        <div className='mb-3 flex items-start justify-between'>
-          <div className='flex min-w-0 flex-1 items-start gap-3'>
-            {owner.profilePic && (
-              <div className='relative h-10 w-10 shrink-0'>
+        <Link
+          href={href}
+          className='from-card to-card/95 group-hover:border-primary/30 flex h-full flex-col overflow-hidden rounded-xl border bg-gradient-to-b shadow-lg transition-all duration-300 group-hover:shadow-xl'
+        >
+          <div className='flex items-start justify-between p-4'>
+            <div className='flex min-w-0 flex-1 items-center gap-3'>
+              {owner.profilePic ? (
                 <Image
                   src={owner.profilePic}
                   alt={owner.name}
-                  fill
-                  className='ring-background/20 rounded-full object-cover ring-2'
-                  sizes='40px'
+                  width={36}
+                  height={36}
+                  className='h-9 w-9 rounded-full object-cover'
                 />
+              ) : (
+                <div className='bg-muted flex h-9 w-9 shrink-0 items-center justify-center rounded-full'>
+                  <span className='text-lg font-medium text-slate-500'>{owner.name.charAt(0)}</span>
+                </div>
+              )}
+              <div className='min-w-0 flex-1'>
+                <SingleLineEllipsis
+                  showTooltip
+                  className='font-semibold text-slate-700 dark:text-slate-300'
+                >
+                  {name}
+                </SingleLineEllipsis>
+                <p className='text-xs text-slate-500 dark:text-slate-400'>{owner.name}</p>
               </div>
-            )}
-            <div className='min-w-0 flex-1'>
-              <SingleLineEllipsis
-                showTooltip
-                className='text-foreground text-base leading-tight font-semibold'
-              >
-                {name}
-              </SingleLineEllipsis>
-              <p className='text-foreground/70 mt-0.5 text-sm'>{owner.name}</p>
+            </div>
+            <div className='flex scale-90 items-center gap-1 opacity-0 transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 max-sm:opacity-100'>
+              {showActions && (
+                <>
+                  <Button
+                    size='icon'
+                    variant='ghost'
+                    className='h-8 w-8 rounded-md'
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onEdit(account);
+                    }}
+                    aria-label={`Edit ${name}`}
+                  >
+                    <Edit size={14} />
+                  </Button>
+                  <Button
+                    size='icon'
+                    variant='ghost'
+                    className='hover:bg-destructive/10 hover:text-destructive h-8 w-8 rounded-md'
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onDelete(account.id);
+                    }}
+                    aria-label={`Delete ${name}`}
+                  >
+                    <Trash size={14} />
+                  </Button>
+                </>
+              )}
             </div>
           </div>
 
-          <div className='opacity-30'>
-            <div className='bg-background/10 rounded-lg p-1.5 backdrop-blur-sm'>
-              <CreditCard className='text-foreground/60 h-4 w-4' />
-            </div>
+          <div className='flex flex-grow flex-col items-center justify-center px-2 py-3'>
+            <p className='text-xs font-medium tracking-wider text-slate-500 uppercase dark:text-slate-400'>
+              Current Balance
+            </p>
+            <SingleLineEllipsis
+              className={cn(
+                'text-4xl font-bold tracking-tight',
+                balance >= 0 ? 'text-slate-900 dark:text-slate-50' : 'text-negative'
+              )}
+            >
+              {formatCurrency(balance, currency)}
+            </SingleLineEllipsis>
           </div>
-        </div>
 
-        {/* Current Balance */}
-        <div className='mb-3'>
-          <span className='text-foreground/60 mb-1 block text-xs font-medium tracking-wide uppercase'>
-            Current Balance
-          </span>
-          <span
-            className={cn(
-              'block text-xl font-bold',
-              balance > 0 ? 'text-success' : balance < 0 ? 'text-destructive' : 'text-foreground'
-            )}
-          >
-            {formatCurrency(balance, currency)}
-          </span>
-        </div>
-
-        {/* Analytics */}
-        {analytics && (
-          <div className='mb-3 space-y-2'>
-            {/* Income */}
-            <div className='flex items-center justify-between'>
-              <span className='text-foreground/60 text-xs font-medium uppercase'>Income</span>
-              <div className='flex items-center gap-2'>
-                <span className='text-foreground text-sm font-semibold'>
-                  {formatCurrency(analytics.income, currency)}
-                </span>
-                <div className='bg-background/20 flex items-center gap-1 rounded-full px-2 py-0.5'>
-                  <span className='text-[0.65rem] font-medium'>
-                    +{analytics.incomePercentageChange}%
-                  </span>
-                  <span className={getChangeColor(analytics.incomePercentageChange)}>
-                    {getChangeIcon(analytics.incomePercentageChange)}
-                  </span>
+          <div className='bg-muted/20 mt-auto border-t p-4'>
+            {analytics && (
+              <div className='space-y-2'>
+                <div className='flex items-center justify-between text-sm'>
+                  <span className='text-slate-500 dark:text-slate-400'>Income</span>
+                  <div className='flex items-center gap-2'>
+                    <SingleLineEllipsis className='font-medium text-slate-700 dark:text-slate-300'>
+                      {formatCurrency(analytics.income, currency)}
+                    </SingleLineEllipsis>
+                    <ChangePill change={analytics.incomePercentageChange} />
+                  </div>
+                </div>
+                <div className='flex items-center justify-between text-sm'>
+                  <span className='text-slate-500 dark:text-slate-400'>Expenses</span>
+                  <div className='flex items-center gap-2'>
+                    <SingleLineEllipsis className='font-medium text-slate-700 dark:text-slate-300'>
+                      {formatCurrency(analytics.expense, currency)}
+                    </SingleLineEllipsis>
+                    <ChangePill change={analytics.expensesPercentageChange} isExpense />
+                  </div>
                 </div>
               </div>
-            </div>
-
-            {/* Expenses */}
-            <div className='flex items-center justify-between'>
-              <span className='text-foreground/60 text-xs font-medium uppercase'>Expenses</span>
-              <div className='flex items-center gap-2'>
-                <span className='text-foreground text-sm font-semibold'>
-                  {formatCurrency(analytics.expense, currency)}
-                </span>
-                <div className='bg-background/20 flex items-center gap-1 rounded-full px-2 py-0.5'>
-                  <span className='text-[0.65rem] font-medium'>
-                    {analytics.expensesPercentageChange}%
-                  </span>
-                  <span className={getChangeColor(analytics.expensesPercentageChange, true)}>
-                    {getChangeIcon(analytics.expensesPercentageChange)}
-                  </span>
-                </div>
-              </div>
+            )}
+            <div
+              className={cn(
+                'flex items-center justify-between text-xs text-slate-500 dark:text-slate-500',
+                analytics ? 'mt-4 border-t pt-4' : ''
+              )}
+            >
+              <p>
+                Created{' '}
+                {new Date(createdAt).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric'
+                })}
+              </p>
+              <CreditCard className='h-4 w-4' />
             </div>
           </div>
-        )}
-
-        {/* Footer */}
-        <div className='flex items-center justify-between gap-2 pt-2'>
-          <p className='text-foreground/50 text-xs'>
-            Created{' '}
-            {new Date(createdAt).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric'
-            })}
-          </p>
-          {showActions && (
-            <div className='flex gap-1.5'>
-              <Button
-                size='sm'
-                variant='outline'
-                className={cn(
-                  'h-7 w-7 rounded-full p-0',
-                  'bg-background/10 hover:bg-background/20 backdrop-blur-sm',
-                  'border-border/30 transition-all duration-200'
-                )}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onEdit(account);
-                }}
-                aria-label={`Edit ${name}`}
-              >
-                <Edit className='text-foreground/70 h-3 w-3' />
-              </Button>
-              <Button
-                size='sm'
-                variant='outline'
-                className={cn(
-                  'h-7 w-7 rounded-full p-0',
-                  'bg-destructive/10 hover:bg-destructive/20 backdrop-blur-sm',
-                  'border-destructive/30 transition-all duration-200'
-                )}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onDelete(account.id);
-                }}
-                aria-label={`Delete ${name}`}
-              >
-                <Trash className='text-destructive h-3 w-3' />
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
-    </Link>
-  );
-});
+        </Link>
+      </motion.div>
+    );
+  }
+);
 
 AccountCard.displayName = 'AccountCard';
 
