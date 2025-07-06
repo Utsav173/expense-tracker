@@ -120,4 +120,20 @@ investmentAccountRouter.delete('/:id', authMiddleware, async (c) => {
   }
 });
 
+investmentAccountRouter.get('/:id/performance', authMiddleware, async (c) => {
+  try {
+    const accountId = c.req.param('id');
+    const userId = await c.get('userId');
+    const performanceData = await investmentAccountService.getInvestmentAccountPerformance(
+      accountId,
+      userId,
+    );
+    return c.json(performanceData);
+  } catch (err: any) {
+    if (err instanceof HTTPException) throw err;
+    console.error('Investment Account Performance Error:', err);
+    throw new HTTPException(500, { message: 'Failed to fetch investment account performance.' });
+  }
+});
+
 export default investmentAccountRouter;

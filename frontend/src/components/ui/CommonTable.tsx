@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   flexRender,
   getCoreRowModel,
@@ -8,7 +8,6 @@ import {
   ColumnDef,
   getPaginationRowModel,
   SortingState,
-  HeaderContext,
   getSortedRowModel
 } from '@tanstack/react-table';
 import {

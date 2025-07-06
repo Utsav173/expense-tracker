@@ -265,6 +265,7 @@ export class InvestmentService {
     customStartDate?: string,
     customEndDate?: string,
     symbol?: string,
+    accountId?: string,
   ): Promise<HistoricalPortfolioResult> {
     let startDate: Date;
     let endDate: Date;
@@ -297,8 +298,16 @@ export class InvestmentService {
     }
     startDate.setHours(0, 0, 0, 0);
 
+    let whereClause;
+
+    if (accountId) {
+      whereClause = and(eq(InvestmentAccount.userId, userId), eq(InvestmentAccount.id, accountId));
+    } else {
+      whereClause = eq(InvestmentAccount.userId, userId);
+    }
+
     const accounts = await db.query.InvestmentAccount.findMany({
-      where: eq(InvestmentAccount.userId, userId),
+      where: whereClause,
       columns: { id: true, currency: true },
     });
 

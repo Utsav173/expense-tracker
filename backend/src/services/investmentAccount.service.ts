@@ -14,6 +14,7 @@ import {
   ne,
 } from 'drizzle-orm';
 import { HTTPException } from 'hono/http-exception';
+import { investmentService } from './investment.service';
 
 export class InvestmentAccountService {
   async getInvestmentAccounts(
@@ -237,6 +238,19 @@ export class InvestmentAccountService {
     });
 
     return { message: 'Investment Account and associated investments deleted successfully!' };
+  }
+
+  async getInvestmentAccountPerformance(accountId: string, userId: string) {
+    const accountCheck = await db.query.InvestmentAccount.findFirst({
+      where: and(eq(InvestmentAccount.id, accountId), eq(InvestmentAccount.userId, userId)),
+      columns: { id: true },
+    });
+
+    if (!accountCheck) {
+      throw new HTTPException(404, { message: 'Investment account not found or access denied.' });
+    }
+
+    return investmentService.getHistoricalPortfolioValue(userId, '30d', undefined, undefined, undefined, accountId);
   }
 }
 

@@ -16,7 +16,7 @@ import { useState } from 'react';
 import Loader from '@/components/ui/loader';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/lib/hooks/useToast';
-import { ArrowLeft, PlusCircle, BarChart3, Banknote } from 'lucide-react';
+import { ArrowLeft, PlusCircle } from 'lucide-react';
 import {
   Investment,
   StockSearchResult,
@@ -34,6 +34,7 @@ import { investmentHoldingsColumns } from '@/components/investment/investment-ho
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { useUrlState } from '@/hooks/useUrlState';
 import { SortingState } from '@tanstack/react-table';
+import InvestmentAccountOverview from '@/components/investment/investment-account-overview';
 import { SingleLineEllipsis } from '@/components/ui/ellipsis-components';
 
 const InvestmentAccountDetailPage = () => {
@@ -163,7 +164,11 @@ const InvestmentAccountDetailPage = () => {
     <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 max-sm:px-0 md:space-y-6'>
       <div className='flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div className='flex min-w-0 flex-1 items-center gap-4'>
-          <Button variant='ghost' onClick={() => router.back()} className='shrink-0'>
+          <Button
+            variant='ghost'
+            onClick={() => router.replace('/investment')}
+            className='shrink-0'
+          >
             <ArrowLeft size={16} className='mr-2' />
           </Button>
           <SingleLineEllipsis className='min-w-0 text-xl font-semibold md:text-2xl'>
@@ -175,59 +180,12 @@ const InvestmentAccountDetailPage = () => {
         </Button>
       </div>
 
-      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-        <Card>
-          <CardHeader className='pb-2'>
-            <CardTitle className='flex items-center gap-2 text-sm font-medium'>
-              Total Invested
-            </CardTitle>
-            <CardDescription>Initial investment amount</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoadingSummary ? (
-              <Loader />
-            ) : (
-              <p className='text-2xl font-bold'>
-                {formatCurrency(summary?.totalinvestment || 0, account.currency)}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className='pb-2'>
-            <CardTitle className='flex items-center gap-2 text-sm font-medium'>
-              <Banknote size={16} /> Total Dividends
-            </CardTitle>
-            <CardDescription>Dividends received</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoadingSummary ? (
-              <Loader />
-            ) : (
-              <p className='text-2xl font-bold text-green-600'>
-                +{formatCurrency(summary?.totaldividend || 0, account.currency)}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className='pb-2'>
-            <CardTitle className='flex items-center gap-2 text-sm font-medium'>
-              <BarChart3 size={16} /> Total Value
-            </CardTitle>
-            <CardDescription>Invested + Dividends</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoadingSummary ? (
-              <Loader />
-            ) : (
-              <p className='text-2xl font-bold'>
-                {formatCurrency(summary?.totalvalue || 0, account.currency)}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      <InvestmentAccountOverview
+        accountId={accountId}
+        accountCurrency={account.currency}
+        summary={summary}
+        isLoadingSummary={isLoadingSummary}
+      />
 
       <Card>
         <CardHeader>
