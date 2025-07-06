@@ -1,5 +1,5 @@
 import axios, { AxiosRequestConfig } from 'axios';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 

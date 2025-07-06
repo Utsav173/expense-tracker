@@ -17,7 +17,6 @@ import { Category, Transaction } from '@/lib/types';
 import { DateRange } from 'react-day-picker';
 import * as XLSX from 'xlsx';
 import { useToast } from '@/lib/hooks/useToast';
-import { format } from 'date-fns';
 
 interface AccountTransactionsSectionProps {
   transactionsData?: {

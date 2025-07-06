@@ -111,7 +111,7 @@ This is the frontend component of the Expense Tracker application, providing a u
   - [react-dropzone](https://react-dropzone.js.org/) (File uploads)
   - [file-saver](https://github.com/eligrey/FileSaver.js/) (Triggering file downloads)
 - **Animation:** [Framer Motion](https://www.framer.com/motion/) (v12+)
-- **Utilities:** [date-fns](https://date-fns.org/) (v4+), [jwt-decode](https://www.npmjs.com/package/jwt-decode), [react-hot-toast](https://react-hot-toast.com/), [use-debounce](https://www.npmjs.com/package/use-debounce), [axios](https://axios-http.com/), [clsx](https://github.com/lukeed/clsx), [tailwind-merge](https://github.com/dcastil/tailwind-merge)
+- **Utilities:** [date-fns](https://date-fns.org/) (v4+), [jwt-decode](https://www.npmjs.com/package/jwt-decode), [sonner](https://sonner.emilkowalski.com/), [use-debounce](https://www.npmjs.com/package/use-debounce), [axios](https://axios-http.com/), [clsx](https://github.com/lukeed/clsx), [tailwind-merge](https://github.com/dcastil/tailwind-merge)
 - **Theming:** [next-themes](https://github.com/pacocoursey/next-themes)
 
 ## Getting Started

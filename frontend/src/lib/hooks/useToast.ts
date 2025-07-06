@@ -1,4 +1,4 @@
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 interface ToastOptions {
   id?: string;
@@ -9,10 +9,10 @@ export const useToast = () => {
     toast.success(message, options);
   };
   const showError = (message: string, options?: ToastOptions) => {
-    toast(message, { ...options, icon: '🚨' });
+    toast.error(message, options);
   };
   const showInfo = (message: string, options?: ToastOptions) => {
-    toast(message, options);
+    toast.info(message, options);
   };
 
   return { showSuccess, showError, showInfo };
