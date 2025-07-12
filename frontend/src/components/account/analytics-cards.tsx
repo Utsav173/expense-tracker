@@ -18,7 +18,6 @@ import { ApiResponse } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { SingleLineEllipsis } from '../ui/ellipsis-components';
-import { PixelCanvas } from '../ui/pixel-canvas';
 
 interface AnalyticsCardsProps {
   analytics?: ApiResponse<CustomAnalytics>;
@@ -83,12 +82,12 @@ const CurrentBalanceCard = ({ account, isLoading }: { account: any; isLoading?: 
               <h3 className='text-lg font-semibold'>Current Balance</h3>
             </div>
             <div className='flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1'>
-              <p
+              <SingleLineEllipsis
                 className='text-foreground font-bold tracking-tight'
                 style={{ fontSize: dynamicFontSize }}
               >
                 {formattedBalance}
-              </p>
+              </SingleLineEllipsis>
               <Badge
                 variant={isPositive ? 'default' : 'destructive'}
                 className={cn(
@@ -210,12 +209,12 @@ const StatCard = ({
         </div>
 
         <div className='mt-2'>
-          <p
+          <SingleLineEllipsis
             className='text-foreground font-bold tracking-tight'
             style={{ fontSize: dynamicFontSize }}
           >
             {formattedValue}
-          </p>
+          </SingleLineEllipsis>
         </div>
 
         <div className='mt-4 flex items-center gap-1.5'>

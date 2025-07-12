@@ -1,24 +1,12 @@
 'use client';
 
+import { BGPattern } from '@/components/landing/bg-pattern';
 import UserProfile from '@/components/ui/user-profile';
-import { useTheme } from 'next-themes';
-import dynamic from 'next/dynamic';
-
-const Particles = dynamic(() => import('@/components/ui/particles').then((mod) => mod.Particles), {
-  ssr: false
-});
 
 const ProfilePage = () => {
-  const theme = useTheme();
   return (
     <>
-      <Particles
-        className='absolute inset-0'
-        quantity={100}
-        ease={80}
-        color={theme.theme === 'dark' ? '#fff' : '#000'}
-        refresh
-      />
+      <BGPattern variant='dots' mask='fade-center' className='absolute inset-0 z-[-10] size-full' />
       <div className='z-20 mx-auto my-auto p-4 max-sm:p-1'>
         <UserProfile />
       </div>

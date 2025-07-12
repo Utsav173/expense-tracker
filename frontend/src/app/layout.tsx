@@ -7,7 +7,10 @@ import { cn } from '@/lib/utils';
 import './globals.css';
 import { GoogleAnalytics } from '@next/third-parties/google';
 
-const openSans = Open_Sans();
+const openSans = Open_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700']
+});
 
 export const metadata: Metadata = {
   title: 'Expense Tracker - Master Your Money. Effortlessly.',

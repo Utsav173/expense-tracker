@@ -60,12 +60,12 @@
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "use-debounce": "^10.0.5",
-    "vercel": "^41.7.8",
     "xlsx": "^0.18.5",
     "zod": "^3.25.64"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.10",
+    "vercel": "^41.7.8",
     "@tailwindcss/typography": "^0.5.13",
     "@types/file-saver": "^2.0.7",
     "@types/node": "^20.19.0",
