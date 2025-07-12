@@ -236,7 +236,7 @@ The application implements several security measures:
   - Secure headers (HSTS, CSP, etc.) are recommended for production deployments (not explicitly configured here).
 - **Best Practices:**
   - Environment variables for all sensitive data (DB URL, JWT secret, encryption secret, email pass). `.env` file excluded via `.gitignore`.
-  - Dependencies are managed via `bun.lockb`. Regular updates recommended (`bun update`).
+  - Dependencies are managed via `bun.lock`. Regular updates recommended (`bun update`).
   - Error handling attempts to avoid exposing sensitive internal details in responses, especially in production mode.
 
 ## Troubleshooting

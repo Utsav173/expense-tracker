@@ -1,5 +1,4 @@
 node_modules
-bun.lockb
 Dockerfile*
 docker-compose*
 .dockerignore
@@ -10,17 +9,22 @@ LICENSE
 .vscode
 Makefile
 helm-charts
-.env
+.env*
 .editorconfig
 .idea
 coverage*
-# Ignore source files and scripts not needed in final image
-
 scripts/
 test/
 __tests__/
 *.log
 *.tsbuildinfo
-# Ignore build artifacts except dist and public
+.DS_Store
+.nyc_output
+temp/
+tmp/
+
+# Keep these for build
 !dist/
 !public/
+!package.json
+!bun.lock
