@@ -19,11 +19,10 @@ import {
   ChartContainer,
   ChartConfig,
   ChartTooltip,
-  ChartTooltipContent,
   ChartLegend,
   ChartLegendContent
 } from '@/components/ui/chart';
-import { Skeleton } from '../ui/skeleton';
+import Loader from '../ui/loader';
 import NoData from '../ui/no-data';
 
 interface ApiChartDataPoint {
@@ -38,7 +37,6 @@ export interface TrendChartProps {
   className?: string;
   currency?: string;
   chartType?: 'line' | 'bar' | 'area';
-
   timeRangeOption: string;
   customDateRange?: DateRange;
   isLoading?: boolean;
@@ -55,17 +53,41 @@ interface ProcessedDataPoint {
 const trendsChartConfig = {
   income: {
     label: 'Income',
-    color: 'var(--chart-income)'
+    color: 'hsl(142, 76%, 36%)'
   },
   expense: {
     label: 'Expense',
-    color: 'var(--chart-expense)'
+    color: 'hsl(0, 84%, 60%)'
   },
   balance: {
     label: 'Balance',
-    color: 'var(--chart-balance)'
+    color: 'hsl(221, 83%, 53%)'
   }
 } satisfies ChartConfig;
+
+// Custom tooltip component for better styling
+const CustomTooltip = ({ active, payload, label, currency }: any) => {
+  if (!active || !payload || !payload.length) return null;
+
+  return (
+    <div className='bg-background/95 border-border/50 min-w-[200px] rounded-lg border p-3 shadow-lg backdrop-blur-sm'>
+      <p className='text-foreground mb-2 text-sm font-medium'>{label}</p>
+      <div className='space-y-1'>
+        {payload.map((entry: any, index: number) => (
+          <div key={index} className='flex items-center justify-between gap-3'>
+            <div className='flex items-center gap-2'>
+              <div className='h-2.5 w-2.5 rounded-full' style={{ backgroundColor: entry.color }} />
+              <span className='text-muted-foreground text-xs capitalize'>{entry.dataKey}</span>
+            </div>
+            <span className='text-foreground text-sm font-medium'>
+              {entry.value !== null ? formatCurrency(entry.value, currency) : 'N/A'}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 export const TrendChart: React.FC<TrendChartProps> = ({
   incomeData = [],
@@ -92,7 +114,6 @@ export const TrendChart: React.FC<TrendChartProps> = ({
       if (timeRangeOption === 'all' || !startTimestamp || !endTimestamp) {
         return true;
       }
-
       return point.x >= startTimestamp && point.x <= endTimestamp;
     };
 
@@ -151,7 +172,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
   if (isLoading) {
     return (
       <div className={`relative h-[320px] w-full ${className}`}>
-        <Skeleton className='h-full w-full' />
+        <Loader />
       </div>
     );
   }
@@ -164,235 +185,196 @@ export const TrendChart: React.FC<TrendChartProps> = ({
     );
   }
 
+  const commonProps = {
+    data: processedData,
+    margin: { top: 15, right: 15, left: 5, bottom: 5 }
+  };
+
+  const axisProps = {
+    xAxis: {
+      dataKey: 'date',
+      tickLine: false,
+      axisLine: false,
+      tick: { fontSize: 11, fill: 'hsl(var(--muted-foreground))' },
+      interval: 'preserveStartEnd' as const,
+      minTickGap: 20
+    },
+    yAxis: {
+      tickFormatter: formatYaxis,
+      tickLine: false,
+      axisLine: false,
+      tick: { fontSize: 11, fill: 'hsl(var(--muted-foreground))' },
+      width: 50
+    }
+  };
+
   return (
     <div className={`relative h-[320px] w-full ${className}`}>
       <ChartContainer config={trendsChartConfig} className='h-full w-full'>
         <ResponsiveContainer width='100%' height='100%'>
           {chartType === 'bar' ? (
-            <RechartsBarChart
-              data={processedData}
-              margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-            >
+            <RechartsBarChart {...commonProps}>
               <CartesianGrid
                 strokeDasharray='3 3'
                 vertical={false}
-                stroke='var(--border)'
-                strokeOpacity={0.5}
+                stroke='hsl(var(--border))'
+                strokeOpacity={0.3}
               />
-              <XAxis
-                dataKey='date'
-                tickLine={false}
-                axisLine={false}
-                tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
-                interval='preserveStartEnd'
-                minTickGap={15}
-              />
-              <YAxis
-                tickFormatter={formatYaxis}
-                tickLine={false}
-                axisLine={false}
-                tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
-                width={45}
-              />
-              {/* Use standardized ChartTooltip */}
+              <XAxis {...axisProps.xAxis} />
+
               <ChartTooltip
-                cursor={{ fill: 'var(--muted)' }}
-                content={
-                  <ChartTooltipContent
-                    formatter={(value) => formatCurrency(value as number, currency)}
-                    labelKey='date'
-                  />
-                }
+                cursor={{ fill: 'hsl(var(--muted))', fillOpacity: 0.1 }}
+                content={<CustomTooltip currency={currency} />}
               />
-              {/* Use standardized ChartLegend */}
-              <ChartLegend content={<ChartLegendContent />} verticalAlign='top' height={36} />
+              <ChartLegend content={<ChartLegendContent />} />
               <Bar
                 dataKey='income'
-                fill='var(--color-income)'
-                radius={[4, 4, 0, 0]}
-                animationDuration={800}
-                minPointSize={3}
+                fill='hsl(142, 76%, 36%)'
+                radius={[3, 3, 0, 0]}
+                animationDuration={600}
+                minPointSize={2}
               />
               <Bar
                 dataKey='expense'
-                fill='var(--color-expense)'
-                radius={[4, 4, 0, 0]}
-                animationDuration={800}
-                minPointSize={3}
+                fill='hsl(0, 84%, 60%)'
+                radius={[3, 3, 0, 0]}
+                animationDuration={600}
+                minPointSize={2}
               />
               <Bar
                 dataKey='balance'
-                fill='var(--color-balance)'
-                radius={[4, 4, 0, 0]}
-                animationDuration={800}
-                minPointSize={3}
+                fill='hsl(221, 83%, 53%)'
+                radius={[3, 3, 0, 0]}
+                animationDuration={600}
+                minPointSize={2}
               />
             </RechartsBarChart>
           ) : chartType === 'area' ? (
-            <RechartsAreaChart
-              data={processedData}
-              margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-            >
+            <RechartsAreaChart {...commonProps}>
               <defs>
-                {/* Define gradients using CSS variables */}
-                <linearGradient id='incomeGradientArea' x1='0' y1='0' x2='0' y2='1'>
-                  <stop offset='0%' stopColor='var(--color-income)' stopOpacity={0.3} />
-                  <stop offset='100%' stopColor='var(--color-income)' stopOpacity={0.05} />
+                <linearGradient id='incomeGradient' x1='0' y1='0' x2='0' y2='1'>
+                  <stop offset='5%' stopColor='hsl(142, 76%, 36%)' stopOpacity={0.8} />
+                  <stop offset='95%' stopColor='hsl(142, 76%, 36%)' stopOpacity={0.1} />
                 </linearGradient>
-                <linearGradient id='expenseGradientArea' x1='0' y1='0' x2='0' y2='1'>
-                  <stop offset='0%' stopColor='var(--color-expense)' stopOpacity={0.3} />
-                  <stop offset='100%' stopColor='var(--color-expense)' stopOpacity={0.05} />
+                <linearGradient id='expenseGradient' x1='0' y1='0' x2='0' y2='1'>
+                  <stop offset='5%' stopColor='hsl(0, 84%, 60%)' stopOpacity={0.8} />
+                  <stop offset='95%' stopColor='hsl(0, 84%, 60%)' stopOpacity={0.1} />
                 </linearGradient>
-                <linearGradient id='balanceGradientArea' x1='0' y1='0' x2='0' y2='1'>
-                  <stop offset='0%' stopColor='var(--color-balance)' stopOpacity={0.3} />
-                  <stop offset='100%' stopColor='var(--color-balance)' stopOpacity={0.05} />
+                <linearGradient id='balanceGradient' x1='0' y1='0' x2='0' y2='1'>
+                  <stop offset='5%' stopColor='hsl(221, 83%, 53%)' stopOpacity={0.8} />
+                  <stop offset='95%' stopColor='hsl(221, 83%, 53%)' stopOpacity={0.1} />
                 </linearGradient>
               </defs>
               <CartesianGrid
                 strokeDasharray='3 3'
                 vertical={false}
-                stroke='var(--border)'
-                strokeOpacity={0.5}
+                stroke='hsl(var(--border))'
+                strokeOpacity={0.3}
               />
-              <XAxis
-                dataKey='date'
-                tickLine={false}
-                axisLine={false}
-                tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
-                interval='preserveStartEnd'
-                minTickGap={15}
-              />
-              <YAxis
-                tickFormatter={formatYaxis}
-                tickLine={false}
-                axisLine={false}
-                tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
-                width={45}
-              />
-              {/* Use standardized ChartTooltip */}
+              <XAxis {...axisProps.xAxis} />
+
               <ChartTooltip
-                cursor={false}
-                content={
-                  <ChartTooltipContent
-                    formatter={(value) => formatCurrency(value as number, currency)}
-                    labelKey='date'
-                  />
-                }
+                cursor={{
+                  stroke: 'hsl(var(--muted-foreground))',
+                  strokeWidth: 1,
+                  strokeDasharray: '3 3'
+                }}
+                content={<CustomTooltip currency={currency} />}
               />
-              {/* Use standardized ChartLegend */}
-              <ChartLegend content={<ChartLegendContent />} verticalAlign='top' height={36} />
+              <ChartLegend content={<ChartLegendContent />} />
               <Area
                 type='monotone'
                 dataKey='income'
-                stroke='var(--color-income)'
+                stroke='hsl(142, 76%, 36%)'
                 strokeWidth={2}
-                fill='url(#incomeGradientArea)'
-                activeDot={{ r: 6, strokeWidth: 2, stroke: '#fff' }}
-                animationDuration={800}
+                fill='url(#incomeGradient)'
+                activeDot={{ r: 5, strokeWidth: 2, stroke: 'hsl(var(--background))' }}
+                animationDuration={600}
                 connectNulls
               />
               <Area
                 type='monotone'
                 dataKey='expense'
-                stroke='var(--color-expense)'
+                stroke='hsl(0, 84%, 60%)'
                 strokeWidth={2}
-                fill='url(#expenseGradientArea)'
-                activeDot={{ r: 6, strokeWidth: 2, stroke: '#fff' }}
-                animationDuration={800}
+                fill='url(#expenseGradient)'
+                activeDot={{ r: 5, strokeWidth: 2, stroke: 'hsl(var(--background))' }}
+                animationDuration={600}
                 connectNulls
               />
               <Area
                 type='monotone'
                 dataKey='balance'
-                stroke='var(--color-balance)'
+                stroke='hsl(221, 83%, 53%)'
                 strokeWidth={2}
-                fill='url(#balanceGradientArea)'
-                activeDot={{ r: 6, strokeWidth: 2, stroke: '#fff' }}
-                animationDuration={800}
+                fill='url(#balanceGradient)'
+                activeDot={{ r: 5, strokeWidth: 2, stroke: 'hsl(var(--background))' }}
+                animationDuration={600}
                 connectNulls
               />
             </RechartsAreaChart>
           ) : (
-            <RechartsLineChart
-              data={processedData}
-              margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-            >
+            <RechartsLineChart {...commonProps}>
               <CartesianGrid
                 strokeDasharray='3 3'
                 vertical={false}
-                stroke='var(--border)'
-                strokeOpacity={0.5}
+                stroke='hsl(var(--border))'
+                strokeOpacity={0.3}
               />
-              <XAxis
-                dataKey='date'
-                tickLine={false}
-                axisLine={false}
-                tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
-                interval='preserveStartEnd'
-                minTickGap={15}
-              />
-              <YAxis
-                tickFormatter={formatYaxis}
-                tickLine={false}
-                axisLine={false}
-                tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
-                width={45}
-              />
-              {/* Use standardized ChartTooltip */}
+              <XAxis {...axisProps.xAxis} />
+
               <ChartTooltip
-                cursor={false}
-                content={
-                  <ChartTooltipContent
-                    formatter={(value) => formatCurrency(value as number, currency)}
-                    labelKey='date'
-                  />
-                }
+                cursor={{
+                  stroke: 'hsl(var(--muted-foreground))',
+                  strokeWidth: 1,
+                  strokeDasharray: '3 3'
+                }}
+                content={<CustomTooltip currency={currency} />}
               />
-              {/* Use standardized ChartLegend */}
-              <ChartLegend content={<ChartLegendContent />} verticalAlign='top' height={36} />
+              <ChartLegend content={<ChartLegendContent />} />
               <Line
                 type='monotone'
                 dataKey='income'
-                stroke='var(--color-income)'
-                strokeWidth={2}
+                stroke='hsl(142, 76%, 36%)'
+                strokeWidth={2.5}
                 dot={{
-                  r: 2,
-                  fill: 'var(--color-income)',
-                  strokeWidth: 1,
-                  stroke: 'var(--background)'
+                  r: 3,
+                  fill: 'hsl(142, 76%, 36%)',
+                  strokeWidth: 2,
+                  stroke: 'hsl(var(--background))'
                 }}
-                activeDot={{ r: 5, strokeWidth: 2, stroke: 'var(--background)' }}
-                animationDuration={800}
+                activeDot={{ r: 6, strokeWidth: 2, stroke: 'hsl(var(--background))' }}
+                animationDuration={600}
                 connectNulls
               />
               <Line
                 type='monotone'
                 dataKey='expense'
-                stroke='var(--color-expense)'
-                strokeWidth={2}
+                stroke='hsl(0, 84%, 60%)'
+                strokeWidth={2.5}
                 dot={{
-                  r: 2,
-                  fill: 'var(--color-expense)',
-                  strokeWidth: 1,
-                  stroke: 'var(--background)'
+                  r: 3,
+                  fill: 'hsl(0, 84%, 60%)',
+                  strokeWidth: 2,
+                  stroke: 'hsl(var(--background))'
                 }}
-                activeDot={{ r: 5, strokeWidth: 2, stroke: 'var(--background)' }}
-                animationDuration={800}
+                activeDot={{ r: 6, strokeWidth: 2, stroke: 'hsl(var(--background))' }}
+                animationDuration={600}
                 connectNulls
               />
               <Line
                 type='monotone'
                 dataKey='balance'
-                stroke='var(--color-balance)'
-                strokeWidth={2}
+                stroke='hsl(221, 83%, 53%)'
+                strokeWidth={2.5}
                 dot={{
-                  r: 2,
-                  fill: 'var(--color-balance)',
-                  strokeWidth: 1,
-                  stroke: 'var(--background)'
+                  r: 3,
+                  fill: 'hsl(221, 83%, 53%)',
+                  strokeWidth: 2,
+                  stroke: 'hsl(var(--background))'
                 }}
-                activeDot={{ r: 5, strokeWidth: 2, stroke: 'var(--background)' }}
-                animationDuration={800}
+                activeDot={{ r: 6, strokeWidth: 2, stroke: 'hsl(var(--background))' }}
+                animationDuration={600}
                 connectNulls
               />
             </RechartsLineChart>

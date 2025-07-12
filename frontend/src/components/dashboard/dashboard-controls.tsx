@@ -10,36 +10,25 @@ import {
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-  DropdownMenuCheckboxItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { LayoutGrid, ChevronDown, SlidersHorizontal, Sun, Moon, ArrowLeft } from 'lucide-react';
+import { LayoutGrid, ChevronDown, SlidersHorizontal, ArrowLeft, Sun, Moon } from 'lucide-react';
 import { DASHBOARD_PRESETS, PresetConfig } from '@/config/dashboard-config';
 import { ModeToggle } from '../theme-toggle';
 import { useRouter } from 'next/navigation';
 
 interface DashboardControlsProps {
   currentPreset: string;
-  layoutConfig: Record<string, PresetConfig[string]>;
-  hiddenSections: Set<string>;
   refreshInterval: number;
-  isDarkMode: boolean;
   onChangePreset: (preset: string) => void;
-  onToggleSectionVisibility: (sectionId: string) => void;
   onSetRefreshInterval: (intervalMs: number) => void;
-  onToggleDarkMode: () => void;
 }
 
 export const DashboardControls: React.FC<DashboardControlsProps> = ({
   currentPreset,
-  layoutConfig,
-  hiddenSections,
   refreshInterval,
-  isDarkMode,
   onChangePreset,
-  onToggleSectionVisibility,
-  onSetRefreshInterval,
-  onToggleDarkMode
+  onSetRefreshInterval
 }) => {
   const router = useRouter();
   return (
@@ -117,29 +106,11 @@ export const DashboardControls: React.FC<DashboardControlsProps> = ({
                 align='end'
                 className='w-56 border-white/20 bg-white/80 backdrop-blur-xl backdrop-saturate-150 dark:border-white/10 dark:bg-black/80'
               >
-                {Object.entries(layoutConfig || {}).map(([id, config]) => (
-                  <DropdownMenuCheckboxItem
-                    key={id}
-                    checked={!hiddenSections.has(id)}
-                    onCheckedChange={() => onToggleSectionVisibility(id)}
-                    onSelect={(e) => e.preventDefault()}
-                    className='hover:bg-white/20 dark:hover:bg-white/10'
-                  >
-                    {config.title}
-                  </DropdownMenuCheckboxItem>
-                ))}
-                <DropdownMenuSeparator className='bg-white/20 dark:bg-white/10' />
                 <DropdownMenuItem
-                  onClick={() => alert('Export feature coming soon')}
+                  onClick={() => alert('Not yet implemented')}
                   className='hover:bg-white/20 dark:hover:bg-white/10'
                 >
                   Export Dashboard
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => window.print()}
-                  className='hover:bg-white/20 dark:hover:bg-white/10'
-                >
-                  Print View
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className='bg-white/20 dark:bg-white/10' />
                 <DropdownMenuSub>
@@ -173,16 +144,6 @@ export const DashboardControls: React.FC<DashboardControlsProps> = ({
                     </DropdownMenuItem>
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
-                <DropdownMenuSeparator className='bg-white/20 dark:bg-white/10' />
-                <DropdownMenuItem
-                  onClick={onToggleDarkMode}
-                  className='hover:bg-white/20 dark:hover:bg-white/10'
-                >
-                  <div className='flex w-full items-center justify-between'>
-                    <span>{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
-                    {isDarkMode ? <Sun className='h-4 w-4' /> : <Moon className='h-4 w-4' />}
-                  </div>
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 

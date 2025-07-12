@@ -18,6 +18,7 @@ interface AccountComboboxProps {
   allowClear?: boolean;
   clearLabel?: string;
   setDateRange?: Dispatch<SetStateAction<DateRange | undefined>>;
+  id: HTMLDivElement['id'];
 }
 
 const AccountCombobox: React.FC<AccountComboboxProps> = ({
@@ -28,7 +29,8 @@ const AccountCombobox: React.FC<AccountComboboxProps> = ({
   className,
   allowClear = false,
   clearLabel = 'All Accounts',
-  setDateRange
+  setDateRange,
+  id
 }) => {
   const { data: initialAccountData, isLoading: isLoadingInitial } = useQuery({
     queryKey: ['accountById', value],
@@ -129,6 +131,7 @@ const AccountCombobox: React.FC<AccountComboboxProps> = ({
       loadingPlaceholder='Searching accounts...'
       className={className}
       disabled={disabled || isLoadingInitial}
+      id={id}
     />
   );
 };

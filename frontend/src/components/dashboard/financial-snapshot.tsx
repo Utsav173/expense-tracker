@@ -1,10 +1,11 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+
 import { cn, formatCurrency } from '@/lib/utils';
 import { DashboardData } from '@/lib/types';
 import { ChangeIndicator } from '@/components/ui/change-indicator';
 import NoData from '../ui/no-data';
+import Loader from '../ui/loader';
 
 interface FinancialSnapshotProps {
   data: DashboardData | null | undefined;
@@ -18,28 +19,7 @@ export const FinancialSnapshot: React.FC<FinancialSnapshotProps> = ({
   className
 }) => {
   if (isLoading) {
-    return (
-      <Card className={cn('col-span-1 sm:col-span-2 lg:col-span-4', className)}>
-        <CardHeader className='p-4'>
-          <Skeleton className='h-6 w-3/4' />
-        </CardHeader>
-        <CardContent className='flex flex-col items-center justify-center space-y-6 py-10'>
-          <Skeleton className='h-10 w-4/5' />
-          <div className='flex w-full justify-around pt-2'>
-            <div className='space-y-2 text-center'>
-              <Skeleton className='h-4 w-20' />
-              <Skeleton className='h-6 w-28' />
-              <Skeleton className='h-3 w-16' />
-            </div>
-            <div className='space-y-2 text-center'>
-              <Skeleton className='h-4 w-20' />
-              <Skeleton className='h-6 w-28' />
-              <Skeleton className='h-3 w-16' />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <Loader />;
   }
 
   if (!data) {
@@ -63,7 +43,10 @@ export const FinancialSnapshot: React.FC<FinancialSnapshotProps> = ({
 
   return (
     <Card
-      className={cn('col-span-1 overflow-hidden shadow-md sm:col-span-2 lg:col-span-4', className)}
+      className={cn(
+        'col-span-1 h-full overflow-hidden shadow-md sm:col-span-2 lg:col-span-4',
+        className
+      )}
     >
       <CardContent className='flex flex-col items-center justify-center space-y-6 py-10 text-center'>
         <p className='text-muted-foreground text-sm font-medium'>Overall Net Balance</p>

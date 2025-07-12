@@ -76,13 +76,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
       <SidebarFooter>
         {userIsLoading ? (
-          <div className='flex items-center gap-2 p-2'>
-            <Skeleton className='h-8 w-8 rounded-full' />
-            <div className='flex-1 space-y-1'>
-              <Skeleton className='h-3 w-3/4' />
-              <Skeleton className='h-3 w-full' />
-            </div>
-          </div>
+          <Skeleton className='h-8 w-8 rounded-full' />
         ) : user ? (
           <NavUser user={user} />
         ) : null}

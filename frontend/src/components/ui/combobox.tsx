@@ -29,6 +29,7 @@ interface ComboboxProps {
   loadingPlaceholder?: string;
   className?: string;
   disabled?: boolean;
+  id?: HTMLDivElement['id'];
 }
 
 export function Combobox({
@@ -39,7 +40,8 @@ export function Combobox({
   noOptionsMessage = 'No option found.',
   loadingPlaceholder = 'Loading...',
   className,
-  disabled
+  disabled,
+  id
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -100,6 +102,7 @@ export function Combobox({
             'border-border w-full justify-between bg-transparent font-normal',
             className
           )}
+          id={id}
         >
           <span className='truncate'>{value?.label || placeholder}</span>
           <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />

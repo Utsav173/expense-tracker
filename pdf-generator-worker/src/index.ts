@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import puppeteer, { BrowserWorker } from '@cloudflare/puppeteer';
+import puppeteer from '@cloudflare/puppeteer';
 import React from 'react';
 import ReactDOMServer from 'react-dom/server';
 import { Statement } from './components/Statement';

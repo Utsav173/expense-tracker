@@ -12,7 +12,7 @@ import {
   investmentGetPortfolioHistorical,
   investmentGetOldestDate
 } from '@/lib/endpoints/investment';
-import { Skeleton } from '../ui/skeleton';
+
 import { useToast } from '@/lib/hooks/useToast';
 import {
   AreaChart,
@@ -31,6 +31,7 @@ import { DateRange } from 'react-day-picker';
 import { format as formatDate, startOfToday, subDays } from 'date-fns';
 import DateRangePickerV2 from '../date/date-range-picker-v2';
 import { ChartContainer, ChartConfig } from '@/components/ui/chart';
+import Loader from '../ui/loader';
 
 type PeriodOption = '7d' | '30d' | '90d' | '1y' | 'custom';
 
@@ -169,19 +170,8 @@ export const InvestmentSummaryCard: React.FC<{
 
   if (isLoading) {
     return (
-      <Card className={cn('col-span-1 md:col-span-1', className)}>
-        <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-          <CardTitle className='text-base font-semibold'>Investment Summary</CardTitle>
-          <WalletCards className='text-muted-foreground h-4 w-4' />
-        </CardHeader>
-        <CardContent className='space-y-4'>
-          <Skeleton className='h-4 w-3/5' />
-          <Skeleton className='h-[160px] w-full sm:h-[180px]' />
-          <div className='grid gap-4'>
-            <Skeleton className='h-8 w-full' />
-            <Skeleton className='h-8 w-full' />
-          </div>
-        </CardContent>
+      <Card className={cn('col-span-1 flex items-center justify-center md:col-span-1', className)}>
+        <Loader />
       </Card>
     );
   }
@@ -304,7 +294,7 @@ export const InvestmentSummaryCard: React.FC<{
 
         {/* Mobile-optimized Chart */}
         {isHistoricalLoading ? (
-          <Skeleton className='h-[140px] w-full sm:h-[180px]' />
+          <Loader />
         ) : sparklineData.length > 1 ? (
           <div className='h-[140px] w-full sm:h-[180px]'>
             <ChartContainer

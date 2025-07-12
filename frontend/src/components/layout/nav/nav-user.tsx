@@ -25,7 +25,7 @@ import Link from 'next/link';
 import { User } from '@/lib/types';
 
 export function NavUser({ user }: { user: User }) {
-  const { isMobile } = useSidebar();
+  const { isMobile, state } = useSidebar();
 
   const { showError } = useToast();
 
@@ -48,17 +48,20 @@ export function NavUser({ user }: { user: User }) {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size='lg'
-              className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground'
+              className={`data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:p-0! ${state === 'collapsed' ? 'justify-center px-0' : ''}`}
+              tooltip={state === 'collapsed' ? `${user.name}\n${user.email}` : undefined}
             >
               <Avatar className='h-8 w-8 rounded-lg'>
                 <AvatarImage src={user?.profilePic!} alt={user.name} />
                 <AvatarFallback className='rounded-lg'>{user.name.split('')[0]}</AvatarFallback>
               </Avatar>
-              <div className='grid flex-1 text-left text-sm leading-tight'>
-                <span className='truncate font-semibold'>{user.name}</span>
-                <span className='truncate text-xs'>{user.email}</span>
-              </div>
-              <ChevronsUpDown className='ml-auto size-4' />
+              {state !== 'collapsed' && (
+                <div className='grid flex-1 text-left text-sm leading-tight'>
+                  <span className='truncate font-semibold'>{user.name}</span>
+                  <span className='truncate text-xs'>{user.email}</span>
+                </div>
+              )}
+              {state !== 'collapsed' && <ChevronsUpDown className='ml-auto size-4' />}
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent

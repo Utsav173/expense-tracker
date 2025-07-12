@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { DashboardData } from '@/lib/types';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, LineChart, AreaChart } from 'lucide-react';
-import { Skeleton } from '../ui/skeleton';
+import Loader from '../ui/loader';
 import NoData from '../ui/no-data';
 import { TrendChart } from './trend-chart';
 import { useDateRangeFilter } from '@/hooks/useDateRangeFilter';
@@ -63,7 +63,7 @@ const TrendChartWrapper = ({
 
   const renderContent = () => {
     if (isLoading) {
-      return <Skeleton className='h-full min-h-[400px] w-full' />;
+      return <Loader className='h-full min-h-[400px] w-full' />;
     }
     const hasData = transformedChartData.length > 0;
 

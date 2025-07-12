@@ -1,10 +1,11 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+
 import NoData from '../ui/no-data';
 import { DashboardData } from '@/lib/types';
 import { cn, formatCurrency } from '@/lib/utils';
 import { ArrowUp, ArrowDown } from 'lucide-react';
+import Loader from '../ui/loader';
 
 interface QuickStatsProps {
   data: DashboardData | null | undefined;
@@ -14,20 +15,10 @@ interface QuickStatsProps {
 
 export const QuickStats: React.FC<QuickStatsProps> = ({ data, isLoading, className }) => {
   return (
-    <Card className={cn('flex flex-col py-4', className)}>
+    <Card className={cn('flex h-full flex-col py-4', className)}>
       <CardContent className='scrollbar h-full grow space-y-3 overflow-y-auto text-sm'>
         {isLoading || !data ? (
-          <>
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className='flex justify-between'>
-                <Skeleton className='h-4 w-1/3' />
-                <Skeleton className='h-4 w-1/4' />
-              </div>
-            ))}
-            <Skeleton className='mt-4 h-4 w-1/2' />
-            <Skeleton className='h-3 w-full' />
-            <Skeleton className='h-3 w-full' />
-          </>
+          <Loader />
         ) : data.totalTransaction < 1 ? (
           <div className='flex h-full items-center justify-center'>
             <NoData message='No transactions recorded yet.' icon='inbox' />

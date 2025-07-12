@@ -9,7 +9,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Share2, Mail, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { formatCurrency } from '@/lib/utils';
 import ShareAccountModal from '@/components/modals/share-account-modal';
 import {
   DropdownMenu,
@@ -127,15 +126,17 @@ const AccountSharesPage = ({ params }: PageProps) => {
               <div className='flex items-center justify-between'>
                 <div className='flex items-center gap-3'>
                   <Avatar>
-                    <AvatarImage src={share.User.profilePic || undefined} />
+                    <AvatarImage src={share.profilePic || undefined} />
                     <AvatarFallback>
-                      {share.User.name
-                        .split(' ')
-                        .map((n) => n[0])
-                        .join('')}
+                      {share?.name
+                        ? share.name
+                            .split(' ')
+                            .map((n) => n[0])
+                            .join('')
+                        : ''}
                     </AvatarFallback>
                   </Avatar>
-                  <CardTitle className='text-lg'>{share.User.name}</CardTitle>
+                  <CardTitle className='text-lg'>{share?.name || 'N/A'}</CardTitle>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -146,7 +147,7 @@ const AccountSharesPage = ({ params }: PageProps) => {
                   <DropdownMenuContent align='end'>
                     <DropdownMenuItem
                       className='text-destructive'
-                      onClick={() => revokeShareMutation.mutate(share.User.id)}
+                      onClick={() => revokeShareMutation.mutate(share.id)}
                     >
                       <Trash2 className='mr-2 h-4 w-4' />
                       Revoke Access
@@ -159,13 +160,7 @@ const AccountSharesPage = ({ params }: PageProps) => {
               <div className='space-y-3'>
                 <div className='flex items-center gap-2 text-sm'>
                   <Mail className='text-muted-foreground h-4 w-4' />
-                  <span className='text-muted-foreground'>{share.User.email}</span>
-                </div>
-                <div className='border-t pt-2'>
-                  <div className='flex items-center justify-between'>
-                    <span className='text-muted-foreground text-sm'>Current Balance</span>
-                    <span className='font-medium'>{formatCurrency(share.balance, 'INR')}</span>
-                  </div>
+                  <span className='text-muted-foreground'>{share?.email || 'N/A'}</span>
                 </div>
               </div>
             </CardContent>

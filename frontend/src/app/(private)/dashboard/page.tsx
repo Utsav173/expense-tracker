@@ -6,13 +6,24 @@ import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import NoData from '@/components/ui/no-data';
-import { Frown, LayoutGrid } from 'lucide-react';
-import { DashboardCardWrapper } from '@/components/dashboard/dashboard-card-wrapper';
+import { Frown, LayoutGrid, Maximize2 } from 'lucide-react';
 import { DASHBOARD_PRESETS, DASHBOARD_CARD_CONFIG } from '@/config/dashboard-config';
 import { DashboardControls } from '@/components/dashboard/dashboard-controls';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { useAuth } from '@/hooks/useAuth';
 import Loader from '@/components/ui/loader';
+import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 // Dynamically import heavy components
 const FinancialSnapshot = dynamic(
@@ -82,12 +93,6 @@ const DashboardPage = () => {
 
   const [chartType, setChartType] = useState<'line' | 'bar' | 'area'>('line');
 
-  const currentPreset = dashboardSettings.preset;
-  const hiddenSections = useMemo(
-    () => new Set(dashboardSettings.hiddenSections || []),
-    [dashboardSettings.hiddenSections]
-  );
-
   const {
     data: dashboardPageData,
     isLoading,
@@ -104,23 +109,6 @@ const DashboardPage = () => {
   const updateSettings = useCallback((updates: Partial<DashboardSettings>) => {
     setDashboardSettings((prev) => ({ ...prev, ...updates }));
   }, []);
-
-  const toggleSectionVisibility = useCallback(
-    (sectionId: string) => {
-      const newHiddenSections = new Set(dashboardSettings.hiddenSections);
-      if (newHiddenSections.has(sectionId)) {
-        newHiddenSections.delete(sectionId);
-      } else {
-        newHiddenSections.add(sectionId);
-      }
-      updateSettings({ hiddenSections: Array.from(newHiddenSections) });
-    },
-    [dashboardSettings.hiddenSections, updateSettings]
-  );
-
-  const toggleDarkMode = useCallback(() => {
-    updateSettings({ darkMode: !dashboardSettings.darkMode });
-  }, [dashboardSettings.darkMode, updateSettings]);
 
   const refetchAll = useCallback(async () => {
     try {
@@ -158,57 +146,9 @@ const DashboardPage = () => {
     [showSuccess, refetchAll, updateSettings]
   );
 
-  const currentLayoutConfig =
-    DASHBOARD_CARD_CONFIG[currentPreset] || DASHBOARD_CARD_CONFIG['default'];
-
-  const cardMap: Record<string, React.ReactNode> = useMemo(
-    () => ({
-      financialHealth: <FinancialHealth />,
-      financialSnapshot: dashboardPageData?.dashboardSummary ? (
-        <FinancialSnapshot data={dashboardPageData.dashboardSummary} isLoading={isLoading} />
-      ) : null,
-      trendChart: dashboardPageData?.dashboardSummary ? (
-        <TrendChartWrapper
-          data={dashboardPageData.dashboardSummary}
-          chartType={chartType}
-          isLoading={isLoading}
-          setChartType={setChartType}
-        />
-      ) : null,
-      spendingBreakdown: <SpendingBreakdown className='h-full' />,
-      budgetProgress: <BudgetProgress />,
-      goals: <GoalHighlights data={dashboardPageData?.goals ?? undefined} isLoading={isLoading} />,
-      investments: <InvestmentSummaryCard />,
-      debtSummary: <DebtSummaryCard />,
-      accounts: (
-        <AccountListSummary
-          accountsInfo={dashboardPageData?.dashboardSummary?.accountsInfo}
-          isLoading={isLoading}
-          className='col-span-12 md:col-span-6 lg:col-span-4'
-        />
-      ),
-      quickStats: dashboardPageData?.dashboardSummary ? (
-        <QuickStats data={dashboardPageData.dashboardSummary} isLoading={isLoading} />
-      ) : null
-    }),
-    [dashboardPageData, isLoading, chartType]
-  );
-
   const renderSkeleton = () => (
-    <div className='mx-auto w-full max-w-7xl animate-pulse space-y-6 p-4 pt-6 lg:p-8 lg:pt-8'>
-      <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
-        <Skeleton className='h-9 w-48 rounded-md' />
-        <div className='flex flex-wrap items-center gap-2'>
-          {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className='h-9 w-28 rounded-md' />
-          ))}
-        </div>
-      </div>
-      <Skeleton className='h-28 w-full rounded-lg' />
-      <div className='grid grid-cols-12 gap-6'>
-        <Skeleton className='col-span-12 h-[400px] w-full rounded-lg lg:col-span-8' />
-        <Skeleton className='col-span-12 h-[400px] w-full rounded-lg lg:col-span-4' />
-      </div>
+    <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
+      <Loader />
     </div>
   );
 
@@ -252,17 +192,12 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className='relative w-full space-y-4 select-none'>
+    <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
       <DashboardControls
         currentPreset={dashboardSettings.preset}
-        layoutConfig={currentLayoutConfig}
-        hiddenSections={hiddenSections}
         refreshInterval={dashboardSettings.refreshInterval}
-        isDarkMode={dashboardSettings.darkMode}
         onChangePreset={changePreset}
-        onToggleSectionVisibility={toggleSectionVisibility}
         onSetRefreshInterval={handleSetRefreshInterval}
-        onToggleDarkMode={toggleDarkMode}
       />
 
       {isError && dashboardPageData && (
@@ -276,27 +211,175 @@ const DashboardPage = () => {
         </Alert>
       )}
 
-      <div className='mx-auto max-w-7xl p-2 max-sm:max-w-full max-sm:p-0'>
-        <div className='grid max-w-7xl grid-cols-12 gap-4'>
-          {Object.entries(currentLayoutConfig)
-            .filter(([id]) => !hiddenSections.has(id))
-            .map(([id, config]) => (
-              <DashboardCardWrapper
-                key={id}
-                id={id}
-                title={config.title}
-                description={config.description}
-                gridSpanClass={config.gridSpan}
-                isHidden={hiddenSections.has(id)}
-                onVisibilityToggle={toggleSectionVisibility}
-                icon={config.icon}
-              >
-                {cardMap[id] ?? <Loader className='my-2' />}
-              </DashboardCardWrapper>
-            ))}
-        </div>
-      </div>
+      <BentoGrid>
+        <BentoGridItem className='col-span-12 row-span-2 md:col-span-6 lg:col-span-4'>
+          <DashboardCardContent
+            title={DASHBOARD_CARD_CONFIG.default.financialSnapshot.title}
+            description={DASHBOARD_CARD_CONFIG.default.financialSnapshot.description}
+            icon={DASHBOARD_CARD_CONFIG.default.financialSnapshot.icon}
+          >
+            {dashboardPageData?.dashboardSummary ? (
+              <FinancialSnapshot data={dashboardPageData.dashboardSummary} isLoading={isLoading} />
+            ) : null}
+          </DashboardCardContent>
+        </BentoGridItem>
+        <BentoGridItem className='col-span-12 row-span-2 md:col-span-6 lg:col-span-4'>
+          <DashboardCardContent
+            title={DASHBOARD_CARD_CONFIG.default.quickStats.title}
+            description={DASHBOARD_CARD_CONFIG.default.quickStats.description}
+            icon={DASHBOARD_CARD_CONFIG.default.quickStats.icon}
+          >
+            <QuickStats data={dashboardPageData?.dashboardSummary} isLoading={isLoading} />
+          </DashboardCardContent>
+        </BentoGridItem>
+        <BentoGridItem className='col-span-12 row-span-2 md:col-span-6 lg:col-span-4'>
+          <DashboardCardContent
+            title={DASHBOARD_CARD_CONFIG.default.financialHealth.title}
+            description={DASHBOARD_CARD_CONFIG.default.financialHealth.description}
+            icon={DASHBOARD_CARD_CONFIG.default.financialHealth.icon}
+            noExpand
+          >
+            <FinancialHealth />
+          </DashboardCardContent>
+        </BentoGridItem>
+        <BentoGridItem className='col-span-12 row-span-2 md:col-span-6 lg:col-span-6'>
+          <DashboardCardContent
+            title={DASHBOARD_CARD_CONFIG.default.trendChart.title}
+            description={DASHBOARD_CARD_CONFIG.default.trendChart.description}
+            icon={DASHBOARD_CARD_CONFIG.default.trendChart.icon}
+          >
+            {dashboardPageData?.dashboardSummary ? (
+              <TrendChartWrapper
+                data={dashboardPageData.dashboardSummary}
+                chartType={chartType}
+                isLoading={isLoading}
+                setChartType={setChartType}
+              />
+            ) : null}
+          </DashboardCardContent>
+        </BentoGridItem>
+        <BentoGridItem className='col-span-12 row-span-2 md:col-span-6 lg:col-span-6'>
+          <DashboardCardContent
+            title={DASHBOARD_CARD_CONFIG.default.spendingBreakdown.title}
+            description={DASHBOARD_CARD_CONFIG.default.spendingBreakdown.description}
+            icon={DASHBOARD_CARD_CONFIG.default.spendingBreakdown.icon}
+          >
+            <SpendingBreakdown className='h-full' />
+          </DashboardCardContent>
+        </BentoGridItem>
+        <BentoGridItem className='col-span-12 row-span-2 md:col-span-6 lg:col-span-4'>
+          <DashboardCardContent
+            title={DASHBOARD_CARD_CONFIG.default.budgetProgress.title}
+            description={DASHBOARD_CARD_CONFIG.default.budgetProgress.description}
+            icon={DASHBOARD_CARD_CONFIG.default.budgetProgress.icon}
+          >
+            <BudgetProgress />
+          </DashboardCardContent>
+        </BentoGridItem>
+        <BentoGridItem className='col-span-12 row-span-2 md:col-span-6 lg:col-span-4'>
+          <DashboardCardContent
+            title={DASHBOARD_CARD_CONFIG.default.goals.title}
+            description={DASHBOARD_CARD_CONFIG.default.goals.description}
+            icon={DASHBOARD_CARD_CONFIG.default.goals.icon}
+          >
+            <GoalHighlights data={dashboardPageData?.goals ?? undefined} isLoading={isLoading} />
+          </DashboardCardContent>
+        </BentoGridItem>
+        <BentoGridItem className='col-span-12 row-span-2 md:col-span-6 lg:col-span-4'>
+          <DashboardCardContent
+            title={DASHBOARD_CARD_CONFIG.default.debtSummary.title}
+            description={DASHBOARD_CARD_CONFIG.default.debtSummary.description}
+            icon={DASHBOARD_CARD_CONFIG.default.debtSummary.icon}
+          >
+            <DebtSummaryCard />
+          </DashboardCardContent>
+        </BentoGridItem>
+        <BentoGridItem className='col-span-12 row-span-2 md:col-span-6 lg:col-span-6'>
+          <DashboardCardContent
+            title={DASHBOARD_CARD_CONFIG.default.investments.title}
+            description={DASHBOARD_CARD_CONFIG.default.investments.description}
+            icon={DASHBOARD_CARD_CONFIG.default.investments.icon}
+          >
+            <InvestmentSummaryCard />
+          </DashboardCardContent>
+        </BentoGridItem>
+        <BentoGridItem className='col-span-12 row-span-2 md:col-span-6 lg:col-span-6'>
+          <DashboardCardContent
+            title={DASHBOARD_CARD_CONFIG.default.accounts.title}
+            description={DASHBOARD_CARD_CONFIG.default.accounts.description}
+            icon={DASHBOARD_CARD_CONFIG.default.accounts.icon}
+          >
+            <AccountListSummary
+              accountsInfo={dashboardPageData?.dashboardSummary?.accountsInfo}
+              isLoading={isLoading}
+              className='h-full'
+            />
+          </DashboardCardContent>
+        </BentoGridItem>
+      </BentoGrid>
     </div>
+  );
+};
+
+// New component to encapsulate the card content and dialog logic
+interface DashboardCardContentProps {
+  title: string;
+  icon?: React.ReactNode;
+  description?: string;
+  children: React.ReactNode;
+  className?: string;
+  noExpand?: boolean;
+}
+
+const DashboardCardContent: React.FC<DashboardCardContentProps> = ({
+  title,
+  icon,
+  description,
+  children,
+  className,
+  noExpand = false
+}) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  return (
+    <Card className={cn('flex h-full flex-col', className)}>
+      <CardHeader className='flex flex-row items-start justify-between space-y-0 pt-4 pb-2'>
+        <div className='flex-1 pr-4'>
+          <CardTitle className='flex items-center gap-2 text-base font-semibold md:text-lg'>
+            {icon} {title}
+          </CardTitle>
+          {description && (
+            <CardDescription className='text-xs md:text-sm'>{description}</CardDescription>
+          )}
+        </div>
+        {!noExpand && (
+          <div className='flex shrink-0 items-center space-x-1'>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  className='hidden h-7 w-7 md:flex'
+                  aria-label={'Maximize'}
+                >
+                  <Maximize2 className='h-4 w-4' />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className='h-fit max-h-[90vh] w-[90%]! overflow-y-auto sm:max-w-2xl md:max-w-4xl lg:max-w-6xl'>
+                <DialogHeader>
+                  <DialogTitle>{title}</DialogTitle>
+                  {description && <DialogDescription>{description}</DialogDescription>}
+                </DialogHeader>
+                <div className={cn('flex min-h-fit flex-1 flex-col justify-center p-0')}>
+                  {children}
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
+      </CardHeader>
+      <CardContent className={cn('flex flex-1 flex-col p-0')}>{children}</CardContent>
+    </Card>
   );
 };
 

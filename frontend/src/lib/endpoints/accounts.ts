@@ -6,7 +6,6 @@ import {
   ApiResponse,
   CustomAnalytics,
   DashboardData,
-  DropdownUser,
   PreviousShareAccount
 } from '../types';
 

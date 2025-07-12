@@ -84,7 +84,5 @@ export const investmentGetPortfolioHistorical = (
 export const investmentGetOldestDate = (): Promise<ApiResponse<{ oldestDate: string | null }>> =>
   apiFetch('/investment/oldest-date', 'GET');
 
-export const investmentAccountGetPerformance = (
-  accountId: string
-): Promise<ApiResponse<any>> =>
+export const investmentAccountGetPerformance = (accountId: string): Promise<ApiResponse<any>> =>
   apiFetch(`/investmentAccount/${accountId}/performance`, 'GET');

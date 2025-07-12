@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import Loader from '../ui/loader';
 import NoData from '../ui/no-data';
 import { DashboardData } from '@/lib/types';
 import { cn, formatCurrency } from '@/lib/utils';
@@ -48,17 +48,7 @@ export const AccountListSummary: React.FC<AccountListSummaryProps> = ({
     <Card className={cn('flex flex-col py-4', className)}>
       <CardContent className='scrollbar h-[200px] grow overflow-y-auto'>
         {isLoading ? (
-          <div className='space-y-4'>
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className='space-y-1'>
-                <div className='flex justify-between'>
-                  <Skeleton className='h-4 w-2/5' />
-                  <Skeleton className='h-4 w-1/4' />
-                </div>
-                <Skeleton className='h-3 w-1/3' />
-              </div>
-            ))}
-          </div>
+          <Loader />
         ) : !sortedAccounts || sortedAccounts.length === 0 ? (
           <div className='flex h-full items-center justify-center'>
             <NoData message='No accounts added yet.' icon='inbox' />

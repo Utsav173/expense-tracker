@@ -251,7 +251,7 @@
     --shadow-xl:
       0px 2px 0px 0px oklch(0.6723 0.1606 244.9955 / 0),
       0px 8px 10px -1px oklch(0.6723 0.1606 244.9955 / 0);
-    --shadow-2xl: 0px 2px 0px 0px oklch(0.6723 0.1606 244.9955 / 0);
+    --shadow-2xl: 0px 2px 0px 0px oklch(67.23% 0.1607 245.017 / 0.076);
 
     --income: oklch(0.6907 0.1554 160.3454);
     --income-foreground: oklch(1 0 0);
@@ -265,7 +265,7 @@
     --negative-foreground: oklch(1 0 0);
     --neutral: oklch(0.5637 0.0078 247.9662);
     --neutral-foreground: oklch(1 0 0);
-    --bg-pattern: #e0e3ff
+    --bg-pattern: #a1bcff;
   }
 
   .dark {
@@ -353,7 +353,7 @@
     --negative-foreground: oklch(1 0 0);
     --neutral: oklch(0.5 0.01 248);
     --neutral-foreground: oklch(1 0 0);
-    --bg-pattern: #494d6e
+    --bg-pattern: #494d6e;
   }
 }
 
@@ -380,7 +380,7 @@
   html,
   body {
     scroll-behavior: smooth;
-    width: 100dvw;
+    width: 100%;
   }
 }
 

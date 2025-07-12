@@ -277,13 +277,8 @@ export type ChartDataType = {
 export type PreviousShareAccount = {
   id: string;
   name: string;
-  balance: number;
-  User: {
-    id: string;
-    name: string;
-    email: string;
-    profilePic: string | null;
-  };
+  email: number;
+  profilePic?: string | null;
 };
 
 export type DropdownUser = {
