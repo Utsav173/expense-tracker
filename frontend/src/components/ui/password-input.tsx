@@ -6,8 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-const PasswordInput = React.forwardRef<HTMLInputElement, React.ComponentProps<'input'>>(
-  ({ className, ...props }, ref) => {
+const PasswordInput = React.forwardRef<HTMLInputElement, React.ComponentProps<'input'> & { variant?: 'default' | 'auth' }>(
+  ({ className, variant = 'default', ...props }, ref) => {
     const [showPassword, setShowPassword] = React.useState(false);
 
     const togglePasswordVisibility = () => setShowPassword(!showPassword);
@@ -18,6 +18,7 @@ const PasswordInput = React.forwardRef<HTMLInputElement, React.ComponentProps<'i
           type={showPassword ? 'text' : 'password'}
           className={cn('pr-10', className)}
           ref={ref}
+          variant={variant}
           {...props}
         />
         <Button

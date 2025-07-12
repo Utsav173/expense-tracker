@@ -192,7 +192,7 @@ const LandingPageContent = () => {
           </div>
         </section>
 
-        <section id='dashboard-showcase' className='relative mb-16 h-[75dvh] bg-slate-900'>
+        <section id='dashboard-showcase' className='relative mb-16 h-[100dvh] bg-slate-900'>
           <Image
             src='/og-image-dashboard-desktop.png'
             alt='Expense Pro Dashboard Mockup'

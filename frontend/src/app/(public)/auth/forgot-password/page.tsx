@@ -59,16 +59,16 @@ const ForgotPasswordPage = () => {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         id='json-ld'
       />
-      <Card className='w-full border-0 p-0 shadow-none'>
+      <Card variant='auth'>
         <CardHeader className='py-4'>
-          <CardTitle className='text-center text-xl font-bold tracking-wide text-gray-700'>
+          <CardTitle className='text-center text-xl font-bold tracking-wide text-foreground'>
             Forgot Password
           </CardTitle>
         </CardHeader>
         <CardContent className='space-y-6 p-0 pb-4'>
           <form onSubmit={handleSubmit(handleForgotPassword)}>
             <div>
-              <label htmlFor='email' className='mb-1 block text-sm font-medium text-gray-700'>
+              <label htmlFor='email' className='mb-1 block text-sm font-medium text-foreground'>
                 Email Address
               </label>
               <Input
@@ -77,10 +77,10 @@ const ForgotPasswordPage = () => {
                 placeholder='Your Email'
                 disabled={isLoading}
                 {...register('email')}
-                className='w-full'
+                variant='auth'
               />
               {errors.email && (
-                <p className='py-1 text-xs text-red-500'> {errors.email.message} </p>
+                <p className='py-1 text-xs text-destructive'> {errors.email.message} </p>
               )}
             </div>
             <Button
@@ -94,13 +94,12 @@ const ForgotPasswordPage = () => {
           </form>
         </CardContent>
         <CardFooter className='flex items-center justify-end border-t p-4'>
-          <Link href='/auth/login' className='text-sm text-blue-500 hover:underline'>
+          <Link href='/auth/login' className='text-sm text-primary hover:underline'>
             Back to Login
           </Link>
         </CardFooter>
       </Card>
-      <GoogleAnalytics gaId='GTM-NRXZ2WPR' />
-    </>
+      </>
   );
 };
 export default ForgotPasswordPage;

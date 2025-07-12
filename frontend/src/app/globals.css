@@ -229,7 +229,7 @@
     --sidebar-border: oklch(0.93 0.005 240);
     --sidebar-ring: oklch(0.55 0.18 245);
 
-    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-sans: 'Open Sans', system-ui, -apple-system, sans-serif;
     --font-serif: Georgia, 'Times New Roman', serif;
     --font-mono: 'JetBrains Mono', Menlo, Monaco, 'Courier New', monospace;
     --radius: 0.75rem;
@@ -255,7 +255,8 @@
     --negative-foreground: oklch(0.98 0.003 240);
     --neutral: oklch(0.55 0.005 245);
     --neutral-foreground: oklch(0.98 0.003 240);
-    --bg-pattern: oklch(52.434% 0.11518 245.871 / 0.664);
+    --bg-pattern: oklch(86.324% 0.07665 238.277);
+    --bg-pattern-active: oklch(53.525% 0.14849 253.055);
   }
 
   .dark {
@@ -307,7 +308,7 @@
     --sidebar-border: oklch(0.22 0.008 245);
     --sidebar-ring: oklch(0.65 0.18 245);
 
-    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-sans: 'Open Sans', system-ui, -apple-system, sans-serif;
     --font-serif: Georgia, 'Times New Roman', serif;
     --font-mono: 'JetBrains Mono', Menlo, Monaco, 'Courier New', monospace;
     --radius: 0.75rem;
@@ -333,7 +334,8 @@
     --negative-foreground: oklch(0.08 0.005 245);
     --neutral: oklch(0.5 0.005 245);
     --neutral-foreground: oklch(0.08 0.005 245);
-    --bg-pattern: oklch(72.059% 0.15902 242.476 / 0.578);
+    --bg-pattern: oklch(53.525% 0.14849 253.055 / 0.693);
+    --bg-pattern-active: oklch(86.324% 0.07665 238.277);
   }
 }
 
@@ -353,7 +355,7 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+    font-family: 'Open Sans', system-ui, Avenir, Helvetica, Arial, sans-serif;
     line-height: 1.7;
   }
 

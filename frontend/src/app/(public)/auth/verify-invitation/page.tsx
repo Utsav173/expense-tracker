@@ -40,7 +40,7 @@ const VerifyInvitationPage = () => {
   }, [searchParams, push, showError]);
 
   return (
-    <Card className='w-full border-0 shadow-none'>
+    <Card variant='auth'>
       <CardContent className='space-y-6 p-0 pt-4'>
         <div className='space-y-2 text-center select-none'>
           <h2 className='text-foreground text-2xl font-semibold'>Invitation</h2>

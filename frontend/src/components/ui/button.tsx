@@ -18,7 +18,7 @@ const buttonVariants = cva(
         ghost: 'hover:bg-accent hover:text-accent-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
         authButton:
-          'w-full rounded-lg bg-linear-to-r from-blue-600 to-indigo-600 px-4 py-2 font-medium text-white transition-all duration-200 hover:from-blue-700 hover:to-indigo-700'
+          'w-full rounded-lg bg-gradient-to-r from-primary to-primary px-4 py-2 font-medium text-primary-foreground transition-all duration-200 hover:from-primary/90 hover:to-primary/90'
       },
       size: {
         default: 'h-9 px-4 py-2',

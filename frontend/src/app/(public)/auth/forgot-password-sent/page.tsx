@@ -25,19 +25,19 @@ const ForgotPasswordSentPage = () => {
         type='application/ld+json'
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <Card className='w-full border-0 p-0 shadow-none'>
+      <Card variant='auth'>
         <CardHeader className='items-center py-4'>
-          <MailCheck className='mb-3 h-12 w-12 text-green-500' />
-          <CardTitle className='text-center text-xl font-bold tracking-wide text-gray-700'>
+          <MailCheck className='mb-3 h-12 w-12 text-success' />
+          <CardTitle className='text-center text-xl font-bold tracking-wide text-foreground'>
             Check Your Email
           </CardTitle>
         </CardHeader>
         <CardContent className='space-y-4 p-0 pb-4 text-center'>
-          <p className='text-sm text-gray-600'>
+          <p className='text-sm text-muted-foreground'>
             We&apos;ve sent a password reset link to your email address. Please check your inbox
             (and spam folder) to proceed.
           </p>
-          <p className='text-xs text-gray-500'>
+          <p className='text-xs text-muted-foreground'>
             If you don&apos;t receive the email within a few minutes, please try again or contact
             support.
           </p>
@@ -46,8 +46,7 @@ const ForgotPasswordSentPage = () => {
           </Button>
         </CardContent>
       </Card>
-      <GoogleAnalytics gaId='GTM-NRXZ2WPR' />
-    </>
+      </>
   );
 };
 

@@ -91,7 +91,7 @@ const SignupPage = () => {
         type='application/ld+json'
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <Card className='w-full border-0 shadow-none'>
+      <Card variant='auth'>
         <CardContent className='space-y-6 p-0 pt-4'>
           <div className='space-y-2 text-center select-none'>
             <h2 className='text-foreground text-2xl font-semibold'>Create Account</h2>
@@ -111,7 +111,8 @@ const SignupPage = () => {
                 placeholder='John Doe'
                 {...register('name')}
                 disabled={loading}
-                className='border-border bg-background focus:bg-card focus:ring-primary w-full rounded-lg border px-4 py-2 transition-all duration-200 focus:border-transparent focus:ring-2'
+                variant='auth'
+                autoComplete="off"
               />
               {formState.errors.name && (
                 <p className='text-destructive py-1 text-xs'> {formState.errors.name.message}</p>
@@ -128,7 +129,7 @@ const SignupPage = () => {
                 placeholder='you@example.com'
                 {...register('email')}
                 disabled={loading}
-                className='border-border bg-background focus:bg-card focus:ring-primary w-full rounded-lg border px-4 py-2 transition-all duration-200 focus:border-transparent focus:ring-2'
+                variant='auth'
               />
               {formState.errors.email && (
                 <p className='text-destructive py-1 text-xs'> {formState.errors.email.message}</p>
@@ -144,7 +145,7 @@ const SignupPage = () => {
                 placeholder='••••••••'
                 {...register('password')}
                 disabled={loading}
-                className='border-border bg-background focus:bg-card focus:ring-primary w-full rounded-lg border px-4 py-2 transition-all duration-200 focus:border-transparent focus:ring-2'
+                variant='auth'
               />
               {formState.errors.password && (
                 <p className='text-destructive py-1 text-xs'>
@@ -156,7 +157,7 @@ const SignupPage = () => {
 
             <div className='space-y-2'>
               <label className='text-foreground text-sm font-medium'>Profile Picture</label>
-              <div className='border-border bg-background hover:border-primary mt-1 flex justify-center rounded-lg border-2 border-dashed px-2 pt-5 pb-6 transition-colors duration-200'>
+              <label htmlFor='file-upload' className='border-border bg-background hover:border-primary mt-1 flex cursor-pointer justify-center rounded-lg border-2 border-dashed px-2 pt-5 pb-6 transition-colors duration-200'>
                 <div className='w-full max-w-xs space-y-1 text-center'>
                   <svg
                     className='text-muted-foreground mx-auto h-12 w-12'
@@ -173,24 +174,22 @@ const SignupPage = () => {
                     />
                   </svg>
                   <div className='text-muted-foreground flex flex-col items-center justify-center gap-1 text-sm sm:flex-row'>
-                    <label className='text-primary hover:text-primary/80 relative cursor-pointer rounded-md font-medium focus-within:outline-hidden'>
-                      <span>Upload a file</span>
-                      <input
-                        id='file-upload'
-                        name='file-upload'
-                        onChange={handleFileChange}
-                        type='file'
-                        disabled={loading}
-                        className='sr-only'
-                        accept='image/png, image/jpeg, image/gif'
-                      />
-                    </label>
+                    <span>Upload a file</span>
                     <span className='hidden px-1 sm:inline'>or</span>
                     <span className='block sm:inline'>drag and drop</span>
                   </div>
                   <p className='text-muted-foreground text-xs'>PNG, JPG, GIF up to 2MB</p>{' '}
+                  <input
+                    id='file-upload'
+                    name='file-upload'
+                    onChange={handleFileChange}
+                    type='file'
+                    disabled={loading}
+                    className='sr-only'
+                    accept='image/png, image/jpeg, image/gif'
+                  />
                 </div>
-              </div>
+              </label>
               {profilePic && profilePic instanceof File && (
                 <p className='text-muted-foreground mt-1 text-xs break-all'>
                   Selected: {profilePic.name}
@@ -213,8 +212,7 @@ const SignupPage = () => {
           </Link>
         </CardFooter>
       </Card>
-      <GoogleAnalytics gaId='GTM-NRXZ2WPR' />
-    </>
+      </>
   );
 };
 

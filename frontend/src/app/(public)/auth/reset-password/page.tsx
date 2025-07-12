@@ -87,16 +87,16 @@ const ResetPasswordPage = () => {
         type='application/ld+json'
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <Card className='w-full border-0 p-0 shadow-none'>
+      <Card variant='auth'>
         <CardHeader className='py-4'>
-          <CardTitle className='text-center text-xl font-bold tracking-wide text-gray-700'>
+          <CardTitle className='text-center text-xl font-bold tracking-wide text-foreground'>
             Reset Password
           </CardTitle>
         </CardHeader>
         <CardContent className='space-y-6 p-0 pb-4'>
           <form onSubmit={handleSubmit(handleResetPassword)} className='space-y-4'>
             <div>
-              <label className='text-sm font-medium text-gray-700' htmlFor='password'>
+              <label className='text-sm font-medium text-foreground' htmlFor='password'>
                 New Password
               </label>
               {/* Use PasswordInput here */}
@@ -104,17 +104,17 @@ const ResetPasswordPage = () => {
                 id='password'
                 placeholder='New Password'
                 {...register('password')}
-                className='mt-1 w-full' // Added margin-top
+                variant='auth'
                 disabled={isLoading}
               />
               {errors.password && (
-                <p className='py-1 text-xs text-red-500'>{errors.password.message}</p>
+                <p className='py-1 text-xs text-destructive'>{errors.password.message}</p>
               )}
             </div>
             {/* Hidden input for the token */}
             <input type='hidden' {...register('resetPasswordToken')} />
             {errors.resetPasswordToken && (
-              <p className='py-1 text-xs text-red-500'>{errors.resetPasswordToken.message}</p>
+              <p className='py-1 text-xs text-destructive'>{errors.resetPasswordToken.message}</p>
             )}
 
             <Button type='submit' className='w-full' disabled={isLoading} variant={'authButton'}>
@@ -123,13 +123,12 @@ const ResetPasswordPage = () => {
           </form>
         </CardContent>
         <CardFooter className='flex justify-center p-4'>
-          <Link href='/auth/login' className='text-sm text-blue-500 hover:underline'>
+          <Link href='/auth/login' className='text-sm text-primary hover:underline'>
             Back to Login
           </Link>
         </CardFooter>
       </Card>
-      <GoogleAnalytics gaId='GTM-NRXZ2WPR' />
-    </>
+      </>
   );
 };
 

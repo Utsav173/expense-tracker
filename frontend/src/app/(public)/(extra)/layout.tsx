@@ -1,8 +1,8 @@
 import React from 'react';
-import '../../globals.css';
-
 import LandingPageHeader from '@/components/landing/landing-page-header';
 import LandingPageFooter from '@/components/landing/landing-page-footer';
+
+import '../../globals.css';
 
 export default function PublicPagesLayout({ children }: { children: React.ReactNode }) {
   return (
