@@ -163,9 +163,7 @@ const DashboardPage = () => {
 
   const cardMap: Record<string, React.ReactNode> = useMemo(
     () => ({
-      financialHealth: dashboardPageData?.dashboardSummary ? (
-        <FinancialHealth data={dashboardPageData.dashboardSummary} />
-      ) : null,
+      financialHealth: <FinancialHealth />,
       financialSnapshot: dashboardPageData?.dashboardSummary ? (
         <FinancialSnapshot data={dashboardPageData.dashboardSummary} isLoading={isLoading} />
       ) : null,
@@ -254,7 +252,7 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className='space-y-4 select-none'>
+    <div className='relative w-full space-y-4 select-none'>
       <DashboardControls
         currentPreset={dashboardSettings.preset}
         layoutConfig={currentLayoutConfig}
@@ -278,7 +276,7 @@ const DashboardPage = () => {
         </Alert>
       )}
 
-      <div className='mx-auto w-full max-w-7xl p-2 max-sm:max-w-full max-sm:p-0'>
+      <div className='mx-auto max-w-7xl p-2 max-sm:max-w-full max-sm:p-0'>
         <div className='grid max-w-7xl grid-cols-12 gap-4'>
           {Object.entries(currentLayoutConfig)
             .filter(([id]) => !hiddenSections.has(id))

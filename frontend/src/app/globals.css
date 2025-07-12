@@ -150,19 +150,19 @@
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
 
-  --text-xs: clamp(0.625rem, 0.625rem + 0.1vw, 0.7rem);
-  --text-sm: clamp(0.75rem, 0.75rem + 0.15vw, 0.875rem);
-  --text-base: clamp(0.875rem, 0.875rem + 0.25vw, 1rem);
-  --text-lg: clamp(1rem, 1rem + 0.3vw, 1.2rem);
-  --text-xl: clamp(1.1rem, 1.1rem + 0.4vw, 1.3rem);
-  --text-2xl: clamp(1.3rem, 1.3rem + 0.8vw, 1.75rem);
-  --text-3xl: clamp(1.6rem, 1.6rem + 1.2vw, 2.1rem);
-  --text-4xl: clamp(1.9rem, 1.9rem + 2vw, 2.5rem);
-  --text-5xl: clamp(2.5rem, 2.5rem + 3vw, 3.2rem);
-  --text-6xl: clamp(3rem, 3rem + 4vw, 4rem);
-  --text-7xl: clamp(3.6rem, 3.6rem + 5vw, 4.8rem);
-  --text-8xl: clamp(4.8rem, 4.8rem + 6vw, 6.4rem);
-  --text-9xl: clamp(6.4rem, 6.4rem + 8vw, 8rem);
+  --text-xs: clamp(0.5rem, 0.5rem + 0.5vw, 0.75rem);
+  --text-sm: clamp(0.625rem, 0.625rem + 0.75vw, 0.875rem);
+  --text-base: clamp(0.75rem, 0.75rem + 1vw, 1rem);
+  --text-lg: clamp(0.875rem, 0.875rem + 1.25vw, 1.125rem);
+  --text-xl: clamp(1rem, 1rem + 1.5vw, 1.25rem);
+  --text-2xl: clamp(1.125rem, 1.125rem + 2vw, 1.5rem);
+  --text-3xl: clamp(1.25rem, 1.25rem + 2.5vw, 1.875rem);
+  --text-4xl: clamp(1.5rem, 1.5rem + 3vw, 2.25rem);
+  --text-5xl: clamp(1.875rem, 1.875rem + 3.5vw, 3rem);
+  --text-6xl: clamp(2.25rem, 2.25rem + 4vw, 3.75rem);
+  --text-7xl: clamp(2.75rem, 2.75rem + 4.5vw, 4.5rem);
+  --text-8xl: clamp(3.25rem, 3.25rem + 5vw, 5.25rem);
+  --text-9xl: clamp(4rem, 4rem + 6vw, 6.5rem);
 
   --text-xs--line-height: 1.5;
   --text-sm--line-height: 1.5;
@@ -265,6 +265,7 @@
     --negative-foreground: oklch(1 0 0);
     --neutral: oklch(0.5637 0.0078 247.9662);
     --neutral-foreground: oklch(1 0 0);
+    --bg-pattern: #e0e3ff
   }
 
   .dark {
@@ -352,6 +353,7 @@
     --negative-foreground: oklch(1 0 0);
     --neutral: oklch(0.5 0.01 248);
     --neutral-foreground: oklch(1 0 0);
+    --bg-pattern: #494d6e
   }
 }
 
@@ -378,8 +380,7 @@
   html,
   body {
     scroll-behavior: smooth;
-    /* scrollbar-gutter: stable; */
-    width: 100%;
+    width: 100dvw;
   }
 }
 

@@ -1,97 +1,110 @@
-import React, { useMemo } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { DashboardData } from '@/lib/types';
+import { useQuery } from '@tanstack/react-query';
+import { getFinancialHealthAnalysis } from '@/lib/endpoints/financial-health';
+import { Loader2, AlertTriangle, Lightbulb, TrendingUp, TrendingDown } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
-interface FinancialHealthProps {
-  data: DashboardData | null | undefined;
-}
+const FinancialHealth: React.FC = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-const FinancialHealth: React.FC<FinancialHealthProps> = ({ data }) => {
-  const calculateFinancialHealthScore = () => {
-    if (!data) return 0;
-    const income = data.overallIncome ?? 0;
-    const expense = data.overallExpense ?? 0;
-    const savingsRatio = income > 0 ? Math.max(0, (income - expense) / income) : 0;
-    const expenseRatio = income > 0 ? expense / income : expense > 0 ? 1 : 0;
-    const incomeGrowth = data.overallIncomeChange ?? 0;
-
-    let score = 50;
-
-    if (savingsRatio > 0.25) score += 40;
-    else if (savingsRatio > 0.15) score += 30;
-    else if (savingsRatio > 0.05) score += 15;
-    else if (savingsRatio > 0) score += 5;
-
-    if (expenseRatio < 0.6) score += 30;
-    else if (expenseRatio < 0.8) score += 20;
-    else if (expenseRatio < 0.95) score += 10;
-
-    if (incomeGrowth > 10) score += 30;
-    else if (incomeGrowth > 5) score += 20;
-    else if (incomeGrowth > 0) score += 10;
-    else if (incomeGrowth < -5) score -= 10;
-
-    return Math.min(Math.max(Math.round(score), 0), 100);
-  };
-
-  const financialHealthScore = useMemo(calculateFinancialHealthScore, [data]);
+  const { data: analysis, isLoading, isError, error } = useQuery({
+    queryKey: ['financialHealthAnalysis'],
+    queryFn: getFinancialHealthAnalysis,
+  });
 
   const getHealthScoreMeta = (score: number) => {
-    if (score > 80)
-      return {
-        badge: 'Excellent',
-        color: 'bg-green-500 text-green-foreground',
-        message: 'Your finances are in great shape!'
-      };
-    if (score > 60)
-      return {
-        badge: 'Good',
-        color: 'bg-yellow-500 text-yellow-foreground',
-        message: 'You have a solid financial foundation.'
-      };
-    if (score > 40)
-      return {
-        badge: 'Fair',
-        color: 'bg-orange-500 text-orange-foreground',
-        message: 'Some areas could use improvement.'
-      };
-    return {
-      badge: 'Needs Attention',
-      color: 'bg-red-500 text-red-foreground',
-      message: 'Focus on improving key financial habits.'
-    };
+    if (score > 80) return { badge: 'Excellent', color: 'bg-green-500 text-green-foreground', message: 'Your finances are in great shape!' };
+    if (score > 60) return { badge: 'Good', color: 'bg-yellow-500 text-yellow-foreground', message: 'You have a solid financial foundation.' };
+    if (score > 40) return { badge: 'Fair', color: 'bg-orange-500 text-orange-foreground', message: 'Some areas could use improvement.' };
+    return { badge: 'Needs Attention', color: 'bg-red-500 text-red-foreground', message: 'Focus on improving key financial habits.' };
   };
 
-  const healthScoreMeta = getHealthScoreMeta(financialHealthScore);
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className='p-4 flex items-center justify-center'>
+          <Loader2 className='h-8 w-8 animate-spin text-primary' />
+          <p className='ml-2'>Analyzing your financial health...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Card>
+        <CardContent className='p-4 flex items-center text-red-500'>
+          <AlertTriangle className='h-6 w-6 mr-2' />
+          <div>
+            <p className='font-bold'>Error Fetching Analysis</p>
+            <p className='text-xs'>{error instanceof Error ? error.message : 'An unknown error occurred'}</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!analysis) return null;
+
+  const healthScoreMeta = getHealthScoreMeta(analysis.score);
 
   return (
     <Card>
+      <CardHeader>
+        <CardTitle>AI Financial Health Analysis</CardTitle>
+      </CardHeader>
       <CardContent className='p-4'>
-        <div className='flex flex-col justify-between gap-4 md:flex-row md:items-center'>
-          <div className='flex flex-col items-center gap-4 sm:flex-row'>
-            <div className='border-primary relative flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-4 sm:h-24 sm:w-24'>
-              <span className='text-2xl font-bold sm:text-3xl'>{financialHealthScore}</span>
-              <span className='text-muted-foreground absolute bottom-1 text-[10px] sm:bottom-2'>
-                / 100
-              </span>
-            </div>
-            <div className='text-center sm:text-left'>
-              <Badge className={`mb-1 text-xs ${healthScoreMeta.color}`}>
-                {healthScoreMeta.badge}
-              </Badge>
-              <p className='mb-1 text-sm'>{healthScoreMeta.message}</p>
-              <Button
-                variant='link'
-                size='sm'
-                className='h-auto p-0 text-xs'
-                onClick={() => alert('Recommendations feature coming soon...')}
-              >
-                View Recommendations
-              </Button>
-            </div>
+        <div className='flex flex-col items-center gap-4'>
+          <div className='border-primary relative flex h-24 w-24 shrink-0 items-center justify-center rounded-full border-4'>
+            <span className='text-3xl font-bold'>{analysis.score}</span>
+            <span className='text-muted-foreground absolute bottom-2 text-[10px]'>/ 100</span>
           </div>
+          <div className='text-center'>
+            <Badge className={`mb-1 text-xs ${healthScoreMeta.color}`}>{healthScoreMeta.badge}</Badge>
+            <p className='mb-2 text-sm'>{healthScoreMeta.message}</p>
+            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+              <DialogTrigger asChild>
+                <Button variant='link' size='sm' className='h-auto p-0 text-xs'>View Full Analysis</Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>AI-Powered Recommendations</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  {analysis.recommendations.map((rec, index) => (
+                    <div key={index} className="flex items-start gap-3">
+                      <Lightbulb className="h-5 w-5 text-yellow-400 mt-1" />
+                      <div>
+                        <h4 className="font-semibold">{rec.title}</h4>
+                        <p className="text-sm text-muted-foreground">{rec.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+        <div className='mt-6 grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div className='space-y-2'>
+                <h4 className='font-semibold flex items-center'><TrendingUp className="h-5 w-5 mr-2 text-green-500"/> Highlights</h4>
+                <ul className='list-none space-y-1'>
+                    {analysis.highlights.map((item, index) => (
+                        <li key={index} className='text-xs flex items-center'><span className='mr-2'>{item.emoji}</span> {item.statement}</li>
+                    ))}
+                </ul>
+            </div>
+            <div className='space-y-2'>
+                <h4 className='font-semibold flex items-center'><TrendingDown className="h-5 w-5 mr-2 text-red-500"/> Areas for Improvement</h4>
+                <ul className='list-none space-y-1'>
+                    {analysis.improvements.map((item, index) => (
+                        <li key={index} className='text-xs flex items-center'><span className='mr-2'>{item.emoji}</span> {item.statement}</li>
+                    ))}
+                </ul>
+            </div>
         </div>
       </CardContent>
     </Card>

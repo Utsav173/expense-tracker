@@ -32,13 +32,13 @@ export const DASHBOARD_CARD_CONFIG: Record<string, PresetConfig> = {
     financialHealth: {
       title: 'Financial Health Score',
       description: 'Overall financial wellness assessment',
-      gridSpan: 'col-span-12',
+      gridSpan: 'col-span-4 max-md:col-span-12',
       visible: true
     },
     financialSnapshot: {
       title: 'Financial Snapshot',
       description: 'Key metrics overview',
-      gridSpan: 'col-span-12',
+      gridSpan: 'col-span-8 max-md:col-span-12',
       visible: true
     },
     trendChart: {

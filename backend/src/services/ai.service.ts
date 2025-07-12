@@ -1,6 +1,7 @@
 import { db } from '../database';
+import * as schema from '../database/schema';
 import { AiConversationHistory, Category, User } from '../database/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, gte, sum, inArray } from 'drizzle-orm';
 import { generateText, CoreMessage, CoreAssistantMessage, generateId, generateObject } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { HTTPException } from 'hono/http-exception';
@@ -18,7 +19,7 @@ import {
 import { createExternalTools } from '../lib/ai/external.tools';
 import { InferInsertModel } from 'drizzle-orm';
 import { decryptApiKey } from '../utils/crypto.utils';
-import { format as formatDateFn } from 'date-fns';
+import { format as formatDateFn, subMonths, format } from 'date-fns';
 import { config } from '../config';
 import { z } from 'zod';
 
@@ -122,9 +123,9 @@ function createPdfParsingSystemPrompt(userCategories: string[], currentDate: str
     
     B. **Partial Date (Day/Month only):** If a transaction only provides a day and month (e.g., '15-Jul', '07/15'), you MUST use the year from "Today's Date" provided above to construct the full date.
         - *Example:* If today is '${currentDate}' and the text says '15-Jul', the output date MUST be '${currentDate.substring(
-          0,
-          4,
-        )}-07-15'.
+    0,
+    4,
+  )}-07-15'.
         
     C. **No Date Found:** If a transaction line has absolutely no date information associated with it, you MUST use the full "Today's Date" provided above as the default date for that transaction.
 
@@ -249,7 +250,9 @@ export class AiService {
     } catch (dbError: any) {
       console.error(`Error fetching/decrypting user API key for user ${userId}:`, dbError);
       if (dbError instanceof HTTPException) throw dbError;
-      throw new HTTPException(500, { message: 'Failed to retrieve AI configuration.' });
+      throw new HTTPException(500, {
+        message: 'AI API key not configured. Please add it in your profile settings.',
+      });
     }
   }
 
@@ -419,6 +422,178 @@ export class AiService {
       }
 
       throw new HTTPException(statusCode as any, { message: userFriendlyMessage });
+    }
+  }
+
+  async getFinancialHealthAnalysis(userId: string) {
+    const userApiKey = await this.getApiKey(userId);
+    const google = createGoogleGenerativeAI({ apiKey: userApiKey });
+    const aiModel = google('gemini-2.0-flash-001');
+
+    // --- Data Aggregation ---
+    const sixMonthsAgo = subMonths(new Date(), 6);
+
+    // 1. Transactions
+    const transactions = await db
+      .select({
+        amount: schema.Transaction.amount,
+        isIncome: schema.Transaction.isIncome,
+        category: schema.Category.name,
+      })
+      .from(schema.Transaction)
+      .leftJoin(schema.Category, eq(schema.Transaction.category, schema.Category.id))
+      .where(
+        and(eq(schema.Transaction.owner, userId), gte(schema.Transaction.createdAt, sixMonthsAgo)),
+      );
+
+    let totalIncome = 0;
+    let totalExpenses = 0;
+    const spendingByCategory: { [key: string]: number } = {};
+
+    transactions.forEach((t) => {
+      const amount = Number(t.amount);
+      if (t.isIncome) {
+        totalIncome += amount;
+      } else {
+        totalExpenses += amount;
+        const category = t.category || 'Uncategorized';
+        spendingByCategory[category] = (spendingByCategory[category] || 0) + amount;
+      }
+    });
+
+    const topSpendingCategories = Object.entries(spendingByCategory)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([category, total]) => ({ category, total }));
+
+    const totalSavings = totalIncome - totalExpenses;
+    const savingsRate = totalIncome > 0 ? (totalSavings / totalIncome) * 100 : 0;
+
+    // 2. Accounts
+    const accounts = await db.query.Account.findMany({
+      where: eq(schema.Account.owner, userId),
+      columns: { name: true, balance: true },
+    });
+    const accountDetails = accounts.map((a) => ({
+      accountName: a.name,
+      balance: Number(a.balance),
+      type: 'standard', // Placeholder, as type is not in the schema
+    }));
+    const totalAssets = accounts.reduce((acc, a) => acc + Number(a.balance), 0);
+
+    // 3. Investments
+    const investmentAccounts = await db.query.InvestmentAccount.findMany({
+      where: eq(schema.InvestmentAccount.userId, userId),
+      columns: { id: true },
+    });
+    const investmentAccountIds = investmentAccounts.map((a) => a.id);
+
+    const investments =
+      investmentAccountIds.length > 0
+        ? await db.query.Investment.findMany({
+            where: inArray(schema.Investment.account, investmentAccountIds),
+            columns: { investedAmount: true },
+          })
+        : [];
+
+    const investmentSummary = investments.reduce(
+      (
+        acc: { totalInvested: number; currentValue: number },
+        i: { investedAmount: number | null },
+      ) => {
+        acc.totalInvested += Number(i.investedAmount);
+        acc.currentValue += Number(i.investedAmount); // Placeholder for current value
+        return acc;
+      },
+      { totalInvested: 0, currentValue: 0 },
+    );
+
+    // 4. Debts
+    const debts = await db.query.Debts.findMany({
+      where: eq(schema.Debts.userId, userId),
+      columns: { amount: true },
+    });
+    const totalDebt = debts.reduce(
+      (acc: number, d: { amount: number | null }) => acc + Number(d.amount),
+      0,
+    );
+
+    // 5. Goals
+    const goals = await db.query.SavingGoal.findMany({
+      where: eq(schema.SavingGoal.userId, userId),
+      columns: { name: true, savedAmount: true, targetAmount: true },
+    });
+    const goalProgress = goals.map(
+      (g: { name: string; savedAmount: number | null; targetAmount: number | null }) => ({
+        goalName: g.name,
+        progress: (Number(g.savedAmount) / Number(g.targetAmount)) * 100,
+      }),
+    );
+
+    const financialDataSummary = {
+      totalIncome,
+      totalExpenses,
+      totalSavings,
+      savingsRate,
+      topSpendingCategories,
+      accountDetails,
+      investmentSummary,
+      debtSummary: { totalDebt, totalAssets },
+      goalProgress,
+    };
+
+    // --- AI Analysis ---
+    const analysisSchema = z.object({
+      score: z.number().min(0).max(100).describe('A financial health score from 0 to 100.'),
+      highlights: z
+        .array(
+          z.object({
+            emoji: z.string().describe('An emoji representing the highlight.'),
+            statement: z.string().describe("A positive observation about the user's finances."),
+          }),
+        )
+        .describe('A list of positive financial observations.'),
+      improvements: z
+        .array(
+          z.object({
+            emoji: z.string().describe('An emoji representing the area for improvement.'),
+            statement: z
+              .string()
+              .describe('A constructive observation about an area needing improvement.'),
+          }),
+        )
+        .describe('A list of areas for financial improvement.'),
+      recommendations: z
+        .array(
+          z.object({
+            title: z.string().describe('A short, actionable title for the recommendation.'),
+            description: z.string().describe('A detailed, personalized recommendation.'),
+          }),
+        )
+        .describe('A list of actionable recommendations.'),
+    });
+
+    const systemPrompt = `You are an expert financial analyst. Your task is to analyze a user\'s financial data and provide a clear, concise, and helpful financial health assessment.\n\n    Based on the following JSON data, you will generate a structured analysis.\n\n    - **Score:** Calculate a financial health score from 0-100. A higher score is better. Consider savings rate, debt-to-asset ratio, and income vs. expenses.\n    - **Highlights:** Identify 2-3 key positive aspects. Praise good habits.\n    - **Improvements:** Identify 2-3 key areas for improvement. Be constructive and encouraging.\n    - **Recommendations:** Provide 2-3 specific, actionable recommendations. These should be directly related to the improvement areas.\n\n    Be insightful and encouraging. Your goal is to empower the user to improve their financial well-being.`;
+
+    try {
+      const { object: analysis } = await generateObject({
+        model: aiModel,
+        schema: analysisSchema,
+        system: systemPrompt,
+        prompt: `Analyze the following financial data for the last 6 months: ${JSON.stringify(
+          financialDataSummary,
+          null,
+          2,
+        )}`,
+      });
+      return analysis;
+    } catch (aiError: any) {
+      console.error(`AI Financial Health Analysis Error (User: ${userId}):`, aiError);
+      throw new HTTPException(502, {
+        message: `AI analysis failed: ${
+          aiError.message || 'The AI model could not process the financial data.'
+        }`,
+      });
     }
   }
 }

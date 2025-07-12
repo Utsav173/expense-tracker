@@ -35,7 +35,7 @@ const SharedAccountsPage = () => {
 
   if (isLoading) {
     return (
-      <div className='space-y-4 p-4'>
+      <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
         <Skeleton className='h-8 w-48' />
         <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
           {[1, 2, 3].map((i) => (
@@ -65,7 +65,7 @@ const SharedAccountsPage = () => {
 
   if (!sharedAccounts || sharedAccounts.data.length === 0) {
     return (
-      <div className='space-y-4 p-4'>
+      <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
         <div className='flex items-center justify-between'>
           <h1 className='flex items-center gap-2 text-2xl font-bold'>
             <Share2 className='h-6 w-6' />
@@ -84,7 +84,7 @@ const SharedAccountsPage = () => {
   }
 
   return (
-    <div className='space-y-4 p-4'>
+    <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
       <div className='flex items-center justify-between'>
         <h1 className='flex items-center gap-2 text-2xl font-bold'>
           <Share2 className='h-6 w-6' />

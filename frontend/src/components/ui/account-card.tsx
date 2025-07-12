@@ -9,13 +9,6 @@ import Image from 'next/image';
 import { Button } from './button';
 import { Account } from '@/lib/types';
 import { SingleLineEllipsis } from './ellipsis-components';
-import { motion, Variants } from 'framer-motion';
-
-const cardVariants: Variants = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.4, 0, 0.2, 1] } },
-  hover: { y: -6, transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] } }
-};
 
 interface AccountCardProps {
   href: string;
@@ -51,13 +44,12 @@ const AccountCard = React.forwardRef<HTMLDivElement, AccountCardProps>(
     };
 
     return (
-      <motion.div
+      <div
         ref={ref}
-        variants={cardVariants}
-        initial='initial'
-        animate='animate'
-        whileHover='hover'
-        className={cn('group relative h-full shadow-2xl', className)}
+        className={cn(
+          'group relative h-full shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-xl',
+          className
+        )}
       >
         <Link
           href={href}
@@ -177,7 +169,7 @@ const AccountCard = React.forwardRef<HTMLDivElement, AccountCardProps>(
             </div>
           </div>
         </Link>
-      </motion.div>
+      </div>
     );
   }
 );

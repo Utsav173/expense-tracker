@@ -1,5 +1,5 @@
 import React from 'react';
-import { Inter } from 'next/font/google';
+import { Open_Sans } from 'next/font/google';
 import { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import ReactQueryProvider from '@/components/providers/provider';
@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import './globals.css';
 import { GoogleAnalytics } from '@next/third-parties/google';
 
-const inter = Inter({ subsets: ['latin'] });
+const openSans = Open_Sans();
 
 export const metadata: Metadata = {
   title: 'Expense Tracker - Master Your Money. Effortlessly.',
@@ -98,7 +98,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           `}
         </Script>
       </head>
-      <body className={cn(inter.className, 'bg-background text-foreground')}>
+      <body className={cn(openSans.className, 'bg-background text-foreground')}>
         <ReactQueryProvider>{children}</ReactQueryProvider>
       </body>
       <GoogleAnalytics gaId='GTM-NRXZ2WPR' />

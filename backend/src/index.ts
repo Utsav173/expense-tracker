@@ -17,6 +17,7 @@ import investmentAccountRouter from './router/investmentAccount.routes';
 import investmentRouter from './router/investment.routes';
 import aiRouter from './router/ai.routes';
 import invitationRouter from './router/invitation.routes';
+import financialHealthRouter from './router/financial-health.routes';
 import { StatusCode } from 'hono/utils/http-status';
 
 // --- Import Services for Cron ---
@@ -44,6 +45,7 @@ app.route('/investmentAccount', investmentAccountRouter);
 app.route('/investment', investmentRouter);
 app.route('/ai', aiRouter);
 app.route('/invite', invitationRouter);
+app.route('/financial-health', financialHealthRouter);
 
 // <---------------------------------------------- Error Handling ----------------------------------------------->
 app.onError((err, c) => {
