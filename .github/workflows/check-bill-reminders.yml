@@ -1,0 +1,14 @@
+name: Check Bill Reminders
+
+on:
+  schedule:
+    - cron: '0 14 * * *' # Daily at 02:00 PM UTC
+
+jobs:
+  trigger-check-bill-reminders:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    - name: Trigger Check Bill Reminders
+      run: "curl -X GET -H \"X-Schedule-Auth: ${{ secrets.SCHEDULE_SERVICE_AUTH_TOKEN }}\" ${{ secrets.BACKEND_URL }}/schedule/check-bill-reminders"

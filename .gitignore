@@ -9,3 +9,6 @@ mcp-servers
 temp_mcp_servers
 gemini.md
 .temp
+.vscode
+.vscode/launch.json
+schedule-service

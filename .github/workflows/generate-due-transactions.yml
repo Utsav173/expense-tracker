@@ -1,0 +1,17 @@
+name: Generate Due Transactions
+
+on:
+  schedule:
+    - cron: '1 0 * * *' # Daily at 00:01 AM UTC
+
+jobs:
+  run-task:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Trigger Generate Due Transactions
+        run: |
+          curl -X GET \
+              -H "X-Schedule-Auth: ${{ secrets.SCHEDULE_SERVICE_AUTH_TOKEN }}" \
+              ${{ secrets.BACKEND_URL }}/schedule/generate-due-transactions

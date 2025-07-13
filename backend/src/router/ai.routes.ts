@@ -49,4 +49,10 @@ aiRouter.post('/process-pdf', authMiddleware, zValidator('json', pdfProcessSchem
   }
 });
 
+aiRouter.get('/financial-health//analysis', authMiddleware, async (c) => {
+  const userId = await c.get('userId');
+  const analysis = await aiService.getFinancialHealthAnalysis(userId);
+  return c.json(analysis);
+});
+
 export default aiRouter;

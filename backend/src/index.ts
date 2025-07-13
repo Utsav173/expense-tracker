@@ -17,12 +17,10 @@ import investmentAccountRouter from './router/investmentAccount.routes';
 import investmentRouter from './router/investment.routes';
 import aiRouter from './router/ai.routes';
 import invitationRouter from './router/invitation.routes';
-import financialHealthRouter from './router/financial-health.routes';
+import emailRouter from './router/email.routes';
 import { StatusCode } from 'hono/utils/http-status';
 
 // --- Import Services for Cron ---
-import { recurringTransactionService } from './services/recurring.service';
-import { notificationService } from './services/notification.service';
 import contactRouter from './router/contact.routes';
 // -------------------------------
 
@@ -45,7 +43,7 @@ app.route('/investmentAccount', investmentAccountRouter);
 app.route('/investment', investmentRouter);
 app.route('/ai', aiRouter);
 app.route('/invite', invitationRouter);
-app.route('/financial-health', financialHealthRouter);
+app.route('/email', emailRouter);
 
 // <---------------------------------------------- Error Handling ----------------------------------------------->
 app.onError((err, c) => {
@@ -83,54 +81,54 @@ app.notFound((c) => {
   return c.json({ message: 'Not Found', status: 404 });
 });
 
-// <---------------------------------------------- Cron Jobs Setup ---------------------------------------------->
-if (config.NODE_ENV !== 'test') {
-  console.log('Setting up scheduled jobs...');
+// // <---------------------------------------------- Disable Scheduled Jobs not needed ---------------------------------------------->
+// if (config.NODE_ENV !== 'test') {
+//   console.log('Setting up scheduled jobs...');
 
-  // Recurring Transactions (Run daily at 1 AM server time - adjust cron string as needed)
-  // Cron syntax: second minute hour day-of-month month day-of-week
-  cron.schedule(
-    '0 1 * * *',
-    async () => {
-      // Use cron.schedule
-      console.log(`[${new Date().toISOString()}] Running Recurring Transactions Job...`);
-      try {
-        await recurringTransactionService.generateDueTransactions();
-      } catch (error) {
-        console.error(`[${new Date().toISOString()}] Error in Recurring Transactions Job:`, error);
-      }
-    },
-    {
-      scheduled: true,
-      timezone: 'Asia/Kolkata', // Example: Set your server's timezone
-    },
-  );
+//   // Recurring Transactions (Run daily at 1 AM server time - adjust cron string as needed)
+//   // Cron syntax: second minute hour day-of-month month day-of-week
+//   cron.schedule(
+//     '0 1 * * *',
+//     async () => {
+//       // Use cron.schedule
+//       console.log(`[${new Date().toISOString()}] Running Recurring Transactions Job...`);
+//       try {
+//         await recurringTransactionService.generateDueTransactions();
+//       } catch (error) {
+//         console.error(`[${new Date().toISOString()}] Error in Recurring Transactions Job:`, error);
+//       }
+//     },
+//     {
+//       scheduled: true,
+//       timezone: 'Asia/Kolkata', // Example: Set your server's timezone
+//     },
+//   );
 
-  // Notifications (Run daily at 8 AM server time)
-  cron.schedule(
-    '0 8 * * *',
-    async () => {
-      // Use cron.schedule
-      console.log(`[${new Date().toISOString()}] Running Daily Notifications Job...`);
-      try {
-        await notificationService.checkBudgetAlerts();
-        await notificationService.checkGoalReminders();
-        await notificationService.checkBillReminders();
-      } catch (error) {
-        console.error(`[${new Date().toISOString()}] Error in Daily Notifications Job:`, error);
-      }
-    },
-    {
-      scheduled: true,
-      timezone: 'Asia/Kolkata', // Example: Set your server's timezone
-    },
-  );
+//   // Notifications (Run daily at 8 AM server time)
+//   cron.schedule(
+//     '0 8 * * *',
+//     async () => {
+//       // Use cron.schedule
+//       console.log(`[${new Date().toISOString()}] Running Daily Notifications Job...`);
+//       try {
+//         await notificationService.checkBudgetAlerts();
+//         await notificationService.checkGoalReminders();
+//         await notificationService.checkBillReminders();
+//       } catch (error) {
+//         console.error(`[${new Date().toISOString()}] Error in Daily Notifications Job:`, error);
+//       }
+//     },
+//     {
+//       scheduled: true,
+//       timezone: 'Asia/Kolkata', // Example: Set your server's timezone
+//     },
+//   );
 
-  console.log('Scheduled jobs configured.');
-} else {
-  console.log('Skipping scheduled jobs setup in test environment.');
-}
-// -------------------------------------------------------------------------------------------------------------
+//   console.log('Scheduled jobs configured.');
+// } else {
+//   console.log('Skipping scheduled jobs setup in test environment.');
+// }
+// // -------------------------------------------------------------------------------------------------------------
 
 // <---------------------------------------------- Server Export ------------------------------------------------>
 export default {
