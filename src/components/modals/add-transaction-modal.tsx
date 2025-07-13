@@ -365,7 +365,7 @@ const AddTransactionModal = ({
           </Card>
         </div>
 
-        <div className='max-h-full overflow-y-auto'>
+        <div className='max-h-full overflow-y-auto px-1'>
           <div className='space-y-4'>
             {/* Account Selection */}
             {accountId ? (

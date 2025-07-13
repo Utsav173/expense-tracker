@@ -166,7 +166,8 @@ const AccountListPage = () => {
           initialValues={{
             name: selectedItem.name,
             balance: selectedItem.balance,
-            currency: selectedItem.currency
+            currency: selectedItem.currency,
+            isDefault: selectedItem.isDefault
           }}
           onAccountUpdated={refetch}
         />

@@ -30,16 +30,18 @@ import { useToast } from '@/lib/hooks/useToast';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { Loader2, Pencil, Banknote, CircleDollarSign } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { Checkbox } from '../ui/checkbox';
 
 const formSchema = z.object({
   name: z
     .string()
     .min(2, 'Account name must be at least 2 characters.')
     .max(64, 'Account name cannot exceed 64 characters.')
-    .trim()
+    .trim(),
+  isDefault: z.boolean()
 });
 
-type AccountUpdatePayload = Pick<z.infer<typeof formSchema>, 'name'>;
+type AccountUpdatePayload = z.infer<typeof formSchema>;
 
 interface UpdateAccountModalProps {
   open: boolean;
@@ -49,6 +51,7 @@ interface UpdateAccountModalProps {
     name: string;
     balance: number | undefined | null;
     currency: string | undefined;
+    isDefault: boolean;
   };
   onAccountUpdated: () => void;
 }
@@ -66,7 +69,8 @@ export function UpdateAccountModal({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: initialValues.name
+      name: initialValues.name,
+      isDefault: initialValues.isDefault
     },
     mode: 'onChange'
   });
@@ -74,10 +78,11 @@ export function UpdateAccountModal({
   React.useEffect(() => {
     if (open) {
       form.reset({
-        name: initialValues.name
+        name: initialValues.name,
+        isDefault: initialValues.isDefault
       });
     }
-  }, [initialValues.name, open, form]);
+  }, [initialValues.name, open, form, initialValues.isDefault]);
 
   const updateAccountMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: AccountUpdatePayload }) =>
@@ -97,7 +102,7 @@ export function UpdateAccountModal({
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const updateData: AccountUpdatePayload = { name: values.name };
+    const updateData: AccountUpdatePayload = { name: values.name, isDefault: values.isDefault };
     updateAccountMutation.mutate({ id: accountId, data: updateData });
   }
 
@@ -173,6 +178,28 @@ export function UpdateAccountModal({
               </FormItem>
             </div>
 
+            {/** add isDefault booelan switch field */}
+            <div className='flex items-center gap-2'>
+              <FormField
+                control={form.control}
+                name='isDefault'
+                render={({ field }) => (
+                  <FormItem className='flex flex-row items-center space-y-0 space-x-3'>
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={updateAccountMutation.isPending}
+                      />
+                    </FormControl>
+                    <FormLabel className='text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70'>
+                      Default Account
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <DialogFooter className='gap-2 pt-4 sm:gap-0'>
               <DialogClose asChild>
                 <Button type='button' variant='outline' disabled={updateAccountMutation.isPending}>
@@ -181,11 +208,7 @@ export function UpdateAccountModal({
               </DialogClose>
               <Button
                 type='submit'
-                disabled={
-                  updateAccountMutation.isPending ||
-                  !form.formState.isDirty ||
-                  !form.formState.isValid
-                }
+                disabled={updateAccountMutation.isPending || !form.formState.isValid}
                 className='min-w-[120px]'
               >
                 {updateAccountMutation.isPending ? (
