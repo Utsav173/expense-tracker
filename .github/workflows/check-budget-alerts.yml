@@ -1,0 +1,14 @@
+name: Check Budget Alerts
+
+on:
+  schedule:
+    - cron: '0 9 * * *' # Daily at 09:00 AM UTC
+
+jobs:
+  trigger-check-budget-alerts:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    - name: Trigger Check Budget Alerts
+      run: "curl -X GET -H \"X-Schedule-Auth: ${{ secrets.SCHEDULE_SERVICE_AUTH_TOKEN }}\" ${{ secrets.BACKEND_URL }}/schedule/check-budget-alerts"

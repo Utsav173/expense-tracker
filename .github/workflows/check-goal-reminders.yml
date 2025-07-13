@@ -1,0 +1,14 @@
+name: Check Goal Reminders
+
+on:
+  schedule:
+    - cron: '0 10 * * *' # Daily at 10:00 AM UTC
+
+jobs:
+  trigger-check-goal-reminders:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    - name: Trigger Check Goal Reminders
+      run: "curl -X GET -H \"X-Schedule-Auth: ${{ secrets.SCHEDULE_SERVICE_AUTH_TOKEN }}\" ${{ secrets.BACKEND_URL }}/schedule/check-goal-reminders"

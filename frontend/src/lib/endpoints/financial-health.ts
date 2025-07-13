@@ -8,4 +8,4 @@ export interface FinancialHealthAnalysis {
 }
 
 export const getFinancialHealthAnalysis = async (): Promise<FinancialHealthAnalysis> =>
-  await apiFetch('/financial-health/analysis', 'GET');
+  await apiFetch('/ai/financial-health/analysis', 'GET');

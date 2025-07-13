@@ -201,3 +201,11 @@ export const acceptInvitationSchema = z.object({
 export const searchUserSchema = z.object({
   query: z.string().optional(),
 });
+
+export const emailPayloadSchema = z.object({
+  to: z.string().email(),
+  subject: z.string(),
+  html: z.string(),
+  text: z.string().optional(),
+  replyTo: z.string().email().optional(),
+});

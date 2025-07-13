@@ -1,0 +1,14 @@
+name: Generate Financial Reports
+
+on:
+  schedule:
+    - cron: '0 3 1 * *' # Monthly on the 1st at 03:00 AM UTC
+
+jobs:
+  trigger-generate-financial-reports:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    - name: Trigger Generate Financial Reports
+      run: "curl -X GET -H \"X-Schedule-Auth: ${{ secrets.SCHEDULE_SERVICE_AUTH_TOKEN }}\" ${{ secrets.BACKEND_URL }}/schedule/generate-financial-reports"
