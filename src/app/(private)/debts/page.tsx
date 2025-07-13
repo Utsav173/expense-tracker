@@ -36,6 +36,10 @@ const DebtsPage = () => {
   const [debouncedSearch] = useDebounce(search, 600);
   const [type, setType] = useState<DebtTypeFilter>('all');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<string | undefined>(searchParams.get('sortBy') || undefined);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | undefined>(
+    (searchParams.get('sortOrder') as 'asc' | 'desc') || undefined
+  );
 
   const { page, handlePageChange } = usePagination(
     Number(searchParams.get('page')) || 1,
@@ -48,6 +52,11 @@ const DebtsPage = () => {
           currentParams.set(key.toString(), params[key]);
         }
       });
+      if (sortBy) currentParams.set('sortBy', sortBy);
+      else currentParams.delete('sortBy');
+      if (sortOrder) currentParams.set('sortOrder', sortOrder);
+      else currentParams.delete('sortOrder');
+
       const newUrl = `${pathname}?${currentParams.toString()}`;
       router.push(newUrl, { scroll: false });
     }
@@ -57,18 +66,31 @@ const DebtsPage = () => {
     data: debts,
     isLoading,
     error,
+    isPending,
     refetch
   } = useQuery({
-    queryKey: ['debts', page, debouncedSearch, type],
+    queryKey: ['debts', page, debouncedSearch, type, sortBy, sortOrder],
     queryFn: () =>
       apiFetchDebts({
         page,
         pageSize: 10,
         q: debouncedSearch,
-        type: type === 'all' ? '' : type
+        type: type === 'all' ? '' : type,
+        sortBy,
+        sortOrder
       }),
     retry: false
   });
+
+  const handleSortChange = (sorting: any) => {
+    if (sorting.length > 0) {
+      setSortBy(sorting[0].id);
+      setSortOrder(sorting[0].desc ? 'desc' : 'asc');
+    } else {
+      setSortBy(undefined);
+      setSortOrder(undefined);
+    }
+  };
 
   const debtColumns = createDebtColumns({ user, refetchDebts: refetch });
 
@@ -76,7 +98,7 @@ const DebtsPage = () => {
     handlePageChange(1);
   }, [debouncedSearch, type, handlePageChange]);
 
-  if (isLoading || !user) {
+  if ((isLoading && !isPending) || !user) {
     return <Loader />;
   }
 
@@ -100,7 +122,7 @@ const DebtsPage = () => {
           placeholder='Search description, due date, amount...'
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className='max-w-full grow sm:max-w-xs'
+          className='max-w-full grow'
         />
 
         <div className='w-full sm:w-[180px]'>
@@ -128,6 +150,9 @@ const DebtsPage = () => {
           currentPage={page}
           onPageChange={handlePageChange}
           enablePagination
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSortChange={handleSortChange}
         />
       </div>
 

@@ -19,6 +19,7 @@ export const goalGetAll = (params: {
   limit?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  q?: string;
 }): Promise<ApiResponse<{ data: SavingGoal[]; pagination: Pagination }>> =>
   apiFetch('/goal/all', 'GET', undefined, { params });
 

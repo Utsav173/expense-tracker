@@ -10,6 +10,7 @@ export const budgetGetAll = (
     limit?: number;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
+    q?: string;
   }
 ): Promise<ApiResponse<{ data: Budget[]; pagination: Pagination }>> =>
   apiFetch(`/budget/${id}/all`, 'GET', undefined, { params });

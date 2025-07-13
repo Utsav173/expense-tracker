@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { goalGetAll } from '@/lib/endpoints/goal';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Loader from '@/components/ui/loader';
 import CommonTable from '@/components/ui/CommonTable';
 import { createGoalColumns } from '@/components/goal/goal-columns';
@@ -13,6 +13,8 @@ import AddGoalModal from '@/components/modals/add-goal-modal';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { Input } from '@/components/ui/input';
+import { useDebounce } from 'use-debounce';
 
 const GoalPage = () => {
   const router = useRouter();
@@ -21,7 +23,13 @@ const GoalPage = () => {
   const { showError } = useToast();
   const { user } = useAuth();
 
+  const [search, setSearch] = useState('');
+  const [debouncedSearch] = useDebounce(search, 600);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<string | undefined>(searchParams.get('sortBy') || undefined);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | undefined>(
+    (searchParams.get('sortOrder') as 'asc' | 'desc') || undefined
+  );
 
   const { page, handlePageChange } = usePagination(
     Number(searchParams.get('page')) || 1,
@@ -34,6 +42,11 @@ const GoalPage = () => {
           currentParams.set(key.toString(), params[key]);
         }
       });
+      if (sortBy) currentParams.set('sortBy', sortBy);
+      else currentParams.delete('sortBy');
+      if (sortOrder) currentParams.set('sortOrder', sortOrder);
+      else currentParams.delete('sortOrder');
+
       const newUrl = `${pathname}?${currentParams.toString()}`;
       router.push(newUrl, { scroll: false });
     }
@@ -42,18 +55,29 @@ const GoalPage = () => {
   const {
     data: goals,
     isLoading,
+    isPending,
     error,
     refetch
   } = useQuery({
-    queryKey: ['goals', page],
-    queryFn: () => goalGetAll({ page, limit: 10 }),
+    queryKey: ['goals', page, sortBy, sortOrder, debouncedSearch],
+    queryFn: () => goalGetAll({ page, limit: 10, sortBy, sortOrder, q: debouncedSearch }),
     retry: false,
     enabled: !!user
   });
 
+  const handleSortChange = (sorting: any) => {
+    if (sorting.length > 0) {
+      setSortBy(sorting[0].id);
+      setSortOrder(sorting[0].desc ? 'desc' : 'asc');
+    } else {
+      setSortBy(undefined);
+      setSortOrder(undefined);
+    }
+  };
+
   const goalColumns = createGoalColumns({ user, refetchGoals: refetch });
 
-  if (isLoading || !user) {
+  if ((isLoading && !isPending) || !user) {
     return <Loader />;
   }
 
@@ -71,6 +95,16 @@ const GoalPage = () => {
         </Button>
       </div>
 
+      <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4'>
+        <Input
+          type='text'
+          placeholder='Search Goals...'
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className='max-w-full grow'
+        />
+      </div>
+
       <CommonTable
         tableId='goals-table'
         data={goals?.data || []}
@@ -81,6 +115,9 @@ const GoalPage = () => {
         currentPage={page}
         onPageChange={handlePageChange}
         enablePagination
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        onSortChange={handleSortChange}
       />
 
       <AddGoalModal

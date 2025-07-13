@@ -14,11 +14,15 @@ import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { Budget } from '@/lib/types';
 import { useUrlState } from '@/hooks/useUrlState';
 import { SortingState } from '@tanstack/react-table';
+import { Input } from '@/components/ui/input';
+import { useDebounce } from 'use-debounce';
 
 const BudgetPage = () => {
   const { showError } = useToast();
   const invalidate = useInvalidateQueries();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch] = useDebounce(search, 600);
 
   const { state, setState, handlePageChange } = useUrlState({
     page: 1,
@@ -27,13 +31,14 @@ const BudgetPage = () => {
   });
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['budgets', state.page, state.sortBy, state.sortOrder],
+    queryKey: ['budgets', debouncedSearch, state.page, state.sortBy, state.sortOrder],
     queryFn: () =>
       budgetGetAll('all', {
         page: state.page,
         limit: 10,
         sortBy: state.sortBy,
-        sortOrder: state.sortOrder
+        sortOrder: state.sortOrder,
+        q: debouncedSearch
       }),
     retry: false
   });
@@ -68,6 +73,16 @@ const BudgetPage = () => {
         <Button onClick={() => setIsAddModalOpen(true)}>
           <PlusCircle className='mr-2 h-4 w-4' /> Add Budget
         </Button>
+      </div>
+
+      <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4'>
+        <Input
+          type='text'
+          placeholder='Search Budgets...'
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className='max-w-full grow'
+        />
       </div>
 
       <CommonTable<Budget>

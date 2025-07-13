@@ -28,7 +28,6 @@ import AddInvestmentHoldingModal from '@/components/modals/add-investment-holdin
 import UpdateInvestmentHoldingModal from '@/components/modals/update-investment-holding-modal';
 import DeleteConfirmationModal from '@/components/modals/delete-confirmation-modal';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { formatCurrency } from '@/lib/utils';
 import CommonTable from '@/components/ui/CommonTable';
 import { investmentHoldingsColumns } from '@/components/investment/investment-holdings-columns';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
@@ -36,6 +35,8 @@ import { useUrlState } from '@/hooks/useUrlState';
 import { SortingState } from '@tanstack/react-table';
 import InvestmentAccountOverview from '@/components/investment/investment-account-overview';
 import { SingleLineEllipsis } from '@/components/ui/ellipsis-components';
+import { useDebounce } from 'use-debounce';
+import { Input } from '@/components/ui/input';
 
 const InvestmentAccountDetailPage = () => {
   const params = useParams();
@@ -44,6 +45,8 @@ const InvestmentAccountDetailPage = () => {
   const { showError } = useToast();
   const invalidate = useInvalidateQueries();
 
+  const [search, setSearch] = useState('');
+  const [debouncedSearch] = useDebounce(search, 600);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [deleteInvestmentId, setDeleteInvestmentId] = useState<string | null>(null);
@@ -66,11 +69,9 @@ const InvestmentAccountDetailPage = () => {
     retry: false
   });
 
-  const {
-    data: summary,
-    isLoading: isLoadingSummary,
-    error: summaryError
-  } = useQuery<ApiResponse<InvestmentAccountSummary>>({
+  const { data: summary, isLoading: isLoadingSummary } = useQuery<
+    ApiResponse<InvestmentAccountSummary>
+  >({
     queryKey: ['investmentAccountSummary', accountId],
     queryFn: () => investmentAccountGetSummary(accountId),
     enabled: !!accountId,
@@ -80,16 +81,23 @@ const InvestmentAccountDetailPage = () => {
   const {
     data: investments,
     isLoading: isLoadingInvestments,
-    error: investmentsError,
     refetch: refetchInvestments
   } = useQuery({
-    queryKey: ['investments', accountId, state.page, state.sortBy, state.sortOrder],
+    queryKey: [
+      'investments',
+      debouncedSearch,
+      accountId,
+      state.page,
+      state.sortBy,
+      state.sortOrder
+    ],
     queryFn: () =>
       investmentGetAll(accountId, {
         page: state.page,
         limit: 10,
         sortBy: state.sortBy,
-        sortOrder: state.sortOrder
+        sortOrder: state.sortOrder,
+        q: debouncedSearch
       }),
     enabled: !!accountId,
     retry: false
@@ -193,6 +201,15 @@ const InvestmentAccountDetailPage = () => {
           <CardDescription>Investments within this account.</CardDescription>
         </CardHeader>
         <CardContent>
+          <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4'>
+            <Input
+              type='text'
+              placeholder='Search investments...'
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className='max-w-full grow'
+            />
+          </div>
           <CommonTable<Investment>
             tableId={`investment-holdings-${accountId}`}
             data={investments?.data || []}

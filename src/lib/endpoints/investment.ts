@@ -22,6 +22,7 @@ export const investmentGetAll = (
     limit?: number;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
+    q?: string;
   }
 ): Promise<ApiResponse<{ data: Investment[]; pagination: Pagination }>> =>
   apiFetch(`/investment/${accountId}`, 'GET', undefined, { params });
