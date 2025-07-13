@@ -75,9 +75,7 @@ const StatementPage = () => {
           }}
         >
           <div className='flex flex-col space-y-2'>
-            <Label htmlFor='accountId' className='text-secondary'>
-              Account
-            </Label>
+            <Label htmlFor='accountId'>Account</Label>
             <AccountCombobox
               id='accountId'
               value={accountId}
