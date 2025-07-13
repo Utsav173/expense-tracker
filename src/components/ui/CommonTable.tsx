@@ -183,7 +183,7 @@ const CommonTable = <T extends object>({
               <SelectValue placeholder='Sort by...' />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value='none'>Default Order</SelectItem>
+              <SelectItem key='none' value='none'>Default Order</SelectItem>
               {sortOptions.map((option) => (
                 <SelectItem key={option.id} value={option.value}>
                   {option.label}
@@ -194,9 +194,9 @@ const CommonTable = <T extends object>({
         )}
       </div>
 
-      <div className='w-full overflow-x-auto rounded-lg border'>
-        <Table className={cn('min-w-full', tableClassName)} style={{ width: table.getTotalSize() }}>
-          <TableHeader className={headerClassName}>
+      <div className={cn('w-full overflow-x-auto rounded-lg border shadow-sm bg-card', tableClassName)}>
+        <Table className={cn('min-w-full')} style={{ width: table.getTotalSize() }}>
+          <TableHeader className={cn('bg-muted', headerClassName)}>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
@@ -206,7 +206,8 @@ const CommonTable = <T extends object>({
                     className={cn(
                       'group/th text-muted-foreground relative px-3 py-2 text-left text-xs font-medium tracking-wider uppercase',
                       { 'whitespace-nowrap': !isMobile },
-                      headerClassName
+                      headerClassName,
+                      header.index < headerGroup.headers.length - 1 && 'border-r' // Add border-r to all but the last header
                     )}
                     style={{
                       width: header.getSize(),
@@ -227,25 +228,35 @@ const CommonTable = <T extends object>({
           <TableBody>
             {loading ? (
               Array.from({ length: pageSize }).map((_, i) => (
-                <TableRow key={`loading-${i}`}>
+                <TableRow key={`loading-${i}`} className={cn(i < pageSize - 1 && 'border-b')}>
                   {columns.map((_col, j) => (
-                    <TableCell key={`skeleton-${i}-${j}`} className='p-3'>
+                    <TableCell
+                      key={`skeleton-${i}-${j}`}
+                      className={cn('p-3', j < columns.length - 1 && 'border-r')}
+                    >
                       <Skeleton className='h-5 w-full' />
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : table.getRowModel().rows.length > 0 ? (
-              table.getRowModel().rows.map((row) => (
+              table.getRowModel().rows.map((row, rowIndex) => (
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
-                  className='hover:bg-muted/50 transition-colors'
+                  className={cn(
+                    'hover:bg-muted/50 transition-colors',
+                    rowIndex < table.getRowModel().rows.length - 1 && 'border-b' // Add border-b to all but the last row
+                  )}
                 >
-                  {row.getVisibleCells().map((cell) => (
+                  {row.getVisibleCells().map((cell, cellIndex) => (
                     <TableCell
                       key={cell.id}
-                      className={cn('truncate p-3 align-middle text-sm', cellClassName)}
+                      className={cn(
+                        'truncate p-3 align-middle text-sm',
+                        cellClassName,
+                        cellIndex < row.getVisibleCells().length - 1 && 'border-r' // Add border-r to all but the last cell
+                      )}
                       style={{ width: cell.column.getSize() }}
                     >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}

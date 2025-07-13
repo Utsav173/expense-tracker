@@ -34,7 +34,7 @@ const transactionSchema = z.object({
   accountId: z.string().min(1, 'Please select an account'),
   transfer: z.string().optional(),
   recurring: z.boolean().optional(),
-  recurrenceType: z.enum(['daily', 'weekly', 'monthly', 'yearly']).optional().nullable(),
+  recurrenceType: z.enum(['daily', 'weekly', 'monthly', 'yearly', 'hourly']).optional().nullable(),
   recurrenceEndDate: z.string().optional().nullable(),
   currency: z.string().optional().default('')
 });
@@ -272,6 +272,9 @@ const AddTransactionModal = ({
       switch (recurrenceType) {
         case 'daily':
           return date < createdAt;
+        case 'hourly': {
+          return date < createdAt;
+        }
         case 'weekly': {
           const diff = Math.floor((date.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
           return diff < 0 || diff % 7 !== 0;
@@ -533,6 +536,7 @@ const AddTransactionModal = ({
                         <SelectItem value='weekly'>Weekly</SelectItem>
                         <SelectItem value='monthly'>Monthly</SelectItem>
                         <SelectItem value='yearly'>Yearly</SelectItem>
+                        <SelectItem value='hourly'>Hourly</SelectItem>
                       </SelectContent>
                     </Select>
                     {errors.recurrenceType && (

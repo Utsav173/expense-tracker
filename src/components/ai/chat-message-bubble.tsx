@@ -490,76 +490,77 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message })
   };
 
   return (
-    <TooltipProvider>
-      {' '}
-      {/* Add TooltipProvider at the root */}
+    <div
+      className={cn(
+        'group relative flex items-start space-x-3',
+        isUser ? 'justify-end' : 'justify-start'
+      )}
+    >
+      {!isUser && (
+        <Avatar className='h-8 w-8 shrink-0 border'>
+          <AvatarFallback className='bg-muted'>
+            <Bot className='h-4 w-4' />
+          </AvatarFallback>
+        </Avatar>
+      )}
       <div
         className={cn(
-          'group relative flex items-start space-x-3',
-          isUser ? 'justify-end' : 'justify-start'
+          'relative w-auto max-w-[85%] space-y-1 rounded-lg px-3 py-2 shadow-sm sm:max-w-[80%]',
+          isUser ? 'bg-primary text-primary-foreground' : 'bg-background border'
         )}
       >
-        {!isUser && (
-          <Avatar className='h-8 w-8 shrink-0 border'>
-            <AvatarFallback className='bg-muted'>
-              <Bot className='h-4 w-4' />
-            </AvatarFallback>
-          </Avatar>
+        {!isUser && message.content && (
+          <Button
+            variant='ghost'
+            size='icon'
+            className='hover:bg-accent/50 absolute top-1 right-1 h-6 w-6 opacity-0 transition-opacity group-hover:opacity-70 hover:opacity-100'
+            onClick={handleCopy}
+            aria-label='Copy message'
+          >
+            {copied ? (
+              <Check className='h-3.5 w-3.5 text-green-500' />
+            ) : (
+              <ClipboardCopy className='h-3.5 w-3.5' />
+            )}
+          </Button>
         )}
+        {/* Render AI's text content */}
         <div
           className={cn(
-            'relative w-auto max-w-[85%] space-y-1 rounded-lg px-3 py-2 shadow-sm sm:max-w-[80%]',
-            isUser ? 'bg-primary text-primary-foreground' : 'bg-background border'
+            'prose prose-sm dark:prose-invert prose-p:before:content-none prose-p:after:content-none prose-p:my-1 max-w-none pt-1 break-words',
+            !!isUser && 'text-white'
           )}
         >
-          {!isUser && message.content && (
-            <Button
-              variant='ghost'
-              size='icon'
-              className='hover:bg-accent/50 absolute top-1 right-1 h-6 w-6 opacity-0 transition-opacity group-hover:opacity-70 hover:opacity-100'
-              onClick={handleCopy}
-              aria-label='Copy message'
-            >
-              {copied ? (
-                <Check className='h-3.5 w-3.5 text-green-500' />
-              ) : (
-                <ClipboardCopy className='h-3.5 w-3.5' />
-              )}
-            </Button>
-          )}
-          {/* Render AI's text content */}
-          <div className='prose prose-sm dark:prose-invert prose-p:before:content-none prose-p:after:content-none prose-p:my-1 max-w-none pt-1 break-words'>
-            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
-              {message.content || ''}
-            </ReactMarkdown>
-          </div>
-
-          {/* Render Tool Data Summary */}
-          {!isUser && <ToolDataSummary toolData={message.toolData} />}
-
-          {/* Render Chart if available */}
-          {!isUser && message.chart && <ChartRenderer chartData={message.chart} />}
-
-          {/* Render Raw Tool Calls/Results Collapsible */}
-          {!isUser && (message.toolCalls || message.toolResults) && (
-            <ToolInfo toolCalls={message.toolCalls} toolResults={message.toolResults} />
-          )}
-
-          {/* Timestamp */}
-          {message.createdAt && (
-            <p className='pt-1 text-right text-[10px] opacity-70'>
-              {format(message.createdAt, 'h:mm a')}
-            </p>
-          )}
+          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+            {message.content || ''}
+          </ReactMarkdown>
         </div>
-        {isUser && (
-          <Avatar className='h-8 w-8 shrink-0 border'>
-            <AvatarFallback>
-              <User className='h-4 w-4' />
-            </AvatarFallback>
-          </Avatar>
+
+        {/* Render Tool Data Summary */}
+        {!isUser && <ToolDataSummary toolData={message.toolData} />}
+
+        {/* Render Chart if available */}
+        {!isUser && message.chart && <ChartRenderer chartData={message.chart} />}
+
+        {/* Render Raw Tool Calls/Results Collapsible */}
+        {!isUser && (message.toolCalls || message.toolResults) && (
+          <ToolInfo toolCalls={message.toolCalls} toolResults={message.toolResults} />
+        )}
+
+        {/* Timestamp */}
+        {message.createdAt && (
+          <p className='pt-1 text-right text-[10px] opacity-70'>
+            {format(message.createdAt, 'h:mm a')}
+          </p>
         )}
       </div>
-    </TooltipProvider>
+      {isUser && (
+        <Avatar className='h-8 w-8 shrink-0 border'>
+          <AvatarFallback>
+            <User className='h-4 w-4' />
+          </AvatarFallback>
+        </Avatar>
+      )}
+    </div>
   );
 };

@@ -1,42 +1,21 @@
 'use client';
 
-import React, { useEffect, useMemo } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import React, { useMemo } from 'react';
 import { z } from 'zod';
-import { useToast } from '@/lib/hooks/useToast';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogClose
-} from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage
-} from '@/components/ui/form';
-import { apiUpdateDebt } from '@/lib/endpoints/debt';
-import { Debts } from '@/lib/types';
-import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
+import { UpdateModal } from './update-modal';
+import { Input } from '@/components/ui/input';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import DateRangePickerV2 from '../date/date-range-picker-v2';
 import { NumericInput } from '../ui/numeric-input';
-import { Loader2, Pencil, Info } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { format, parseISO, isValid as isDateValid } from 'date-fns';
 import { Card, CardContent } from '../ui/card';
 import { formatCurrency } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { DateRange } from 'react-day-picker';
+import { apiUpdateDebt } from '@/lib/endpoints/debt';
+import { Debts } from '@/lib/types';
 
 const debtUpdateSchema = z
   .object({
@@ -104,19 +83,6 @@ const debtUpdateSchema = z
 
 type DebtUpdateFormSchema = z.infer<typeof debtUpdateSchema>;
 
-type DebtUpdateApiPayload = {
-  description: string;
-  duration: string;
-  frequency?: string;
-};
-
-interface UpdateDebtModalProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  debt: Debts;
-  onDebtUpdated: () => void;
-}
-
 const parseInitialDuration = (
   debt: Debts
 ): Pick<DebtUpdateFormSchema, 'durationType' | 'frequency' | 'customDateRange'> => {
@@ -151,54 +117,22 @@ const parseInitialDuration = (
   };
 };
 
+interface UpdateDebtModalProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  debt: Debts;
+  onDebtUpdated: () => void;
+}
+
 const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
   isOpen,
   onOpenChange,
   debt,
   onDebtUpdated
 }) => {
-  const { showError } = useToast();
-  const invalidate = useInvalidateQueries();
-
   const initialDurationState = useMemo(() => parseInitialDuration(debt), [debt]);
 
-  const form = useForm<DebtUpdateFormSchema>({
-    resolver: zodResolver(debtUpdateSchema),
-    defaultValues: {
-      description: debt.description || '',
-      ...initialDurationState
-    },
-    mode: 'onChange'
-  });
-
-  const { watch, reset } = form;
-  const durationType = watch('durationType');
-
-  useEffect(() => {
-    if (isOpen && debt) {
-      const parsedDuration = parseInitialDuration(debt);
-      reset({
-        description: debt.description || '',
-        ...parsedDuration
-      });
-    }
-  }, [isOpen, debt, reset]);
-
-  const updateDebtMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: DebtUpdateApiPayload }) =>
-      apiUpdateDebt(id, data),
-    onSuccess: async () => {
-      await invalidate(['debts']);
-      onDebtUpdated();
-      handleClose();
-    },
-    onError: (error: any) => {
-      const message = error?.response?.data?.message || error.message || 'Failed to update debt.';
-      showError(message);
-    }
-  });
-
-  const handleUpdate = (formData: DebtUpdateFormSchema) => {
+  const handleUpdate = (id: string, formData: DebtUpdateFormSchema) => {
     let apiDuration: string;
     if (formData.durationType === 'custom') {
       apiDuration = `${format(formData.customDateRange!.from!, 'yyyy-MM-dd')},${format(
@@ -209,75 +143,73 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
       apiDuration = formData.durationType;
     }
 
-    const apiPayload: DebtUpdateApiPayload = {
+    const apiPayload = {
       description: formData.description,
       duration: apiDuration,
-
       frequency: formData.durationType !== 'custom' ? formData.frequency || undefined : undefined
     };
 
-    updateDebtMutation.mutate({ id: debt.id, data: apiPayload });
-  };
-
-  const handleClose = () => {
-    if (!updateDebtMutation.isPending) {
-      onOpenChange(false);
-    }
+    return apiUpdateDebt(id, apiPayload);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className='sm:max-w-lg'>
-        <DialogHeader>
-          <DialogTitle className='flex items-center gap-2'>
-            <Pencil className='h-5 w-5' /> Edit Debt
-          </DialogTitle>
-          <DialogDescription>
-            Update the editable details for this debt record. Financial details cannot be changed
-            here.
-          </DialogDescription>
-        </DialogHeader>
-
-        <Card className='border-border/50 bg-muted/50 mt-4 p-4'>
-          <CardContent className='space-y-2 p-0 text-sm'>
-            <h4 className='text-foreground mb-2 font-medium'>Original Details</h4>
-            <div className='grid grid-cols-2 gap-x-4 gap-y-1'>
-              <span className='text-muted-foreground'>Amount:</span>
-              <span className='text-foreground font-semibold'>{formatCurrency(debt.amount)}</span>
-              {debt.premiumAmount > 0 && (
-                <>
-                  <span className='text-muted-foreground'>Premium:</span>
-                  <span className='text-foreground font-semibold'>
-                    {formatCurrency(debt.premiumAmount)}
+    <UpdateModal
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      title="Edit Debt"
+      description="Update the editable details for this debt record. Financial details cannot be changed here."
+      initialValues={{
+        description: debt.description || '',
+        ...initialDurationState
+      }}
+      validationSchema={debtUpdateSchema}
+      updateFn={handleUpdate}
+      invalidateKeys={[[`debts`]]}
+      onSuccess={onDebtUpdated}
+      entityId={debt.id}
+    >
+      {(form) => {
+        const durationType = form.watch('durationType');
+        return (
+          <>
+            <Card className='border-border/50 bg-muted/50 mt-4 p-4'>
+              <CardContent className='space-y-2 p-0 text-sm'>
+                <h4 className='text-foreground mb-2 font-medium'>Original Details</h4>
+                <div className='grid grid-cols-2 gap-x-4 gap-y-1'>
+                  <span className='text-muted-foreground'>Amount:</span>
+                  <span className='text-foreground font-semibold'>{formatCurrency(debt.amount)}</span>
+                  {debt.premiumAmount > 0 && (
+                    <>
+                      <span className='text-muted-foreground'>Premium:</span>
+                      <span className='text-foreground font-semibold'>
+                        {formatCurrency(debt.premiumAmount)}
+                      </span>
+                    </>
+                  )}
+                  <span className='text-muted-foreground'>Type:</span>
+                  <span className='text-foreground font-semibold capitalize'>{debt.type}</span>
+                  <span className='text-muted-foreground'>Interest:</span>
+                  <span className='text-foreground font-semibold capitalize'>
+                    {debt.interestType} ({debt.percentage}%)
                   </span>
-                </>
-              )}
-              <span className='text-muted-foreground'>Type:</span>
-              <span className='text-foreground font-semibold capitalize'>{debt.type}</span>
-              <span className='text-muted-foreground'>Interest:</span>
-              <span className='text-foreground font-semibold capitalize'>
-                {debt.interestType} ({debt.percentage}%)
-              </span>
-              <span className='text-muted-foreground'>Status:</span>
-              <span
-                className={`font-semibold ${debt.isPaid ? 'text-success' : 'text-destructive'}`}
-              >
-                {debt.isPaid ? 'Paid' : 'Unpaid'}
-              </span>
-              {debt.dueDate && (
-                <>
-                  <span className='text-muted-foreground'>Original Due:</span>
-                  <span className='text-foreground font-semibold'>
-                    {format(parseISO(debt.dueDate), 'MMM d, yyyy')}
+                  <span className='text-muted-foreground'>Status:</span>
+                  <span
+                    className={`font-semibold ${debt.isPaid ? 'text-success' : 'text-destructive'}`}
+                  >
+                    {debt.isPaid ? 'Paid' : 'Unpaid'}
                   </span>
-                </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                  {debt.dueDate && (
+                    <>
+                      <span className='text-muted-foreground'>Original Due:</span>
+                      <span className='text-foreground font-semibold'>
+                        {format(parseISO(debt.dueDate), 'MMM d, yyyy')}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleUpdate)} className='space-y-5 pt-4'>
             <FormField
               control={form.control}
               name='description'
@@ -288,7 +220,7 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
                     <Input
                       placeholder='Debt description'
                       {...field}
-                      disabled={updateDebtMutation.isPending}
+                      disabled={form.formState.isSubmitting}
                     />
                   </FormControl>
                   <FormMessage />
@@ -306,7 +238,6 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
                     <Select
                       onValueChange={(value) => {
                         field.onChange(value);
-
                         if (value === 'custom') {
                           form.setValue('frequency', '');
                         } else {
@@ -315,7 +246,7 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
                         form.clearErrors(['frequency', 'customDateRange']);
                       }}
                       value={field.value}
-                      disabled={updateDebtMutation.isPending}
+                      disabled={form.formState.isSubmitting}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -355,7 +286,7 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
                           {...field}
                           value={field.value}
                           onValueChange={(values: { value: any }) => field.onChange(values.value)}
-                          disabled={updateDebtMutation.isPending}
+                          disabled={form.formState.isSubmitting}
                           allowNegative={false}
                           allowLeadingZeros={false}
                           decimalScale={0}
@@ -380,7 +311,7 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
                     <DateRangePickerV2
                       date={field.value ? (field.value as DateRange) : undefined}
                       onDateChange={field.onChange}
-                      disabled={updateDebtMutation.isPending}
+                      disabled={form.formState.isSubmitting}
                       minDate={new Date()}
                     />
                     <FormMessage />
@@ -389,7 +320,6 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
               />
             )}
 
-            {/* Alert about Due Date Calculation */}
             <Alert
               variant='default'
               className='border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950'
@@ -402,34 +332,10 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
                 creation.
               </AlertDescription>
             </Alert>
-
-            <DialogFooter className='gap-2 pt-4 sm:gap-0'>
-              <DialogClose asChild>
-                <Button type='button' variant='outline' disabled={updateDebtMutation.isPending}>
-                  Cancel
-                </Button>
-              </DialogClose>
-              <Button
-                type='submit'
-                disabled={
-                  updateDebtMutation.isPending || !form.formState.isValid || !form.formState.isDirty
-                }
-                className='min-w-[120px]'
-              >
-                {updateDebtMutation.isPending ? (
-                  <>
-                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                    Saving...
-                  </>
-                ) : (
-                  'Save Changes'
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+          </>
+        );
+      }}
+    </UpdateModal>
   );
 };
 

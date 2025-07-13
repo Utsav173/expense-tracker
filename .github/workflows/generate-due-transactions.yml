@@ -2,7 +2,7 @@ name: Generate Due Transactions
 
 on:
   schedule:
-    - cron: '1 0 * * *' # Daily at 00:01 AM UTC
+    - cron: '0 * * * *' # Hourly at the top of every hour UTC
 
 jobs:
   run-task:

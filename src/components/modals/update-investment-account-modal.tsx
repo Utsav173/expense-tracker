@@ -1,36 +1,16 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import React from 'react';
 import { z } from 'zod';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+import { UpdateModal } from './update-modal';
+import { Input } from '@/components/ui/input';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Landmark, Building, CircleDollarSign } from 'lucide-react';
 import { investmentAccountUpdate } from '@/lib/endpoints/investmentAccount';
-import { useToast } from '@/lib/hooks/useToast';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogClose
-} from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage
-} from '@/components/ui/form';
 import { InvestmentAccount } from '@/lib/types';
 import { fetchCurrencies, COMMON_CURRENCIES } from '@/lib/endpoints/currency';
-import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import CurrencySelect from '../ui/currency-select';
-import { Loader2, Pencil, Landmark, Building, CircleDollarSign } from 'lucide-react';
 
 const investmentAccountUpdateSchema = z.object({
   name: z
@@ -45,8 +25,6 @@ const investmentAccountUpdateSchema = z.object({
     .trim()
 });
 
-type InvestmentAccountUpdateFormSchema = z.infer<typeof investmentAccountUpdateSchema>;
-
 interface UpdateInvestmentAccountModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -60,9 +38,6 @@ const UpdateInvestmentAccountModal: React.FC<UpdateInvestmentAccountModalProps> 
   account,
   onAccountUpdated
 }) => {
-  const { showError } = useToast();
-  const invalidate = useInvalidateQueries();
-
   const { data: currencies, isLoading: isLoadingCurrencies } = useQuery({
     queryKey: ['currencies'],
     queryFn: fetchCurrencies,
@@ -75,152 +50,87 @@ const UpdateInvestmentAccountModal: React.FC<UpdateInvestmentAccountModalProps> 
     }))
   });
 
-  const form = useForm<InvestmentAccountUpdateFormSchema>({
-    resolver: zodResolver(investmentAccountUpdateSchema),
-    defaultValues: {
-      name: account?.name ?? '',
-      platform: account?.platform ?? ''
-    },
-    mode: 'onChange'
-  });
-
-  useEffect(() => {
-    if (isOpen && account) {
-      form.reset({
-        name: account.name,
-        platform: account.platform || ''
-      });
-    }
-  }, [isOpen, account, form]);
-
-  const updateAccountMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: InvestmentAccountUpdateFormSchema }) =>
-      investmentAccountUpdate(id, data),
-    onSuccess: async () => {
-      await invalidate(['investmentAccounts']);
-      await invalidate(['investmentAccount', account.id]);
-      await invalidate(['investmentPortfolioSummaryDashboard']);
-      onAccountUpdated();
-      handleClose();
-    },
-    onError: (error: any) => {
-      const message =
-        error?.response?.data?.message || error.message || 'Failed to update investment account.';
-      showError(message);
-    }
-  });
-
-  const handleUpdate = (data: InvestmentAccountUpdateFormSchema) => {
-    updateAccountMutation.mutate({ id: account.id, data });
-  };
-
-  const handleClose = () => {
-    if (!updateAccountMutation.isPending) {
-      form.reset({ name: account?.name ?? '', platform: account?.platform ?? '' });
-      onOpenChange(false);
-    }
-  };
-
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className='sm:max-w-[480px]'>
-        <DialogHeader>
-          <DialogTitle className='flex items-center gap-2'>
-            <Pencil className='h-5 w-5' /> Edit Investment Account
-          </DialogTitle>
-          <DialogDescription>
-            Update the name and platform for this investment account. Currency cannot be changed.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleUpdate)} className='space-y-5 pt-2'>
-            <FormField
-              control={form.control}
-              name='name'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className='flex items-center gap-1.5'>
-                    <Landmark className='text-muted-foreground h-4 w-4' />
-                    Account Name*
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder='E.g., Zerodha Stocks'
-                      {...field}
-                      disabled={updateAccountMutation.isPending}
-                      autoFocus
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+    <UpdateModal
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      title="Edit Investment Account"
+      description="Update the name and platform for this investment account. Currency cannot be changed."
+      initialValues={{
+        name: account?.name ?? '',
+        platform: account?.platform ?? ''
+      }}
+      validationSchema={investmentAccountUpdateSchema}
+      updateFn={investmentAccountUpdate}
+      invalidateKeys={[
+        ['investmentAccounts'],
+        ['investmentAccount', account.id],
+        ['investmentPortfolioSummaryDashboard']
+      ]}
+      onSuccess={onAccountUpdated}
+      entityId={account.id}
+    >
+      {(form) => (
+        <>
+          <FormField
+            control={form.control}
+            name='name'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className='flex items-center gap-1.5'>
+                  <Landmark className='text-muted-foreground h-4 w-4' />
+                  Account Name*
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder='E.g., Zerodha Stocks'
+                    {...field}
+                    disabled={form.formState.isSubmitting}
+                    autoFocus
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='platform'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className='flex items-center gap-1.5'>
+                  <Building className='text-muted-foreground h-4 w-4' />
+                  Platform / Broker*
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder='E.g., Zerodha, Groww, Upstox'
+                    {...field}
+                    disabled={form.formState.isSubmitting}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormItem>
+            <FormLabel className='text-muted-foreground flex items-center gap-1.5 text-sm'>
+              <CircleDollarSign className='h-4 w-4' />
+              Currency (Read-only)
+            </FormLabel>
+            <CurrencySelect
+              currencies={currencies}
+              value={account.currency}
+              isLoading={isLoadingCurrencies}
+              disabled
+              disabledTooltip='Currency cannot be changed after creation.'
             />
-
-            <FormField
-              control={form.control}
-              name='platform'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className='flex items-center gap-1.5'>
-                    <Building className='text-muted-foreground h-4 w-4' />
-                    Platform / Broker*
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder='E.g., Zerodha, Groww, Upstox'
-                      {...field}
-                      disabled={updateAccountMutation.isPending}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Display Currency (Read-only) */}
-            <FormItem>
-              <FormLabel className='text-muted-foreground flex items-center gap-1.5 text-sm'>
-                <CircleDollarSign className='h-4 w-4' />
-                Currency (Read-only)
-              </FormLabel>
-              <CurrencySelect
-                currencies={currencies}
-                value={account.currency}
-                isLoading={isLoadingCurrencies}
-                disabled
-                disabledTooltip='Currency cannot be changed after creation.'
-              />
-            </FormItem>
-
-            <DialogFooter className='gap-2 pt-4 sm:gap-0'>
-              <DialogClose asChild>
-                <Button type='button' variant='outline' disabled={updateAccountMutation.isPending}>
-                  Cancel
-                </Button>
-              </DialogClose>
-              <Button
-                type='submit'
-                disabled={
-                  updateAccountMutation.isPending ||
-                  !form.formState.isDirty ||
-                  !form.formState.isValid
-                }
-                className='min-w-[120px]'
-              >
-                {updateAccountMutation.isPending ? (
-                  <>
-                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                    Saving...
-                  </>
-                ) : (
-                  'Save Changes'
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+          </FormItem>
+        </>
+      )}
+    </UpdateModal>
   );
 };
 

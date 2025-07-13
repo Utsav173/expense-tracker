@@ -79,7 +79,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
           <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className='w-auto p-0'>
+      <PopoverContent className='w-auto p-0 pl-2'>
         <div className='relative z-120 sm:flex'>
           <Calendar
             mode='single'

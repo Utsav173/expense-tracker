@@ -338,6 +338,7 @@ const TransactionsPage = () => {
           refetchData={async () => {
             await refetch();
           }}
+          accountsData={accountsData!}
         />
       ) : (
         <div className='flex items-center justify-center py-12'>

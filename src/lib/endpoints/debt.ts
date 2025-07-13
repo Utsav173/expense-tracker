@@ -42,8 +42,7 @@ export const apiUpdateDebt = (id: string, body: any): Promise<ApiResponse<{ mess
   const payload = {
     description: body.description,
     duration: body.duration,
-    frequency: body.frequency,
-    isPaid: body.isPaid
+    frequency: body.frequency
   };
 
   return apiFetch(`/interest/debts/${id}`, 'PUT', payload);

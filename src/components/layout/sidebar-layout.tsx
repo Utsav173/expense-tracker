@@ -15,7 +15,7 @@ const SidebarLayout = ({ children }: { children: React.ReactNode }) => {
     >
       <SidebarProvider>
         <AppSidebar />
-        <SidebarInset className='scrollbar bg-muted/40 relative flex min-h-[calc(100dvh-4rem)] w-[100dvw] flex-1 flex-col gap-4'>
+        <SidebarInset className='scrollbar bg-muted/40 relative flex min-h-[calc(100dvh-4rem)] w-[100dvw] flex-1 flex-col gap-4 pb-12'>
           <PageHeader />
           {children}
         </SidebarInset>

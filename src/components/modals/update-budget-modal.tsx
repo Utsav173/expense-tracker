@@ -1,35 +1,14 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import React from 'react';
 import { z } from 'zod';
-import { useMutation } from '@tanstack/react-query';
-import { budgetUpdate } from '@/lib/endpoints/budget';
-import { useToast } from '@/lib/hooks/useToast';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogClose
-} from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage
-} from '@/components/ui/form';
-import { Budget } from '@/lib/types';
-import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
-import { Loader2, CalendarDays, Tag, Pencil } from 'lucide-react';
+import { UpdateModal } from './update-modal';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { NumericInput } from '../ui/numeric-input';
+import { budgetUpdate } from '@/lib/endpoints/budget';
+import { Budget } from '@/lib/types';
 import { monthNames } from '@/lib/utils';
+import { CalendarDays, Tag } from 'lucide-react';
 
 export const budgetUpdateSchema = z.object({
   amount: z
@@ -41,10 +20,8 @@ export const budgetUpdateSchema = z.object({
     .refine((val) => parseFloat(val) >= 0, {
       message: 'Budget amount cannot be negative.'
     })
+    .transform((val) => parseFloat(val))
 });
-
-type BudgetUpdateFormSchema = { amount: string };
-type BudgetApiPayload = { amount: number };
 
 interface UpdateBudgetModalProps {
   isOpen: boolean;
@@ -59,139 +36,69 @@ const UpdateBudgetModal: React.FC<UpdateBudgetModalProps> = ({
   budget,
   onBudgetUpdated
 }) => {
-  const { showError } = useToast();
-  const invalidate = useInvalidateQueries();
-
-  const form = useForm<BudgetUpdateFormSchema>({
-    resolver: zodResolver(budgetUpdateSchema),
-    defaultValues: {
-      amount: budget?.amount?.toString() ?? ''
-    },
-    mode: 'onChange'
-  });
-
-  useEffect(() => {
-    if (isOpen && budget) {
-      form.reset({ amount: budget.amount.toString() });
-    }
-  }, [isOpen, budget, form]);
-
-  const updateBudgetMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: BudgetApiPayload }) => budgetUpdate(id, data),
-    onSuccess: async () => {
-      await invalidate(['budgets']);
-      await invalidate(['budgetSummaryDashboard']);
-      onBudgetUpdated();
-      handleClose();
-    },
-    onError: (error: any) => {
-      const message = error?.response?.data?.message || error.message || 'Failed to update budget.';
-      showError(message);
-    }
-  });
-
-  const handleUpdate = (data: BudgetUpdateFormSchema) => {
-    form.trigger('amount').then((isValid) => {
-      if (isValid) {
-        const transformedData = budgetUpdateSchema.parse(data);
-        updateBudgetMutation.mutate({
-          id: budget.id,
-          data: { amount: parseFloat(transformedData.amount) }
-        });
-      }
-    });
-  };
-
-  const handleClose = () => {
-    if (!updateBudgetMutation.isPending) {
-      form.reset({ amount: budget?.amount?.toString() ?? '' });
-      onOpenChange(false);
-    }
-  };
-
   const getMonthName = (monthNumber: number): string => {
     return monthNames[monthNumber - 1] || 'Invalid Month';
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className='sm:max-w-[480px]'>
-        <DialogHeader>
-          <DialogTitle className='flex items-center gap-2 text-xl font-semibold'>
-            <Pencil className='h-5 w-5' /> Edit Budget
-          </DialogTitle>
-          <DialogDescription className='pt-1'>
-            Update the amount for the selected budget period. Category and period cannot be changed.
-          </DialogDescription>
-        </DialogHeader>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleUpdate)} className='space-y-6 pt-2'>
-            <div className='bg-muted/50 space-y-3 rounded-md border p-4'>
-              <div className='flex items-center gap-2 text-sm'>
-                <Tag className='text-muted-foreground h-4 w-4' />
-                <span className='text-muted-foreground font-medium'>Category:</span>
-                <span className='text-foreground font-semibold'>
-                  {budget?.category?.name ?? 'N/A'}
-                </span>
-              </div>
-              <div className='flex items-center gap-2 text-sm'>
-                <CalendarDays className='text-muted-foreground h-4 w-4' />
-                <span className='text-muted-foreground font-medium'>Period:</span>
-                <span className='text-foreground font-semibold'>
-                  {budget ? `${getMonthName(budget.month)} ${budget.year}` : 'N/A'}
-                </span>
-              </div>
+    <UpdateModal
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      title='Edit Budget'
+      description='Update the amount for the selected budget period. Category and period cannot be changed.'
+      initialValues={{
+        amount: budget?.amount
+      }}
+      validationSchema={budgetUpdateSchema}
+      updateFn={(id, data) => budgetUpdate(id, { amount: data.amount })}
+      invalidateKeys={[[`budgets`], [`budgetSummaryDashboard`]]}
+      onSuccess={onBudgetUpdated}
+      entityId={budget.id}
+    >
+      {(form) => (
+        <>
+          <div className='bg-muted/50 space-y-3 rounded-md border p-4'>
+            <div className='flex items-center gap-2 text-sm'>
+              <Tag className='text-muted-foreground h-4 w-4' />
+              <span className='text-muted-foreground font-medium'>Category:</span>
+              <span className='text-foreground font-semibold'>
+                {budget?.category?.name ?? 'N/A'}
+              </span>
             </div>
+            <div className='flex items-center gap-2 text-sm'>
+              <CalendarDays className='text-muted-foreground h-4 w-4' />
+              <span className='text-muted-foreground font-medium'>Period:</span>
+              <span className='text-foreground font-semibold'>
+                {budget ? `${getMonthName(budget.month)} ${budget.year}` : 'N/A'}
+              </span>
+            </div>
+          </div>
 
-            <FormField
-              control={form.control}
-              name='amount'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>New Budget Amount*</FormLabel>
-                  <FormControl>
-                    <NumericInput
-                      placeholder='1,500.50'
-                      className='w-full'
-                      disabled={updateBudgetMutation.isPending}
-                      value={String(field.value)}
-                      onValueChange={(values: { value: any }) => {
-                        field.onChange(values.value);
-                      }}
-                      ref={field.ref as React.Ref<HTMLInputElement>}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <DialogFooter className='gap-2 pt-4 sm:gap-0'>
-              <DialogClose asChild>
-                <Button type='button' variant='outline' disabled={updateBudgetMutation.isPending}>
-                  Cancel
-                </Button>
-              </DialogClose>
-              <Button
-                type='submit'
-                disabled={updateBudgetMutation.isPending || !form.formState.isValid}
-                className='min-w-[120px]'
-              >
-                {updateBudgetMutation.isPending ? (
-                  <>
-                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                    Updating...
-                  </>
-                ) : (
-                  'Update Budget'
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+          <FormField
+            control={form.control}
+            name='amount'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>New Budget Amount*</FormLabel>
+                <FormControl>
+                  <NumericInput
+                    placeholder='1,500.50'
+                    className='w-full'
+                    disabled={form.formState.isSubmitting}
+                    value={String(field.value)}
+                    onValueChange={(values: { value: any }) => {
+                      field.onChange(values.value);
+                    }}
+                    ref={field.ref as React.Ref<HTMLInputElement>}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </>
+      )}
+    </UpdateModal>
   );
 };
 

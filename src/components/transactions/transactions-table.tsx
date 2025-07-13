@@ -1,20 +1,20 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { ColumnDef } from '@tanstack/react-table';
+import { ColumnDef, Row } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2, Repeat, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
+import { Pencil, Trash2, Repeat, ArrowUpCircle, ArrowDownCircle, User } from 'lucide-react';
 import UpdateTransactionModal from '../modals/update-transaction-modal';
 import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
 import { transactionDelete } from '@/lib/endpoints/transactions';
 import { useToast } from '@/lib/hooks/useToast';
-import { Transaction as TransactionType } from '@/lib/types';
+import { Transaction as TransactionType, AccountDropdown } from '@/lib/types';
 import { cn, formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
 import CommonTable from '../ui/CommonTable';
 import { useMutation } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { SingleLineEllipsis } from '../ui/ellipsis-components';
 import { DataTableColumnHeader } from '../ui/column-header';
 
@@ -29,7 +29,8 @@ interface TransactionTableProps {
   handlePageChange: (page: number) => void;
   refetchData: () => Promise<void>;
   isOwner?: boolean;
-  tableId: string; // Required for state persistence
+  tableId: string;
+  accountsData?: AccountDropdown[];
 }
 
 const TransactionTable = ({
@@ -43,7 +44,8 @@ const TransactionTable = ({
   handlePageChange,
   refetchData,
   isOwner = true,
-  tableId
+  tableId,
+  accountsData // Destructure new prop
 }: TransactionTableProps) => {
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionType | null>(null);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
@@ -128,10 +130,34 @@ const TransactionTable = ({
         meta: { header: 'Category' },
         cell: ({ row }) => (
           <Badge variant='outline' className='bg-muted/30 max-w-[120px] truncate md:max-w-[150px]'>
-            {row.original.category?.name ?? 'Uncategorized'}
+            <SingleLineEllipsis>
+              {row.original.category?.name ?? 'Uncategorized'}
+            </SingleLineEllipsis>
           </Badge>
         )
       },
+      ...(!!accountsData?.length
+        ? [
+            {
+              accessorKey: 'account',
+              header: ({ column }: any) => (
+                <DataTableColumnHeader column={column} title='Account' />
+              ),
+              meta: { header: 'Account' },
+              cell: ({ row }: { row: Row<TransactionType> }) => {
+                const account = accountsData?.find((acc) => acc.id === row.original.account);
+                return (
+                  <SingleLineEllipsis
+                    showTooltip
+                    className='max-w-[120px] text-sm md:max-w-[150px]'
+                  >
+                    {account?.name ?? 'N/A'}
+                  </SingleLineEllipsis>
+                );
+              }
+            }
+          ]
+        : []),
       {
         accessorKey: 'createdAt',
         header: ({ column }) => <DataTableColumnHeader column={column} title='Date' />,
@@ -147,19 +173,50 @@ const TransactionTable = ({
         }
       },
       {
-        accessorKey: 'isIncome',
+        accessorKey: 'type',
         header: ({ column }) => <DataTableColumnHeader column={column} title='Type' />,
         meta: { header: 'Type' },
         cell: ({ row }) => (
-          <div className='flex items-center gap-1.5'>
-            {row.original.isIncome ? (
-              <ArrowUpCircle className='text-success h-4 w-4' />
-            ) : (
-              <ArrowDownCircle className='text-destructive h-4 w-4' />
+          <div className='flex flex-col items-start gap-1.5'>
+            <div className='flex items-center gap-1.5'>
+              {row.original.isIncome ? (
+                <ArrowUpCircle className='text-success h-4 w-4' />
+              ) : (
+                <ArrowDownCircle className='text-destructive h-4 w-4' />
+              )}
+              <span className='text-muted-foreground text-sm'>
+                {row.original.isIncome ? 'Income' : 'Expense'}
+              </span>
+            </div>
+            {row.original.recurring && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant='secondary' className='flex items-center gap-1 text-xs'>
+                    <Repeat className='h-3 w-3' />
+                    {row.original.recurrenceType
+                      ? row.original.recurrenceType.charAt(0).toUpperCase() +
+                        row.original.recurrenceType.slice(1)
+                      : 'Recurring'}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>This is a recurring transaction.</p>
+                </TooltipContent>
+              </Tooltip>
             )}
-            <span className='text-muted-foreground text-sm'>
-              {row.original.isIncome ? 'Income' : 'Expense'}
-            </span>
+          </div>
+        )
+      },
+      {
+        accessorKey: 'createdBy.name',
+        header: ({ column }) => <DataTableColumnHeader column={column} title='Created By' />,
+        meta: { header: 'Created By' },
+        cell: ({ row }) => (
+          <div className='flex items-center gap-1.5 text-sm'>
+            <User className='text-muted-foreground h-4 w-4' />
+            <SingleLineEllipsis showTooltip className='max-w-[120px]'>
+              {row.original.createdBy?.name ?? 'N/A'}
+            </SingleLineEllipsis>
           </div>
         )
       },
@@ -218,7 +275,7 @@ const TransactionTable = ({
           ]
         : [])
     ],
-    [isOwner, deleteTransactionId, handleDelete]
+    [isOwner, deleteTransactionId, handleDelete, accountsData]
   );
 
   return (
