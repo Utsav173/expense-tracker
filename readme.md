@@ -1,198 +1,164 @@
-# Expense Tracker: Full-Stack Financial Management
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg?style=flat-square)](https://github.com/Utsav173/expense-tracker/actions) [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE) [![Version](https://img.shields.io/badge/version-1.0.0-orange.svg?style=flat-square)](https://github.com/Utsav173/expense-tracker/releases) [![Frontend](https://img.shields.io/badge/frontend-Next.js-black.svg?style=flat-square&logo=next.js&logoColor=white)](frontend) [![Backend](https://img.shields.io/badge/backend-Bun.js-black.svg?style=flat-square&logo=bun&logoColor=white)](backend) [![Database](https://img.shields.io/badge/database-PostgreSQL-blue.svg?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+<div align="center">
+  <img src="public/favicon.svg" alt="Logo" width="100" height="100">
+  <h1>Expense Tracker</h1>
+  <p>A modern, AI-powered, open-source expense tracker built to provide a seamless and intuitive financial management experience.</p>
 
-> A comprehensive full-stack web application for tracking, managing, understanding, and interacting with your finances using an AI assistant.
+  <div>
+    <img src="https://img.shields.io/badge/Next.js-15-black.svg?style=for-the-badge&logo=nextdotjs" alt="Next.js 15">
+    <img src="https://img.shields.io/badge/React-19-blue.svg?style=for-the-badge&logo=react" alt="React 19">
+    <img src="https://img.shields.io/badge/TypeScript-5-blue.svg?style=for-the-badge&logo=typescript" alt="TypeScript">
+    <img src="https://img.shields.io/badge/Tailwind_CSS-4-38B2AC.svg?style=for-the-badge&logo=tailwind-css" alt="Tailwind CSS 4">
+    <img src="https://img.shields.io/badge/Shadcn_UI-black?style=for-the-badge&logo=shadcnui&logoColor=white" alt="Shadcn UI">
+  </div>
 
-## Table of Contents
+  <p>
+    <a href="#-features-showcase">Features</a> •
+    <a href="#-why-choose-this-project">Why Us?</a> •
+    <a href="#-tech-stack--architecture">Tech Stack</a> •
+    <a href="#-local-development">Getting Started</a> •
+    <a href="#-deployment">Deployment</a> •
+    <a href="#-contributing">Contributing</a>
+  </p>
+</div>
 
-- [Features](#features)
-- [Technologies Used](#technologies-used)
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Backend Setup](#1-backend-setup)
-  - [Frontend Setup](#2-frontend-setup)
-- [Running the Application](#running-the-application)
-- [API Documentation](#api-documentation)
-- [Deployment](#deployment)
-- [Demo](#demo)
-- [Contributing](#contributing)
-- [License](#license)
 
-## Features
 
-This project provides a robust feature set for personal finance management through a backend API and a modern frontend UI.
+## 🚀 Features Showcase
 
-Detailed feature lists can be found in the respective README files:
+This application is packed with features designed for comprehensive financial management.
 
-- **[Backend Features](./backend/README.md)**
-- **[Frontend Features](./frontend/README.md)**
+### 👤 User & Account Management
+- ✅ **Secure Authentication:** JWT-based login, registration, and password reset flows.
+- ✅ **Profile Customization:** Update user details, profile picture, and preferred currency.
+- ✅ **Multi-Account Support:** Manage multiple financial accounts seamlessly.
+- ✅ **Account Sharing:** Securely share accounts with other users and manage access permissions.
 
-**Highlights:**
+### 💸 Transaction & Data Management
+- ✅ **CRUD Operations:** Full support for creating, reading, editing, and deleting transactions.
+- ✅ **Advanced Filtering & Sorting:** Easily find transactions with powerful filters (date, category, type, text search) and sorting options.
+- ✅ **Data Import/Export:**
+    - **Import:** From XLSX templates and PDF bank statements.
+    - **Export:** Filtered transaction data to XLSX or CSV.
+- ✅ **Categorization:** Smart category management with an intuitive combobox and inline creation.
 
-- **Core Finance Management:** Secure user auth, multi-account/currency support, detailed transaction tracking (CRUD, recurring, categorization), budgeting, saving goals, investment tracking (holdings, summary, finance API integration), debt management.
-- **Data Handling:** Import transactions (XLSX, PDF bank statement parsing via `unpdf`), Export transactions (XLSX/CSV), Generate account statements (PDF/XLSX).
-- **User Interface:** Interactive dashboard (customizable presets, charts, summaries), account sharing, profile management (including AI API key setup).
-- **Automation:** Scheduled backend jobs (via `node-cron`) for recurring transactions and email notifications (budget alerts, goal reminders, bill reminders).
-- **AI Assistant:** Natural language interaction (via frontend chat) for querying data and performing actions (e.g., "Add a ₹500 expense for groceries", "Show my budget for travel this month"). Securely uses user-provided AI keys (encrypted via AES-GCM on backend).
-- **Security:** JWT authentication, bcrypt hashing, input validation (Zod), ORM protection, secure AI key encryption.
+### 📊 Analytics & Visualization
+- ✅ **Interactive Dashboard:** A fully customizable dashboard with widgets for:
+    - Financial Snapshot (Income, Expenses, Net Worth)
+    - Spending Breakdowns (by category)
+    - Budget vs. Actual Tracking
+    - Investment & Debt Summaries
+    - Account Balance Lists
+- ✅ **Rich Charts & Graphs:** Powered by Recharts for clear, beautiful data visualization.
+- ✅ **Account-Specific Analytics:** Dive deep into the financial trends of a single account.
+- ✅ **Financial Statements:** Generate PDF or XLSX statements on demand.
 
-## Technologies Used
+### 🎯 Financial Planning
+- ✅ **Budgeting:** Set monthly or yearly budgets for specific categories and track your progress.
+- ✅ **Savings Goals:** Create and manage savings goals, tracking your contributions and progress visually.
+- ✅ **Debt Management:** Track loans (taken or given) with details on interest, duration, and payment status.
+- ✅ **Investment Tracking:** Monitor investment accounts, individual holdings, and overall portfolio performance.
 
-### Frontend
+### 🤖 AI Assistant
+- ✅ **Natural Language Commands:** Interact with your finances using plain English. Ask the AI to add transactions, list expenses, or provide financial summaries.
+- ✅ **Secure Tool Integration:** The AI securely interacts with the backend API to perform actions on your behalf.
+- ✅ **Context-Aware Suggestions:** Receive smart, actionable suggestions based on your conversation.
+- ✅ **Personal API Key:** Full user control over their AI provider API key.
 
-- **Framework:** [Next.js](https://nextjs.org/) (v15+, App Router)
-- **UI:** [React](https://react.dev/) (v19+), [Tailwind CSS](https://tailwindcss.com/) (v4+), [Shadcn UI](https://ui.shadcn.com/)
-- **State/Data Fetching:** [TanStack Query](https://tanstack.com/query/v5) (v5+)
-- **Forms:** [React Hook Form](https://react-hook-form.com/), [Zod](https://zod.dev/)
-- **Charting:** [Recharts](https://recharts.org/en-US/)
-- **File Parsing:** [XLSX](https://sheetjs.com/), [unpdf](https://unpdf.unjs.io/) (PDF parsing)
-- **Other:** [Lucide React](https://lucide.dev/), [date-fns](https://date-fns.org/) (v4+), [axios](https://axios-http.com/), [Framer Motion](https://www.framer.com/motion/)
+---
 
-### Backend
+## 🌟 Why Choose This Project?
 
-- **Runtime:** [Bun.js](https://bun.sh/)
-- **Framework:** [Hono](https://hono.dev/)
-- **ORM:** [Drizzle ORM](https://orm.drizzle.team/)
-- **Database:** [PostgreSQL](https://www.postgresql.org/) (tested with Neon)
-- **Authentication:** [hono/jwt](https://hono.dev/middleware/jwt), [bcryptjs](https://www.npmjs.com/package/bcryptjs)
-- **AI:** [@ai-sdk/google](https://sdk.vercel.ai/)
-- **Scheduling:** [node-cron](https://www.npmjs.com/package/node-cron)
-- **Email:** [Nodemailer](https://nodemailer.com/about/)
-- **File Handling:** [XLSX](https://sheetjs.com/), PDF generation handled by `pdf-generator-worker` (using Puppeteer and EJS for templates)
-- **Other:** [Zod](https://zod.dev/), [date-fns-tz](https://date-fns.org/v2/docs/Time-Zones), [Sharp](https://sharp.pixelplumbing.com/) (Image processing), [crypto.subtle](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto) (for AES-GCM)
+- **Modern Tech Stack:** Built with the latest and greatest web technologies like Next.js 15, React 19, and Tailwind CSS 4 for a fast, reliable, and scalable application.
+- **Exceptional User Experience:** A huge emphasis has been placed on creating a clean, intuitive, and responsive UI/UX, powered by the elegant Shadcn UI component library.
+- **AI-Powered:** Goes beyond simple tracking by integrating a powerful AI assistant to make financial management faster and more accessible.
+- **Extensible & Open Source:** The codebase is clean, well-structured, and ready for new features. Contributions are welcome!
+- **Data-Driven Insights:** Powerful analytics and visualizations help you understand your financial health at a glance.
 
-## Project Structure
+---
 
+## 🛠️ Tech Stack & Architecture
+
+This project uses a modern, type-safe, and performant technology stack.
+
+| Category          | Technology                                                              | Role & Purpose                                                                                             |
+| ----------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **Framework**     | [Next.js](https://nextjs.org/) 15 (App Router)                          | Provides the core structure, file-based routing, server-side rendering, and API routes.                    |
+| **UI Library**    | [React](https://react.dev/) 19                                          | The foundational library for building the interactive user interface.                                      |
+| **Styling**       | [Tailwind CSS](https://tailwindcss.com/) 4                              | A utility-first CSS framework for rapid, custom UI development without leaving your HTML.                  |
+| **Components**    | [Shadcn UI](https://ui.shadcn.com/)                                     | A collection of beautifully designed, accessible, and unstyled components that we build upon.              |
+| **Data Fetching** | [TanStack Query](https://tanstack.com/query/v5)                         | Manages all server state: fetching, caching, and updating data with hooks for a seamless developer experience. |
+| **Forms**         | [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/) | The standard for building performant, flexible, and type-safe forms with robust validation.                |
+| **Charting**      | [Recharts](https://recharts.org/en-US/)                                 | A composable charting library built on React components for creating beautiful data visualizations.        |
+| **Icons**         | [Lucide React](https://lucide.dev/icons/)                               | A simply beautiful and consistent icon toolkit.                                                            |
+| **Utilities**     | `date-fns`, `clsx`, `tailwind-merge`                                    | Best-in-class utilities for date manipulation and robust class name management.                            |
+
+---
+
+## ⚙️ Local Development
+
+Follow these steps to get the project running on your local machine.
+
+### 1. Prerequisites
+- [Node.js](https://nodejs.org/en) (v18.17 or higher)
+- [Bun](https://bun.sh/) (v1.0 or higher)
+- A running instance of the backend API service.
+
+### 2. Clone the Repository
+```bash
+git clone https://github.com/Utsav173/expense-tracker.git
+cd expense-tracker
 ```
-expense-tracker/
-├── backend/  # Backend API (Bun.js, Hono, Drizzle ORM, PostgreSQL)
-│   ├── src/
-│   ├── public/
-│   ├── package.json
-│   └── README.md
-├── frontend/ # Frontend application (Next.js, React, Tailwind CSS)
-│   ├── src/
-│   ├── public/
-│   ├── package.json
-│   └── README.md
-├── .gitignore
-├── LICENSE
-└── README.md # This file
+
+### 3. Install Dependencies
+This project uses `bun` for package management.
+```bash
+bun install
 ```
 
-## Getting Started
+### 4. Configure Environment Variables
+Create a `.env.local` file in the root of the project by copying the example file:
+```bash
+cp .env.example .env.local
+```
+Now, open `.env.local` and add the URL for your running backend API:
+```dotenv
+# .env.local
 
-### Prerequisites
+# URL of your running backend service (Required)
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+```
 
-- **Bun:** Install Bun (version >= 1.0 recommended). See [https://bun.sh/](https://bun.sh/).
-- **Node.js:** Required for some frontend tooling (18+ recommended).
-- **Docker & Docker Compose:** **Required** for the simplified local database setup.
-- **Gmail Account (Optional):** For sending welcome/reset/notification emails (requires App Password).
-- **Google AI API Key (Optional):** For using the AI Assistant feature. Users add this via their profile.
-- **Encryption Secret:** A strong, 32-byte secret key is **required** in the backend `.env` if the AI feature will be used.
+### 5. Run the Development Server
+```bash
+bun dev
+```
+The application will be available at **http://localhost:3000**.
 
-### 1. Backend Setup
+---
 
-1.  Navigate to the backend directory: `cd backend`
-2.  Install dependencies: `bun install`
-3.  Create a `.env` file from the example or with the following structure (you'll fill in `DATABASE_URL_NEW` in the next step):
+## 🌐 Deployment
 
-    ```dotenv
-    # --- REQUIRED ---
-    DATABASE_URL_NEW=
-    JWT_SECRET="your_super_strong_jwt_secret_at_least_32_chars"
-    FRONTEND_URL="http://localhost:3000"
-    LOGINPAGE="http://localhost:3000/auth/login"
-    RESETPAGE="http://localhost:3000/auth/reset-password"
+The easiest way to deploy this Next.js application is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme).
 
-    # --- REQUIRED IF USING AI ASSISTANT ---
-    AI_API_KEY_ENCRYPTION_SECRET="your_random_and_secure_32_byte_encryption_key"
+- **Connect Your Git Repository:** Import your project into Vercel from your Git provider (GitHub, GitLab, etc.).
+- **Configure Environment Variables:** Add the `NEXT_PUBLIC_API_BASE_URL` to your Vercel project's environment variables.
+- **Deploy:** Vercel will automatically build and deploy your application.
 
-    # --- OPTIONAL: EMAIL ---
-    GMAIL_USERNAME="your_email@gmail.com"
-    GMAIL_PASS="your_gmail_app_password"
-    ```
+---
 
-4.  **Create and start the local database** using Docker. This is the simplest method.
+## 🙌 Contributing
 
-    ```bash
-    bun run db:create
-    ```
+Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
-    This script will start a PostgreSQL container and print the connection URL.
+1.  Fork the Project
+2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4.  Push to the Branch (`git push origin feature/AmazingFeature`)
+5.  Open a Pull Request
 
-5.  **Copy the database URL** from the terminal and paste it into your `.env` file for the `DATABASE_URL_NEW` variable.
+---
 
-6.  Run database migrations to create the tables:
-    ```bash
-    bun run db:push
-    ```
-7.  (Optional but Recommended for Demo) Seed the database with sample data:
-    ```bash
-    bun run seed
-    ```
-    _Note: The seed script clears existing data. To stop the database container later, run `bun run db:stop`. To remove it completely (including all data), run `bun run db:clean`._
+## 📄 License
 
-### 2. Frontend Setup
-
-1.  Navigate to the frontend directory: `cd ../frontend`
-2.  Install dependencies: `bun install`
-3.  Create a `.env.local` file and set `NEXT_PUBLIC_API_BASE_URL` to your running backend URL:
-    ```dotenv
-    NEXT_PUBLIC_API_BASE_URL=http://localhost:1337
-    ```
-
-## Running the Application
-
-1.  **Start the Backend:** (from the `backend` directory): `bun run dev`
-2.  **Start the Frontend:** (from the `frontend` directory): `bun dev`
-
-Access the application in your browser, typically at `http://localhost:3000`.
-
-## API Documentation
-
-The backend API is documented via a Postman collection. See the **[Backend README](./backend/README.md#api-documentation)** for the link to the collection file (`expense-backend-api.collection.json`).
-
-**Published Backend Docs:** [View API Documentation on Postman](https://documenter.getpostman.com/view/23794641/2sB2j68A9x)
-
-## Deployment
-
-- **Backend:** Refer to the [backend README](./backend/README.md#running-the-application) for build (`generate:build`) and start (`start`) commands. Ensure all necessary environment variables (`DATABASE_URL_NEW`, `JWT_SECRET`, `AI_API_KEY_ENCRYPTION_SECRET`, `FRONTEND_URL` etc.) are set securely in your deployment environment (e.g., using environment variables in Vercel, Render, Docker secrets). Use the provided `Dockerfile` for containerization.
-- **Frontend:** Deploy as a standard Next.js application (e.g., to Vercel, Netlify). Ensure the `NEXT_PUBLIC_API_BASE_URL` environment variable points to your deployed backend URL.
-
-## Demo
-
-A live demo of the application is available at [pro-expense.vercel.app](https://pro-expense.vercel.app/auth/login).
-
-**Demo Credentials:**
-
-- Email: `sampleuser@example.com`
-- Password: `Password@123`
-
-_(Note: AI features might require you to add your own Google AI API key in the profile settings on the demo)._
-
-## Contributing
-
-We welcome contributions from the community! To contribute:
-
-1.  Fork the repository
-2.  Create a new branch for your feature (`git checkout -b feature/amazing-feature`)
-3.  Make your changes in the relevant `backend` or `frontend` directory.
-4.  Commit your changes (`git commit -m 'Add some amazing feature'`)
-5.  Push to the branch (`git push origin feature/amazing-feature`)
-6.  Open a Pull Request against the `main` branch of the original repository.
-
-Please ensure your PR:
-
-- Follows the existing code style (run `bun run format` in the relevant directory).
-- Includes tests for new features (if applicable - testing setup may be required).
-- Updates documentation (READMEs, code comments) as needed.
-- Has a clear description of changes.
-
-For major changes, please open an issue first to discuss what you would like to change.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Distributed under the MIT License. See `LICENSE` for more information.
