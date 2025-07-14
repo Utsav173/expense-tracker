@@ -2,8 +2,8 @@ name: Generate Due Transactions
 
 on:
   schedule:
-    - cron: '0 * * * *'  # Every hour (UTC)
-  workflow_dispatch:      # Optional: allows manual trigger from GitHub UI
+    - cron: '0 * * * *'  # Every hour UTC
+  workflow_dispatch:      # Manual trigger support
 
 jobs:
   run-task:
@@ -11,26 +11,18 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        continue-on-error: true  # Don't fail if checkout throws warnings
 
       - name: Trigger Generate Due Transactions
         env:
           SCHEDULE_SERVICE_AUTH_TOKEN: ${{ secrets.SCHEDULE_SERVICE_AUTH_TOKEN }}
           BACKEND_URL: ${{ secrets.BACKEND_URL }}
         run: |
-          echo "Triggering: ${BACKEND_URL}/schedule/generate-due-transactions"
-          curl -s -w "\nStatus: %{http_code}\n" -o /tmp/response.txt -X GET \
-            -H "X-Schedule-Auth: ${SCHEDULE_SERVICE_AUTH_TOKEN}" \
-            "${BACKEND_URL}/schedule/generate-due-transactions"
-
-          cat /tmp/response.txt
-
-          STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X GET \
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X GET \
             -H "X-Schedule-Auth: ${SCHEDULE_SERVICE_AUTH_TOKEN}" \
             "${BACKEND_URL}/schedule/generate-due-transactions")
 
-          if [ "$STATUS_CODE" -ne 200 ]; then
-            echo "❌ Request failed with status $STATUS_CODE"
+          if [ "$RESPONSE" -ne 200 ]; then
+            echo "::error ::Request failed with status $RESPONSE"
             exit 1
-          else
-            echo "✅ Request succeeded"
           fi
