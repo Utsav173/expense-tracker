@@ -2,7 +2,8 @@ name: Generate Due Transactions
 
 on:
   schedule:
-    - cron: '0 * * * *' # Hourly at the top of every hour UTC
+    - cron: '0 * * * *'  # Every hour (UTC)
+  workflow_dispatch:      # Optional: allows manual trigger from GitHub UI
 
 jobs:
   run-task:
@@ -10,8 +11,26 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+
       - name: Trigger Generate Due Transactions
+        env:
+          SCHEDULE_SERVICE_AUTH_TOKEN: ${{ secrets.SCHEDULE_SERVICE_AUTH_TOKEN }}
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
         run: |
-          curl -X GET \
-              -H "X-Schedule-Auth: ${{ secrets.SCHEDULE_SERVICE_AUTH_TOKEN }}" \
-              ${{ secrets.BACKEND_URL }}/schedule/generate-due-transactions
+          echo "Triggering: ${BACKEND_URL}/schedule/generate-due-transactions"
+          curl -s -w "\nStatus: %{http_code}\n" -o /tmp/response.txt -X GET \
+            -H "X-Schedule-Auth: ${SCHEDULE_SERVICE_AUTH_TOKEN}" \
+            "${BACKEND_URL}/schedule/generate-due-transactions"
+
+          cat /tmp/response.txt
+
+          STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X GET \
+            -H "X-Schedule-Auth: ${SCHEDULE_SERVICE_AUTH_TOKEN}" \
+            "${BACKEND_URL}/schedule/generate-due-transactions")
+
+          if [ "$STATUS_CODE" -ne 200 ]; then
+            echo "❌ Request failed with status $STATUS_CODE"
+            exit 1
+          else
+            echo "✅ Request succeeded"
+          fi
