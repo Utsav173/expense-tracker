@@ -14,14 +14,18 @@ import {
   Camera,
   Save,
   X,
-  User as UserIcon,
+  User,
   Trash2,
   BrainCircuit,
   Loader2,
   Check,
   Edit3,
   Shield,
-  ExternalLink
+  ExternalLink,
+  Settings,
+  Key,
+  Mail,
+  Globe
 } from 'lucide-react';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card';
@@ -95,6 +99,7 @@ const UserProfile = () => {
       refetchUser?.();
       setIsEditingProfile(false);
       setPreviewUrl(null);
+      showSuccess('Profile updated successfully!');
     },
     onError: (error: any) => {
       showError(error.message || 'Failed to update profile.');
@@ -177,7 +182,7 @@ const UserProfile = () => {
       return;
     }
 
-    if (!trimmedKey.startsWith('AIza') && !trimmedKey.startsWith('AIza')) {
+    if (!trimmedKey.startsWith('AIza')) {
       showError('Please enter a valid Google AI API Key (should start with "AIza").');
       return;
     }
@@ -197,26 +202,41 @@ const UserProfile = () => {
 
   if (userIsLoading) {
     return (
-      <div className='mx-auto max-w-4xl p-4 max-sm:p-1 md:p-8'>
-        <div className='grid gap-6 md:grid-cols-1'>
-          <Card className='w-full'>
+      <div className='mx-auto max-w-5xl px-4 py-8'>
+        <div className='space-y-8'>
+          {/* Header Skeleton */}
+          <div className='space-y-3 text-center'>
+            <Skeleton className='mx-auto h-10 w-64' />
+            <Skeleton className='mx-auto h-5 w-96' />
+          </div>
+
+          {/* Profile Card Skeleton */}
+          <Card className='bg-background/80 border-border/50 backdrop-blur-sm'>
             <CardHeader>
-              <Skeleton className='h-8 w-48' />
-              <Skeleton className='h-4 w-64' />
+              <Skeleton className='h-7 w-48' />
+              <Skeleton className='h-4 w-72' />
             </CardHeader>
-            <CardContent className='space-y-8'>
-              <div className='flex items-center gap-6'>
-                <Skeleton className='h-24 w-24 rounded-full' />
-                <div className='flex-1 space-y-4'>
-                  <Skeleton className='h-10 w-full' />
-                  <Skeleton className='h-10 w-full' />
-                  <Skeleton className='h-10 w-2/3' />
+            <CardContent className='space-y-6'>
+              <div className='flex items-start gap-8'>
+                <Skeleton className='h-32 w-32 rounded-full' />
+                <div className='flex-1 space-y-6'>
+                  <Skeleton className='h-12 w-full' />
+                  <Skeleton className='h-12 w-full' />
+                  <Skeleton className='h-12 w-2/3' />
                 </div>
               </div>
-              <div className='space-y-4'>
-                <Skeleton className='h-6 w-32' />
-                <Skeleton className='h-20 w-full' />
-              </div>
+            </CardContent>
+          </Card>
+
+          {/* AI Settings Card Skeleton */}
+          <Card className='bg-background/80 border-border/50 backdrop-blur-sm'>
+            <CardHeader>
+              <Skeleton className='h-7 w-56' />
+              <Skeleton className='h-4 w-80' />
+            </CardHeader>
+            <CardContent className='space-y-6'>
+              <Skeleton className='h-20 w-full' />
+              <Skeleton className='h-12 w-full' />
             </CardContent>
           </Card>
         </div>
@@ -226,13 +246,15 @@ const UserProfile = () => {
 
   if (!user) {
     return (
-      <div className='mx-auto max-w-4xl p-4 max-sm:p-1 md:p-8'>
-        <Card className='w-full'>
-          <CardContent className='p-8 text-center'>
-            <div className='space-y-4'>
-              <UserIcon className='text-muted-foreground mx-auto h-12 w-12' />
-              <div>
-                <h3 className='text-lg font-semibold'>User Not Found</h3>
+      <div className='mx-auto max-w-5xl px-4 py-8'>
+        <Card className='bg-background/80 border-border/50 backdrop-blur-sm'>
+          <CardContent className='p-12 text-center'>
+            <div className='space-y-6'>
+              <div className='bg-muted/50 mx-auto flex h-20 w-20 items-center justify-center rounded-full'>
+                <User className='text-muted-foreground h-10 w-10' />
+              </div>
+              <div className='space-y-2'>
+                <h3 className='text-xl font-semibold'>User Not Found</h3>
                 <p className='text-muted-foreground'>Please log in again to access your profile.</p>
               </div>
             </div>
@@ -246,26 +268,30 @@ const UserProfile = () => {
   const isApiKeySubmitting = updateApiKeyMutation.isPending;
 
   return (
-    <div className='mx-auto max-w-4xl p-4 max-sm:p-1 md:p-8'>
+    <div className='mx-auto max-w-5xl p-4 max-sm:p-1'>
       <div className='space-y-8'>
-        {/* Header */}
-        <div className='space-y-2 text-center'>
-          <h1 className='text-3xl font-bold tracking-tight'>Profile Settings</h1>
-          <p className='text-muted-foreground'>
+        {/* Header Section */}
+        <div className='space-y-3 text-center'>
+          <h1 className='from-foreground to-foreground/70 bg-gradient-to-r bg-clip-text text-4xl font-bold tracking-tight text-transparent'>
+            Profile Settings
+          </h1>
+          <p className='text-muted-foreground mx-auto max-w-2xl text-lg'>
             Manage your personal information and AI assistant preferences
           </p>
         </div>
 
         {/* Profile Information Card */}
-        <Card>
-          <CardHeader className='pb-6'>
-            <div className='flex items-center justify-between max-sm:flex-col max-sm:gap-2'>
-              <div className='max-sm:space-y-2'>
-                <CardTitle className='flex items-center gap-2 max-sm:mx-auto max-sm:w-fit'>
-                  <UserIcon className='h-5 w-5' />
+        <Card className='bg-background/80 border-border/50 shadow-lg backdrop-blur-sm'>
+          <CardHeader className='pb-8'>
+            <div className='flex items-start justify-between'>
+              <div className='space-y-2'>
+                <CardTitle className='flex items-center gap-3 text-xl'>
+                  <div className='bg-primary/10 rounded-lg p-2'>
+                    <User className='text-primary h-5 w-5' />
+                  </div>
                   Profile Information
                 </CardTitle>
-                <CardDescription className='max-sm:text-center'>
+                <CardDescription className='text-base'>
                   Update your personal details and profile picture
                 </CardDescription>
               </div>
@@ -274,37 +300,40 @@ const UserProfile = () => {
                   variant='outline'
                   size='sm'
                   onClick={() => setIsEditingProfile(true)}
-                  className='shrink-0'
+                  className='shrink-0 gap-2'
                 >
-                  <Edit3 className='mr-2 h-4 w-4' />
+                  <Edit3 className='h-4 w-4' />
                   Edit Profile
                 </Button>
               )}
             </div>
           </CardHeader>
-          <CardContent>
+
+          <CardContent className='pt-0'>
             <Form {...profileForm}>
-              <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className='space-y-6'>
-                {/* Profile Picture Section */}
-                <div className='flex flex-col items-start gap-6 sm:flex-row'>
-                  <div className='flex flex-col items-center gap-3'>
-                    <div className='relative'>
-                      <Avatar className='h-24 w-24 border-2'>
+              <div onSubmit={profileForm.handleSubmit(onProfileSubmit)} className='space-y-8'>
+                {/* Profile Picture and Basic Info */}
+                <div className='flex flex-col gap-8 lg:flex-row'>
+                  {/* Profile Picture Section */}
+                  <div className='flex flex-col items-center space-y-4 lg:w-64'>
+                    <div className='group relative'>
+                      <Avatar className='border-background h-32 w-32 border-4 shadow-lg'>
                         <AvatarImage
                           src={previewUrl || user.profilePic || undefined}
                           alt={user.name}
                           className='object-cover'
                         />
-                        <AvatarFallback className='text-2xl font-semibold'>
+                        <AvatarFallback className='from-primary/20 to-primary/10 bg-gradient-to-br text-3xl font-bold'>
                           {user.name?.charAt(0)?.toUpperCase() || 'U'}
                         </AvatarFallback>
                       </Avatar>
+
                       {isEditingProfile && (
                         <label
                           htmlFor='profile-upload'
-                          className='bg-background hover:bg-accent absolute -right-2 -bottom-2 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border-2 shadow-lg transition-colors'
+                          className='absolute inset-0 flex cursor-pointer items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100'
                         >
-                          <Camera className='text-muted-foreground h-4 w-4' />
+                          <Camera className='h-8 w-8 text-white' />
                           <input
                             id='profile-upload'
                             type='file'
@@ -316,27 +345,32 @@ const UserProfile = () => {
                         </label>
                       )}
                     </div>
+
                     {isEditingProfile && (
-                      <p className='text-muted-foreground max-w-32 text-center text-xs'>
-                        Click the camera icon to change your profile picture
+                      <p className='text-muted-foreground max-w-48 text-center text-sm'>
+                        Hover over your avatar to change your profile picture
                       </p>
                     )}
                   </div>
 
                   {/* Form Fields */}
-                  <div className='w-full flex-1 space-y-4'>
+                  <div className='flex-1 space-y-6'>
+                    {/* Name Field */}
                     <FormField
                       control={profileForm.control}
                       name='name'
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Full Name *</FormLabel>
+                          <FormLabel className='flex items-center gap-2 text-base font-medium'>
+                            <User className='h-4 w-4' />
+                            Full Name
+                          </FormLabel>
                           <FormControl>
                             <Input
                               placeholder='Enter your full name'
                               {...field}
                               disabled={!isEditingProfile || isProfileSubmitting}
-                              className={!isEditingProfile ? 'bg-muted/50' : ''}
+                              className={`h-12 text-base ${!isEditingProfile ? 'bg-muted/30' : ''}`}
                             />
                           </FormControl>
                           <FormMessage />
@@ -344,37 +378,48 @@ const UserProfile = () => {
                       )}
                     />
 
+                    {/* Email Field */}
                     <div className='space-y-2'>
-                      <Label className='text-sm font-medium'>Email Address</Label>
-                      <div className='flex items-center gap-2'>
+                      <Label className='flex items-center gap-2 text-base font-medium'>
+                        <Mail className='h-4 w-4' />
+                        Email Address
+                      </Label>
+                      <div className='flex items-center gap-3'>
                         <Input
                           value={user.email}
                           readOnly
                           disabled
-                          className='bg-muted/50 flex-1 cursor-not-allowed opacity-70'
+                          className='bg-muted/30 h-12 flex-1 cursor-not-allowed text-base'
                         />
-                        <Badge variant='secondary' className='shrink-0'>
+                        <Badge variant='secondary' className='px-3 py-1'>
+                          <Check className='mr-1 h-3 w-3' />
                           Verified
                         </Badge>
                       </div>
-                      <p className='text-muted-foreground text-xs'>
+                      <p className='text-muted-foreground text-sm'>
                         Email cannot be changed. Contact support if needed.
                       </p>
                     </div>
 
+                    {/* Currency Field */}
                     <FormField
                       control={profileForm.control}
                       name='preferredCurrency'
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Preferred Currency</FormLabel>
-                          <CurrencySelect
-                            currencies={currencies}
-                            value={field.value ?? undefined}
-                            onValueChange={field.onChange}
-                            isLoading={isLoadingCurrencies}
-                            disabled={!isEditingProfile || isProfileSubmitting}
-                          />
+                          <FormLabel className='flex items-center gap-2 text-base font-medium'>
+                            <Globe className='h-4 w-4' />
+                            Preferred Currency
+                          </FormLabel>
+                          <div className='h-12'>
+                            <CurrencySelect
+                              currencies={currencies}
+                              value={field.value ?? undefined}
+                              onValueChange={field.onChange}
+                              isLoading={isLoadingCurrencies}
+                              disabled={!isEditingProfile || isProfileSubmitting}
+                            />
+                          </div>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -384,118 +429,137 @@ const UserProfile = () => {
 
                 {/* Action Buttons */}
                 {isEditingProfile && (
-                  <div className='flex justify-end gap-3 border-t pt-4'>
+                  <div className='border-border/50 flex justify-end gap-3 border-t pt-6'>
                     <Button
                       type='button'
                       variant='outline'
                       onClick={handleProfileCancel}
                       disabled={isProfileSubmitting}
+                      className='gap-2'
                     >
-                      <X className='mr-2 h-4 w-4' />
+                      <X className='h-4 w-4' />
                       Cancel
                     </Button>
                     <Button
-                      type='submit'
+                      type='button'
+                      onClick={() => onProfileSubmit(profileForm.getValues())}
                       disabled={
                         isProfileSubmitting ||
                         !profileForm.formState.isDirty ||
                         !profileForm.formState.isValid
                       }
+                      className='gap-2'
                     >
                       {isProfileSubmitting ? (
-                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                        <Loader2 className='h-4 w-4 animate-spin' />
                       ) : (
-                        <Save className='mr-2 h-4 w-4' />
+                        <Save className='h-4 w-4' />
                       )}
                       Save Changes
                     </Button>
                   </div>
                 )}
-              </form>
+              </div>
             </Form>
           </CardContent>
         </Card>
 
         {/* AI Assistant Settings Card */}
-        <Card>
-          <CardHeader className='pb-6'>
-            <CardTitle className='flex items-center gap-2'>
-              <BrainCircuit className='text-primary h-5 w-5' />
+        <Card className='bg-background/80 border-border/50 shadow-lg backdrop-blur-sm'>
+          <CardHeader className='pb-8'>
+            <CardTitle className='flex items-center gap-3 text-xl'>
+              <div className='bg-primary/10 rounded-lg p-2'>
+                <BrainCircuit className='text-primary h-5 w-5' />
+              </div>
               AI Assistant Settings
             </CardTitle>
-            <CardDescription>
+            <CardDescription className='text-base'>
               Configure your AI API key to enable the AI assistant features
             </CardDescription>
           </CardHeader>
-          <CardContent className='space-y-6'>
+
+          <CardContent className='space-y-8 pt-0'>
             {/* Security Alert */}
-            <Alert className='bg-muted/50 border-muted'>
+            <Alert className='bg-muted/30 border-muted/50'>
               <Shield className='h-4 w-4' />
               <AlertTitle>Security & Privacy</AlertTitle>
-              <AlertDescription className='text-sm'>
+              <AlertDescription>
                 Your API key is encrypted and stored securely. It's only decrypted temporarily when
                 you use the AI Assistant.
               </AlertDescription>
             </Alert>
 
-            {/* API Key Status */}
-            <div className='space-y-4'>
+            {/* API Key Management */}
+            <div className='space-y-6'>
+              {/* Status Header */}
               <div className='flex items-center justify-between'>
-                <div>
-                  <Label className='text-base font-medium'>API Key Status</Label>
-                  <p className='text-muted-foreground mt-1 text-sm'>
+                <div className='space-y-1'>
+                  <Label className='flex items-center gap-2 text-base font-medium'>
+                    <Key className='h-4 w-4' />
+                    API Key Status
+                  </Label>
+                  <p className='text-muted-foreground text-sm'>
                     {hasAiApiKey
                       ? 'Your AI assistant is ready to use'
                       : 'Add an API key to enable AI features'}
                   </p>
                 </div>
-                <Badge className='shrink-0' variant={hasAiApiKey ? 'default' : 'secondary'}>
+                <Badge variant={hasAiApiKey ? 'default' : 'secondary'} className='px-3 py-1'>
                   {hasAiApiKey ? (
                     <>
-                      <Check className='mr-1 h-3 w-3' />
+                      <Check className='mr-2 h-3 w-3' />
                       Active
                     </>
                   ) : (
-                    'Not Set'
+                    <>
+                      <Settings className='mr-2 h-3 w-3' />
+                      Not Set
+                    </>
                   )}
                 </Badge>
               </div>
 
+              {/* API Key Display/Edit */}
               {hasAiApiKey && !isEditingApiKey && (
                 <div className='flex w-full items-center gap-3'>
                   <PasswordInput
                     value='••••••••••••••••••••••••••••••••••••'
                     readOnly
                     disabled
-                    className='bg-muted/50 flex-1 cursor-not-allowed opacity-70'
+                    className='bg-muted/30 flex-1 cursor-not-allowed text-base'
                     noEyeIcon
                   />
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => setIsEditingApiKey(true)}
-                    disabled={isApiKeySubmitting}
-                  >
-                    <Edit3 className='mr-2 h-4 w-4' />
-                    Update
-                  </Button>
-                  <Button
-                    variant='destructive'
-                    size='sm'
-                    onClick={() => setIsRemoveKeyConfirmOpen(true)}
-                    disabled={isApiKeySubmitting}
-                  >
-                    <Trash2 className='mr-2 h-4 w-4' />
-                    Remove
-                  </Button>
+                  <div className='flex items-center gap-2'>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      onClick={() => setIsEditingApiKey(true)}
+                      disabled={isApiKeySubmitting}
+                      className='gap-2'
+                    >
+                      <Edit3 className='h-4 w-4' />
+                      Update
+                    </Button>
+                    <Button
+                      variant='destructive'
+                      size='sm'
+                      onClick={() => setIsRemoveKeyConfirmOpen(true)}
+                      disabled={isApiKeySubmitting}
+                      className='gap-2'
+                    >
+                      <Trash2 className='h-4 w-4' />
+                      Remove
+                    </Button>
+                  </div>
                 </div>
               )}
 
+              {/* API Key Input */}
               {(!hasAiApiKey || isEditingApiKey) && (
-                <div className='space-y-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='ai-api-key' className='text-sm font-medium'>
-                      Google AI API Key *
+                <div className='space-y-6'>
+                  <div className='space-y-3'>
+                    <Label htmlFor='ai-api-key' className='text-base font-medium'>
+                      Google AI API Key
                     </Label>
                     <PasswordInput
                       id='ai-api-key'
@@ -504,9 +568,9 @@ const UserProfile = () => {
                       onChange={(e) => setApiKeyInput(e.target.value)}
                       disabled={isApiKeySubmitting}
                       autoComplete='off'
-                      className='font-mono'
+                      className='h-12 font-mono text-base'
                     />
-                    <div className='text-muted-foreground flex items-center gap-2 text-xs'>
+                    <div className='text-muted-foreground flex items-center gap-2 text-sm'>
                       <span>Get your free API key from</span>
                       <a
                         href='https://aistudio.google.com/app/apikey'
@@ -520,15 +584,16 @@ const UserProfile = () => {
                     </div>
                   </div>
 
-                  <div className='flex justify-end gap-3 pt-2'>
+                  <div className='flex justify-end gap-3 pt-4'>
                     {isEditingApiKey && (
                       <Button
                         type='button'
                         variant='outline'
                         onClick={handleCancelApiKeyEdit}
                         disabled={isApiKeySubmitting}
+                        className='gap-2'
                       >
-                        <X className='mr-2 h-4 w-4' />
+                        <X className='h-4 w-4' />
                         Cancel
                       </Button>
                     )}
@@ -536,11 +601,12 @@ const UserProfile = () => {
                       type='button'
                       onClick={handleSaveApiKey}
                       disabled={isApiKeySubmitting || !apiKeyInput.trim()}
+                      className='gap-2'
                     >
                       {isApiKeySubmitting ? (
-                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                        <Loader2 className='h-4 w-4 animate-spin' />
                       ) : (
-                        <Save className='mr-2 h-4 w-4' />
+                        <Save className='h-4 w-4' />
                       )}
                       {isEditingApiKey ? 'Update Key' : 'Save Key'}
                     </Button>
