@@ -2,7 +2,7 @@
 
 import { useToast } from '@/lib/hooks/useToast';
 import { useAuth } from '@/hooks/useAuth';
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { authUpdateUser, authUpdateUserAiApiKey } from '@/lib/endpoints/auth';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,10 +15,7 @@ import {
   Save,
   X,
   User as UserIcon,
-  KeyRound,
   Trash2,
-  Eye,
-  EyeOff,
   BrainCircuit,
   Loader2,
   Check,
@@ -27,9 +24,8 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card';
 import { Avatar, AvatarFallback, AvatarImage } from './avatar';
-import { Separator } from './separator';
 import { Input } from './input';
 import { Button } from './button';
 import { Skeleton } from './skeleton';
@@ -49,7 +45,7 @@ import { Badge } from './badge';
 
 const profileUpdateSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters.').max(64).trim(),
-  preferredCurrency: z.string().length(3, 'Invalid currency.').optional(),
+  preferredCurrency: z.string().optional().or(z.literal('')),
   profilePic: z.instanceof(File).optional().nullable()
 });
 
@@ -466,33 +462,32 @@ const UserProfile = () => {
               </div>
 
               {hasAiApiKey && !isEditingApiKey && (
-                <div className='space-y-3'>
-                  <div className='flex items-center gap-3'>
-                    <PasswordInput
-                      value='••••••••••••••••••••••••••••••••••••'
-                      readOnly
-                      disabled
-                      className='bg-muted/50 flex-1 cursor-not-allowed opacity-70'
-                    />
-                    <Button
-                      variant='outline'
-                      size='sm'
-                      onClick={() => setIsEditingApiKey(true)}
-                      disabled={isApiKeySubmitting}
-                    >
-                      <Edit3 className='mr-2 h-4 w-4' />
-                      Update
-                    </Button>
-                    <Button
-                      variant='destructive'
-                      size='sm'
-                      onClick={() => setIsRemoveKeyConfirmOpen(true)}
-                      disabled={isApiKeySubmitting}
-                    >
-                      <Trash2 className='mr-2 h-4 w-4' />
-                      Remove
-                    </Button>
-                  </div>
+                <div className='flex w-full items-center gap-3'>
+                  <PasswordInput
+                    value='••••••••••••••••••••••••••••••••••••'
+                    readOnly
+                    disabled
+                    className='bg-muted/50 flex-1 cursor-not-allowed opacity-70'
+                    noEyeIcon
+                  />
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() => setIsEditingApiKey(true)}
+                    disabled={isApiKeySubmitting}
+                  >
+                    <Edit3 className='mr-2 h-4 w-4' />
+                    Update
+                  </Button>
+                  <Button
+                    variant='destructive'
+                    size='sm'
+                    onClick={() => setIsRemoveKeyConfirmOpen(true)}
+                    disabled={isApiKeySubmitting}
+                  >
+                    <Trash2 className='mr-2 h-4 w-4' />
+                    Remove
+                  </Button>
                 </div>
               )}
 

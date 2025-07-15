@@ -30,14 +30,9 @@ const accountSchema = z.object({
     .min(2, 'Account name must be at least 2 characters.')
     .max(64, 'Account name cannot exceed 64 characters.'),
   balance: z
-    .string()
-    .refine((val) => !isNaN(parseFloat(val)), {
-      message: 'Starting balance must be a valid number.'
-    })
-    .transform((val) => parseFloat(val))
-    .refine((val) => val >= 0, {
-      message: 'Starting balance cannot be negative.'
-    }),
+    .number()
+    .min(0, 'Starting balance must be a positive number.')
+    .max(9999999999, 'Starting balance cannot exceed 9999999999.'),
   currency: z.string().min(3, 'Currency is required.')
 });
 

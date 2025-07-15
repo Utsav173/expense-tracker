@@ -1,6 +1,5 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { SavingGoal } from '@/lib/types';
 import NoData from '../ui/no-data';
 import { cn, formatCurrency } from '@/lib/utils';
 import { Progress } from '../ui/progress';
@@ -8,15 +7,21 @@ import Link from 'next/link';
 import { Button } from '../ui/button';
 import { formatDistanceToNowStrict, isValid, parseISO } from 'date-fns';
 import Loader from '../ui/loader';
+import { useQuery } from '@tanstack/react-query';
+import { goalGetAll } from '@/lib/endpoints/goal';
 
 interface GoalHighlightsProps {
-  data: SavingGoal[] | undefined;
-  isLoading: boolean;
   className?: string;
 }
 
-export const GoalHighlights: React.FC<GoalHighlightsProps> = ({ data, isLoading, className }) => {
-  const highlightedGoals = data;
+export const GoalHighlights: React.FC<GoalHighlightsProps> = ({ className }) => {
+  const { data: highlightedGoals, isLoading } = useQuery({
+    queryKey: ['goalsDashboard'],
+    queryFn: () => goalGetAll({ page: 1, limit: 5 }),
+    staleTime: 15 * 60 * 1000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true
+  });
 
   return (
     <Card className={cn('flex flex-col', className)}>
@@ -25,13 +30,13 @@ export const GoalHighlights: React.FC<GoalHighlightsProps> = ({ data, isLoading,
           <div className='flex h-full items-center justify-center'>
             <Loader />
           </div>
-        ) : !highlightedGoals || highlightedGoals.length === 0 ? (
+        ) : !highlightedGoals || highlightedGoals.data.length === 0 ? (
           <div className='flex h-full items-center justify-center'>
             <NoData message='No active saving goals.' icon='inbox' />
           </div>
         ) : (
           <div className='space-y-4 px-4 py-4'>
-            {highlightedGoals.map((goal) => {
+            {highlightedGoals.data.map((goal) => {
               const saved = goal.savedAmount || 0;
               const target = goal.targetAmount || 1;
               const progress = Math.min((saved / target) * 100, 100);
@@ -63,7 +68,7 @@ export const GoalHighlights: React.FC<GoalHighlightsProps> = ({ data, isLoading,
           </div>
         )}
       </CardContent>
-      {!isLoading && highlightedGoals && highlightedGoals.length > 0 && (
+      {!isLoading && highlightedGoals && highlightedGoals.data.length > 0 && (
         <div className='border-t p-3 text-center'>
           <Button variant='link' size='sm' asChild className='text-xs'>
             <Link href='/goal'>View All Goals</Link>

@@ -10,7 +10,7 @@ import { Frown, LayoutGrid, Maximize2 } from 'lucide-react';
 import { DASHBOARD_PRESETS, DASHBOARD_CARD_CONFIG } from '@/config/dashboard-config';
 import { DashboardControls } from '@/components/dashboard/dashboard-controls';
 import { useDashboardData } from '@/hooks/useDashboardData';
-import { useAuth } from '@/hooks/useAuth';
+
 import Loader from '@/components/ui/loader';
 import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -86,7 +86,6 @@ const initialDashboardSettings: DashboardSettings = {
 
 const DashboardPage = () => {
   const { showSuccess, showError } = useToast();
-  const { user } = useAuth();
 
   const [dashboardSettings, setDashboardSettings] =
     useState<DashboardSettings>(initialDashboardSettings);
@@ -100,11 +99,7 @@ const DashboardPage = () => {
     isError,
     error,
     refetch
-  } = useDashboardData({
-    user: user,
-    timeRangeOption: 'thisMonth',
-    customDateRange: undefined
-  });
+  } = useDashboardData();
 
   const updateSettings = useCallback((updates: Partial<DashboardSettings>) => {
     setDashboardSettings((prev) => ({ ...prev, ...updates }));
@@ -167,7 +162,7 @@ const DashboardPage = () => {
     </Alert>
   );
 
-  if (isLoading && !isFetching) {
+  if (isFetching) {
     return renderSkeleton();
   }
 
@@ -175,11 +170,7 @@ const DashboardPage = () => {
     return renderErrorState();
   }
 
-  if (
-    !isLoading &&
-    dashboardPageData &&
-    (dashboardPageData.dashboardSummary?.totalTransaction ?? 0) < 1
-  ) {
+  if (!isLoading && dashboardPageData && (dashboardPageData?.totalTransaction ?? 0) < 1) {
     return (
       <div className='mx-auto w-full max-w-7xl min-w-0 space-y-4 p-4 pt-6 select-none max-sm:max-w-full md:space-y-6 lg:p-8 lg:pt-8'>
         <NoData
@@ -218,8 +209,8 @@ const DashboardPage = () => {
             description={DASHBOARD_CARD_CONFIG.default.financialSnapshot.description}
             icon={DASHBOARD_CARD_CONFIG.default.financialSnapshot.icon}
           >
-            {dashboardPageData?.dashboardSummary ? (
-              <FinancialSnapshot data={dashboardPageData.dashboardSummary} isLoading={isLoading} />
+            {dashboardPageData ? (
+              <FinancialSnapshot data={dashboardPageData} isLoading={isLoading} />
             ) : null}
           </DashboardCardContent>
         </BentoGridItem>
@@ -229,7 +220,7 @@ const DashboardPage = () => {
             description={DASHBOARD_CARD_CONFIG.default.quickStats.description}
             icon={DASHBOARD_CARD_CONFIG.default.quickStats.icon}
           >
-            <QuickStats data={dashboardPageData?.dashboardSummary} isLoading={isLoading} />
+            <QuickStats data={dashboardPageData} isLoading={isLoading} />
           </DashboardCardContent>
         </BentoGridItem>
         <BentoGridItem className='col-span-12 row-span-2 md:col-span-6 lg:col-span-4'>
@@ -248,9 +239,9 @@ const DashboardPage = () => {
             description={DASHBOARD_CARD_CONFIG.default.trendChart.description}
             icon={DASHBOARD_CARD_CONFIG.default.trendChart.icon}
           >
-            {dashboardPageData?.dashboardSummary ? (
+            {dashboardPageData ? (
               <TrendChartWrapper
-                data={dashboardPageData.dashboardSummary}
+                data={dashboardPageData}
                 chartType={chartType}
                 isLoading={isLoading}
                 setChartType={setChartType}
@@ -282,7 +273,7 @@ const DashboardPage = () => {
             description={DASHBOARD_CARD_CONFIG.default.goals.description}
             icon={DASHBOARD_CARD_CONFIG.default.goals.icon}
           >
-            <GoalHighlights data={dashboardPageData?.goals ?? undefined} isLoading={isLoading} />
+            <GoalHighlights />
           </DashboardCardContent>
         </BentoGridItem>
         <BentoGridItem className='col-span-12 row-span-2 md:col-span-6 lg:col-span-4'>
@@ -310,7 +301,7 @@ const DashboardPage = () => {
             icon={DASHBOARD_CARD_CONFIG.default.accounts.icon}
           >
             <AccountListSummary
-              accountsInfo={dashboardPageData?.dashboardSummary?.accountsInfo}
+              accountsInfo={dashboardPageData?.accountsInfo}
               isLoading={isLoading}
               className='h-full'
             />

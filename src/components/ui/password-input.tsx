@@ -6,21 +6,24 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-const PasswordInput = React.forwardRef<HTMLInputElement, React.ComponentProps<'input'> & { variant?: 'default' | 'auth' }>(
-  ({ className, variant = 'default', ...props }, ref) => {
-    const [showPassword, setShowPassword] = React.useState(false);
+const PasswordInput = React.forwardRef<
+  HTMLInputElement,
+  React.ComponentProps<'input'> & { variant?: 'default' | 'auth'; noEyeIcon?: boolean }
+>(({ className, noEyeIcon = false, variant = 'default', ...props }, ref) => {
+  const [showPassword, setShowPassword] = React.useState(false);
 
-    const togglePasswordVisibility = () => setShowPassword(!showPassword);
+  const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
-    return (
-      <div className='relative'>
-        <Input
-          type={showPassword ? 'text' : 'password'}
-          className={cn('pr-10', className)}
-          ref={ref}
-          variant={variant}
-          {...props}
-        />
+  return (
+    <div className='relative'>
+      <Input
+        type={showPassword ? 'text' : 'password'}
+        className={cn('pr-10', className)}
+        ref={ref}
+        variant={variant}
+        {...props}
+      />
+      {!noEyeIcon && (
         <Button
           type='button'
           variant='ghost'
@@ -36,10 +39,10 @@ const PasswordInput = React.forwardRef<HTMLInputElement, React.ComponentProps<'i
             <Eye className='h-4 w-4' aria-hidden='true' />
           )}
         </Button>
-      </div>
-    );
-  }
-);
+      )}
+    </div>
+  );
+});
 PasswordInput.displayName = 'PasswordInput';
 
 export { PasswordInput };

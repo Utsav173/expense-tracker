@@ -217,8 +217,8 @@ const StatCard = ({
           </SingleLineEllipsis>
         </div>
 
-        <div className='mt-4 flex items-center gap-1.5'>
-          <TooltipProvider>
+        {Math.abs(change) !== 0 && (
+          <div className='mt-4 flex items-center gap-1.5'>
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className='bg-background/50 dark:bg-background/30 inline-flex items-center gap-1.5 rounded-md px-2 py-1'>
@@ -233,8 +233,8 @@ const StatCard = ({
                 <p>Change from last period</p>
               </TooltipContent>
             </Tooltip>
-          </TooltipProvider>
-        </div>
+          </div>
+        )}
       </div>
     </Card>
   );

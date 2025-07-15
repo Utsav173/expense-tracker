@@ -1,28 +1,13 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useMemo } from 'react';
-import { DateRange } from 'react-day-picker';
+import { useCallback } from 'react';
+
 import { accountGetDashboard } from '@/lib/endpoints/accounts';
-import { goalGetAll } from '@/lib/endpoints/goal';
+import { ApiResponse, DashboardData } from '@/lib/types';
 
-import { DashboardData, SavingGoal, User } from '@/lib/types';
-
-interface UseDashboardDataOptions {
-  timeRangeOption: string;
-  customDateRange?: DateRange;
-  user?: User | null;
-}
-
-interface CombinedDashboardData {
-  dashboardSummary: DashboardData | null;
-  goals: SavingGoal[] | null;
-}
-
-export const useDashboardData = ({
-  user
-}: UseDashboardDataOptions): {
-  data: CombinedDashboardData | null;
+export const useDashboardData = (): {
+  data: ApiResponse<DashboardData> | undefined;
   isLoading: boolean;
   isFetching: boolean;
   isError: boolean;
@@ -34,34 +19,14 @@ export const useDashboardData = ({
   const dashboardSummaryQuery = useQuery({
     queryKey: ['dashboardData'],
     queryFn: () => accountGetDashboard(),
-    enabled: !!user,
     staleTime: 5 * 60 * 1000,
     refetchOnMount: true,
     refetchOnWindowFocus: true
   });
 
-  const goalsQuery = useQuery({
-    queryKey: ['goalsDashboard'],
-    queryFn: () => goalGetAll({ page: 1, limit: 5 }),
-    enabled: !!user,
-    staleTime: 15 * 60 * 1000,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true
-  });
-
-  const isLoading = dashboardSummaryQuery.isLoading || goalsQuery.isLoading;
-  const isFetching = dashboardSummaryQuery.isFetching || goalsQuery.isFetching;
-  const error = dashboardSummaryQuery.error || goalsQuery.error;
-
-  const combinedData = useMemo((): CombinedDashboardData | null => {
-    if (isLoading || !dashboardSummaryQuery.data || !goalsQuery.data) {
-      return null;
-    }
-    return {
-      dashboardSummary: dashboardSummaryQuery.data,
-      goals: goalsQuery.data?.data ?? []
-    };
-  }, [isLoading, dashboardSummaryQuery.data, goalsQuery.data]);
+  const isLoading = dashboardSummaryQuery.isLoading;
+  const isFetching = dashboardSummaryQuery.isFetching;
+  const error = dashboardSummaryQuery.error;
 
   const refetch = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: ['dashboardData'] });
@@ -69,7 +34,7 @@ export const useDashboardData = ({
   }, [queryClient]);
 
   return {
-    data: combinedData,
+    data: dashboardSummaryQuery.data,
     isLoading,
     isFetching,
     isError: !!error,
