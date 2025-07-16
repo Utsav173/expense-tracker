@@ -584,9 +584,6 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
             </TabsList>
           </Tabs>
         </div>
-        <CardDescription className='text-muted-foreground mx-auto mt-2 text-center'>
-          Expenses by category for {durationLabels[duration]}.{accountId && ' (Account specific)'}
-        </CardDescription>
       </CardHeader>
       <CardContent className='min-h-[400px] flex-1 pt-4'>
         {isLoading || isFetching ? (

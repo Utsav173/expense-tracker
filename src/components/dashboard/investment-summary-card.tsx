@@ -168,35 +168,14 @@ export const InvestmentSummaryCard: React.FC<{
   const hasData = summaryData && summaryData.numberOfHoldings > 0;
   const displayError = summaryError || (!hasData && historicalError);
 
-  if (isLoading) {
-    return (
-      <Card className={cn('col-span-1 flex items-center justify-center md:col-span-1', className)}>
-        <Loader />
-      </Card>
-    );
-  }
+  if (isLoading) return <Loader />;
 
   if (displayError || !hasData) {
     return (
-      <Card className={cn('col-span-1 flex flex-col md:col-span-1', className)}>
-        <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-          <CardTitle className='text-base font-semibold'>Investment Summary</CardTitle>
-          <WalletCards className='text-muted-foreground h-4 w-4' />
-        </CardHeader>
-        <CardContent className='h-full grow'>
-          <NoData
-            message={displayError ? 'Could not load data.' : 'No investments tracked yet.'}
-            icon={displayError ? 'x-circle' : 'inbox'}
-          />
-        </CardContent>
-        {!displayError && !hasData && (
-          <div className='border-t p-3 text-center'>
-            <Button variant='link' size='sm' asChild className='text-xs'>
-              <Link href='/investment'>Add Investments</Link>
-            </Button>
-          </div>
-        )}
-      </Card>
+      <NoData
+        message={displayError ? 'Could not load data.' : 'No investments tracked yet.'}
+        icon={displayError ? 'x-circle' : 'inbox'}
+      />
     );
   }
 

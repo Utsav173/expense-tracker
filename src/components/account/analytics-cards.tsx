@@ -217,24 +217,22 @@ const StatCard = ({
           </SingleLineEllipsis>
         </div>
 
-        {Math.abs(change) !== 0 && (
-          <div className='mt-4 flex items-center gap-1.5'>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className='bg-background/50 dark:bg-background/30 inline-flex items-center gap-1.5 rounded-md px-2 py-1'>
-                  {getTrendIcon()}
-                  <span className={cn('text-xs font-medium sm:text-sm', getChangeColor())}>
-                    {change > 0 ? '+' : ''}
-                    {Math.abs(change).toFixed(2)}%
-                  </span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Change from last period</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        )}
+        <div className='mt-4 flex items-center gap-1.5'>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className='bg-background/50 dark:bg-background/30 inline-flex items-center gap-1.5 rounded-md px-2 py-1'>
+                {getTrendIcon()}
+                <span className={cn('text-xs font-medium sm:text-sm', getChangeColor())}>
+                  {change > 0 ? '+' : ''}
+                  {Math.abs(change).toFixed(2)}%
+                </span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Change from last period</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
       </div>
     </Card>
   );

@@ -1,13 +1,12 @@
 'use client';
 
-import { useToast } from '@/lib/hooks/useToast';
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import NoData from '@/components/ui/no-data';
 import { Frown, LayoutGrid, Maximize2 } from 'lucide-react';
-import { DASHBOARD_PRESETS, DASHBOARD_CARD_CONFIG } from '@/config/dashboard-config';
+import { DASHBOARD_CARD_CONFIG } from '@/config/dashboard-config';
 import { DashboardControls } from '@/components/dashboard/dashboard-controls';
 import { useDashboardData } from '@/hooks/useDashboardData';
 
@@ -70,79 +69,13 @@ const FinancialHealth = dynamic(() => import('@/components/dashboard/financial-h
   loading: () => <Skeleton className='h-full min-h-[150px]' />
 });
 
-interface DashboardSettings {
-  preset: string;
-  darkMode: boolean;
-  hiddenSections: string[];
-  refreshInterval: number;
-}
-
-const initialDashboardSettings: DashboardSettings = {
-  preset: 'default',
-  darkMode: false,
-  hiddenSections: [],
-  refreshInterval: 0
-};
-
 const DashboardPage = () => {
-  const { showSuccess, showError } = useToast();
-
-  const [dashboardSettings, setDashboardSettings] =
-    useState<DashboardSettings>(initialDashboardSettings);
-
   const [chartType, setChartType] = useState<'line' | 'bar' | 'area'>('line');
 
-  const {
-    data: dashboardPageData,
-    isLoading,
-    isFetching,
-    isError,
-    error,
-    refetch
-  } = useDashboardData();
-
-  const updateSettings = useCallback((updates: Partial<DashboardSettings>) => {
-    setDashboardSettings((prev) => ({ ...prev, ...updates }));
-  }, []);
-
-  const refetchAll = useCallback(async () => {
-    try {
-      await refetch();
-      showSuccess('Dashboard data refreshed.');
-    } catch (fetchError) {
-      console.error('Error refreshing dashboard:', fetchError);
-      showError('Failed to refresh dashboard data.');
-    }
-  }, [refetch, showSuccess, showError]);
-
-  const changePreset = useCallback(
-    (presetKey: string) => {
-      const config = DASHBOARD_CARD_CONFIG[presetKey] || DASHBOARD_CARD_CONFIG['default'];
-      const sectionsToHide = Object.entries(config)
-        .filter(([, value]) => !value.visible)
-        .map(([key]) => key);
-      updateSettings({ preset: presetKey, hiddenSections: sectionsToHide });
-      showSuccess(`Switched to "${DASHBOARD_PRESETS[presetKey]}" layout`);
-      refetchAll();
-    },
-    [showSuccess, refetchAll, updateSettings]
-  );
-
-  const handleSetRefreshInterval = useCallback(
-    (intervalMs: number) => {
-      updateSettings({ refreshInterval: intervalMs });
-      showSuccess(
-        intervalMs > 0
-          ? `Dashboard will refresh every ${intervalMs / 60000} minutes.`
-          : 'Automatic refresh disabled.'
-      );
-      refetchAll();
-    },
-    [showSuccess, refetchAll, updateSettings]
-  );
+  const { data: dashboardPageData, isLoading, isFetching, isError, error } = useDashboardData();
 
   const renderSkeleton = () => (
-    <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
+    <div className='mx-auto min-h-screen w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
       <Loader />
     </div>
   );
@@ -184,12 +117,7 @@ const DashboardPage = () => {
 
   return (
     <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
-      <DashboardControls
-        currentPreset={dashboardSettings.preset}
-        refreshInterval={dashboardSettings.refreshInterval}
-        onChangePreset={changePreset}
-        onSetRefreshInterval={handleSetRefreshInterval}
-      />
+      <DashboardControls />
 
       {isError && dashboardPageData && (
         <Alert variant='destructive' className='mt-4'>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   flexRender,
   getCoreRowModel,
@@ -19,13 +19,6 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { useIsMobile } from '@/hooks/use-mobile';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import Loader from './loader';
 import EnhancedPagination from './enhance-pagination';
@@ -120,27 +113,6 @@ const CommonTable = <T extends object>({
     columnResizeMode: 'onChange'
   });
 
-  const sortOptions = useMemo(() => {
-    return table
-      .getAllLeafColumns()
-      .filter((column) => column.getCanSort() && column.id !== 'actions')
-      .flatMap((column) => {
-        const headerLabel = (column.columnDef.meta as { header?: string })?.header || column.id;
-        return [
-          {
-            id: `${column.id}-asc`,
-            label: `Sort by ${headerLabel} (Asc)`,
-            value: `${column.id}-asc`
-          },
-          {
-            id: `${column.id}-desc`,
-            label: `Sort by ${headerLabel} (Desc)`,
-            value: `${column.id}-desc`
-          }
-        ];
-      });
-  }, [table]);
-
   if (loading && (!data || data.length === 0)) {
     return (
       <div className='w-full'>
@@ -161,40 +133,9 @@ const CommonTable = <T extends object>({
 
   return (
     <>
-      {/* Mobile Sort Dropdown */}
-      <div className='mb-3 flex justify-end'>
-        {isMobile && onSortChange && sortOptions.length > 0 && (
-          <Select
-            value={
-              internalSorting.length
-                ? `${internalSorting[0].id}-${internalSorting[0].desc ? 'desc' : 'asc'}`
-                : 'none'
-            }
-            onValueChange={(value) => {
-              if (value === 'none') {
-                handleSortingChange([]);
-              } else if (value) {
-                const [id, order] = value.split('-');
-                handleSortingChange([{ id, desc: order === 'desc' }]);
-              }
-            }}
-          >
-            <SelectTrigger className='w-full'>
-              <SelectValue placeholder='Sort by...' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem key='none' value='none'>Default Order</SelectItem>
-              {sortOptions.map((option) => (
-                <SelectItem key={option.id} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-      </div>
-
-      <div className={cn('w-full overflow-x-auto rounded-lg border shadow-sm bg-card', tableClassName)}>
+      <div
+        className={cn('bg-card w-full overflow-x-auto rounded-lg border shadow-sm', tableClassName)}
+      >
         <Table className={cn('min-w-full')} style={{ width: table.getTotalSize() }}>
           <TableHeader className={cn('bg-muted', headerClassName)}>
             {table.getHeaderGroups().map((headerGroup) => (

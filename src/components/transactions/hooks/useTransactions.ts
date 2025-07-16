@@ -16,6 +16,9 @@ interface Filters {
   dateRange?: DateRange;
   sortBy: string;
   sortOrder: 'asc' | 'desc';
+  minAmount?: number;
+  maxAmount?: number;
+  type?: 'recurring' | 'normal' | 'all';
 }
 
 interface UseTransactionsReturn {
@@ -36,6 +39,8 @@ interface UseTransactionsReturn {
   handleClearDateRange: () => void;
   handleSort: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
   resetFilters: () => void;
+  handleAmountChange: (min?: number, max?: number) => void;
+  handleTypeChange: (type: 'recurring' | 'normal' | 'all') => void;
 }
 
 export const useTransactions = (
@@ -66,7 +71,10 @@ export const useTransactions = (
             }
           : undefined,
       sortBy: searchParams.get('sortBy') || 'createdAt',
-      sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc'
+      sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc',
+      minAmount: searchParams.get('minAmount') ? Number(searchParams.get('minAmount')) : undefined,
+      maxAmount: searchParams.get('maxAmount') ? Number(searchParams.get('maxAmount')) : undefined,
+      type: (searchParams.get('type') as 'recurring' | 'normal' | 'all') || 'all'
     }),
     [searchParams, initialAccountId]
   );
@@ -78,13 +86,13 @@ export const useTransactions = (
   const [debouncedSearchQuery] = useDebounce(filters.searchQuery, 600);
 
   const updateURL = useCallback(
-    (newParams: Record<string, string | undefined>) => {
+    (newParams: Record<string, string | number | undefined>) => {
       const params = new URLSearchParams(searchParams.toString());
       Object.entries(newParams).forEach(([key, value]) => {
-        if (value === undefined || value === '') {
+        if (value === undefined || value === '' || value === 'all') {
           params.delete(key);
         } else {
-          params.set(key, value);
+          params.set(key, String(value));
         }
       });
 
@@ -110,7 +118,10 @@ export const useTransactions = (
       filters.isIncome,
       filters.dateRange,
       filters.sortBy,
-      filters.sortOrder
+      filters.sortOrder,
+      filters.minAmount,
+      filters.maxAmount,
+      filters.type
     ],
     [
       page,
@@ -120,7 +131,10 @@ export const useTransactions = (
       filters.isIncome,
       filters.dateRange,
       filters.sortBy,
-      filters.sortOrder
+      filters.sortOrder,
+      filters.minAmount,
+      filters.maxAmount,
+      filters.type
     ]
   );
 
@@ -135,7 +149,10 @@ export const useTransactions = (
     queryFn: () => {
       const duration =
         filters.dateRange?.from && filters.dateRange.to
-          ? `${format(filters.dateRange.from, 'yyyy-MM-dd')},${format(filters.dateRange.to, 'yyyy-MM-dd')}`
+          ? `${format(filters.dateRange.from, 'yyyy-MM-dd')},${format(
+              filters.dateRange.to,
+              'yyyy-MM-dd'
+            )}`
           : undefined;
 
       return transactionGetAll({
@@ -147,7 +164,10 @@ export const useTransactions = (
         sortBy: filters.sortBy,
         sortOrder: filters.sortOrder,
         categoryId: filters.categoryId === 'all' ? '' : filters.categoryId,
-        isIncome: filters.isIncome
+        isIncome: filters.isIncome,
+        minAmount: filters.minAmount,
+        maxAmount: filters.maxAmount,
+        type: filters.type === 'all' ? undefined : filters.type
       });
     },
     staleTime: 5 * 60 * 1000,
@@ -158,7 +178,7 @@ export const useTransactions = (
   const handlePageChange = useCallback(
     (newPage: number) => {
       setPage(newPage);
-      updateURL({ page: newPage > 1 ? String(newPage) : undefined });
+      updateURL({ page: newPage > 1 ? newPage : undefined });
     },
     [updateURL]
   );
@@ -247,6 +267,24 @@ export const useTransactions = (
     [updateURL]
   );
 
+  const handleAmountChange = useCallback(
+    (min?: number, max?: number) => {
+      setFilters((prev) => ({ ...prev, minAmount: min, maxAmount: max }));
+      setPage(1);
+      updateURL({ minAmount: min, maxAmount: max, page: undefined });
+    },
+    [updateURL]
+  );
+
+  const handleTypeChange = useCallback(
+    (type: 'recurring' | 'normal' | 'all') => {
+      setFilters((prev) => ({ ...prev, type }));
+      setPage(1);
+      updateURL({ type: type === 'all' ? undefined : type, page: undefined });
+    },
+    [updateURL]
+  );
+
   const resetFilters = useCallback(() => {
     const defaultFilters: Filters = {
       accountId: initialAccountId,
@@ -256,7 +294,10 @@ export const useTransactions = (
       isIncome: undefined,
       dateRange: undefined,
       sortBy: 'createdAt',
-      sortOrder: 'desc'
+      sortOrder: 'desc',
+      minAmount: undefined,
+      maxAmount: undefined,
+      type: 'all'
     };
     setFilters(defaultFilters);
     setPage(1);
@@ -292,6 +333,8 @@ export const useTransactions = (
     handleDateRangeSelect,
     handleClearDateRange,
     handleSort,
-    resetFilters
+    resetFilters,
+    handleAmountChange,
+    handleTypeChange
   };
 };

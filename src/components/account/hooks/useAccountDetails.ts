@@ -18,6 +18,9 @@ interface SearchParams {
   isIncome?: string;
   dateFrom?: string;
   dateTo?: string;
+  minAmount?: string;
+  maxAmount?: string;
+  type?: string;
 }
 
 interface QueryKeys {
@@ -37,7 +40,9 @@ export const useAccountDetails = (id: string, searchParams: SearchParams) => {
     handleDateRangeSelect,
     handleClearDateRange,
     handleSort,
-    updateURL
+    updateURL,
+    handleAmountChange,
+    handleTypeChange
   } = useAccountFilterState();
 
   const queryClient = useQueryClient();
@@ -55,7 +60,10 @@ export const useAccountDetails = (id: string, searchParams: SearchParams) => {
           sortBy: filters.sortBy,
           sortOrder: filters.sortOrder,
           categoryId: filters.categoryId,
-          isIncome: filters.isIncome
+          isIncome: filters.isIncome,
+          minAmount: filters.minAmount,
+          maxAmount: filters.maxAmount,
+          type: filters.type
         }
       ],
       account: ['account', id],
@@ -153,7 +161,10 @@ export const useAccountDetails = (id: string, searchParams: SearchParams) => {
         sortBy: filters.sortBy,
         sortOrder: filters.sortOrder,
         categoryId: filters.categoryId === 'all' ? '' : filters.categoryId,
-        isIncome: filters.isIncome
+        isIncome: filters.isIncome,
+        minAmount: filters.minAmount,
+        maxAmount: filters.maxAmount,
+        type: filters.type === 'all' ? undefined : filters.type
       })
   });
 
@@ -168,6 +179,8 @@ export const useAccountDetails = (id: string, searchParams: SearchParams) => {
     handleIncomeTypeChange('all');
     handleClearDateRange();
     handleSort('date', 'desc');
+    handleAmountChange(undefined, undefined);
+    handleTypeChange('all');
     updateURL({});
   }, [
     setSearchQuery,
@@ -175,6 +188,8 @@ export const useAccountDetails = (id: string, searchParams: SearchParams) => {
     handleIncomeTypeChange,
     handleClearDateRange,
     handleSort,
+    handleAmountChange,
+    handleTypeChange,
     updateURL
   ]);
 
@@ -205,6 +220,8 @@ export const useAccountDetails = (id: string, searchParams: SearchParams) => {
     categories,
     handleResetFilters,
     refetchData,
-    duration
+    duration,
+    handleAmountChange,
+    handleTypeChange
   };
 };

@@ -51,6 +51,9 @@ interface PageProps {
     isIncome?: string;
     dateFrom?: string;
     dateTo?: string;
+    minAmount?: string;
+    maxAmount?: string;
+    type?: string;
   }>;
 }
 
@@ -82,7 +85,9 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
     categories,
     handleResetFilters,
     refetchData,
-    duration
+    duration,
+    handleAmountChange,
+    handleTypeChange
   } = useAccountDetails(id, parsedSearchParams);
 
   const transformedChartData = useMemo(() => {
@@ -191,6 +196,8 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
         handleResetFilters={handleResetFilters}
         refetchData={refetchData}
         isOwner={isOwner}
+        handleAmountChange={handleAmountChange}
+        handleTypeChange={handleTypeChange}
       />
     </div>
   );

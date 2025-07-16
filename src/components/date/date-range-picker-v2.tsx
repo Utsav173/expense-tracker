@@ -330,7 +330,7 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
                 type='button'
                 variant='outline'
                 className={cn(
-                  'border-border w-full justify-between bg-transparent px-3 font-normal',
+                  'border-border w-full justify-between bg-transparent px-3 text-xs sm:h-10 sm:text-sm',
                   !(tempDate?.from || date?.from) && 'text-muted-foreground',
                   disabled && 'cursor-not-allowed opacity-50',
                   buttonClassName

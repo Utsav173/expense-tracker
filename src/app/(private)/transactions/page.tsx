@@ -55,7 +55,9 @@ const TransactionsPage = () => {
     handleDateRangeSelect,
     handleClearDateRange,
     handleSort,
-    resetFilters
+    resetFilters,
+    handleAmountChange,
+    handleTypeChange
   } = useTransactions();
 
   const { data: accountsData, isLoading: isLoadingAccounts } = useQuery({
@@ -70,7 +72,10 @@ const TransactionsPage = () => {
     filters.categoryId !== undefined && filters.categoryId !== 'all',
     filters.isIncome !== undefined,
     filters.dateRange?.from && filters.dateRange.to,
-    debouncedSearchQuery !== ''
+    debouncedSearchQuery !== '',
+    filters.minAmount !== undefined,
+    filters.maxAmount !== undefined,
+    filters.type !== 'all'
   ].filter(Boolean).length;
 
   useEffect(() => {
@@ -99,8 +104,15 @@ const TransactionsPage = () => {
         if (filters.dateRange?.from)
           params.set(
             'duration',
-            `${format(filters.dateRange.from, 'yyyy-MM-dd')},${format(filters.dateRange.to!, 'yyyy-MM-dd')}`
+            `${format(filters.dateRange.from, 'yyyy-MM-dd')},${format(
+              filters.dateRange.to!,
+              'yyyy-MM-dd'
+            )}`
           );
+        if (filters.minAmount) params.set('minAmount', String(filters.minAmount));
+        if (filters.maxAmount) params.set('maxAmount', String(filters.maxAmount));
+        if (filters.type && filters.type !== 'all') params.set('type', filters.type);
+
         params.set('format', exportFormat);
 
         const exportUrl = `${API_BASE_URL}/transactions/export?${params.toString()}`;
@@ -287,6 +299,43 @@ const TransactionsPage = () => {
                     : undefined
                 }
               />
+            </div>
+            <div className='space-y-1'>
+              <label className='mb-1 block text-xs font-medium sm:text-sm'>Min Amount</label>
+              <Input
+                type='number'
+                placeholder='Min amount'
+                value={filters.minAmount || ''}
+                onChange={(e) =>
+                  handleAmountChange(Number(e.target.value) || undefined, filters.maxAmount)
+                }
+                className='h-9 text-xs sm:h-10 sm:text-sm'
+              />
+            </div>
+            <div className='space-y-1'>
+              <label className='mb-1 block text-xs font-medium sm:text-sm'>Max Amount</label>
+              <Input
+                type='number'
+                placeholder='Max amount'
+                value={filters.maxAmount || ''}
+                onChange={(e) =>
+                  handleAmountChange(filters.minAmount, Number(e.target.value) || undefined)
+                }
+                className='h-9 text-xs sm:h-10 sm:text-sm'
+              />
+            </div>
+            <div className='space-y-1'>
+              <label className='mb-1 block text-xs font-medium sm:text-sm'>Transaction Type</label>
+              <Select onValueChange={handleTypeChange} value={filters.type || 'all'}>
+                <SelectTrigger className='h-9 w-full text-xs sm:h-10 sm:text-sm'>
+                  <SelectValue placeholder='All' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='all'>All</SelectItem>
+                  <SelectItem value='normal'>Normal</SelectItem>
+                  <SelectItem value='recurring'>Recurring</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className='space-y-1 sm:ml-2'>
               <label className='mb-1 block text-xs font-medium sm:text-sm'>Export</label>

@@ -62,17 +62,15 @@ const FinancialHealth: React.FC = () => {
 
   if (isError) {
     return (
-      <Card>
-        <CardContent className='flex items-center p-4 text-red-500'>
-          <AlertTriangle className='mr-2 h-6 w-6' />
-          <div>
-            <p className='font-bold'>Error Fetching Analysis</p>
-            <p className='text-xs'>
-              {error instanceof Error ? error.message : 'An unknown error occurred'}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className='text-destructive mx-4 my-auto flex flex-col items-center justify-center p-2'>
+        <AlertTriangle className='mr-2 h-6 w-6' />
+        <div className='text-center font-light'>
+          <p className='font-bold'>Error Fetching Analysis</p>
+          <p className='text-xs'>
+            {error instanceof Error ? error.message : 'An unknown error occurred'}
+          </p>
+        </div>
+      </div>
     );
   }
 

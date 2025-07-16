@@ -15,6 +15,9 @@ interface AccountsFilters {
   isIncome?: boolean;
   dateRange?: DateRange;
   tempDateRange?: DateRange;
+  minAmount?: number;
+  maxAmount?: number;
+  type?: 'all' | 'recurring' | 'normal';
 }
 
 interface LastUrlUpdate {
@@ -25,7 +28,10 @@ interface LastUrlUpdate {
   isIncome: string;
   dateFrom: string;
   dateTo: string;
+  minAmount?: string;
+  maxAmount?: string;
   page?: string;
+  type?: 'all' | 'recurring' | 'normal';
 }
 
 export const useAccountFilterState = () => {
@@ -42,7 +48,10 @@ export const useAccountFilterState = () => {
     isIncome: searchParams.get('isIncome') || '',
     dateFrom: searchParams.get('dateFrom') || '',
     dateTo: searchParams.get('dateTo') || '',
-    page: searchParams.get('page') || undefined
+    minAmount: searchParams.get('minAmount') || '',
+    maxAmount: searchParams.get('maxAmount') || '',
+    page: searchParams.get('page') || undefined,
+    type: (searchParams.get('type') as 'all' | 'recurring' | 'normal' | null) || 'all'
   });
 
   const initialFilters = useMemo(
@@ -71,7 +80,15 @@ export const useAccountFilterState = () => {
               from: parseISO(searchParams.get('dateFrom')!),
               to: parseISO(searchParams.get('dateTo')!)
             }
-          : undefined
+          : undefined,
+      minAmount: searchParams.get('minAmount')
+        ? Number(searchParams.get('minAmount'))
+        : undefined,
+      maxAmount: searchParams.get('maxAmount')
+        ? Number(searchParams.get('maxAmount'))
+        : undefined,
+      page: searchParams.get('page') || undefined,
+      type: (searchParams.get('type') as 'all' | 'recurring' | 'normal' | null) || 'all'
     }),
     [searchParams]
   );
@@ -134,7 +151,10 @@ export const useAccountFilterState = () => {
       isIncome: searchParams.get('isIncome') || '',
       dateFrom: searchParams.get('dateFrom') || '',
       dateTo: searchParams.get('dateTo') || '',
-      page: searchParams.get('page') || undefined
+      minAmount: searchParams.get('minAmount') || '',
+      maxAmount: searchParams.get('maxAmount') || '',
+      page: searchParams.get('page') || undefined,
+      type: (searchParams.get('type') as 'all' | 'recurring' | 'normal' | null) || 'all'
     };
 
     const isSelfUpdate = Object.entries(urlParams).every(
@@ -160,7 +180,10 @@ export const useAccountFilterState = () => {
       isIncome:
         urlParams.isIncome === 'true' ? true : urlParams.isIncome === 'false' ? false : undefined,
       dateRange: newDateRange,
-      tempDateRange: newDateRange
+      tempDateRange: newDateRange,
+      minAmount: urlParams.minAmount ? Number(urlParams.minAmount) : undefined,
+      maxAmount: urlParams.maxAmount ? Number(urlParams.maxAmount) : undefined,
+      type: urlParams.type
     });
 
     setTimeout(() => {
@@ -247,6 +270,30 @@ export const useAccountFilterState = () => {
     [updateURL]
   );
 
+  const handleAmountChange = useCallback(
+    (min?: number, max?: number) => {
+      if (isUpdatingFromUrl.current) return;
+
+      setFilters((prev) => ({ ...prev, minAmount: min, maxAmount: max }));
+      updateURL({
+        minAmount: min?.toString(),
+        maxAmount: max?.toString(),
+        page: undefined
+      });
+    },
+    [updateURL]
+  );
+
+  const handleTypeChange = useCallback(
+    (type: 'all' | 'recurring' | 'normal') => {
+      if (isUpdatingFromUrl.current) return;
+
+      setFilters((prev) => ({ ...prev, type }));
+      updateURL({ type: type === 'all' ? undefined : type, page: undefined });
+    },
+    [updateURL]
+  );
+
   return {
     filters,
     setSearchQuery,
@@ -255,6 +302,8 @@ export const useAccountFilterState = () => {
     handleDateRangeSelect,
     handleClearDateRange,
     handleSort,
-    updateURL
+    updateURL,
+    handleAmountChange,
+    handleTypeChange
   };
 };

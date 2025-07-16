@@ -27,7 +27,7 @@ export const FinancialTrendsSection: React.FC<FinancialTrendsSectionProps> = ({
 
   return (
     <div className='flex h-full flex-col'>
-      <div className='flex flex-wrap items-center justify-center gap-2 border-b px-4 py-2 sm:justify-start'>
+      <div className='flex w-full flex-wrap items-center justify-between gap-2 border-b px-4 py-2 sm:justify-start'>
         <button
           className={cn(
             'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors sm:flex-initial',

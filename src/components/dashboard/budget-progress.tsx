@@ -50,13 +50,13 @@ export const BudgetProgress: React.FC<{ className?: string }> = ({ className }) 
 
   return (
     <Card className={cn('flex h-full flex-col', className)}>
-      <div className='flex items-center gap-2 p-4'>
+      <div className='flex w-full items-center gap-2 p-4'>
         <Select
           value={String(selectedMonth)}
           onValueChange={(value) => setSelectedMonth(Number(value))}
           disabled={isLoading || isFetching}
         >
-          <SelectTrigger className='h-8 w-[120px] text-xs'>
+          <SelectTrigger className='h-8 w-full text-xs'>
             <SelectValue placeholder='Select Month' />
           </SelectTrigger>
           <SelectContent>
@@ -72,7 +72,7 @@ export const BudgetProgress: React.FC<{ className?: string }> = ({ className }) 
           onValueChange={(value) => setSelectedYear(Number(value))}
           disabled={isLoading || isFetching}
         >
-          <SelectTrigger className='h-8 w-[100px] text-xs'>
+          <SelectTrigger className='h-8 w-full text-xs'>
             <SelectValue placeholder='Select Year' />
           </SelectTrigger>
           <SelectContent>

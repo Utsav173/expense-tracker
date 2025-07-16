@@ -204,24 +204,17 @@ const EnhancedPagination: React.FC<EnhancedPaginationProps> = ({
           </div>
         ) : (
           <div className='relative flex items-center'>
-            <div
-              className={cn(
-                'flex h-9 min-w-12 items-center rounded-md border px-2 transition-all',
-                isInputFocused ? 'border-primary' : 'border-gray-200'
-              )}
-            >
-              <Input
-                type='text'
-                value={inputPage}
-                onChange={handleInputChange}
-                onKeyDown={handleInputKeyDown}
-                onFocus={() => setIsInputFocused(true)}
-                onBlur={handleInputBlur}
-                className='h-7 w-8 min-w-4 border-none bg-transparent p-0 text-center focus-visible:ring-0 focus-visible:ring-offset-0'
-                aria-label='Page number'
-                placeholder='Go to'
-              />
-            </div>
+            <Input
+              type='text'
+              value={inputPage}
+              onChange={handleInputChange}
+              onKeyDown={handleInputKeyDown}
+              onFocus={() => setIsInputFocused(true)}
+              onBlur={handleInputBlur}
+              className='h-7 w-8 min-w-4 border-none bg-transparent p-0 text-center focus-visible:ring-0 focus-visible:ring-offset-0'
+              aria-label='Page number'
+              placeholder='Go to'
+            />
             <span className='mx-2 text-sm text-gray-500'>of {totalPages}</span>
           </div>
         )}

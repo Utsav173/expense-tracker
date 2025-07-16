@@ -44,58 +44,55 @@ export const AccountListSummary: React.FC<AccountListSummaryProps> = ({
     .sort((a, b) => (b.balance ?? 0) - (a.balance ?? 0))
     .slice(0, 5);
 
+  if (isLoading) return <Loader />;
+
+  if (!sortedAccounts || sortedAccounts.length === 0)
+    return <NoData message='No accounts added yet.' icon='inbox' />;
+
   return (
-    <Card className={cn('flex flex-col py-4', className)}>
-      <CardContent className='scrollbar h-[200px] grow overflow-y-auto'>
-        {isLoading ? (
-          <Loader />
-        ) : !sortedAccounts || sortedAccounts.length === 0 ? (
-          <div className='flex h-full items-center justify-center'>
-            <NoData message='No accounts added yet.' icon='inbox' />
-          </div>
-        ) : (
-          <ul className='space-y-4'>
-            {sortedAccounts.map((accountInfo) => {
-              const currency = accountIdToCurrencyMap.get(accountInfo.id) || 'INR';
-              return (
-                <li key={accountInfo.id} className='text-sm'>
-                  <Link
-                    href={`/accounts/${accountInfo.id}`}
-                    className='hover:bg-muted/50 block rounded-md p-2 transition-colors'
-                  >
-                    <div className='mb-1 flex w-full justify-between'>
-                      <div className='min-w-0'>
-                        <SingleLineEllipsis className='mr-2 truncate font-semibold'>
-                          {accountInfo.name}
-                        </SingleLineEllipsis>
-                      </div>
-                      <span className='shrink-0 font-bold'>
-                        {formatCurrency(accountInfo.balance ?? 0, currency)}
-                      </span>
+    <Card className={cn('flex h-full flex-col py-4', className)}>
+      <CardContent className='scrollbar grow overflow-y-auto'>
+        <ul className='space-y-4'>
+          {sortedAccounts.map((accountInfo) => {
+            const currency = accountIdToCurrencyMap.get(accountInfo.id) || 'INR';
+            return (
+              <li key={accountInfo.id} className='text-sm'>
+                <Link
+                  href={`/accounts/${accountInfo.id}`}
+                  className='hover:bg-muted/50 block rounded-md p-2 transition-colors'
+                >
+                  <div className='mb-1 flex w-full justify-between'>
+                    <div className='min-w-0'>
+                      <SingleLineEllipsis className='mr-2 truncate font-semibold'>
+                        {accountInfo.name}
+                      </SingleLineEllipsis>
                     </div>
-                    <div className='text-muted-foreground flex justify-between text-xs'>
-                      <span>
-                        In:{' '}
-                        <span className='text-green-600'>
-                          {formatCurrency(accountInfo.income ?? 0, currency)}
-                        </span>
+                    <span className='shrink-0 font-bold'>
+                      {formatCurrency(accountInfo.balance ?? 0, currency)}
+                    </span>
+                  </div>
+                  <div className='text-muted-foreground flex justify-between text-xs'>
+                    <span>
+                      In:{' '}
+                      <span className='text-green-600'>
+                        {formatCurrency(accountInfo.income ?? 0, currency)}
                       </span>
-                      <span>
-                        Out:{' '}
-                        <span className='text-red-600'>
-                          {formatCurrency(accountInfo.expense ?? 0, currency)}
-                        </span>
+                    </span>
+                    <span>
+                      Out:{' '}
+                      <span className='text-red-600'>
+                        {formatCurrency(accountInfo.expense ?? 0, currency)}
                       </span>
-                    </div>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+                    </span>
+                  </div>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
       </CardContent>
       {!isLoading && accountsInfo && accountsInfo.length > 0 && (
-        <div className='border-t p-3 text-center'>
+        <div className='border-t p-2 text-center'>
           <Button variant='link' size='sm' asChild className='text-xs'>
             <Link href='/accounts'>View All Accounts</Link>
           </Button>

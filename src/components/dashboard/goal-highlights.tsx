@@ -23,50 +23,45 @@ export const GoalHighlights: React.FC<GoalHighlightsProps> = ({ className }) => 
     refetchOnWindowFocus: true
   });
 
+  if (isLoading) return <Loader />;
+
+  if (!highlightedGoals || highlightedGoals.data.length === 0)
+    return <NoData message='No active saving goals.' icon='inbox' />;
+
   return (
     <Card className={cn('flex flex-col', className)}>
       <CardContent className='h-auto max-h-[60vh] w-full overflow-y-auto p-0'>
-        {isLoading ? (
-          <div className='flex h-full items-center justify-center'>
-            <Loader />
-          </div>
-        ) : !highlightedGoals || highlightedGoals.data.length === 0 ? (
-          <div className='flex h-full items-center justify-center'>
-            <NoData message='No active saving goals.' icon='inbox' />
-          </div>
-        ) : (
-          <div className='space-y-4 px-4 py-4'>
-            {highlightedGoals.data.map((goal) => {
-              const saved = goal.savedAmount || 0;
-              const target = goal.targetAmount || 1;
-              const progress = Math.min((saved / target) * 100, 100);
-              const targetDate = goal.targetDate ? parseISO(goal.targetDate) : null;
-              const isValidDate = targetDate && isValid(targetDate);
-              const timeRemaining = isValidDate
-                ? formatDistanceToNowStrict(targetDate, { addSuffix: true })
-                : null;
+        <div className='space-y-4 px-4 py-4'>
+          {highlightedGoals.data.map((goal) => {
+            const saved = goal.savedAmount || 0;
+            const target = goal.targetAmount || 1;
+            const progress = Math.min((saved / target) * 100, 100);
+            const targetDate = goal.targetDate ? parseISO(goal.targetDate) : null;
+            const isValidDate = targetDate && isValid(targetDate);
+            const timeRemaining = isValidDate
+              ? formatDistanceToNowStrict(targetDate, { addSuffix: true })
+              : null;
 
-              return (
-                <div
-                  key={goal.id}
-                  className='rounded-lg border p-3 shadow-sm transition-all hover:shadow-md'
-                >
-                  <div className='mb-2 flex items-start justify-between text-sm'>
-                    <span className='truncate pr-2 font-medium'>{goal.name}</span>
-                    <span className='text-muted-foreground shrink-0'>{progress.toFixed(0)}%</span>
-                  </div>
-                  <Progress value={progress} className='h-2 transition-all duration-500' />
-                  <div className='text-muted-foreground mt-2 flex justify-between text-xs'>
-                    <span>
-                      {formatCurrency(saved)} / {formatCurrency(target)}
-                    </span>
-                    {timeRemaining && <span className='text-right'>Target: {timeRemaining}</span>}
-                  </div>
+            return (
+              <div
+                key={goal.id}
+                className='rounded-lg border p-3 shadow-sm transition-all hover:shadow-md'
+              >
+                <div className='mb-2 flex items-start justify-between text-sm'>
+                  <span className='truncate pr-2 font-medium'>{goal.name}</span>
+                  <span className='text-muted-foreground shrink-0'>{progress.toFixed(0)}%</span>
                 </div>
-              );
-            })}
-          </div>
-        )}
+                <Progress value={progress} className='h-2 transition-all duration-500' />
+                <div className='text-muted-foreground mt-2 flex justify-between text-xs'>
+                  <span>
+                    {formatCurrency(saved)} / {formatCurrency(target)}
+                  </span>
+                  {timeRemaining && <span className='text-right'>Target: {timeRemaining}</span>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </CardContent>
       {!isLoading && highlightedGoals && highlightedGoals.data.length > 0 && (
         <div className='border-t p-3 text-center'>

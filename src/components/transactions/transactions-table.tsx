@@ -89,20 +89,23 @@ const TransactionTable = ({
     setDeleteTransactionId(id);
   };
 
-  const handleInsightClick = async (transaction: TransactionType) => {
-    try {
-      const fullData = (await transactionGetById(transaction.id)) as TransactionWithContext;
-      if (fullData && fullData.transaction) {
-        setInsightData({
-          template: fullData.transaction,
-          instances: fullData.generatedInstances || []
-        });
-        setIsInsightModalOpen(true);
+  const handleInsightClick = useCallback(
+    async (transaction: TransactionType) => {
+      try {
+        const fullData = (await transactionGetById(transaction.id)) as TransactionWithContext;
+        if (fullData && fullData.transaction) {
+          setInsightData({
+            template: fullData.transaction,
+            instances: fullData.generatedInstances || []
+          });
+          setIsInsightModalOpen(true);
+        }
+      } catch (err: any) {
+        showError('Could not fetch recurring details: ' + err.message);
       }
-    } catch (err: any) {
-      showError('Could not fetch recurring details: ' + err.message);
-    }
-  };
+    },
+    [showError]
+  );
 
   const columns = useMemo<ColumnDef<TransactionType>[]>(
     () => [
@@ -232,26 +235,13 @@ const TransactionTable = ({
           </div>
         )
       },
-      {
-        accessorKey: 'createdBy.name',
-        header: ({ column }) => <DataTableColumnHeader column={column} title='Created By' />,
-        meta: { header: 'Created By' },
-        cell: ({ row }) => (
-          <div className='flex items-center gap-1.5 text-sm'>
-            <User className='text-muted-foreground h-4 w-4' />
-            <SingleLineEllipsis showTooltip className='max-w-[120px]'>
-              {row.original.createdBy?.name ?? 'N/A'}
-            </SingleLineEllipsis>
-          </div>
-        )
-      },
       ...(isOwner
         ? [
             {
               id: 'actions' as const,
               header: 'Actions',
               cell: ({ row }: { row: any }) => (
-                <div className='flex justify-end gap-2'>
+                <div className='flex justify-center gap-2'>
                   {row.original.recurring && (
                     <Button
                       size='icon'
@@ -311,7 +301,7 @@ const TransactionTable = ({
           ]
         : [])
     ],
-    [isOwner, deleteTransactionId, handleDelete, accountsData]
+    [accountsData, isOwner, handleDelete, deleteTransactionId, handleInsightClick]
   );
 
   return (
