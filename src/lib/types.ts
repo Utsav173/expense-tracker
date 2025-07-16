@@ -110,6 +110,12 @@ export interface Transaction {
   recurrenceEndDate?: string;
 }
 
+export interface TransactionWithContext {
+  transaction: Transaction; 
+  generatedInstances?: Transaction[]; 
+  template?: Transaction; 
+}
+
 // Account Interface
 export interface Account {
   id: string;

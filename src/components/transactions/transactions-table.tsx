@@ -1,14 +1,18 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { ColumnDef, Row } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2, Repeat, ArrowUpCircle, ArrowDownCircle, User } from 'lucide-react';
+import { Pencil, Trash2, Repeat, ArrowUpCircle, ArrowDownCircle, User, Eye } from 'lucide-react';
 import UpdateTransactionModal from '../modals/update-transaction-modal';
 import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
-import { transactionDelete } from '@/lib/endpoints/transactions';
+import { transactionDelete, transactionGetById } from '@/lib/endpoints/transactions';
 import { useToast } from '@/lib/hooks/useToast';
-import { Transaction as TransactionType, AccountDropdown } from '@/lib/types';
+import {
+  Transaction as TransactionType,
+  AccountDropdown,
+  TransactionWithContext
+} from '@/lib/types';
 import { cn, formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
 import CommonTable from '../ui/CommonTable';
@@ -17,6 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { SingleLineEllipsis } from '../ui/ellipsis-components';
 import { DataTableColumnHeader } from '../ui/column-header';
+import RecurringInsightModal from '../modals/recurring-insight-modal';
 
 interface TransactionTableProps {
   transactions: TransactionType[] | undefined;
@@ -45,11 +50,16 @@ const TransactionTable = ({
   refetchData,
   isOwner = true,
   tableId,
-  accountsData // Destructure new prop
+  accountsData
 }: TransactionTableProps) => {
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionType | null>(null);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [deleteTransactionId, setDeleteTransactionId] = useState<string | null>(null);
+  const [isInsightModalOpen, setIsInsightModalOpen] = useState(false);
+  const [insightData, setInsightData] = useState<{
+    template: TransactionType;
+    instances: TransactionType[];
+  } | null>(null);
   const { showError } = useToast();
 
   const deleteMutation = useMutation({
@@ -64,7 +74,7 @@ const TransactionTable = ({
     }
   });
 
-  const handleDelete = React.useCallback(async () => {
+  const handleDelete = useCallback(async () => {
     if (deleteTransactionId) {
       await deleteMutation.mutateAsync(deleteTransactionId);
     }
@@ -77,6 +87,21 @@ const TransactionTable = ({
 
   const handleDeleteClick = (id: string) => {
     setDeleteTransactionId(id);
+  };
+
+  const handleInsightClick = async (transaction: TransactionType) => {
+    try {
+      const fullData = (await transactionGetById(transaction.id)) as TransactionWithContext;
+      if (fullData && fullData.transaction) {
+        setInsightData({
+          template: fullData.transaction,
+          instances: fullData.generatedInstances || []
+        });
+        setIsInsightModalOpen(true);
+      }
+    } catch (err: any) {
+      showError('Could not fetch recurring details: ' + err.message);
+    }
   };
 
   const columns = useMemo<ColumnDef<TransactionType>[]>(
@@ -136,7 +161,7 @@ const TransactionTable = ({
           </Badge>
         )
       },
-      ...(!!accountsData?.length
+      ...(accountsData?.length
         ? [
             {
               accessorKey: 'account',
@@ -200,7 +225,7 @@ const TransactionTable = ({
                   </Badge>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>This is a recurring transaction.</p>
+                  <p>This is a recurring transaction template.</p>
                 </TooltipContent>
               </Tooltip>
             )}
@@ -227,6 +252,17 @@ const TransactionTable = ({
               header: 'Actions',
               cell: ({ row }: { row: any }) => (
                 <div className='flex justify-end gap-2'>
+                  {row.original.recurring && (
+                    <Button
+                      size='icon'
+                      variant='ghost'
+                      onClick={() => handleInsightClick(row.original)}
+                      className='hover:bg-muted h-8 w-8'
+                    >
+                      <Eye className='text-muted-foreground h-3.5 w-3.5' />
+                      <span className='sr-only'>View Recurring Details</span>
+                    </Button>
+                  )}
                   <Button
                     size='icon'
                     variant='ghost'
@@ -301,8 +337,16 @@ const TransactionTable = ({
         tableClassName='bg-background'
         headerClassName='bg-muted'
         cellClassName='border-border'
-        tableId={tableId} // Pass the required tableId
+        tableId={tableId}
       />
+      {insightData && (
+        <RecurringInsightModal
+          isOpen={isInsightModalOpen}
+          onOpenChange={setIsInsightModalOpen}
+          template={insightData.template}
+          instances={insightData.instances}
+        />
+      )}
       <UpdateTransactionModal
         isOpen={isUpdateModalOpen}
         onOpenChange={setIsUpdateModalOpen}

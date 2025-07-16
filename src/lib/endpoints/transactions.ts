@@ -1,12 +1,17 @@
 import apiFetch from '../api-client';
-import { Transaction, ApiResponse, IncomeExpenseChartData, TransactionsResponse } from '../types';
+import {
+  ApiResponse,
+  IncomeExpenseChartData,
+  TransactionsResponse,
+  TransactionWithContext
+} from '../types';
 
 export const transactionCreate = (body: any) => apiFetch('/transactions', 'POST', body, undefined);
 
 export const transactionGetAll = (params: any): Promise<TransactionsResponse> =>
   apiFetch(`/transactions`, 'GET', undefined, { params });
 
-export const transactionGetById = (id: string): Promise<ApiResponse<Transaction>> =>
+export const transactionGetById = (id: string): Promise<ApiResponse<TransactionWithContext>> =>
   apiFetch(`/transactions/${id}`, 'GET', undefined, undefined);
 
 export const transactionGetRecurringAll = (params: any) =>
