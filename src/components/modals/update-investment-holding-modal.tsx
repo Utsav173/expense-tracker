@@ -2,32 +2,37 @@
 
 import React, { useState } from 'react';
 import { z } from 'zod';
-import { UpdateModal } from './update-modal';
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { useMutation } from '@tanstack/react-query';
+import { useToast } from '@/lib/hooks/useToast';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogClose
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage
+} from '@/components/ui/form';
 import { NumericInput } from '../ui/numeric-input';
 import DatePicker from '../date/date-picker';
 import { Investment, StockPriceResult } from '@/lib/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency, cn } from '@/lib/utils';
 import { Card, CardHeader, CardDescription } from '@/components/ui/card';
-import {
-  Loader2,
-  TrendingUp,
-  Calendar,
-  Layers,
-  BarChart4,
-  PiggyBank,
-  ArrowDown,
-  ArrowUp,
-  Check,
-  Pencil,
-  TrendingDown
-} from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { Loader2, Calendar, Layers, BarChart4, PiggyBank, Pencil } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 import { useInvestmentHoldingForm } from '@/hooks/use-investment-holding-form';
 import { investmentUpdate, investmentUpdateDividend } from '@/lib/endpoints/investment';
+import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 
 const investmentHoldingUpdateSchema = z.object({
   shares: z
@@ -72,150 +77,257 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
   getStockPriceFn
 }) => {
   const [activeTab, setActiveTab] = useState('details');
+  const { showError, showSuccess } = useToast();
+  const invalidate = useInvalidateQueries();
 
-  const {
-    detailsForm,
-    dividendForm,
-    isHistoricalPriceLoading,
-    currentPriceInfo,
-    isPriceLoading
-  } = useInvestmentHoldingForm({
-    investment,
-    onInvestmentUpdated,
-    getStockPriceFn,
-    isOpen
+  const { detailsForm, dividendForm, isHistoricalPriceLoading, currentPriceInfo, isPriceLoading } =
+    useInvestmentHoldingForm({
+      investment,
+      onInvestmentUpdated,
+      getStockPriceFn,
+      isOpen
+    });
+
+  const invalidateKeys = [
+    ['investments', investment.account],
+    ['investmentAccountSummary', investment.account],
+    ['investmentPortfolioSummaryDashboard'],
+    ['dashboardData']
+  ];
+
+  const detailsMutation = useMutation({
+    mutationFn: (data: z.infer<typeof investmentHoldingUpdateSchema>) => {
+      const apiPayload = {
+        ...data,
+        purchaseDate: data.purchaseDate.toISOString()
+      };
+      return investmentUpdate(investment.id, apiPayload);
+    },
+    onSuccess: async () => {
+      for (const key of invalidateKeys) {
+        await invalidate(key);
+      }
+      showSuccess('Investment details updated successfully.');
+      onInvestmentUpdated();
+      onOpenChange(false);
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.message || error.message || 'Failed to update investment details.';
+      showError(message);
+    }
   });
 
-  const handleDetailsUpdate = (id: string, data: z.infer<typeof investmentHoldingUpdateSchema>) => {
-    const apiPayload = {
-      ...data,
-      purchaseDate: data.purchaseDate.toISOString()
-    };
-    return investmentUpdate(id, apiPayload);
+  const dividendMutation = useMutation({
+    mutationFn: (data: z.infer<typeof dividendUpdateSchema>) => {
+      return investmentUpdateDividend(investment.id, { dividend: parseFloat(data.dividend) });
+    },
+    onSuccess: async () => {
+      for (const key of invalidateKeys) {
+        await invalidate(key);
+      }
+      showSuccess('Dividend information updated successfully.');
+      onInvestmentUpdated();
+      onOpenChange(false);
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.message || error.message || 'Failed to update dividend information.';
+      showError(message);
+    }
+  });
+
+  const handleDetailsSubmit = (values: z.infer<typeof investmentHoldingUpdateSchema>) => {
+    detailsMutation.mutate(values);
   };
 
-  const handleDividendUpdate = (id: string, data: z.infer<typeof dividendUpdateSchema>) => {
-    return investmentUpdateDividend(id, { dividend: parseFloat(data.dividend) });
+  const handleDividendSubmit = (values: z.infer<typeof dividendUpdateSchema>) => {
+    dividendMutation.mutate(values);
   };
+
+  const handleClose = () => {
+    if (!detailsMutation.isPending && !dividendMutation.isPending) {
+      onOpenChange(false);
+    }
+  };
+
+  const isLoading = detailsMutation.isPending || dividendMutation.isPending;
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className='mt-2'>
-      <TabsList className='mb-2 grid w-full grid-cols-2'>
-        <TabsTrigger value='details' className='flex items-center gap-1.5'>
-          <BarChart4 className='h-4 w-4' />
-          <span>Purchase Details</span>
-        </TabsTrigger>
-        <TabsTrigger value='dividends' className='flex items-center gap-1.5'>
-          <PiggyBank className='h-4 w-4' />
-          <span>Dividend Info</span>
-        </TabsTrigger>
-      </TabsList>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className='sm:max-w-[480px]'>
+        <DialogHeader>
+          <DialogTitle className='flex items-center gap-2'>
+            <Pencil className='h-5 w-5' />
+            Edit Investment: {investment.symbol}
+          </DialogTitle>
+          <DialogDescription>
+            Update the investment details or dividend information.
+          </DialogDescription>
+        </DialogHeader>
 
-      <TabsContent value='details'>
-        <UpdateModal
-          isOpen={isOpen}
-          onOpenChange={onOpenChange}
-          title={`Edit Investment: ${investment.symbol}`}
-          description="Update the purchase details for this investment."
-          initialValues={detailsForm.getValues()}
-          validationSchema={investmentHoldingUpdateSchema}
-          updateFn={handleDetailsUpdate}
-          invalidateKeys={[
-            ['investments', investment.account],
-            ['investmentAccountSummary', investment.account],
-            ['investmentPortfolioSummaryDashboard'],
-            ['dashboardData']
-          ]}
-          onSuccess={onInvestmentUpdated}
-          entityId={investment.id}
-        >
-          {(form) => (
-            <>
-              {investment?.symbol && getStockPriceFn && (
-                <Card className='border-border/50 bg-muted/30'>
-                  <CardHeader className='flex flex-row items-center justify-between p-3'>
-                    <div className='space-y-0.5'>
-                      <CardDescription className='text-xs'>Current Market Info</CardDescription>
-                      <div className='text-lg font-bold'>
-                        {isPriceLoading ? (
-                          <Skeleton className='h-6 w-24' />
-                        ) : currentPriceInfo?.price !== null &&
-                          currentPriceInfo?.price !== undefined ? (
-                          formatCurrency(
-                            currentPriceInfo.price,
-                            currentPriceInfo.currency ?? accountCurrency
-                          )
-                        ) : (
-                          <span className='text-muted-foreground text-sm'>N/A</span>
-                        )}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className='mt-2'>
+          <TabsList className='mb-2 grid w-full grid-cols-2'>
+            <TabsTrigger value='details' className='flex items-center gap-1.5'>
+              <BarChart4 className='h-4 w-4' />
+              <span>Purchase Details</span>
+            </TabsTrigger>
+            <TabsTrigger value='dividends' className='flex items-center gap-1.5'>
+              <PiggyBank className='h-4 w-4' />
+              <span>Dividend Info</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value='details'>
+            <Form {...detailsForm}>
+              <form
+                onSubmit={detailsForm.handleSubmit(handleDetailsSubmit)}
+                className='space-y-6 pt-2'
+              >
+                {investment?.symbol && getStockPriceFn && (
+                  <Card className='border-border/50 bg-muted/30'>
+                    <CardHeader className='flex flex-row items-center justify-between p-3'>
+                      <div className='space-y-0.5'>
+                        <CardDescription className='text-xs'>Current Market Info</CardDescription>
+                        <div className='text-lg font-bold'>
+                          {isPriceLoading ? (
+                            <Skeleton className='h-6 w-24' />
+                          ) : currentPriceInfo?.price !== null &&
+                            currentPriceInfo?.price !== undefined ? (
+                            formatCurrency(
+                              currentPriceInfo.price,
+                              currentPriceInfo.currency ?? accountCurrency
+                            )
+                          ) : (
+                            <span className='text-muted-foreground text-sm'>N/A</span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </CardHeader>
-                </Card>
-              )}
-
-              <FormField
-                control={form.control}
-                name='purchaseDate'
-                render={({ field }) => (
-                  <FormItem className='flex flex-col'>
-                    <FormLabel className='flex items-center gap-1.5'>
-                      <Calendar className='text-muted-foreground h-4 w-4' />
-                      Purchase Date*
-                    </FormLabel>
-                    <FormControl>
-                      <DatePicker
-                        value={field.value}
-                        onChange={field.onChange}
-                        disabled={form.formState.isSubmitting || isHistoricalPriceLoading}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                    </CardHeader>
+                  </Card>
                 )}
-              />
-              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+
                 <FormField
-                  control={form.control}
-                  name='shares'
+                  control={detailsForm.control}
+                  name='purchaseDate'
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className='flex flex-col'>
                       <FormLabel className='flex items-center gap-1.5'>
-                        <Layers className='text-muted-foreground h-4 w-4' />
-                        Number of Shares*
+                        <Calendar className='text-muted-foreground h-4 w-4' />
+                        Purchase Date*
                       </FormLabel>
                       <FormControl>
-                        <NumericInput
-                          placeholder='e.g., 10.5'
+                        <DatePicker
                           value={field.value}
-                          onValueChange={(values: any) => field.onChange(values.value)}
-                          disabled={form.formState.isSubmitting}
-                          decimalScale={8}
-                          ref={field.ref as React.Ref<HTMLInputElement>}
+                          onChange={field.onChange}
+                          disabled={isLoading || isHistoricalPriceLoading}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+                <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                  <FormField
+                    control={detailsForm.control}
+                    name='shares'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className='flex items-center gap-1.5'>
+                          <Layers className='text-muted-foreground h-4 w-4' />
+                          Number of Shares*
+                        </FormLabel>
+                        <FormControl>
+                          <NumericInput
+                            placeholder='e.g., 10.5'
+                            value={field.value}
+                            onValueChange={(values: any) => field.onChange(values.value)}
+                            disabled={isLoading}
+                            decimalScale={8}
+                            ref={field.ref as React.Ref<HTMLInputElement>}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={detailsForm.control}
+                    name='purchasePrice'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className='flex items-center gap-1.5'>
+                          Purchase Price / Share*{' '}
+                          {isHistoricalPriceLoading && (
+                            <Loader2 className='text-primary h-3 w-3 animate-spin' />
+                          )}
+                        </FormLabel>
+                        <FormControl>
+                          <NumericInput
+                            placeholder='e.g., 150.75'
+                            className='pr-10'
+                            value={field.value}
+                            onValueChange={(values: any) => field.onChange(values.value)}
+                            disabled={isLoading || isHistoricalPriceLoading}
+                            suffix={` ${accountCurrency}`}
+                            ref={field.ref as React.Ref<HTMLInputElement>}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <DialogFooter className='gap-2 pt-4 sm:gap-0'>
+                  <DialogClose asChild>
+                    <Button type='button' variant='outline' disabled={isLoading}>
+                      Cancel
+                    </Button>
+                  </DialogClose>
+                  <Button
+                    type='submit'
+                    disabled={
+                      isLoading || !detailsForm.formState.isValid || !detailsForm.formState.isDirty
+                    }
+                    className='min-w-[120px]'
+                  >
+                    {detailsMutation.isPending ? (
+                      <>
+                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                        Saving...
+                      </>
+                    ) : (
+                      'Save Changes'
+                    )}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </TabsContent>
+
+          <TabsContent value='dividends'>
+            <Form {...dividendForm}>
+              <form
+                onSubmit={dividendForm.handleSubmit(handleDividendSubmit)}
+                className='space-y-6 pt-2'
+              >
                 <FormField
-                  control={form.control}
-                  name='purchasePrice'
+                  control={dividendForm.control}
+                  name='dividend'
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className='flex items-center gap-1.5'>
-                        Purchase Price / Share*{' '}
-                        {isHistoricalPriceLoading && (
-                          <Loader2 className='text-primary h-3 w-3 animate-spin' />
-                        )}
+                        <PiggyBank className='text-muted-foreground h-4 w-4' />
+                        Total Dividend Received*
                       </FormLabel>
                       <FormControl>
                         <NumericInput
-                          placeholder='e.g., 150.75'
+                          placeholder='e.g., 25.50'
                           className='pr-10'
                           value={field.value}
                           onValueChange={(values: any) => field.onChange(values.value)}
-                          disabled={form.formState.isSubmitting || isHistoricalPriceLoading}
+                          disabled={isLoading}
                           suffix={` ${accountCurrency}`}
                           ref={field.ref as React.Ref<HTMLInputElement>}
                         />
@@ -224,59 +336,38 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
                     </FormItem>
                   )}
                 />
-              </div>
-            </>
-          )}
-        </UpdateModal>
-      </TabsContent>
 
-      <TabsContent value='dividends'>
-        <UpdateModal
-          isOpen={isOpen}
-          onOpenChange={onOpenChange}
-          title={`Edit Dividend: ${investment.symbol}`}
-          description="Update the dividend information for this investment."
-          initialValues={dividendForm.getValues()}
-          validationSchema={dividendUpdateSchema}
-          updateFn={handleDividendUpdate}
-          invalidateKeys={[
-            ['investments', investment.account],
-            ['investmentAccountSummary', investment.account],
-            ['investmentPortfolioSummaryDashboard'],
-            ['dashboardData']
-          ]}
-          onSuccess={onInvestmentUpdated}
-          entityId={investment.id}
-        >
-          {(form) => (
-            <FormField
-              control={form.control}
-              name='dividend'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className='flex items-center gap-1.5'>
-                    <PiggyBank className='text-muted-foreground h-4 w-4' />
-                    Total Dividend Received*
-                  </FormLabel>
-                  <FormControl>
-                    <NumericInput
-                      placeholder='e.g., 25.50'
-                      className='pr-10'
-                      value={field.value}
-                      onValueChange={(values: any) => field.onChange(values.value)}
-                      disabled={form.formState.isSubmitting}
-                      suffix={` ${accountCurrency}`}
-                      ref={field.ref as React.Ref<HTMLInputElement>}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
-        </UpdateModal>
-      </TabsContent>
-    </Tabs>
+                <DialogFooter className='gap-2 pt-4 sm:gap-0'>
+                  <DialogClose asChild>
+                    <Button type='button' variant='outline' disabled={isLoading}>
+                      Cancel
+                    </Button>
+                  </DialogClose>
+                  <Button
+                    type='submit'
+                    disabled={
+                      isLoading ||
+                      !dividendForm.formState.isValid ||
+                      !dividendForm.formState.isDirty
+                    }
+                    className='min-w-[120px]'
+                  >
+                    {dividendMutation.isPending ? (
+                      <>
+                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                        Saving...
+                      </>
+                    ) : (
+                      'Save Changes'
+                    )}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </TabsContent>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
   );
 };
 

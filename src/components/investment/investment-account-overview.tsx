@@ -229,20 +229,11 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
                   margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
                 >
                   <defs>
-                    {/* Subtle multi-stop gradient using CSS variables */}
                     <linearGradient id='chartFill' x1='0' y1='0' x2='0' y2='1'>
                       <stop offset='0%' stopColor='var(--color-primary)' stopOpacity='0.3' />
                       <stop offset='50%' stopColor='var(--color-primary)' stopOpacity='0.08' />
                       <stop offset='100%' stopColor='var(--color-card)' stopOpacity={0} />
                     </linearGradient>
-                    {/* Softer bloom/glow filter for the line */}
-                    <filter id='glow' x='-5%' y='-5%' width='120%' height='120%'>
-                      <feGaussianBlur stdDeviation='2' result='coloredBlur' />
-                      <feMerge>
-                        <feMergeNode in='coloredBlur' />
-                        <feMergeNode in='SourceGraphic' />
-                      </feMerge>
-                    </filter>
                   </defs>
                   <CartesianGrid
                     vertical={false}
@@ -287,14 +278,14 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
                       }}
                     />
                   )}
-                  {/* Main area with subtle bloom effect */}
+                  {/* --- THE FIX IS HERE --- */}
                   <Area
-                    type='monotone'
+                    type='linear' // Changed from 'monotone' to 'linear' for sharp lines
                     dataKey='value'
                     stroke='var(--color-primary)'
                     fill='url(#chartFill)'
-                    strokeWidth={2.5}
-                    filter='url(#glow)'
+                    strokeWidth={2}
+                    dot={false} // Explicitly disable dots on each data point
                     isAnimationActive={true}
                   />
                 </RechartsAreaChart>
