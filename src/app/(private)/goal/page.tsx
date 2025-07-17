@@ -90,7 +90,7 @@ const GoalPage = () => {
     <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
       <div className='flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center'>
         <h1 className='text-2xl font-semibold md:text-3xl'>Goals</h1>
-        <Button onClick={() => setIsAddModalOpen(true)} size='sm'>
+        <Button onClick={() => setIsAddModalOpen(true)}>
           <PlusCircle className='mr-2 h-4 w-4' /> Add Goal
         </Button>
       </div>

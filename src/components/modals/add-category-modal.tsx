@@ -115,7 +115,7 @@ const AddCategoryModal: React.FC<CreateCategoryModalProps> = ({
         noTriggerButton
           ? null
           : triggerButton || (
-              <Button type='button' variant='outline' className='w-full sm:w-auto'>
+              <Button className='w-full sm:w-auto'>
                 {categoryId ? 'Edit Category' : 'Create Category'}
               </Button>
             )

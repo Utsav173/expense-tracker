@@ -169,7 +169,7 @@ const InvestmentAccountDetailPage = () => {
   }
 
   return (
-    <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 max-sm:px-0 md:space-y-6'>
+    <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 max-sm:px-3 md:space-y-6'>
       <div className='flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div className='flex min-w-0 flex-1 items-center gap-4'>
           <Button
@@ -201,7 +201,7 @@ const InvestmentAccountDetailPage = () => {
           <CardDescription>Investments within this account.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4'>
+          <div className='mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4'>
             <Input
               type='text'
               placeholder='Search investments...'

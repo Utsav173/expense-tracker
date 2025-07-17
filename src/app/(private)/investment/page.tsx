@@ -114,11 +114,7 @@ const InvestmentPage = () => {
           <h1 className='text-3xl font-bold'>Investment Accounts</h1>
           <p className='text-muted-foreground mt-1'>Manage your investment portfolios</p>
         </div>
-        <Button
-          onClick={() => setIsAddModalOpen(true)}
-          size='lg'
-          className='shadow-xs hover:shadow-sm'
-        >
+        <Button onClick={() => setIsAddModalOpen(true)} className='shadow-xs hover:shadow-sm'>
           <PlusCircle className='mr-2 h-5 w-5' /> Add New Account
         </Button>
       </div>

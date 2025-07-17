@@ -199,7 +199,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
             onValueChange={(value) => {
               if (value) setSelectedTimeRange(value);
             }}
-            className='w-full sm:w-auto'
+            className='w-full border sm:w-auto'
             aria-label='Select time range'
           >
             {timeRanges.map((range) => (
@@ -236,7 +236,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
                       <stop offset='100%' stopColor='var(--color-card)' stopOpacity={0} />
                     </linearGradient>
                     {/* Softer bloom/glow filter for the line */}
-                    <filter id='glow' x='-5%' y='-5%' width='140%' height='140%'>
+                    <filter id='glow' x='-5%' y='-5%' width='120%' height='120%'>
                       <feGaussianBlur stdDeviation='2' result='coloredBlur' />
                       <feMerge>
                         <feMergeNode in='coloredBlur' />
@@ -246,9 +246,9 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
                   </defs>
                   <CartesianGrid
                     vertical={false}
-                    strokeDasharray='3 3'
+                    strokeDasharray='2 2'
                     stroke='var(--border)'
-                    strokeOpacity={0.5}
+                    strokeOpacity={1}
                   />
                   <XAxis
                     dataKey='date'
@@ -257,15 +257,15 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
                     axisLine={false}
                     tickLine={false}
                     interval='preserveStartEnd'
-                    minTickGap={50}
+                    minTickGap={30}
                   />
                   <YAxis
                     domain={['dataMin - 1000', 'dataMax + 1000']}
                     tickFormatter={yAxisFormatter}
                     tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
                     axisLine={false}
-                    tickLine={false}
-                    width={60}
+                    tickLine={true}
+                    width={30}
                   />
                   <ChartTooltip
                     cursor={{ stroke: 'var(--primary)', strokeWidth: 1.5, strokeDasharray: '4 4' }}

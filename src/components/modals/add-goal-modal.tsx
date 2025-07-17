@@ -111,7 +111,7 @@ const AddGoalModal: React.FC<AddGoalModalProps> = ({
       description='Define your financial target and track your progress.'
       triggerButton={
         hideTriggerButton ? null : (
-          <Button size='sm'>
+          <Button>
             <PlusCircle className='mr-2 h-4 w-4' /> Add Goal
           </Button>
         )
