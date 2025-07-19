@@ -2,30 +2,34 @@
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { format, parseISO, isAfter } from 'date-fns';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogClose
-} from '@/components/ui/dialog';
-import { DebtWithDetails, Debts, Payment } from '@/lib/types';
-import { getDebtSchedule } from '@/lib/endpoints/debt';
-import { Skeleton } from '../ui/skeleton';
-import { Alert, AlertDescription } from '../ui/alert';
-import { CheckCircle, X, TrendingUp, Clock, IndianRupee, User, AlertTriangle } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
-import { Separator } from '../ui/separator';
-import { Badge } from '../ui/badge';
-import { format, parseISO, isAfter, isValid } from 'date-fns';
-import { formatCurrency, cn } from '@/lib/utils';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Button } from '../ui/button';
+  CheckCircle,
+  X,
+  TrendingUp,
+  Clock,
+  IndianRupee,
+  User,
+  AlertTriangle,
+  Calendar,
+  Percent,
+  type LucideProps
+} from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
-import NoData from '../ui/no-data';
+
+import { DebtWithDetails, Payment } from '@/lib/types';
+import { getDebtSchedule } from '@/lib/endpoints/debt';
+import { formatCurrency, cn } from '@/lib/utils';
+
+import { Dialog, DialogContent, DialogTitle, DialogClose } from '@/components/ui/dialog';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TimelineScroller } from '../debt/timeline-scroller';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Skeleton } from '../ui/skeleton';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
+import NoData from '../ui/no-data';
 
 interface DebtInsightModalProps {
   isOpen: boolean;
@@ -33,47 +37,118 @@ interface DebtInsightModalProps {
   debt: DebtWithDetails;
 }
 
-const COLORS = {
-  'Principal Paid': 'var(--primary)',
-  'Interest Paid': 'var(--destructive)',
-  'Remaining Principal': 'var(--muted)'
-};
+const StatusBadge = React.memo(
+  ({
+    isPaid,
+    isOverdue,
+    className
+  }: {
+    isPaid: boolean;
+    isOverdue: boolean;
+    className?: string;
+  }) => {
+    if (isPaid) {
+      return (
+        <Badge variant='success' className={cn('gap-1.5', className)}>
+          <CheckCircle className='h-3 w-3' />
+          Settled
+        </Badge>
+      );
+    }
+    if (isOverdue) {
+      return (
+        <Badge variant='destructive' className={cn('gap-1.5', className)}>
+          <AlertTriangle className='h-3 w-3' />
+          Overdue
+        </Badge>
+      );
+    }
+    return (
+      <Badge variant='info' className={cn('gap-1.5', className)}>
+        <Clock className='h-3 w-3' />
+        Active
+      </Badge>
+    );
+  }
+);
+StatusBadge.displayName = 'StatusBadge';
 
-const KPICard = ({
-  title,
-  value,
-  icon,
-  isLoading,
-  subValue,
-  className = ''
-}: {
-  title: string;
-  value: React.ReactNode;
-  icon: React.ElementType;
-  isLoading: boolean;
-  subValue?: string;
-  className?: string;
-}) => {
-  const Icon = icon;
-  return (
-    <div className='flex items-center gap-3 rounded-lg border p-3'>
-      <div className={cn('bg-muted rounded-full p-2', className)}>
-        <Icon className={cn('h-4 w-4', className)} />
-      </div>
-      <div className='min-w-0 flex-1'>
-        <div className='text-muted-foreground text-xs'>{title}</div>
+const MetricCard = React.memo(
+  ({
+    title,
+    value,
+    icon: Icon,
+    isLoading,
+    subValue
+  }: {
+    title: string;
+    value: React.ReactNode;
+    icon: React.ElementType<LucideProps>;
+    isLoading: boolean;
+    subValue?: string;
+  }) => (
+    <Card>
+      <CardHeader className='relative flex-row items-center justify-between space-y-0 pb-2'>
+        <CardTitle className='text-muted-foreground text-sm font-medium'>{title}</CardTitle>
+        <div className='bg-background/50 absolute -top-2 -right-2 rounded-full border p-2 backdrop-blur-sm'>
+          <Icon className='text-accent-foreground bg-background/50 h-5 w-5 rounded-full' />
+        </div>
+      </CardHeader>
+      <CardContent>
         {isLoading ? (
-          <Skeleton className='h-5 w-16' />
+          <Skeleton className='mt-1 h-8 w-24' />
         ) : (
-          <div className='font-semibold'>{value}</div>
+          <div className='text-2xl font-bold'>{value}</div>
         )}
-        {subValue && <div className='text-muted-foreground text-xs'>{subValue}</div>}
+        {subValue && <p className='text-muted-foreground text-xs'>{subValue}</p>}
+      </CardContent>
+    </Card>
+  )
+);
+MetricCard.displayName = 'MetricCard';
+
+const CustomTooltip = React.memo(({ active, payload }: any) => {
+  if (!active || !payload || !payload.length) return null;
+  return (
+    <div className='bg-background/75 min-w-[200px] rounded-lg border p-3 shadow-lg backdrop-blur-sm'>
+      <div className='space-y-2'>
+        {payload.map((entry: any, index: number) => (
+          <div key={`item-${index}`} className='flex items-center justify-between gap-4'>
+            <div className='flex items-center gap-2'>
+              <div
+                className='h-2.5 w-2.5 flex-shrink-0 rounded-full'
+                style={{ backgroundColor: entry.payload.color }}
+              />
+              <span className='text-foreground text-sm font-medium'>{entry.name}</span>
+            </div>
+            <span className='text-foreground text-sm font-semibold'>
+              {formatCurrency(entry.value)}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );
-};
+});
+CustomTooltip.displayName = 'CustomTooltip';
 
 const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChange, debt }) => {
+  const resolvedChartColors = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return {
+        'Principal Paid': '#8884d8',
+        'Interest Paid': '#82ca9d',
+        'Remaining Principal': '#ffc658'
+      };
+    }
+    const style = getComputedStyle(document.documentElement);
+    return {
+      'Principal Paid': style.getPropertyValue('--chart-1').trim(),
+      'Interest Paid': style.getPropertyValue('--chart-2').trim(),
+      'Remaining Principal': style.getPropertyValue('--chart-3').trim()
+    };
+  }, []);
+
   const {
     data: paymentSchedule,
     isLoading,
@@ -83,189 +158,241 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
     queryKey: ['debtSchedule', debt.debts.id],
     queryFn: async () => {
       const data = await getDebtSchedule(debt.debts.id);
-      // The API returns dates as strings, we need to convert them back to Date objects
       return data?.map((p) => ({ ...p, date: parseISO(p.date as any) })) ?? [];
     },
     enabled: isOpen && !!debt.debts.id,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 1000 * 60 * 5,
     retry: 1
   });
 
-  const getDefaultIndex = useCallback(() => {
-    if (!paymentSchedule || paymentSchedule.length === 0) return 0;
-    if (debt.debts.isPaid) return Math.max(0, paymentSchedule.length - 1);
-    const firstUpcoming = paymentSchedule.findIndex((p: Payment) => p.status === 'upcoming');
-    return firstUpcoming !== -1 ? firstUpcoming : Math.max(0, paymentSchedule.length - 1);
-  }, [debt.debts.isPaid, paymentSchedule]);
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const [selectedIndex, setSelectedIndex] = useState<number>(0);
-
-  useEffect(() => {
-    if (isOpen) {
-      setSelectedIndex(getDefaultIndex());
-    }
-  }, [isOpen, getDefaultIndex]);
-
-  const { breakdownData, chartData, totalInterest } = useMemo(() => {
+  const data = useMemo(() => {
     const calculatedTotalInterest =
       paymentSchedule?.reduce((sum, p) => sum + p.interestForPeriod, 0) || 0;
     const totalPrincipal = debt.debts.amount || 0;
     const totalPayable = totalPrincipal + calculatedTotalInterest;
-    const selectedInstallmentData = paymentSchedule?.[selectedIndex] || null;
-
-    const bd = selectedInstallmentData
+    const selected = paymentSchedule?.[selectedIndex] || null;
+    const breakdownData = selected
       ? {
-          principalPaid: selectedInstallmentData.cumulativePrincipalPaid,
-          interestPaid: selectedInstallmentData.cumulativeInterestPaid,
-          remainingPrincipal: selectedInstallmentData.remainingPrincipal,
-          totalPayable,
-          statusAsOfDate: selectedInstallmentData.date
+          principalPaid: selected.cumulativePrincipalPaid,
+          interestPaid: selected.cumulativeInterestPaid,
+          remainingPrincipal: selected.remainingPrincipal
         }
       : {
           principalPaid: debt.debts.isPaid ? totalPrincipal : 0,
           interestPaid: debt.debts.isPaid ? calculatedTotalInterest : 0,
-          remainingPrincipal: debt.debts.isPaid ? 0 : totalPrincipal,
-          totalPayable,
-          statusAsOfDate: debt.debts.dueDate ? parseISO(debt.debts.dueDate) : new Date()
+          remainingPrincipal: debt.debts.isPaid ? 0 : totalPrincipal
         };
-
-    const cd = [
-      { name: 'Principal Paid', value: bd.principalPaid },
-      { name: 'Interest Paid', value: bd.interestPaid },
-      { name: 'Remaining Principal', value: bd.remainingPrincipal }
+    const chartData = [
+      {
+        name: 'Principal Paid',
+        value: breakdownData.principalPaid,
+        color: resolvedChartColors['Principal Paid']
+      },
+      {
+        name: 'Interest Paid',
+        value: breakdownData.interestPaid,
+        color: resolvedChartColors['Interest Paid']
+      },
+      {
+        name: 'Remaining Principal',
+        value: breakdownData.remainingPrincipal,
+        color: resolvedChartColors['Remaining Principal']
+      }
     ].filter((item) => item.value > 0);
-
+    const settledPayments = paymentSchedule?.filter((p) => p.status === 'settled').length || 0;
+    const totalPayments = paymentSchedule?.length || 0;
+    const progressPercentage = totalPayments > 0 ? (settledPayments / totalPayments) * 100 : 0;
     return {
-      breakdownData: bd,
-      chartData: cd,
-      totalInterest: calculatedTotalInterest
+      breakdownData,
+      chartData,
+      totalInterest: calculatedTotalInterest,
+      totalPayable,
+      progressStats: {
+        settled: settledPayments,
+        total: totalPayments,
+        percentage: progressPercentage
+      }
     };
-  }, [selectedIndex, paymentSchedule, debt.debts]);
+  }, [selectedIndex, paymentSchedule, debt.debts, resolvedChartColors]);
 
   const isOverdue =
     !debt.debts.isPaid && debt.debts.dueDate && isAfter(new Date(), parseISO(debt.debts.dueDate));
 
-  const debtStatus = debt.debts.isPaid ? 'paid' : isOverdue ? 'overdue' : 'active';
-
-  const statusConfig = {
-    paid: {
-      icon: CheckCircle,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
-      borderColor: 'border-green-200',
-      badge: { variant: 'default' as const, className: 'bg-green-600 hover:bg-green-700' }
-    },
-    overdue: {
-      icon: AlertTriangle,
-      color: 'text-red-600',
-      bgColor: 'bg-red-50',
-      borderColor: 'border-red-200',
-      badge: { variant: 'destructive' as const, className: '' }
-    },
-    active: {
-      icon: Clock,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200',
-      badge: { variant: 'outline' as const, className: 'border-blue-200' }
-    }
-  }[debtStatus];
-
-  const StatusIcon = statusConfig.icon;
-
-  const keyMetrics = [
+  const metrics = [
     {
-      label: 'Principal Amount',
+      title: 'Principal Amount',
       value: formatCurrency(debt.debts.amount || 0),
       icon: IndianRupee,
-      color: 'text-blue-600'
+      subValue: 'Original loan amount'
     },
     {
-      label: 'Interest Rate',
+      title: 'Interest Rate',
       value: `${debt.debts.percentage}%`,
-      subValue: debt.debts.interestType,
-      icon: TrendingUp,
-      color: 'text-orange-600'
+      subValue: `${debt.debts.interestType} interest`,
+      icon: Percent
     },
     {
-      label: 'Total Interest',
-      value: formatCurrency(totalInterest || 0),
+      title: 'Total Interest',
+      value: formatCurrency(data.totalInterest),
       icon: TrendingUp,
-      color: 'text-red-600',
-      loading: isLoading
+      isLoading: isLoading,
+      subValue: 'Over the loan term'
     },
     {
-      label: 'Final Amount',
-      value: formatCurrency(breakdownData.totalPayable),
+      title: 'Total Payable',
+      value: formatCurrency(data.totalPayable),
       icon: IndianRupee,
-      color: 'text-green-600',
-      loading: isLoading
+      isLoading: isLoading,
+      subValue: 'Principal + Interest'
     }
   ];
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent hideClose className='max-h-[95dvh] w-[98vw] max-w-7xl overflow-y-auto p-0'>
-        <DialogHeader className='bg-muted/30 border-b px-6 py-4'>
-          <div className='flex items-start justify-between gap-2 max-sm:flex-col max-sm:items-center'>
-            <div className='space-y-2'>
-              <div className='flex items-center gap-3'>
-                <DialogTitle className='text-xl'>Debt Analysis</DialogTitle>
-                <Badge {...statusConfig.badge}>
-                  {debt.debts.isPaid ? 'Settled' : isOverdue ? 'Overdue' : 'Active'}
+        <div className='flex-shrink-0 border-b px-6 py-4'>
+          <div className='flex items-start justify-between gap-4'>
+            <div className='space-y-1.5'>
+              <div className='flex flex-wrap items-center gap-x-3 gap-y-2'>
+                <DialogTitle className='text-2xl font-bold'>{debt.debts.description}</DialogTitle>
+                <StatusBadge isPaid={debt.debts.isPaid} isOverdue={!!isOverdue} />
+                <Badge variant='secondary' className='capitalize'>
+                  {debt.debts.type}
                 </Badge>
               </div>
-              <DialogDescription className='text-base'>
-                {debt.debts.description || 'Debt tracking and payment analysis'}
-              </DialogDescription>
+              {data.progressStats.total > 0 && (
+                <p className='text-muted-foreground text-sm'>
+                  {data.progressStats.settled} of {data.progressStats.total} payments completed (
+                  {Math.round(data.progressStats.percentage)}%)
+                </p>
+              )}
             </div>
+            <DialogClose asChild>
+              <Button variant='ghost' size='icon' className='h-8 w-8 flex-shrink-0'>
+                <X className='h-4 w-4' />
+              </Button>
+            </DialogClose>
           </div>
-        </DialogHeader>
+        </div>
 
-        <div className='flex-1 overflow-y-auto'>
-          <div className='bg-background border-b p-4'>
-            <div className='grid grid-cols-2 gap-4 lg:grid-cols-4'>
-              {keyMetrics.map((metric, index) => (
-                <KPICard
-                  key={index}
-                  title={metric.label}
-                  value={metric.value}
-                  icon={metric.icon}
-                  isLoading={metric.loading ?? false}
-                  subValue={metric.subValue}
-                  className={metric.color}
-                />
+        <div className='flex flex-1 flex-col overflow-hidden md:flex-row'>
+          <aside className='bg-muted/30 w-full flex-shrink-0 overflow-y-auto border-b p-6 md:w-80 md:border-r md:border-b-0'>
+            <div className='mb-6'>
+              <h3 className='mb-2 text-base font-semibold'>Payment Breakdown</h3>
+              <div className='relative'>
+                <ResponsiveContainer width='100%' height={240}>
+                  <PieChart>
+                    <Tooltip cursor={false} content={<CustomTooltip />} />
+                    <Pie
+                      data={data.chartData}
+                      dataKey='value'
+                      nameKey='name'
+                      cx='50%'
+                      cy='50%'
+                      labelLine={false}
+                      innerRadius={65}
+                      outerRadius={95}
+                      paddingAngle={2}
+                    >
+                      {data.chartData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={entry.color}
+                          stroke='var(--muted)'
+                          className='focus:outline-none'
+                        />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className='pointer-events-none absolute inset-0 flex flex-col items-center justify-center'>
+                  <span className='text-xl font-bold tracking-tight'>
+                    {formatCurrency(data.totalPayable)}
+                  </span>
+                  <span className='text-muted-foreground text-xs'>Total Payable</span>
+                </div>
+              </div>
+            </div>
+
+            <div className='space-y-3'>
+              {data.chartData.map((item) => (
+                <div key={item.name} className='flex items-center justify-between text-sm'>
+                  <div className='flex items-center gap-2'>
+                    <div
+                      className='h-2.5 w-2.5 rounded-full'
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span className='font-medium'>{item.name}</span>
+                  </div>
+                  <span className='font-semibold'>{formatCurrency(item.value)}</span>
+                </div>
               ))}
             </div>
-          </div>
 
-          <div className='p-6'>
-            <Tabs defaultValue='timeline' className='space-y-6'>
-              <TabsList className='grid w-full grid-cols-3'>
-                <TabsTrigger value='timeline' className='max-sm:text-xs'>
-                  Payment Timeline
-                </TabsTrigger>
-                <TabsTrigger value='breakdown' className='max-sm:text-xs'>
-                  Financial Breakdown
-                </TabsTrigger>
-                <TabsTrigger value='details' className='max-sm:text-xs'>
-                  Debt Details
-                </TabsTrigger>
+            <div className='mt-6 space-y-3 border-t pt-6'>
+              <div className='flex justify-between text-sm'>
+                <span className='text-muted-foreground'>Duration</span>
+                <span className='font-medium capitalize'>{debt.debts.duration}</span>
+              </div>
+              <div className='flex justify-between text-sm'>
+                <span className='text-muted-foreground'>Frequency</span>
+                <span className='font-medium capitalize'>{debt.debts.frequency}</span>
+              </div>
+              {debt.debts.dueDate && (
+                <div className='flex justify-between text-sm'>
+                  <span className='text-muted-foreground'>Due Date</span>
+                  <span className='font-medium'>
+                    {format(parseISO(debt.debts.dueDate), 'MMM d, yyyy')}
+                  </span>
+                </div>
+              )}
+            </div>
+          </aside>
+
+          <main className='flex min-w-0 flex-1 flex-col overflow-hidden'>
+            <Tabs defaultValue='timeline' className='flex flex-1 flex-col'>
+              <TabsList className='mx-6 mt-6 w-fit flex-shrink-0'>
+                <TabsTrigger value='timeline'>Payment Timeline</TabsTrigger>
+                <TabsTrigger value='details'>Loan Details</TabsTrigger>
               </TabsList>
-              <TabsContent value='timeline' className='space-y-4'>
+
+              <TabsContent
+                value='timeline'
+                className='min-w-0 flex-1 space-y-6 overflow-y-auto p-6'
+              >
+                <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+                  {metrics.map((metric) => (
+                    <MetricCard
+                      key={metric.title}
+                      title={metric.title}
+                      value={metric.value}
+                      icon={metric.icon}
+                      isLoading={metric.isLoading ?? false}
+                      subValue={metric.subValue}
+                    />
+                  ))}
+                </div>
                 <Card>
                   <CardHeader>
-                    <CardTitle>Payment Schedule</CardTitle>
+                    <CardTitle className='flex items-center gap-2'>
+                      <Calendar className='h-5 w-5' />
+                      Payment Schedule
+                    </CardTitle>
                     <CardDescription>
-                      Interactive timeline showing all payment installments
+                      Interactive timeline showing all installments and their status
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     {isLoading ? (
-                      <Skeleton className='h-40 w-full' />
+                      <div className='space-y-4 p-4'>
+                        <Skeleton className='h-8 w-full' />
+                        <Skeleton className='h-40 w-full' />
+                      </div>
                     ) : isError || !paymentSchedule ? (
                       <NoData
-                        message={`Could not generate schedule. ${error?.message || ''}`}
+                        message={`Unable to generate payment schedule. ${error?.message || ''}`}
                         icon='x-circle'
                       />
                     ) : paymentSchedule.length > 0 ? (
@@ -275,130 +402,20 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                         onSelect={setSelectedIndex}
                       />
                     ) : (
-                      <NoData message='Payment schedule cannot be generated with the available information.' />
+                      <NoData message='No payment schedule available for this debt.' />
                     )}
                   </CardContent>
                 </Card>
               </TabsContent>
-              <TabsContent value='breakdown' className='space-y-4'>
-                <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Payment Composition</CardTitle>
-                      <CardDescription>
-                        Financial breakdown as of{' '}
-                        {isValid(breakdownData.statusAsOfDate)
-                          ? format(breakdownData.statusAsOfDate, 'MMMM d, yyyy')
-                          : 'N/A'}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {isLoading ? (
-                        <Skeleton className='mx-auto h-[200px] w-[200px] rounded-full' />
-                      ) : isError ? (
-                        <Alert>
-                          <AlertTriangle className='h-4 w-4' />
-                          <AlertDescription>
-                            Unable to calculate financial breakdown.
-                          </AlertDescription>
-                        </Alert>
-                      ) : (
-                        <div className='space-y-4'>
-                          <div className='relative h-[200px]'>
-                            {/* Pie Chart */}
-                            <ResponsiveContainer width='100%' height='100%'>
-                              <PieChart>
-                                <Tooltip
-                                  contentStyle={{
-                                    backgroundColor: 'var(--background)',
-                                    border: '1px solid var(--border)',
-                                    borderRadius: '6px'
-                                  }}
-                                  formatter={(value: number) => formatCurrency(value)}
-                                />
-                                <Pie
-                                  data={chartData}
-                                  dataKey='value'
-                                  nameKey='name'
-                                  cx='50%'
-                                  cy='50%'
-                                  innerRadius={60}
-                                  outerRadius={80}
-                                  paddingAngle={4}
-                                  stroke='var(--background)'
-                                  strokeWidth={2}
-                                >
-                                  {chartData.map((entry) => (
-                                    <Cell
-                                      key={entry.name}
-                                      fill={COLORS[entry.name as keyof typeof COLORS]}
-                                    />
-                                  ))}
-                                </Pie>
-                              </PieChart>
-                            </ResponsiveContainer>
-                            <div className='absolute inset-0 flex flex-col items-center justify-center text-center'>
-                              <span className='text-muted-foreground text-xs'>
-                                {debt.debts.type === 'taken' ? 'Total Payable' : 'Total Receivable'}
-                              </span>
-                              <span className='text-lg font-bold'>
-                                {formatCurrency(breakdownData.totalPayable)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Amount Breakdown</CardTitle>
-                      <CardDescription>Detailed financial components</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className='space-y-4'>
-                        {[
-                          {
-                            label: 'Principal Paid',
-                            value: breakdownData.principalPaid,
-                            color: 'bg-primary'
-                          },
-                          {
-                            label: 'Interest Paid',
-                            value: breakdownData.interestPaid,
-                            color: 'bg-destructive'
-                          },
-                          {
-                            label: 'Remaining Principal',
-                            value: breakdownData.remainingPrincipal,
-                            color: 'bg-muted'
-                          }
-                        ].map((item, index) => (
-                          <div key={index} className='flex items-center justify-between'>
-                            <div className='flex items-center gap-3'>
-                              <div className={cn('h-3 w-3 rounded-full', item.color)} />
-                              <span className='text-muted-foreground text-sm'>{item.label}</span>
-                            </div>
-                            <span className='font-medium'>{formatCurrency(item.value)}</span>
-                          </div>
-                        ))}
-                        <Separator />
-                        <div className='flex items-center justify-between font-bold'>
-                          <span>Total Amount</span>
-                          <span>{formatCurrency(breakdownData.totalPayable)}</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
-              <TabsContent value='details' className='space-y-4'>
-                <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
+
+              <TabsContent value='details' className='min-w-0 flex-1 space-y-6 overflow-y-auto p-6'>
+                <div className='grid gap-6 lg:grid-cols-2'>
                   <Card>
                     <CardHeader>
                       <CardTitle>Counterparty Information</CardTitle>
+                      <CardDescription>Details about the other party in this debt</CardDescription>
                     </CardHeader>
-                    <CardContent className='space-y-4'>
+                    <CardContent>
                       <div className='flex items-center gap-4'>
                         <Avatar className='h-12 w-12'>
                           <AvatarImage src={debt.user?.profilePic || undefined} />
@@ -407,53 +424,62 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <div className='font-semibold'>{debt.user?.name || 'Unknown'}</div>
-                          <div className='text-muted-foreground text-sm'>
+                          <p className='font-semibold'>{debt.user?.name || 'Unknown User'}</p>
+                          <p className='text-muted-foreground text-sm'>
                             {debt.user?.email || 'No email provided'}
-                          </div>
-                        </div>
-                      </div>
-                      <div className='grid grid-cols-2 gap-y-3 text-sm'>
-                        <div className='text-muted-foreground'>Account:</div>
-                        <div className='font-medium'>{debt.account?.name || 'Not specified'}</div>
-                        <div className='text-muted-foreground'>Transaction Type:</div>
-                        <div>
-                          <Badge variant={debt.debts.type === 'given' ? 'outline' : 'default'}>
-                            {debt.debts.type === 'given' ? 'Money Lent' : 'Money Borrowed'}
-                          </Badge>
+                          </p>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
                   <Card>
                     <CardHeader>
-                      <CardTitle>Terms & Timeline</CardTitle>
+                      <CardTitle>Associated Account</CardTitle>
+                      <CardDescription>The account this debt is linked to</CardDescription>
                     </CardHeader>
-                    <CardContent className='space-y-4'>
-                      <div className='space-y-3 text-sm'>
-                        <div className='flex justify-between'>
-                          <span className='text-muted-foreground'>Created:</span>
-                          <span className='font-medium'>
+                    <CardContent>
+                      <div>
+                        <p className='font-semibold'>
+                          {debt.account?.name || 'No account specified'}
+                        </p>
+                        <p className='text-muted-foreground text-sm'>
+                          Financial portfolio integration
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className='lg:col-span-2'>
+                    <CardHeader>
+                      <CardTitle>Loan Terms & Conditions</CardTitle>
+                      <CardDescription>Complete terms and timeline for this debt</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className='grid gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-4'>
+                        <div>
+                          <p className='text-muted-foreground text-sm font-medium'>Created On</p>
+                          <p className='font-semibold'>
                             {debt.debts.createdAt
                               ? format(parseISO(debt.debts.createdAt), 'MMM d, yyyy')
-                              : 'Unknown'}
-                          </span>
+                              : 'N/A'}
+                          </p>
                         </div>
-                        <div className='flex justify-between'>
-                          <span className='text-muted-foreground'>Due Date:</span>
-                          <span className='font-medium'>
+                        <div>
+                          <p className='text-muted-foreground text-sm font-medium'>Due Date</p>
+                          <p className='font-semibold'>
                             {debt.debts.dueDate
                               ? format(parseISO(debt.debts.dueDate), 'MMM d, yyyy')
-                              : 'Not set'}
-                          </span>
+                              : 'N/A'}
+                          </p>
                         </div>
-                        <div className='flex justify-between'>
-                          <span className='text-muted-foreground'>Payment Frequency:</span>
-                          <span className='font-medium'>{debt.debts.frequency} installments</span>
+                        <div>
+                          <p className='text-muted-foreground text-sm font-medium'>
+                            Payment Frequency
+                          </p>
+                          <p className='font-semibold capitalize'>{debt.debts.frequency}</p>
                         </div>
-                        <div className='flex justify-between'>
-                          <span className='text-muted-foreground'>Duration:</span>
-                          <span className='font-medium capitalize'>{debt.debts.duration}</span>
+                        <div>
+                          <p className='text-muted-foreground text-sm font-medium'>Loan Duration</p>
+                          <p className='font-semibold capitalize'>{debt.debts.duration}</p>
                         </div>
                       </div>
                     </CardContent>
@@ -461,19 +487,8 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                 </div>
               </TabsContent>
             </Tabs>
-          </div>
+          </main>
         </div>
-        <DialogClose asChild>
-          <Button
-            type='button'
-            variant='ghost'
-            size='icon'
-            className='absolute top-4 right-4 h-8 w-8'
-          >
-            <X className='h-4 w-4' />
-            <span className='sr-only'>Close</span>
-          </Button>
-        </DialogClose>
       </DialogContent>
     </Dialog>
   );
