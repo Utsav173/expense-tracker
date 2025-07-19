@@ -532,11 +532,11 @@ const AddTransactionModal = ({
                         <SelectValue placeholder='Select recurrence type' />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value='hourly'>Hourly</SelectItem>
                         <SelectItem value='daily'>Daily</SelectItem>
                         <SelectItem value='weekly'>Weekly</SelectItem>
                         <SelectItem value='monthly'>Monthly</SelectItem>
                         <SelectItem value='yearly'>Yearly</SelectItem>
-                        <SelectItem value='hourly'>Hourly</SelectItem>
                       </SelectContent>
                     </Select>
                     {errors.recurrenceType && (

@@ -162,7 +162,6 @@ const KPICard = ({
   title,
   value,
   icon,
-  isLoading,
   className = '',
   trend,
   subtitle,
@@ -171,7 +170,6 @@ const KPICard = ({
   title: string;
   value: React.ReactNode;
   icon: React.ElementType;
-  isLoading: boolean;
   className?: string;
   trend?: 'up' | 'down' | 'neutral';
   subtitle?: string;
@@ -229,15 +227,11 @@ const KPICard = ({
           )}
         </div>
 
-        {isLoading ? (
-          <Skeleton className='h-8 w-3/4' />
-        ) : (
-          <SingleLineEllipsis
-            className={cn('text-foreground text-xl font-bold sm:text-2xl', className)}
-          >
-            {value}
-          </SingleLineEllipsis>
-        )}
+        <SingleLineEllipsis
+          className={cn('text-foreground text-xl font-bold sm:text-2xl', className)}
+        >
+          {value}
+        </SingleLineEllipsis>
       </CardContent>
     </Card>
   );
@@ -252,7 +246,6 @@ const InvestmentSummaryCard = ({
   investment: Investment;
   performanceMetrics: any;
   accountCurrency: string;
-  isLoading: boolean;
 }) => {
   return (
     <Card className='bg-muted/50'>
@@ -295,7 +288,7 @@ const InvestmentSummaryCard = ({
           </div>
         </div>
 
-        {investment.dividend && investment.dividend > 0 && (
+        {investment.dividend && investment.dividend > 0 ? (
           <div className='bg-chart-4/10 rounded-lg p-3'>
             <div className='flex items-center justify-between'>
               <span className='text-chart-4 text-sm font-medium'>Total Dividends Received</span>
@@ -304,11 +297,31 @@ const InvestmentSummaryCard = ({
               </span>
             </div>
           </div>
-        )}
+        ) : null}
       </CardContent>
     </Card>
   );
 };
+
+const ModalLoadingSkeleton = () => (
+  <div className='p-4 sm:p-6'>
+    <div className='mb-6 grid w-full grid-cols-3 gap-2'>
+      <Skeleton className='h-10 w-full' />
+      <Skeleton className='h-10 w-full' />
+      <Skeleton className='h-10 w-full' />
+    </div>
+    <div className='space-y-6'>
+      <div className='grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-4'>
+        <Skeleton className='h-24 w-full' />
+        <Skeleton className='h-24 w-full' />
+        <Skeleton className='h-24 w-full' />
+        <Skeleton className='h-24 w-full' />
+      </div>
+      <Skeleton className='h-16 w-full' />
+      <Skeleton className='h-48 w-full' />
+    </div>
+  </div>
+);
 
 const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
   isOpen,
@@ -383,7 +396,7 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
     if (Math.abs(num) >= 1_000) {
       return (num / 1_000).toFixed(1).replace(/\.0$/, '') + 'k';
     }
-    return num.toString();
+    return num.toFixed(2);
   };
 
   // X-Axis Magic: Calculate a dynamic tick interval to avoid label overlap
@@ -438,8 +451,7 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                   {investment.symbol}
                 </DialogTitle>
                 <DialogDescription className='text-muted-foreground text-xs sm:text-sm'>
-                  {performanceData?.currentMarketData?.companyName ||
-                    (isLoading ? 'Loading company details...' : 'Investment Analysis')}
+                  {performanceData?.currentMarketData?.companyName || 'Investment Analysis'}
                 </DialogDescription>
               </div>
             </div>
@@ -473,357 +485,349 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
         </div>
 
         {/* Content with tabs */}
-        <div className='p-4 sm:p-6'>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full'>
-            <TabsList className='grid w-full grid-cols-3'>
-              <TabsTrigger value='overview' className='flex items-center gap-2'>
-                <PieChart className='h-4 w-4' />
-                Overview
-              </TabsTrigger>
-              <TabsTrigger value='performance' className='flex items-center gap-2'>
-                <BarChart3 className='h-4 w-4' />
-                Performance
-              </TabsTrigger>
-              <TabsTrigger value='details' className='flex items-center gap-2'>
-                <Info className='h-4 w-4' />
-                Details
-              </TabsTrigger>
-            </TabsList>
+        {isLoading ? (
+          <ModalLoadingSkeleton />
+        ) : (
+          <div className='p-4 sm:p-6'>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full'>
+              <TabsList className='grid w-full grid-cols-3'>
+                <TabsTrigger value='overview' className='flex items-center gap-2'>
+                  <PieChart className='h-4 w-4' />
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger value='performance' className='flex items-center gap-2'>
+                  <BarChart3 className='h-4 w-4' />
+                  Performance
+                </TabsTrigger>
+                <TabsTrigger value='details' className='flex items-center gap-2'>
+                  <Info className='h-4 w-4' />
+                  Details
+                </TabsTrigger>
+              </TabsList>
 
-            <TabsContent value='overview' className='mt-6 space-y-6'>
-              {/* Refined Performance Summary Grid */}
-              <div className='grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-4'>
-                <KPICard
-                  title='Current Value'
-                  value={formatCurrency(
-                    performanceMetrics?.currentMarketValue || 0,
-                    accountCurrency
-                  )}
-                  icon={DollarSign}
-                  isLoading={isLoading}
-                  className='text-info'
-                  colorScheme='info'
-                />
-                <KPICard
-                  title='Total P&L'
-                  value={
-                    <span className={gainLossTrend === 'up' ? 'text-positive' : 'text-negative'}>
-                      {formatCurrency(performanceMetrics?.totalGainLoss || 0, accountCurrency)}
-                    </span>
-                  }
-                  icon={TrendingUp}
-                  isLoading={isLoading}
-                  trend={gainLossTrend}
-                  colorScheme={gainLossTrend === 'up' ? 'success' : 'danger'}
-                />
-                <KPICard
-                  title='Return %'
-                  value={
-                    <span className={gainLossTrend === 'up' ? 'text-positive' : 'text-negative'}>
-                      {(performanceMetrics?.gainLossPercentage || 0).toFixed(2)}%
-                    </span>
-                  }
-                  icon={Percent}
-                  isLoading={isLoading}
-                  trend={gainLossTrend}
-                  colorScheme={gainLossTrend === 'up' ? 'success' : 'danger'}
-                />
-                <KPICard
-                  title='Current Price'
-                  value={formatCurrency(performanceMetrics?.currentPrice || 0, accountCurrency)}
-                  icon={Activity}
-                  isLoading={isLoading}
-                  className='text-warning'
-                  colorScheme='warning'
-                />
-              </div>
+              <TabsContent value='overview' className='mt-6 space-y-6'>
+                {/* Refined Performance Summary Grid */}
+                <div className='grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-4'>
+                  <KPICard
+                    title='Current Value'
+                    value={formatCurrency(
+                      performanceMetrics?.currentMarketValue || 0,
+                      accountCurrency
+                    )}
+                    icon={DollarSign}
+                    className='text-info'
+                    colorScheme='info'
+                  />
+                  <KPICard
+                    title='Total P&L'
+                    value={
+                      <span className={gainLossTrend === 'up' ? 'text-positive' : 'text-negative'}>
+                        {formatCurrency(performanceMetrics?.totalGainLoss || 0, accountCurrency)}
+                      </span>
+                    }
+                    icon={TrendingUp}
+                    trend={gainLossTrend}
+                    colorScheme={gainLossTrend === 'up' ? 'success' : 'danger'}
+                  />
+                  <KPICard
+                    title='Return %'
+                    value={
+                      <span className={gainLossTrend === 'up' ? 'text-positive' : 'text-negative'}>
+                        {(performanceMetrics?.gainLossPercentage || 0).toFixed(2)}%
+                      </span>
+                    }
+                    icon={Percent}
+                    trend={gainLossTrend}
+                    colorScheme={gainLossTrend === 'up' ? 'success' : 'danger'}
+                  />
+                  <KPICard
+                    title='Current Price'
+                    value={formatCurrency(performanceMetrics?.currentPrice || 0, accountCurrency)}
+                    icon={Activity}
+                    className='text-warning'
+                    colorScheme='warning'
+                  />
+                </div>
 
-              {/* Responsive Day Change Card */}
-              {performanceMetrics?.dayChange !== undefined && (
-                <Card className={cn(dayChangeTrend === 'up' ? 'bg-positive/5' : 'bg-negative/5')}>
-                  <CardContent className='p-4'>
-                    <div className='flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between'>
-                      <div className='flex items-center gap-2'>
-                        <Clock
+                {/* Responsive Day Change Card */}
+                {performanceMetrics?.dayChange !== undefined ? (
+                  <Card className={cn(dayChangeTrend === 'up' ? 'bg-positive/5' : 'bg-negative/5')}>
+                    <CardContent className='p-4'>
+                      <div className='flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between'>
+                        <div className='flex items-center gap-2'>
+                          <Clock
+                            className={cn(
+                              'h-5 w-5',
+                              dayChangeTrend === 'up' ? 'text-positive' : 'text-negative'
+                            )}
+                          />
+                          <span className='text-foreground/90 font-semibold'>Today's Change</span>
+                        </div>
+                        <div
                           className={cn(
-                            'h-5 w-5',
+                            'flex items-center gap-2 text-base font-bold sm:text-lg',
                             dayChangeTrend === 'up' ? 'text-positive' : 'text-negative'
                           )}
-                        />
-                        <span className='text-foreground/90 font-semibold'>Today's Change</span>
-                      </div>
-                      <div
-                        className={cn(
-                          'flex items-center gap-2 text-base font-bold sm:text-lg',
-                          dayChangeTrend === 'up' ? 'text-positive' : 'text-negative'
-                        )}
-                      >
-                        {dayChangeTrend === 'up' ? (
-                          <TrendingUp className='h-5 w-5' />
-                        ) : (
-                          <TrendingDown className='h-5 w-5' />
-                        )}
-                        {formatCurrency(performanceMetrics.dayChange, accountCurrency)} (
-                        {performanceMetrics.dayChangePercent.toFixed(2)}%)
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              <InvestmentSummaryCard
-                investment={investment}
-                performanceMetrics={performanceMetrics}
-                accountCurrency={accountCurrency}
-                isLoading={isLoading}
-              />
-            </TabsContent>
-
-            <TabsContent value='performance' className='mt-6'>
-              <Card>
-                <CardHeader>
-                  <CardTitle className='flex items-center gap-2 text-xl'>
-                    <Activity className='text-primary h-6 w-6' />
-                    Performance Timeline
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className='h-[400px] w-full max-sm:overflow-x-scroll'>
-                    {isLoading ? (
-                      <div className='flex h-full items-center justify-center'>
-                        <div className='text-center'>
-                          <div className='border-primary mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-4'></div>
-                          <p className='text-foreground text-lg font-semibold'>
-                            Loading performance data...
-                          </p>
-                          <p className='text-muted-foreground text-sm'>
-                            Please wait while we fetch the latest data
-                          </p>
-                        </div>
-                      </div>
-                    ) : gainLossChartData.length > 1 ? (
-                      <ChartContainer config={{}} className='h-full w-full'>
-                        <ResponsiveContainer>
-                          <RechartsAreaChart
-                            data={gainLossChartData}
-                            margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-                          >
-                            <defs>
-                              <linearGradient id='positiveGradient' x1='0' y1='0' x2='0' y2='1'>
-                                <stop
-                                  offset='5%'
-                                  stopColor='var(--color-positive)'
-                                  stopOpacity={0.3}
-                                />
-                                <stop
-                                  offset='95%'
-                                  stopColor='var(--color-positive)'
-                                  stopOpacity={0.05}
-                                />
-                              </linearGradient>
-                              <linearGradient id='negativeGradient' x1='0' y1='0' x2='0' y2='1'>
-                                <stop
-                                  offset='5%'
-                                  stopColor='var(--color-negative)'
-                                  stopOpacity={0.05}
-                                />
-                                <stop
-                                  offset='95%'
-                                  stopColor='var(--color-negative)'
-                                  stopOpacity={0.3}
-                                />
-                              </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray='3 3' className='stroke-border' />
-                            {/* --- APPLYING X-AXIS MAGIC --- */}
-                            <XAxis
-                              dataKey='date'
-                              tickFormatter={(tick) => format(parseISO(tick), 'MMM dd')}
-                              className='text-muted-foreground'
-                              fontSize={12}
-                              axisLine={false}
-                              tickLine={false}
-                              interval={xAxisTickInterval}
-                            />
-                            {/* --- APPLYING Y-AXIS MAGIC --- */}
-                            <YAxis
-                              domain={yAxisDomain}
-                              tickCount={8}
-                              tickFormatter={yAxisFormatter}
-                              className='text-muted-foreground'
-                              fontSize={12}
-                              axisLine={false}
-                              tickLine={false}
-                            />
-                            <ChartTooltip
-                              cursor={{
-                                stroke: 'hsl(var(--primary) / 0.4)',
-                                strokeWidth: 2,
-                                strokeDasharray: '5 5'
-                              }}
-                              content={
-                                <CustomTooltip
-                                  currency={accountCurrency}
-                                  data={gainLossChartData}
-                                  chartType='holding'
-                                />
-                              }
-                            />
-                            <ReferenceLine
-                              y={0}
-                              stroke='hsl(var(--border))'
-                              strokeDasharray='3 3'
-                              strokeWidth={2}
-                            />
-                            <Area
-                              type='monotone'
-                              dataKey='positive'
-                              stroke='var(--color-positive)'
-                              fill='url(#positiveGradient)'
-                              strokeWidth={2}
-                              dot={false}
-                            />
-                            <Area
-                              type='monotone'
-                              dataKey='negative'
-                              stroke='var(--color-negative)'
-                              fill='url(#negativeGradient)'
-                              strokeWidth={2}
-                              dot={false}
-                            />
-                          </RechartsAreaChart>
-                        </ResponsiveContainer>
-                      </ChartContainer>
-                    ) : (
-                      <div className='flex h-full items-center justify-center'>
-                        <div className='text-center'>
-                          <div className='bg-muted mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full'>
-                            <Activity className='text-muted-foreground h-8 w-8' />
-                          </div>
-                          <p className='text-foreground text-lg font-semibold'>
-                            No Performance Data Available
-                          </p>
-                          <p className='text-muted-foreground text-sm'>
-                            Historical performance data is not available for this investment yet.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value='details' className='mt-6'>
-              <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className='flex items-center gap-2'>
-                      <Share className='h-5 w-5' />
-                      Investment Details
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className='space-y-4'>
-                    <div className='space-y-4'>
-                      <div className='flex flex-col items-start gap-0.5 border-b pb-3 sm:flex-row sm:items-center sm:justify-between'>
-                        <span className='text-muted-foreground text-sm font-medium'>Symbol</span>
-                        <span className='text-foreground text-base font-bold sm:text-lg'>
-                          {investment.symbol}
-                        </span>
-                      </div>
-                      <div className='flex flex-col items-start gap-0.5 border-b pb-3 sm:flex-row sm:items-center sm:justify-between'>
-                        <span className='text-muted-foreground text-sm font-medium'>Shares</span>
-                        <span className='text-foreground text-base font-semibold sm:text-lg'>
-                          {investment.shares?.toLocaleString() ?? 0}
-                        </span>
-                      </div>
-                      <div className='flex flex-col items-start gap-0.5 border-b pb-3 sm:flex-row sm:items-center sm:justify-between'>
-                        <span className='text-muted-foreground text-sm font-medium'>
-                          Purchase Price
-                        </span>
-                        <span className='text-foreground text-base font-semibold sm:text-lg'>
-                          {formatCurrency(investment.purchasePrice ?? 0, accountCurrency)}
-                        </span>
-                      </div>
-                      <div className='flex flex-col items-start gap-0.5 border-b pb-3 sm:flex-row sm:items-center sm:justify-between'>
-                        <span className='text-muted-foreground text-sm font-medium'>
-                          Total Investment
-                        </span>
-                        <span className='text-primary text-base font-semibold sm:text-lg'>
-                          {formatCurrency(investment.investedAmount ?? 0, accountCurrency)}
-                        </span>
-                      </div>
-                      <div className='flex flex-col items-start gap-0.5 sm:flex-row sm:items-center sm:justify-between'>
-                        <span className='text-muted-foreground text-sm font-medium'>
-                          Purchase Date
-                        </span>
-                        <span className='text-foreground text-base font-semibold sm:text-lg'>
-                          {format(purchaseDate, 'MMM dd, yyyy')}
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className='flex items-center gap-2'>
-                      <DollarSign className='h-5 w-5' />
-                      Current Valuation
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className='space-y-4'>
-                    <div className='space-y-4'>
-                      <div className='flex flex-col items-start gap-0.5 border-b pb-3 sm:flex-row sm:items-center sm:justify-between'>
-                        <span className='text-muted-foreground text-sm font-medium'>
-                          Current Price
-                        </span>
-                        <span className='text-foreground text-base font-semibold sm:text-lg'>
-                          {formatCurrency(performanceMetrics?.currentPrice ?? 0, accountCurrency)}
-                        </span>
-                      </div>
-                      <div className='flex flex-col items-start gap-0.5 border-b pb-3 sm:flex-row sm:items-center sm:justify-between'>
-                        <span className='text-muted-foreground text-sm font-medium'>
-                          Market Value
-                        </span>
-                        <span className='text-primary text-base font-semibold sm:text-lg'>
-                          {formatCurrency(
-                            performanceMetrics?.currentMarketValue ?? 0,
-                            accountCurrency
+                        >
+                          {dayChangeTrend === 'up' ? (
+                            <TrendingUp className='h-5 w-5' />
+                          ) : (
+                            <TrendingDown className='h-5 w-5' />
                           )}
-                        </span>
+                          {formatCurrency(performanceMetrics.dayChange, accountCurrency)} (
+                          {performanceMetrics.dayChangePercent.toFixed(2)}%)
+                        </div>
                       </div>
-                      <div className='flex flex-col items-start gap-0.5 border-b pb-3 sm:flex-row sm:items-center sm:justify-between'>
-                        <span className='text-muted-foreground text-sm font-medium'>
-                          Unrealized P&L
-                        </span>
-                        <span
-                          className={cn('text-base font-semibold sm:text-lg', {
-                            'text-positive': gainLossTrend === 'up',
-                            'text-negative': gainLossTrend === 'down'
-                          })}
-                        >
-                          {formatCurrency(performanceMetrics?.totalGainLoss ?? 0, accountCurrency)}
-                        </span>
-                      </div>
-                      <div className='flex flex-col items-start gap-0.5 sm:flex-row sm:items-center sm:justify-between'>
-                        <span className='text-muted-foreground text-sm font-medium'>Return %</span>
-                        <span
-                          className={cn('text-base font-semibold sm:text-lg', {
-                            'text-positive': gainLossTrend === 'up',
-                            'text-negative': gainLossTrend === 'down'
-                          })}
-                        >
-                          {(performanceMetrics?.gainLossPercentage ?? 0).toFixed(2)}%
-                        </span>
-                      </div>
+                    </CardContent>
+                  </Card>
+                ) : null}
+
+                <InvestmentSummaryCard
+                  investment={investment}
+                  performanceMetrics={performanceMetrics}
+                  accountCurrency={accountCurrency}
+                />
+              </TabsContent>
+
+              <TabsContent value='performance' className='mt-6'>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className='flex items-center gap-2 text-xl'>
+                      <Activity className='text-primary h-6 w-6' />
+                      Performance Timeline
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className='h-[400px] w-full max-sm:overflow-x-scroll'>
+                      {gainLossChartData.length > 1 ? (
+                        <ChartContainer config={{}} className='h-full w-full'>
+                          <ResponsiveContainer>
+                            <RechartsAreaChart
+                              data={gainLossChartData}
+                              margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                            >
+                              <defs>
+                                <linearGradient id='positiveGradient' x1='0' y1='0' x2='0' y2='1'>
+                                  <stop
+                                    offset='5%'
+                                    stopColor='var(--color-positive)'
+                                    stopOpacity={0.3}
+                                  />
+                                  <stop
+                                    offset='95%'
+                                    stopColor='var(--color-positive)'
+                                    stopOpacity={0.05}
+                                  />
+                                </linearGradient>
+                                <linearGradient id='negativeGradient' x1='0' y1='0' x2='0' y2='1'>
+                                  <stop
+                                    offset='5%'
+                                    stopColor='var(--color-negative)'
+                                    stopOpacity={0.05}
+                                  />
+                                  <stop
+                                    offset='95%'
+                                    stopColor='var(--color-negative)'
+                                    stopOpacity={0.3}
+                                  />
+                                </linearGradient>
+                              </defs>
+                              <CartesianGrid strokeDasharray='3 3' className='stroke-border' />
+                              {/* --- APPLYING X-AXIS MAGIC --- */}
+                              <XAxis
+                                dataKey='date'
+                                tickFormatter={(tick) => format(parseISO(tick), 'MMM dd')}
+                                className='text-muted-foreground'
+                                fontSize={12}
+                                axisLine={false}
+                                tickLine={false}
+                                interval={xAxisTickInterval}
+                              />
+                              {/* --- APPLYING Y-AXIS MAGIC --- */}
+                              <YAxis
+                                domain={yAxisDomain}
+                                tickCount={8}
+                                tickFormatter={yAxisFormatter}
+                                className='text-muted-foreground'
+                                fontSize={12}
+                                axisLine={false}
+                                tickLine={false}
+                              />
+                              <ChartTooltip
+                                cursor={{
+                                  stroke: 'hsl(var(--primary) / 0.4)',
+                                  strokeWidth: 2,
+                                  strokeDasharray: '5 5'
+                                }}
+                                content={
+                                  <CustomTooltip
+                                    currency={accountCurrency}
+                                    data={gainLossChartData}
+                                    chartType='holding'
+                                  />
+                                }
+                              />
+                              <ReferenceLine
+                                y={0}
+                                stroke='hsl(var(--border))'
+                                strokeDasharray='3 3'
+                                strokeWidth={2}
+                              />
+                              <Area
+                                type='monotone'
+                                dataKey='positive'
+                                stroke='var(--color-positive)'
+                                fill='url(#positiveGradient)'
+                                strokeWidth={2}
+                                dot={false}
+                              />
+                              <Area
+                                type='monotone'
+                                dataKey='negative'
+                                stroke='var(--color-negative)'
+                                fill='url(#negativeGradient)'
+                                strokeWidth={2}
+                                dot={false}
+                              />
+                            </RechartsAreaChart>
+                          </ResponsiveContainer>
+                        </ChartContainer>
+                      ) : (
+                        <div className='flex h-full items-center justify-center'>
+                          <div className='text-center'>
+                            <div className='bg-muted mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full'>
+                              <Activity className='text-muted-foreground h-8 w-8' />
+                            </div>
+                            <p className='text-foreground text-lg font-semibold'>
+                              No Performance Data Available
+                            </p>
+                            <p className='text-muted-foreground text-sm'>
+                              Historical performance data is not available for this investment yet.
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
+              </TabsContent>
+
+              <TabsContent value='details' className='mt-6'>
+                <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className='flex items-center gap-2'>
+                        <Share className='h-5 w-5' />
+                        Investment Details
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className='space-y-4'>
+                      <div className='space-y-4'>
+                        <div className='flex flex-col items-start gap-0.5 border-b pb-3 sm:flex-row sm:items-center sm:justify-between'>
+                          <span className='text-muted-foreground text-sm font-medium'>Symbol</span>
+                          <span className='text-foreground text-base font-bold sm:text-lg'>
+                            {investment.symbol}
+                          </span>
+                        </div>
+                        <div className='flex flex-col items-start gap-0.5 border-b pb-3 sm:flex-row sm:items-center sm:justify-between'>
+                          <span className='text-muted-foreground text-sm font-medium'>Shares</span>
+                          <span className='text-foreground text-base font-semibold sm:text-lg'>
+                            {investment.shares?.toLocaleString() ?? 0}
+                          </span>
+                        </div>
+                        <div className='flex flex-col items-start gap-0.5 border-b pb-3 sm:flex-row sm:items-center sm:justify-between'>
+                          <span className='text-muted-foreground text-sm font-medium'>
+                            Purchase Price
+                          </span>
+                          <span className='text-foreground text-base font-semibold sm:text-lg'>
+                            {formatCurrency(investment.purchasePrice ?? 0, accountCurrency)}
+                          </span>
+                        </div>
+                        <div className='flex flex-col items-start gap-0.5 border-b pb-3 sm:flex-row sm:items-center sm:justify-between'>
+                          <span className='text-muted-foreground text-sm font-medium'>
+                            Total Investment
+                          </span>
+                          <span className='text-primary text-base font-semibold sm:text-lg'>
+                            {formatCurrency(investment.investedAmount ?? 0, accountCurrency)}
+                          </span>
+                        </div>
+                        <div className='flex flex-col items-start gap-0.5 sm:flex-row sm:items-center sm:justify-between'>
+                          <span className='text-muted-foreground text-sm font-medium'>
+                            Purchase Date
+                          </span>
+                          <span className='text-foreground text-base font-semibold sm:text-lg'>
+                            {format(purchaseDate, 'MMM dd, yyyy')}
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className='flex items-center gap-2'>
+                        <DollarSign className='h-5 w-5' />
+                        Current Valuation
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className='space-y-4'>
+                      <div className='space-y-4'>
+                        <div className='flex flex-col items-start gap-0.5 border-b pb-3 sm:flex-row sm:items-center sm:justify-between'>
+                          <span className='text-muted-foreground text-sm font-medium'>
+                            Current Price
+                          </span>
+                          <span className='text-foreground text-base font-semibold sm:text-lg'>
+                            {formatCurrency(performanceMetrics?.currentPrice ?? 0, accountCurrency)}
+                          </span>
+                        </div>
+                        <div className='flex flex-col items-start gap-0.5 border-b pb-3 sm:flex-row sm:items-center sm:justify-between'>
+                          <span className='text-muted-foreground text-sm font-medium'>
+                            Market Value
+                          </span>
+                          <span className='text-primary text-base font-semibold sm:text-lg'>
+                            {formatCurrency(
+                              performanceMetrics?.currentMarketValue ?? 0,
+                              accountCurrency
+                            )}
+                          </span>
+                        </div>
+                        <div className='flex flex-col items-start gap-0.5 border-b pb-3 sm:flex-row sm:items-center sm:justify-between'>
+                          <span className='text-muted-foreground text-sm font-medium'>
+                            Unrealized P&L
+                          </span>
+                          <span
+                            className={cn('text-base font-semibold sm:text-lg', {
+                              'text-positive': gainLossTrend === 'up',
+                              'text-negative': gainLossTrend === 'down'
+                            })}
+                          >
+                            {formatCurrency(
+                              performanceMetrics?.totalGainLoss ?? 0,
+                              accountCurrency
+                            )}
+                          </span>
+                        </div>
+                        <div className='flex flex-col items-start gap-0.5 sm:flex-row sm:items-center sm:justify-between'>
+                          <span className='text-muted-foreground text-sm font-medium'>
+                            Return %
+                          </span>
+                          <span
+                            className={cn('text-base font-semibold sm:text-lg', {
+                              'text-positive': gainLossTrend === 'up',
+                              'text-negative': gainLossTrend === 'down'
+                            })}
+                          >
+                            {(performanceMetrics?.gainLossPercentage ?? 0).toFixed(2)}%
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

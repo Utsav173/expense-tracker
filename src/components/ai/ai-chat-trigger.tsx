@@ -23,7 +23,7 @@ export const AiChatTrigger = () => {
                 variant='default'
                 size='icon'
                 className={cn(
-                  'fixed right-6 bottom-6 z-50 h-14 w-14 rounded-full shadow-lg',
+                  'fixed right-6 bottom-6 z-50 h-10 w-10 rounded-full shadow-lg',
                   'transition-transform duration-200 ease-out hover:scale-110 focus-visible:scale-110 active:scale-95',
                   'from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 bg-gradient-to-br'
                 )}
