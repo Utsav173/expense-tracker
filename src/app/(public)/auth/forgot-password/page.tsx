@@ -12,7 +12,6 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { WebPage, WithContext } from 'schema-dts';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { GoogleAnalytics } from '@next/third-parties/google';
 import Script from 'next/script';
 
 const forgotPasswordSchema = z.object({
@@ -61,14 +60,14 @@ const ForgotPasswordPage = () => {
       />
       <Card variant='auth'>
         <CardHeader className='py-4'>
-          <CardTitle className='text-center text-xl font-bold tracking-wide text-foreground'>
+          <CardTitle className='text-foreground text-center text-xl font-bold tracking-wide'>
             Forgot Password
           </CardTitle>
         </CardHeader>
         <CardContent className='space-y-6 p-0 pb-4'>
           <form onSubmit={handleSubmit(handleForgotPassword)}>
             <div>
-              <label htmlFor='email' className='mb-1 block text-sm font-medium text-foreground'>
+              <label htmlFor='email' className='text-foreground mb-1 block text-sm font-medium'>
                 Email Address
               </label>
               <Input
@@ -80,7 +79,7 @@ const ForgotPasswordPage = () => {
                 variant='auth'
               />
               {errors.email && (
-                <p className='py-1 text-xs text-destructive'> {errors.email.message} </p>
+                <p className='text-destructive py-1 text-xs'> {errors.email.message} </p>
               )}
             </div>
             <Button
@@ -89,17 +88,17 @@ const ForgotPasswordPage = () => {
               className='mt-6 mb-2 w-full'
               variant={'authButton'}
             >
-              {isLoading ? 'Sending Mail...' : 'Send Reset Link'}{' '}
+              {isLoading ? 'Sending Mail...' : 'Send Reset Link'}
             </Button>
           </form>
         </CardContent>
         <CardFooter className='flex items-center justify-end border-t p-4'>
-          <Link href='/auth/login' className='text-sm text-primary hover:underline'>
+          <Link href='/auth/login' className='text-primary text-sm hover:underline'>
             Back to Login
           </Link>
         </CardFooter>
       </Card>
-      </>
+    </>
   );
 };
 export default ForgotPasswordPage;

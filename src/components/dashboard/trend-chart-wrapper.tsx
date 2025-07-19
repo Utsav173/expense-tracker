@@ -7,7 +7,7 @@ import { BarChart, LineChart, AreaChart } from 'lucide-react';
 import Loader from '../ui/loader';
 import NoData from '../ui/no-data';
 import { TrendChart } from './trend-chart';
-import { useDateRangeFilter } from '@/hooks/useDateRangeFilter';
+import { useDateRangeFilter } from '@/components/dashboard/hooks/useDateRangeFilter';
 import { cn } from '@/lib/utils';
 import { startOfDay, subDays } from 'date-fns';
 

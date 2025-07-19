@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { aiProcessPrompt } from '@/lib/endpoints/ai';
-import { useInvalidateQueries } from './useInvalidateQueries';
+import { useInvalidateQueries } from '../../../hooks/useInvalidateQueries';
 import { safeJsonParse } from '@/lib/utils';
 import { useToast } from '@/lib/hooks/useToast';
 

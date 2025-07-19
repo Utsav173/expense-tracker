@@ -1,14 +1,15 @@
 'use client';
 
-import { authGetMe, authLogin, authLogOut } from '@/lib/endpoints/auth';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { authGetMe, authLogin, authLogOut } from '@/lib/endpoints/auth';
 import { storeAuthToken, storeUser, removeAuthToken } from '@/app/(public)/auth/actions';
 import { getAuthTokenClient } from '@/lib/auth';
-import { LoginResponse, User, ApiResponse } from '@/lib/types';
+import { ApiResponse, LoginResponse, User } from '@/lib/types';
 
-type LoginResponseData = ApiResponse<LoginResponse>;
-
-type LoginMutationVariables = { email: string; password: string };
+type LoginVariables = {
+  email: string;
+  password: string;
+};
 
 type UseAuthReturn = {
   user: User | undefined;
@@ -27,9 +28,15 @@ export const useAuth = (): UseAuthReturn => {
   const token = getAuthTokenClient();
   const queryClient = useQueryClient();
 
-  const userQueryResult = useQuery({
+  const {
+    data: user,
+    isLoading: userIsLoading,
+    isError: userIsError,
+    error: userQueryError,
+    refetch: refetchUser
+  } = useQuery({
     queryKey: ['user'],
-    queryFn: authGetMe,
+    queryFn: () => authGetMe(),
     enabled: !!token,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
@@ -37,62 +44,51 @@ export const useAuth = (): UseAuthReturn => {
   });
 
   const {
-    data: user,
-    isLoading: userIsLoading,
-    isError: userIsError,
-    error: userQueryError,
-    refetch
-  } = userQueryResult;
-
-  const {
-    mutateAsync: loginMutateAsync,
+    mutateAsync: login,
     isPending: loginLoading,
     isError: loginIsError,
     error: loginError
   } = useMutation({
-    mutationFn: async (param: LoginMutationVariables) => {
-      const res = (await authLogin(param)) as LoginResponseData;
-      if (res?.data?.token) {
-        localStorage.setItem('token', res.data.token);
-        await Promise.all([storeAuthToken(res.data.token), storeUser(res.data.user)]);
-        queryClient.setQueryData(['user'], res.data.user);
-        return res.data.user;
-      } else {
+    mutationFn: async (credentials: LoginVariables) => {
+      const res = (await authLogin(credentials)) as ApiResponse<LoginResponse>;
+      const token = res?.data?.token;
+      const user = res?.data?.user;
+
+      if (!token || !user) {
         throw new Error(res?.error?.message || 'Failed to login');
       }
+
+      localStorage.setItem('token', token);
+      await Promise.all([storeAuthToken(token), storeUser(user)]);
+
+      queryClient.setQueryData(['user'], user);
+      return user;
     }
   });
 
-  const logoutMutation = useMutation({
+  const { mutateAsync: logoutAction } = useMutation({
     mutationFn: async () => {
-      const response = await authLogOut();
+      await authLogOut();
       localStorage.removeItem('token');
       await removeAuthToken();
       queryClient.removeQueries({ queryKey: ['user'] });
-      return response;
     }
   });
 
-  const { mutate: logout } = logoutMutation;
-
   const loginAction = async (email: string, password: string): Promise<void> => {
-    await loginMutateAsync({ email, password });
-  };
-
-  const logoutAction = async () => {
-    await logout();
+    await login({ email, password });
   };
 
   return {
     user: user ?? undefined,
     login: loginAction,
-    logoutAction: logoutAction,
-    loginIsError,
+    logoutAction,
     loginLoading,
+    loginIsError,
+    loginError: loginError ?? null,
     userIsLoading,
     userIsError,
-    loginError,
-    userQueryError,
-    refetchUser: refetch
+    userQueryError: userQueryError ?? null,
+    refetchUser
   };
 };

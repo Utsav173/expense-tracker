@@ -22,3 +22,14 @@ export const investmentAccountGetSummary = (
   id: string
 ): Promise<ApiResponse<InvestmentAccountSummary>> =>
   apiFetch(`/investmentAccount/${id}/summary`, 'GET');
+
+export const investmentAccountGetPerformance = (
+  accountId: string,
+  params?: {
+    period?: '7d' | '30d' | '90d' | '1y';
+    startDate?: string;
+    endDate?: string;
+    symbol?: string;
+  }
+): Promise<ApiResponse<any>> =>
+  apiFetch(`/investmentAccount/${accountId}/performance`, 'GET', undefined, { params });

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { cn, formatCurrency, safeJsonParse } from '@/lib/utils';
-import { ChatMessage } from '@/hooks/useAiChat';
+import { ChatMessage } from '@/components/ai/hooks/useAiChat';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   Bot,

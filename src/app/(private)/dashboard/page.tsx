@@ -8,7 +8,7 @@ import NoData from '@/components/ui/no-data';
 import { Frown, LayoutGrid, Maximize2 } from 'lucide-react';
 import { DASHBOARD_CARD_CONFIG } from '@/config/dashboard-config';
 import { DashboardControls } from '@/components/dashboard/dashboard-controls';
-import { useDashboardData } from '@/hooks/useDashboardData';
+import { useDashboardData } from '@/components/dashboard/hooks/useDashboardData';
 
 import Loader from '@/components/ui/loader';
 import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';

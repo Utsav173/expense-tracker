@@ -193,6 +193,7 @@ const InvestmentAccountDetailPage = () => {
         accountCurrency={account.currency}
         summary={summary}
         isLoadingSummary={isLoadingSummary}
+        oldestInvestmentDate={account?.oldestInvestmentDate}
       />
 
       <Card>
@@ -250,12 +251,7 @@ const InvestmentAccountDetailPage = () => {
           onOpenChange={setIsEditModalOpen}
           investment={selectedInvestment}
           accountCurrency={account.currency}
-          onInvestmentUpdated={() => {
-            invalidate(['investments', accountId, state.page, state.sortBy, state.sortOrder]);
-            invalidate(['investmentAccountSummary', accountId]);
-            invalidate(['investmentPortfolioSummaryDashboard']);
-            refetchInvestments();
-          }}
+          onInvestmentUpdated={refetchInvestments}
         />
       )}
 

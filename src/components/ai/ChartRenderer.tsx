@@ -4,7 +4,7 @@ import React from 'react';
 import { BarChartComponent } from './BarChart';
 import { LineChartComponent } from './LineChart';
 import { PieChartComponent } from './PieChart';
-import { ChatMessage } from '@/hooks/useAiChat';
+import { ChatMessage } from '@/components/ai/hooks/useAiChat';
 
 interface ChartRendererProps {
   chartData: ChatMessage['chart'];

@@ -15,6 +15,7 @@ import { PasswordInput } from '@/components/ui/password-input';
 import { WebPage, WithContext } from 'schema-dts';
 import { GoogleAnalytics } from '@next/third-parties/google';
 import Script from 'next/script';
+import { Loader2 } from 'lucide-react';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -126,7 +127,14 @@ const LoginPage = () => {
             </div>
 
             <Button type='submit' disabled={loginLoading} variant={'authButton'}>
-              {loginLoading ? 'Signing In ..' : 'Sign In'}
+              {loginLoading ? (
+                <>
+                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  Signing In ..
+                </>
+              ) : (
+                'Sign In'
+              )}
             </Button>
           </form>
         </CardContent>
@@ -146,7 +154,7 @@ const LoginPage = () => {
           </Link>
         </CardFooter>
       </Card>
-      </>
+    </>
   );
 };
 

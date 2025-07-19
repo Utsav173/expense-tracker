@@ -13,8 +13,8 @@ import { PasswordInput } from '@/components/ui/password-input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { WebPage, WithContext } from 'schema-dts';
-import { GoogleAnalytics } from '@next/third-parties/google';
 import Script from 'next/script';
+import { Loader2 } from 'lucide-react';
 
 const signUpSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters long').max(64).trim(),
@@ -112,7 +112,7 @@ const SignupPage = () => {
                 {...register('name')}
                 disabled={loading}
                 variant='auth'
-                autoComplete="off"
+                autoComplete='off'
               />
               {formState.errors.name && (
                 <p className='text-destructive py-1 text-xs'> {formState.errors.name.message}</p>
@@ -157,7 +157,10 @@ const SignupPage = () => {
 
             <div className='space-y-2'>
               <label className='text-foreground text-sm font-medium'>Profile Picture</label>
-              <label htmlFor='file-upload' className='border-border bg-background hover:border-primary mt-1 flex cursor-pointer justify-center rounded-lg border-2 border-dashed px-2 pt-5 pb-6 transition-colors duration-200'>
+              <label
+                htmlFor='file-upload'
+                className='border-border bg-background hover:border-primary mt-1 flex cursor-pointer justify-center rounded-lg border-2 border-dashed px-2 pt-5 pb-6 transition-colors duration-200'
+              >
                 <div className='w-full max-w-xs space-y-1 text-center'>
                   <svg
                     className='text-muted-foreground mx-auto h-12 w-12'
@@ -198,7 +201,14 @@ const SignupPage = () => {
             </div>
 
             <Button type='submit' disabled={loading} variant={'authButton'} className='w-full'>
-              {loading ? 'Creating Account...' : 'Create Account'}
+              {loading ? (
+                <>
+                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  Creating Account...
+                </>
+              ) : (
+                'Create Account'
+              )}
             </Button>
           </form>
         </CardContent>
@@ -212,7 +222,7 @@ const SignupPage = () => {
           </Link>
         </CardFooter>
       </Card>
-      </>
+    </>
   );
 };
 

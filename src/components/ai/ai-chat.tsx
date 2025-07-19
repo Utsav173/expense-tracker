@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
-import { useAiChat } from '@/hooks/useAiChat';
+import { useAiChat } from '@/components/ai/hooks/useAiChat';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Send, Loader2, RefreshCcw, Bot, AlertTriangle, X, BrainCircuit } from 'lucide-react';

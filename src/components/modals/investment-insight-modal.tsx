@@ -35,7 +35,7 @@ import {
   Minimize2,
   Building2,
   Activity,
-  DollarSign,
+  IndianRupee,
   Percent,
   Share,
   PieChart,
@@ -514,7 +514,7 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                       performanceMetrics?.currentMarketValue || 0,
                       accountCurrency
                     )}
-                    icon={DollarSign}
+                    icon={IndianRupee}
                     className='text-info'
                     colorScheme='info'
                   />
@@ -766,7 +766,7 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                   <Card>
                     <CardHeader>
                       <CardTitle className='flex items-center gap-2'>
-                        <DollarSign className='h-5 w-5' />
+                        <IndianRupee className='h-5 w-5' />
                         Current Valuation
                       </CardTitle>
                     </CardHeader>

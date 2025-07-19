@@ -1,6 +1,9 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+
+import DateRangePickerV2 from '@/components/date/date-range-picker-v2';
+import { DateRange } from 'react-day-picker';
 import { useQuery } from '@tanstack/react-query';
 import {
   Area,
@@ -11,9 +14,8 @@ import {
   XAxis,
   YAxis
 } from 'recharts';
-import { format, parseISO, startOfYear, subDays } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { cn, formatCurrency } from '@/lib/utils';
-import { investmentAccountGetPerformance } from '@/lib/endpoints/investment';
 import { ApiResponse, InvestmentAccountSummary } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,7 +24,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import NoData from '@/components/ui/no-data';
 import {
-  DollarSign,
+  IndianRupee,
   Info,
   LineChart as LineChartIcon,
   PiggyBank,
@@ -31,6 +33,9 @@ import {
   Wallet
 } from 'lucide-react';
 import { SingleLineEllipsis } from '../ui/ellipsis-components';
+import { investmentAccountGetPerformance } from '@/lib/endpoints/investmentAccount';
+import { Button } from '../ui/button';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface KpiCardProps {
   title: string;
@@ -143,11 +148,12 @@ const CustomTooltip = ({ active, payload, currency, data }: any) => {
 };
 
 const timeRanges = [
-  { label: '1W', value: '1W', days: 7 },
-  { label: '1M', value: '1M', days: 30 },
-  { label: '3M', value: '3M', days: 90 },
-  { label: 'YTD', value: 'YTD', days: null },
-  { label: 'All', value: 'All', days: null }
+  { label: '7D', value: '7d' },
+  { label: '1M', value: '30d' },
+  { label: '3M', value: '90d' },
+  { label: '1Y', value: '1y' },
+  { label: 'All', value: 'all' },
+  { label: 'Custom', value: 'custom' }
 ];
 
 interface PerformanceChartProps {
@@ -155,28 +161,31 @@ interface PerformanceChartProps {
   isLoading: boolean;
   currency: string;
   totalInvested: number;
+  selectedTimeRange: string;
+  setSelectedTimeRange: (value: string) => void;
+  customDateRange: DateRange | undefined;
+  setCustomDateRange: (value: DateRange | undefined) => void;
+  oldestInvestmentDate: Date | undefined;
+  isMobile?: boolean;
 }
 
 const PerformanceChart: React.FC<PerformanceChartProps> = ({
   performanceData,
   isLoading,
   currency,
-  totalInvested
+  totalInvested,
+  selectedTimeRange,
+  setSelectedTimeRange,
+  customDateRange,
+  setCustomDateRange,
+  oldestInvestmentDate,
+  isMobile
 }) => {
-  const [selectedTimeRange, setSelectedTimeRange] = useState('All');
-
+  const [customRangeOpen, setCustomRangeOpen] = useState(false);
   const chartData = useMemo(() => {
     if (!performanceData?.data) return [];
-    const data = performanceData.data;
-    if (selectedTimeRange === 'All') return data;
-
-    const now = new Date();
-    const range = timeRanges.find((r) => r.value === selectedTimeRange);
-    if (!range) return data;
-
-    const startDate = range.value === 'YTD' ? startOfYear(now) : subDays(now, range.days!);
-    return data.filter((point: any) => parseISO(point.date) >= startDate);
-  }, [performanceData, selectedTimeRange]);
+    return performanceData.data;
+  }, [performanceData]);
 
   const yAxisFormatter = (tick: number) =>
     new Intl.NumberFormat('en-IN', {
@@ -189,30 +198,66 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
     <Card className='shadow-sm'>
       <CardHeader>
         <div className='flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between'>
-          <div>
+          <div className='max-sm:w-full max-sm:text-center'>
             <CardTitle className='text-xl'>Portfolio Performance</CardTitle>
             <CardDescription>Historical value over time</CardDescription>
           </div>
-          <ToggleGroup
-            type='single'
-            value={selectedTimeRange}
-            onValueChange={(value) => {
-              if (value) setSelectedTimeRange(value);
-            }}
-            className='w-full border sm:w-auto'
-            aria-label='Select time range'
-          >
-            {timeRanges.map((range) => (
-              <ToggleGroupItem
-                key={range.value}
-                value={range.value}
-                className='w-full sm:w-auto'
-                aria-label={range.label}
-              >
-                {range.label}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
+          <div className='flex items-center gap-2 max-sm:mx-auto'>
+            <ToggleGroup
+              type='single'
+              value={selectedTimeRange}
+              onValueChange={(value) => {
+                if (value) {
+                  setCustomRangeOpen(false);
+                  setSelectedTimeRange(value);
+                  setCustomDateRange(undefined);
+                }
+              }}
+              className='w-full border sm:w-auto'
+              aria-label='Select time range'
+            >
+              {timeRanges
+                .filter((range) => range.value !== 'custom')
+                .map((range) => (
+                  <ToggleGroupItem
+                    key={range.value}
+                    value={range.value}
+                    className='w-full sm:w-auto'
+                    aria-label={range.label}
+                  >
+                    {range.label}
+                  </ToggleGroupItem>
+                ))}
+            </ToggleGroup>
+            <div>
+              {customRangeOpen ? (
+                <DateRangePickerV2
+                  date={customDateRange}
+                  onDateChange={(range) => {
+                    setCustomDateRange(range);
+                    if (range?.from && range?.to) {
+                      setSelectedTimeRange('custom');
+                    }
+                  }}
+                  minDate={oldestInvestmentDate}
+                  maxDate={new Date()}
+                  noLabel
+                  buttonClassName={cn(
+                    'w-full sm:w-auto',
+                    selectedTimeRange === 'custom' ? 'bg-accent text-accent-foreground' : ''
+                  )}
+                />
+              ) : (
+                <Button
+                  size={'sm'}
+                  variant={'outline'}
+                  onClick={() => setCustomRangeOpen(!customRangeOpen)}
+                >
+                  Custom Range
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -256,7 +301,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
                     tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
                     axisLine={false}
                     tickLine={true}
-                    width={30}
+                    width={isMobile ? 38 : 55}
                   />
                   <ChartTooltip
                     cursor={{ stroke: 'var(--primary)', strokeWidth: 1.5, strokeDasharray: '4 4' }}
@@ -278,14 +323,13 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
                       }}
                     />
                   )}
-                  {/* --- THE FIX IS HERE --- */}
                   <Area
-                    type='linear' // Changed from 'monotone' to 'linear' for sharp lines
+                    type='linear'
                     dataKey='value'
                     stroke='var(--color-primary)'
                     fill='url(#chartFill)'
                     strokeWidth={2}
-                    dot={false} // Explicitly disable dots on each data point
+                    dot={false}
                     isAnimationActive={true}
                   />
                 </RechartsAreaChart>
@@ -307,17 +351,44 @@ interface InvestmentAccountOverviewProps {
   accountCurrency: string;
   summary: ApiResponse<InvestmentAccountSummary> | undefined;
   isLoadingSummary: boolean;
+  oldestInvestmentDate: Date | undefined;
 }
 
 const InvestmentAccountOverview: React.FC<InvestmentAccountOverviewProps> = ({
   accountId,
   accountCurrency,
   summary,
-  isLoadingSummary
+  isLoadingSummary,
+  oldestInvestmentDate
 }) => {
+  const [selectedTimeRange, setSelectedTimeRange] = useState('30d');
+  const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>(undefined);
+  const isMobile = useIsMobile();
   const { data: performanceData, isLoading: isLoadingChart } = useQuery<any>({
-    queryKey: ['investmentAccountPerformance', accountId],
-    queryFn: () => investmentAccountGetPerformance(accountId),
+    queryKey: ['investmentAccountPerformance', accountId, selectedTimeRange, customDateRange],
+    queryFn: () => {
+      const periodMap: Record<string, '7d' | '30d' | '90d' | '1y'> = {
+        '7d': '7d',
+        '30d': '30d',
+        '90d': '90d',
+        '1y': '1y'
+      };
+
+      if (selectedTimeRange === 'all') {
+        return investmentAccountGetPerformance(accountId, {
+          startDate: String(oldestInvestmentDate),
+          endDate: format(new Date(), 'yyyy-MM-dd')
+        });
+      } else if (selectedTimeRange === 'custom') {
+        return investmentAccountGetPerformance(accountId, {
+          startDate: customDateRange?.from ? format(customDateRange.from, 'yyyy-MM-dd') : undefined,
+          endDate: customDateRange?.to ? format(customDateRange.to, 'yyyy-MM-dd') : undefined
+        });
+      } else {
+        const period = periodMap[selectedTimeRange];
+        return investmentAccountGetPerformance(accountId, { period });
+      }
+    },
     staleTime: 5 * 60 * 1000
   });
 
@@ -357,7 +428,7 @@ const InvestmentAccountOverview: React.FC<InvestmentAccountOverviewProps> = ({
         />
         <KpiCard
           title='Total Dividends'
-          icon={DollarSign}
+          icon={IndianRupee}
           isLoading={isLoadingSummary}
           value={performanceMetrics?.totalDividends || 0}
           currency={accountCurrency}
@@ -391,6 +462,12 @@ const InvestmentAccountOverview: React.FC<InvestmentAccountOverviewProps> = ({
         isLoading={isLoadingChart}
         currency={accountCurrency}
         totalInvested={performanceMetrics?.totalInvested || 0}
+        selectedTimeRange={selectedTimeRange}
+        setSelectedTimeRange={setSelectedTimeRange}
+        customDateRange={customDateRange}
+        setCustomDateRange={setCustomDateRange}
+        oldestInvestmentDate={oldestInvestmentDate}
+        isMobile={isMobile}
       />
     </div>
   );

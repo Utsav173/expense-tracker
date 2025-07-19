@@ -29,7 +29,9 @@ import {
   PlusCircle,
   TrendingDown,
   BarChart3,
-  IndianRupee
+  IndianRupee,
+  Info,
+  AlertCircle
 } from 'lucide-react';
 import { Combobox, ComboboxOption } from '../ui/combobox';
 import { Card, CardContent, CardDescription, CardHeader } from '../ui/card';
@@ -48,6 +50,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/
 import DatePicker from '../date/date-picker';
 import { Skeleton } from '../ui/skeleton';
 import { Badge } from '../ui/badge';
+import { Alert, AlertDescription } from '../ui/alert';
 
 const investmentHoldingSchema = z.object({
   symbol: z
@@ -121,7 +124,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
   getStockPriceFn,
   hideTriggerButton = false
 }) => {
-  const { showSuccess, showError, showInfo } = useToast();
+  const { showSuccess, showError } = useToast();
   const invalidate = useInvalidateQueries();
   const queryClient = useQueryClient();
 
@@ -146,7 +149,9 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
   const totalValue = useMemo(() => {
     const sharesNum = parseFloat(sharesStr);
     const priceNum = parseFloat(purchasePriceStr);
-    return !isNaN(sharesNum) && !isNaN(priceNum) ? sharesNum * priceNum : null;
+    return !isNaN(sharesNum) && !isNaN(priceNum) && sharesNum > 0 && priceNum > 0
+      ? sharesNum * priceNum
+      : null;
   }, [sharesStr, purchasePriceStr]);
 
   const { data: currentPriceInfo, isLoading: isPriceLoading } = useQuery({
@@ -242,10 +247,14 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
   const createInvestmentMutation = useMutation({
     mutationFn: (data: InvestmentApiPayload) => investmentCreate(data),
     onSuccess: async () => {
-      await invalidate(['investments', accountId]);
-      await invalidate(['investmentAccountSummary', accountId]);
-      await invalidate(['investmentPortfolioSummaryDashboard']);
-      await invalidate(['dashboardData']);
+      await Promise.all([
+        invalidate(['investments', accountId]),
+        invalidate(['investmentAccountSummary', accountId]),
+        invalidate(['investmentPortfolioSummaryDashboard']),
+        invalidate(['investmentAccount']),
+        invalidate(['investmentAccountPerformance']),
+        invalidate(['dashboardData'])
+      ]);
       onInvestmentAdded();
       handleClose();
     },
@@ -299,6 +308,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
       purchaseDate: getMostRecentValidDate()
     });
 
+    // Clean up queries
     queryClient.removeQueries({ queryKey: ['stockPrice', debouncedSymbolValue], exact: true });
     queryClient.removeQueries({
       queryKey: ['historicalStockPrice', debouncedSymbolValue, formattedPurchaseDate],
@@ -308,32 +318,33 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
     onOpenChange(false);
   }, [form, onOpenChange, queryClient, debouncedSymbolValue, formattedPurchaseDate]);
 
-  const disabledDates = (date: Date): boolean => {
-    if (isWeekend(date)) return true;
-    if (isFuture(startOfDay(date))) return true;
+  const disabledDates = useCallback((date: Date): boolean => {
+    if (isWeekend(date) || isFuture(startOfDay(date))) return true;
     return false;
-  };
+  }, []);
 
   const isPending =
     createInvestmentMutation.isPending || isPriceLoading || isHistoricalPriceLoading;
+  const hasErrors = Object.keys(form.formState.errors).length > 0;
 
   return (
     <AddModal
       title='Add Investment Holding'
-      description={`Add a new stock or asset to your ${accountCurrency} account`}
+      description={`Add a new stock or asset to your ${accountCurrency} investment account`}
       triggerButton={
         hideTriggerButton ? null : (
           <Button className='w-full sm:w-auto'>
-            <PlusCircle className='mr-2 h-4 w-4' /> Add Holding
+            <PlusCircle className='mr-2 h-4 w-4' />
+            Add Holding
           </Button>
         )
       }
       isOpen={isOpen}
       onOpenChange={handleClose}
     >
-      <div className='space-y-6'>
+      <div className='max-h-[80vh] space-y-4 px-1'>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleCreate)} className='space-y-6'>
+          <form onSubmit={form.handleSubmit(handleCreate)} className='space-y-4'>
             {/* Stock Symbol Search */}
             <FormField
               control={form.control}
@@ -343,6 +354,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                   <FormLabel className='flex items-center gap-2 text-sm font-medium'>
                     <Search className='text-muted-foreground h-4 w-4' />
                     Stock Symbol
+                    <span className='text-destructive'>*</span>
                   </FormLabel>
                   <FormControl>
                     <Combobox
@@ -352,7 +364,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                         form.setValue('purchasePrice', '', { shouldValidate: true });
                       }}
                       fetchOptions={fetchStocks}
-                      placeholder='Search stocks (e.g., AAPL, MSFT, GOOGL)'
+                      placeholder='Search stocks (e.g., AAPL, MSFT)'
                       loadingPlaceholder='Searching stocks...'
                       noOptionsMessage='No stocks found. Try a different term.'
                       className='w-full'
@@ -364,20 +376,20 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
               )}
             />
 
-            {/* Current Market Info Card */}
+            {/* Current Market Price Card - Responsive */}
             {selectedSymbolOption?.value && (
-              <Card className='border-muted bg-muted/20'>
-                <CardHeader className='py-3'>
-                  <div className='flex items-center justify-between'>
-                    <div className='space-y-1'>
+              <Card className='border-muted bg-muted/20 transition-all duration-200'>
+                <CardContent className='p-3 sm:p-4'>
+                  <div className='flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0'>
+                    <div className='space-y-2'>
                       <div className='flex items-center gap-2'>
                         <BarChart3 className='text-muted-foreground h-4 w-4' />
                         <CardDescription className='text-xs font-medium tracking-wide uppercase'>
                           Current Market Price
                         </CardDescription>
                       </div>
-                      <div className='flex items-center gap-2'>
-                        <Badge variant='secondary' className='text-xs'>
+                      <div className='flex flex-wrap items-center gap-2'>
+                        <Badge variant='secondary' className='font-mono text-xs'>
                           {selectedSymbolOption.value}
                         </Badge>
                         <div className='text-lg font-bold'>
@@ -385,21 +397,25 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                             <Skeleton className='h-6 w-20' />
                           ) : currentPriceInfo?.price !== null &&
                             currentPriceInfo?.price !== undefined ? (
-                            formatCurrency(
-                              currentPriceInfo.price,
-                              currentPriceInfo.currency ?? accountCurrency
-                            )
+                            <span className='text-foreground'>
+                              {formatCurrency(
+                                currentPriceInfo.price,
+                                currentPriceInfo.currency ?? accountCurrency
+                              )}
+                            </span>
                           ) : (
                             <span className='text-muted-foreground text-sm'>Price unavailable</span>
                           )}
                         </div>
                       </div>
                     </div>
+
+                    {/* Price Comparison - Stack on mobile */}
                     {priceComparison && (
-                      <div className='text-right'>
+                      <div className='flex items-center justify-start gap-3 sm:flex-col sm:items-end sm:justify-center'>
                         <div
                           className={cn(
-                            'flex items-center justify-end gap-1.5 text-sm font-semibold',
+                            'flex items-center gap-1.5 text-sm font-semibold',
                             priceComparison.isPositive
                               ? 'text-green-600 dark:text-green-400'
                               : 'text-red-600 dark:text-red-400'
@@ -415,11 +431,11 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                             {priceComparison.percentage.toFixed(1)}%
                           </span>
                         </div>
-                        <div className='text-muted-foreground mt-1 text-xs'>vs Purchase Price</div>
+                        <div className='text-muted-foreground text-xs'>vs Purchase</div>
                       </div>
                     )}
                   </div>
-                </CardHeader>
+                </CardContent>
               </Card>
             )}
 
@@ -432,6 +448,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                   <FormLabel className='flex items-center gap-2 text-sm font-medium'>
                     <Calendar className='text-muted-foreground h-4 w-4' />
                     Purchase Date
+                    <span className='text-destructive'>*</span>
                   </FormLabel>
                   <FormControl>
                     <DatePicker
@@ -450,12 +467,20 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                     />
                   </FormControl>
                   <FormMessage />
+                  {isWeekend(field.value) && (
+                    <Alert className='mt-2'>
+                      <AlertCircle className='h-4 w-4' />
+                      <AlertDescription className='text-xs'>
+                        Weekend dates are automatically adjusted to the previous trading day.
+                      </AlertDescription>
+                    </Alert>
+                  )}
                 </FormItem>
               )}
             />
 
-            {/* Shares and Purchase Price - Side by side on desktop, stacked on mobile */}
-            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+            {/* Shares and Price - Responsive Grid */}
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
               {/* Number of Shares */}
               <FormField
                 control={form.control}
@@ -465,6 +490,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                     <FormLabel className='flex items-center gap-2 text-sm font-medium'>
                       <Layers className='text-muted-foreground h-4 w-4' />
                       Shares
+                      <span className='text-destructive'>*</span>
                     </FormLabel>
                     <FormControl>
                       <NumericInput
@@ -490,6 +516,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                     <FormLabel className='flex items-center gap-2 text-sm font-medium'>
                       <IndianRupee className='text-muted-foreground h-4 w-4' />
                       Price per Share
+                      <span className='text-destructive'>*</span>
                       {isHistoricalPriceLoading && (
                         <TooltipProvider delayDuration={100}>
                           <Tooltip>
@@ -520,64 +547,83 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
               />
             </div>
 
-            {/* Total Investment Cost Card */}
-            {totalValue !== null && totalValue > 0 && (
-              <Card className='border-primary/30 bg-primary/5'>
+            {/* Total Investment Summary - Enhanced */}
+            {totalValue && totalValue > 0 && (
+              <Card className='border-primary/30 bg-primary/5 transition-all duration-200'>
                 <CardContent className='p-4'>
-                  <div className='flex items-center justify-between'>
-                    <div className='flex items-center gap-2'>
+                  <div className='flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0'>
+                    <div className='flex items-center gap-3'>
                       <div className='bg-primary/10 rounded-full p-2'>
                         <BarChart3 className='text-primary h-4 w-4' />
                       </div>
                       <div>
-                        <p className='text-sm font-medium'>Total Investment</p>
+                        <p className='text-foreground text-sm font-semibold'>Total Investment</p>
                         <p className='text-muted-foreground text-xs'>
                           {parseFloat(sharesStr) || 0} shares ×{' '}
                           {formatCurrency(parseFloat(purchasePriceStr) || 0, accountCurrency)}
                         </p>
                       </div>
                     </div>
-                    <div className='text-right'>
+                    <div className='text-left sm:text-right'>
                       <p className='text-primary text-lg font-bold'>
                         {formatCurrency(totalValue, accountCurrency)}
                       </p>
+                      {priceComparison && (
+                        <p className='text-muted-foreground text-xs'>
+                          Current value:{' '}
+                          {formatCurrency(
+                            (parseFloat(sharesStr) || 0) * (currentPriceInfo?.price || 0),
+                            accountCurrency
+                          )}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </CardContent>
               </Card>
             )}
 
-            {/* Action Buttons */}
-            <div className='flex flex-col-reverse gap-3 pt-4 sm:flex-row sm:justify-end'>
-              <Button
-                type='button'
-                variant='outline'
-                onClick={handleClose}
-                disabled={isPending}
-                className='w-full sm:w-auto'
-              >
-                Cancel
-              </Button>
-              <Button
-                type='submit'
-                disabled={isPending || !form.formState.isValid}
-                className='w-full sm:w-auto sm:min-w-[140px]'
-              >
-                {createInvestmentMutation.isPending ? (
-                  <>
-                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                    Adding...
-                  </>
-                ) : (
-                  <>
-                    <PlusCircle className='mr-2 h-4 w-4' />
-                    Add Holding
-                  </>
-                )}
-              </Button>
-            </div>
+            {/* Help Text */}
+            {selectedSymbolOption && !totalValue && (
+              <Alert>
+                <Info className='h-4 w-4' />
+                <AlertDescription className='text-xs'>
+                  Enter the number of shares and purchase price to see your total investment.
+                </AlertDescription>
+              </Alert>
+            )}
           </form>
         </Form>
+
+        {/* Action Buttons - Fixed at bottom */}
+        <div className='bg-background sticky bottom-0 flex flex-col-reverse gap-3 border-t pt-4 sm:flex-row sm:justify-end'>
+          <Button
+            type='button'
+            variant='outline'
+            onClick={handleClose}
+            disabled={isPending}
+            className='w-full sm:w-auto'
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={form.handleSubmit(handleCreate)}
+            disabled={isPending || !form.formState.isValid || hasErrors}
+            className='w-full sm:w-auto sm:min-w-[140px]'
+          >
+            {createInvestmentMutation.isPending ? (
+              <>
+                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                Adding...
+              </>
+            ) : (
+              <>
+                <PlusCircle className='mr-2 h-4 w-4' />
+                Add Holding
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </AddModal>
   );

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { useAiChat } from '@/hooks/useAiChat';
+import { useAiChat } from '@/components/ai/hooks/useAiChat';
 import {
   ArrowRight,
   Wallet,

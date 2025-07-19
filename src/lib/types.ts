@@ -185,6 +185,7 @@ export interface InvestmentAccount {
   currency: string;
   createdAt: string;
   updatedAt?: string;
+  oldestInvestmentDate?: Date;
 }
 
 // Investment Interface
