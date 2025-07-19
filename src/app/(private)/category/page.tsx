@@ -9,6 +9,7 @@ import CategoryList from '@/components/category/category-list';
 import AddCategoryModal from '@/components/modals/add-category-modal';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
 
 const CategoryPage = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -56,12 +57,15 @@ const CategoryPage = () => {
           onCategoryAdded={refetch}
         />
       </div>
-      <div>
+      <div className='relative flex-1'>
+        <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+
         <Input
           type='text'
           placeholder='Search by category name...'
           value={filters.searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
+          className='pl-9'
         />
       </div>
       {isError && <div>Error: {error.message}</div>}

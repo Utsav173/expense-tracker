@@ -18,7 +18,7 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Search } from 'lucide-react';
 import { createDebtColumns } from '@/components/debt/debt-columns';
 import AddDebtModal from '@/components/modals/add-debt-modal';
 import { useAuth } from '@/hooks/useAuth';
@@ -117,14 +117,16 @@ const DebtsPage = () => {
       </div>
 
       <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4'>
-        <Input
-          type='text'
-          placeholder='Search description, due date, amount...'
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className='max-w-full grow'
-        />
-
+        <div className='relative flex-1'>
+          <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+          <Input
+            type='text'
+            placeholder='Search description, due date, amount...'
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className='max-w-full grow pl-9'
+          />
+        </div>
         <div className='w-full sm:w-[180px]'>
           <Select onValueChange={(value) => setType(value as DebtTypeFilter)} value={type || 'all'}>
             <SelectTrigger className='w-full'>

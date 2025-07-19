@@ -14,7 +14,7 @@ import DeleteConfirmationModal from '@/components/modals/delete-confirmation-mod
 import AddTransactionModal from '@/components/modals/add-transaction-modal';
 import { UpdateAccountModal } from '@/components/modals/update-account-modal';
 import NoData from '@/components/ui/no-data';
-import { Wallet } from 'lucide-react';
+import { Search, Wallet } from 'lucide-react';
 
 const AccountListPage = () => {
   const [page, setPage] = useState(1);
@@ -84,15 +84,16 @@ const AccountListPage = () => {
           <AddTransactionModal onTransactionAdded={refetch} />
         </div>
       </div>
-
-      <Input
-        type='text'
-        placeholder='Search accounts...'
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className='mb-6'
-      />
-
+      <div className='relative mb-6 flex-1'>
+        <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+        <Input
+          type='text'
+          placeholder='Search accounts...'
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className='pl-9'
+        />
+      </div>
       {isLoading ? (
         <Loader />
       ) : (

@@ -9,7 +9,8 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatCurrency(
   amount: number | null | undefined,
-  currencyCode: string = 'INR'
+  currencyCode: string = 'INR',
+  mode?: 'standard' | 'scientific' | 'engineering' | 'compact' | undefined
 ): string {
   const numAmount = Number(amount ?? 0);
 
@@ -25,7 +26,12 @@ export function formatCurrency(
       maximumFractionDigits: 2
     };
 
-    if (Math.abs(numAmount) >= 999_999_999) {
+    if (mode) {
+      options.notation = mode;
+    }
+
+    // Use compact notation for better UX with large numbers
+    if (Math.abs(numAmount) >= 999_999) {
       options.notation = 'compact';
       options.compactDisplay = 'short';
     }

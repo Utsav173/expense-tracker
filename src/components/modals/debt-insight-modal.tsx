@@ -110,7 +110,7 @@ MetricCard.displayName = 'MetricCard';
 const CustomTooltip = React.memo(({ active, payload }: any) => {
   if (!active || !payload || !payload.length) return null;
   return (
-    <div className='bg-background/75 min-w-[200px] rounded-lg border p-3 shadow-lg backdrop-blur-sm'>
+    <div className='bg-background/95 min-w-[200px] rounded-lg border p-3 shadow-lg backdrop-blur-sm'>
       <div className='space-y-2'>
         {payload.map((entry: any, index: number) => (
           <div key={`item-${index}`} className='flex items-center justify-between gap-4'>
@@ -374,38 +374,26 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                     />
                   ))}
                 </div>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className='flex items-center gap-2'>
-                      <Calendar className='h-5 w-5' />
-                      Payment Schedule
-                    </CardTitle>
-                    <CardDescription>
-                      Interactive timeline showing all installments and their status
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {isLoading ? (
-                      <div className='space-y-4 p-4'>
-                        <Skeleton className='h-8 w-full' />
-                        <Skeleton className='h-40 w-full' />
-                      </div>
-                    ) : isError || !paymentSchedule ? (
-                      <NoData
-                        message={`Unable to generate payment schedule. ${error?.message || ''}`}
-                        icon='x-circle'
-                      />
-                    ) : paymentSchedule.length > 0 ? (
-                      <TimelineScroller
-                        schedule={paymentSchedule}
-                        selectedIndex={selectedIndex}
-                        onSelect={setSelectedIndex}
-                      />
-                    ) : (
-                      <NoData message='No payment schedule available for this debt.' />
-                    )}
-                  </CardContent>
-                </Card>
+
+                {isLoading ? (
+                  <div className='space-y-4 p-4'>
+                    <Skeleton className='h-8 w-full' />
+                    <Skeleton className='h-64 w-full' />
+                  </div>
+                ) : isError || !paymentSchedule ? (
+                  <NoData
+                    message={`Unable to generate payment schedule. ${error?.message || ''}`}
+                    icon='x-circle'
+                  />
+                ) : paymentSchedule.length > 0 ? (
+                  <TimelineScroller
+                    schedule={paymentSchedule}
+                    selectedIndex={selectedIndex}
+                    onSelect={setSelectedIndex}
+                  />
+                ) : (
+                  <NoData message='No payment schedule available for this debt.' />
+                )}
               </TabsContent>
 
               <TabsContent value='details' className='min-w-0 flex-1 space-y-6 overflow-y-auto p-6'>

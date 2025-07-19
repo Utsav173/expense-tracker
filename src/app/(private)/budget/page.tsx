@@ -9,7 +9,7 @@ import AddBudgetModal from '@/components/modals/add-budget-modal';
 import Loader from '@/components/ui/loader';
 import { useToast } from '@/lib/hooks/useToast';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Search } from 'lucide-react';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { Budget } from '@/lib/types';
 import { useUrlState } from '@/hooks/useUrlState';
@@ -75,13 +75,14 @@ const BudgetPage = () => {
         </Button>
       </div>
 
-      <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4'>
+      <div className='relative flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4'>
+        <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
         <Input
           type='text'
           placeholder='Search Budgets...'
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className='max-w-full grow'
+          className='max-w-full grow pl-9'
         />
       </div>
 

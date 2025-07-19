@@ -14,7 +14,7 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import AddTransactionModal from '@/components/modals/add-transaction-modal';
-import { Filter, Import, X, Download } from 'lucide-react';
+import { Filter, Import, X, Download, Search } from 'lucide-react';
 import { accountGetDropdown } from '@/lib/endpoints/accounts';
 import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/lib/hooks/useToast';
@@ -190,6 +190,7 @@ const TransactionsPage = () => {
           })}
         >
           <div className='relative flex-1'>
+            <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
             <Input
               type='text'
               placeholder='Search transactions...'

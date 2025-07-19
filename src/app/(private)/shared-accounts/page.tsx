@@ -4,7 +4,7 @@ import { accountGetSharedWithMe } from '@/lib/endpoints/accounts';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/lib/hooks/useToast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, Share2 } from 'lucide-react';
+import { AlertCircle, Search, Share2 } from 'lucide-react';
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -92,13 +92,16 @@ const SharedAccountsPage = () => {
         </h1>
       </div>
 
-      <Input
-        type='text'
-        placeholder='Search shared accounts...'
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className='mb-6'
-      />
+      <div className='relative mb-9 flex-1'>
+        <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+        <Input
+          type='text'
+          placeholder='Search shared accounts...'
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className='pl-9'
+        />
+      </div>
 
       <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
         {sharedAccounts.data.map((account) => (

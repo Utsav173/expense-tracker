@@ -1,274 +1,246 @@
-'use client';
+'use-client';
 
+import React from 'react';
 import { AccountDetails, CustomAnalytics } from '@/lib/types';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getDynamicFontSize, formatCurrency } from '@/lib/utils';
+import { formatCurrency, cn } from '@/lib/utils';
+import { cva, type VariantProps } from 'class-variance-authority';
 import {
   TrendingDown,
   TrendingUp,
   Minus,
-  ArrowUpCircle,
-  ArrowDownCircle,
-  CreditCard,
-  BarChart3
+  Wallet,
+  ArrowLeftRight,
+  Banknote,
+  type LucideProps
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { ApiResponse } from '@/lib/types';
-import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { SingleLineEllipsis } from '../ui/ellipsis-components';
 
-interface AnalyticsCardsProps {
-  analytics?: ApiResponse<CustomAnalytics>;
-  isLoading?: boolean;
-  account?: ApiResponse<AccountDetails>;
-}
+// --- STYLES (cva) ---
 
-const ShimmeringCard = ({
-  children,
-  className
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) => (
-  <div
-    className={cn(
-      'bg-background relative overflow-hidden rounded-lg border shadow-md',
-      'before:border-primary/20 before:via-primary/10 before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_2s_infinite] before:border-t before:bg-gradient-to-r before:from-transparent before:to-transparent',
-      className
-    )}
-  >
-    {children}
-  </div>
+const cardVariants = cva(
+  'relative group overflow-hidden rounded-2xl border-none shadow-lg transition-all duration-300 ease-out hover:scale-[1.01] hover:shadow-2xl hover:brightness-105',
+  {
+    variants: {
+      variant: {
+        primary:
+          'text-slate-800 bg-gradient-to-br from-purple-200 via-indigo-300 to-blue-300 dark:text-slate-100 dark:bg-gradient-to-br dark:from-indigo-700 dark:via-purple-700 dark:to-blue-800',
+        success:
+          'text-slate-800 bg-gradient-to-br from-green-300/80 to-teal-300/50 dark:text-slate-100 dark:bg-gradient-to-br dark:from-green-900 dark:to-teal-600/90',
+        destructive:
+          'text-slate-800 bg-gradient-to-br from-red-300 to-rose-300/50 dark:text-slate-100 dark:bg-gradient-to-br dark:from-red-500/80 dark:to-orange-900/60'
+      }
+    },
+    defaultVariants: {
+      variant: 'primary'
+    }
+  }
 );
 
-const CurrentBalanceCard = ({ account, isLoading }: { account: any; isLoading?: boolean }) => {
-  if (isLoading) {
-    return (
-      <ShimmeringCard className='h-full'>
-        <div className='p-6 sm:p-8'>
-          <div className='space-y-3'>
-            <Skeleton className='h-5 w-32' />
-            <Skeleton className='h-12 w-64' />
-            <Skeleton className='h-4 w-40' />
-          </div>
-        </div>
-      </ShimmeringCard>
-    );
-  }
+const DotPattern = () => (
+  <div className='absolute h-full w-full bg-[radial-gradient(theme(colors.slate.900/15)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)] [background-size:16px_16px] opacity-55 transition-transform duration-500 ease-out group-hover:scale-105 dark:bg-[radial-gradient(theme(colors.slate.100/10)_1px,transparent_1px)]' />
+);
 
-  const isPositive = account?.balance && account?.balance > 0;
-  const bgColorClass = isPositive
-    ? 'from-blue-500/10 to-blue-500/20 dark:from-blue-900/10 dark:to-blue-900/20'
-    : 'from-red-500/10 to-red-500/20 dark:from-red-900/10 dark:to-red-900/20';
+const GhostIcon = ({ icon: Icon }: { icon: React.ElementType<LucideProps> }) => (
+  <Icon className='absolute -right-8 -bottom-8 h-40 w-40 opacity-10 transition-transform duration-500 ease-out group-hover:scale-110 dark:opacity-8' />
+);
 
-  const formattedBalance = formatCurrency(account?.balance ?? 0, account?.currency);
-  const dynamicFontSize = getDynamicFontSize(formattedBalance);
+// --- SUB-COMPONENTS ---
+
+const TrendIndicator = ({ value }: { value: number }) => {
+  const direction = value > 0 ? 'up' : value < 0 ? 'down' : 'neutral';
+  const Icon = value > 0 ? TrendingUp : value < 0 ? TrendingDown : Minus;
+
+  const trendColorClasses =
+    direction === 'up'
+      ? 'text-green-700 dark:text-green-300'
+      : direction === 'down'
+        ? 'text-red-700 dark:text-red-300'
+        : 'text-slate-600 dark:text-slate-400';
 
   return (
-    <Card
-      className={cn(
-        'group relative h-full overflow-hidden border-none shadow-lg transition-all duration-300 hover:shadow-xl',
-        'bg-gradient-to-br',
-        bgColorClass
-      )}
-    >
-      <div className='flex h-full flex-col justify-between p-6 sm:p-8'>
-        <div className='flex items-start justify-between gap-4'>
-          <div className='flex flex-col gap-2'>
-            <div className='text-foreground/80 mb-2 flex items-center gap-2'>
-              <CreditCard className='h-5 w-5' />
-              <h3 className='text-lg font-semibold'>Current Balance</h3>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className='flex items-center gap-3'>
+            <div className='flex h-12 w-12 items-center justify-center rounded-full border border-black/10 bg-black/5 backdrop-blur-sm dark:border-white/20 dark:bg-white/10'>
+              <Icon className={cn('h-6 w-6', trendColorClasses)} />
             </div>
-            <div className='flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1'>
-              <SingleLineEllipsis
-                className='text-foreground font-bold tracking-tight'
-                style={{ fontSize: dynamicFontSize }}
-              >
-                {formattedBalance}
-              </SingleLineEllipsis>
-              <Badge
-                variant={isPositive ? 'default' : 'destructive'}
-                className={cn(
-                  'h-fit w-fit font-medium',
-                  isPositive &&
-                    'bg-success text-success-foreground hover:bg-success/80 border-transparent shadow-sm'
-                )}
-              >
-                {isPositive ? 'Positive' : 'Negative'}
-              </Badge>
+            <div className='text-base font-bold text-inherit'>
+              <span>
+                {value > 0 ? '+' : ''}
+                {Math.abs(value).toFixed(1)}%
+              </span>
             </div>
           </div>
-          <div className='hidden sm:block'>
-            <div
-              className={cn(
-                'rounded-full p-3 transition-colors duration-300',
-                isPositive ? 'bg-success/20' : 'bg-destructive/20'
-              )}
-            >
-              {isPositive ? (
-                <TrendingUp className='text-success h-6 w-6' />
-              ) : (
-                <TrendingDown className='text-destructive h-6 w-6' />
-              )}
-            </div>
-          </div>
-        </div>
-        <p className='text-muted-foreground mt-4 text-sm'>
-          Last updated{' '}
-          {account?.updatedAt ? new Date(account.updatedAt).toLocaleDateString() : 'Never'}
-        </p>
-      </div>
-    </Card>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Change vs. previous period</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
 
-const StatCard = ({
-  title,
-  value,
-  change,
-  type,
-  currency,
-  isLoading
-}: {
+interface AnalyticsCardProps extends VariantProps<typeof cardVariants> {
   title: string;
   value: number;
-  change: number;
-  type: 'income' | 'expense' | 'balance';
   currency: string;
-  isLoading?: boolean;
-}) => {
-  if (isLoading) {
-    return (
-      <ShimmeringCard>
-        <div className='p-6'>
-          <div className='space-y-3'>
-            <Skeleton className='h-5 w-20' />
-            <Skeleton className='h-10 w-32' />
-            <Skeleton className='h-4 w-24' />
-          </div>
+  icon: React.ElementType<LucideProps>;
+  trendValue?: number;
+  footerText?: string;
+  totalBalance?: number;
+}
+
+const AnalyticsCard = ({
+  title,
+  value,
+  currency,
+  icon: Icon,
+  trendValue,
+  footerText,
+  variant,
+  totalBalance
+}: AnalyticsCardProps) => (
+  <Card className={cn(cardVariants({ variant }))}>
+    {variant === 'primary' && <DotPattern />}
+    <GhostIcon icon={Icon} />
+
+    {variant === 'primary' ? (
+      // Hero Card Layout remains the same
+      <div className='relative flex h-full min-h-[180px] flex-col justify-between p-6'>
+        <div>
+          <p className='font-medium text-inherit opacity-70'>{title}</p>
+          <p className='font-display mt-2 text-4xl font-bold tracking-tighter text-inherit'>
+            {formatCurrency(value, currency)}
+          </p>
         </div>
-      </ShimmeringCard>
+        <div className='mt-4'>
+          {totalBalance !== undefined && (
+            <p className='text-sm text-inherit opacity-70'>
+              <span className='opacity-80'>Total in Account:</span>{' '}
+              {formatCurrency(totalBalance, currency)}
+            </p>
+          )}
+          {footerText && <p className='mt-1 text-xs text-inherit opacity-60'>{footerText}</p>}
+        </div>
+      </div>
+    ) : (
+      // New Corner-Aligned Layout for Income & Expense Cards
+      <div className='relative flex h-full min-h-[140px] flex-col justify-between p-6'>
+        {/* Top-left content */}
+        <div>
+          <p className='font-medium text-inherit opacity-70'>{title}</p>
+          <p className='font-display mt-1 text-3xl font-bold tracking-tight text-inherit'>
+            {formatCurrency(value, currency)}
+          </p>
+        </div>
+
+        {/* Bottom-right content, pushed with self-end */}
+        {trendValue !== undefined && (
+          <div className='self-end'>
+            <TrendIndicator value={trendValue} />
+          </div>
+        )}
+      </div>
+    )}
+  </Card>
+);
+
+// --- SKELETON COMPONENTS ---
+
+const SkeletonCard = ({ isHero = false }: { isHero?: boolean }) => {
+  if (isHero) {
+    return (
+      <div className='bg-card flex min-h-[180px] flex-col justify-between rounded-2xl p-6 shadow-md'>
+        <div className='space-y-2'>
+          <Skeleton className='h-5 w-2/5' />
+          <Skeleton className='h-12 w-3/4' />
+        </div>
+        <div className='mt-4 space-y-2'>
+          <Skeleton className='h-4 w-1/2' />
+          <Skeleton className='h-3 w-1/3' />
+        </div>
+      </div>
     );
   }
 
-  const cardConfig = {
-    income: {
-      icon: <ArrowUpCircle className='text-success h-5 w-5' />,
-      iconBg: 'bg-success/10 dark:bg-success/20',
-      gradientFrom: 'from-green-500/10',
-      gradientTo: 'to-green-500/20'
-    },
-    expense: {
-      icon: <ArrowDownCircle className='text-destructive h-5 w-5' />,
-      iconBg: 'bg-destructive/10 dark:bg-destructive/20',
-      gradientFrom: 'from-red-500/10',
-      gradientTo: 'to-red-500/20'
-    },
-    balance: {
-      icon: <BarChart3 className='text-primary h-5 w-5' />,
-      iconBg: 'bg-primary/10 dark:bg-primary/20',
-      gradientFrom: 'from-blue-500/10',
-      gradientTo: 'to-blue-500/20'
-    }
-  };
-
-  const config = cardConfig[type];
-
-  const getTrendIcon = () => {
-    if (change === 0) return <Minus className='text-muted-foreground h-4 w-4' />;
-    return change > 0 ? (
-      <TrendingUp className='text-success h-4 w-4' />
-    ) : (
-      <TrendingDown className='text-destructive h-4 w-4' />
-    );
-  };
-
-  const getChangeColor = () => {
-    if (change === 0) return 'text-muted-foreground';
-    return change > 0 ? 'text-success' : 'text-destructive';
-  };
-
-  const formattedValue = formatCurrency(value, currency);
-  const dynamicFontSize = getDynamicFontSize(formattedValue, 2, 1.2, 10);
-
+  // Updated skeleton to match the new corner-aligned layout
   return (
-    <Card
-      className={cn(
-        'h-full overflow-hidden border-none shadow-lg transition-all duration-300 hover:shadow-xl',
-        'bg-gradient-to-br',
-        config.gradientFrom,
-        config.gradientTo
-      )}
-    >
-      <div className='flex h-full flex-col justify-between p-4 sm:p-6'>
-        <div className='flex items-start justify-between'>
-          <span className='text-foreground/80 text-sm font-medium sm:text-base'>{title}</span>
-          <div className={cn('rounded-full p-2', config.iconBg)}>{config.icon}</div>
-        </div>
-
-        <div className='mt-2'>
-          <SingleLineEllipsis
-            className='text-foreground font-bold tracking-tight'
-            style={{ fontSize: dynamicFontSize }}
-          >
-            {formattedValue}
-          </SingleLineEllipsis>
-        </div>
-
-        <div className='mt-4 flex items-center gap-1.5'>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className='bg-background/50 dark:bg-background/30 inline-flex items-center gap-1.5 rounded-md px-2 py-1'>
-                {getTrendIcon()}
-                <span className={cn('text-xs font-medium sm:text-sm', getChangeColor())}>
-                  {change > 0 ? '+' : ''}
-                  {Math.abs(change).toFixed(2)}%
-                </span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Change from last period</p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
+    <div className='bg-card flex min-h-[140px] flex-col justify-between rounded-2xl p-6 shadow-md'>
+      {/* Top-left skeleton */}
+      <div className='space-y-2'>
+        <Skeleton className='h-5 w-24' />
+        <Skeleton className='h-9 w-40' />
       </div>
-    </Card>
+
+      {/* Bottom-right skeleton */}
+      <div className='flex items-center gap-3 self-end'>
+        <Skeleton className='h-12 w-12 rounded-full' />
+        <Skeleton className='h-6 w-16' />
+      </div>
+    </div>
   );
 };
 
-export const AnalyticsCards = ({ analytics, isLoading, account }: AnalyticsCardsProps) => {
-  if (!analytics && !isLoading) return null;
+// --- MAIN EXPORTED COMPONENT ---
+
+export const AnalyticsCards = ({
+  analytics,
+  isLoading,
+  account
+}: {
+  analytics?: CustomAnalytics;
+  isLoading?: boolean;
+  account?: AccountDetails;
+}) => {
+  const currency = account?.currency ?? 'INR';
+  const lastUpdated = account?.updatedAt
+    ? `Updated: ${new Date(account.updatedAt).toLocaleDateString()}`
+    : undefined;
+
+  if (isLoading) {
+    return (
+      <div className='grid gap-4 sm:gap-6'>
+        <SkeletonCard isHero />
+        <div className='grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2'>
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      </div>
+    );
+  }
+
+  if (!analytics || !account) return null;
 
   return (
-    <div className='flex flex-col gap-4 sm:gap-6'>
-      <CurrentBalanceCard account={account} isLoading={isLoading} />
-
-      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3'>
-        <StatCard
+    <div className='grid gap-4 sm:gap-6'>
+      <AnalyticsCard
+        variant='primary'
+        title='Current Balance'
+        value={analytics.balance}
+        totalBalance={account.balance ?? 0}
+        currency={currency}
+        icon={Wallet}
+        footerText={lastUpdated}
+      />
+      <div className='grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2'>
+        <AnalyticsCard
+          variant='success'
           title='Income'
-          value={analytics?.income ?? 0}
-          change={analytics?.IncomePercentageChange ?? 0}
-          type='income'
-          currency={account?.currency ?? 'INR'}
-          isLoading={isLoading}
+          value={analytics.income}
+          currency={currency}
+          icon={Banknote}
+          trendValue={analytics.IncomePercentageChange}
         />
-        <StatCard
+        <AnalyticsCard
+          variant='destructive'
           title='Expenses'
-          value={analytics?.expense ?? 0}
-          change={analytics?.ExpensePercentageChange ?? 0}
-          type='expense'
-          currency={account?.currency ?? 'INR'}
-          isLoading={isLoading}
-        />
-        <StatCard
-          title='Net Balance'
-          value={analytics?.balance ?? 0}
-          change={analytics?.BalancePercentageChange ?? 0}
-          type='balance'
-          currency={account?.currency ?? 'INR'}
-          isLoading={isLoading}
+          value={analytics.expense}
+          currency={currency}
+          icon={ArrowLeftRight}
+          trendValue={analytics.ExpensePercentageChange}
         />
       </div>
     </div>

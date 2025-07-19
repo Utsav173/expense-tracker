@@ -16,7 +16,7 @@ import { useState } from 'react';
 import Loader from '@/components/ui/loader';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/lib/hooks/useToast';
-import { ArrowLeft, PlusCircle } from 'lucide-react';
+import { ArrowLeft, PlusCircle, Search } from 'lucide-react';
 import {
   Investment,
   StockSearchResult,
@@ -201,13 +201,14 @@ const InvestmentAccountDetailPage = () => {
           <CardDescription>Investments within this account.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className='mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4'>
+          <div className='relative mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4'>
+            <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
             <Input
               type='text'
               placeholder='Search investments...'
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className='max-w-full grow'
+              className='max-w-full grow pl-9'
             />
           </div>
           <CommonTable<Investment>

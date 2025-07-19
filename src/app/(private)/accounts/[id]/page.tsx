@@ -155,14 +155,14 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
       {isOwner && (
         <div
           className={cn(
-            'grid grid-cols-1 gap-6',
+            'grid grid-cols-1 gap-6 select-none',
             hasTransactions && 'lg:grid-cols-2 xl:grid-cols-[1fr_1.5fr]'
           )}
         >
           <AnalyticsCards
-            analytics={customAnalytics}
-            isLoading={isAnalyticsLoading}
-            account={account}
+            analytics={customAnalytics ?? undefined}
+            isLoading={isAnalyticsLoading ?? false}
+            account={account ?? undefined}
           />
 
           {hasTransactions && (
