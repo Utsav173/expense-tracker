@@ -111,9 +111,9 @@ export interface Transaction {
 }
 
 export interface TransactionWithContext {
-  transaction: Transaction; 
-  generatedInstances?: Transaction[]; 
-  template?: Transaction; 
+  transaction: Transaction;
+  generatedInstancesCount?: number;
+  remainingInstancesCount?: number;
 }
 
 // Account Interface
@@ -424,6 +424,7 @@ export interface AiProcessPdfResponse {
 }
 
 export interface Payment {
+  id: string;
   date: Date;
   status: 'settled' | 'due' | 'upcoming';
   installmentAmount: number;

@@ -55,11 +55,7 @@ const TransactionTable = ({
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionType | null>(null);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [deleteTransactionId, setDeleteTransactionId] = useState<string | null>(null);
-  const [isInsightModalOpen, setIsInsightModalOpen] = useState(false);
-  const [insightData, setInsightData] = useState<{
-    template: TransactionType;
-    instances: TransactionType[];
-  } | null>(null);
+  const [insightTransactionId, setInsightTransactionId] = useState<string | null>(null);
   const { showError } = useToast();
 
   const deleteMutation = useMutation({
@@ -89,23 +85,9 @@ const TransactionTable = ({
     setDeleteTransactionId(id);
   };
 
-  const handleInsightClick = useCallback(
-    async (transaction: TransactionType) => {
-      try {
-        const fullData = (await transactionGetById(transaction.id)) as TransactionWithContext;
-        if (fullData && fullData.transaction) {
-          setInsightData({
-            template: fullData.transaction,
-            instances: fullData.generatedInstances || []
-          });
-          setIsInsightModalOpen(true);
-        }
-      } catch (err: any) {
-        showError('Could not fetch recurring details: ' + err.message);
-      }
-    },
-    [showError]
-  );
+  const handleInsightClick = useCallback((transactionId: string) => {
+    setInsightTransactionId(transactionId);
+  }, []);
 
   const columns = useMemo<ColumnDef<TransactionType>[]>(
     () => [
@@ -157,7 +139,10 @@ const TransactionTable = ({
         header: ({ column }) => <DataTableColumnHeader column={column} title='Category' />,
         meta: { header: 'Category' },
         cell: ({ row }) => (
-          <Badge variant='outline' className='bg-muted/30 max-w-[120px] truncate md:max-w-[150px]'>
+          <Badge
+            variant='secondary'
+            className='bg-muted/30 max-w-[120px] truncate md:max-w-[150px]'
+          >
             <SingleLineEllipsis>
               {row.original.category?.name ?? 'Uncategorized'}
             </SingleLineEllipsis>
@@ -193,7 +178,7 @@ const TransactionTable = ({
         cell: ({ row }) => {
           const date = new Date(row.original.createdAt);
           return (
-            <div className='flex flex-col text-sm'>
+            <div className='flex items-center gap-2 text-sm'>
               <span className='font-medium whitespace-nowrap'>{format(date, 'MMM d, yyyy')}</span>
               <span className='text-muted-foreground text-xs'>{format(date, 'h:mm a')}</span>
             </div>
@@ -241,12 +226,12 @@ const TransactionTable = ({
               id: 'actions' as const,
               header: 'Actions',
               cell: ({ row }: { row: any }) => (
-                <div className='flex justify-center gap-2'>
+                <div className='flex justify-end gap-2'>
                   {row.original.recurring && (
                     <Button
                       size='icon'
                       variant='ghost'
-                      onClick={() => handleInsightClick(row.original)}
+                      onClick={() => handleInsightClick(row.original.id)}
                       className='hover:bg-muted h-8 w-8'
                     >
                       <Eye className='text-muted-foreground h-3.5 w-3.5' />
@@ -324,19 +309,13 @@ const TransactionTable = ({
         enablePagination
         sortBy={sortBy}
         sortOrder={sortOrder}
-        tableClassName='bg-background'
-        headerClassName='bg-muted'
-        cellClassName='border-border'
         tableId={tableId}
       />
-      {insightData && (
-        <RecurringInsightModal
-          isOpen={isInsightModalOpen}
-          onOpenChange={setIsInsightModalOpen}
-          template={insightData.template}
-          instances={insightData.instances}
-        />
-      )}
+      <RecurringInsightModal
+        isOpen={!!insightTransactionId}
+        onOpenChange={(isOpen) => !isOpen && setInsightTransactionId(null)}
+        transactionId={insightTransactionId}
+      />
       <UpdateTransactionModal
         isOpen={isUpdateModalOpen}
         onOpenChange={setIsUpdateModalOpen}

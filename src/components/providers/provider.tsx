@@ -8,7 +8,7 @@ import { Toaster } from '../ui/sonner';
 const ReactQueryProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute='class' defaultTheme='system' enableSystem disableTransitionOnChange>
+      <ThemeProvider attribute='class' defaultTheme='dark' disableTransitionOnChange>
         <Toaster richColors position='top-right' />
         {children}
       </ThemeProvider>
