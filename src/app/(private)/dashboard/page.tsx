@@ -116,7 +116,7 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
+    <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 select-none md:space-y-6'>
       <DashboardControls />
 
       {isError && dashboardPageData && (

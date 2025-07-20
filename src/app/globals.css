@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 
 @plugin 'tailwindcss-animate';
-@plugin '@tailwindcss/typography';
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -14,36 +14,46 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
-  --color-primary-hover: var(--primary-hover);
-  --color-primary-active: var(--primary-active);
+  --color-primary-hover: oklch(from var(--primary) calc(l - 0.05) c h);
+  --color-primary-active: oklch(from var(--primary) calc(l - 0.1) c h);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary-hover: var(--secondary-hover);
+  --color-secondary-hover: oklch(from var(--secondary) calc(l - 0.05) c h);
+  --color-secondary-active: oklch(from var(--secondary) calc(l - 0.1) c h);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-muted-hover: oklch(from var(--muted) calc(l - 0.05) c h);
+  --color-muted-active: oklch(from var(--muted) calc(l - 0.1) c h);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --color-accent-hover: var(--accent-hover);
+  --color-accent-hover: oklch(from var(--accent) calc(l - 0.05) c h);
+  --color-accent-active: oklch(from var(--accent) calc(l - 0.1) c h);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
-  --color-destructive-hover: var(--destructive-hover);
+  --color-destructive-hover: oklch(from var(--destructive) calc(l - 0.05) c h);
+  --color-destructive-active: oklch(from var(--destructive) calc(l - 0.1) c h);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
-  --color-success-hover: var(--success-hover);
+  --color-success-hover: oklch(from var(--success) calc(l - 0.05) c h);
+  --color-success-active: oklch(from var(--success) calc(l - 0.1) c h);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
-  --color-warning-hover: var(--warning-hover);
+  --color-warning-hover: oklch(from var(--warning) calc(l - 0.05) c h);
+  --color-warning-active: oklch(from var(--warning) calc(l - 0.1) c h);
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
-  --color-info-hover: var(--info-hover);
+  --color-info-hover: oklch(from var(--info) calc(l - 0.05) c h);
+  --color-info-active: oklch(from var(--info) calc(l - 0.1) c h);
   --color-border: var(--border);
-  --color-border-hover: var(--border-hover);
+  --color-border-hover: oklch(from var(--border) calc(l - 0.05) c h);
+  --color-border-active: oklch(from var(--border) calc(l - 0.1) c h);
   --color-input: var(--input);
   --color-input-foreground: var(--input-foreground);
-  --color-input-border: var(--input-border);
-  --color-input-focus: var(--input-focus);
-  --color-input-placeholder: var(--input-placeholder);
+  --color-input-hover: oklch(from var(--input) calc(l - 0.05) c h);
+  --color-input-active: oklch(from var(--input) calc(l - 0.1) c h);
   --color-ring: var(--ring);
+  --color-ring-hover: oklch(from var(--ring) calc(l - 0.05) c h);
+  --color-ring-active: oklch(from var(--ring) calc(l - 0.1) c h);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -71,49 +81,72 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --color-navigation: var(--navigation);
   --color-navigation-foreground: var(--navigation-foreground);
-  --color-navigation-border: var(--navigation-border);
   --color-tooltip: var(--tooltip);
   --color-tooltip-foreground: var(--tooltip-foreground);
   --color-income: var(--income);
   --color-income-foreground: var(--income-foreground);
-  --color-income-light: var(--income-light);
+  --color-income-hover: oklch(from var(--income) calc(l - 0.05) c h);
+  --color-income-active: oklch(from var(--income) calc(l - 0.1) c h);
+  --color-income-muted: oklch(from var(--income) l c h / 0.1);
+  --color-income-muted-foreground: var(--income);
   --color-expense: var(--expense);
   --color-expense-foreground: var(--expense-foreground);
-  --color-expense-light: var(--expense-light);
+  --color-expense-hover: oklch(from var(--expense) calc(l - 0.05) c h);
+  --color-expense-active: oklch(from var(--expense) calc(l - 0.1) c h);
+  --color-expense-muted: oklch(from var(--expense) l c h / 0.1);
+  --color-expense-muted-foreground: var(--expense);
   --color-balance: var(--balance);
   --color-balance-foreground: var(--balance-foreground);
-  --color-balance-light: var(--balance-light);
+  --color-balance-hover: oklch(from var(--balance) calc(l - 0.05) c h);
+  --color-balance-active: oklch(from var(--balance) calc(l - 0.1) c h);
+  --color-balance-muted: oklch(from var(--balance) l c h / 0.1);
+  --color-balance-muted-foreground: var(--balance);
   --color-positive: var(--positive);
   --color-positive-foreground: var(--positive-foreground);
+  --color-positive-hover: oklch(from var(--positive) calc(l - 0.05) c h);
+  --color-positive-active: oklch(from var(--positive) calc(l - 0.1) c h);
   --color-negative: var(--negative);
   --color-negative-foreground: var(--negative-foreground);
+  --color-negative-hover: oklch(from var(--negative) calc(l - 0.05) c h);
+  --color-negative-active: oklch(from var(--negative) calc(l - 0.1) c h);
   --color-neutral: var(--neutral);
   --color-neutral-foreground: var(--neutral-foreground);
+  --color-neutral-hover: oklch(from var(--neutral) calc(l - 0.05) c h);
+  --color-neutral-active: oklch(from var(--neutral) calc(l - 0.1) c h);
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
+  --color-brand-hover: oklch(from var(--brand) calc(l - 0.05) c h);
+  --color-brand-active: oklch(from var(--brand) calc(l - 0.1) c h);
   --color-error: var(--error);
   --color-error-foreground: var(--error-foreground);
+  --color-error-hover: oklch(from var(--error) calc(l - 0.05) c h);
+  --color-error-active: oklch(from var(--error) calc(l - 0.1) c h);
   --color-danger: var(--danger);
   --color-danger-foreground: var(--danger-foreground);
+  --color-danger-hover: oklch(from var(--danger) calc(l - 0.05) c h);
+  --color-danger-active: oklch(from var(--danger) calc(l - 0.1) c h);
   --color-ghost: var(--ghost);
   --color-ghost-foreground: var(--ghost-foreground);
-  --color-ghost-hover: var(--ghost-hover);
+  --color-ghost-hover: oklch(from var(--ghost) calc(l - 0.05) c h);
+  --color-ghost-active: oklch(from var(--ghost) calc(l - 0.1) c h);
   --color-outline: var(--outline);
   --color-outline-foreground: var(--outline-foreground);
-  --color-outline-hover: var(--outline-hover);
+  --color-outline-hover: oklch(from var(--outline) calc(l - 0.05) c h);
+  --color-outline-active: oklch(from var(--outline) calc(l - 0.1) c h);
   --color-link: var(--link);
   --color-link-foreground: var(--link-foreground);
-  --color-link-hover: var(--link-hover);
+  --color-link-hover: oklch(from var(--link) calc(l - 0.05) c h);
+  --color-link-active: oklch(from var(--link) calc(l - 0.1) c h);
   --color-overlay: var(--overlay);
   --color-overlay-foreground: var(--overlay-foreground);
   --color-separator: var(--separator);
-  --radius-xs: calc(var(--radius) - 0.25rem);
-  --radius-sm: calc(var(--radius) - 0.125rem);
-  --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 0.125rem);
-  --radius-xl: calc(var(--radius) + 0.25rem);
-  --radius-2xl: calc(var(--radius) + 0.5rem);
-  --radius-3xl: calc(var(--radius) + 1rem);
+  --radius-xs: calc(var(--radius) - 0.5rem);
+  --radius-sm: calc(var(--radius) - 0.4rem);
+  --radius-md: calc(var(--radius) - 0.2rem);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 0.2rem);
+  --radius-2xl: calc(var(--radius) + 0.4rem);
+  --radius-3xl: calc(var(--radius) + 0.6rem);
   --radius-full: 9999px;
   --font-sans: var(--font-sans);
   --font-serif: var(--font-serif);
@@ -140,21 +173,67 @@
   --animate-fade-out: fade-out 0.2s ease-out;
   --animate-slide-in: slide-in 0.2s ease-out;
   --animate-slide-out: slide-out 0.2s ease-out;
-  --animate-appear: appear 0.5s ease-out forwards;
-  --animate-appear-zoom: appear-zoom 0.5s ease-out forwards;
-  --text-xs: clamp(0.6rem, 0.5rem + 0.25vw, 0.75rem);
-  --text-sm: clamp(0.75rem, 0.65rem + 0.5vw, 0.875rem);
-  --text-base: clamp(0.875rem, 0.75rem + 0.5vw, 1rem);
-  --text-lg: clamp(1rem, 0.85rem + 0.75vw, 1.125rem);
-  --text-xl: clamp(1.125rem, 0.9rem + 1vw, 1.25rem);
-  --text-2xl: clamp(1.25rem, 1rem + 1.25vw, 1.5rem);
-  --text-3xl: clamp(1.5rem, 1.2rem + 1.5vw, 1.875rem);
-  --text-4xl: clamp(1.875rem, 1.5rem + 1.75vw, 2.25rem);
-  --text-5xl: clamp(2.25rem, 1.8rem + 2vw, 3rem);
-  --text-6xl: clamp(3rem, 2.4rem + 3vw, 3.75rem);
-  --text-7xl: clamp(3.75rem, 3rem + 4vw, 4.5rem);
-  --text-8xl: clamp(4.5rem, 3.6rem + 5vw, 6rem);
-  --text-9xl: clamp(6rem, 4.8rem + 6vw, 8rem);
+  --text-xs: clamp(0.55rem, 0.55rem + 0.5vw, 0.75rem);
+  --text-sm: clamp(0.75rem, 0.75rem + 0.5vw, 0.875rem);
+  --text-base: clamp(0.875rem, 0.875rem + 0.5vw, 1rem);
+  --text-lg: clamp(1rem, 1rem + 0.5vw, 1.125rem);
+  --text-xl: clamp(1.125rem, 1.125rem + 0.5vw, 1.25rem);
+  --text-2xl: clamp(1.25rem, 1.25rem + 0.75vw, 1.5rem);
+  --text-3xl: clamp(1.5rem, 1.5rem + 1vw, 1.875rem);
+  --text-4xl: clamp(1.875rem, 1.875rem + 1.25vw, 2.25rem);
+  --text-5xl: clamp(2.25rem, 2.25rem + 1.5vw, 3rem);
+  --text-6xl: clamp(3rem, 3rem + 2vw, 3.75rem);
+  --text-7xl: clamp(3.75rem, 3.75rem + 2.5vw, 4.5rem);
+  --text-8xl: clamp(4.5rem, 4.5rem + 3vw, 6rem);
+  --text-9xl: clamp(6rem, 6rem + 4vw, 8rem);
+  --text-xs--line-height: 1.4;
+  --text-sm--line-height: 1.45;
+  --text-base--line-height: 1.5;
+  --text-lg--line-height: 1.55;
+  --text-xl--line-height: 1.5;
+  --text-2xl--line-height: 1.4;
+  --text-3xl--line-height: 1.3;
+  --text-4xl--line-height: 1.2;
+  --text-5xl--line-height: 1.1;
+  --text-6xl--line-height: 1;
+  --text-7xl--line-height: 1;
+  --text-8xl--line-height: 1;
+  --text-9xl--line-height: 1;
+  --space-px: 1px;
+  --space-0: 0;
+  --space-0-5: 0.125rem;
+  --space-1: 0.25rem;
+  --space-1-5: 0.375rem;
+  --space-2: 0.5rem;
+  --space-2-5: 0.625rem;
+  --space-3: 0.75rem;
+  --space-3-5: 0.875rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-7: 1.75rem;
+  --space-8: 2rem;
+  --space-9: 2.25rem;
+  --space-10: 2.5rem;
+  --space-11: 2.75rem;
+  --space-12: 3rem;
+  --space-14: 3.5rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+  --space-28: 7rem;
+  --space-32: 8rem;
+  --space-36: 9rem;
+  --space-40: 10rem;
+  --space-44: 11rem;
+  --space-48: 12rem;
+  --space-52: 13rem;
+  --space-56: 14rem;
+  --space-60: 15rem;
+  --space-64: 16rem;
+  --space-72: 18rem;
+  --space-80: 20rem;
+  --space-96: 24rem;
   --z-0: 0;
   --z-10: 10;
   --z-20: 20;
@@ -169,6 +248,35 @@
   --z-popover: 1060;
   --z-tooltip: 1070;
   --z-toast: 1080;
+
+  --animate-appear: appear 0.5s ease-out forwards;
+  --animate-appear-zoom: appear-zoom 0.5s ease-out forwards;
+  --color-brand-foreground: var(----brand-foreground);
+  --color-brand: var(----brand);
+
+  @keyframes appear {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes appear-zoom {
+    0% {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
 
   @keyframes appear {
     0% {
@@ -197,266 +305,217 @@
 
 @layer base {
   :root {
-    --background: oklch(0.983 0.007 152.6);
-    --foreground: oklch(0.12 0.015 155);
-    --card: oklch(0.997 0.004 158.6);
-    --card-foreground: oklch(0.12 0.015 155);
-    --popover: oklch(0.998 0.004 122.4);
-    --popover-foreground: oklch(0.12 0.015 155);
+    --green: oklch(0.45 0.16 155);
+    --blue: oklch(0.55 0.16 260);
+    --yellow: oklch(0.68 0.14 80);
+    --red: oklch(0.5 0.18 15);
 
-    --primary: oklch(0.55 0.16 155);
-    --primary-foreground: oklch(0.98 0.005 155);
-    --primary-hover: oklch(0.52 0.17 158);
-    --primary-active: oklch(0.50 0.18 160);
-
-    --secondary: oklch(0.95 0.007 155);
-    --secondary-foreground: oklch(0.15 0.02 155);
-    --secondary-hover: oklch(0.92 0.01 155);
-
-    --muted: oklch(0.93 0.006 155);
-    --muted-foreground: oklch(0.48 0.015 155);
-
-    --accent: oklch(0.65 0.18 140);
-    --accent-foreground: oklch(0.1 0.02 140);
-    --accent-hover: oklch(0.62 0.19 142);
-
-    --destructive: oklch(0.6 0.2 25);
-    --destructive-foreground: oklch(0.99 0.005 25);
-    --destructive-hover: oklch(0.57 0.21 28);
-    --destructive-light: oklch(0.97 0.05 25);
-    --error: var(--destructive);
-    --error-foreground: var(--destructive-foreground);
-    --danger: var(--destructive);
-    --danger-foreground: var(--destructive-foreground);
-
-    --success: oklch(0.6 0.18 145);
-    --success-foreground: oklch(0.1 0.02 145);
-    --success-hover: oklch(0.57 0.19 148);
-    --success-light: oklch(0.95 0.04 145);
-
-    --warning: oklch(0.75 0.15 85);
-    --warning-foreground: oklch(0.2 0.04 85);
-    --warning-hover: oklch(0.72 0.16 88);
-    --warning-light: oklch(0.98 0.04 85);
-
-    --info: oklch(0.65 0.14 220);
-    --info-foreground: oklch(0.98 0.005 220);
-    --info-hover: oklch(0.62 0.15 223);
-    --info-light: oklch(0.96 0.04 220);
-
-    --border: oklch(0.9 0.008 155);
-    --border-hover: oklch(0.85 0.012 155);
-    --separator: oklch(0.92 0.009 162);
-    --ring: oklch(0.65 0.18 140 / 0.4);
-
-    --input: oklch(0.99 0.003 155);
-    --input-foreground: oklch(0.12 0.015 155);
-    --input-border: oklch(0.88 0.01 155);
-    --input-focus: var(--ring);
-    --input-placeholder: oklch(0.48 0.012 155);
-
-    --chart-1: oklch(0.6 0.15 258);
-    --chart-2: oklch(0.7 0.15 210);
+    --background: oklch(from var(--green) 0.98 0.007 h);
+    --foreground: oklch(from var(--green) 0.1 0.01 h);
+    --card: oklch(from var(--green) 0.99 0.004 h);
+    --card-foreground: var(--foreground);
+    --popover: oklch(from var(--green) 1 0 h);
+    --popover-foreground: var(--foreground);
+    --primary: var(--green);
+    --primary-foreground: oklch(from var(--green) 0.98 0.005 h);
+    --secondary: oklch(from var(--green) 0.96 0.008 h);
+    --secondary-foreground: oklch(from var(--green) 0.15 0.02 h);
+    --muted: oklch(from var(--green) 0.96 0.008 h);
+    --muted-foreground: oklch(from var(--green) 0.45 0.015 h);
+    --accent: oklch(from var(--green) 0.97 0.006 h);
+    --accent-foreground: var(--primary);
+    --success: var(--green);
+    --success-foreground: var(--primary-foreground);
+    --warning: var(--yellow);
+    --warning-foreground: oklch(from var(--yellow) 0.15 0.03 h);
+    --destructive: var(--red);
+    --destructive-foreground: oklch(from var(--red) 0.98 0.005 h);
+    --info: var(--blue);
+    --info-foreground: oklch(from var(--blue) 0.98 0.005 h);
+    --border: oklch(from var(--green) 0.9 0.008 h);
+    --input: oklch(from var(--green) 0.99 0.003 h);
+    --input-foreground: var(--foreground);
+    --ring: oklch(from var(--primary) l c h / 0.3);
+    --chart-1: oklch(0.6 0.15 265);
+    --chart-2: oklch(0.55 0.16 140);
     --chart-3: oklch(0.8 0.16 90);
-    --chart-4: oklch(0.6 0.2 25);
-    --chart-5: oklch(0.75 0.18 310);
-    --chart-6: oklch(0.65 0.16 120);
-    --chart-7: oklch(0.72 0.14 180);
-    --chart-8: oklch(0.82 0.12 60);
-    --chart-9: oklch(0.55 0.14 155);
-    --chart-10: oklch(0.85 0.12 30);
-    --chart-income: var(--success);
-    --chart-expense: var(--destructive);
-    --chart-balance: oklch(0.6 0.15 258);
-    --chart-savings: oklch(0.65 0.16 120);
-    --chart-investment: var(--warning);
-    --chart-debt: oklch(0.85 0.12 30);
-    --chart-other: oklch(0.65 0.008 155);
-
-    --sidebar: oklch(0.97 0.007 146);
-    --sidebar-foreground: oklch(0.12 0.015 155);
+    --chart-4: oklch(0.65 0.18 45);
+    --chart-5: oklch(0.6 0.17 310);
+    --chart-6: oklch(0.6 0.15 190);
+    --chart-7: oklch(0.6 0.19 350);
+    --chart-8: oklch(0.75 0.18 115);
+    --chart-9: oklch(0.65 0.14 230);
+    --chart-10: oklch(0.6 0.1 70);
+    --chart-income: var(--green);
+    --chart-expense: var(--red);
+    --chart-balance: var(--blue);
+    --chart-savings: oklch(0.48 0.16 145);
+    --chart-investment: var(--yellow);
+    --chart-debt: var(--red);
+    --chart-other: oklch(from var(--green) 0.58 0.008 h);
+    --sidebar: oklch(from var(--green) 0.96 0.007 h);
+    --sidebar-foreground: var(--foreground);
     --sidebar-primary: var(--primary);
     --sidebar-primary-foreground: var(--primary-foreground);
-    --sidebar-accent: oklch(0.94 0.01 141);
+    --sidebar-accent: oklch(from var(--green) 0.92 0.009 h);
     --sidebar-accent-foreground: var(--primary);
-    --sidebar-border: oklch(0.90 0.01 146);
+    --sidebar-border: oklch(from var(--green) 0.88 0.01 h);
     --sidebar-ring: var(--ring);
-
-    --navigation: oklch(0.997 0.005 146);
-    --navigation-foreground: oklch(0.12 0.015 155);
-    --navigation-border: oklch(0.924 0.01 155);
-
-    --tooltip: oklch(0.15 0.02 155);
-    --tooltip-foreground: oklch(0.977 0.012 157);
-    --overlay: oklch(0.05 0.02 155 / 0.75);
-    --overlay-foreground: oklch(0.97 0.008 155);
-
-    --brand: oklch(0.58 0.17 147);
-    --brand-foreground: oklch(0.98 0.005 155);
-
+    --navigation: oklch(from var(--green) 0.99 0.004 h);
+    --navigation-foreground: var(--foreground);
+    --navigation-border: oklch(from var(--green) 0.92 0.01 h);
+    --tooltip: oklch(from var(--green) 0.15 0.02 h);
+    --tooltip-foreground: oklch(from var(--green) 0.97 0.012 h);
+    --overlay: oklch(from var(--green) 0.05 0.02 h / 0.75);
+    --overlay-foreground: oklch(from var(--green) 0.97 0.008 h);
+    --separator: oklch(from var(--green) 0.92 0.009 h);
+    --brand: var(--green);
+    --brand-foreground: var(--primary-foreground);
+    --error: var(--red);
+    --error-foreground: var(--destructive-foreground);
+    --danger: var(--red);
+    --danger-foreground: var(--destructive-foreground);
     --ghost: transparent;
-    --ghost-foreground: oklch(0.15 0.02 155);
-    --ghost-hover: oklch(0.968 0.012 157);
+    --ghost-foreground: oklch(from var(--green) 0.15 0.02 h);
+    --ghost-hover: oklch(from var(--green) 0.97 0.012 h);
     --outline: transparent;
-    --outline-foreground: oklch(0.15 0.02 155);
-    --outline-hover: oklch(0.96 0.008 155);
-
+    --outline-foreground: oklch(from var(--green) 0.15 0.02 h);
+    --outline-hover: oklch(from var(--green) 0.96 0.008 h);
     --link: var(--primary);
     --link-foreground: var(--primary);
-    --link-hover: var(--primary-hover);
-
-    --income: var(--success);
-    --income-foreground: var(--success-foreground);
-    --income-light: var(--success-light);
-    --positive: var(--income);
-    --positive-foreground: var(--income-foreground);
-
-    --expense: var(--destructive);
+    --link-hover: oklch(from var(--primary) calc(l - 0.05) c h);
+    --income: var(--green);
+    --income-foreground: var(--primary-foreground);
+    --expense: var(--red);
     --expense-foreground: var(--destructive-foreground);
-    --expense-light: var(--destructive-light);
-    --negative: var(--expense);
-    --negative-foreground: var(--expense-foreground);
-
-    --balance: oklch(0.6 0.13 255);
-    --balance-foreground: oklch(0.98 0.005 220);
-    --balance-light: oklch(0.93 0.025 242);
-
-    --neutral: oklch(0.58 0.008 155);
-    --neutral-foreground: oklch(0.98 0.005 155);
-
+    --balance: var(--blue);
+    --balance-foreground: var(--info-foreground);
+    --positive: var(--green);
+    --positive-foreground: var(--primary-foreground);
+    --negative: var(--red);
+    --negative-foreground: var(--destructive-foreground);
+    --neutral: oklch(from var(--green) 0.58 0.008 h);
+    --neutral-foreground: oklch(from var(--green) 0.98 0.005 h);
     --font-sans: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     --font-serif: 'Playfair Display', Georgia, serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
     --font-display: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-
     --radius: 0.5rem;
-
-    --shadow-color-l: 0.15;
-    --shadow-color-c: 0.02;
-    --shadow-color-h: 155;
-    --shadow-2xs: 0 1px 2px 0 oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.04);
-    --shadow-xs: 0 1px 3px 0 oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.06), 0 1px 2px 0 oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.04);
-    --shadow-sm: 0 2px 4px -1px oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.08), 0 1px 2px 0 oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.06);
-    --shadow: 0 4px 6px -1px oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.1), 0 2px 4px -1px oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.08);
-    --shadow-md: 0 6px 16px -4px oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.12), 0 4px 8px -2px oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.08);
-    --shadow-lg: 0 10px 24px -4px oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.15), 0 8px 16px -4px oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.1);
-    --shadow-xl: 0 16px 32px -4px oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.18), 0 12px 24px -4px oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.12);
-    --shadow-2xl: 0 24px 48px -8px oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.2);
-    --shadow-3xl: 0 32px 64px -12px oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.25);
-    --shadow-inner: inset 0 2px 4px 0 oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.06);
+    --shadow-color: 240 5.1% 10.2%;
+    --shadow-2xs: 0 1px 2px 0 oklch(0.15 0.02 155 / 0.04);
+    --shadow-xs: 0 1px 3px 0 oklch(0.15 0.02 155 / 0.06), 0 1px 2px 0 oklch(0.15 0.02 155 / 0.04);
+    --shadow-sm: 0 2px 4px -1px oklch(0.15 0.02 155 / 0.08), 0 1px 2px 0 oklch(0.15 0.02 155 / 0.06);
+    --shadow: 0 4px 6px -1px oklch(0.15 0.02 155 / 0.1), 0 2px 4px -1px oklch(0.15 0.02 155 / 0.08);
+    --shadow-md: 0 6px 16px -4px oklch(0.15 0.02 155 / 0.12), 0 4px 8px -2px oklch(0.15 0.02 155 / 0.08);
+    --shadow-lg: 0 10px 24px -4px oklch(0.15 0.02 155 / 0.15), 0 8px 16px -4px oklch(0.15 0.02 155 / 0.1);
+    --shadow-xl: 0 16px 32px -4px oklch(0.15 0.02 155 / 0.18), 0 12px 24px -4px oklch(0.15 0.02 155 / 0.12);
+    --shadow-2xl: 0 24px 48px -8px oklch(0.15 0.02 155 / 0.2);
+    --shadow-3xl: 0 32px 64px -12px oklch(0.15 0.02 155 / 0.25);
+    --shadow-inner: inset 0 2px 4px 0 oklch(0.15 0.02 155 / 0.06);
   }
 
   .dark {
-    --background: oklch(0.12 0.015 155);
-    --foreground: oklch(0.94 0.008 155);
-    --card: oklch(0.15 0.018 155);
-    --card-foreground: oklch(0.94 0.008 155);
-    --popover: oklch(0.15 0.018 155);
-    --popover-foreground: oklch(0.94 0.008 155);
+    --green: oklch(0.65 0.18 155);
+    --blue: oklch(0.7 0.15 260);
+    --yellow: oklch(0.78 0.13 80);
+    --red: oklch(0.65 0.16 15);
 
-    --primary: oklch(0.7 0.18 155);
-    --primary-foreground: oklch(0.1 0.02 155);
-    --primary-hover: oklch(0.73 0.17 158);
-    --primary-active: oklch(0.75 0.16 160);
-
-    --secondary: oklch(0.2 0.02 155);
-    --secondary-foreground: oklch(0.9 0.008 155);
-    --secondary-hover: oklch(0.24 0.025 155);
-
-    --muted: oklch(0.22 0.018 155);
-    --muted-foreground: oklch(0.65 0.012 155);
-
-    --accent: oklch(0.78 0.17 140);
-    --accent-foreground: oklch(0.1 0.02 140);
-    --accent-hover: oklch(0.81 0.16 142);
-
-    --destructive: oklch(0.7 0.18 25);
-    --destructive-foreground: oklch(0.12 0.02 25);
-    --destructive-hover: oklch(0.73 0.17 28);
-    --destructive-light: oklch(0.18 0.035 25);
-
-    --success: oklch(0.7 0.16 145);
-    --success-foreground: oklch(0.12 0.02 145);
-    --success-hover: oklch(0.73 0.15 148);
-    --success-light: oklch(0.18 0.035 145);
-
-    --warning: oklch(0.8 0.14 85);
-    --warning-foreground: oklch(0.15 0.02 85);
-    --warning-hover: oklch(0.83 0.13 88);
-    --warning-light: oklch(0.18 0.035 85);
-
-    --info: oklch(0.75 0.13 220);
-    --info-foreground: oklch(0.12 0.02 220);
-    --info-hover: oklch(0.78 0.12 223);
-    --info-light: oklch(0.18 0.035 220);
-
-    --border: oklch(0.25 0.02 155);
-    --border-hover: oklch(0.32 0.025 155);
-    --separator: oklch(0.25 0.02 155);
-    --ring: oklch(0.78 0.17 140 / 0.5);
-
-    --input: oklch(0.18 0.018 155);
-    --input-foreground: oklch(0.94 0.008 155);
-    --input-border: oklch(0.3 0.022 155);
-    --input-placeholder: oklch(0.55 0.01 155);
-
-    --chart-1: oklch(0.75 0.15 258);
-    --chart-2: oklch(0.8 0.15 210);
+    --background: oklch(from var(--green) 0.1 0.015 h);
+    --foreground: oklch(from var(--green) 0.94 0.008 h);
+    --card: oklch(from var(--green) 0.12 0.018 h);
+    --card-foreground: var(--foreground);
+    --popover: oklch(from var(--green) 0.12 0.018 h);
+    --popover-foreground: var(--foreground);
+    --primary: var(--green);
+    --primary-foreground: oklch(from var(--green) 0.1 0.02 h);
+    --secondary: oklch(from var(--green) 0.18 0.02 h);
+    --secondary-foreground: oklch(from var(--green) 0.9 0.008 h);
+    --muted: oklch(from var(--green) 0.18 0.02 h);
+    --muted-foreground: oklch(from var(--green) 0.65 0.012 h);
+    --accent: oklch(from var(--green) 0.22 0.025 h);
+    --accent-foreground: var(--primary);
+    --success: var(--green);
+    --success-foreground: var(--primary-foreground);
+    --warning: var(--yellow);
+    --warning-foreground: oklch(from var(--yellow) 0.12 0.02 h);
+    --destructive: var(--red);
+    --destructive-foreground: oklch(from var(--red) 0.12 0.02 h);
+    --info: var(--blue);
+    --info-foreground: oklch(from var(--blue) 0.12 0.02 h);
+    --border: oklch(from var(--green) 0.25 0.02 h);
+    --input: oklch(from var(--green) 0.15 0.018 h);
+    --input-foreground: var(--foreground);
+    --ring: oklch(from var(--primary) l c h / 0.4);
+    --chart-1: oklch(0.7 0.15 265);
+    --chart-2: oklch(0.65 0.16 140);
     --chart-3: oklch(0.85 0.16 90);
-    --chart-4: oklch(0.7 0.18 25);
-    --chart-5: oklch(0.82 0.18 310);
-    --chart-6: oklch(0.78 0.16 120);
-    --chart-7: oklch(0.8 0.14 180);
-    --chart-8: oklch(0.88 0.12 60);
-    --chart-9: oklch(0.7 0.18 155);
-    --chart-10: oklch(0.9 0.12 30);
-    --chart-other: oklch(0.7 0.012 155);
-    --chart-balance: oklch(0.75 0.15 258);
-
-    --sidebar: oklch(0.13 0.016 155);
-    --sidebar-foreground: oklch(0.94 0.008 155);
+    --chart-4: oklch(0.75 0.18 45);
+    --chart-5: oklch(0.7 0.17 310);
+    --chart-6: oklch(0.7 0.15 190);
+    --chart-7: oklch(0.7 0.19 350);
+    --chart-8: oklch(0.8 0.18 115);
+    --chart-9: oklch(0.75 0.14 230);
+    --chart-10: oklch(0.7 0.1 70);
+    --chart-income: var(--green);
+    --chart-expense: var(--red);
+    --chart-balance: var(--blue);
+    --chart-savings: oklch(0.58 0.16 145);
+    --chart-investment: var(--yellow);
+    --chart-debt: var(--red);
+    --chart-other: oklch(from var(--green) 0.65 0.012 h);
+    --sidebar: oklch(from var(--green) 0.1 0.016 h);
+    --sidebar-foreground: var(--foreground);
     --sidebar-primary: var(--primary);
     --sidebar-primary-foreground: var(--primary-foreground);
-    --sidebar-accent: oklch(0.2 0.02 155);
+    --sidebar-accent: oklch(from var(--green) 0.18 0.02 h);
     --sidebar-accent-foreground: var(--primary);
-    --sidebar-border: oklch(0.25 0.02 155);
+    --sidebar-border: oklch(from var(--green) 0.25 0.02 h);
     --sidebar-ring: var(--ring);
-
-    --navigation: oklch(0.13 0.016 155);
-    --navigation-foreground: oklch(0.94 0.008 155);
-    --navigation-border: oklch(0.22 0.018 155);
-
-    --tooltip: oklch(0.92 0.008 155);
-    --tooltip-foreground: oklch(0.15 0.018 155);
-
+    --navigation: oklch(from var(--green) 0.1 0.016 h);
+    --navigation-foreground: var(--foreground);
+    --navigation-border: oklch(from var(--green) 0.22 0.018 h);
+    --tooltip: oklch(from var(--green) 0.92 0.008 h);
+    --tooltip-foreground: oklch(from var(--green) 0.15 0.018 h);
     --overlay: oklch(0 0 0 / 0.8);
-    --overlay-foreground: oklch(0.94 0.008 155);
-
-    --brand: oklch(0.65 0.21 144);
-    --brand-foreground: oklch(0.1 0.02 155);
-
-    --ghost-foreground: oklch(0.9 0.008 155);
-    --ghost-hover: oklch(0.2 0.018 155);
-    --outline-foreground: oklch(0.9 0.008 155);
-    --outline-hover: oklch(0.2 0.018 155);
-
-    --balance: oklch(0.75 0.13 220);
-    --balance-foreground: oklch(0.95 0.02 262);
-    --balance-light: oklch(0.15 0.023 250);
-
-    --shadow-color-l: 0.05;
-    --shadow-color-c: 0.01;
-    --shadow-color-h: 155;
-    --shadow-2xs: 0 1px 2px 0 oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.2);
-    --shadow-xs: 0 1px 3px 0 oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.25), 0 1px 2px 0 oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.2);
-    --shadow-sm: 0 2px 4px -1px oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.3), 0 1px 2px 0 oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.25);
-    --shadow: 0 4px 6px -1px oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.35), 0 2px 4px -1px oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.3);
-    --shadow-md: 0 6px 16px -4px oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.4), 0 4px 8px -2px oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.35);
-    --shadow-lg: 0 10px 24px -4px oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.45), 0 8px 16px -4px oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.4);
-    --shadow-xl: 0 16px 32px -4px oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.5), 0 12px 24px -4px oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.45);
-    --shadow-2xl: 0 24px 48px -8px oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.6);
-    --shadow-3xl: 0 32px 64px -12px oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.7);
-    --shadow-inner: inset 0 2px 4px 0 oklch(var(--shadow-color-l) var(--shadow-color-c) var(--shadow-color-h) / 0.25);
+    --overlay-foreground: var(--foreground);
+    --separator: oklch(from var(--green) 0.25 0.02 h);
+    --brand: var(--green);
+    --brand-foreground: var(--primary-foreground);
+    --error: var(--red);
+    --error-foreground: var(--destructive-foreground);
+    --danger: var(--red);
+    --danger-foreground: var(--destructive-foreground);
+    --ghost: transparent;
+    --ghost-foreground: oklch(from var(--green) 0.9 0.008 h);
+    --ghost-hover: oklch(from var(--green) 0.15 0.018 h);
+    --outline: transparent;
+    --outline-foreground: oklch(from var(--green) 0.9 0.008 h);
+    --outline-hover: oklch(from var(--green) 0.15 0.018 h);
+    --link: var(--primary);
+    --link-foreground: var(--primary);
+    --link-hover: oklch(from var(--primary) calc(l + 0.05) c h);
+    --income: var(--green);
+    --income-foreground: var(--primary-foreground);
+    --expense: var(--red);
+    --expense-foreground: var(--destructive-foreground);
+    --balance: var(--blue);
+    --balance-foreground: var(--info-foreground);
+    --positive: var(--green);
+    --positive-foreground: var(--primary-foreground);
+    --negative: var(--red);
+    --negative-foreground: var(--destructive-foreground);
+    --neutral: oklch(from var(--green) 0.65 0.012 h);
+    --neutral-foreground: oklch(from var(--green) 0.1 0.02 h);
+    --shadow-2xs: 0 1px 2px 0 oklch(0 0 0 / 0.2);
+    --shadow-xs: 0 1px 3px 0 oklch(0 0 0 / 0.25), 0 1px 2px 0 oklch(0 0 0 / 0.2);
+    --shadow-sm: 0 2px 4px -1px oklch(0 0 0 / 0.3), 0 1px 2px 0 oklch(0 0 0 / 0.25);
+    --shadow: 0 4px 6px -1px oklch(0 0 0 / 0.35), 0 2px 4px -1px oklch(0 0 0 / 0.3);
+    --shadow-md: 0 6px 16px -4px oklch(0 0 0 / 0.4), 0 4px 8px -2px oklch(0 0 0 / 0.35);
+    --shadow-lg: 0 10px 24px -4px oklch(0 0 0 / 0.45), 0 8px 16px -4px oklch(0 0 0 / 0.4);
+    --shadow-xl: 0 16px 32px -4px oklch(0 0 0 / 0.5), 0 12px 24px -4px oklch(0 0 0 / 0.45);
+    --shadow-2xl: 0 24px 48px -8px oklch(0 0 0 / 0.6);
+    --shadow-3xl: 0 32px 64px -12px oklch(0 0 0 / 0.7);
+    --shadow-inner: inset 0 2px 4px 0 oklch(0 0 0 / 0.25);
   }
 }
 
@@ -467,17 +526,17 @@
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--border);
+    border-color: hsl(var(--border));
   }
 
   * {
-    @apply border-border;
-    outline-color: var(--ring);
+    @apply border-border outline-ring/50;
   }
 
   body {
-    background-color: var(--background);
-    color: var(--foreground);
+    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
     font-feature-settings: 'rlig' 1, 'calt' 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -497,9 +556,7 @@
   }
 
   .hero-gradient {
-    background: linear-gradient(160deg,
-        oklch(from var(--background) l c h / 0) 0%,
-        oklch(from var(--primary) l c h / 0.15) 100%);
+    background: linear-gradient(160deg, oklch(from var(--background) l c h / 0) 0%, oklch(from var(--primary) l c h / 0.15) 100%);
   }
 
   .scrollbar {
@@ -522,8 +579,7 @@
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background-color: var(--muted-foreground);
-    opacity: 0.8;
+    @apply bg-muted-foreground/80;
   }
 
   ::-webkit-scrollbar-button {
@@ -545,7 +601,7 @@
   }
 
   *::selection {
-    background-color: oklch(from var(--primary) l c h / 0.2);
+    @apply bg-primary/20;
   }
 
   .hero-text-glow {
@@ -557,9 +613,9 @@
   }
 
   .glassmorphism-nav {
-    background-color: oklch(from var(--card) l c h / 0.6);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background-color: hsl(var(--card) / 0.6);
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
   }
 
   .perspective {
@@ -569,13 +625,31 @@
   .transform-style-3d {
     transform-style: preserve-3d;
   }
+
+  .ai-reply-anim.animate-enter {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+    transition-delay: 1s;
+  }
+
+  .ai-reply-anim {
+    opacity: 0;
+    transform: translateY(10px);
+  }
 }
 
+.recharts-tooltip-wrapper:focus,
 .recharts-tooltip-wrapper:focus-visible,
+.recharts-wrapper:focus,
 .recharts-wrapper:focus-visible,
+.recharts-surface:focus,
 .recharts-surface:focus-visible,
+.recharts-pie-sector:focus,
 .recharts-pie-sector:focus-visible,
+.recharts-cell:focus,
 .recharts-cell:focus-visible,
+.recharts-active-shape:focus,
 .recharts-active-shape:focus-visible {
   outline: none !important;
 }
@@ -588,7 +662,7 @@
 
 @keyframes accordion-down {
   from {
-    height: 0;
+    height: 0px;
   }
 
   to {
@@ -602,6 +676,6 @@
   }
 
   to {
-    height: 0;
+    height: 0px;
   }
 }

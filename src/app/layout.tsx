@@ -80,7 +80,11 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  viewportFit: 'cover'
+  viewportFit: 'cover',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: 'oklch(98.321% 0.00739 152.648)' },
+    { media: '(prefers-color-scheme: dark)', color: 'oklch(0.08 0.015 155)' }
+  ]
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
