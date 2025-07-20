@@ -14,21 +14,6 @@ export const transactionGetAll = (params: any): Promise<TransactionsResponse> =>
 export const transactionGetById = (id: string): Promise<ApiResponse<TransactionWithContext>> =>
   apiFetch(`/transactions/${id}`, 'GET', undefined, undefined);
 
-export const transactionGetRecurringAll = (params: any) =>
-  apiFetch('/transactions/recurring', 'GET', undefined, { params });
-
-export const transactionGetRecurringById = (id: string) =>
-  apiFetch(`/transactions/recurring/${id}`, 'GET');
-
-export const transactionUpdateRecurring = (id: string, body: any) =>
-  apiFetch(`/transactions/recurring/${id}`, 'PUT', body, undefined);
-
-export const transactionDeleteRecurring = (id: string) =>
-  apiFetch(`/transactions/recurring/${id}`, 'DELETE');
-
-export const transactionSkipRecurring = (id: string) =>
-  apiFetch(`/transactions/recurring/${id}/skip`, 'POST');
-
 export const transactionUpdate = (id: string, body: any) =>
   apiFetch(`/transactions/${id}`, 'PUT', body, undefined);
 
