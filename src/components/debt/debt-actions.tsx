@@ -1,5 +1,5 @@
 'use client';
-import { DebtWithDetails, User } from '@/lib/types';
+import { DebtWithDetails } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { debtsMarkAsPaid, apiDeleteDebt } from '@/lib/endpoints/debt';
 import { useMutation } from '@tanstack/react-query';

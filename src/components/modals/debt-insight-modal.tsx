@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { format, parseISO, isAfter } from 'date-fns';
+import { format, parseISO, isAfter, addDays, addWeeks, addMonths, addYears } from 'date-fns';
 import {
   CheckCircle,
   X,
@@ -11,11 +11,10 @@ import {
   IndianRupee,
   User,
   AlertTriangle,
-  Calendar,
   Percent,
   type LucideProps
 } from 'lucide-react';
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
+import { ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, Tooltip } from 'recharts';
 
 import { DebtWithDetails, Payment } from '@/lib/types';
 import { getDebtSchedule } from '@/lib/endpoints/debt';
@@ -36,6 +35,23 @@ interface DebtInsightModalProps {
   onOpenChange: (open: boolean) => void;
   debt: DebtWithDetails;
 }
+
+const calculateFinalDueDate = (debt: DebtWithDetails['debts']): Date | null => {
+  if (!debt.startDate || !debt.termLength || !debt.termUnit) return null;
+  const startDate = new Date(debt.startDate);
+  switch (debt.termUnit) {
+    case 'days':
+      return addDays(startDate, debt.termLength);
+    case 'weeks':
+      return addWeeks(startDate, debt.termLength);
+    case 'months':
+      return addMonths(startDate, debt.termLength);
+    case 'years':
+      return addYears(startDate, debt.termLength);
+    default:
+      return null;
+  }
+};
 
 const StatusBadge = React.memo(
   ({
@@ -133,21 +149,8 @@ const CustomTooltip = React.memo(({ active, payload }: any) => {
 CustomTooltip.displayName = 'CustomTooltip';
 
 const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChange, debt }) => {
-  const resolvedChartColors = useMemo(() => {
-    if (typeof window === 'undefined') {
-      return {
-        'Principal Paid': '#8884d8',
-        'Interest Paid': '#82ca9d',
-        'Remaining Principal': '#ffc658'
-      };
-    }
-    const style = getComputedStyle(document.documentElement);
-    return {
-      'Principal Paid': style.getPropertyValue('--chart-1').trim(),
-      'Interest Paid': style.getPropertyValue('--chart-2').trim(),
-      'Remaining Principal': style.getPropertyValue('--chart-3').trim()
-    };
-  }, []);
+  const finalDueDate = useMemo(() => calculateFinalDueDate(debt.debts), [debt.debts]);
+  const isOverdue = !debt.debts.isPaid && finalDueDate && isAfter(new Date(), finalDueDate);
 
   const {
     data: paymentSchedule,
@@ -158,7 +161,7 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
     queryKey: ['debtSchedule', debt.debts.id],
     queryFn: async () => {
       const data = await getDebtSchedule(debt.debts.id);
-      return data?.map((p) => ({ ...p, date: parseISO(p.date as any) })) ?? [];
+      return data?.map((p: any) => ({ ...p, date: parseISO(p.date) })) ?? [];
     },
     enabled: isOpen && !!debt.debts.id,
     staleTime: 1000 * 60 * 5,
@@ -168,11 +171,12 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const data = useMemo(() => {
+    const totalPrincipal = debt.debts.amount || 0;
     const calculatedTotalInterest =
       paymentSchedule?.reduce((sum, p) => sum + p.interestForPeriod, 0) || 0;
-    const totalPrincipal = debt.debts.amount || 0;
     const totalPayable = totalPrincipal + calculatedTotalInterest;
     const selected = paymentSchedule?.[selectedIndex] || null;
+
     const breakdownData = selected
       ? {
           principalPaid: selected.cumulativePrincipalPaid,
@@ -184,26 +188,29 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
           interestPaid: debt.debts.isPaid ? calculatedTotalInterest : 0,
           remainingPrincipal: debt.debts.isPaid ? 0 : totalPrincipal
         };
+
     const chartData = [
       {
         name: 'Principal Paid',
         value: breakdownData.principalPaid,
-        color: resolvedChartColors['Principal Paid']
+        color: 'var(--chart-1)'
       },
       {
         name: 'Interest Paid',
         value: breakdownData.interestPaid,
-        color: resolvedChartColors['Interest Paid']
+        color: 'var(--chart-2)'
       },
       {
         name: 'Remaining Principal',
         value: breakdownData.remainingPrincipal,
-        color: resolvedChartColors['Remaining Principal']
+        color: 'var(--chart-3)'
       }
     ].filter((item) => item.value > 0);
+
     const settledPayments = paymentSchedule?.filter((p) => p.status === 'settled').length || 0;
     const totalPayments = paymentSchedule?.length || 0;
     const progressPercentage = totalPayments > 0 ? (settledPayments / totalPayments) * 100 : 0;
+
     return {
       breakdownData,
       chartData,
@@ -215,39 +222,7 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
         percentage: progressPercentage
       }
     };
-  }, [selectedIndex, paymentSchedule, debt.debts, resolvedChartColors]);
-
-  const isOverdue =
-    !debt.debts.isPaid && debt.debts.dueDate && isAfter(new Date(), parseISO(debt.debts.dueDate));
-
-  const metrics = [
-    {
-      title: 'Principal Amount',
-      value: formatCurrency(debt.debts.amount || 0),
-      icon: IndianRupee,
-      subValue: 'Original loan amount'
-    },
-    {
-      title: 'Interest Rate',
-      value: `${debt.debts.percentage}%`,
-      subValue: `${debt.debts.interestType} interest`,
-      icon: Percent
-    },
-    {
-      title: 'Total Interest',
-      value: formatCurrency(data.totalInterest),
-      icon: TrendingUp,
-      isLoading: isLoading,
-      subValue: 'Over the loan term'
-    },
-    {
-      title: 'Total Payable',
-      value: formatCurrency(data.totalPayable),
-      icon: IndianRupee,
-      isLoading: isLoading,
-      subValue: 'Principal + Interest'
-    }
-  ];
+  }, [selectedIndex, paymentSchedule, debt.debts]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -283,7 +258,7 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
               <h3 className='mb-2 text-base font-semibold'>Payment Breakdown</h3>
               <div className='relative'>
                 <ResponsiveContainer width='100%' height={240}>
-                  <PieChart>
+                  <RechartsPieChart>
                     <Tooltip cursor={false} content={<CustomTooltip />} />
                     <Pie
                       data={data.chartData}
@@ -305,7 +280,7 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                         />
                       ))}
                     </Pie>
-                  </PieChart>
+                  </RechartsPieChart>
                 </ResponsiveContainer>
                 <div className='pointer-events-none absolute inset-0 flex flex-col items-center justify-center'>
                   <span className='text-xl font-bold tracking-tight'>
@@ -330,25 +305,6 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                 </div>
               ))}
             </div>
-
-            <div className='mt-6 space-y-3 border-t pt-6'>
-              <div className='flex justify-between text-sm'>
-                <span className='text-muted-foreground'>Duration</span>
-                <span className='font-medium capitalize'>{debt.debts.duration}</span>
-              </div>
-              <div className='flex justify-between text-sm'>
-                <span className='text-muted-foreground'>Frequency</span>
-                <span className='font-medium capitalize'>{debt.debts.frequency}</span>
-              </div>
-              {debt.debts.dueDate && (
-                <div className='flex justify-between text-sm'>
-                  <span className='text-muted-foreground'>Due Date</span>
-                  <span className='font-medium'>
-                    {format(parseISO(debt.debts.dueDate), 'MMM d, yyyy')}
-                  </span>
-                </div>
-              )}
-            </div>
           </aside>
 
           <main className='flex min-w-0 flex-1 flex-col overflow-hidden'>
@@ -363,16 +319,34 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                 className='min-w-0 flex-1 space-y-6 overflow-y-auto p-6'
               >
                 <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-                  {metrics.map((metric) => (
-                    <MetricCard
-                      key={metric.title}
-                      title={metric.title}
-                      value={metric.value}
-                      icon={metric.icon}
-                      isLoading={metric.isLoading ?? false}
-                      subValue={metric.subValue}
-                    />
-                  ))}
+                  <MetricCard
+                    title='Principal Amount'
+                    value={formatCurrency(debt.debts.amount || 0)}
+                    icon={IndianRupee}
+                    isLoading={isLoading}
+                    subValue='Original loan amount'
+                  />
+                  <MetricCard
+                    title='Interest Rate'
+                    value={`${debt.debts.interestRate}%`}
+                    subValue={`${debt.debts.interestType} interest`}
+                    icon={Percent}
+                    isLoading={isLoading}
+                  />
+                  <MetricCard
+                    title='Total Interest'
+                    value={formatCurrency(data.totalInterest)}
+                    icon={TrendingUp}
+                    isLoading={isLoading}
+                    subValue='Over the loan term'
+                  />
+                  <MetricCard
+                    title='Total Payable'
+                    value={formatCurrency(data.totalPayable)}
+                    icon={IndianRupee}
+                    isLoading={isLoading}
+                    subValue='Principal + Interest'
+                  />
                 </div>
 
                 {isLoading ? (
@@ -444,30 +418,30 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                     <CardContent>
                       <div className='grid gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-4'>
                         <div>
-                          <p className='text-muted-foreground text-sm font-medium'>Created On</p>
+                          <p className='text-muted-foreground text-sm font-medium'>Start Date</p>
                           <p className='font-semibold'>
-                            {debt.debts.createdAt
-                              ? format(parseISO(debt.debts.createdAt), 'MMM d, yyyy')
-                              : 'N/A'}
+                            {format(new Date(debt.debts.startDate), 'MMM d, yyyy')}
                           </p>
                         </div>
                         <div>
-                          <p className='text-muted-foreground text-sm font-medium'>Due Date</p>
+                          <p className='text-muted-foreground text-sm font-medium'>
+                            Final Due Date
+                          </p>
                           <p className='font-semibold'>
-                            {debt.debts.dueDate
-                              ? format(parseISO(debt.debts.dueDate), 'MMM d, yyyy')
-                              : 'N/A'}
+                            {finalDueDate ? format(finalDueDate, 'MMM d, yyyy') : 'N/A'}
                           </p>
                         </div>
                         <div>
                           <p className='text-muted-foreground text-sm font-medium'>
                             Payment Frequency
                           </p>
-                          <p className='font-semibold capitalize'>{debt.debts.frequency}</p>
+                          <p className='font-semibold capitalize'>{debt.debts.paymentFrequency}</p>
                         </div>
                         <div>
-                          <p className='text-muted-foreground text-sm font-medium'>Loan Duration</p>
-                          <p className='font-semibold capitalize'>{debt.debts.duration}</p>
+                          <p className='text-muted-foreground text-sm font-medium'>Loan Term</p>
+                          <p className='font-semibold capitalize'>
+                            {debt.debts.termLength} {debt.debts.termUnit}
+                          </p>
                         </div>
                       </div>
                     </CardContent>

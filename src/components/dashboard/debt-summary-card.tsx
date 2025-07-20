@@ -42,9 +42,10 @@ export const DebtSummaryCard: React.FC<{
   const numberOfDebts = data?.data?.length ?? 0;
 
   const nextDueDebt = data?.data
-    ?.filter((d) => d.debts?.dueDate)
+    ?.filter((d) => d.debts?.finalDueDate)
     .sort(
-      (a, b) => new Date(a.debts!.dueDate!).getTime() - new Date(b.debts!.dueDate!).getTime()
+      (a, b) =>
+        new Date(a.debts!.finalDueDate!).getTime() - new Date(b.debts!.finalDueDate!).getTime()
     )[0];
 
   const getDueDateInfo = (dueDateStr?: string): string | null => {
@@ -92,7 +93,7 @@ export const DebtSummaryCard: React.FC<{
                         {formatCurrency(nextDueDebt.debts.amount)}
                       </span>
                       <span className='text-muted-foreground text-xs'>
-                        {getDueDateInfo(nextDueDebt.debts.dueDate)}
+                        {getDueDateInfo(nextDueDebt.debts.finalDueDate)}
                       </span>
                     </div>
                   </div>

@@ -404,11 +404,15 @@
     --shadow-color: 240 5.1% 10.2%;
     --shadow-2xs: 0 1px 2px 0 oklch(0.15 0.02 155 / 0.04);
     --shadow-xs: 0 1px 3px 0 oklch(0.15 0.02 155 / 0.06), 0 1px 2px 0 oklch(0.15 0.02 155 / 0.04);
-    --shadow-sm: 0 2px 4px -1px oklch(0.15 0.02 155 / 0.08), 0 1px 2px 0 oklch(0.15 0.02 155 / 0.06);
+    --shadow-sm:
+      0 2px 4px -1px oklch(0.15 0.02 155 / 0.08), 0 1px 2px 0 oklch(0.15 0.02 155 / 0.06);
     --shadow: 0 4px 6px -1px oklch(0.15 0.02 155 / 0.1), 0 2px 4px -1px oklch(0.15 0.02 155 / 0.08);
-    --shadow-md: 0 6px 16px -4px oklch(0.15 0.02 155 / 0.12), 0 4px 8px -2px oklch(0.15 0.02 155 / 0.08);
-    --shadow-lg: 0 10px 24px -4px oklch(0.15 0.02 155 / 0.15), 0 8px 16px -4px oklch(0.15 0.02 155 / 0.1);
-    --shadow-xl: 0 16px 32px -4px oklch(0.15 0.02 155 / 0.18), 0 12px 24px -4px oklch(0.15 0.02 155 / 0.12);
+    --shadow-md:
+      0 6px 16px -4px oklch(0.15 0.02 155 / 0.12), 0 4px 8px -2px oklch(0.15 0.02 155 / 0.08);
+    --shadow-lg:
+      0 10px 24px -4px oklch(0.15 0.02 155 / 0.15), 0 8px 16px -4px oklch(0.15 0.02 155 / 0.1);
+    --shadow-xl:
+      0 16px 32px -4px oklch(0.15 0.02 155 / 0.18), 0 12px 24px -4px oklch(0.15 0.02 155 / 0.12);
     --shadow-2xl: 0 24px 48px -8px oklch(0.15 0.02 155 / 0.2);
     --shadow-3xl: 0 32px 64px -12px oklch(0.15 0.02 155 / 0.25);
     --shadow-inner: inset 0 2px 4px 0 oklch(0.15 0.02 155 / 0.06);
@@ -520,7 +524,6 @@
 }
 
 @layer base {
-
   *,
   ::after,
   ::before,
@@ -537,7 +540,9 @@
     @apply bg-background text-foreground;
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
-    font-feature-settings: 'rlig' 1, 'calt' 1;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -556,7 +561,11 @@
   }
 
   .hero-gradient {
-    background: linear-gradient(160deg, oklch(from var(--background) l c h / 0) 0%, oklch(from var(--primary) l c h / 0.15) 100%);
+    background: linear-gradient(
+      160deg,
+      oklch(from var(--background) l c h / 0) 0%,
+      oklch(from var(--primary) l c h / 0.15) 100%
+    );
   }
 
   .scrollbar {
@@ -629,7 +638,9 @@
   .ai-reply-anim.animate-enter {
     opacity: 1;
     transform: translateY(0);
-    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+    transition:
+      opacity 0.3s ease-out,
+      transform 0.3s ease-out;
     transition-delay: 1s;
   }
 

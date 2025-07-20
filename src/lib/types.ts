@@ -61,20 +61,20 @@ export type CategoryListResponse = ApiResponse<CategoryListData>;
 export interface Debts {
   id: string;
   amount: number;
-  premiumAmount: number;
-  createdBy: string;
-  description?: string;
-  createdAt: string;
-  updatedAt?: string;
-  dueDate?: string;
-  duration?: string;
-  percentage: number;
-  frequency?: string;
+  description?: string | null;
+  interestRate: number;
+  interestType: 'simple' | 'compound';
+  startDate: string;
+  termLength: number;
+  termUnit: 'days' | 'weeks' | 'months' | 'years';
+  paymentFrequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
   isPaid: boolean;
+  type: 'given' | 'taken';
   userId: string;
-  type: string;
-  interestType: string;
-  account?: string;
+  createdBy: string;
+  account?: string | null;
+  createdAt: string;
+  updatedAt?: string | null;
 }
 
 // ImportData Interface
@@ -377,7 +377,7 @@ export interface InvestmentAccountSummary {
 }
 
 export interface DebtWithDetails {
-  debts: Debts;
+  debts: Debts & { finalDueDate?: string };
   account: Account | null;
   user: User | null;
 }
@@ -425,17 +425,14 @@ export interface AiProcessPdfResponse {
 }
 
 export interface Payment {
-  id: string;
   date: Date;
   status: 'settled' | 'due' | 'upcoming';
   installmentAmount: number;
   principalForPeriod: number;
   interestForPeriod: number;
+  remainingPrincipal: number;
   cumulativePrincipalPaid: number;
   cumulativeInterestPaid: number;
-  remainingPrincipal: number;
-  totalPrincipalPaid?: number;
-  totalInterestPaid?: number;
 }
 
 export interface InvestmentPerformanceData {

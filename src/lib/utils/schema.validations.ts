@@ -1,25 +1,26 @@
 import * as z from 'zod';
 
 export const interestSchema = z.object({
-  debt: z.string(),
-  amount: z.string().min(1, { message: 'Amount is required' }),
-  type: z.enum(['simple', 'compound']),
-  percentage: z.string().min(1, { message: 'Percentage is required' }),
-  frequency: z.string().min(1, { message: 'Frequency is required' }),
-  duration: z.enum(['day', 'week', 'month', 'year'])
+  amount: z.number().positive(),
+  interestRate: z.number().min(0),
+  termLength: z.number().int().positive(),
+  termUnit: z.enum(['days', 'weeks', 'months', 'years']),
+  interestType: z.enum(['simple', 'compound']),
+  compoundingFrequency: z.number().int().positive().optional()
 });
 
 export const debtSchema = z.object({
-  user: z.string(),
-  amount: z.string().min(1, { message: 'Amount is required' }),
-  premiumAmount: z.string().optional(),
-  description: z.string().min(1, { message: 'Description is required' }),
-  dueDate: z.string().optional(),
-  type: z.enum(['given', 'taken']),
+  amount: z.number().positive('Amount must be positive.'),
+  description: z.string().max(255).optional(),
+  interestRate: z.number().min(0).default(0),
   interestType: z.enum(['simple', 'compound']),
-  account: z.string().min(1, { message: 'Account is required' }),
-  percentage: z.string().optional(),
-  frequency: z.string().optional()
+  startDate: z.string().datetime().optional(),
+  termLength: z.number().int().positive('Term length must be a positive integer.'),
+  termUnit: z.enum(['days', 'weeks', 'months', 'years']),
+  paymentFrequency: z.enum(['daily', 'weekly', 'monthly', 'yearly']),
+  type: z.enum(['given', 'taken']),
+  user: z.string().uuid('Involved user ID must be a valid UUID.'),
+  account: z.string().uuid('Associated account ID must be a valid UUID.')
 });
 
 export type InterestFormSchema = z.infer<typeof interestSchema>;

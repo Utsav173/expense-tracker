@@ -39,13 +39,7 @@ export const apiCreateDebt = (body: any): Promise<ApiResponse<{ message: string;
   apiFetch('/interest/debts', 'POST', body);
 
 export const apiUpdateDebt = (id: string, body: any): Promise<ApiResponse<{ message: string }>> => {
-  const payload = {
-    description: body.description,
-    duration: body.duration,
-    frequency: body.frequency
-  };
-
-  return apiFetch(`/interest/debts/${id}`, 'PUT', payload);
+  return apiFetch(`/interest/debts/${id}`, 'PUT', body);
 };
 
 export const apiDeleteDebt = (id: string): Promise<ApiResponse<{ message: string }>> =>

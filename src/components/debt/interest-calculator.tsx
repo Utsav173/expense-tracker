@@ -4,7 +4,6 @@ import { ApiResponse } from '@/lib/types';
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -12,33 +11,53 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Card, CardContent } from '../ui/card';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { interestSchema, type InterestFormSchema } from '@/lib/utils/schema.validations';
+import { interestSchema } from '@/lib/utils/schema.validations';
 import { useMutation } from '@tanstack/react-query';
 import { interestCalculate } from '@/lib/endpoints/debt';
 import { useToast } from '@/lib/hooks/useToast';
+import { z } from 'zod';
+import { NumericInput } from '../ui/numeric-input';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from '@/components/ui/form';
+import { Input } from '../ui/input';
+import { formatCurrency } from '@/lib/utils';
+import { Loader2, ArrowRight } from 'lucide-react';
+
+type InterestFormSchema = z.infer<typeof interestSchema>;
 
 interface InterestResponse {
   interest: number;
   totalAmount: number;
 }
 
-const InterestCalculator = () => {
+interface InterestCalculatorProps {
+  onUseCalculation?: (data: InterestFormSchema) => void;
+}
+
+const InterestCalculator: React.FC<InterestCalculatorProps> = ({ onUseCalculation }) => {
   const [result, setResult] = useState<{ interest: number; totalAmount: number } | null>(null);
   const { showError } = useToast();
 
   const form = useForm<InterestFormSchema>({
     resolver: zodResolver(interestSchema),
     defaultValues: {
-      debt: '',
-      amount: '',
-      type: 'simple',
-      percentage: '',
-      frequency: '',
-      duration: 'year'
-    }
+      amount: 0,
+      interestType: 'simple',
+      interestRate: 0,
+      termLength: 1,
+      termUnit: 'years',
+      compoundingFrequency: 12
+    },
+    mode: 'onChange'
   });
 
   const calculateInterestMutation = useMutation<
@@ -63,116 +82,169 @@ const InterestCalculator = () => {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Interest Calculator</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={form.handleSubmit(handleCalculate)} className='space-y-4'>
-          <div>
-            <label htmlFor='amount' className='block text-sm font-medium text-gray-700'>
-              Principal Amount
-            </label>
-            <Input
-              type='text'
-              placeholder='Enter amount'
-              {...form.register('amount')}
-              className='mt-1 w-full'
-            />
-            {form.formState.errors.amount && (
-              <p className='mt-1 text-sm text-red-500'>{form.formState.errors.amount.message}</p>
-            )}
-          </div>
-
-          <div>
-            <label htmlFor='percentage' className='block text-sm font-medium text-gray-700'>
-              Interest Rate (%)
-            </label>
-            <Input
-              type='text'
-              placeholder='Enter interest rate'
-              {...form.register('percentage')}
-              className='mt-1 w-full'
-            />
-            {form.formState.errors.percentage && (
-              <p className='mt-1 text-sm text-red-500'>
-                {form.formState.errors.percentage.message}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label htmlFor='type' className='block text-sm font-medium text-gray-700'>
-              Interest Type
-            </label>
-            <Select
-              onValueChange={(value) => form.setValue('type', value as 'simple' | 'compound')}
-              value={form.watch('type')}
-            >
-              <SelectTrigger className='mt-1 w-full'>
-                <SelectValue placeholder='Select type' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='simple'>Simple</SelectItem>
-                <SelectItem value='compound'>Compound</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {form.watch('type') === 'compound' && (
-            <div>
-              <label htmlFor='frequency' className='block text-sm font-medium text-gray-700'>
-                Compounding Frequency (Yearly)
-              </label>
-              <Input
-                type='number'
-                placeholder='Enter compounding frequency'
-                {...form.register('frequency')}
-                className='mt-1 w-full'
+    <Card className='border-none shadow-none'>
+      <CardContent className='p-0'>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleCalculate)} className='space-y-4'>
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+              <FormField
+                control={form.control}
+                name='amount'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Principal Amount</FormLabel>
+                    <FormControl>
+                      <NumericInput
+                        placeholder='Enter amount'
+                        onValueChange={({ value }: { value: string }) =>
+                          field.onChange(Number(value))
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {form.formState.errors.frequency && (
-                <p className='mt-1 text-sm text-red-500'>
-                  {form.formState.errors.frequency.message}
-                </p>
+              <FormField
+                control={form.control}
+                name='interestRate'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Interest Rate (% p.a.)</FormLabel>
+                    <FormControl>
+                      <NumericInput
+                        placeholder='Enter interest rate'
+                        onValueChange={({ value }: { value: string }) =>
+                          field.onChange(Number(value))
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+              <FormField
+                control={form.control}
+                name='termLength'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Term Length</FormLabel>
+                    <FormControl>
+                      <Input
+                        type='number'
+                        placeholder='e.g., 2'
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='termUnit'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Term Unit</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Select unit' />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value='days'>Days</SelectItem>
+                        <SelectItem value='weeks'>Weeks</SelectItem>
+                        <SelectItem value='months'>Months</SelectItem>
+                        <SelectItem value='years'>Years</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+              <FormField
+                control={form.control}
+                name='interestType'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Interest Type</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Select type' />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value='simple'>Simple</SelectItem>
+                        <SelectItem value='compound'>Compound</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {form.watch('interestType') === 'compound' && (
+                <FormField
+                  control={form.control}
+                  name='compoundingFrequency'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Compounds per Year</FormLabel>
+                      <FormControl>
+                        <Input
+                          type='number'
+                          placeholder='e.g., 12 for monthly'
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               )}
             </div>
-          )}
 
-          <div>
-            <label htmlFor='duration' className='block text-sm font-medium text-gray-700'>
-              Duration
-            </label>
-            <Select
-              onValueChange={(value) =>
-                form.setValue('duration', value as 'day' | 'week' | 'month' | 'year')
-              }
-              value={form.watch('duration')}
-            >
-              <SelectTrigger className='mt-1 w-full'>
-                <SelectValue placeholder='Select duration' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='day'>Day</SelectItem>
-                <SelectItem value='week'>Week</SelectItem>
-                <SelectItem value='month'>Month</SelectItem>
-                <SelectItem value='year'>Year</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <Button type='submit' disabled={calculateInterestMutation.isPending}>
-            {calculateInterestMutation.isPending ? 'Calculating...' : 'Calculate Interest'}
-          </Button>
-        </form>
+            <Button type='submit' disabled={calculateInterestMutation.isPending} className='w-full'>
+              {calculateInterestMutation.isPending ? (
+                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+              ) : null}
+              {calculateInterestMutation.isPending ? 'Calculating...' : 'Calculate Interest'}
+            </Button>
+          </form>
+        </Form>
 
         {result && (
-          <div className='mt-4'>
-            <p>
-              <strong>Interest:</strong> {result.interest.toFixed(2)}
-            </p>
-            <p>
-              <strong>Total Amount:</strong> {result.totalAmount.toFixed(2)}
-            </p>
+          <div className='bg-muted/50 mt-6 space-y-3 rounded-lg border p-4'>
+            <h3 className='text-lg font-semibold'>Calculation Result</h3>
+            <div className='flex justify-between'>
+              <span className='text-muted-foreground'>Total Interest:</span>
+              <span className='text-primary font-bold'>{formatCurrency(result.interest)}</span>
+            </div>
+            <div className='flex justify-between'>
+              <span className='text-muted-foreground'>Total Amount Payable:</span>
+              <span className='text-foreground font-bold'>
+                {formatCurrency(result.totalAmount)}
+              </span>
+            </div>
+            {onUseCalculation && (
+              <Button
+                variant='link'
+                className='h-auto p-0 text-sm'
+                onClick={() => onUseCalculation(form.getValues())}
+              >
+                Create Debt from this Calculation <ArrowRight className='ml-1 h-4 w-4' />
+              </Button>
+            )}
           </div>
         )}
       </CardContent>
