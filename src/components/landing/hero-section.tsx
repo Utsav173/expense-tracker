@@ -8,10 +8,14 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { Mockup, MockupFrame } from '../ui/mockup';
+import Image from 'next/image';
+import { Glow } from '../ui/glow';
+import { useTheme } from 'next-themes';
 
 const HeroSection = () => {
   const mainRef = useRef<HTMLDivElement>(null);
-
+  const { theme } = useTheme();
   useGSAP(
     () => {
       gsap
@@ -59,8 +63,9 @@ const HeroSection = () => {
   return (
     <section
       ref={mainRef}
+      // CHANGE IS ON THIS LINE: added 'flex-col' and adjusted padding
       className={cn(
-        'hero-content-wrapper hero-gradient relative flex min-h-screen items-center justify-center overflow-hidden pt-32 pb-24 text-center',
+        'hero-content-wrapper hero-gradient relative flex min-h-screen flex-col items-center justify-center overflow-hidden pt-24 pb-16 text-center sm:pt-32',
         'bg-background'
       )}
     >
@@ -101,6 +106,25 @@ const HeroSection = () => {
         <p className='hero-social-proof-mini text-muted-foreground/80 mt-6 text-sm'>
           No credit card required. Start in seconds.
         </p>
+      </div>
+      {/* The mockup now correctly appears below the content above */}
+      <div className='relative pt-16'>
+        <MockupFrame className='animate-appear opacity-0 delay-700' size='small'>
+          <Mockup type='responsive'>
+            <Image
+              src={
+                theme === 'dark'
+                  ? '/og-image-dashboard-desktop-dark.png'
+                  : '/og-image-dashboard-desktop-light.png'
+              }
+              alt={'expense-pro-dashboard'}
+              width={1248}
+              height={765}
+              priority
+            />
+          </Mockup>
+        </MockupFrame>
+        <Glow variant='top' className='animate-appear-zoom opacity-0 delay-1000' />
       </div>
     </section>
   );

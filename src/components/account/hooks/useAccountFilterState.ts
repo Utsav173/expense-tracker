@@ -81,12 +81,8 @@ export const useAccountFilterState = () => {
               to: parseISO(searchParams.get('dateTo')!)
             }
           : undefined,
-      minAmount: searchParams.get('minAmount')
-        ? Number(searchParams.get('minAmount'))
-        : undefined,
-      maxAmount: searchParams.get('maxAmount')
-        ? Number(searchParams.get('maxAmount'))
-        : undefined,
+      minAmount: searchParams.get('minAmount') ? Number(searchParams.get('minAmount')) : undefined,
+      maxAmount: searchParams.get('maxAmount') ? Number(searchParams.get('maxAmount')) : undefined,
       page: searchParams.get('page') || undefined,
       type: (searchParams.get('type') as 'all' | 'recurring' | 'normal' | null) || 'all'
     }),

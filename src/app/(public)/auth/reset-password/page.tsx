@@ -89,14 +89,14 @@ const ResetPasswordPage = () => {
       />
       <Card variant='auth'>
         <CardHeader className='py-4'>
-          <CardTitle className='text-center text-xl font-bold tracking-wide text-foreground'>
+          <CardTitle className='text-foreground text-center text-xl font-bold tracking-wide'>
             Reset Password
           </CardTitle>
         </CardHeader>
         <CardContent className='space-y-6 p-0 pb-4'>
           <form onSubmit={handleSubmit(handleResetPassword)} className='space-y-4'>
             <div>
-              <label className='text-sm font-medium text-foreground' htmlFor='password'>
+              <label className='text-foreground text-sm font-medium' htmlFor='password'>
                 New Password
               </label>
               {/* Use PasswordInput here */}
@@ -108,13 +108,13 @@ const ResetPasswordPage = () => {
                 disabled={isLoading}
               />
               {errors.password && (
-                <p className='py-1 text-xs text-destructive'>{errors.password.message}</p>
+                <p className='text-destructive py-1 text-xs'>{errors.password.message}</p>
               )}
             </div>
             {/* Hidden input for the token */}
             <input type='hidden' {...register('resetPasswordToken')} />
             {errors.resetPasswordToken && (
-              <p className='py-1 text-xs text-destructive'>{errors.resetPasswordToken.message}</p>
+              <p className='text-destructive py-1 text-xs'>{errors.resetPasswordToken.message}</p>
             )}
 
             <Button type='submit' className='w-full' disabled={isLoading} variant={'authButton'}>
@@ -123,12 +123,12 @@ const ResetPasswordPage = () => {
           </form>
         </CardContent>
         <CardFooter className='flex justify-center p-4'>
-          <Link href='/auth/login' className='text-sm text-primary hover:underline'>
+          <Link href='/auth/login' className='text-primary text-sm hover:underline'>
             Back to Login
           </Link>
         </CardFooter>
       </Card>
-      </>
+    </>
   );
 };
 

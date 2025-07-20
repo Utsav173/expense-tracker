@@ -65,7 +65,7 @@ const ContactSupportPage = () => {
       />
       <div className='bg-background min-h-screen px-4 py-16'>
         <div className='container mx-auto max-w-4xl'>
-          <div className='text-center mb-12'>
+          <div className='mb-12 text-center'>
             <MessageSquare className='mx-auto mb-4 h-16 w-16 text-sky-500 dark:text-sky-400' />
             <h1 className='text-foreground text-4xl font-bold md:text-5xl'>Contact Support</h1>
             <p className='text-muted-foreground mx-auto mt-4 max-w-2xl text-xl'>
@@ -198,8 +198,8 @@ const ContactSupportPage = () => {
                   Looking for Answers?
                 </h3>
                 <p className='text-text-body mt-2'>
-                  You might find what you&apos;re looking for in our FAQ section. We&apos;re building
-                  it out with answers to common questions.
+                  You might find what you&apos;re looking for in our FAQ section. We&apos;re
+                  building it out with answers to common questions.
                 </p>
                 <Button variant='outline' className='mt-4' disabled>
                   Browse FAQs (Coming Soon)

@@ -63,7 +63,11 @@ const RecurringInsightModal: React.FC<RecurringInsightModalProps> = ({
   onOpenChange,
   transactionId
 }) => {
-  const { data: insightData, isLoading, isError } = useQuery<TransactionWithContext | null>({
+  const {
+    data: insightData,
+    isLoading,
+    isError
+  } = useQuery<TransactionWithContext | null>({
     queryKey: ['recurringInsight', transactionId],
     queryFn: () => transactionGetById(transactionId!),
     enabled: !!transactionId && isOpen
@@ -101,12 +105,12 @@ const RecurringInsightModal: React.FC<RecurringInsightModalProps> = ({
           <div className='p-6'>
             {isLoading && (
               <div className='flex items-center justify-center py-20'>
-                <Loader2 className='h-12 w-12 animate-spin text-primary' />
+                <Loader2 className='text-primary h-12 w-12 animate-spin' />
               </div>
             )}
             {isError && (
               <div className='flex flex-col items-center justify-center py-20'>
-                <AlertCircle className='h-12 w-12 text-destructive' />
+                <AlertCircle className='text-destructive h-12 w-12' />
                 <p className='mt-4 text-lg font-semibold'>Error fetching data</p>
                 <p className='text-muted-foreground'>Could not load the transaction details.</p>
               </div>
@@ -276,9 +280,7 @@ const InsightContent: React.FC<{ insightData: TransactionWithContext }> = ({ ins
           <div className='text-muted-foreground flex justify-between text-xs'>
             <span>Started: {format(new Date(transaction.createdAt), 'MMM d, yyyy')}</span>
             {transaction.recurrenceEndDate && (
-              <span>
-                Ends: {format(new Date(transaction.recurrenceEndDate), 'MMM d, yyyy')}
-              </span>
+              <span>Ends: {format(new Date(transaction.recurrenceEndDate), 'MMM d, yyyy')}</span>
             )}
           </div>
         </div>
@@ -339,8 +341,8 @@ const InsightContent: React.FC<{ insightData: TransactionWithContext }> = ({ ins
               <Clock className='text-muted-foreground mb-4 h-12 w-12' />
               <h5 className='mb-2 font-semibold'>No Transactions Generated Yet</h5>
               <p className='text-muted-foreground max-w-md text-sm'>
-                This recurring transaction template has been created but no instances have
-                been generated yet.
+                This recurring transaction template has been created but no instances have been
+                generated yet.
                 {remainingInstancesCount > 0 &&
                   ` ${remainingInstancesCount} transactions are scheduled.`}
               </p>

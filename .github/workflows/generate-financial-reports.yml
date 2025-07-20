@@ -2,8 +2,8 @@ name: Generate Financial Reports
 
 on:
   schedule:
-    - cron: '0 3 1 * *'  # Monthly on the 1st at 03:00 AM UTC
-  workflow_dispatch:        # Optional: allows manual trigger from GitHub UI
+    - cron: '0 3 1 * *' # Monthly on the 1st at 03:00 AM UTC
+  workflow_dispatch: # Optional: allows manual trigger from GitHub UI
 
 jobs:
   trigger-generate-financial-reports:

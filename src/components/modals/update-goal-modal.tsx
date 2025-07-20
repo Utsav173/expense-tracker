@@ -62,7 +62,7 @@ const UpdateGoalModal: React.FC<UpdateGoalModalProps> = ({
     <UpdateModal
       isOpen={isOpen}
       onOpenChange={onOpenChange}
-      title="Edit Saving Goal"
+      title='Edit Saving Goal'
       description={`Update the details for your goal: "${goal?.name}".`}
       initialValues={{
         name: goal.name,

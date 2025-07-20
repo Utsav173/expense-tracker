@@ -2,8 +2,8 @@ name: Check Bill Reminders
 
 on:
   schedule:
-    - cron: '0 14 * * *'  # Daily at 02:00 PM UTC
-  workflow_dispatch:        # Optional: allows manual triggering from GitHub UI
+    - cron: '0 14 * * *' # Daily at 02:00 PM UTC
+  workflow_dispatch: # Optional: allows manual triggering from GitHub UI
 
 jobs:
   trigger-check-bill-reminders:

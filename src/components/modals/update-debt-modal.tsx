@@ -156,8 +156,8 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
     <UpdateModal
       isOpen={isOpen}
       onOpenChange={onOpenChange}
-      title="Edit Debt"
-      description="Update the editable details for this debt record. Financial details cannot be changed here."
+      title='Edit Debt'
+      description='Update the editable details for this debt record. Financial details cannot be changed here.'
       initialValues={{
         description: debt.description || '',
         ...initialDurationState
@@ -177,7 +177,9 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
                 <h4 className='text-foreground mb-2 font-medium'>Original Details</h4>
                 <div className='grid grid-cols-2 gap-x-4 gap-y-1'>
                   <span className='text-muted-foreground'>Amount:</span>
-                  <span className='text-foreground font-semibold'>{formatCurrency(debt.amount)}</span>
+                  <span className='text-foreground font-semibold'>
+                    {formatCurrency(debt.amount)}
+                  </span>
                   {debt.premiumAmount > 0 && (
                     <>
                       <span className='text-muted-foreground'>Premium:</span>

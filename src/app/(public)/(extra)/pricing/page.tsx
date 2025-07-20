@@ -171,8 +171,8 @@ const PricingPage = () => {
               Questions about our pricing?
             </h3>
             <p className='text-muted-foreground mx-auto mb-6 max-w-2xl'>
-              Our Free plan includes everything you need to start tracking expenses. Upgrade to
-              Pro when you're ready for advanced analytics and automation.
+              Our Free plan includes everything you need to start tracking expenses. Upgrade to Pro
+              when you're ready for advanced analytics and automation.
             </p>
             <Button variant='outline' size='lg'>
               Contact Support
@@ -185,4 +185,3 @@ const PricingPage = () => {
 };
 
 export default PricingPage;
-

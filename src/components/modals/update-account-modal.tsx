@@ -43,8 +43,8 @@ export function UpdateAccountModal({
     <UpdateModal
       isOpen={open}
       onOpenChange={onOpenChange}
-      title="Edit Account Name"
-      description="Update the name for this account. Balance and currency cannot be changed after creation."
+      title='Edit Account Name'
+      description='Update the name for this account. Balance and currency cannot be changed after creation.'
       initialValues={{
         name: initialValues.name,
         isDefault: initialValues.isDefault
@@ -59,13 +59,13 @@ export function UpdateAccountModal({
         <>
           <FormField
             control={form.control}
-            name="name"
+            name='name'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Account Name*</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="Enter new account name"
+                    placeholder='Enter new account name'
                     {...field}
                     disabled={form.formState.isSubmitting}
                     autoFocus
@@ -76,10 +76,10 @@ export function UpdateAccountModal({
             )}
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className='grid grid-cols-2 gap-4'>
             <FormItem>
-              <FormLabel className="text-muted-foreground flex items-center gap-1.5 text-sm">
-                <Banknote className="h-4 w-4" />
+              <FormLabel className='text-muted-foreground flex items-center gap-1.5 text-sm'>
+                <Banknote className='h-4 w-4' />
                 Current Balance
               </FormLabel>
               <FormControl>
@@ -87,13 +87,13 @@ export function UpdateAccountModal({
                   value={formatCurrency(initialValues.balance ?? 0, initialValues.currency)}
                   readOnly
                   disabled
-                  className="bg-muted/50 cursor-not-allowed opacity-70"
+                  className='bg-muted/50 cursor-not-allowed opacity-70'
                 />
               </FormControl>
             </FormItem>
             <FormItem>
-              <FormLabel className="text-muted-foreground flex items-center gap-1.5 text-sm">
-                <CircleDollarSign className="h-4 w-4" />
+              <FormLabel className='text-muted-foreground flex items-center gap-1.5 text-sm'>
+                <CircleDollarSign className='h-4 w-4' />
                 Currency
               </FormLabel>
               <FormControl>
@@ -101,18 +101,18 @@ export function UpdateAccountModal({
                   value={initialValues.currency ?? 'N/A'}
                   readOnly
                   disabled
-                  className="bg-muted/50 cursor-not-allowed opacity-70"
+                  className='bg-muted/50 cursor-not-allowed opacity-70'
                 />
               </FormControl>
             </FormItem>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className='flex items-center gap-2'>
             <FormField
               control={form.control}
-              name="isDefault"
+              name='isDefault'
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-y-0 space-x-3">
+                <FormItem className='flex flex-row items-center space-y-0 space-x-3'>
                   <FormControl>
                     <Checkbox
                       checked={field.value}
@@ -120,7 +120,7 @@ export function UpdateAccountModal({
                       disabled={form.formState.isSubmitting}
                     />
                   </FormControl>
-                  <FormLabel className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  <FormLabel className='text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70'>
                     Default Account
                   </FormLabel>
                 </FormItem>

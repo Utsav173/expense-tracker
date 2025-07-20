@@ -1,4 +1,3 @@
-
 export interface Feature {
   slug: string;
   title: string;
@@ -23,7 +22,7 @@ export const features: Feature[] = [
       Furthermore, our smart tracking extends to recurring expenses. Set up automatic recognition for your monthly subscriptions, rent, or loan payments, and Expense Pro will ensure they are consistently logged and accounted for. This proactive approach helps you anticipate upcoming financial commitments and avoid surprises, contributing to a more stable financial outlook.
 
       The benefits of smart expense tracking are manifold. It eliminates the guesswork from budgeting, highlights areas where you might be overspending, and provides the foundational data for all other financial insights within the app. By understanding your spending patterns with unprecedented clarity, you empower yourself to make informed decisions, identify opportunities for savings, and ultimately, achieve your financial goals faster. This foundational feature is the first step towards true financial mastery, offering both convenience and profound insight into your monetary flow.
-    `,
+    `
   },
   {
     slug: 'ai-powered-insights',
@@ -41,12 +40,13 @@ export const features: Feature[] = [
       The insights are presented in an easy-to-understand format, often visualized through interactive charts and graphs that make complex financial data accessible. You don't need to be a financial expert to grasp the implications of your spending; the AI translates the numbers into clear, actionable takeaways. This demystifies personal finance, making it approachable for everyone.
 
       Furthermore, the AI can help you understand the impact of your financial decisions over time. Want to see how cutting back on daily coffee affects your savings goal over a year? The AI can model these scenarios, providing a tangible motivation for positive financial changes. This feature is not just about tracking; it's about empowering you with knowledge and foresight to make smarter, more confident financial decisions, ultimately accelerating your path to financial freedom.
-    `,
+    `
   },
   {
     slug: 'bank-grade-security',
     title: 'Bank-Grade Security',
-    shortDescription: 'Your financial data is protected with advanced encryption and security protocols.',
+    shortDescription:
+      'Your financial data is protected with advanced encryption and security protocols.',
     longDescription: `
       At Expense Pro, we understand that the security of your financial data is paramount. That's why we've implemented Bank-Grade Security measures, employing advanced encryption and robust security protocols to ensure your sensitive information remains private and protected at all times. Our commitment to security is unwavering, providing you with peace of mind as you manage your finances.
 
@@ -59,12 +59,13 @@ export const features: Feature[] = [
       For authentication, we utilize secure JWT (JSON Web Token) based session management, and all user passwords are never stored in plain text. Instead, they are securely hashed using bcrypt, a strong cryptographic hashing function. This one-way encryption means that even we cannot access your password, further enhancing the security of your account.
 
       While no system can guarantee 100% impenetrable security, we are dedicated to employing the most advanced and effective measures available to protect your financial privacy. Our multi-layered security approach is designed to safeguard your data from unauthorized access, use, disclosure, alteration, or destruction, allowing you to manage your finances with confidence and trust in Expense Pro. Your security is not just a feature; it's a fundamental principle embedded in every aspect of our service.
-    `,
+    `
   },
   {
     slug: 'goal-oriented-planning',
     title: 'Goal-Oriented Planning',
-    shortDescription: 'Set and achieve your financial goals with clear, actionable steps and progress tracking.',
+    shortDescription:
+      'Set and achieve your financial goals with clear, actionable steps and progress tracking.',
     longDescription: `
       Goal-Oriented Planning in Expense Pro transforms abstract financial aspirations into concrete, achievable milestones. Whether you're saving for a down payment on a house, planning a dream vacation, building an emergency fund, or paying off debt, our platform provides the tools and guidance to help you define, track, and ultimately reach your financial objectives with clarity and confidence.
 
@@ -77,12 +78,13 @@ export const features: Feature[] = [
       The platform also allows for the prioritization of multiple goals. If you're juggling several financial objectives, Expense Pro helps you allocate your funds strategically, ensuring that your most important goals receive the necessary attention without neglecting others. This intelligent allocation helps you optimize your savings strategy across all your aspirations.
 
       Furthermore, the AI-powered insights integrate seamlessly with your goal planning. The AI can analyze your spending to identify areas where you could save more to accelerate your goal achievement, or suggest alternative strategies if you're falling behind. This proactive guidance ensures you're always on the most efficient path to financial success. Goal-Oriented Planning is more than just a tracking tool; it's a powerful motivator and a strategic partner in turning your financial dreams into reality, providing the structure and encouragement needed to stay committed and achieve lasting financial freedom.
-    `,
+    `
   },
   {
     slug: 'comprehensive-reporting',
     title: 'Comprehensive Reporting',
-    shortDescription: 'Visualize your financial health with detailed charts and customizable reports.',
+    shortDescription:
+      'Visualize your financial health with detailed charts and customizable reports.',
     longDescription: `
       Comprehensive Reporting in Expense Pro empowers you with a crystal-clear view of your financial health, transforming complex data into easily digestible and visually engaging charts and customizable reports. This feature is designed to help you understand your money at a glance, identify trends, and make informed decisions without needing to be a data analyst.
 
@@ -95,7 +97,7 @@ export const features: Feature[] = [
       Exporting your reports is also straightforward. You can export your data to various formats, such as CSV for detailed spreadsheet analysis or PDF for easy sharing and record-keeping. This flexibility ensures that you can use your financial data in the way that best suits your needs, whether for tax preparation, financial planning with an advisor, or personal review.
 
       Comprehensive Reporting is more than just a historical record; it's a powerful analytical tool. By regularly reviewing your reports, you can identify opportunities for savings, track progress towards your financial goals, and gain a deeper understanding of your financial habits. This feature provides the evidence-based insights necessary to refine your budget, optimize your spending, and ultimately, take full control of your financial future, turning data into decisive action.
-    `,
+    `
   },
   {
     slug: 'automated-reminders',
@@ -113,6 +115,6 @@ export const features: Feature[] = [
       The reminders are delivered through your preferred channels, whether it's in-app notifications, email, or push notifications to your mobile device. This multi-channel approach ensures that you receive critical information wherever you are, making it easy to take immediate action.
 
       Automated Reminders are not just about preventing negative outcomes; they're also about reinforcing positive financial habits. By consistently reminding you of your financial commitments and progress, Expense Pro helps build discipline and awareness, transforming sporadic financial checks into a continuous, effortless process. This feature provides the peace of mind that comes from knowing your finances are being actively monitored and that you're always informed, empowering you to stay in control and confidently navigate your financial landscape.
-    `,
-  },
+    `
+  }
 ];

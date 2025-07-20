@@ -25,7 +25,7 @@ const TermsOfServicePage = () => {
       />
       <div className='bg-background min-h-screen px-4 py-16'>
         <div className='container mx-auto max-w-4xl'>
-          <div className='text-center mb-12'>
+          <div className='mb-12 text-center'>
             <FileText className='mx-auto mb-4 h-16 w-16 text-sky-500 dark:text-sky-400' />
             <h1 className='text-foreground text-4xl font-bold md:text-5xl'>Terms of Service</h1>
           </div>
@@ -33,8 +33,8 @@ const TermsOfServicePage = () => {
             <h2>1. Acceptance of Terms</h2>
             <p>
               By accessing or using Expense Pro (the &quot;Service&quot;), you agree to be bound by
-              these Terms of Service (&quot;Terms&quot;). If you disagree with any part of the terms,
-              then you may not access the Service.
+              these Terms of Service (&quot;Terms&quot;). If you disagree with any part of the
+              terms, then you may not access the Service.
             </p>
 
             <h2>2. Description of Service</h2>
@@ -61,13 +61,14 @@ const TermsOfServicePage = () => {
               </li>
               <li>Impersonate any person or entity.</li>
               <li>
-                Interfere with or disrupt the Service or servers or networks connected to the Service.
+                Interfere with or disrupt the Service or servers or networks connected to the
+                Service.
               </li>
             </ul>
             <p>
               If using the AI Assistant feature, you are responsible for the API key you provide and
-              its usage limits with the third-party AI provider (e.g., Google AI). Expense Pro is not
-              responsible for any charges incurred from your AI provider.
+              its usage limits with the third-party AI provider (e.g., Google AI). Expense Pro is
+              not responsible for any charges incurred from your AI provider.
             </p>
 
             <h2>5. Intellectual Property</h2>
@@ -80,26 +81,26 @@ const TermsOfServicePage = () => {
             <h2>6. Disclaimer of Warranties</h2>
             <p>
               The Service is provided on an &quot;AS IS&quot; and &quot;AS AVAILABLE&quot; basis.
-              Expense Pro makes no warranties, expressed or implied, and hereby disclaims and negates
-              all other warranties including, without limitation, implied warranties or conditions of
-              merchantability, fitness for a particular purpose, or non-infringement of intellectual
-              property or other violation of rights.
+              Expense Pro makes no warranties, expressed or implied, and hereby disclaims and
+              negates all other warranties including, without limitation, implied warranties or
+              conditions of merchantability, fitness for a particular purpose, or non-infringement
+              of intellectual property or other violation of rights.
             </p>
 
             <h2>7. Limitation of Liability</h2>
             <p>
               In no event shall Expense Pro, nor its directors, employees, partners, agents,
-              suppliers, or affiliates, be liable for any indirect, incidental, special, consequential
-              or punitive damages, including without limitation, loss of profits, data, use, goodwill,
-              or other intangible losses, resulting from your access to or use of or inability to
-              access or use the Service.
+              suppliers, or affiliates, be liable for any indirect, incidental, special,
+              consequential or punitive damages, including without limitation, loss of profits,
+              data, use, goodwill, or other intangible losses, resulting from your access to or use
+              of or inability to access or use the Service.
             </p>
 
             <h2>8. Termination</h2>
             <p>
               We may terminate or suspend your account and bar access to the Service immediately,
-              without prior notice or liability, under our sole discretion, for any reason whatsoever
-              and without limitation, including but not limited to a breach of the Terms.
+              without prior notice or liability, under our sole discretion, for any reason
+              whatsoever and without limitation, including but not limited to a breach of the Terms.
             </p>
 
             <h2>9. Governing Law</h2>

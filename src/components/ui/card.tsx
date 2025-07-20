@@ -13,7 +13,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
       className={cn(
         'bg-card text-card-foreground rounded-xl border shadow-sm',
         {
-          'border-0 p-0 shadow-none bg-card/90 backdrop-blur-sm': variant === 'auth',
+          'bg-card/90 border-0 p-0 shadow-none backdrop-blur-sm': variant === 'auth'
         },
         className
       )}

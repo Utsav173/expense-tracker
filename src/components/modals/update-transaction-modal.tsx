@@ -123,8 +123,8 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
     <UpdateModal
       isOpen={isOpen}
       onOpenChange={onOpenChange}
-      title="Update Transaction"
-      description="Modify the details of this transaction."
+      title='Update Transaction'
+      description='Modify the details of this transaction.'
       initialValues={form.getValues()}
       validationSchema={updateTransactionSchema}
       updateFn={handleUpdate}
@@ -151,7 +151,8 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
               </AlertTitle>
               <AlertDescription className='text-blue-700 dark:text-blue-300/90'>
                 Only the Description can be edited for this recurring transaction instance.
-                Financial details, category, and transfer information must be edited on the recurring template.
+                Financial details, category, and transfer information must be edited on the
+                recurring template.
               </AlertDescription>
             </Alert>
           )}
@@ -314,9 +315,7 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
                         className='w-full pr-10'
                         disabled={form.formState.isSubmitting}
                         value={field.value}
-                        onValueChange={(values: { value: string }) =>
-                          field.onChange(values.value)
-                        }
+                        onValueChange={(values: { value: string }) => field.onChange(values.value)}
                         suffix={` ${transaction?.currency || ''}`}
                         ref={field.ref as React.Ref<HTMLInputElement>}
                       />

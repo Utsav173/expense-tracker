@@ -45,7 +45,11 @@ export const useTransactionForm = ({
     mode: 'onChange'
   });
 
-  const { data: categoriesData, isLoading: isLoadingCategory, refetch: refetchCategories } = useQuery({
+  const {
+    data: categoriesData,
+    isLoading: isLoadingCategory,
+    refetch: refetchCategories
+  } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoryGetAll({ limit: 100 }),
     staleTime: 5 * 60 * 1000

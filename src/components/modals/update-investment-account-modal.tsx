@@ -54,8 +54,8 @@ const UpdateInvestmentAccountModal: React.FC<UpdateInvestmentAccountModalProps> 
     <UpdateModal
       isOpen={isOpen}
       onOpenChange={onOpenChange}
-      title="Edit Investment Account"
-      description="Update the name and platform for this investment account. Currency cannot be changed."
+      title='Edit Investment Account'
+      description='Update the name and platform for this investment account. Currency cannot be changed.'
       initialValues={{
         name: account?.name ?? '',
         platform: account?.platform ?? ''

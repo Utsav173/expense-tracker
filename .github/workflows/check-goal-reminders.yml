@@ -2,8 +2,8 @@ name: Check Goal Reminders
 
 on:
   schedule:
-    - cron: '0 10 * * *'  # Daily at 10:00 AM UTC
-  workflow_dispatch:        # Optional: manual trigger via GitHub UI
+    - cron: '0 10 * * *' # Daily at 10:00 AM UTC
+  workflow_dispatch: # Optional: manual trigger via GitHub UI
 
 jobs:
   trigger-check-goal-reminders:

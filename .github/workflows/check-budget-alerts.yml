@@ -2,8 +2,8 @@ name: Check Budget Alerts
 
 on:
   schedule:
-    - cron: '0 9 * * *'  # Daily at 09:00 AM UTC
-  workflow_dispatch:        # Optional: allows manual triggering
+    - cron: '0 9 * * *' # Daily at 09:00 AM UTC
+  workflow_dispatch: # Optional: allows manual triggering
 
 jobs:
   trigger-check-budget-alerts:

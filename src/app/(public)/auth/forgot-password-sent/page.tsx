@@ -27,17 +27,17 @@ const ForgotPasswordSentPage = () => {
       />
       <Card variant='auth'>
         <CardHeader className='items-center py-4'>
-          <MailCheck className='mb-3 h-12 w-12 text-success' />
-          <CardTitle className='text-center text-xl font-bold tracking-wide text-foreground'>
+          <MailCheck className='text-success mb-3 h-12 w-12' />
+          <CardTitle className='text-foreground text-center text-xl font-bold tracking-wide'>
             Check Your Email
           </CardTitle>
         </CardHeader>
         <CardContent className='space-y-4 p-0 pb-4 text-center'>
-          <p className='text-sm text-muted-foreground'>
+          <p className='text-muted-foreground text-sm'>
             We&apos;ve sent a password reset link to your email address. Please check your inbox
             (and spam folder) to proceed.
           </p>
-          <p className='text-xs text-muted-foreground'>
+          <p className='text-muted-foreground text-xs'>
             If you don&apos;t receive the email within a few minutes, please try again or contact
             support.
           </p>
@@ -46,7 +46,7 @@ const ForgotPasswordSentPage = () => {
           </Button>
         </CardContent>
       </Card>
-      </>
+    </>
   );
 };
 

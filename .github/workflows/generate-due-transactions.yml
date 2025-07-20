@@ -2,8 +2,8 @@ name: Generate Due Transactions
 
 on:
   schedule:
-    - cron: '0 * * * *'  # Every hour UTC
-  workflow_dispatch:      # Manual trigger support
+    - cron: '0 * * * *' # Every hour UTC
+  workflow_dispatch: # Manual trigger support
 
 jobs:
   run-task:
@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-        continue-on-error: true  # Don't fail if checkout throws warnings
+        continue-on-error: true # Don't fail if checkout throws warnings
 
       - name: Trigger Generate Due Transactions
         env:

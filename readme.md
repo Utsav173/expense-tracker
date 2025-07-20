@@ -1,4 +1,3 @@
-
 <div align="center">
   <img src="public/favicon.svg" alt="Logo" width="100" height="100">
   <h1>Expense Tracker</h1>
@@ -22,44 +21,47 @@
   </p>
 </div>
 
-
-
 ## 🚀 Features Showcase
 
 This application is packed with features designed for comprehensive financial management.
 
 ### 👤 User & Account Management
+
 - ✅ **Secure Authentication:** JWT-based login, registration, and password reset flows.
 - ✅ **Profile Customization:** Update user details, profile picture, and preferred currency.
 - ✅ **Multi-Account Support:** Manage multiple financial accounts seamlessly.
 - ✅ **Account Sharing:** Securely share accounts with other users and manage access permissions.
 
 ### 💸 Transaction & Data Management
+
 - ✅ **CRUD Operations:** Full support for creating, reading, editing, and deleting transactions.
 - ✅ **Advanced Filtering & Sorting:** Easily find transactions with powerful filters (date, category, type, text search) and sorting options.
 - ✅ **Data Import/Export:**
-    - **Import:** From XLSX templates and PDF bank statements.
-    - **Export:** Filtered transaction data to XLSX or CSV.
+  - **Import:** From XLSX templates and PDF bank statements.
+  - **Export:** Filtered transaction data to XLSX or CSV.
 - ✅ **Categorization:** Smart category management with an intuitive combobox and inline creation.
 
 ### 📊 Analytics & Visualization
+
 - ✅ **Interactive Dashboard:** A fully customizable dashboard with widgets for:
-    - Financial Snapshot (Income, Expenses, Net Worth)
-    - Spending Breakdowns (by category)
-    - Budget vs. Actual Tracking
-    - Investment & Debt Summaries
-    - Account Balance Lists
+  - Financial Snapshot (Income, Expenses, Net Worth)
+  - Spending Breakdowns (by category)
+  - Budget vs. Actual Tracking
+  - Investment & Debt Summaries
+  - Account Balance Lists
 - ✅ **Rich Charts & Graphs:** Powered by Recharts for clear, beautiful data visualization.
 - ✅ **Account-Specific Analytics:** Dive deep into the financial trends of a single account.
 - ✅ **Financial Statements:** Generate PDF or XLSX statements on demand.
 
 ### 🎯 Financial Planning
+
 - ✅ **Budgeting:** Set monthly or yearly budgets for specific categories and track your progress.
 - ✅ **Savings Goals:** Create and manage savings goals, tracking your contributions and progress visually.
 - ✅ **Debt Management:** Track loans (taken or given) with details on interest, duration, and payment status.
 - ✅ **Investment Tracking:** Monitor investment accounts, individual holdings, and overall portfolio performance.
 
 ### 🤖 AI Assistant
+
 - ✅ **Natural Language Commands:** Interact with your finances using plain English. Ask the AI to add transactions, list expenses, or provide financial summaries.
 - ✅ **Secure Tool Integration:** The AI securely interacts with the backend API to perform actions on your behalf.
 - ✅ **Context-Aware Suggestions:** Receive smart, actionable suggestions based on your conversation.
@@ -81,17 +83,17 @@ This application is packed with features designed for comprehensive financial ma
 
 This project uses a modern, type-safe, and performant technology stack.
 
-| Category          | Technology                                                              | Role & Purpose                                                                                             |
-| ----------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| **Framework**     | [Next.js](https://nextjs.org/) 15 (App Router)                          | Provides the core structure, file-based routing, server-side rendering, and API routes.                    |
-| **UI Library**    | [React](https://react.dev/) 19                                          | The foundational library for building the interactive user interface.                                      |
-| **Styling**       | [Tailwind CSS](https://tailwindcss.com/) 4                              | A utility-first CSS framework for rapid, custom UI development without leaving your HTML.                  |
-| **Components**    | [Shadcn UI](https://ui.shadcn.com/)                                     | A collection of beautifully designed, accessible, and unstyled components that we build upon.              |
-| **Data Fetching** | [TanStack Query](https://tanstack.com/query/v5)                         | Manages all server state: fetching, caching, and updating data with hooks for a seamless developer experience. |
-| **Forms**         | [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/) | The standard for building performant, flexible, and type-safe forms with robust validation.                |
-| **Charting**      | [Recharts](https://recharts.org/en-US/)                                 | A composable charting library built on React components for creating beautiful data visualizations.        |
-| **Icons**         | [Lucide React](https://lucide.dev/icons/)                               | A simply beautiful and consistent icon toolkit.                                                            |
-| **Utilities**     | `date-fns`, `clsx`, `tailwind-merge`                                    | Best-in-class utilities for date manipulation and robust class name management.                            |
+| Category          | Technology                                                                | Role & Purpose                                                                                                 |
+| ----------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| **Framework**     | [Next.js](https://nextjs.org/) 15 (App Router)                            | Provides the core structure, file-based routing, server-side rendering, and API routes.                        |
+| **UI Library**    | [React](https://react.dev/) 19                                            | The foundational library for building the interactive user interface.                                          |
+| **Styling**       | [Tailwind CSS](https://tailwindcss.com/) 4                                | A utility-first CSS framework for rapid, custom UI development without leaving your HTML.                      |
+| **Components**    | [Shadcn UI](https://ui.shadcn.com/)                                       | A collection of beautifully designed, accessible, and unstyled components that we build upon.                  |
+| **Data Fetching** | [TanStack Query](https://tanstack.com/query/v5)                           | Manages all server state: fetching, caching, and updating data with hooks for a seamless developer experience. |
+| **Forms**         | [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/) | The standard for building performant, flexible, and type-safe forms with robust validation.                    |
+| **Charting**      | [Recharts](https://recharts.org/en-US/)                                   | A composable charting library built on React components for creating beautiful data visualizations.            |
+| **Icons**         | [Lucide React](https://lucide.dev/icons/)                                 | A simply beautiful and consistent icon toolkit.                                                                |
+| **Utilities**     | `date-fns`, `clsx`, `tailwind-merge`                                      | Best-in-class utilities for date manipulation and robust class name management.                                |
 
 ---
 
@@ -100,28 +102,36 @@ This project uses a modern, type-safe, and performant technology stack.
 Follow these steps to get the project running on your local machine.
 
 ### 1. Prerequisites
+
 - [Node.js](https://nodejs.org/en) (v18.17 or higher)
 - [Bun](https://bun.sh/) (v1.0 or higher)
 - A running instance of the backend API service.
 
 ### 2. Clone the Repository
+
 ```bash
 git clone https://github.com/Utsav173/expense-tracker.git
 cd expense-tracker
 ```
 
 ### 3. Install Dependencies
+
 This project uses `bun` for package management.
+
 ```bash
 bun install
 ```
 
 ### 4. Configure Environment Variables
+
 Create a `.env.local` file in the root of the project by copying the example file:
+
 ```bash
 cp .env.example .env.local
 ```
+
 Now, open `.env.local` and add the URL for your running backend API:
+
 ```dotenv
 # .env.local
 
@@ -130,9 +140,11 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
 ```
 
 ### 5. Run the Development Server
+
 ```bash
 bun dev
 ```
+
 The application will be available at **http://localhost:3000**.
 
 ---

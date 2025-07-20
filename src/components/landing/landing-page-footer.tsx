@@ -46,7 +46,9 @@ const LandingPageFooter = () => {
           {/* Links Section */}
           <div className='col-span-12 grid grid-cols-2 gap-8 sm:grid-cols-3 md:col-span-8 lg:col-span-7'>
             <div>
-              <h3 className='text-foreground text-sm font-semibold uppercase tracking-wider'>Product</h3>
+              <h3 className='text-foreground text-sm font-semibold tracking-wider uppercase'>
+                Product
+              </h3>
               <ul className='mt-4 space-y-3'>
                 {productLinks.map((link) => (
                   <li key={link.name}>
@@ -61,7 +63,9 @@ const LandingPageFooter = () => {
               </ul>
             </div>
             <div>
-              <h3 className='text-foreground text-sm font-semibold uppercase tracking-wider'>Company</h3>
+              <h3 className='text-foreground text-sm font-semibold tracking-wider uppercase'>
+                Company
+              </h3>
               <ul className='mt-4 space-y-3'>
                 {companyLinks.map((link) => (
                   <li key={link.name}>
@@ -76,7 +80,9 @@ const LandingPageFooter = () => {
               </ul>
             </div>
             <div>
-              <h3 className='text-foreground text-sm font-semibold uppercase tracking-wider'>Legal</h3>
+              <h3 className='text-foreground text-sm font-semibold tracking-wider uppercase'>
+                Legal
+              </h3>
               <ul className='mt-4 space-y-3'>
                 {legalLinks.map((link) => (
                   <li key={link.name}>
