@@ -1,67 +1,92 @@
 'use client';
-import React from 'react';
-import { BrainCircuit, LayoutGrid, TrendingUp, Target, FileText, Scale } from 'lucide-react';
-import { AnimatedFinancialElement } from './animated-financial-element';
-import AnimatedFeatureCardV2 from './animated-feature-card-v2';
+
+import React, { useRef, useEffect } from 'react';
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
+import { DollarSign, TrendingUp, ShieldCheck, Lightbulb, BarChart, BellRing } from 'lucide-react';
+import { gsap } from 'gsap';
+
+interface FeatureCardProps {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}
+
+const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description }) => (
+  <Card className='feature-card-anim flex flex-col items-center p-6 text-center shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl'>
+    <div className='bg-primary/10 text-primary mb-4 rounded-full p-3'>{icon}</div>
+    <CardTitle className='mb-2 text-xl font-semibold'>{title}</CardTitle>
+    <CardContent className='text-muted-foreground text-sm'>{description}</CardContent>
+  </Card>
+);
 
 const FeaturesSection = () => {
+  const featuresRef = useRef(null);
+
+  useEffect(() => {
+    gsap.fromTo(
+      '.feature-card-anim',
+      { opacity: 0, y: 50 },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.3,
+        ease: 'power2.out',
+        stagger: 0.1,
+        scrollTrigger: {
+          trigger: featuresRef.current,
+          start: 'top 80%',
+          toggleActions: 'play none none none'
+        }
+      }
+    );
+  }, []);
+
   const features = [
     {
-      icon: <BrainCircuit size={28} strokeWidth={1.5} className='text-white' />,
-      title: 'AI-Powered Co-pilot',
-      description: 'Add expenses, ask questions, and get insights via a natural chat interface.'
+      icon: <DollarSign className='h-6 w-6' />,
+      title: 'Smart Expense Tracking',
+      description: 'Effortlessly log and categorize your spending with intelligent suggestions.'
     },
     {
-      icon: <LayoutGrid size={28} strokeWidth={1.5} className='text-white' />,
-      title: 'Unified Dashboard',
-      description: 'See your complete financial picture at a glance with customizable widgets.'
+      icon: <TrendingUp className='h-6 w-6' />,
+      title: 'AI-Powered Insights',
+      description: 'Get personalized financial advice and spending analysis powered by AI.'
     },
     {
-      icon: <TrendingUp size={28} strokeWidth={1.5} className='text-white' />,
-      title: 'Investment Tracking',
-      description: 'Monitor your portfolio, track holdings, and see real-time performance.'
+      icon: <ShieldCheck className='h-6 w-6' />,
+      title: 'Bank-Grade Security',
+      description:
+        'Your financial data is protected with advanced encryption and security protocols.'
     },
     {
-      icon: <Target size={28} strokeWidth={1.5} className='text-white' />,
-      title: 'Smart Budgeting',
-      description: 'Set monthly or yearly budgets for categories and track your spending progress.'
+      icon: <Lightbulb className='h-6 w-6' />,
+      title: 'Goal-Oriented Planning',
+      description:
+        'Set and achieve your financial goals with clear, actionable steps and progress tracking.'
     },
     {
-      icon: <FileText size={28} strokeWidth={1.5} className='text-white' />,
-      title: 'Data Automation',
-      description: 'Effortlessly import transactions from XLSX or PDF bank statements.'
+      icon: <BarChart className='h-6 w-6' />,
+      title: 'Comprehensive Reporting',
+      description: 'Visualize your financial health with detailed charts and customizable reports.'
     },
     {
-      icon: <Scale size={28} strokeWidth={1.5} className='text-white' />,
-      title: 'Debt & Loan Management',
-      description: 'Track money you owe and money owed to you with clear due dates.'
+      icon: <BellRing className='h-6 w-6' />,
+      title: 'Automated Reminders',
+      description: 'Never miss a bill payment or financial milestone with smart notifications.'
     }
   ];
 
   return (
-    <section id='features' className='bg-slate-900 px-6 py-24'>
-      <div className='container mx-auto'>
-        <AnimatedFinancialElement className='section-title-anim mb-12 text-center'>
-          <h2 className='text-4xl font-bold text-white md:text-5xl'>
-            Powerful Features, Simple Interface
-          </h2>
-        </AnimatedFinancialElement>
-        <AnimatedFinancialElement className='section-subtitle-anim mb-16 text-center' delay={0.1}>
-          <p className='mx-auto mt-6 max-w-2xl text-lg text-slate-300'>
-            Expense Pro provides comprehensive tools in a user-friendly package to help you manage
-            every aspect of your finances.
-          </p>
-        </AnimatedFinancialElement>
-        <div className='grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3'>
-          {features.map((feature, i) => (
-            <AnimatedFeatureCardV2
-              key={feature.title}
-              icon={feature.icon}
-              title={feature.title}
-              description={feature.description}
-              delay={i * 0.08}
-              className='bg-slate-800/60 backdrop-blur-sm hover:border-sky-500/60 dark:border-slate-700 dark:bg-slate-800/80 dark:hover:border-sky-400/50'
-            />
+    <section className='from-background to-muted bg-gradient-to-b py-20'>
+      <div className='container mx-auto px-4 text-center'>
+        <h2 className='text-foreground mb-4 text-4xl font-bold'>Unlock Your Financial Potential</h2>
+        <p className='text-muted-foreground mx-auto mb-12 max-w-3xl text-lg'>
+          Expense Pro offers a suite of powerful features designed to simplify your financial life
+          and help you make smarter decisions.
+        </p>
+        <div ref={featuresRef} className='grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3'>
+          {features.map((feature, index) => (
+            <FeatureCard key={index} {...feature} />
           ))}
         </div>
       </div>

@@ -14,11 +14,9 @@ const LandingPageHeader = () => {
             alt='Expense Pro Logo'
             width={32}
             height={32}
-            className='transition-transform duration-300 hover:rotate-12'
+            className='-mb-0.5'
           />
-          <span className='bg-gradient-to-r from-sky-400 to-cyan-300 bg-clip-text text-transparent max-sm:text-sm'>
-            Expense Pro
-          </span>
+          <span className='max-sm:text-sm'>Expense Pro</span>
         </Link>
         <nav className='hidden items-center gap-4 md:flex'>
           <Link

@@ -1,66 +1,97 @@
 'use client';
-import React from 'react';
-import { UserPlus, Link2, ListChecks, BarChartBig } from 'lucide-react';
-import { AnimatedFinancialElement } from './animated-financial-element';
-import { cn } from '@/lib/utils';
 
-interface HowItWorksSectionProps {
-  className?: string;
+import React, { useRef, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Lightbulb, DollarSign, BarChart, CheckCircle } from 'lucide-react';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import Link from 'next/link';
+import { features } from '@/lib/data/features'; // Import the features data
+import { Button } from '@/components/ui/button';
+
+interface FeatureOverviewCardProps {
+  icon: React.ReactNode;
+  title: string;
+  shortDescription: string;
+  slug: string;
 }
 
-const HowItWorksSection: React.FC<HowItWorksSectionProps> = ({ className }) => {
-  const steps = [
-    {
-      icon: <UserPlus className='h-10 w-10 text-sky-600 dark:text-sky-400' />,
-      title: 'Sign Up & Secure',
-      description: 'Quick registration. Your data is encrypted and protected from day one.'
-    },
-    {
-      icon: <Link2 className='h-10 w-10 text-emerald-600 dark:text-emerald-400' />,
-      title: 'Connect or Add Manually',
-      description: 'Easily import transactions (XLSX, PDF) or add accounts and entries manually.'
-    },
-    {
-      icon: <ListChecks className='h-10 w-10 text-amber-600 dark:text-amber-400' />,
-      title: 'Track & Organize',
-      description: 'Expenses are auto-categorized. Set budgets, goals, and manage debts with ease.'
-    },
-    {
-      icon: <BarChartBig className='h-10 w-10 text-purple-600 dark:text-purple-400' />,
-      title: 'Analyze & Understand',
-      description: 'Visualize spending, track investments, and get AI-powered insights instantly.'
+const FeatureOverviewCard: React.FC<FeatureOverviewCardProps> = ({
+  icon,
+  title,
+  shortDescription,
+  slug
+}) => (
+  <Card className='feature-overview-card-anim flex flex-col items-center p-6 text-center shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl'>
+    <div className='bg-primary/10 text-primary mb-4 rounded-full p-3'>{icon}</div>
+    <CardTitle className='mb-2 text-xl font-semibold'>{title}</CardTitle>
+    <CardContent className='text-muted-foreground flex-grow text-sm'>
+      {shortDescription}
+    </CardContent>
+    <Link href={`/features/${slug}`}>
+      <Button variant='outline' className='mt-4'>
+        Learn More
+      </Button>
+    </Link>
+  </Card>
+);
+
+const HowItWorksSection = () => {
+  const sectionRef = useRef(null);
+
+  useEffect(() => {
+    gsap.fromTo(
+      '.feature-overview-card-anim',
+      { opacity: 0, y: 50 },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.3,
+        ease: 'power2.out',
+        stagger: 0.1,
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: 'top 80%',
+          toggleActions: 'play none none none'
+        }
+      }
+    );
+  }, []);
+
+  // Map icons to features based on their slug or title for display
+  const featuresWithIcons = features.map((feature) => {
+    let iconComponent;
+    switch (feature.slug) {
+      case 'smart-expense-tracking':
+        iconComponent = <DollarSign className='h-6 w-6' />;
+        break;
+      case 'ai-powered-insights':
+        iconComponent = <Lightbulb className='h-6 w-6' />;
+        break;
+      case 'bank-grade-security':
+        iconComponent = <CheckCircle className='h-6 w-6' />;
+        break;
+      case 'goal-oriented-planning':
+        iconComponent = <BarChart className='h-6 w-6' />;
+        break;
+      // Add more cases for other features as needed
+      default:
+        iconComponent = <Lightbulb className='h-6 w-6' />;
     }
-  ];
+    return { ...feature, icon: iconComponent };
+  });
 
   return (
-    <section className={cn('animated-section lp-bg-light-contrast-section px-6 py-20', className)}>
-      <div className='container mx-auto'>
-        <AnimatedFinancialElement className='section-title-anim mb-16 text-center'>
-          <h2 className='lp-text-light-contrast-section-heading text-3xl font-bold tracking-tight sm:text-4xl'>
-            Get Started in Minutes
-          </h2>
-        </AnimatedFinancialElement>
-        <AnimatedFinancialElement className='section-subtitle-anim mb-16 text-center' delay={0.1}>
-          <p className='lp-text-light-contrast-section-paragraph mt-4 text-lg'>
-            Achieving financial clarity is simpler than you think.
-          </p>
-        </AnimatedFinancialElement>
-
-        <div className='grid gap-10 md:grid-cols-2 lg:grid-cols-4'>
-          {steps.map((step, index) => (
-            <AnimatedFinancialElement
-              key={step.title}
-              delay={0.1 * index}
-              className='animated-card flex flex-col items-center text-center'
-            >
-              <div className='mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800'>
-                {step.icon}
-              </div>
-              <h3 className='lp-text-light-contrast-section-heading mb-2 text-xl font-semibold'>
-                {step.title}
-              </h3>
-              <p className='lp-text-light-contrast-section-paragraph text-sm'>{step.description}</p>
-            </AnimatedFinancialElement>
+    <section id='how-it-works' className='bg-muted py-20'>
+      <div className='container mx-auto px-4 text-center'>
+        <h2 className='text-foreground mb-4 text-4xl font-bold'>How Expense Pro Works</h2>
+        <p className='text-muted-foreground mx-auto mb-12 max-w-3xl text-lg'>
+          Getting started with Expense Pro is simple. Discover the key features that make managing
+          your finances effortless.
+        </p>
+        <div ref={sectionRef} className='grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4'>
+          {featuresWithIcons.map((feature, index) => (
+            <FeatureOverviewCard key={index} {...feature} />
           ))}
         </div>
       </div>

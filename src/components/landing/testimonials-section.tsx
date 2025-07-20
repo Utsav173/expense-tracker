@@ -1,76 +1,89 @@
 'use client';
-import React from 'react';
-import { Star } from 'lucide-react';
-import { AnimatedFinancialElement } from './animated-financial-element';
-import { cn } from '@/lib/utils';
 
-interface TestimonialsSectionProps {
-  className?: string;
+import React, { useRef, useEffect } from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardContent } from '@/components/ui/card';
+import { gsap } from 'gsap';
+
+interface TestimonialProps {
+  quote: string;
+  name: string;
+  title: string;
+  avatar: string;
 }
 
-const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ className }) => {
+const TestimonialCard: React.FC<TestimonialProps> = ({ quote, name, title, avatar }) => (
+  <Card className='testimonial-card-anim flex flex-col items-center p-6 text-center shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl'>
+    <Avatar className='mb-4 h-20 w-20'>
+      <AvatarImage src={avatar} alt={name} />
+      <AvatarFallback>
+        {name
+          .split(' ')
+          .map((n) => n[0])
+          .join('')}
+      </AvatarFallback>
+    </Avatar>
+    <CardContent className='text-muted-foreground text-md mb-4 italic'>"{quote}"</CardContent>
+    <h3 className='text-foreground text-lg font-semibold'>{name}</h3>
+    <p className='text-muted-foreground text-sm'>{title}</p>
+  </Card>
+);
+
+const TestimonialsSection = () => {
+  const testimonialsRef = useRef(null);
+
+  useEffect(() => {
+    gsap.fromTo(
+      '.testimonial-card-anim',
+      { opacity: 0, y: 50 },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.8,
+        ease: 'power2.out',
+        stagger: 0.1,
+        scrollTrigger: {
+          trigger: testimonialsRef.current,
+          start: 'top 80%',
+          toggleActions: 'play none none none'
+        }
+      }
+    );
+  }, []);
+
   const testimonials = [
     {
       quote:
-        'Expense Pro has revolutionized how I manage my freelance income. The AI assistant is a game-changer for quick entries and insights!',
-      name: 'Aisha K.',
-      role: 'Freelance Designer'
+        'Expense Pro has revolutionized how I manage my finances. The AI insights are a game-changer!',
+      name: 'Sarah J.',
+      title: 'Small Business Owner',
+      avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Sarah+J'
     },
     {
-      quote:
-        'Finally, an app that handles investments, budgets, and everyday spending all in one place. The dashboard view is fantastic.',
-      name: 'Rohan S.',
-      role: 'Software Engineer'
+      quote: 'Finally, an app that makes budgeting easy and even enjoyable. Highly recommend!',
+      name: 'David L.',
+      title: 'Financial Analyst',
+      avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=David+L'
     },
     {
-      quote:
-        "As someone juggling multiple accounts, Expense Pro's import feature and clear analytics have saved me hours. Highly recommend!",
-      name: 'Priya M.',
-      role: 'Small Business Owner'
+      quote: "The best expense tracker I've used. Clean interface and powerful features.",
+      name: 'Emily R.',
+      title: 'Freelance Designer',
+      avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Emily+R'
     }
   ];
 
   return (
-    <section className={cn('animated-section lp-bg-light-contrast-section px-6 py-20', className)}>
-      <div className='container mx-auto'>
-        <AnimatedFinancialElement className='section-title-anim mb-12 text-center'>
-          <h2 className='lp-text-light-contrast-section-heading text-3xl font-bold tracking-tight sm:text-4xl'>
-            Loved by Users Like You
-          </h2>
-        </AnimatedFinancialElement>
-        <AnimatedFinancialElement className='section-subtitle-anim mb-16 text-center' delay={0.1}>
-          <p className='lp-text-light-contrast-section-paragraph mt-4 text-lg'>
-            See what our community is saying about Expense Pro.
-          </p>
-        </AnimatedFinancialElement>
-
-        <div className='grid gap-8 md:grid-cols-3'>
+    <section className='bg-background py-20'>
+      <div className='container mx-auto px-4 text-center'>
+        <h2 className='text-foreground mb-4 text-4xl font-bold'>What Our Users Say</h2>
+        <p className='text-muted-foreground mx-auto mb-12 max-w-3xl text-lg'>
+          Don't just take our word for it. Hear from real users who have transformed their financial
+          lives with Expense Pro.
+        </p>
+        <div ref={testimonialsRef} className='grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3'>
           {testimonials.map((testimonial, index) => (
-            <AnimatedFinancialElement
-              key={testimonial.name}
-              delay={0.1 * index}
-              className='animated-card flex flex-col rounded-xl border border-slate-200 bg-white p-6 shadow-lg dark:border-slate-700 dark:bg-slate-800'
-            >
-              <div className='mb-4 flex'>
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className='h-5 w-5 fill-yellow-400 text-yellow-400' />
-                ))}
-              </div>
-              <blockquote className='flex-grow text-slate-700 dark:text-slate-300'>
-                <p className='italic'>"{testimonial.quote}"</p>
-              </blockquote>
-              <footer className='mt-6 flex items-center'>
-                <div className='mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-200 font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-200'>
-                  {testimonial.name.charAt(0)}
-                </div>
-                <div>
-                  <p className='font-semibold text-slate-800 dark:text-slate-100'>
-                    {testimonial.name}
-                  </p>
-                  <p className='text-sm text-slate-500 dark:text-slate-400'>{testimonial.role}</p>
-                </div>
-              </footer>
-            </AnimatedFinancialElement>
+            <TestimonialCard key={index} {...testimonial} />
           ))}
         </div>
       </div>
