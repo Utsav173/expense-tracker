@@ -22,7 +22,7 @@ const LandingPageContent = () => {
   return (
     <div
       ref={mainRef}
-      className={cn('min-h-screen overflow-x-hidden antialiased', 'bg-background')}
+      className={cn('min-h-screen overflow-x-hidden antialiased select-none', 'bg-background')}
     >
       <LandingPageHeader />
       <HeroSection />

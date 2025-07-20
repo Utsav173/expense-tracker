@@ -11,12 +11,12 @@ export const AuthPageTitle: React.FC<AuthPageTitleProps> = ({ title, className }
   return (
     <>
       <h1
-        sr-only
         hidden
         className={cn(
           'bg-gradient-to-r from-[var(--primary)] to-[var(--primary)] bg-clip-text text-center text-3xl font-bold text-transparent select-none',
           className
         )}
+        sr-only='true'
       >
         {title}
       </h1>

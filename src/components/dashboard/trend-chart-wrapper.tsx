@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { DashboardData } from '@/lib/types';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, LineChart, AreaChart } from 'lucide-react';
@@ -19,6 +19,12 @@ interface TrendChartWrapperProps {
   className?: string;
 }
 
+const CHART_TYPE_CONFIGS = {
+  line: { icon: LineChart, label: 'Line' },
+  bar: { icon: BarChart, label: 'Bar' },
+  area: { icon: AreaChart, label: 'Area' }
+} as const;
+
 const TrendChartWrapper = ({
   data,
   chartType = 'line',
@@ -36,55 +42,84 @@ const TrendChartWrapper = ({
     }
   });
 
-  const handleChartTypeChange = (value: string) => {
-    setChartType(value as 'line' | 'bar' | 'area');
-  };
+  const handleChartTypeChange = useCallback(
+    (value: string) => {
+      setChartType(value as 'line' | 'bar' | 'area');
+    },
+    [setChartType]
+  );
 
-  const transformedChartData = useMemo(() => {
-    const incomeMap = new Map(data?.incomeChartData?.map((p) => [p.x, p.y ?? null]) ?? []);
-    const expenseMap = new Map(data?.expenseChartData?.map((p) => [p.x, p.y ?? null]) ?? []);
-    const balanceMap = new Map(data?.balanceChartData?.map((p) => [p.x, p.y ?? null]) ?? []);
+  // Memoize chart data transformation with early returns for performance
+  const { chartData, hasData } = useMemo(() => {
+    if (!data) return { chartData: [], hasData: false };
 
+    const incomeData = data.incomeChartData || [];
+    const expenseData = data.expenseChartData || [];
+    const balanceData = data.balanceChartData || [];
+
+    // Early return if no data
+    if (!incomeData.length && !expenseData.length && !balanceData.length) {
+      return { chartData: [], hasData: false };
+    }
+
+    // Use Map for O(1) lookups
+    const incomeMap = new Map(incomeData.map((p) => [p.x, p.y ?? null]));
+    const expenseMap = new Map(expenseData.map((p) => [p.x, p.y ?? null]));
+    const balanceMap = new Map(balanceData.map((p) => [p.x, p.y ?? null]));
+
+    // Get all unique timestamps and sort once
     const allTimestamps = new Set([
-      ...(data?.incomeChartData?.map((p) => p.x) ?? []),
-      ...(data?.expenseChartData?.map((p) => p.x) ?? []),
-      ...(data?.balanceChartData?.map((p) => p.x) ?? [])
+      ...incomeData.map((p) => p.x),
+      ...expenseData.map((p) => p.x),
+      ...balanceData.map((p) => p.x)
     ]);
 
     const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b);
 
-    return sortedTimestamps.map((ts) => ({
-      date: new Date(ts * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    const processedData = sortedTimestamps.map((ts) => ({
+      date: new Date(ts * 1000).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+      }),
+      timestamp: ts,
       income: incomeMap.get(ts) ?? null,
       expense: expenseMap.get(ts) ?? null,
       balance: balanceMap.get(ts) ?? null
     }));
+
+    return {
+      chartData: processedData,
+      hasData: processedData.length > 0
+    };
   }, [data]);
+
+  const currency = useMemo(() => data?.accountsInfo?.[0]?.currency ?? 'INR', [data?.accountsInfo]);
 
   const renderContent = () => {
     if (isLoading) {
-      return <Loader className='h-full min-h-[400px] w-full' />;
+      return (
+        <div className='flex h-full min-h-[350px] items-center justify-center'>
+          <Loader className='h-8 w-8' />
+        </div>
+      );
     }
-    const hasData = transformedChartData.length > 0;
 
     if (!hasData) {
       return (
-        <NoData
-          message='No trend data available for the selected period.'
-          icon='inbox'
-          className='min-h-[400px]'
-        />
+        <div className='flex h-full min-h-[350px] items-center justify-center'>
+          <NoData message='No trend data available for the selected period.' icon='inbox' />
+        </div>
       );
     }
 
     return (
-      <div className='h-full min-h-[400px] w-full'>
+      <div className='h-full w-full'>
         <TrendChart
           incomeData={data?.incomeChartData ?? []}
           expenseData={data?.expenseChartData ?? []}
           balanceData={data?.balanceChartData ?? []}
           chartType={chartType}
-          currency={data?.accountsInfo?.[0]?.currency ?? 'INR'}
+          currency={currency}
           className='h-full w-full'
           timeRangeOption={dateRange ? 'custom' : 'thisMonth'}
           customDateRange={dateRange}
@@ -95,27 +130,41 @@ const TrendChartWrapper = ({
   };
 
   return (
-    <div className={cn('flex h-full w-full flex-col', className)}>
-      {/* Controls remain in the wrapper */}
-      <div className='flex flex-wrap items-center justify-between gap-4 px-6 py-2'>
-        <DateRangeFilter />
+    <div className={cn('flex h-full w-full flex-col overflow-hidden', className)}>
+      {/* Responsive header with controls */}
+      <div className='bg-card flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4'>
+        <div className='flex-1'>
+          <DateRangeFilter />
+        </div>
+
         {!!setChartType && (
-          <Tabs defaultValue={chartType} onValueChange={handleChartTypeChange}>
-            <TabsList className='h-7'>
-              <TabsTrigger value='line' className='px-2 py-1 text-xs'>
-                <LineChart className='h-3 w-3' />
-              </TabsTrigger>
-              <TabsTrigger value='bar' className='px-2 py-1 text-xs'>
-                <BarChart className='h-3 w-3' />
-              </TabsTrigger>
-              <TabsTrigger value='area' className='px-2 py-1 text-xs'>
-                <AreaChart className='h-3 w-3' />
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className='flex justify-center sm:justify-end'>
+            <Tabs value={chartType} onValueChange={handleChartTypeChange} className='w-fit'>
+              <TabsList className='bg-muted/50 grid h-9 w-full grid-cols-3'>
+                {Object.entries(CHART_TYPE_CONFIGS).map(([type, config]) => {
+                  const Icon = config.icon;
+                  return (
+                    <TabsTrigger
+                      key={type}
+                      value={type}
+                      className='hover:bg-background/80 flex items-center gap-1.5 px-3 py-1.5 text-xs transition-all'
+                      aria-label={`${config.label} chart`}
+                    >
+                      <Icon className='h-3.5 w-3.5' />
+                      <span className='hidden sm:inline'>{config.label}</span>
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
+            </Tabs>
+          </div>
         )}
       </div>
-      <div className='min-h-[400px] flex-1 px-4 pb-4'>{renderContent()}</div>
+
+      {/* Chart container with responsive height */}
+      <div className='flex-1 p-4'>
+        <div className='h-full min-h-[350px] w-full'>{renderContent()}</div>
+      </div>
     </div>
   );
 };

@@ -83,7 +83,7 @@ const HeroSection = () => {
           <span className='hero-headline-word hero-text-glow inline-block'>Master Your</span>{' '}
           <span className='hero-headline-word hero-text-glow inline-block'>Money.</span>
           <br />
-          <span className='hero-headline-word from-primary inline-block bg-gradient-to-r via-blue-500 to-sky-500 bg-clip-text text-transparent'>
+          <span className='hero-headline-word from-primary inline-block bg-gradient-to-r via-blue-500 to-sky-500 bg-clip-text leading-normal text-transparent'>
             Effortlessly.
           </span>
         </h1>

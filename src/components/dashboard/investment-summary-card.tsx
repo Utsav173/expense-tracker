@@ -3,7 +3,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { PortfolioSummary } from '@/lib/types';
 import { cn, formatCurrency } from '@/lib/utils';
 import NoData from '../ui/no-data';
 import { WalletCards, TrendingUp, TrendingDown, Minus, AlertTriangle } from 'lucide-react';
@@ -12,7 +11,6 @@ import {
   investmentGetPortfolioHistorical,
   investmentGetOldestDate
 } from '@/lib/endpoints/investment';
-
 import { useToast } from '@/lib/hooks/useToast';
 import {
   AreaChart,
@@ -22,85 +20,132 @@ import {
   YAxis,
   XAxis
 } from 'recharts';
-import { parseISO, format, differenceInDays } from 'date-fns';
+import {
+  parseISO,
+  format,
+  differenceInDays,
+  startOfToday,
+  subDays,
+  format as formatDate
+} from 'date-fns';
 import Link from 'next/link';
 import { Button } from '../ui/button';
 import TooltipElement from '../ui/tooltip-element';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DateRange } from 'react-day-picker';
-import { format as formatDate, startOfToday, subDays } from 'date-fns';
 import DateRangePickerV2 from '../date/date-range-picker-v2';
 import { ChartContainer, ChartConfig } from '@/components/ui/chart';
 import Loader from '../ui/loader';
 
 type PeriodOption = '7d' | '30d' | '90d' | '1y' | 'custom';
 
-const PERIOD_OPTIONS: { value: PeriodOption; label: string }[] = [
-  { value: '7d', label: '7D' },
-  { value: '30d', label: '30D' },
-  { value: '90d', label: '90D' },
-  { value: '1y', label: '1Y' },
-  { value: 'custom', label: 'Custom' }
+const PERIOD_OPTIONS = [
+  { value: '7d' as const, label: '7D' },
+  { value: '30d' as const, label: '30D' },
+  { value: '90d' as const, label: '90D' },
+  { value: '1y' as const, label: '1Y' },
+  { value: 'custom' as const, label: 'Custom' }
 ];
 
-const getAvailablePeriodOptions = (
-  oldestDate: Date | undefined
-): { value: PeriodOption; label: string }[] => {
+const chartConfig = {
+  value: {
+    label: 'Portfolio Value',
+    color: 'var(--chart-1)'
+  }
+} satisfies ChartConfig;
+
+const getAvailablePeriods = (oldestDate?: Date) => {
   if (!oldestDate) return PERIOD_OPTIONS;
 
   const daysSinceOldest = differenceInDays(new Date(), oldestDate);
-  const baseOptions = [
-    { value: '7d' as const, label: '7D' },
-    { value: '30d' as const, label: '30D' }
-  ];
+  const baseOptions = PERIOD_OPTIONS.slice(0, 2); // 7D, 30D
 
   if (daysSinceOldest <= 35) {
-    return [...baseOptions, { value: 'custom', label: 'Custom' }];
+    return [...baseOptions, PERIOD_OPTIONS[4]]; // Add Custom
   }
-
   if (daysSinceOldest <= 95) {
-    return [...baseOptions, { value: '90d', label: '90D' }, { value: 'custom', label: 'Custom' }];
+    return [...baseOptions, PERIOD_OPTIONS[2], PERIOD_OPTIONS[4]]; // Add 90D, Custom
   }
 
   return PERIOD_OPTIONS;
 };
 
-const sparklineChartConfig = {
-  value: {
-    label: 'Portfolio Value',
-    color: 'var(--chart-investment)'
-  }
-} satisfies ChartConfig;
+const MetricCard: React.FC<{
+  label: string;
+  value: string;
+  secondaryValue?: string;
+  icon?: React.ReactNode;
+  variant?: 'default' | 'positive' | 'negative';
+  className?: string;
+}> = ({ label, value, secondaryValue, icon, variant = 'default', className }) => {
+  const colorClass =
+    variant === 'positive'
+      ? 'text-emerald-600 dark:text-emerald-400'
+      : variant === 'negative'
+        ? 'text-red-600 dark:text-red-400'
+        : 'text-foreground';
+
+  return (
+    <div className={cn('space-y-1', className)}>
+      <div className='text-muted-foreground flex items-center gap-1.5 text-xs font-medium'>
+        {icon}
+        {label}
+      </div>
+      <div className={cn('leading-tight font-semibold', colorClass)}>
+        <div className='text-lg break-all sm:text-xl'>{value}</div>
+        {secondaryValue && <div className='text-xs opacity-80'>{secondaryValue}</div>}
+      </div>
+    </div>
+  );
+};
 
 export const InvestmentSummaryCard: React.FC<{
   className?: string;
 }> = ({ className }) => {
   const { showError } = useToast();
   const [selectedPeriod, setSelectedPeriod] = React.useState<PeriodOption>('30d');
-  const [dateRange, setDateRange] = React.useState<DateRange | undefined>(undefined);
-  const [oldestDate, setOldestDate] = React.useState<Date | undefined>(undefined);
+  const [dateRange, setDateRange] = React.useState<DateRange | undefined>();
+  const [oldestDate, setOldestDate] = React.useState<Date>();
+
+  // Fetch oldest date once
+  React.useEffect(() => {
+    investmentGetOldestDate()
+      .then((res) => res?.oldestDate && setOldestDate(new Date(res.oldestDate)))
+      .catch(() => {});
+  }, []);
+
+  const availablePeriods = React.useMemo(() => getAvailablePeriods(oldestDate), [oldestDate]);
+
+  // Adjust period if not available
+  React.useEffect(() => {
+    if (
+      !availablePeriods.find((opt) => opt.value === selectedPeriod) &&
+      selectedPeriod !== 'custom'
+    ) {
+      setSelectedPeriod('30d');
+    }
+  }, [availablePeriods, selectedPeriod]);
 
   const handlePeriodChange = (value: string) => {
     const period = value as PeriodOption;
     setSelectedPeriod(period);
-    if (period !== 'custom') {
-      setDateRange(undefined);
-    } else if (!dateRange) {
+
+    if (period === 'custom' && !dateRange) {
       const today = startOfToday();
-      setDateRange({
-        from: subDays(today, 30),
-        to: today
-      });
+      setDateRange({ from: subDays(today, 30), to: today });
+    } else if (period !== 'custom') {
+      setDateRange(undefined);
     }
   };
 
+  // Queries
   const {
     data: summaryData,
     isLoading: isSummaryLoading,
     error: summaryError
-  } = useQuery<PortfolioSummary | null>({
+  } = useQuery({
     queryKey: ['investmentPortfolioSummaryDashboard'],
-    queryFn: () => investmentGetPortfolioSummary(),
+    queryFn: investmentGetPortfolioSummary,
     retry: 1,
     staleTime: 15 * 60 * 1000,
     refetchOnMount: true,
@@ -125,8 +170,7 @@ export const InvestmentSummaryCard: React.FC<{
       });
     },
     enabled:
-      !!summaryData &&
-      summaryData.numberOfHoldings > 0 &&
+      !!summaryData?.numberOfHoldings &&
       (selectedPeriod !== 'custom' || (!!dateRange?.from && !!dateRange?.to)),
     retry: 1,
     staleTime: 60 * 60 * 1000,
@@ -134,41 +178,18 @@ export const InvestmentSummaryCard: React.FC<{
     refetchOnWindowFocus: true
   });
 
-  const availablePeriodOptions = React.useMemo(
-    () => getAvailablePeriodOptions(oldestDate),
-    [oldestDate]
-  );
-
+  // Error handling
   React.useEffect(() => {
     if (summaryError) showError(`Investment Summary Error: ${(summaryError as Error).message}`);
     if (historicalError)
       showError(`Investment History Error: ${(historicalError as Error).message}`);
   }, [summaryError, historicalError, showError]);
 
-  React.useEffect(() => {
-    investmentGetOldestDate()
-      .then((res) => {
-        if (res?.oldestDate) {
-          setOldestDate(new Date(res.oldestDate));
-        }
-      })
-      .catch(() => {});
-  }, []);
+  // Loading and error states
+  if (isSummaryLoading) return <Loader />;
 
-  React.useEffect(() => {
-    if (
-      !availablePeriodOptions.find((opt) => opt.value === selectedPeriod) &&
-      selectedPeriod !== 'custom'
-    ) {
-      setSelectedPeriod('30d');
-    }
-  }, [availablePeriodOptions, selectedPeriod]);
-
-  const isLoading = isSummaryLoading;
   const hasData = summaryData && summaryData.numberOfHoldings > 0;
   const displayError = summaryError || (!hasData && historicalError);
-
-  if (isLoading) return <Loader />;
 
   if (displayError || !hasData) {
     return (
@@ -179,6 +200,7 @@ export const InvestmentSummaryCard: React.FC<{
     );
   }
 
+  // Data processing
   const {
     currentMarketValue,
     totalInvestedAmount,
@@ -191,69 +213,53 @@ export const InvestmentSummaryCard: React.FC<{
     valueIsEstimate
   } = summaryData;
 
-  const gainLossColor =
-    overallGainLoss > 0
-      ? 'text-green-600'
-      : overallGainLoss < 0
-        ? 'text-red-600'
-        : 'text-muted-foreground';
-  const GainLossIcon =
-    overallGainLoss > 0 ? TrendingUp : overallGainLoss < 0 ? TrendingDown : Minus;
+  const isPositiveReturn = overallGainLoss > 0;
+  const isNegativeReturn = overallGainLoss < 0;
+  const returnVariant = isPositiveReturn ? 'positive' : isNegativeReturn ? 'negative' : 'default';
+  const ReturnIcon = isPositiveReturn ? TrendingUp : isNegativeReturn ? TrendingDown : Minus;
 
-  const sparklineData =
+  const chartData =
     historicalData?.data
-      ?.map((d) => ({
-        date: parseISO(d.date),
-        value: d.value
-      }))
+      ?.map((d) => ({ date: parseISO(d.date), value: d.value }))
       .sort((a, b) => a.date.getTime() - b.date.getTime()) || [];
 
-  const sparklineColorVarName =
-    overallGainLoss >= 0 ? 'var(--color-chart-investment)' : 'var(--color-chart-expense)';
+  const chartColor = isPositiveReturn ? 'var(--positive)' : 'var(--destructive)';
 
   return (
-    <Card className={cn('col-span-1 flex flex-col md:col-span-1', className)}>
-      {/* Mobile-optimized Header */}
-      <CardHeader className='pb-3'>
-        <div className='flex items-start justify-between gap-2'>
+    <Card className={cn('flex flex-col', className)}>
+      <CardHeader className='pb-4'>
+        <div className='flex items-start justify-between gap-3'>
           <div className='min-w-0 flex-1'>
-            <CardTitle className='mb-1 text-base font-semibold sm:text-lg'>
-              Investment Summary
-            </CardTitle>
-            <CardDescription className='text-xs leading-relaxed'>
-              <span className='block sm:inline'>
-                {numberOfHoldings} holding(s) across {numberOfAccounts} account(s)
-              </span>
+            <CardTitle className='text-lg font-semibold'>Investment Summary</CardTitle>
+            <CardDescription className='text-sm leading-relaxed'>
+              {numberOfHoldings} holding{numberOfHoldings !== 1 ? 's' : ''} across{' '}
+              {numberOfAccounts} account{numberOfAccounts !== 1 ? 's' : ''}
               {valueIsEstimate && (
                 <TooltipElement tooltipContent='Values are estimated due to mixed currencies or missing price data.'>
-                  <span className='ml-1 inline-flex items-center text-amber-500'>
+                  <span className='ml-2 inline-flex items-center text-amber-600 dark:text-amber-400'>
                     <AlertTriangle className='mr-1 h-3 w-3' />
-                    <span className='hidden text-xs sm:inline'>Est.</span>
+                    <span className='text-xs'>Est.</span>
                   </span>
                 </TooltipElement>
               )}
             </CardDescription>
           </div>
-          <WalletCards className='text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0' />
+          <WalletCards className='text-muted-foreground h-5 w-5 flex-shrink-0' />
         </div>
       </CardHeader>
 
-      <CardContent className='flex-1 space-y-4'>
-        {/* Mobile-optimized Controls */}
-        <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-2'>
+      <CardContent className='flex-1 space-y-6'>
+        {/* Period Controls */}
+        <div className='flex flex-col gap-3 sm:flex-row sm:items-center'>
           <Tabs
             value={selectedPeriod}
             onValueChange={handlePeriodChange}
-            className='w-full sm:w-fit'
+            className='w-full sm:w-auto'
           >
-            <TabsList className='grid h-8 w-full grid-cols-5 p-0.5 sm:flex sm:h-7 sm:w-auto sm:p-1'>
-              {availablePeriodOptions.map((option) => (
-                <TabsTrigger
-                  key={option.value}
-                  value={option.value}
-                  className='px-1 py-1 text-xs sm:px-2 sm:py-0.5'
-                >
-                  {option.label}
+            <TabsList className='grid h-9 w-full grid-cols-5 sm:flex sm:w-auto'>
+              {availablePeriods.map(({ value, label }) => (
+                <TabsTrigger key={value} value={value} className='text-xs sm:text-sm'>
+                  {label}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -262,8 +268,8 @@ export const InvestmentSummaryCard: React.FC<{
             <DateRangePickerV2
               date={dateRange}
               onDateChange={setDateRange}
-              className='w-full sm:w-[260px]'
-              placeholder='Select dates'
+              className='w-full sm:w-[280px]'
+              placeholder='Select date range'
               noLabel
               minDate={oldestDate}
               maxDate={new Date()}
@@ -271,115 +277,85 @@ export const InvestmentSummaryCard: React.FC<{
           )}
         </div>
 
-        {/* Mobile-optimized Chart */}
+        {/* Chart */}
         {isHistoricalLoading ? (
-          <Loader />
-        ) : sparklineData.length > 1 ? (
-          <div className='h-[140px] w-full sm:h-[180px]'>
-            <ChartContainer
-              config={sparklineChartConfig}
-              className='h-full w-full'
-              aria-label={`Sparkline area chart showing portfolio value trend for the selected period (${selectedPeriod})`}
-            >
+          <div className='h-32 sm:h-40'>
+            <Loader />
+          </div>
+        ) : chartData.length > 1 ? (
+          <div className='h-32 sm:h-40'>
+            <ChartContainer config={chartConfig} className='h-full w-full'>
               <ResponsiveContainer width='100%' height='100%'>
-                <AreaChart data={sparklineData}>
+                <AreaChart data={chartData}>
                   <defs>
-                    <linearGradient id='sparklineValue' x1='0' y1='0' x2='0' y2='1'>
-                      <stop offset='0%' stopColor={sparklineColorVarName} stopOpacity={0.4} />
-                      <stop offset='50%' stopColor={sparklineColorVarName} stopOpacity={0.1} />
-                      <stop offset='100%' stopColor={sparklineColorVarName} stopOpacity={0} />
+                    <linearGradient id='portfolioGradient' x1='0' y1='0' x2='0' y2='1'>
+                      <stop offset='0%' stopColor={chartColor} stopOpacity={0.3} />
+                      <stop offset='100%' stopColor={chartColor} stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <YAxis domain={['dataMin', 'dataMax']} hide />
                   <XAxis dataKey='date' hide />
                   <RechartsTooltip
                     content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        const data = payload[0].payload;
-                        return (
-                          <div className='bg-background/95 rounded-lg border px-2 py-1.5 text-xs shadow-lg backdrop-blur-sm sm:px-3 sm:py-2 sm:text-sm'>
-                            <div className='font-medium'>{format(data.date, 'MMM d, yyyy')}</div>
-                            <div className='text-muted-foreground'>
-                              {formatCurrency(data.value, currency)}
-                            </div>
+                      if (!active || !payload?.[0]?.payload) return null;
+                      const data = payload[0].payload;
+                      return (
+                        <div className='bg-background/95 rounded-lg border px-3 py-2 text-sm shadow-lg backdrop-blur'>
+                          <div className='font-medium'>{format(data.date, 'MMM d, yyyy')}</div>
+                          <div className='text-muted-foreground'>
+                            {formatCurrency(data.value, currency)}
                           </div>
-                        );
-                      }
-                      return null;
+                        </div>
+                      );
                     }}
-                    cursor={{
-                      stroke: 'var(--border)',
-                      strokeWidth: 1,
-                      strokeDasharray: '3 3'
-                    }}
+                    cursor={{ stroke: 'var(--border)', strokeDasharray: '2 2' }}
                   />
                   <Area
                     type='monotone'
                     dataKey='value'
-                    stroke={sparklineColorVarName}
-                    strokeWidth={2.5}
-                    fillOpacity={1}
-                    fill='url(#sparklineValue)'
+                    stroke={chartColor}
+                    strokeWidth={2}
+                    fill='url(#portfolioGradient)'
                   />
                 </AreaChart>
               </ResponsiveContainer>
             </ChartContainer>
           </div>
         ) : (
-          <div className='text-muted-foreground flex h-[140px] items-center justify-center text-xs sm:h-[180px] sm:text-sm'>
-            Not enough data for trendline.
+          <div className='text-muted-foreground flex h-32 items-center justify-center text-sm sm:h-40'>
+            Insufficient data for chart
           </div>
         )}
 
-        {/* Mobile-optimized Values Grid */}
-        <div className='space-y-4'>
-          {/* Current Value & Total Invested - Responsive Grid */}
+        {/* Metrics Grid */}
+        <div className='grid gap-6'>
+          {/* Primary Metrics */}
           <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-            <div className='text-center sm:text-left'>
-              <div className='text-muted-foreground mb-1 text-xs font-medium sm:text-sm'>
-                Current Value
-              </div>
-              <div className='text-xl leading-tight font-bold break-all sm:text-2xl'>
-                {formatCurrency(currentMarketValue, currency)}
-              </div>
-            </div>
-            <div className='text-center sm:text-left'>
-              <div className='text-muted-foreground mb-1 text-xs font-medium sm:text-sm'>
-                Total Invested
-              </div>
-              <div className='text-xl leading-tight font-bold break-all sm:text-2xl'>
-                {formatCurrency(totalInvestedAmount, currency)}
-              </div>
-            </div>
+            <MetricCard
+              label='Current Value'
+              value={formatCurrency(currentMarketValue, currency)}
+            />
+            <MetricCard
+              label='Total Invested'
+              value={formatCurrency(totalInvestedAmount, currency)}
+            />
           </div>
 
-          {/* Returns & Dividends - Mobile Optimized */}
-          <div className='bg-muted/30 space-y-3 rounded-lg p-3 sm:space-y-0'>
-            <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4'>
-              <div className='text-center sm:text-left'>
-                <div
-                  className={`mb-1 flex items-center justify-center gap-1 text-xs font-medium sm:justify-start sm:text-sm ${gainLossColor}`}
-                >
-                  <GainLossIcon className='h-3 w-3 sm:h-4 sm:w-4' />
-                  Total Return
-                </div>
-                <div className={`font-bold ${gainLossColor}`}>
-                  <div className='text-base leading-tight break-all sm:text-lg'>
-                    {formatCurrency(overallGainLoss, currency)}
-                  </div>
-                  <div className='text-xs opacity-90 sm:text-sm'>
-                    ({overallGainLossPercentage?.toFixed(1)}%)
-                  </div>
-                </div>
-              </div>
-              <div className='border-t pt-3 text-center sm:border-t-0 sm:pt-0 sm:text-left'>
-                <div className='text-muted-foreground mb-1 text-xs font-medium sm:text-sm'>
-                  Total Dividends
-                </div>
-                <div className='text-base leading-tight font-bold break-all text-green-600 sm:text-lg'>
-                  {formatCurrency(totalDividends, currency)}
-                </div>
-              </div>
+          {/* Returns Section */}
+          <div className='bg-muted/50 rounded-lg p-4'>
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+              <MetricCard
+                label='Total Return'
+                value={formatCurrency(overallGainLoss, currency)}
+                secondaryValue={`(${overallGainLossPercentage?.toFixed(1) ?? '0.0'}%)`}
+                icon={<ReturnIcon className='h-3 w-3' />}
+                variant={returnVariant}
+              />
+              <MetricCard
+                label='Total Dividends'
+                value={formatCurrency(totalDividends, currency)}
+                variant='positive'
+              />
             </div>
           </div>
         </div>
