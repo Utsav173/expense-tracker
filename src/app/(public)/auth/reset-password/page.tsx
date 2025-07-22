@@ -104,7 +104,6 @@ const ResetPasswordPage = () => {
                 id='password'
                 placeholder='New Password'
                 {...register('password')}
-                variant='auth'
                 disabled={isLoading}
               />
               {errors.password && (

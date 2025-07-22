@@ -145,7 +145,6 @@ const SignupPage = () => {
                 placeholder='••••••••'
                 {...register('password')}
                 disabled={loading}
-                variant='auth'
               />
               {formState.errors.password && (
                 <p className='text-destructive py-1 text-xs'>

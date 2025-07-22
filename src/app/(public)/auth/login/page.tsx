@@ -119,7 +119,6 @@ const LoginPage = () => {
                 placeholder='••••••••'
                 {...register('password')}
                 disabled={loginLoading}
-                variant='auth'
               />
               {errors.password && (
                 <p className='text-destructive py-1 text-xs'> {errors.password.message}</p>
