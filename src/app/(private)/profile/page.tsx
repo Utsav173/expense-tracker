@@ -62,7 +62,7 @@ const ProfilePage = () => {
 
   return (
     <div className='mx-auto w-full max-w-6xl p-4 sm:p-8'>
-      <h1 className='mb-8 text-3xl font-bold'>Account Settings</h1>
+      <h1 className='mb-8 text-3xl font-bold'>Profile Space</h1>
       <div className='grid grid-cols-1 gap-8 md:grid-cols-[1fr_3fr]'>
         <aside>
           <nav className='flex flex-row space-x-1 overflow-x-auto pb-2 md:flex-col md:space-y-1 md:space-x-0 md:overflow-x-visible'>

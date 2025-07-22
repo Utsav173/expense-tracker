@@ -6,43 +6,44 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-const PasswordInput = React.forwardRef<
-  HTMLInputElement,
-  React.ComponentProps<'input'> & { variant?: 'default' | 'auth'; noEyeIcon?: boolean }
->(({ className, noEyeIcon = false, variant = 'default', ...props }, ref) => {
-  const [showPassword, setShowPassword] = React.useState(false);
+export interface PasswordInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  noEyeIcon?: boolean;
+}
 
-  const togglePasswordVisibility = () => setShowPassword(!showPassword);
+const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
+  ({ className, noEyeIcon = false, ...props }, ref) => {
+    const [showPassword, setShowPassword] = React.useState(false);
+    const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
-  return (
-    <div className='relative'>
-      <Input
-        type={showPassword ? 'text' : 'password'}
-        className={cn('pr-10', className)}
-        ref={ref}
-        variant={variant}
-        {...props}
-      />
-      {!noEyeIcon && (
-        <Button
-          type='button'
-          variant='ghost'
-          size='sm'
-          className='absolute top-0 right-0 h-full px-3 py-1 hover:bg-transparent'
-          onClick={togglePasswordVisibility}
-          tabIndex={-1}
-          aria-label={showPassword ? 'Hide password' : 'Show password'}
-        >
-          {showPassword ? (
-            <EyeOff className='h-4 w-4' aria-hidden='true' />
-          ) : (
-            <Eye className='h-4 w-4' aria-hidden='true' />
-          )}
-        </Button>
-      )}
-    </div>
-  );
-});
+    return (
+      <div className='relative'>
+        <Input
+          type={showPassword ? 'text' : 'password'}
+          className={cn('pr-10', className)}
+          ref={ref}
+          {...props}
+        />
+        {!noEyeIcon && (
+          <Button
+            type='button'
+            variant='ghost'
+            size='sm'
+            className='absolute top-0 right-0 h-full px-3 py-1 hover:bg-transparent'
+            onClick={togglePasswordVisibility}
+            tabIndex={-1}
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
+          >
+            {showPassword ? (
+              <EyeOff className='text-muted-foreground h-4 w-4' aria-hidden='true' />
+            ) : (
+              <Eye className='text-muted-foreground h-4 w-4' aria-hidden='true' />
+            )}
+          </Button>
+        )}
+      </div>
+    );
+  }
+);
 PasswordInput.displayName = 'PasswordInput';
 
 export { PasswordInput };

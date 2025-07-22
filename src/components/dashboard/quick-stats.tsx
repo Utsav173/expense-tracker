@@ -27,28 +27,28 @@ export const QuickStats: React.FC<QuickStatsProps> = ({ data, isLoading, classNa
           <>
             <div className='flex justify-between'>
               <span className='text-muted-foreground flex items-center gap-1'>
-                <ArrowUp className='h-4 w-4 text-green-500' />
+                <ArrowUp className='text-success h-4 w-4' />
                 Highest Income
               </span>
-              <span className='font-medium text-green-600'>
+              <span className='text-success font-medium'>
                 {data.mostExpensiveIncome ? formatCurrency(data.mostExpensiveIncome, 'INR') : 'N/A'}
               </span>
             </div>
             <div className='flex justify-between'>
               <span className='text-muted-foreground flex items-center gap-1'>
-                <ArrowUp className='h-4 w-4 text-green-500/70' />
+                <ArrowUp className='text-success/70 h-4 w-4' />
                 Lowest Income
               </span>
-              <span className='font-medium text-green-500'>
+              <span className='text-success font-medium'>
                 {data.cheapestIncome ? formatCurrency(data.cheapestIncome, 'INR') : 'N/A'}
               </span>
             </div>
             <div className='flex justify-between'>
               <span className='text-muted-foreground flex items-center gap-1'>
-                <ArrowDown className='h-4 w-4 text-red-500' />
+                <ArrowDown className='text-destructive h-4 w-4' />
                 Highest Expense
               </span>
-              <span className='font-medium text-red-600'>
+              <span className='text-destructive font-medium'>
                 {data.mostExpensiveExpense
                   ? formatCurrency(data.mostExpensiveExpense, 'INR')
                   : 'N/A'}
@@ -56,10 +56,10 @@ export const QuickStats: React.FC<QuickStatsProps> = ({ data, isLoading, classNa
             </div>
             <div className='flex justify-between'>
               <span className='text-muted-foreground flex items-center gap-1'>
-                <ArrowDown className='h-4 w-4 text-red-500/70' />
+                <ArrowDown className='text-destructive/70 h-4 w-4' />
                 Lowest Expense
               </span>
-              <span className='font-medium text-red-500'>
+              <span className='text-destructive font-medium'>
                 {data.cheapestExpense ? formatCurrency(data.cheapestExpense, 'INR') : 'N/A'}
               </span>
             </div>
