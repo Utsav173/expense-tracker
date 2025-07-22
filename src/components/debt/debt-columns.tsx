@@ -53,16 +53,19 @@ export const createDebtColumns = ({
     accessorKey: 'debts.amount',
     header: ({ column }) => <DataTableColumnHeader column={column} title='Amount' />,
     meta: { header: 'Amount' },
-    cell: ({ row }) => (
-      <span
-        className={cn(
-          'font-semibold',
-          row.original.debts.type === 'given' ? 'text-red-500' : 'text-green-500'
-        )}
-      >
-        {formatCurrency(row.original.debts.amount, user?.preferredCurrency || 'INR')}
-      </span>
-    )
+    cell: ({ row }) => {
+      const currency = row.original.account?.currency || user?.preferredCurrency || 'INR';
+      return (
+        <span
+          className={cn(
+            'font-semibold',
+            row.original.debts.type === 'given' ? 'text-red-500' : 'text-green-500'
+          )}
+        >
+          {formatCurrency(row.original.debts.amount, currency)}
+        </span>
+      );
+    }
   },
   {
     accessorKey: 'debts.interestRate',

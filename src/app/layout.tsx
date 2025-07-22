@@ -1,5 +1,5 @@
 import React from 'react';
-import { Open_Sans } from 'next/font/google';
+import { Inter, Open_Sans } from 'next/font/google';
 import { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import ReactQueryProvider from '@/components/providers/provider';
@@ -10,6 +10,12 @@ import { GoogleAnalytics } from '@next/third-parties/google';
 const openSans = Open_Sans({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700']
+});
+
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-sans' // Optional: if you use Tailwind font variables
 });
 
 export const metadata: Metadata = {
@@ -105,7 +111,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           `}
         </Script>
       </head>
-      <body className={cn(openSans.className, 'bg-background text-foreground')}>
+      <body
+        className={cn(
+          openSans.className,
+          inter.className,
+          'bg-background text-foreground dark:subtle-noise-bg'
+        )}
+      >
         <ReactQueryProvider>{children}</ReactQueryProvider>
       </body>
       <GoogleAnalytics gaId='GTM-NRXZ2WPR' />

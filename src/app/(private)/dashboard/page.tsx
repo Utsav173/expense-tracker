@@ -69,38 +69,36 @@ const FinancialHealth = dynamic(() => import('@/components/dashboard/financial-h
   loading: () => <Skeleton className='h-full min-h-[150px]' />
 });
 
+const renderSkeleton = () => (
+  <div className='mx-auto flex min-h-screen w-full max-w-7xl flex-col items-center justify-center space-y-4 p-3 pt-4 md:space-y-6'>
+    <Loader />
+  </div>
+);
+
+const renderErrorState = ({ error }: { error?: any }) => (
+  <Alert variant='destructive' className='max-auto mt-6'>
+    <Frown className='h-4 w-4' />
+    <AlertTitle>Oops! Something went wrong.</AlertTitle>
+    <AlertDescription>
+      We couldn&apos;t load your dashboard data. Please check your connection and try refreshing.
+      {error && (
+        <div className='text-muted-foreground mt-2 text-xs'>Error: {(error as Error).message}</div>
+      )}
+    </AlertDescription>
+  </Alert>
+);
+
 const DashboardPage = () => {
   const [chartType, setChartType] = useState<'line' | 'bar' | 'area'>('line');
 
   const { data: dashboardPageData, isLoading, isFetching, isError, error } = useDashboardData();
-
-  const renderSkeleton = () => (
-    <div className='mx-auto min-h-screen w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
-      <Loader />
-    </div>
-  );
-
-  const renderErrorState = () => (
-    <Alert variant='destructive' className='max-auto mt-6'>
-      <Frown className='h-4 w-4' />
-      <AlertTitle>Oops! Something went wrong.</AlertTitle>
-      <AlertDescription>
-        We couldn&apos;t load your dashboard data. Please check your connection and try refreshing.
-        {error && (
-          <div className='text-muted-foreground mt-2 text-xs'>
-            Error: {(error as Error).message}
-          </div>
-        )}
-      </AlertDescription>
-    </Alert>
-  );
 
   if (isFetching) {
     return renderSkeleton();
   }
 
   if (isError && !dashboardPageData) {
-    return renderErrorState();
+    return renderErrorState({ error });
   }
 
   if (!isLoading && dashboardPageData && (dashboardPageData?.totalTransaction ?? 0) < 1) {

@@ -15,6 +15,7 @@ import AddTransactionModal from '@/components/modals/add-transaction-modal';
 import { UpdateAccountModal } from '@/components/modals/update-account-modal';
 import NoData from '@/components/ui/no-data';
 import { Search, Wallet } from 'lucide-react';
+import { motion, Variants } from 'framer-motion';
 
 const AccountListPage = () => {
   const [page, setPage] = useState(1);
@@ -32,6 +33,28 @@ const AccountListPage = () => {
       }),
     retry: false
   });
+
+  const containerVariants: Variants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants: Variants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        duration: 0.5,
+        ease: 'easeOut'
+      }
+    }
+  };
 
   const [selectedItem, setSelectedItem] = useState<Account | undefined>();
   const { showError } = useToast();
@@ -97,30 +120,34 @@ const AccountListPage = () => {
       {isLoading ? (
         <Loader />
       ) : (
-        <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3'>
+        <motion.div
+          className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3'
+          variants={containerVariants}
+          initial='hidden'
+          animate='visible'
+        >
           {!data || !data.accounts || data.accounts.length === 0 ? (
-            <div className='col-span-full flex min-h-[300px] flex-col items-center justify-center rounded-lg border border-dashed'>
-              <Wallet className='text-muted-foreground mb-4 h-16 w-16' />
-              <h3 className='text-xl font-semibold'>No Accounts Yet</h3>
-              <p className='text-muted-foreground mt-1 text-sm'>
-                Get started by adding your first financial account.
-              </p>
-              <div className='mt-4'>
-                <AddAccountModal />
-              </div>
+            <div className='col-span-full'>
+              <NoData
+                icon={Wallet}
+                message='No Accounts Yet'
+                description='Get started by creating your first financial account to track your income and expenses.'
+                action={<AddAccountModal />}
+              />
             </div>
           ) : (
             data.accounts.map((account) => (
-              <AccountCard
-                key={account.id}
-                href={`/accounts/${account.id}`}
-                account={account}
-                onEdit={handleEdit}
-                onDelete={handleDeleteClick}
-              />
+              <motion.div key={account.id} variants={itemVariants}>
+                <AccountCard
+                  href={`/accounts/${account.id}`}
+                  account={account}
+                  onEdit={handleEdit}
+                  onDelete={handleDeleteClick}
+                />
+              </motion.div>
             ))
           )}
-        </div>
+        </motion.div>
       )}
 
       <div className='mt-6 flex justify-center'>

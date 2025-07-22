@@ -3,16 +3,12 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { ColumnDef, Row } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2, Repeat, ArrowUpCircle, ArrowDownCircle, User, Eye } from 'lucide-react';
+import { Pencil, Trash2, Repeat, ArrowUpCircle, ArrowDownCircle, Eye } from 'lucide-react';
 import UpdateTransactionModal from '../modals/update-transaction-modal';
 import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
 import { transactionDelete, transactionGetById } from '@/lib/endpoints/transactions';
 import { useToast } from '@/lib/hooks/useToast';
-import {
-  Transaction as TransactionType,
-  AccountDropdown,
-  TransactionWithContext
-} from '@/lib/types';
+import { Transaction as TransactionType, AccountDropdown } from '@/lib/types';
 import { cn, formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
 import CommonTable from '../ui/CommonTable';
@@ -124,7 +120,7 @@ const TransactionTable = ({
           return (
             <div
               className={cn(
-                'font-semibold whitespace-nowrap',
+                'font-mono font-semibold whitespace-nowrap tabular-nums', // <-- ADDED HERE
                 transaction.isIncome ? 'text-success' : 'text-destructive'
               )}
             >

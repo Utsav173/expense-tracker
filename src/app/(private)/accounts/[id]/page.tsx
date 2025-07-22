@@ -155,7 +155,7 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
       {isOwner && (
         <div
           className={cn(
-            'grid max-h-[70dvh] grid-cols-1 gap-6 overflow-auto select-none max-sm:h-auto',
+            'grid max-h-[70dvh] grid-cols-1 gap-6 overflow-hidden select-none max-sm:h-auto',
             hasTransactions && 'lg:grid-cols-2 xl:grid-cols-[1fr_1.5fr]'
           )}
         >

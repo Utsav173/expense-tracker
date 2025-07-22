@@ -120,7 +120,7 @@ const AccountCard = React.forwardRef<HTMLDivElement, AccountCardProps>(
             </p>
             <SingleLineEllipsis
               className={cn(
-                'text-4xl font-bold tracking-tight',
+                'font-mono text-4xl font-bold tracking-tight tabular-nums',
                 balance >= 0 ? 'text-slate-900 dark:text-slate-50' : 'text-negative'
               )}
             >
@@ -134,7 +134,7 @@ const AccountCard = React.forwardRef<HTMLDivElement, AccountCardProps>(
                 <div className='flex items-center justify-between text-sm'>
                   <span className='text-slate-500 dark:text-slate-400'>Income</span>
                   <div className='flex items-center gap-2'>
-                    <SingleLineEllipsis className='font-medium text-slate-700 dark:text-slate-300'>
+                    <SingleLineEllipsis className='font-mono font-medium text-slate-700 tabular-nums dark:text-slate-300'>
                       {formatCurrency(analytics.income, currency)}
                     </SingleLineEllipsis>
                     <ChangePill change={analytics.incomePercentageChange} />
@@ -143,7 +143,7 @@ const AccountCard = React.forwardRef<HTMLDivElement, AccountCardProps>(
                 <div className='flex items-center justify-between text-sm'>
                   <span className='text-slate-500 dark:text-slate-400'>Expenses</span>
                   <div className='flex items-center gap-2'>
-                    <SingleLineEllipsis className='font-medium text-slate-700 dark:text-slate-300'>
+                    <SingleLineEllipsis className='font-mono font-medium text-slate-700 tabular-nums dark:text-slate-300'>
                       {formatCurrency(analytics.expense, currency)}
                     </SingleLineEllipsis>
                     <ChangePill change={analytics.expensesPercentageChange} isExpense />

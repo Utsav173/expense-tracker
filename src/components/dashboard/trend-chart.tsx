@@ -53,15 +53,15 @@ interface ProcessedDataPoint {
 const trendsChartConfig = {
   income: {
     label: 'Income',
-    color: 'hsl(142, 76%, 36%)'
+    color: 'hsl(155 52% 47%)' // Corresponds to your --green
   },
   expense: {
     label: 'Expense',
-    color: 'hsl(0, 84%, 60%)'
+    color: 'hsl(20 82% 52%)' // Corresponds to your --red
   },
   balance: {
     label: 'Balance',
-    color: 'hsl(221, 83%, 53%)'
+    color: 'hsl(260 55% 61%)' // Corresponds to your --blue
   }
 } satisfies ChartConfig;
 
@@ -79,7 +79,7 @@ const CustomTooltip = ({ active, payload, label, currency }: any) => {
               <div className='h-2.5 w-2.5 rounded-full' style={{ backgroundColor: entry.color }} />
               <span className='text-muted-foreground text-xs capitalize'>{entry.dataKey}</span>
             </div>
-            <span className='text-foreground text-sm font-medium'>
+            <span className='text-foreground font-mono text-sm font-medium tabular-nums'>
               {entry.value !== null ? formatCurrency(entry.value, currency) : 'N/A'}
             </span>
           </div>
@@ -195,7 +195,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
       dataKey: 'date',
       tickLine: false,
       axisLine: false,
-      tick: { fontSize: 11, fill: 'hsl(var(--muted-foreground))' },
+      tick: { fontSize: 11, fill: 'var(--muted-foreground)' },
       interval: 'preserveStartEnd' as const,
       minTickGap: 20
     },
@@ -203,7 +203,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
       tickFormatter: formatYaxis,
       tickLine: false,
       axisLine: false,
-      tick: { fontSize: 11, fill: 'hsl(var(--muted-foreground))' },
+      tick: { fontSize: 11, fill: 'var(--muted-foreground)' },
       width: 50
     }
   };
@@ -217,33 +217,33 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               <CartesianGrid
                 strokeDasharray='3 3'
                 vertical={false}
-                stroke='hsl(var(--border))'
+                stroke='var(--border)'
                 strokeOpacity={0.3}
               />
               <XAxis {...axisProps.xAxis} />
-
+              <YAxis {...axisProps.yAxis} />
               <ChartTooltip
-                cursor={{ fill: 'hsl(var(--muted))', fillOpacity: 0.1 }}
+                cursor={{ fill: '(var(--muted)', fillOpacity: 0.1 }}
                 content={<CustomTooltip currency={currency} />}
               />
               <ChartLegend content={<ChartLegendContent />} />
               <Bar
                 dataKey='income'
-                fill='hsl(142, 76%, 36%)'
+                fill='var(--color-income)'
                 radius={[3, 3, 0, 0]}
                 animationDuration={600}
                 minPointSize={2}
               />
               <Bar
                 dataKey='expense'
-                fill='hsl(0, 84%, 60%)'
+                fill='var(--color-expense)'
                 radius={[3, 3, 0, 0]}
                 animationDuration={600}
                 minPointSize={2}
               />
               <Bar
                 dataKey='balance'
-                fill='hsl(221, 83%, 53%)'
+                fill='var(--color-balance)'
                 radius={[3, 3, 0, 0]}
                 animationDuration={600}
                 minPointSize={2}
@@ -253,29 +253,29 @@ export const TrendChart: React.FC<TrendChartProps> = ({
             <RechartsAreaChart {...commonProps}>
               <defs>
                 <linearGradient id='incomeGradient' x1='0' y1='0' x2='0' y2='1'>
-                  <stop offset='5%' stopColor='hsl(142, 76%, 36%)' stopOpacity={0.8} />
-                  <stop offset='95%' stopColor='hsl(142, 76%, 36%)' stopOpacity={0.1} />
+                  <stop offset='5%' stopColor='var(--color-income)' stopOpacity={0.4} />
+                  <stop offset='95%' stopColor='var(--color-income)' stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id='expenseGradient' x1='0' y1='0' x2='0' y2='1'>
-                  <stop offset='5%' stopColor='hsl(0, 84%, 60%)' stopOpacity={0.8} />
-                  <stop offset='95%' stopColor='hsl(0, 84%, 60%)' stopOpacity={0.1} />
+                  <stop offset='5%' stopColor='var(--color-expense)' stopOpacity={0.4} />
+                  <stop offset='95%' stopColor='var(--color-expense)' stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id='balanceGradient' x1='0' y1='0' x2='0' y2='1'>
-                  <stop offset='5%' stopColor='hsl(221, 83%, 53%)' stopOpacity={0.8} />
-                  <stop offset='95%' stopColor='hsl(221, 83%, 53%)' stopOpacity={0.1} />
+                  <stop offset='5%' stopColor='var(--color-balance)' stopOpacity={0.4} />
+                  <stop offset='95%' stopColor='var(--color-balance)' stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid
                 strokeDasharray='3 3'
                 vertical={false}
-                stroke='hsl(var(--border))'
+                stroke='var(--border)'
                 strokeOpacity={0.3}
               />
               <XAxis {...axisProps.xAxis} />
-
+              <YAxis {...axisProps.yAxis} />
               <ChartTooltip
                 cursor={{
-                  stroke: 'hsl(var(--muted-foreground))',
+                  stroke: 'var(--muted-foreground)',
                   strokeWidth: 1,
                   strokeDasharray: '3 3'
                 }}
@@ -285,30 +285,30 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               <Area
                 type='monotone'
                 dataKey='income'
-                stroke='hsl(142, 76%, 36%)'
+                stroke='var(--color-income)'
                 strokeWidth={2}
                 fill='url(#incomeGradient)'
-                activeDot={{ r: 5, strokeWidth: 2, stroke: 'hsl(var(--background))' }}
+                activeDot={{ r: 5, strokeWidth: 2, stroke: 'var(--background)' }}
                 animationDuration={600}
                 connectNulls
               />
               <Area
                 type='monotone'
                 dataKey='expense'
-                stroke='hsl(0, 84%, 60%)'
+                stroke='var(--color-expense)'
                 strokeWidth={2}
                 fill='url(#expenseGradient)'
-                activeDot={{ r: 5, strokeWidth: 2, stroke: 'hsl(var(--background))' }}
+                activeDot={{ r: 5, strokeWidth: 2, stroke: 'var(--background)' }}
                 animationDuration={600}
                 connectNulls
               />
               <Area
                 type='monotone'
                 dataKey='balance'
-                stroke='hsl(221, 83%, 53%)'
+                stroke='var(--color-balance)'
                 strokeWidth={2}
                 fill='url(#balanceGradient)'
-                activeDot={{ r: 5, strokeWidth: 2, stroke: 'hsl(var(--background))' }}
+                activeDot={{ r: 5, strokeWidth: 2, stroke: 'var(--background)' }}
                 animationDuration={600}
                 connectNulls
               />
@@ -318,14 +318,14 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               <CartesianGrid
                 strokeDasharray='3 3'
                 vertical={false}
-                stroke='hsl(var(--border))'
+                stroke='var(--border)'
                 strokeOpacity={0.3}
               />
               <XAxis {...axisProps.xAxis} />
-
+              <YAxis {...axisProps.yAxis} />
               <ChartTooltip
                 cursor={{
-                  stroke: 'hsl(var(--muted-foreground))',
+                  stroke: 'var(--muted-foreground)',
                   strokeWidth: 1,
                   strokeDasharray: '3 3'
                 }}
@@ -335,41 +335,41 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               <Line
                 type='monotone'
                 dataKey='income'
-                stroke='hsl(142, 76%, 36%)'
+                stroke='var(--color-income)'
                 strokeWidth={2.5}
                 dot={{
                   r: 3,
-                  fill: 'hsl(142, 76%, 36%)',
+                  fill: 'var(--color-income)',
                   strokeWidth: 2,
-                  stroke: 'hsl(var(--background))'
+                  stroke: 'var(--background)'
                 }}
-                activeDot={{ r: 6, strokeWidth: 2, stroke: 'hsl(var(--background))' }}
+                activeDot={{ r: 6, strokeWidth: 2, stroke: 'var(--background)' }}
                 animationDuration={600}
                 connectNulls
               />
               <Line
                 type='monotone'
                 dataKey='expense'
-                stroke='hsl(0, 84%, 60%)'
+                stroke='var(--color-expense)'
                 strokeWidth={2.5}
                 dot={{
                   r: 3,
-                  fill: 'hsl(0, 84%, 60%)',
+                  fill: 'var(--color-expense)',
                   strokeWidth: 2,
-                  stroke: 'hsl(var(--background))'
+                  stroke: 'var(--background)'
                 }}
-                activeDot={{ r: 6, strokeWidth: 2, stroke: 'hsl(var(--background))' }}
+                activeDot={{ r: 6, strokeWidth: 2, stroke: 'var(--background)' }}
                 animationDuration={600}
                 connectNulls
               />
               <Line
                 type='monotone'
                 dataKey='balance'
-                stroke='hsl(221, 83%, 53%)'
+                stroke='var(--color-balance)'
                 strokeWidth={2.5}
                 dot={{
                   r: 3,
-                  fill: 'hsl(221, 83%, 53%)',
+                  fill: 'var(--color-balance)',
                   strokeWidth: 2,
                   stroke: 'hsl(var(--background))'
                 }}
