@@ -7,7 +7,7 @@ export interface User {
   token?: string;
   isSocial: boolean;
   profilePic: string | null;
-  role: string;
+  role: 'user' | 'admin';
   isActive: boolean;
   lastLoginAt?: string | null;
   resetPasswordToken?: string | null;
@@ -15,6 +15,18 @@ export interface User {
   updatedAt?: string | null;
   preferredCurrency: string | null;
   hasAiApiKey?: boolean;
+}
+
+// UserSettings Interface
+export interface UserSettings {
+  theme: 'light' | 'dark' | 'system';
+  hasAiApiKey: boolean;
+  notifications: {
+    enableAll: boolean;
+    budgetAlerts: boolean;
+    goalReminders: boolean;
+    billReminders: boolean;
+  };
 }
 
 // Analytics Interface

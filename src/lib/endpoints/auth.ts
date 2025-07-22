@@ -18,10 +18,6 @@ export const authGetMe = (): Promise<UserApiResponse> => apiFetch('/auth/me', 'G
 export const authUpdateUser = (body: any) =>
   apiFetch('/auth/update', 'PUT', body, { headers: { 'Content-Type': 'multipart/form-data' } });
 
-export const authUpdateUserAiApiKey = (
-  apiKey: string | null
-): Promise<ApiResponse<{ message: string }>> => apiFetch('/auth/ai-key', 'PUT', { apiKey });
-
 export const authUpdateUserPreferences = (body: any) => apiFetch('/auth/preferences', 'PUT', body);
 
 export const authGetUserPreferences = (): Promise<
@@ -29,5 +25,8 @@ export const authGetUserPreferences = (): Promise<
     preferredCurrency: string | null;
   }>
 > => apiFetch('/auth/preferences', 'GET');
+
+export const authChangePassword = (body: any): Promise<ApiResponse<{ message: string }>> =>
+  apiFetch('/auth/change-password', 'PUT', body);
 
 export const authLogOut = (): Promise<ApiResponse<null>> => apiFetch('/auth/logout', 'POST');
