@@ -155,7 +155,7 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
       {isOwner && (
         <div
           className={cn(
-            'grid max-h-[70dvh] grid-cols-1 gap-6 overflow-hidden select-none max-sm:h-auto',
+            'grid grid-cols-1 gap-6 select-none',
             hasTransactions && 'lg:grid-cols-2 xl:grid-cols-[1fr_1.5fr]'
           )}
         >
@@ -166,7 +166,7 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
           />
 
           {hasTransactions && (
-            <Card className='h-full shrink-0 overflow-hidden rounded-lg shadow-lg'>
+            <Card className='overflow-hidden rounded-lg shadow-lg'>
               <FinancialTrendsSection
                 chartData={transformedChartData}
                 isChartLoading={isChartLoading}
