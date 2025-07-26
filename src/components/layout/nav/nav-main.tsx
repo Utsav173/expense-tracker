@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 
 import { NavItem } from '../app-sidebar';
 import TooltipElement from '@/components/ui/tooltip-element';
+import React from 'react';
 
 export function NavMain({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
@@ -20,7 +21,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
       <SidebarMenu>
         {items.map((item) => {
           const isActive = pathname === item.url;
-          const LinkIcon = item.icon;
+          const LinkIcon = item.icon as React.ComponentType<React.SVGProps<SVGSVGElement>>;
 
           return (
             <SidebarMenuItem key={item.title} className={cn(isActive && 'bg-transparent')}>

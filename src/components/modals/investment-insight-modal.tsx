@@ -41,7 +41,8 @@ import {
   PieChart,
   BarChart3,
   Info,
-  Clock
+  Clock,
+  LucideProps
 } from 'lucide-react';
 import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
 import { SingleLineEllipsis } from '../ui/ellipsis-components';
@@ -169,7 +170,7 @@ const KPICard = ({
 }: {
   title: string;
   value: React.ReactNode;
-  icon: React.ElementType;
+  icon: React.ElementType<LucideProps>;
   className?: string;
   trend?: 'up' | 'down' | 'neutral';
   subtitle?: string;

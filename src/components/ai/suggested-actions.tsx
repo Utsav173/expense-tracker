@@ -13,7 +13,8 @@ import {
   ArrowLeftRight,
   Check,
   X,
-  HelpCircle
+  HelpCircle,
+  LucideProps
 } from 'lucide-react';
 import { ScrollArea, ScrollBar } from '../ui/scroll-area';
 
@@ -36,7 +37,7 @@ interface ActionDefinition {
   keywords: (string | RegExp)[];
   entities: string[];
   label: string;
-  icon: React.ElementType;
+  icon: React.ElementType<LucideProps>;
   path: string;
 }
 

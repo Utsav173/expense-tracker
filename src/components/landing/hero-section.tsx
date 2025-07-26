@@ -48,7 +48,7 @@ const HeroSection = () => {
       <div
         className={cn(
           'absolute z-0',
-          'hidden lg:top-[20%] lg:right-[0%] lg:block lg:h-[70%] lg:w-[50%]',
+          'hidden lg:top-[15%] lg:left-[20%] lg:block lg:h-[100%]',
           'md:right-0 md:bottom-0 md:block md:h-[40%] md:w-full',
           'sm:bottom-[-5%] sm:h-[30%]'
         )}
@@ -58,7 +58,7 @@ const HeroSection = () => {
         </Suspense>
       </div>
 
-      <div className='relative z-10 container mx-auto px-4 lg:px-8'>
+      <div className='relative z-10 container mx-auto px-4 max-sm:mb-[120px] lg:px-8'>
         <div className='grid grid-cols-1 items-center lg:grid-cols-2'>
           {/* Column 1: Text Content */}
           <div className='hero-content text-center lg:pr-8 lg:text-left'>
@@ -72,7 +72,7 @@ const HeroSection = () => {
               </Badge>
             </div>
 
-            <h1 className='text-foreground text-3xl font-extrabold sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl'>
+            <h1 className='text-foreground text-8xl font-extrabold max-sm:text-5xl'>
               <span className='hero-headline-word hero-text-glow inline-block'>Stop Guessing.</span>
               <br />
               <span className='hero-headline-word from-primary inline-block bg-gradient-to-r via-blue-500 to-sky-500 bg-clip-text leading-tight text-transparent'>

@@ -32,7 +32,8 @@ import {
   TrendingUp,
   Wallet,
   Calendar,
-  BarChart3
+  BarChart3,
+  LucideProps
 } from 'lucide-react';
 import { SingleLineEllipsis } from '../ui/ellipsis-components';
 import { investmentAccountGetPerformance } from '@/lib/endpoints/investmentAccount';
@@ -43,7 +44,7 @@ interface KpiCardProps {
   title: string;
   value: number;
   currency: string;
-  icon: React.ElementType;
+  icon: React.ElementType<LucideProps>;
   isLoading: boolean;
   changePercent?: number;
   valuePrefix?: string;

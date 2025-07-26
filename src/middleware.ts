@@ -14,7 +14,8 @@ export async function middleware(request: NextRequest) {
     '/auth/reset-password',
     '/legal/privacy-policy',
     '/legal/terms-of-service',
-    '/support/contact'
+    '/support/contact',
+    '/support/feedback'
   ];
   const isPublicPath = publicRoutes.some((route) => path.startsWith(route));
 

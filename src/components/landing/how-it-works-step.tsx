@@ -1,25 +1,46 @@
 'use client';
 
-import React from 'react';
+import React, { ReactNode } from 'react';
+import { cn } from '@/lib/utils';
 
 interface HowItWorksStepProps {
   stepNumber: string;
   icon: React.ReactNode;
   title: string;
   description: string;
+  className?: string;
 }
 
-export const HowItWorksStep = ({ stepNumber, icon, title, description }: HowItWorksStepProps) => {
+export const HowItWorksStep = ({
+  stepNumber,
+  icon,
+  title,
+  description,
+  className
+}: HowItWorksStepProps) => {
   return (
-    <div className='bg-background relative z-10 p-4 text-center'>
-      <div className='bg-primary text-primary-foreground mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full text-2xl font-bold shadow-lg'>
-        <div className='border-background absolute -top-3 -left-3 flex h-8 w-8 items-center justify-center rounded-full border-4 bg-white text-sm font-bold text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-white'>
+    <div
+      className={cn(
+        'how-it-works-step-anim relative flex flex-col items-center text-center opacity-0',
+        className
+      )}
+    >
+      <div className='relative mb-6'>
+        <div className='bg-primary/20 absolute inset-0.5 -z-10 rounded-full blur-lg transition-all duration-300 group-hover:blur-xl' />
+        <div className='bg-primary/70 text-primary-foreground group ring-background flex h-20 w-20 items-center justify-center rounded-full shadow-lg ring-8'>
+          {React.cloneElement(
+            icon as React.ReactElement,
+            {
+              className: 'h-8 w-8 transition-transform duration-300 group-hover:scale-110'
+            } as React.HTMLAttributes<SVGElement>
+          )}
+        </div>
+        <div className='border-background bg-foreground text-background absolute -top-2 -left-2 flex h-8 w-8 items-center justify-center rounded-full border-2 text-sm font-bold'>
           {stepNumber}
         </div>
-        {icon}
       </div>
-      <h3 className='mb-2 text-xl font-semibold'>{title}</h3>
-      <p className='text-muted-foreground text-base'>{description}</p>
+      <h3 className='mb-2 text-2xl font-bold'>{title}</h3>
+      <p className='text-muted-foreground max-w-xs text-base'>{description}</p>
     </div>
   );
 };

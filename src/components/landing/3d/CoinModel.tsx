@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useMemo } from 'react';
 import { useGLTF } from '@react-three/drei';
 
 export function CoinModel(props: React.ComponentProps<'group'>) {

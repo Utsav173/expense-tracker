@@ -25,7 +25,8 @@ import {
   ArrowUpCircle,
   ArrowDownCircle,
   Tag,
-  CalendarDays
+  CalendarDays,
+  LucideProps
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { CardContent } from '../ui/card';
@@ -368,7 +369,7 @@ const ToolInfo: React.FC<{
         <CardContent className='max-h-60 overflow-y-auto p-2 pt-0 text-[11px]'>
           {/* Display Tool Calls */}
           {toolCalls?.map((call) => {
-            const Icon = getToolIcon(call.toolName);
+            const Icon = getToolIcon(call.toolName) as React.ElementType<LucideProps>;
             return (
               <div
                 key={call.toolCallId}

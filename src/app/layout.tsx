@@ -49,7 +49,7 @@ export const metadata: Metadata = {
         alt: 'Expense Tracker Dashboard Mockup'
       },
       {
-        url: 'https://expense-pro.vercel.app/og-image-dashboard-desktop-light.png',
+        url: 'https://expense-pro.vercel.app/og-image-dashboard-desktop-light.webp',
         width: 1200,
         height: 630,
         alt: 'Expense Tracker Dashboard'
@@ -63,7 +63,7 @@ export const metadata: Metadata = {
       'Expense Pro: Your intelligent partner for mastering personal finance. Automate tracking, gain deep understanding, and achieve your financial goals with unprecedented ease.',
     images: [
       'https://expense-pro.vercel.app/og-image-home.png',
-      'https://expense-pro.vercel.app/og-image-dashboard-desktop-light.png'
+      'https://expense-pro.vercel.app/og-image-dashboard-desktop-light.webp'
     ]
   },
   verification: {

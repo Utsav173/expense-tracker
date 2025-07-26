@@ -17,7 +17,10 @@ const LandingPageFooter = () => {
     { name: 'Terms of Service', href: '/legal/terms-of-service' }
   ];
 
-  const companyLinks = [{ name: 'Contact Us', href: '/support/contact' }];
+  const companyLinks = [
+    { name: 'Contact Us', href: '/support/contact' },
+    { name: 'Feedback', href: '/support/feedback' }
+  ];
 
   return (
     <footer className='border-border bg-background border-t py-12 md:py-16'>

@@ -1,19 +1,26 @@
 import type { Metadata } from 'next';
-import { features } from '@/lib/data/features';
+import { featuresList } from '@/lib/data/features-list';
 
 export async function generateMetadata({
   params
 }: {
   params: { slug: string };
 }): Promise<Metadata> {
-  const feature = features.find((f) => f.slug === params.slug);
+  const feature = featuresList.find((f) => f.slug === params.slug);
 
   if (!feature) {
-    return {};
+    return {
+      title: 'Feature Not Found'
+    };
   }
 
   return {
-    title: `${feature.title} - Expense Pro Features`,
-    description: feature.shortDescription
+    title: `${feature.title} - Expense Pro`,
+    description: feature.description,
+    openGraph: {
+      title: `${feature.title} - Expense Pro`,
+      description: feature.description,
+      type: 'article'
+    }
   };
 }

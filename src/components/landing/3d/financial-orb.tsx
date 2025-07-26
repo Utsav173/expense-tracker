@@ -1,17 +1,15 @@
 'use client';
 
-import React, { Suspense, useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import React, { Suspense } from 'react';
+import { Canvas } from '@react-three/fiber';
 import { Environment, OrbitControls } from '@react-three/drei';
-import * as THREE from 'three';
 import { CoinModel } from './CoinModel';
 import { useTheme } from 'next-themes';
 
 const CoinStack = () => {
-  // Keep coins stationary at center - camera orbits around this point
   return (
     <group position={[0, 0, 0]}>
-      <CoinModel scale={1.2} />
+      <CoinModel scale={1} />
     </group>
   );
 };
@@ -44,12 +42,12 @@ export const FinancialOrb = () => {
       <directionalLight
         position={[-8, 8, 5]}
         intensity={isDark ? 1 : 1.5}
-        color={isDark ? '#ffffff' : '#ffffff'}
+        color={isDark ? '#fffcf5' : '#fffcf5'}
       />
       <pointLight
         position={[5, -5, 10]}
         intensity={isDark ? 40 : 80}
-        color={isDark ? '#6366f1' : '#4f9cf9'}
+        color={isDark ? '#fff654' : '#f9c64f'}
       />
 
       <Environment preset='city' />

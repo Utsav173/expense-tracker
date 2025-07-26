@@ -5,22 +5,24 @@ import { Check } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { Card } from '../ui/card';
+import { imageToTheme } from '@/lib/data/features-landing';
 
 interface FeatureSpotlightProps {
   id: string;
   headline: string;
   description: string;
   bullets: string[];
-  imageUrl: string;
   reverseLayout?: boolean;
+  theme: 'light' | 'dark';
 }
 
 export const FeatureSpotlight = ({
   headline,
   description,
   bullets,
-  imageUrl,
-  reverseLayout
+  reverseLayout,
+  id,
+  theme
 }: FeatureSpotlightProps) => {
   return (
     <div className='container mx-auto'>
@@ -33,7 +35,7 @@ export const FeatureSpotlight = ({
         <div className={cn('md:order-1', reverseLayout && 'md:order-2')}>
           <Card className='overflow-hidden shadow-2xl'>
             <Image
-              src={imageUrl}
+              src={imageToTheme[id as keyof typeof imageToTheme][theme]}
               alt={headline}
               width={1200}
               height={800}

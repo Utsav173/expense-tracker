@@ -9,8 +9,7 @@ export const featuresData = [
       "Ask for summaries: 'How much did I spend on food last month?'",
       'Get smart, context-aware suggestions.',
       'Securely uses your own AI provider API key.'
-    ],
-    imageUrl: '/feature-ai.png' // Make sure this image exists in /public
+    ]
   },
   {
     id: 'dashboard',
@@ -22,8 +21,7 @@ export const featuresData = [
       'Rich, interactive charts powered by Recharts.',
       'Track income, expenses, investments, and debts.',
       'Assess your financial health with an intelligent score.'
-    ],
-    imageUrl: '/og-image-dashboard-desktop-dark.png' // This one already exists
+    ]
   },
   {
     id: 'data-import',
@@ -34,7 +32,21 @@ export const featuresData = [
       'AI-Powered PDF Import: Turn bank statements into categorized data.',
       'Import from XLSX templates for bulk entries.',
       'Export your filtered data to XLSX or CSV anytime.'
-    ],
-    imageUrl: '/feature-import.png' // Make sure this image exists in /public
+    ]
   }
 ];
+
+export const imageToTheme = {
+  'ai-assistant': {
+    light: '/feature-ai-light.webp',
+    dark: '/feature-ai-dark.webp'
+  },
+  'data-import': {
+    light: '/feature-import-light.webp',
+    dark: '/feature-import-dark.webp'
+  },
+  dashboard: {
+    light: '/og-image-dashboard-desktop-light.webp',
+    dark: '/og-image-dashboard-desktop-dark.webp'
+  }
+};

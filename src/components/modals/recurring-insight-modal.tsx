@@ -23,7 +23,8 @@ import {
   TrendingUp,
   AlertCircle,
   Target,
-  Loader2
+  Loader2,
+  LucideProps
 } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { useQuery } from '@tanstack/react-query';
@@ -44,7 +45,7 @@ const KPICard = ({
 }: {
   title: string;
   value: React.ReactNode;
-  icon: React.ElementType;
+  icon: React.ElementType<LucideProps>;
   className?: string;
   subtitle?: string;
 }) => (
