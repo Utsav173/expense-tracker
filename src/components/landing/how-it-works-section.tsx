@@ -55,9 +55,9 @@ export const HowItWorksSection = () => {
   );
 
   return (
-    <section id='how-it-works' ref={sectionRef} className='bg-muted py-24'>
+    <section id='how-it-works' ref={sectionRef} className='bg-muted px-3 py-24'>
       <div className='container mx-auto text-center'>
-        <h2 className='text-4xl font-bold'>Get Started in 3 Simple Steps</h2>
+        <h2 className='text-4xl font-bold max-sm:text-2xl'>Get Started in 3 Simple Steps</h2>
         <p className='text-muted-foreground mx-auto mt-4 max-w-2xl text-lg'>
           From data to decisions, mastering your finances has never been easier.
         </p>

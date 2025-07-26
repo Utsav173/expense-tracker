@@ -17,7 +17,6 @@ import {
   AlertDialogTrigger
 } from '@/components/ui/alert-dialog';
 import { ChatMessageBubble } from './chat-message-bubble';
-import { SuggestedActions } from './suggested-actions';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -29,8 +28,7 @@ export const AiChat = ({
   handleClose?: () => void;
   shouldFullHeight?: boolean;
 }) => {
-  const { messages, sendMessage, isLoading, error, clearChat, latestAssistantMessage } =
-    useAiChat();
+  const { messages, sendMessage, isLoading, error, clearChat } = useAiChat();
   const [input, setInput] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
@@ -161,7 +159,7 @@ export const AiChat = ({
 
             {/* Messages */}
             {isInitialized &&
-              messages.map((message, index) => (
+              messages.map((message) => (
                 <motion.div
                   key={message.id}
                   layout
@@ -225,9 +223,6 @@ export const AiChat = ({
           </motion.div>
         </AnimatePresence>
       </ScrollArea>
-
-      {/* Suggested Actions */}
-      <SuggestedActions latestAssistantMessage={latestAssistantMessage} />
 
       {/* Input Area */}
       <div className='flex-shrink-0 border-t p-4'>

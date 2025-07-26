@@ -27,7 +27,7 @@ export const HowItWorksStep = ({
     >
       <div className='relative mb-6'>
         <div className='bg-primary/20 absolute inset-0.5 -z-10 rounded-full blur-lg transition-all duration-300 group-hover:blur-xl' />
-        <div className='bg-primary/70 text-primary-foreground group ring-background flex h-20 w-20 items-center justify-center rounded-full shadow-lg ring-8'>
+        <div className='bg-balance text-primary-foreground group ring-background flex h-20 w-20 items-center justify-center rounded-full shadow-lg ring-8'>
           {React.cloneElement(
             icon as React.ReactElement,
             {

@@ -1,17 +1,32 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { BrainCircuit } from 'lucide-react';
+import { BrainCircuit, X } from 'lucide-react';
 import { AiChat } from './ai-chat';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/hooks/useAuth';
 
 export const AiChatTrigger = () => {
   const [isOpen, setIsOpen] = useState(false);
   const isMobile = useIsMobile();
+  const { user } = useAuth();
+
+  if (!user?.hasAiApiKey) {
+    return null;
+  }
+
+  const buttonClasses =
+    'fixed right-6 bottom-6 z-50 h-12 w-12 rounded-full shadow-lg flex items-center justify-center from-primary to-blue-500 bg-gradient-to-br text-primary-foreground';
+
+  const iconVariants = {
+    initial: { opacity: 0, scale: 0.5, rotate: -90 },
+    animate: { opacity: 1, scale: 1, rotate: 0 },
+    exit: { opacity: 0, scale: 0.5, rotate: 90 }
+  };
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -19,18 +34,43 @@ export const AiChatTrigger = () => {
         <Tooltip>
           <TooltipTrigger asChild>
             <SheetTrigger asChild>
-              <Button
-                variant='default'
-                size='icon'
-                className={cn(
-                  'fixed right-6 bottom-6 z-50 h-10 w-10 rounded-full shadow-lg',
-                  'transition-transform duration-200 ease-out hover:scale-110 focus-visible:scale-110 active:scale-95',
-                  'from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 bg-gradient-to-br'
-                )}
-                aria-label='Open AI Assistant'
+              <motion.button
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.5 }}
+                whileHover={{ scale: 1.1, transition: { type: 'spring', stiffness: 300 } }}
+                whileTap={{ scale: 0.95 }}
+                className={cn(buttonClasses)}
+                aria-label={isOpen ? 'Close AI Assistant' : 'Open AI Assistant'}
               >
-                <BrainCircuit className='h-6 w-6' />
-              </Button>
+                {/* Pulsing ring for attention */}
+                <span className='bg-primary absolute h-full w-full animate-ping rounded-full opacity-20' />
+
+                {/* Icon transition */}
+                <AnimatePresence mode='wait' initial={false}>
+                  {isOpen ? (
+                    <motion.div
+                      key='close'
+                      variants={iconVariants}
+                      initial='initial'
+                      animate='animate'
+                      exit='exit'
+                    >
+                      <X className='h-6 w-6' />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key='ai'
+                      variants={iconVariants}
+                      initial='initial'
+                      animate='animate'
+                      exit='exit'
+                    >
+                      <BrainCircuit className='h-6 w-6' />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.button>
             </SheetTrigger>
           </TooltipTrigger>
           <TooltipContent side='left' sideOffset={10}>
@@ -42,13 +82,11 @@ export const AiChatTrigger = () => {
         side={isMobile ? 'bottom' : 'right'}
         className={cn(
           'flex flex-col p-0 [&>button:first-of-type]:hidden',
-          isMobile
-            ? 'h-[90dvh] w-full rounded-t-xl'
-            : 'h-full w-[95vw] sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl'
+          isMobile ? 'h-[90dvh] w-full rounded-t-xl' : 'h-full w-full max-w-2xl'
         )}
         aria-describedby={undefined}
       >
-        <AiChat shouldFullHeight handleClose={!isMobile ? () => setIsOpen(false) : undefined} />
+        <AiChat shouldFullHeight handleClose={() => setIsOpen(false)} />
       </SheetContent>
     </Sheet>
   );

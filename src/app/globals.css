@@ -590,6 +590,7 @@
     z-index: 0;
   }
 
+
   @media (max-width: 1024px) {
     .hero-canvas-container {
       bottom: 0;
@@ -716,5 +717,15 @@
 .recharts-wrapper {
   path {
     outline: none !important;
+  }
+}
+
+@keyframes rotating-glow {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
   }
 }

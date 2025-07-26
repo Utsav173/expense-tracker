@@ -19,7 +19,7 @@ const LandingPage = () => {
       <LandingPageHeader />
       <main>
         <HeroSection />
-        <SocialProofSection />
+        {/* <SocialProofSection /> */}
         <FeatureDeepDiveSection />
         <HowItWorksSection />
         <AllFeaturesSection />

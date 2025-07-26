@@ -1,8 +1,9 @@
+'use client';
+
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { aiProcessPrompt } from '@/lib/endpoints/ai';
 import { useInvalidateQueries } from '../../../hooks/useInvalidateQueries';
-import { safeJsonParse } from '@/lib/utils';
 import { useToast } from '@/lib/hooks/useToast';
 
 const STORAGE_KEY_MESSAGES = 'aiChatMessages';
@@ -12,20 +13,6 @@ export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  toolCalls?: any[];
-  toolResults?: any[];
-  toolData?: {
-    toolName: string;
-    data: any;
-    message?: string;
-    error?: string;
-  } | null;
-  chart?: {
-    type: 'bar' | 'line' | 'pie' | 'donut';
-    data: any;
-    options?: any;
-    title?: string;
-  };
   createdAt?: Date;
 }
 
@@ -92,85 +79,40 @@ export const useAiChat = (): UseAiChatReturn => {
     },
     onSuccess: (data) => {
       if (!data) {
-        console.error('AI Processing Error: Received null or undefined data.');
         setError(new Error('Received no response from the AI assistant.'));
         setMessages((prev) => prev.slice(0, -1));
         return;
-      }
-
-      let processedToolData: ChatMessage['toolData'] = null;
-      let chartData: ChatMessage['chart'] | undefined = undefined;
-      let shouldInvalidateQueries = false;
-
-      if (data.toolResults && data.toolResults.length > 0) {
-        const successfulAnalysisResult = data.toolResults.find((res) => {
-          const parsed = safeJsonParse(res.result);
-          return parsed && parsed.success === true && (parsed.data !== undefined || parsed.chart);
-        });
-
-        if (successfulAnalysisResult) {
-          const parsed = safeJsonParse(successfulAnalysisResult.result);
-          const callingTool = data.toolCalls?.find(
-            (tc) => tc.toolCallId === successfulAnalysisResult.toolCallId
-          );
-          processedToolData = {
-            toolName: callingTool?.toolName || 'Unknown Analysis Tool',
-            data: parsed.data,
-            message: parsed.message
-          };
-          chartData = parsed.chart;
-          if (
-            !callingTool?.toolName?.startsWith('get') &&
-            !callingTool?.toolName?.startsWith('list') &&
-            !callingTool?.toolName?.startsWith('identify')
-          ) {
-            shouldInvalidateQueries = true;
-          }
-        } else {
-          const firstRelevantResult = data.toolResults[0];
-          const parsed = safeJsonParse(firstRelevantResult.result);
-          const callingTool = data.toolCalls?.find(
-            (tc) => tc.toolCallId === firstRelevantResult.toolCallId
-          );
-
-          processedToolData = {
-            toolName: callingTool?.toolName || 'Tool Execution',
-            data: parsed?.data,
-            message: parsed?.message,
-            error: parsed?.error
-          };
-          chartData = parsed.chart;
-          if (parsed?.confirmationNeeded || parsed?.clarificationNeeded) {
-            shouldInvalidateQueries = false;
-          } else if (
-            parsed?.success === true &&
-            !callingTool?.toolName?.startsWith('get') &&
-            !callingTool?.toolName?.startsWith('list') &&
-            !callingTool?.toolName?.startsWith('identify')
-          ) {
-            shouldInvalidateQueries = true;
-          }
-        }
       }
 
       const assistantMessage: ChatMessage = {
         id: crypto.randomUUID(),
         role: 'assistant',
         content: data.response ?? '',
-        toolCalls: data.toolCalls,
-        toolResults: data.toolResults,
-        toolData: processedToolData,
-        chart: chartData,
         createdAt: new Date()
       };
-
       setMessages((prev) => [...prev, assistantMessage]);
 
       if (data.sessionId && data.sessionId !== sessionId) {
         setSessionId(data.sessionId);
       }
 
-      if (shouldInvalidateQueries) {
+      const responseText = data.response?.toLowerCase() || '';
+      const actionKeywords = [
+        'added',
+        'created',
+        'updated',
+        'deleted',
+        'removed',
+        'set',
+        'modified',
+        'imported',
+        'saved',
+        'renamed',
+        'paid'
+      ];
+      const shouldInvalidate = actionKeywords.some((keyword) => responseText.includes(keyword));
+
+      if (shouldInvalidate) {
         invalidate(['dashboardData']);
         invalidate(['transactions']);
         invalidate(['accounts']);
@@ -184,7 +126,7 @@ export const useAiChat = (): UseAiChatReturn => {
     onError: (err: Error) => {
       console.error('AI processing mutation error:', err);
       setError(err);
-      setMessages((prev) => prev.slice(0, -1));
+      setMessages((prev) => prev.slice(0, -1)); // Remove the user's optimistic message on error
     }
   });
 
@@ -199,7 +141,6 @@ export const useAiChat = (): UseAiChatReturn => {
         content: prompt,
         createdAt: new Date()
       };
-
       setMessages((prev) => [...prev, userMessage]);
       await mutation.mutateAsync(prompt);
     },
