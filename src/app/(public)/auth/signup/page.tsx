@@ -147,10 +147,7 @@ const SignupPage = () => {
                 disabled={loading}
               />
               {formState.errors.password && (
-                <p className='text-destructive py-1 text-xs'>
-                  {' '}
-                  {formState.errors.password.message}
-                </p>
+                <p className='text-destructive py-1 text-xs'>{formState.errors.password.message}</p>
               )}
             </div>
 

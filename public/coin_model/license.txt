@@ -1,0 +1,11 @@
+Model Information:
+* title:	Coins
+* source:	https://sketchfab.com/3d-models/coins-a43b47f4eed140a9bd0f5d05849140df
+* author:	Kirill1991 (https://sketchfab.com/Kirill1991)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Coins" (https://sketchfab.com/3d-models/coins-a43b47f4eed140a9bd0f5d05849140df) by Kirill1991 (https://sketchfab.com/Kirill1991) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

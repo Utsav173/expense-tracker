@@ -3,6 +3,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import { ModeToggle } from '../theme-toggle';
 
 const LandingPageHeader = () => {
   return (
@@ -44,7 +45,8 @@ const LandingPageHeader = () => {
             Contact
           </Link>
         </nav>
-        <div className='flex items-center gap-1'>
+        <div className='flex items-center gap-2'>
+          <ModeToggle /> {/* Add the theme toggle here */}
           <Link href='/auth/login'>
             <Button
               variant='ghost'

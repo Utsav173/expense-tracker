@@ -102,7 +102,6 @@ const FinancialHealth: React.FC = () => {
             </ResponsiveContainer>
             <div className='absolute inset-0 flex flex-col items-center justify-center'>
               <span className='text-4xl font-bold'>{analysis.score}</span>
-              <span className='text-muted-foreground text-sm'>/ 100</span>
             </div>
           </div>
           <div className='text-center'>
