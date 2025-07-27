@@ -303,7 +303,6 @@
   --z-toast: 1080;
   --animate-appear: appear 0.5s ease-out forwards;
   --animate-appear-zoom: appear-zoom 0.5s ease-out forwards;
-  /* Corrected the invalid variable name */
   --color-brand-foreground: var(--brand-foreground);
   --color-brand: var(--brand);
 }
@@ -553,7 +552,9 @@
 
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: 'rlig' 1, 'calt' 1;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -590,7 +591,6 @@
     z-index: 0;
   }
 
-
   @media (max-width: 1024px) {
     .hero-canvas-container {
       bottom: 0;
@@ -600,14 +600,13 @@
     }
   }
 
-
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-transparent;
+    @apply bg-muted/20 dark:bg-muted/10;
   }
 
   ::-webkit-scrollbar-thumb {
@@ -626,7 +625,7 @@
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
+    scrollbar-color: var(--color-border) transparent;
   }
 
   .no-scrollbar::-webkit-scrollbar {
@@ -685,7 +684,7 @@
 
   /* Subtle noise background for dark mode */
   .subtle-noise-bg::after {
-    content: "";
+    content: '';
     position: fixed;
     top: 0;
     left: 0;

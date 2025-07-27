@@ -2,12 +2,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAiChat } from '@/components/ai/hooks/useAiChat';
 import { Button } from '@/components/ui/button';
-import { Send, Loader2, Wand2, Bot } from 'lucide-react';
+import { Send, Loader2, Wand2, Bot, Paperclip } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatMessageBubble } from './chat-message-bubble';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Avatar, AvatarFallback } from '../ui/avatar';
+import { useToast } from '@/lib/hooks/useToast';
 
 const PromptSuggestion = ({ text, onClick }: { text: string; onClick: () => void }) => (
   <motion.button
@@ -25,6 +26,8 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
   const [input, setInput] = useState('');
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { showError } = useToast();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -48,6 +51,34 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
     await sendMessage(messageToSend);
   };
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 4.5 * 1024 * 1024) {
+      // 4.5MB limit
+      showError('Image file is too large. Please select a file smaller than 4.5MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = (reader.result as string).split(',')[1];
+      const promptText = input || `Analyze this receipt and add the transaction.`;
+      sendMessage(promptText, base64String);
+      setInput('');
+    };
+    reader.onerror = () => {
+      showError('Failed to read the image file.');
+    };
+    reader.readAsDataURL(file);
+
+    // Reset file input to allow selecting the same file again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
@@ -63,7 +94,11 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
 
   const isInputDisabled = isLoading || isStreaming;
   const lastMessage = messages[messages.length - 1];
-  const showFollowUps = lastMessage?.role === 'assistant' && !isStreaming;
+  const showFollowUps =
+    lastMessage?.role === 'assistant' &&
+    !isStreaming &&
+    lastMessage.followUpPrompts &&
+    lastMessage.followUpPrompts.length > 0;
 
   return (
     <div
@@ -73,7 +108,7 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
       )}
     >
       <ScrollArea className='flex-1'>
-        <div className='mx-auto w-full max-w-3xl space-y-8 px-4 py-6'>
+        <div className='mx-auto w-full max-w-5xl space-y-8 px-4 py-6'>
           <AnimatePresence initial={false}>
             {messages.length === 0 && !isInputDisabled && !error && (
               <motion.div
@@ -154,13 +189,51 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
               </motion.div>
             )}
 
+            {showFollowUps && (
+              <motion.div
+                key='follow-ups'
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className='flex flex-col items-end'
+              >
+                <div className='w-full max-w-[85%] space-y-2'>
+                  {lastMessage.followUpPrompts?.map((prompt, index) => (
+                    <PromptSuggestion
+                      key={index}
+                      text={prompt}
+                      onClick={() => handleSendMessage(prompt)}
+                    />
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
             <div ref={messagesEndRef} />
           </AnimatePresence>
         </div>
       </ScrollArea>
 
-      <div className='mx-auto w-full max-w-3xl p-4'>
+      <div className='mx-auto w-full max-w-4xl p-4'>
         <div className='bg-card relative flex w-full items-end rounded-xl border p-2 shadow-sm'>
+          <Button
+            type='button'
+            variant='ghost'
+            size='icon'
+            className='h-8 w-8 shrink-0 rounded-full'
+            aria-label='Upload image'
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isInputDisabled}
+          >
+            <Paperclip className='h-4 w-4' />
+          </Button>
+          <input
+            type='file'
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept='image/*'
+            className='hidden'
+          />
           <textarea
             ref={textAreaRef}
             value={input}

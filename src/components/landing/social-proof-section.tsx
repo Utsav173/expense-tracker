@@ -6,7 +6,7 @@ export const SocialProofSection = () => {
   return (
     <section className='bg-background py-16'>
       <div className='container mx-auto px-4 text-center'>
-        <p className='text-muted-foreground text-sm font-semibold uppercase tracking-widest'>
+        <p className='text-muted-foreground text-sm font-semibold tracking-widest uppercase'>
           Trusted by smart money managers
         </p>
         <div className='mt-8 grid grid-cols-2 items-center justify-center gap-8 md:grid-cols-4'>

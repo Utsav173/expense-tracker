@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { ChatMessage } from '@/components/ai/hooks/useAiChat';
+import { ChatMessage } from '@/lib/types';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Bot, User, ClipboardCopy, Check } from 'lucide-react';
 import { format } from 'date-fns';
@@ -12,6 +12,7 @@ import rehypeHighlight from 'rehype-highlight';
 import 'highlight.js/styles/github-dark.css';
 import { Button } from '../ui/button';
 import { useToast } from '@/lib/hooks/useToast';
+import AiChartRenderer from './ai-chart-renderer';
 
 interface ChatMessageBubbleProps {
   message: ChatMessage;
@@ -86,6 +87,12 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
           </ReactMarkdown>
           {isStreaming && <span className='ml-1 inline-block h-4 w-1 animate-pulse bg-current' />}
         </div>
+
+        {message.chart && (
+          <div className='mt-2'>
+            <AiChartRenderer chart={message.chart} />
+          </div>
+        )}
 
         {message.createdAt && !isStreaming && (
           <p className='pt-1 text-right text-[10px] opacity-70'>
