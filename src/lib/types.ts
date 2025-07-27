@@ -419,6 +419,7 @@ export interface ParsedTransactionFromAI {
 export interface AiProcessRequest {
   prompt: string;
   sessionId?: string;
+  base64Image?: string;
 }
 
 export interface AiProcessResponse {
@@ -452,4 +453,17 @@ export interface InvestmentPerformanceData {
   currentMarketData: StockPriceResult | null;
   marketPerformance: { date: string; value: number | null }[];
   holdingPerformance: { date: string; holdingValue: number; gainLoss: number }[];
+}
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  chart?: {
+    type: 'auto' | 'bar' | 'line' | 'pie';
+    data: any[];
+  };
+  createdAt?: Date;
+  followUpPrompts?: string[];
+  imageAnalysisData?: any[];
 }

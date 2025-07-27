@@ -5,20 +5,15 @@ import { useMutation } from '@tanstack/react-query';
 import { aiProcessPrompt } from '@/lib/endpoints/ai';
 import { useInvalidateQueries } from '../../../hooks/useInvalidateQueries';
 import { useToast } from '@/lib/hooks/useToast';
+import { ChatMessage } from '@/lib/types';
+import { safeJsonParse } from '@/lib/utils';
 
 const STORAGE_KEY_MESSAGES = 'aiChatMessages';
 const STORAGE_KEY_SESSION_ID = 'aiChatSessionId';
 
-export interface ChatMessage {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  createdAt?: Date;
-}
-
 interface UseAiChatReturn {
   messages: ChatMessage[];
-  sendMessage: (prompt: string) => Promise<void>;
+  sendMessage: (prompt: string, base64Image?: string) => Promise<void>;
   isLoading: boolean;
   isStreaming: boolean;
   error: Error | null;
@@ -56,18 +51,19 @@ export const useAiChat = (): UseAiChatReturn => {
     else localStorage.removeItem(STORAGE_KEY_SESSION_ID);
   }, [messages, sessionId]);
 
-  const streamResponse = useCallback((fullMessage: ChatMessage) => {
+  const streamResponse = useCallback((finalMessage: ChatMessage) => {
     setIsStreaming(true);
     let i = 0;
-    const fullResponseText = fullMessage.content;
+    const fullResponseText = finalMessage.content;
 
     if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
 
     typingIntervalRef.current = setInterval(() => {
       setMessages((currentMessages) => {
         const newMessages = [...currentMessages];
-        if (newMessages.length > 0 && newMessages[newMessages.length - 1].role === 'assistant') {
-          newMessages[newMessages.length - 1].content = fullResponseText.slice(0, i + 1);
+        const lastMsg = newMessages[newMessages.length - 1];
+        if (lastMsg && lastMsg.role === 'assistant') {
+          lastMsg.content = fullResponseText.slice(0, i + 1);
         }
         return newMessages;
       });
@@ -77,8 +73,11 @@ export const useAiChat = (): UseAiChatReturn => {
         setIsStreaming(false);
         setMessages((currentMessages) => {
           const newMessages = [...currentMessages];
-          if (newMessages.length > 0 && newMessages[newMessages.length - 1].id === fullMessage.id) {
-            newMessages[newMessages.length - 1] = fullMessage; // Set final rich data
+          if (
+            newMessages.length > 0 &&
+            newMessages[newMessages.length - 1].id === finalMessage.id
+          ) {
+            newMessages[newMessages.length - 1] = finalMessage;
           }
           return newMessages;
         });
@@ -87,28 +86,32 @@ export const useAiChat = (): UseAiChatReturn => {
   }, []);
 
   const processApiResponse = (data: any) => {
-    const fullResponse = data?.response ?? 'Sorry, I encountered an issue.';
+    const rawResponse = data?.response ?? 'Sorry, I encountered an issue.';
     const newSessionId = data?.sessionId;
 
     if (newSessionId && newSessionId !== sessionId) {
       setSessionId(newSessionId);
     }
 
+    const parsedResponse = safeJsonParse(rawResponse);
+
     const assistantMessage: ChatMessage = {
       id: crypto.randomUUID(),
       role: 'assistant',
-      content: '', // Start empty for streaming
+      content: parsedResponse?.message ?? rawResponse,
+      chart: parsedResponse?.chart,
+      imageAnalysisData: parsedResponse?.imageAnalysisData,
+      followUpPrompts: parsedResponse?.followUpPrompts,
       createdAt: new Date()
     };
 
-    // Create a version of the message with the full content for the stream function
-    const finalMessage = { ...assistantMessage, content: fullResponse };
-
     setMessages((prev) => [...prev, assistantMessage]);
-    streamResponse(finalMessage);
+    streamResponse(assistantMessage);
 
     const actionKeywords = ['added', 'created', 'updated', 'deleted', 'set', 'modified', 'paid'];
-    if (actionKeywords.some((keyword) => fullResponse.toLowerCase().includes(keyword))) {
+    const responseText =
+      typeof parsedResponse === 'string' ? parsedResponse : parsedResponse?.message || '';
+    if (actionKeywords.some((keyword) => responseText.toLowerCase().includes(keyword))) {
       invalidate([
         'dashboardData',
         'transactions',
@@ -122,7 +125,8 @@ export const useAiChat = (): UseAiChatReturn => {
   };
 
   const mutation = useMutation({
-    mutationFn: (prompt: string) => aiProcessPrompt({ prompt, sessionId }),
+    mutationFn: ({ prompt, base64Image }: { prompt: string; base64Image?: string }) =>
+      aiProcessPrompt({ prompt, sessionId, base64Image }),
     onSuccess: processApiResponse,
     onError: (err: Error) => {
       setError(err);
@@ -131,7 +135,7 @@ export const useAiChat = (): UseAiChatReturn => {
   });
 
   const sendMessage = useCallback(
-    async (prompt: string) => {
+    async (prompt: string, base64Image?: string) => {
       if (!prompt.trim() || mutation.isPending || isStreaming) return;
 
       if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
@@ -146,7 +150,7 @@ export const useAiChat = (): UseAiChatReturn => {
       };
       setMessages((prev) => [...prev, userMessage]);
 
-      await mutation.mutateAsync(prompt);
+      await mutation.mutateAsync({ prompt, base64Image });
     },
     [mutation, isStreaming]
   );

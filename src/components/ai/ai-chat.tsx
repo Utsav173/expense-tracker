@@ -64,7 +64,7 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
     const reader = new FileReader();
     reader.onloadend = () => {
       const base64String = (reader.result as string).split(',')[1];
-      const promptText = input || `Analyze this receipt and add the transaction.`;
+      const promptText = input || `Analyze this receipt and extract possible financial data`;
       sendMessage(promptText, base64String);
       setInput('');
     };

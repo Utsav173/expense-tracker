@@ -30,7 +30,6 @@ export function formatCurrency(
       options.notation = mode;
     }
 
-    // Use compact notation for better UX with large numbers
     if (Math.abs(numAmount) >= 999_999) {
       options.notation = 'compact';
       options.compactDisplay = 'short';
@@ -110,22 +109,14 @@ export const getTimestampsForRange = (
   return { startTimestamp, endTimestamp };
 };
 
-/**
- * Safely parses a string as JSON. If parsing fails or input is not a string,
- * returns the original input or a default error object.
- * @param input The value to parse.
- * @returns The parsed object, the original input, or an error object.
- */
 export const safeJsonParse = (input: any): any => {
   if (typeof input === 'string') {
     try {
       return JSON.parse(input);
     } catch (e) {
       console.warn('safeJsonParse: Could not parse string as JSON:', input);
-
-      return { success: false, error: 'Received malformed tool result (not valid JSON).' };
+      return null;
     }
   }
-
   return input;
 };
