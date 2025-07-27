@@ -5,7 +5,6 @@ import * as React from 'react';
 import { CreditCard, ArrowUp, ArrowDown, Edit, Trash } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils';
-import Image from 'next/image';
 import { Button } from './button';
 import { Account } from '@/lib/types';
 import { SingleLineEllipsis } from './ellipsis-components';
@@ -57,19 +56,6 @@ const AccountCard = React.forwardRef<HTMLDivElement, AccountCardProps>(
         >
           <div className='flex items-start justify-between p-4'>
             <div className='flex min-w-0 flex-1 items-center gap-3'>
-              {owner.profilePic ? (
-                <Image
-                  src={owner.profilePic}
-                  alt={owner.name}
-                  width={36}
-                  height={36}
-                  className='h-9 w-9 rounded-full object-cover'
-                />
-              ) : (
-                <div className='bg-muted flex h-9 w-9 shrink-0 items-center justify-center rounded-full'>
-                  <span className='text-lg font-medium text-slate-500'>{owner.name.charAt(0)}</span>
-                </div>
-              )}
               <div className='min-w-0 flex-1'>
                 <SingleLineEllipsis
                   showTooltip

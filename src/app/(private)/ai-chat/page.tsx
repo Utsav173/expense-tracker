@@ -14,7 +14,7 @@ const AiChatPage = () => {
 
   if (userIsLoading) {
     return (
-      <div className='flex h-[calc(100vh-8rem)] w-full flex-1 items-center justify-center p-4'>
+      <div className='flex h-full flex-1 items-center justify-center p-4'>
         <Loader />
       </div>
     );
@@ -22,7 +22,7 @@ const AiChatPage = () => {
 
   if (userIsError) {
     return (
-      <div className='flex h-full w-full flex-1 items-center justify-center p-4'>
+      <div className='flex h-full flex-1 items-center justify-center p-4'>
         <Alert variant='destructive' className='max-w-md'>
           <AlertCircle className='h-4 w-4' />
           <AlertTitle>Error Loading User</AlertTitle>
@@ -37,10 +37,10 @@ const AiChatPage = () => {
 
   if (!user?.hasAiApiKey) {
     return (
-      <div className='flex h-full w-full flex-1 items-center justify-center p-4'>
-        <Alert variant='default' className='max-w-lg text-center'>
-          <KeyRound className='h-4 w-4' />
-          <AlertTitle className='text-lg font-semibold'>AI Assistant Disabled</AlertTitle>
+      <div className='flex h-full flex-1 items-center justify-center p-4'>
+        <Alert variant='default' className='mx-auto max-w-lg text-center'>
+          <KeyRound className='mx-auto h-5 w-5' />
+          <AlertTitle className='mt-2 text-lg font-semibold'>AI Assistant Disabled</AlertTitle>
           <AlertDescription className='mt-2'>
             To use the AI Assistant, please add your Google AI API key in your profile settings.
             <br />
@@ -54,8 +54,8 @@ const AiChatPage = () => {
   }
 
   return (
-    <div className='container mx-auto flex h-full w-full flex-1 items-center justify-center'>
-      <AiChat />
+    <div className='h-[calc(100vh_-_8rem)] w-full'>
+      <AiChat isFullPage={true} />
     </div>
   );
 };

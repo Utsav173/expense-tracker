@@ -15,9 +15,13 @@ import { useToast } from '@/lib/hooks/useToast';
 
 interface ChatMessageBubbleProps {
   message: ChatMessage;
+  isStreaming?: boolean;
 }
 
-export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message }) => {
+export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
+  message,
+  isStreaming = false
+}) => {
   const isUser = message.role === 'user';
   const { showSuccess } = useToast();
   const [copied, setCopied] = useState(false);
@@ -30,15 +34,13 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message })
         showSuccess('Copied to clipboard!');
         setTimeout(() => setCopied(false), 2000);
       })
-      .catch((err) => {
-        console.error('Failed to copy text: ', err);
-      });
+      .catch((err) => console.error('Failed to copy text: ', err));
   };
 
   return (
     <div
       className={cn(
-        'group relative flex items-start space-x-3',
+        'group relative flex w-full items-start space-x-4 max-sm:space-x-2',
         isUser ? 'justify-end' : 'justify-start'
       )}
     >
@@ -51,11 +53,13 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message })
       )}
       <div
         className={cn(
-          'relative w-auto max-w-[85%] space-y-1 rounded-lg px-3 py-2 shadow-sm sm:max-w-[80%]',
-          isUser ? 'bg-primary text-primary-foreground' : 'bg-background border'
+          'relative w-auto max-w-[85%] space-y-1 rounded-2xl px-4 py-3 shadow-sm max-sm:px-2 max-sm:py-2 sm:max-w-[80%]',
+          isUser
+            ? 'bg-primary text-primary-foreground rounded-br-none'
+            : 'bg-card rounded-bl-none border'
         )}
       >
-        {!isUser && message.content && (
+        {!isUser && message.content && !isStreaming && (
           <Button
             variant='ghost'
             size='icon'
@@ -73,16 +77,17 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message })
 
         <div
           className={cn(
-            'prose prose-sm dark:prose-invert prose-p:before:content-none prose-p:after:content-none prose-p:my-1 max-w-none pt-1 break-words',
-            isUser && 'text-white'
+            'prose prose-sm dark:prose-invert prose-p:my-1 max-w-none break-words',
+            isUser && 'prose-p:text-primary-foreground prose-strong:text-primary-foreground'
           )}
         >
           <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
-            {message.content || ''}
+            {message.content}
           </ReactMarkdown>
+          {isStreaming && <span className='ml-1 inline-block h-4 w-1 animate-pulse bg-current' />}
         </div>
 
-        {message.createdAt && (
+        {message.createdAt && !isStreaming && (
           <p className='pt-1 text-right text-[10px] opacity-70'>
             {format(message.createdAt, 'h:mm a')}
           </p>

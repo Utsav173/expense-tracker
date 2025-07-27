@@ -37,8 +37,16 @@ const LoginPage = () => {
   const router = useRouter();
   const loginAttemptedRef = useRef(false);
 
-  const { login, loginLoading, loginIsError, user, userIsLoading, userIsError, loginError } =
-    useAuth();
+  const {
+    login,
+    loginLoading,
+    loginIsError,
+    user,
+    userIsLoading,
+    userIsError,
+    loginError,
+    refetchUser
+  } = useAuth();
 
   const {
     register,
@@ -51,9 +59,10 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (user && !userIsLoading && !userIsError) {
+      refetchUser();
       router.replace('/accounts');
     }
-  }, [user, userIsLoading, userIsError, router]);
+  }, [user, userIsLoading, userIsError, router, refetchUser]);
 
   useEffect(() => {
     if (loginAttemptedRef.current) {

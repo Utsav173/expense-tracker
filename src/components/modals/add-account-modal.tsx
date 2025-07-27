@@ -96,7 +96,7 @@ const AddAccountModal = () => {
       title='Add Account'
       description='Create a new financial account to track your transactions.'
       triggerButton={
-        <Button className='bg-balance w-full max-sm:w-full'>
+        <Button className='w-full bg-blue-800 font-bold hover:bg-blue-700 max-sm:w-full dark:bg-blue-500 dark:text-blue-200 dark:hover:bg-blue-600 dark:hover:text-blue-100'>
           <PlusCircle className='mr-2 h-4 w-4' /> Create Account
         </Button>
       }

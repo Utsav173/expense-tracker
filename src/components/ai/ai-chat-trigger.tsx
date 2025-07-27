@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { BrainCircuit, X } from 'lucide-react';
@@ -11,7 +10,6 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/hooks/useAuth';
 
 export const AiChatTrigger = () => {
-  const [isOpen, setIsOpen] = useState(false);
   const isMobile = useIsMobile();
   const { user } = useAuth();
 
@@ -20,7 +18,7 @@ export const AiChatTrigger = () => {
   }
 
   const buttonClasses =
-    'fixed right-6 bottom-6 z-50 h-12 w-12 rounded-full shadow-lg flex items-center justify-center from-primary to-blue-500 bg-gradient-to-br text-primary-foreground';
+    'fixed right-6 bottom-6 z-50 h-12 w-12 rounded-full shadow-lg flex items-center justify-center from-primary to-accent bg-gradient-to-br text-primary-foreground';
 
   const iconVariants = {
     initial: { opacity: 0, scale: 0.5, rotate: -90 },
@@ -29,7 +27,7 @@ export const AiChatTrigger = () => {
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+    <Sheet>
       <TooltipProvider delayDuration={100}>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -41,34 +39,22 @@ export const AiChatTrigger = () => {
                 whileHover={{ scale: 1.1, transition: { type: 'spring', stiffness: 300 } }}
                 whileTap={{ scale: 0.95 }}
                 className={cn(buttonClasses)}
-                aria-label={isOpen ? 'Close AI Assistant' : 'Open AI Assistant'}
+                aria-label={'AI Assistant'}
               >
                 {/* Pulsing ring for attention */}
                 <span className='bg-primary absolute h-full w-full animate-ping rounded-full opacity-20' />
 
                 {/* Icon transition */}
                 <AnimatePresence mode='wait' initial={false}>
-                  {isOpen ? (
-                    <motion.div
-                      key='close'
-                      variants={iconVariants}
-                      initial='initial'
-                      animate='animate'
-                      exit='exit'
-                    >
-                      <X className='h-6 w-6' />
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key='ai'
-                      variants={iconVariants}
-                      initial='initial'
-                      animate='animate'
-                      exit='exit'
-                    >
-                      <BrainCircuit className='h-6 w-6' />
-                    </motion.div>
-                  )}
+                  <motion.div
+                    key='ai'
+                    variants={iconVariants}
+                    initial='initial'
+                    animate='animate'
+                    exit='exit'
+                  >
+                    <BrainCircuit className='h-6 w-6' />
+                  </motion.div>
                 </AnimatePresence>
               </motion.button>
             </SheetTrigger>
@@ -82,11 +68,11 @@ export const AiChatTrigger = () => {
         side={isMobile ? 'bottom' : 'right'}
         className={cn(
           'flex flex-col p-0 [&>button:first-of-type]:hidden',
-          isMobile ? 'h-[90dvh] w-full rounded-t-xl' : 'h-full w-full max-w-2xl'
+          isMobile ? 'h-[90dvh] w-full rounded-t-xl' : 'h-full max-w-2xl min-w-[30%]'
         )}
         aria-describedby={undefined}
       >
-        <AiChat shouldFullHeight handleClose={() => setIsOpen(false)} />
+        <AiChat isFullPage />
       </SheetContent>
     </Sheet>
   );
