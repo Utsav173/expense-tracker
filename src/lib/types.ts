@@ -430,6 +430,9 @@ export interface AiProcessResponse {
   toolCalls?: any[];
   toolResults?: any[];
 }
+export interface AiProcessPdfRequest {
+  documentContent: string;
+}
 
 export interface AiProcessPdfResponse {
   transactions: ParsedTransactionFromAI[];
