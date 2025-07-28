@@ -11,9 +11,17 @@ import { safeJsonParse } from '@/lib/utils';
 const STORAGE_KEY_MESSAGES = 'aiChatMessages';
 const STORAGE_KEY_SESSION_ID = 'aiChatSessionId';
 
+interface SendMessagePayload {
+  prompt: string;
+  base64Image?: string;
+  documentContent?: string;
+  documentType?: 'pdf' | 'xlsx';
+  documentName?: string;
+}
+
 interface UseAiChatReturn {
   messages: ChatMessage[];
-  sendMessage: (prompt: string, base64Image?: string) => Promise<void>;
+  sendMessage: (payload: SendMessagePayload) => Promise<void>;
   isLoading: boolean;
   isStreaming: boolean;
   error: Error | null;
@@ -125,8 +133,7 @@ export const useAiChat = (): UseAiChatReturn => {
   };
 
   const mutation = useMutation({
-    mutationFn: ({ prompt, base64Image }: { prompt: string; base64Image?: string }) =>
-      aiProcessPrompt({ prompt, sessionId, base64Image }),
+    mutationFn: (payload: SendMessagePayload) => aiProcessPrompt({ ...payload, sessionId }),
     onSuccess: processApiResponse,
     onError: (err: Error) => {
       setError(err);
@@ -135,8 +142,10 @@ export const useAiChat = (): UseAiChatReturn => {
   });
 
   const sendMessage = useCallback(
-    async (prompt: string, base64Image?: string) => {
-      if (!prompt.trim() || mutation.isPending || isStreaming) return;
+    async (payload: SendMessagePayload) => {
+      const { prompt, base64Image, documentContent, documentType, documentName } = payload;
+      if (!prompt.trim() && !base64Image && !documentContent) return;
+      if (mutation.isPending || isStreaming) return;
 
       if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
       setIsStreaming(false);
@@ -148,9 +157,17 @@ export const useAiChat = (): UseAiChatReturn => {
         content: prompt,
         createdAt: new Date()
       };
+
+      if (base64Image) {
+        userMessage.image = `data:image/jpeg;base64,${base64Image}`;
+      }
+      if (documentContent && documentType && documentName) {
+        userMessage.document = { type: documentType, name: documentName };
+      }
+
       setMessages((prev) => [...prev, userMessage]);
 
-      await mutation.mutateAsync({ prompt, base64Image });
+      await mutation.mutateAsync(payload);
     },
     [mutation, isStreaming]
   );

@@ -420,6 +420,8 @@ export interface AiProcessRequest {
   prompt: string;
   sessionId?: string;
   base64Image?: string;
+  documentContent?: string;
+  documentType?: 'pdf' | 'xlsx';
 }
 
 export interface AiProcessResponse {
@@ -427,10 +429,6 @@ export interface AiProcessResponse {
   sessionId: string;
   toolCalls?: any[];
   toolResults?: any[];
-}
-
-export interface AiProcessPdfRequest {
-  documentContent: string;
 }
 
 export interface AiProcessPdfResponse {
@@ -465,5 +463,9 @@ export interface ChatMessage {
   };
   createdAt?: Date;
   followUpPrompts?: string[];
-  imageAnalysisData?: any[];
+  imageAnalysisData?: ParsedTransactionFromAI[];
+  image?: string; // base64 or URL for preview
+  document?: { name: string; type: 'pdf' | 'xlsx' };
+  records?: any[];
+  metrics?: Record<string, any>;
 }

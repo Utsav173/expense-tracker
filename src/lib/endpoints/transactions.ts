@@ -8,6 +8,11 @@ import {
 
 export const transactionCreate = (body: any) => apiFetch('/transactions', 'POST', body, undefined);
 
+export const transactionBulkCreate = (body: {
+  transactions: any[];
+}): Promise<ApiResponse<{ created: number; skipped: number }>> =>
+  apiFetch('/transactions/bulk-create', 'POST', body);
+
 export const transactionGetAll = (params: any): Promise<TransactionsResponse> =>
   apiFetch(`/transactions`, 'GET', undefined, { params });
 

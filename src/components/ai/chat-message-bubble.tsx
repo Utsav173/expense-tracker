@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { ChatMessage } from '@/lib/types';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Bot, User, ClipboardCopy, Check } from 'lucide-react';
+import { Bot, User, ClipboardCopy, Check, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -13,6 +14,9 @@ import 'highlight.js/styles/github-dark.css';
 import { Button } from '../ui/button';
 import { useToast } from '@/lib/hooks/useToast';
 import AiChartRenderer from './ai-chart-renderer';
+import AiTransactionPreview from '@/components/transactions/ai-transaction-preview';
+import AiRecordsTable from './ai-records-table';
+import AiMetricsDisplay from './ai-metrics-display';
 
 interface ChatMessageBubbleProps {
   message: ChatMessage;
@@ -76,6 +80,22 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
           </Button>
         )}
 
+        {message.image && (
+          <div className='relative mb-2 aspect-video w-full max-w-xs overflow-hidden rounded-lg'>
+            <Image src={message.image} alt='Uploaded content' layout='fill' objectFit='cover' />
+          </div>
+        )}
+
+        {message.document && (
+          <div className='bg-muted/50 mb-2 flex items-center gap-3 rounded-lg border p-3'>
+            <FileText className='text-muted-foreground h-6 w-6 shrink-0' />
+            <div className='min-w-0'>
+              <p className='truncate text-sm font-medium'>{message.document.name}</p>
+              <p className='text-muted-foreground text-xs uppercase'>{message.document.type}</p>
+            </div>
+          </div>
+        )}
+
         <div
           className={cn(
             'prose prose-sm dark:prose-invert prose-p:my-1 max-w-none break-words',
@@ -91,6 +111,24 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
         {message.chart && (
           <div className='mt-2'>
             <AiChartRenderer chart={message.chart} />
+          </div>
+        )}
+
+        {message.records && message.records.length > 0 && (
+          <div className='mt-2'>
+            <AiRecordsTable records={message.records} />
+          </div>
+        )}
+
+        {message.metrics && Object.keys(message.metrics).length > 0 && (
+          <div className='mt-2'>
+            <AiMetricsDisplay metrics={message.metrics} />
+          </div>
+        )}
+
+        {message.imageAnalysisData && message.imageAnalysisData.length > 0 && (
+          <div className='mt-2'>
+            <AiTransactionPreview transactions={message.imageAnalysisData} />
           </div>
         )}
 

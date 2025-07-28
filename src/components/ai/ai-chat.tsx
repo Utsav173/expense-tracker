@@ -1,8 +1,9 @@
 'use client';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { useAiChat } from '@/components/ai/hooks/useAiChat';
 import { Button } from '@/components/ui/button';
-import { Send, Loader2, Wand2, Bot, Paperclip } from 'lucide-react';
+import { Send, Loader2, Wand2, Bot, Paperclip, X, FileText } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatMessageBubble } from './chat-message-bubble';
 import { cn } from '@/lib/utils';
@@ -24,6 +25,9 @@ const PromptSuggestion = ({ text, onClick }: { text: string; onClick: () => void
 export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
   const { messages, sendMessage, isLoading, isStreaming, error } = useAiChat();
   const [input, setInput] = useState('');
+  const [attachedFile, setAttachedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -43,39 +47,75 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
     }
   }, [input]);
 
-  const handleSendMessage = async (prompt?: string) => {
-    const messageToSend = prompt || input;
-    if (!messageToSend.trim() || isLoading || isStreaming) return;
-    setInput('');
-    if (textAreaRef.current) textAreaRef.current.style.height = 'auto';
-    await sendMessage(messageToSend);
-  };
+  const resetFileInput = useCallback(() => {
+    setAttachedFile(null);
+    if (filePreview) {
+      URL.revokeObjectURL(filePreview);
+      setFilePreview(null);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, [filePreview]);
+
+  const handleSendMessage = useCallback(
+    async (promptText?: string) => {
+      const messageToSend = promptText || input;
+      if ((!messageToSend.trim() && !attachedFile) || isLoading || isStreaming) return;
+
+      setInput('');
+      if (textAreaRef.current) textAreaRef.current.style.height = 'auto';
+
+      if (attachedFile) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64String = (reader.result as string).split(',')[1];
+          const fileType = attachedFile.type;
+          const payload: Parameters<typeof sendMessage>[0] = {
+            prompt: messageToSend || `Analyze this file and extract financial data.`,
+            documentName: attachedFile.name
+          };
+
+          if (fileType.startsWith('image/')) {
+            payload.base64Image = base64String;
+          } else if (fileType === 'application/pdf') {
+            payload.documentContent = base64String;
+            payload.documentType = 'pdf';
+          } else if (
+            fileType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          ) {
+            payload.documentContent = base64String;
+            payload.documentType = 'xlsx';
+          }
+          sendMessage(payload);
+          resetFileInput();
+        };
+        reader.onerror = () => {
+          showError('Failed to read the file.');
+          resetFileInput();
+        };
+        reader.readAsDataURL(attachedFile);
+      } else {
+        await sendMessage({ prompt: messageToSend });
+      }
+    },
+    [input, attachedFile, isLoading, isStreaming, sendMessage, resetFileInput, showError]
+  );
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 4.5 * 1024 * 1024) {
-      // 4.5MB limit
-      showError('Image file is too large. Please select a file smaller than 4.5MB.');
+    if (file.size > 5 * 1024 * 1024) {
+      showError('File is too large. Please select a file smaller than 5MB.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64String = (reader.result as string).split(',')[1];
-      const promptText = input || `Analyze this receipt and extract possible financial data`;
-      sendMessage(promptText, base64String);
-      setInput('');
-    };
-    reader.onerror = () => {
-      showError('Failed to read the image file.');
-    };
-    reader.readAsDataURL(file);
-
-    // Reset file input to allow selecting the same file again
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    setAttachedFile(file);
+    if (file.type.startsWith('image/')) {
+      const previewUrl = URL.createObjectURL(file);
+      setFilePreview(previewUrl);
     }
   };
 
@@ -112,6 +152,7 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
           <AnimatePresence initial={false}>
             {messages.length === 0 && !isInputDisabled && !error && (
               <motion.div
+                key='welcome'
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, ease: 'easeOut' }}
@@ -122,7 +163,8 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
                 </div>
                 <h3 className='text-foreground text-xl font-semibold'>How can I help you today?</h3>
                 <p className='mt-2 mb-6 text-sm'>
-                  You can ask me to add transactions, check your budget, or summarize your spending.
+                  You can ask me to add transactions, check your budget, or upload a receipt, PDF,
+                  or XLSX file.
                 </p>
                 <div className='w-full max-w-md space-y-2'>
                   {suggestions.map((s) => (
@@ -150,7 +192,7 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
 
             {isLoading && !isStreaming && (
               <motion.div
-                key='thinking'
+                key='thinking-indicator'
                 layout
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -173,7 +215,7 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
 
             {error && !isLoading && (
               <motion.div
-                key='error'
+                key='error-message'
                 layout
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -200,7 +242,7 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
                 <div className='w-full max-w-[85%] space-y-2'>
                   {lastMessage.followUpPrompts?.map((prompt, index) => (
                     <PromptSuggestion
-                      key={index}
+                      key={`follow-up-${index}`}
                       text={prompt}
                       onClick={() => handleSendMessage(prompt)}
                     />
@@ -215,13 +257,44 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
       </ScrollArea>
 
       <div className='mx-auto w-full max-w-4xl p-4'>
-        <div className='bg-card relative flex w-full items-end rounded-xl border p-2 shadow-sm'>
+        {attachedFile && (
+          <div className='bg-muted/50 relative mb-2 rounded-lg border p-2 pr-8'>
+            <Button
+              variant='ghost'
+              size='icon'
+              className='absolute top-1 right-1 h-6 w-6 rounded-full'
+              onClick={resetFileInput}
+            >
+              <X className='h-4 w-4' />
+            </Button>
+            {filePreview ? (
+              <Image
+                src={filePreview}
+                alt='File preview'
+                width={80}
+                height={80}
+                className='h-16 w-16 rounded-md object-cover'
+              />
+            ) : (
+              <div className='flex items-center gap-3'>
+                <FileText className='text-muted-foreground h-8 w-8 shrink-0' />
+                <p className='truncate text-sm font-medium'>{attachedFile.name}</p>
+              </div>
+            )}
+          </div>
+        )}
+        <div
+          className={cn(
+            'bg-card relative flex w-full items-end rounded-xl border p-2 shadow-sm transition-colors',
+            attachedFile && 'border-primary'
+          )}
+        >
           <Button
             type='button'
             variant='ghost'
             size='icon'
             className='h-8 w-8 shrink-0 rounded-full'
-            aria-label='Upload image'
+            aria-label='Upload file'
             onClick={() => fileInputRef.current?.click()}
             disabled={isInputDisabled}
           >
@@ -231,14 +304,18 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
             type='file'
             ref={fileInputRef}
             onChange={handleFileChange}
-            accept='image/*'
+            accept='image/jpeg,image/png,image/webp,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             className='hidden'
           />
           <textarea
             ref={textAreaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder='Ask about finances or request actions...'
+            placeholder={
+              attachedFile
+                ? 'Add a comment... (optional)'
+                : 'Ask about finances or upload a file...'
+            }
             className='placeholder:text-muted-foreground no-scrollbar flex-1 resize-none overflow-y-auto bg-transparent px-2 py-1.5 text-sm focus:outline-none'
             rows={1}
             onKeyDown={handleKeyDown}
@@ -249,7 +326,7 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
           <Button
             type='button'
             size='icon'
-            disabled={isInputDisabled || !input.trim()}
+            disabled={isInputDisabled || (!input.trim() && !attachedFile)}
             className='h-8 w-8 shrink-0 rounded-full'
             aria-label='Send message'
             onClick={() => handleSendMessage()}
