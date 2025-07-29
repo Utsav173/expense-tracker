@@ -309,13 +309,11 @@
 
 @layer base {
   :root {
-    /* 🎨 Base Colors (Light Theme) */
-    --green: oklch(0.52 0.13 155);
+    --green: oklch(50.045% 0.14132 148.368);
     --blue: oklch(0.6 0.15 260);
     --yellow: oklch(0.75 0.14 85);
     --red: oklch(0.58 0.18 20);
 
-    /* 🧠 Semantic Colors (Light Theme) */
     --background: oklch(0.99 0.006 155);
     --foreground: oklch(0.15 0.01 155);
     --card: oklch(1 0 0);
@@ -402,7 +400,7 @@
     --negative-foreground: var(--destructive-foreground);
     --neutral: oklch(0.5 0.01 155);
     --neutral-foreground: oklch(0.98 0.005 155);
-    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-sans: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     --font-serif: 'Playfair Display', Georgia, serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
     --font-display: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
@@ -425,25 +423,17 @@
    * =================================================================================
    */
   .dark {
-    /* 🎨 Base Colors (Dark Theme) - Refined for better aesthetics */
-    --green: oklch(0.62 0.15 155);
-    /* Deeper, less saturated green */
+    --green: oklch(60.388% 0.18148 145.963);
     --blue: oklch(0.65 0.14 260);
     --yellow: oklch(0.78 0.13 85);
     --red: oklch(0.62 0.16 20);
 
-    /* 🧠 Semantic Colors (Dark Theme) - Adjusted for depth and clarity */
     --background: oklch(0.1 0.016 155);
-    /* Darkest layer, subtle green tint */
     --sidebar: oklch(0.12 0.018 155);
-    /* Sidebar slightly lighter than background */
     --card: oklch(0.15 0.022 155);
-    /* Cards are clearly visible on top of the sidebar/bg */
     --popover: oklch(0.17 0.024 155);
-    /* Popovers are the lightest element */
 
     --foreground: oklch(0.96 0.008 155);
-    /* Brighter text for better contrast */
     --card-foreground: var(--foreground);
     --popover-foreground: var(--foreground);
 
@@ -460,7 +450,6 @@
     --destructive-foreground: oklch(0.98 0.005 20);
     --border: oklch(0.27 0.028 155);
     --sidebar-border: oklch(0.22 0.025 155);
-    /* Softer border for sidebar internal elements */
     --input: oklch(0.2 0.02 155);
     --input-foreground: var(--foreground);
     --ring: oklch(from var(--primary) l c h / 0.5);
@@ -472,7 +461,6 @@
     --info: var(--blue);
     --info-foreground: oklch(0.98 0.005 260);
 
-    /* 📊 Chart Colors (Dark Theme) */
     --chart-1: oklch(0.7 0.15 265);
     --chart-2: oklch(0.65 0.16 140);
     --chart-3: oklch(0.85 0.16 90);
@@ -491,7 +479,6 @@
     --chart-debt: var(--red);
     --chart-other: oklch(0.65 0.012 155);
 
-    /* 🧩 Component-Specific Colors (Dark) */
     --sidebar-foreground: var(--foreground);
     --sidebar-primary: var(--primary);
     --sidebar-primary-foreground: var(--primary-foreground);

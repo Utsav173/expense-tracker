@@ -1,5 +1,5 @@
 import React from 'react';
-import { Inter, Open_Sans } from 'next/font/google';
+import { Open_Sans } from 'next/font/google';
 import { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import ReactQueryProvider from '@/components/providers/provider';
@@ -10,12 +10,6 @@ import { GoogleAnalytics } from '@next/third-parties/google';
 const openSans = Open_Sans({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700']
-});
-
-const inter = Inter({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-sans' // Optional: if you use Tailwind font variables
 });
 
 export const metadata: Metadata = {
@@ -88,8 +82,8 @@ export const viewport: Viewport = {
   userScalable: false,
   viewportFit: 'cover',
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: 'oklch(98.321% 0.00739 152.648)' },
-    { media: '(prefers-color-scheme: dark)', color: 'oklch(0.08 0.015 155)' }
+    { media: '(prefers-color-scheme: light)', color: 'oklch(98.5% 0.005 150)' },
+    { media: '(prefers-color-scheme: dark)', color: 'oklch(8% 0.015 150)' }
   ]
 };
 
@@ -112,11 +106,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </Script>
       </head>
       <body
-        className={cn(
-          openSans.className,
-          inter.className,
-          'bg-background text-foreground dark:subtle-noise-bg'
-        )}
+        className={cn(openSans.className, 'bg-background text-foreground dark:subtle-noise-bg')}
       >
         <ReactQueryProvider>{children}</ReactQueryProvider>
       </body>

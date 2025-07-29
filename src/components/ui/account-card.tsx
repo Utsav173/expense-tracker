@@ -46,7 +46,7 @@ const AccountCard = React.forwardRef<HTMLDivElement, AccountCardProps>(
       <div
         ref={ref}
         className={cn(
-          'group relative h-full shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-xl',
+          'group relative h-full shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:rounded-2xl hover:shadow-xl',
           className
         )}
       >

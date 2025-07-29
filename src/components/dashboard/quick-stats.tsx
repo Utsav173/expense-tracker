@@ -15,7 +15,7 @@ interface QuickStatsProps {
 
 export const QuickStats: React.FC<QuickStatsProps> = ({ data, isLoading, className }) => {
   return (
-    <Card className={cn('flex h-full flex-col py-4', className)}>
+    <Card className={cn('flex h-full flex-col border-0 py-4 shadow-none', className)}>
       <CardContent className='scrollbar h-full grow space-y-3 overflow-y-auto text-sm'>
         {isLoading || !data ? (
           <Loader />
@@ -27,28 +27,28 @@ export const QuickStats: React.FC<QuickStatsProps> = ({ data, isLoading, classNa
           <>
             <div className='flex justify-between'>
               <span className='text-muted-foreground flex items-center gap-1'>
-                <ArrowUp className='text-success h-4 w-4' />
+                <ArrowUp className='text-income h-4 w-4' />
                 Highest Income
               </span>
-              <span className='text-success font-medium'>
+              <span className='text-income font-medium'>
                 {data.mostExpensiveIncome ? formatCurrency(data.mostExpensiveIncome, 'INR') : 'N/A'}
               </span>
             </div>
             <div className='flex justify-between'>
               <span className='text-muted-foreground flex items-center gap-1'>
-                <ArrowUp className='text-success/70 h-4 w-4' />
+                <ArrowUp className='text-income/70 h-4 w-4' />
                 Lowest Income
               </span>
-              <span className='text-success font-medium'>
+              <span className='text-income font-medium'>
                 {data.cheapestIncome ? formatCurrency(data.cheapestIncome, 'INR') : 'N/A'}
               </span>
             </div>
             <div className='flex justify-between'>
               <span className='text-muted-foreground flex items-center gap-1'>
-                <ArrowDown className='text-destructive h-4 w-4' />
+                <ArrowDown className='text-expense h-4 w-4' />
                 Highest Expense
               </span>
-              <span className='text-destructive font-medium'>
+              <span className='text-expense font-medium'>
                 {data.mostExpensiveExpense
                   ? formatCurrency(data.mostExpensiveExpense, 'INR')
                   : 'N/A'}
@@ -56,10 +56,10 @@ export const QuickStats: React.FC<QuickStatsProps> = ({ data, isLoading, classNa
             </div>
             <div className='flex justify-between'>
               <span className='text-muted-foreground flex items-center gap-1'>
-                <ArrowDown className='text-destructive/70 h-4 w-4' />
+                <ArrowDown className='text-expense/70 h-4 w-4' />
                 Lowest Expense
               </span>
-              <span className='text-destructive font-medium'>
+              <span className='text-expense font-medium'>
                 {data.cheapestExpense ? formatCurrency(data.cheapestExpense, 'INR') : 'N/A'}
               </span>
             </div>
