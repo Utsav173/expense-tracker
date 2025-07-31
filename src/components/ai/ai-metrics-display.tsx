@@ -3,7 +3,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { formatCurrency } from '@/lib/utils';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/components/providers/auth-provider';
 import startCase from 'lodash/startCase';
 
 interface AiMetricsDisplayProps {
@@ -11,7 +11,8 @@ interface AiMetricsDisplayProps {
 }
 
 const AiMetricsDisplay: React.FC<AiMetricsDisplayProps> = ({ metrics }) => {
-  const { user } = useAuth();
+  const { session } = useAuth();
+  const user = session?.user;
   const currency = user?.preferredCurrency || 'INR';
 
   if (!metrics || Object.keys(metrics).length === 0) {

@@ -5,16 +5,14 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  console.log('Axios Request Config:', config);
   return config;
 });
 
@@ -80,17 +78,16 @@ const apiFetch = async <T>(
 
     if (axios.isAxiosError(error)) {
       if (!error.response) {
-        localStorage.removeItem('token');
         window.location.href = '/auth/login';
         toast.error('Network error. Please check your connection. Redirecting to login.');
         throw new Error('Network error');
       }
 
       message = error?.response?.data?.message || error.message;
-      if (error.response?.status === 403) {
-        localStorage.removeItem('token');
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        // better-auth handles session invalidation via cookies, no need to manually remove token.
         window.location.href = '/auth/login';
-        toast.error('Unauthorized or Server Error. Redirecting to login.');
+        toast.error('Session expired or unauthorized. Redirecting to login.');
       }
     }
 

@@ -12,7 +12,7 @@ import {
 import { ScrollArea } from '../ui/scroll-area';
 import { Card, CardContent } from '../ui/card';
 import { formatCurrency } from '@/lib/utils';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/components/providers/auth-provider';
 import { format, isValid, parseISO } from 'date-fns';
 import startCase from 'lodash/startCase';
 
@@ -21,7 +21,8 @@ interface AiRecordsTableProps {
 }
 
 const AiRecordsTable: React.FC<AiRecordsTableProps> = ({ records }) => {
-  const { user } = useAuth();
+  const { session } = useAuth();
+  const user = session?.user;
   const currency = user?.preferredCurrency || 'INR';
 
   const headers = useMemo(() => {

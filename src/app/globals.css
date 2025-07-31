@@ -54,11 +54,16 @@
   }
 }
 
-@theme {
+@theme inline {
   /* =================================================================================
-   * Theme Variables (Tokens) - Unchanged as per your request
+   * THEME-INLINE: SEMANTIC TOKENS
    * =================================================================================
+   * This block maps abstract design tokens to the core variables defined in :root.
+   * This allows for consistent application of colors, spacing, and other design
+   * properties throughout the application via Tailwind utilities.
    */
+
+  /* --- Colors --- */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -193,18 +198,25 @@
   --color-overlay: var(--overlay);
   --color-overlay-foreground: var(--overlay-foreground);
   --color-separator: var(--separator);
-  --radius-xs: calc(var(--radius) - 0.5rem);
-  --radius-sm: calc(var(--radius) - 0.4rem);
-  --radius-md: calc(var(--radius) - 0.2rem);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 0.2rem);
-  --radius-2xl: calc(var(--radius) + 0.4rem);
-  --radius-3xl: calc(var(--radius) + 0.6rem);
+
+  /* --- Sizing & Radius --- */
+  /* A proportional, consistent radius scale derived from a single base value in :root. */
+  --radius-xs: calc(var(--radius) * 0.5); /* 0.25rem */
+  --radius-sm: calc(var(--radius) * 0.75); /* 0.375rem */
+  --radius-md: var(--radius); /* 0.5rem (base) */
+  --radius-lg: calc(var(--radius) * 1.5); /* 0.75rem */
+  --radius-xl: calc(var(--radius) * 2); /* 1.0rem */
+  --radius-2xl: calc(var(--radius) * 3); /* 1.5rem */
+  --radius-3xl: calc(var(--radius) * 4); /* 2.0rem */
   --radius-full: 9999px;
+
+  /* --- Fonts --- */
   --font-sans: var(--font-sans);
   --font-serif: var(--font-serif);
   --font-mono: var(--font-mono);
   --font-display: var(--font-display);
+
+  /* --- Shadows --- */
   --shadow-2xs: var(--shadow-2xs);
   --shadow-xs: var(--shadow-xs);
   --shadow-sm: var(--shadow-sm);
@@ -215,6 +227,8 @@
   --shadow-2xl: var(--shadow-2xl);
   --shadow-3xl: var(--shadow-3xl);
   --shadow-inner: var(--shadow-inner);
+
+  /* --- Animations --- */
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
   --animate-collapsible-down: collapsible-down 0.2s ease-out;
@@ -226,6 +240,11 @@
   --animate-fade-out: fade-out 0.2s ease-out;
   --animate-slide-in: slide-in 0.2s ease-out;
   --animate-slide-out: slide-out 0.2s ease-out;
+  --animate-appear: appear 0.5s ease-out forwards;
+  --animate-appear-zoom: appear-zoom 0.5s ease-out forwards;
+
+  /* --- Fluid Typography --- */
+  /* Uses clamp() for a responsive font size that scales with the viewport. */
   --text-xs: clamp(0.55rem, 0.55rem + 0.5vw, 0.75rem);
   --text-sm: clamp(0.75rem, 0.75rem + 0.5vw, 0.875rem);
   --text-base: clamp(0.875rem, 0.875rem + 0.5vw, 1rem);
@@ -252,6 +271,8 @@
   --text-7xl--line-height: 1;
   --text-8xl--line-height: 1;
   --text-9xl--line-height: 1;
+
+  /* --- Spacing --- */
   --space-px: 1px;
   --space-0: 0;
   --space-0-5: 0.125rem;
@@ -287,6 +308,8 @@
   --space-72: 18rem;
   --space-80: 20rem;
   --space-96: 24rem;
+
+  /* --- Z-Index --- */
   --z-0: 0;
   --z-10: 10;
   --z-20: 20;
@@ -301,259 +324,322 @@
   --z-popover: 1060;
   --z-tooltip: 1070;
   --z-toast: 1080;
-  --animate-appear: appear 0.5s ease-out forwards;
-  --animate-appear-zoom: appear-zoom 0.5s ease-out forwards;
+
   --color-brand-foreground: var(--brand-foreground);
   --color-brand: var(--brand);
 }
 
-@layer base {
-  :root {
-    --green: oklch(50.045% 0.14132 148.368);
-    --blue: oklch(0.6 0.15 260);
-    --yellow: oklch(0.75 0.14 85);
-    --red: oklch(0.58 0.18 20);
-
-    --background: oklch(0.99 0.006 155);
-    --foreground: oklch(0.15 0.01 155);
-    --card: oklch(1 0 0);
-    --card-foreground: var(--foreground);
-    --popover: var(--card);
-    --popover-foreground: var(--foreground);
-    --primary: var(--green);
-    --primary-foreground: oklch(0.98 0.005 155);
-    --secondary: oklch(0.93 0.012 155);
-    --secondary-foreground: oklch(0.2 0.015 155);
-    --muted: oklch(0.95 0.009 155);
-    --muted-foreground: oklch(0.45 0.015 155);
-    --accent: oklch(0.97 0.01 155);
-    --accent-foreground: var(--primary);
-    --success: var(--green);
-    --success-foreground: var(--primary-foreground);
-    --warning: var(--yellow);
-    --warning-foreground: oklch(0.25 0.03 85);
-    --destructive: var(--red);
-    --destructive-foreground: oklch(0.98 0.005 20);
-    --info: var(--blue);
-    --info-foreground: oklch(0.98 0.005 260);
-    --border: oklch(0.9 0.011 155);
-    --input: oklch(0.97 0.008 155);
-    --input-foreground: var(--foreground);
-    --ring: oklch(from var(--primary) l c h / 0.4);
-    --chart-1: oklch(0.6 0.15 265);
-    --chart-2: oklch(0.55 0.16 140);
-    --chart-3: oklch(0.8 0.16 90);
-    --chart-4: oklch(0.65 0.18 45);
-    --chart-5: oklch(0.6 0.17 310);
-    --chart-6: oklch(0.6 0.15 190);
-    --chart-7: oklch(0.6 0.19 350);
-    --chart-8: oklch(0.75 0.18 115);
-    --chart-9: oklch(0.65 0.14 230);
-    --chart-10: oklch(0.6 0.1 70);
-    --chart-income: var(--green);
-    --chart-expense: var(--red);
-    --chart-balance: var(--blue);
-    --chart-savings: oklch(0.48 0.16 145);
-    --chart-investment: var(--yellow);
-    --chart-debt: var(--red);
-    --chart-other: oklch(0.58 0.008 155);
-    --sidebar: oklch(0.97 0.008 155);
-    --sidebar-foreground: var(--foreground);
-    --sidebar-primary: var(--primary);
-    --sidebar-primary-foreground: var(--primary-foreground);
-    --sidebar-accent: oklch(0.92 0.013 155);
-    --sidebar-accent-foreground: var(--primary);
-    --sidebar-border: oklch(0.88 0.015 155);
-    --sidebar-ring: var(--ring);
-    --navigation: var(--background);
-    --navigation-foreground: var(--foreground);
-    --navigation-border: var(--border);
-    --tooltip: oklch(0.15 0.02 155);
-    --tooltip-foreground: oklch(0.98 0.01 155);
-    --overlay: oklch(0.1 0.01 155 / 0.5);
-    --overlay-foreground: oklch(0.98 0.01 155);
-    --separator: var(--border);
-    --brand: var(--green);
-    --brand-foreground: var(--primary-foreground);
-    --error: var(--red);
-    --error-foreground: var(--destructive-foreground);
-    --danger: var(--red);
-    --danger-foreground: var(--destructive-foreground);
-    --ghost: transparent;
-    --ghost-foreground: var(--secondary-foreground);
-    --ghost-hover: var(--secondary);
-    --outline: transparent;
-    --outline-foreground: var(--secondary-foreground);
-    --outline-hover: var(--secondary);
-    --link: var(--primary);
-    --link-foreground: var(--primary);
-    --link-hover: oklch(from var(--primary) calc(l - 0.05) c h);
-    --income: var(--green);
-    --income-foreground: var(--primary-foreground);
-    --expense: var(--red);
-    --expense-foreground: var(--destructive-foreground);
-    --balance: var(--blue);
-    --balance-foreground: var(--info-foreground);
-    --positive: var(--green);
-    --positive-foreground: var(--primary-foreground);
-    --negative: var(--red);
-    --negative-foreground: var(--destructive-foreground);
-    --neutral: oklch(0.5 0.01 155);
-    --neutral-foreground: oklch(0.98 0.005 155);
-    --font-sans: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    --font-serif: 'Playfair Display', Georgia, serif;
-    --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
-    --font-display: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-    --radius: 0.5rem;
-    --shadow-color: oklch(0.15 0.01 155 / 0.08);
-    --shadow-2xs: 0 1px 2px 0 var(--shadow-color);
-    --shadow-xs: 0 1px 3px 0 var(--shadow-color), 0 1px 2px -1px var(--shadow-color);
-    --shadow-sm: 0 1px 3px 0 var(--shadow-color), 0 1px 2px -1px var(--shadow-color);
-    --shadow: 0 4px 6px -1px var(--shadow-color), 0 2px 4px -2px var(--shadow-color);
-    --shadow-md: 0 6px 10px -2px var(--shadow-color), 0 4px 6px -4px var(--shadow-color);
-    --shadow-lg: 0 10px 15px -3px var(--shadow-color), 0 4px 6px -4px var(--shadow-color);
-    --shadow-xl: 0 20px 25px -5px var(--shadow-color), 0 8px 10px -6px var(--shadow-color);
-    --shadow-2xl: 0 25px 50px -12px var(--shadow-color);
-    --shadow-3xl: 0 30px 60px -15px var(--shadow-color);
-    --shadow-inner: inset 0 2px 4px 0 var(--shadow-color);
-  }
-
+:root {
   /* =================================================================================
-   * REFINED DARK MODE THEME 
+   * CORE THEME SYSTEM: LIGHT MODE
    * =================================================================================
+   * Defines foundational tokens for the light theme.
+   * All semantic color variables below are mapped to this core palette for consistency.
    */
-  .dark {
-    --green: oklch(60.388% 0.18148 145.963);
-    --blue: oklch(0.65 0.14 260);
-    --yellow: oklch(0.78 0.13 85);
-    --red: oklch(0.62 0.16 20);
 
-    --background: oklch(0.1 0.016 155);
-    --sidebar: oklch(0.12 0.018 155);
-    --card: oklch(0.15 0.022 155);
-    --popover: oklch(0.17 0.024 155);
+  /* --- Core Hues (OKLCH Color Space) --- */
+  --hue-neutral: 155;
+  --hue-primary: 148; /* Green */
+  --hue-info: 260; /* Blue */
+  --hue-warning: 85; /* Yellow */
+  --hue-destructive: 20; /* Red */
 
-    --foreground: oklch(0.96 0.008 155);
-    --card-foreground: var(--foreground);
-    --popover-foreground: var(--foreground);
+  /* --- Core Design Constants --- */
+  --radius: 0.5rem;
+  --border-width: 1px;
 
-    --primary: var(--green);
-    --primary-foreground: oklch(0.1 0.02 155);
-    --secondary: oklch(0.22 0.025 155);
-    --secondary-foreground: oklch(0.92 0.01 155);
-    --muted: oklch(0.2 0.02 155);
-    --muted-foreground: oklch(0.65 0.012 155);
-    --accent: oklch(0.25 0.03 155);
-    --accent-foreground: var(--primary);
+  /* --- Light Theme Core Palette --- */
+  --gray-0: oklch(1 0 0);
+  --gray-50: oklch(0.99 0.006 var(--hue-neutral));
+  --gray-100: oklch(0.97 0.008 var(--hue-neutral));
+  --gray-150: oklch(0.95 0.009 var(--hue-neutral));
+  --gray-200: oklch(0.93 0.012 var(--hue-neutral));
+  --gray-300: oklch(0.9 0.011 var(--hue-neutral));
+  --gray-500: oklch(0.45 0.015 var(--hue-neutral));
+  --gray-700: oklch(0.2 0.015 var(--hue-neutral));
+  --gray-900: oklch(0.15 0.01 var(--hue-neutral));
 
-    --destructive: var(--red);
-    --destructive-foreground: oklch(0.98 0.005 20);
-    --border: oklch(0.27 0.028 155);
-    --sidebar-border: oklch(0.22 0.025 155);
-    --input: oklch(0.2 0.02 155);
-    --input-foreground: var(--foreground);
-    --ring: oklch(from var(--primary) l c h / 0.5);
+  --green-base: oklch(50% 0.141 var(--hue-primary));
+  --green-fg: oklch(0.98 0.005 var(--hue-primary));
 
-    --success: var(--green);
-    --success-foreground: var(--primary-foreground);
-    --warning: var(--yellow);
-    --warning-foreground: oklch(0.25 0.03 85);
-    --info: var(--blue);
-    --info-foreground: oklch(0.98 0.005 260);
+  --red-base: oklch(0.58 0.18 var(--hue-destructive));
+  --red-fg: oklch(0.98 0.005 var(--hue-destructive));
 
-    --chart-1: oklch(0.7 0.15 265);
-    --chart-2: oklch(0.65 0.16 140);
-    --chart-3: oklch(0.85 0.16 90);
-    --chart-4: oklch(0.75 0.18 45);
-    --chart-5: oklch(0.7 0.17 310);
-    --chart-6: oklch(0.7 0.15 190);
-    --chart-7: oklch(0.7 0.19 350);
-    --chart-8: oklch(0.8 0.18 115);
-    --chart-9: oklch(0.75 0.14 230);
-    --chart-10: oklch(0.7 0.1 70);
-    --chart-income: var(--green);
-    --chart-expense: var(--red);
-    --chart-balance: var(--blue);
-    --chart-savings: oklch(0.58 0.16 145);
-    --chart-investment: var(--yellow);
-    --chart-debt: var(--red);
-    --chart-other: oklch(0.65 0.012 155);
+  --yellow-base: oklch(0.75 0.14 var(--hue-warning));
+  --yellow-fg: oklch(0.25 0.03 var(--hue-warning));
 
-    --sidebar-foreground: var(--foreground);
-    --sidebar-primary: var(--primary);
-    --sidebar-primary-foreground: var(--primary-foreground);
-    --sidebar-accent: oklch(0.18 0.02 155);
-    --sidebar-accent-foreground: var(--primary);
-    --sidebar-ring: var(--ring);
-    --navigation: oklch(0.12 0.018 155);
-    --navigation-foreground: var(--foreground);
-    --navigation-border: oklch(0.22 0.018 155);
-    --tooltip: var(--foreground);
-    --tooltip-foreground: var(--background);
-    --overlay: oklch(0 0 0 / 0.8);
-    --overlay-foreground: var(--foreground);
-    --separator: var(--border);
-    --brand: var(--green);
-    --brand-foreground: var(--primary-foreground);
-    --error: var(--red);
-    --error-foreground: var(--destructive-foreground);
-    --danger: var(--red);
-    --danger-foreground: var(--destructive-foreground);
-    --ghost: transparent;
-    --ghost-foreground: oklch(0.9 0.008 155);
-    --ghost-hover: oklch(0.2 0.02 155);
-    --outline: transparent;
-    --outline-foreground: oklch(0.9 0.008 155);
-    --outline-hover: oklch(0.2 0.02 155);
-    --link: var(--primary);
-    --link-foreground: var(--primary);
-    --link-hover: oklch(from var(--primary) calc(l + 0.05) c h);
-    --income: var(--green);
-    --income-foreground: var(--primary-foreground);
-    --expense: var(--red);
-    --expense-foreground: var(--destructive-foreground);
-    --balance: var(--blue);
-    --balance-foreground: var(--info-foreground);
-    --positive: var(--green);
-    --positive-foreground: var(--primary-foreground);
-    --negative: var(--red);
-    --negative-foreground: var(--destructive-foreground);
-    --neutral: oklch(0.65 0.012 155);
-    --neutral-foreground: oklch(0.1 0.02 155);
+  --blue-base: oklch(0.6 0.15 var(--hue-info));
+  --blue-fg: oklch(0.98 0.005 var(--hue-info));
 
-    --shadow-color: oklch(0 0 0 / 0.2);
-  }
+  /* --- Semantic & Component-Specific Color Mappings --- */
+  --green: var(--green-base);
+  --blue: var(--blue-base);
+  --yellow: var(--yellow-base);
+  --red: var(--red-base);
+
+  --background: var(--gray-50);
+  --foreground: var(--gray-900);
+  --card: var(--gray-0);
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --primary: var(--green);
+  --primary-foreground: var(--green-fg);
+  --secondary: var(--gray-200);
+  --secondary-foreground: var(--gray-700);
+  --muted: var(--gray-150);
+  --muted-foreground: var(--gray-500);
+  --accent: var(--gray-150);
+  --accent-foreground: var(--primary);
+  --success: var(--green);
+  --success-foreground: var(--green-fg);
+  --warning: var(--yellow);
+  --warning-foreground: var(--yellow-fg);
+  --destructive: var(--red);
+  --destructive-foreground: var(--red-fg);
+  --info: var(--blue);
+  --info-foreground: var(--blue-fg);
+  --border: var(--gray-300);
+  --input: var(--gray-100);
+  --input-foreground: var(--foreground);
+  --ring: oklch(from var(--primary) l c h / 0.4);
+  --chart-1: oklch(0.6 0.15 265);
+  --chart-2: oklch(0.55 0.16 140);
+  --chart-3: oklch(0.8 0.16 90);
+  --chart-4: oklch(0.65 0.18 45);
+  --chart-5: oklch(0.6 0.17 310);
+  --chart-6: oklch(0.6 0.15 190);
+  --chart-7: oklch(0.6 0.19 350);
+  --chart-8: oklch(0.75 0.18 115);
+  --chart-9: oklch(0.65 0.14 230);
+  --chart-10: oklch(0.6 0.1 70);
+  --chart-income: var(--green);
+  --chart-expense: var(--red);
+  --chart-balance: var(--blue);
+  --chart-savings: oklch(0.48 0.16 145);
+  --chart-investment: var(--yellow);
+  --chart-debt: var(--red);
+  --chart-other: oklch(0.58 0.008 155);
+  --sidebar: var(--gray-100);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--gray-200);
+  --sidebar-accent-foreground: var(--primary);
+  --sidebar-border: oklch(0.88 0.015 155);
+  --sidebar-ring: var(--ring);
+  --navigation: var(--background);
+  --navigation-foreground: var(--foreground);
+  --navigation-border: var(--border);
+  --tooltip: var(--gray-900);
+  --tooltip-foreground: var(--gray-50);
+  --overlay: oklch(0.1 0.01 155 / 0.5);
+  --overlay-foreground: var(--gray-50);
+  --separator: var(--border);
+  --brand: var(--green);
+  --brand-foreground: var(--primary-foreground);
+  --error: var(--red);
+  --error-foreground: var(--destructive-foreground);
+  --danger: var(--red);
+  --danger-foreground: var(--destructive-foreground);
+  --ghost: transparent;
+  --ghost-foreground: var(--secondary-foreground);
+  --ghost-hover: var(--secondary);
+  --outline: transparent;
+  --outline-foreground: var(--secondary-foreground);
+  --outline-hover: var(--secondary);
+  --link: var(--primary);
+  --link-foreground: var(--primary);
+  --link-hover: oklch(from var(--primary) calc(l - 0.05) c h);
+  --income: var(--green);
+  --income-foreground: var(--primary-foreground);
+  --expense: var(--red);
+  --expense-foreground: var(--destructive-foreground);
+  --balance: var(--blue);
+  --balance-foreground: var(--info-foreground);
+  --positive: var(--green);
+  --positive-foreground: var(--primary-foreground);
+  --negative: var(--red);
+  --negative-foreground: var(--destructive-foreground);
+  --neutral: var(--gray-700);
+  --neutral-foreground: var(--gray-50);
+  --font-sans: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --shadow-color: oklch(0.15 0.01 155 / 0.08);
+  --shadow-2xs: 0 1px 2px 0 var(--shadow-color);
+  --shadow-xs: 0 1px 3px 0 var(--shadow-color), 0 1px 2px -1px var(--shadow-color);
+  --shadow-sm: 0 1px 3px 0 var(--shadow-color), 0 1px 2px -1px var(--shadow-color);
+  --shadow: 0 4px 6px -1px var(--shadow-color), 0 2px 4px -2px var(--shadow-color);
+  --shadow-md: 0 6px 10px -2px var(--shadow-color), 0 4px 6px -4px var(--shadow-color);
+  --shadow-lg: 0 10px 15px -3px var(--shadow-color), 0 4px 6px -4px var(--shadow-color);
+  --shadow-xl: 0 20px 25px -5px var(--shadow-color), 0 8px 10px -6px var(--shadow-color);
+  --shadow-2xl: 0 25px 50px -12px var(--shadow-color);
+  --shadow-3xl: 0 30px 60px -15px var(--shadow-color);
+  --shadow-inner: inset 0 2px 4px 0 var(--shadow-color);
 }
 
-@layer base {
+/* =================================================================================
+   * CORE THEME SYSTEM: REFINED DARK MODE
+   * =================================================================================
+   */
+.dark {
+  /* --- Core Hues (Slightly adjusted for dark mode vibrancy) --- */
+  --hue-primary: 146;
 
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--border);
-  }
+  /* --- Dark Theme Core Palette --- */
+  --gray-50: oklch(0.1 0.016 var(--hue-neutral));
+  --gray-100: oklch(0.12 0.018 var(--hue-neutral));
+  --gray-150: oklch(0.15 0.022 var(--hue-neutral));
+  --gray-200: oklch(0.17 0.024 var(--hue-neutral));
+  --gray-300: oklch(0.2 0.02 var(--hue-neutral));
+  --gray-400: oklch(0.22 0.025 var(--hue-neutral));
+  --gray-500: oklch(0.27 0.028 var(--hue-neutral));
+  --gray-600: oklch(0.65 0.012 var(--hue-neutral));
+  --gray-800: oklch(0.92 0.01 var(--hue-neutral));
+  --gray-900: oklch(0.96 0.008 var(--hue-neutral));
 
-  * {
-    @apply border-border outline-ring/50;
-  }
+  --green-base: oklch(60.4% 0.181 var(--hue-primary));
+  --green-fg: oklch(0.1 0.02 var(--hue-primary));
 
-  body {
-    @apply bg-background text-foreground;
-    font-feature-settings:
-      'rlig' 1,
-      'calt' 1;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
+  --red-base: oklch(0.62 0.16 var(--hue-destructive));
+  /* --red-fg from light mode is suitable */
 
-  html,
-  body {
-    scroll-behavior: smooth;
-    width: 100%;
-    scrollbar-gutter: stable;
-  }
+  --yellow-base: oklch(0.78 0.13 var(--hue-warning));
+  /* --yellow-fg from light mode is suitable */
+
+  --blue-base: oklch(0.65 0.14 var(--hue-info));
+  /* --blue-fg from light mode is suitable */
+
+  /* --- Semantic & Component-Specific Color Mappings --- */
+  --green: var(--green-base);
+  --blue: var(--blue-base);
+  --yellow: var(--yellow-base);
+  --red: var(--red-base);
+
+  --background: var(--gray-50);
+  --sidebar: var(--gray-100);
+  --card: var(--gray-150);
+  --popover: var(--gray-200);
+
+  --foreground: var(--gray-900);
+  --card-foreground: var(--foreground);
+  --popover-foreground: var(--foreground);
+
+  --primary: var(--green);
+  --primary-foreground: var(--green-fg);
+  --secondary: var(--gray-400);
+  --secondary-foreground: var(--gray-800);
+  --muted: var(--gray-300);
+  --muted-foreground: var(--gray-600);
+  --accent: var(--gray-400);
+  --accent-foreground: var(--primary);
+
+  --destructive: var(--red);
+  --destructive-foreground: var(--red-fg);
+  --border: var(--gray-500);
+  --sidebar-border: var(--gray-400);
+  --input: var(--gray-300);
+  --input-foreground: var(--foreground);
+  --ring: oklch(from var(--primary) l c h / 0.5);
+
+  --success: var(--green);
+  --success-foreground: var(--primary-foreground);
+  --warning: var(--yellow);
+  --warning-foreground: var(--yellow-fg);
+  --info: var(--blue);
+  --info-foreground: var(--blue-fg);
+
+  --chart-1: oklch(0.7 0.15 265);
+  --chart-2: oklch(0.65 0.16 140);
+  --chart-3: oklch(0.85 0.16 90);
+  --chart-4: oklch(0.75 0.18 45);
+  --chart-5: oklch(0.7 0.17 310);
+  --chart-6: oklch(0.7 0.15 190);
+  --chart-7: oklch(0.7 0.19 350);
+  --chart-8: oklch(0.8 0.18 115);
+  --chart-9: oklch(0.75 0.14 230);
+  --chart-10: oklch(0.7 0.1 70);
+  --chart-income: var(--green);
+  --chart-expense: var(--red);
+  --chart-balance: var(--blue);
+  --chart-savings: oklch(0.58 0.16 145);
+  --chart-investment: var(--yellow);
+  --chart-debt: var(--red);
+  --chart-other: oklch(0.65 0.012 155);
+
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--gray-200);
+  --sidebar-accent-foreground: var(--primary);
+  --sidebar-ring: var(--ring);
+  --navigation: var(--gray-100);
+  --navigation-foreground: var(--foreground);
+  --navigation-border: var(--gray-400);
+  --tooltip: var(--foreground);
+  --tooltip-foreground: var(--background);
+  --overlay: oklch(0 0 0 / 0.8);
+  --overlay-foreground: var(--foreground);
+  --separator: var(--border);
+  --brand: var(--green);
+  --brand-foreground: var(--primary-foreground);
+  --error: var(--red);
+  --error-foreground: var(--destructive-foreground);
+  --danger: var(--red);
+  --danger-foreground: var(--destructive-foreground);
+  --ghost: transparent;
+  --ghost-foreground: var(--gray-800);
+  --ghost-hover: var(--gray-300);
+  --outline: transparent;
+  --outline-foreground: var(--gray-800);
+  --outline-hover: var(--gray-300);
+  --link: var(--primary);
+  --link-foreground: var(--primary);
+  --link-hover: oklch(from var(--primary) calc(l + 0.05) c h);
+  --income: var(--green);
+  --income-foreground: var(--primary-foreground);
+  --expense: var(--red);
+  --expense-foreground: var(--destructive-foreground);
+  --balance: var(--blue);
+  --balance-foreground: var(--info-foreground);
+  --positive: var(--green);
+  --positive-foreground: var(--primary-foreground);
+  --negative: var(--red);
+  --negative-foreground: var(--destructive-foreground);
+  --neutral: var(--gray-600);
+  --neutral-foreground: var(--green-fg);
+
+  --shadow-color: oklch(0 0 0 / 0.2);
+}
+
+*,
+::after,
+::before,
+::backdrop,
+::file-selector-button {
+  border-color: var(--border);
+}
+
+* {
+  @apply border-border outline-ring/50;
+}
+
+body {
+  @apply bg-background text-foreground;
+  font-feature-settings:
+    'rlig' 1,
+    'calt' 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body {
+  scroll-behavior: smooth;
+  width: 100%;
+  scrollbar-gutter: stable;
 }
 
 @layer utilities {
@@ -562,9 +648,11 @@
   }
 
   .hero-gradient {
-    background: linear-gradient(160deg,
-        oklch(from var(--background) l c h / 0) 0%,
-        oklch(from var(--primary) l c h / 0.15) 100%);
+    background: linear-gradient(
+      160deg,
+      oklch(from var(--background) l c h / 0) 0%,
+      oklch(from var(--primary) l c h / 0.15) 100%
+    );
   }
 
   .scrollbar {
@@ -600,7 +688,7 @@
 
   ::-webkit-scrollbar-thumb {
     @apply bg-border rounded-full;
-    border: 2px solid transparent;
+    border: calc(var(--border-width) * 2) solid transparent;
     background-clip: content-box;
   }
 

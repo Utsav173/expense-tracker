@@ -12,7 +12,7 @@ import { useToast } from '@/lib/hooks/useToast';
 import AddGoalModal from '@/components/modals/add-goal-modal';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Search } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/components/providers/auth-provider';
 import { Input } from '@/components/ui/input';
 import { useDebounce } from 'use-debounce';
 
@@ -21,7 +21,8 @@ const GoalPage = () => {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const { showError } = useToast();
-  const { user } = useAuth();
+  const { session, isLoading: userIsLoading } = useAuth();
+  const user = session?.user;
 
   const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebounce(search, 600);
@@ -77,7 +78,7 @@ const GoalPage = () => {
 
   const goalColumns = createGoalColumns({ user, refetchGoals: refetch });
 
-  if ((isLoading && !isPending) || !user) {
+  if ((isLoading && !isPending) || userIsLoading || !user) {
     return <Loader />;
   }
 

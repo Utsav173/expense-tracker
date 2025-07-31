@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useToast } from '@/lib/hooks/useToast';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/components/providers/auth-provider';
 import { authUpdateUser } from '@/lib/endpoints/auth';
 import { fetchCurrencies, COMMON_CURRENCIES } from '@/lib/endpoints/currency';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,7 +35,8 @@ const profileUpdateSchema = z.object({
 type ProfileUpdateFormSchema = z.infer<typeof profileUpdateSchema>;
 
 export const ProfileInformationForm = () => {
-  const { user, refetchUser } = useAuth();
+  const { session, isLoading: userIsLoading } = useAuth();
+  const user = session?.user;
   const { showError, showSuccess } = useToast();
   const invalidate = useInvalidateQueries();
   const [isEditing, setIsEditing] = useState(false);
@@ -57,7 +58,7 @@ export const ProfileInformationForm = () => {
     mutationFn: (data: FormData) => authUpdateUser(data),
     onSuccess: async () => {
       await invalidate(['user']);
-      refetchUser?.();
+      // refetchUser?.(); // No longer needed as invalidate handles it
       setIsEditing(false);
       setPreviewUrl(null);
       showSuccess('Profile updated successfully!');
@@ -122,7 +123,7 @@ export const ProfileInformationForm = () => {
             <div className='flex items-center gap-6'>
               <div className='relative'>
                 <Avatar className='h-24 w-24 border'>
-                  <AvatarImage src={previewUrl || user.profilePic || undefined} alt={user.name} />
+                  <AvatarImage src={previewUrl || user.image || undefined} alt={user.name} />
                   <AvatarFallback>{user.name?.charAt(0)?.toUpperCase()}</AvatarFallback>
                 </Avatar>
                 {isEditing && (

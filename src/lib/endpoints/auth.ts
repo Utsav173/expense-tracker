@@ -1,5 +1,7 @@
 import apiFetch from '../api-client';
 import { LoginResponse, User, ApiResponse } from '@/lib/types';
+import { authClient } from '@/lib/auth-client';
+
 type UserApiResponse = ApiResponse<User & { hasAiApiKey?: boolean }>;
 type LoginApiResponse = ApiResponse<LoginResponse>;
 
@@ -9,9 +11,9 @@ export const authSignup = (body: any) =>
 export const authLogin = (body: any): Promise<LoginApiResponse> =>
   apiFetch('/auth/login', 'POST', body);
 
-export const authForgotPassword = (body: any) => apiFetch('/auth/forgot-password', 'POST', body);
+export const authForgotPassword = (body: any) => authClient.forgetPassword(body);
 
-export const authResetPassword = (body: any) => apiFetch('/auth/reset-password', 'POST', body);
+export const authResetPassword = (body: any) => authClient.resetPassword(body);
 
 export const authGetMe = (): Promise<UserApiResponse> => apiFetch('/auth/me', 'GET');
 
@@ -25,8 +27,5 @@ export const authGetUserPreferences = (): Promise<
     preferredCurrency: string | null;
   }>
 > => apiFetch('/auth/preferences', 'GET');
-
-export const authChangePassword = (body: any): Promise<ApiResponse<{ message: string }>> =>
-  apiFetch('/auth/change-password', 'PUT', body);
 
 export const authLogOut = (): Promise<ApiResponse<null>> => apiFetch('/auth/logout', 'POST');

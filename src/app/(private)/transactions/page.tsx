@@ -43,7 +43,6 @@ import { cn } from '@/lib/utils';
 import { useTransactions } from '@/components/transactions/hooks/useTransactions';
 import DateRangePickerV2 from '@/components/date/date-range-picker-v2';
 import { API_BASE_URL } from '@/lib/api-client';
-import { getAuthTokenClient } from '@/lib/auth';
 import { format } from 'date-fns';
 import {
   DropdownMenu,
@@ -301,11 +300,9 @@ const TransactionsPage = () => {
         params.set('format', exportFormat);
 
         const exportUrl = `${API_BASE_URL}/transactions/export?${params.toString()}`;
-        const token = getAuthTokenClient();
 
         const response = await fetch(exportUrl, {
           method: 'GET',
-          headers: { Authorization: `Bearer ${token}` }
         });
 
         if (!response.ok) {

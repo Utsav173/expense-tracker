@@ -1,7 +1,7 @@
 'use client';
 import { usePathname } from 'next/navigation';
 import { AiChatTrigger } from './ai-chat-trigger';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/components/providers/auth-provider';
 
 const AI_CHAT_ALLOWED_PATHS = [
   '/dashboard',
@@ -18,7 +18,8 @@ const AI_CHAT_DETAIL_PATH_REGEX =
 
 export const AiChatWrapper = () => {
   const pathname = usePathname();
-  const { user, userIsLoading } = useAuth();
+  const { session, isLoading: userIsLoading } = useAuth();
+  const user = session?.user;
 
   const isPathAllowed =
     AI_CHAT_ALLOWED_PATHS.includes(pathname) || AI_CHAT_DETAIL_PATH_REGEX.test(pathname);

@@ -27,7 +27,7 @@ import {
   SidebarHeader,
   SidebarRail
 } from '@/components/ui/sidebar';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/components/providers/auth-provider';
 import { Skeleton } from '../ui/skeleton';
 
 export interface NavItem {
@@ -44,7 +44,8 @@ export interface NavGroup {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { user, userIsLoading } = useAuth();
+  const { session, isLoading: userIsLoading } = useAuth();
+  const user = session?.user;
 
   // RESTRUCTURED: Navigation data is now grouped logically
   const navGroups: NavGroup[] = React.useMemo(() => {
@@ -111,9 +112,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <Skeleton className='h-2 w-32' />
             </div>
           </div>
-        ) : user ? (
-          <NavUser user={user} />
-        ) : null}
+        ) : (
+          <NavUser />
+        )}
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

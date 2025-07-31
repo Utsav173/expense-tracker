@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/components/providers/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -14,7 +14,7 @@ import { PasswordSettingsForm } from '@/components/profile/password-settings-for
 type SettingsTab = 'profile' | 'security' | 'notifications' | 'ai';
 
 const ProfilePage = () => {
-  const { userIsLoading } = useAuth();
+  const { isLoading: userIsLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
 
   const navItems = [

@@ -27,7 +27,7 @@ import { motion } from 'framer-motion';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/components/providers/auth-provider';
 import { cn, formatCurrency } from '@/lib/utils';
 import NoData from '../ui/no-data';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -140,7 +140,8 @@ const renderActiveShape = (props: any) => {
 
 const AiChartRenderer: React.FC<AiChartRendererProps> = ({ chart }) => {
   const isMobile = useIsMobile();
-  const { user } = useAuth();
+  const { session } = useAuth();
+  const user = session?.user;
   const currency = user?.preferredCurrency || 'INR';
   const [activeIndex, setActiveIndex] = useState(0);
 

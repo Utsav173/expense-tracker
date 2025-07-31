@@ -22,7 +22,6 @@ import { accountGetDropdown } from '@/lib/endpoints/accounts';
 import { InvitationCombobox } from '@/components/invitation/InvitationCombobox';
 import { apiCreateDebt } from '@/lib/endpoints/debt';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
-import { useAuth } from '@/hooks/useAuth';
 import DatePicker from '../date/date-picker';
 import { NumericInput } from '../ui/numeric-input';
 import { Loader2, PlusCircle, Info } from 'lucide-react';
@@ -74,8 +73,6 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
 }) => {
   const { showError } = useToast();
   const invalidate = useInvalidateQueries();
-  const { user } = useAuth();
-
   const { data: accountsData, isLoading: isLoadingAccounts } = useQuery({
     queryKey: ['accountsDropdown'],
     queryFn: accountGetDropdown,

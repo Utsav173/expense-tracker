@@ -18,28 +18,31 @@ import {
   SidebarMenuItem,
   useSidebar
 } from '@/components/ui/sidebar';
-import { authLogOut } from '@/lib/endpoints/auth';
-import { removeAuthToken } from '@/app/(public)/auth/actions';
 import { useToast } from '@/lib/hooks/useToast';
 import Link from 'next/link';
-import { User } from '@/lib/types';
+import { authClient } from '@/lib/auth-client';
 
-export function NavUser({ user }: { user: User }) {
+export function NavUser() {
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
   const { isMobile, state } = useSidebar();
 
   const { showError } = useToast();
 
-  const handleLogout = () => {
-    authLogOut()
-      .then(async () => {
-        localStorage.removeItem('token');
-        await removeAuthToken();
-        window.location.href = '/auth/login';
-      })
-      .catch(() => {
-        showError('Error in logging out');
-      });
+  const handleLogout = async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          window.location.href = '/auth/login';
+        },
+        onError: () => {
+            showError('Error in logging out');
+        }
+      },
+    });
   };
+
+  if (!user) return null;
 
   return (
     <SidebarMenu>
@@ -52,7 +55,7 @@ export function NavUser({ user }: { user: User }) {
               tooltip={state === 'collapsed' ? `${user.name}\n${user.email}` : undefined}
             >
               <Avatar className='h-8 w-8 rounded-lg'>
-                <AvatarImage src={user?.profilePic!} alt={user.name} />
+                <AvatarImage src={user?.image!} alt={user.name} />
                 <AvatarFallback className='rounded-lg'>{user.name.split('')[0]}</AvatarFallback>
               </Avatar>
               {state !== 'collapsed' && (
@@ -73,7 +76,7 @@ export function NavUser({ user }: { user: User }) {
             <DropdownMenuLabel className='p-0 font-normal'>
               <div className='flex items-center gap-2 px-1 py-1.5 text-left text-sm'>
                 <Avatar className='h-8 w-8 rounded-lg'>
-                  <AvatarImage src={user?.profilePic!} alt={user.name} />
+                  <AvatarImage src={user?.image!} alt={user.name} />
                   <AvatarFallback className='rounded-lg'>{user.name.split('')[0]}</AvatarFallback>
                 </Avatar>
                 <div className='grid flex-1 text-left text-sm leading-tight'>

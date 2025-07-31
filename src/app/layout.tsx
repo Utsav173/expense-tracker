@@ -3,6 +3,7 @@ import { Open_Sans } from 'next/font/google';
 import { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import ReactQueryProvider from '@/components/providers/provider';
+import { AuthProvider } from '@/components/providers/auth-provider';
 import { cn } from '@/lib/utils';
 import './globals.css';
 import { GoogleAnalytics } from '@next/third-parties/google';
@@ -109,7 +110,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body
         className={cn(openSans.className, 'bg-background text-foreground dark:subtle-noise-bg')}
       >
-        <ReactQueryProvider>{children}</ReactQueryProvider>
+        <ReactQueryProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ReactQueryProvider>
       </body>
       <GoogleAnalytics gaId='GTM-NRXZ2WPR' />
     </html>

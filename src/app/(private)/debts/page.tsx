@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle, Search, Calculator } from 'lucide-react';
 import { createDebtColumns } from '@/components/debt/debt-columns';
 import AddDebtModal from '@/components/modals/add-debt-modal';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/components/providers/auth-provider';
 import InterestCalculatorModal from '@/components/modals/interest-calculator-modal';
 import { z } from 'zod';
 import { interestSchema } from '@/lib/utils/schema.validations';
@@ -30,7 +30,8 @@ type DebtTypeFilter = '' | 'given' | 'taken' | 'all' | undefined;
 
 const DebtsPage = () => {
   const { showError } = useToast();
-  const { user } = useAuth();
+  const { session } = useAuth();
+  const user = session?.user;
 
   const { state, setState, handlePageChange } = useUrlState({
     page: 1,

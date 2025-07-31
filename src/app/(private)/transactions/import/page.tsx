@@ -248,10 +248,7 @@ const ImportTransactionsPage = () => {
 
   const handleDownloadSample = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/accounts/sampleFile/import`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await fetch(`${API_BASE_URL}/accounts/sampleFile/import`);
       if (!response.ok) throw new Error(`Server error: ${response.statusText}`);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);

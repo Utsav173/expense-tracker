@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { AiChat } from '@/components/ai/ai-chat';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/components/providers/auth-provider';
 import Loader from '@/components/ui/loader';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, KeyRound } from 'lucide-react';
@@ -10,9 +10,10 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
 const AiChatPage = () => {
-  const { user, userIsLoading, userIsError, userQueryError } = useAuth();
+  const { session, isLoading } = useAuth();
+  const user = session?.user;
 
-  if (userIsLoading) {
+  if (isLoading) {
     return (
       <div className='flex h-full flex-1 items-center justify-center p-4'>
         <Loader />
@@ -20,7 +21,7 @@ const AiChatPage = () => {
     );
   }
 
-  if (userIsError) {
+  if (!user) {
     return (
       <div className='flex h-full flex-1 items-center justify-center p-4'>
         <Alert variant='destructive' className='max-w-md'>
@@ -28,7 +29,6 @@ const AiChatPage = () => {
           <AlertTitle>Error Loading User</AlertTitle>
           <AlertDescription>
             Could not load user information. Please try refreshing the page.
-            {userQueryError?.message && <p className='mt-2 text-xs'>{userQueryError.message}</p>}
           </AlertDescription>
         </Alert>
       </div>

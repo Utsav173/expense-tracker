@@ -7,7 +7,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
 import { useToast } from '@/lib/hooks/useToast';
-import { authSignup } from '@/lib/endpoints/auth';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { WebPage, WithContext } from 'schema-dts';
 import Script from 'next/script';
 import { Loader2 } from 'lucide-react';
+import { authClient } from '@/lib/auth-client';
 
 const signUpSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters long').max(64).trim(),
@@ -57,26 +57,25 @@ const SignupPage = () => {
   const profilePic = watch('profilePic');
 
   const handleSignUp = async (data: SignUpSchemaType) => {
-    setLoading(true);
-    try {
-      const formData = new FormData();
-      formData.append('name', data.name);
-      formData.append('email', data.email);
-      formData.append('password', data.password);
-      if (data.profilePic) {
-        formData.append('profilePic', data.profilePic);
+    await authClient.signUp.email(
+      {
+        email: data.email,
+        password: data.password,
+        name: data.name,
+        ...(data.profilePic && { image: data.profilePic })
+      },
+      {
+        onRequest: (ctx) => {
+          setLoading(true);
+        },
+        onSuccess: (ctx) => {
+          push('/auth/login');
+        },
+        onError: (ctx) => {
+          showError(ctx.error.message);
+        }
       }
-      if (data.token) {
-        formData.append('token', data.token);
-      }
-
-      await authSignup(formData);
-      push('/auth/login');
-    } catch (e: any) {
-      showError(e.message);
-    } finally {
-      setLoading(false);
-    }
+    );
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

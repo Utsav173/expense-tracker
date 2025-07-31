@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/components/providers/auth-provider';
 
 // Dynamically import the heaviest components
 const AccountTransactionsSection = dynamic(
@@ -61,7 +61,8 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
   const { id } = use(params);
   const parsedSearchParams = use(searchParams);
   const isMobile = useIsMobile();
-  const { user } = useAuth();
+  const { session } = useAuth();
+  const user = session?.user;
 
   const {
     account,

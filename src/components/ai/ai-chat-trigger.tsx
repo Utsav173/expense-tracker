@@ -7,11 +7,12 @@ import { AiChat } from './ai-chat';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/components/providers/auth-provider';
 
 export const AiChatTrigger = () => {
   const isMobile = useIsMobile();
-  const { user } = useAuth();
+  const { session } = useAuth();
+  const user = session?.user;
 
   if (!user?.hasAiApiKey) {
     return null;
