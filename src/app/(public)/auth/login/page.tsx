@@ -32,7 +32,7 @@ const jsonLd: WithContext<WebPage> = {
 };
 
 const LoginPage = () => {
-  const { showSuccess, showError } = useToast();
+  const { showSuccess, showError, showInfo } = useToast();
   const router = useRouter();
   const [loading, setLoading] = React.useState(false);
 
@@ -52,15 +52,23 @@ const LoginPage = () => {
         password: data.password
       },
       {
-        onRequest: (ctx) => {
+        onRequest: () => {
           setLoading(true);
         },
-        onResponse: (ctx) => {
+        onSuccess: () => {
           showSuccess('Successfully logged in');
           router.replace('/accounts');
         },
-        onError: (ctx) => {
-          showError(ctx.error.message || 'Failed to login');
+        onError: (ctx: any) => {
+          // Handle unverified email error
+          if (ctx.error.status === 403 && ctx.error.code === 'EMAIL_NOT_VERIFIED') {
+            showInfo('Your email is not verified. Please check your inbox for an OTP.');
+            router.push(`/auth/verify-otp?email=${data.email}&type=email-verification`);
+          } else {
+            showError(ctx.error.message || 'Failed to login');
+          }
+        },
+        onSettled: () => {
           setLoading(false);
         }
       }
@@ -71,10 +79,10 @@ const LoginPage = () => {
     await authClient.signIn.social(
       { provider },
       {
-        onRequest: (ctx) => {
+        onRequest: () => {
           setLoading(true);
         },
-        onResponse: (ctx) => {
+        onSuccess: () => {
           showSuccess('Successfully logged in');
           setLoading(false);
         },

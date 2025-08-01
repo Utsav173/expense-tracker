@@ -89,12 +89,7 @@ const SignupPage = () => {
       },
       {
         onRequest: () => setLoading(true),
-        onSuccess: async (ctx: any) => {
-          // Send OTP for email verification
-          await authClient.emailOtp.sendVerificationOtp({
-            email: data.email,
-            type: 'email-verification'
-          });
+        onSuccess: () => {
           push(`/auth/verify-otp?email=${data.email}&type=email-verification`);
         },
         onError: (ctx: any) => showError(ctx.error.message),
