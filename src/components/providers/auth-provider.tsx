@@ -15,7 +15,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { data: session, isPending: isLoading } = authClient.useSession();
   const router = useRouter();
   const pathname = usePathname();
-  console.log(session, 'session');
 
   const publicRoutes = [
     '/',

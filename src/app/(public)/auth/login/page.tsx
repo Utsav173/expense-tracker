@@ -69,7 +69,7 @@ const LoginPage = () => {
 
   const handleSocialLogin = async (provider: 'google' | 'github') => {
     await authClient.signIn.social(
-      { provider, callbackURL: window.location.origin },
+      { provider },
       {
         onRequest: (ctx) => {
           setLoading(true);

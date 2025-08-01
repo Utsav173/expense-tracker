@@ -8,11 +8,9 @@ const getServerSession = async (): Promise<typeof Session | null> => {
   try {
     const cookieHeader = (await cookies()).toString();
 
-    const res = await fetch(SERVER_URL, {
+    const res = await fetch(LOCAL_SERVER_URL, {
       credentials: 'include',
-      headers: {
-        Cookie: cookieHeader
-      }
+      headers: { Cookie: cookieHeader }
     });
 
     return res.json();

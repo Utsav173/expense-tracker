@@ -11,10 +11,7 @@ const api = axios.create({
   }
 });
 
-api.interceptors.request.use((config) => {
-  console.log('Axios Request Config:', config);
-  return config;
-});
+api.interceptors.request.use((config) => config);
 
 interface ApiResponse<T> {
   data: T;
