@@ -1,104 +1,101 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import Link from 'next/link';
-import { useToast } from '@/lib/hooks/useToast';
-import { authForgotPassword } from '@/lib/endpoints/auth';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { WebPage, WithContext } from 'schema-dts';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import Script from 'next/script';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from '@/components/ui/form';
+import { useToast } from '@/lib/hooks/useToast';
+import { useRouter } from 'next/navigation';
+import { authClient } from '@/lib/auth-client';
 
 const forgotPasswordSchema = z.object({
-  email: z.string().email('Invalid email address')
+  email: z.string().email('Invalid email format.')
 });
 
 type ForgotPasswordSchemaType = z.infer<typeof forgotPasswordSchema>;
 
-const jsonLd: WithContext<WebPage> = {
-  '@context': 'https://schema.org',
-  '@type': 'WebPage',
-  name: 'Forgot Password Page - Expense Tracker',
-  description: 'Forgot password page for Expense Tracker application.',
-  url: 'https://expense-pro.vercel.app/auth/forgot-password'
-};
-
 const ForgotPasswordPage = () => {
-  const { showError } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
-  const {
-    register,
-    handleSubmit,
-    formState: { errors }
-  } = useForm<ForgotPasswordSchemaType>({
-    resolver: zodResolver(forgotPasswordSchema)
+  const [loading, setLoading] = useState(false);
+  const { showSuccess, showError } = useToast();
+  const { push } = useRouter();
+
+  const form = useForm<ForgotPasswordSchemaType>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: ''
+    }
   });
 
   const handleForgotPassword = async (data: ForgotPasswordSchemaType) => {
-    setIsLoading(true);
-    try {
-      await authForgotPassword(data);
-      router.push('/auth/forgot-password-sent');
-    } catch (e: any) {
-      showError(e.message);
-      setIsLoading(false);
-    }
+    await authClient.emailOtp.sendVerificationOtp(
+      {
+        email: data.email,
+        type: 'forget-password'
+      },
+      {
+        onRequest: () => setLoading(true),
+        onSuccess: () => {
+          showSuccess('OTP sent to your email. Please check your inbox.');
+          push(`/auth/verify-otp?email=${data.email}&type=forget-password`);
+        },
+        onError: (ctx: any) => showError(ctx.error.message),
+        onSettled: () => setLoading(false)
+      }
+    );
   };
 
   return (
-    <>
-      <Script
-        type='application/ld+json'
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        id='json-ld'
-      />
-      <Card variant='auth'>
-        <CardHeader className='py-4'>
-          <CardTitle className='text-foreground text-center text-xl font-bold tracking-wide'>
-            Forgot Password
-          </CardTitle>
-        </CardHeader>
-        <CardContent className='space-y-6 p-0 pb-4'>
-          <form onSubmit={handleSubmit(handleForgotPassword)}>
-            <div>
-              <label htmlFor='email' className='text-foreground mb-1 block text-sm font-medium'>
-                Email Address
-              </label>
-              <Input
-                id='email'
-                type='email'
-                placeholder='Your Email'
-                disabled={isLoading}
-                {...register('email')}
-                variant='auth'
-              />
-              {errors.email && (
-                <p className='text-destructive py-1 text-xs'> {errors.email.message} </p>
+    <Card variant='auth'>
+      <CardContent className='space-y-6 p-0 pt-4'>
+        <div className='space-y-2 text-center select-none'>
+          <h2 className='text-foreground text-2xl font-semibold'>Forgot Password</h2>
+          <p className='text-muted-foreground text-sm'>
+            Enter your email to receive a password reset link.
+          </p>
+        </div>
+
+        <Form {...form}>
+          <form className='space-y-4' onSubmit={form.handleSubmit(handleForgotPassword)}>
+            <FormField
+              control={form.control}
+              name='email'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email Address</FormLabel>
+                  <FormControl>
+                    <Input
+                      type='email'
+                      placeholder='you@example.com'
+                      disabled={loading}
+                      variant='auth'
+                      autoComplete='email'
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-            </div>
-            <Button
-              disabled={isLoading}
-              type='submit'
-              className='mt-6 mb-2 w-full'
-              variant={'authButton'}
-            >
-              {isLoading ? 'Sending Mail...' : 'Send Reset Link'}
+            />
+
+            <Button type='submit' disabled={loading} variant='authButton' className='w-full'>
+              {loading ? 'Sending...' : 'Send Reset Link'}
             </Button>
           </form>
-        </CardContent>
-        <CardFooter className='flex items-center justify-end border-t p-4'>
-          <Link href='/auth/login' className='text-primary text-sm hover:underline'>
-            Back to Login
-          </Link>
-        </CardFooter>
-      </Card>
-    </>
+        </Form>
+      </CardContent>
+    </Card>
   );
 };
+
 export default ForgotPasswordPage;

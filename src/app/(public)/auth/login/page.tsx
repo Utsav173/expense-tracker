@@ -55,7 +55,7 @@ const LoginPage = () => {
         onRequest: (ctx) => {
           setLoading(true);
         },
-        onSuccess: (ctx) => {
+        onResponse: (ctx) => {
           showSuccess('Successfully logged in');
           router.replace('/accounts');
         },
@@ -69,13 +69,14 @@ const LoginPage = () => {
 
   const handleSocialLogin = async (provider: 'google' | 'github') => {
     await authClient.signIn.social(
-      { provider },
+      { provider, callbackURL: window.location.origin },
       {
         onRequest: (ctx) => {
           setLoading(true);
         },
-        onSuccess: (ctx) => {
+        onResponse: (ctx) => {
           showSuccess('Successfully logged in');
+          setLoading(false);
         },
         onError: (ctx) => {
           showError(ctx.error.message || 'Failed to login');

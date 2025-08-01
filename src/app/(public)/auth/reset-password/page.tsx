@@ -1,133 +1,124 @@
 'use client';
 
-'use client';
-
-import React, { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useToast } from '@/lib/hooks/useToast';
-import { authResetPassword } from '@/lib/endpoints/auth';
-import { PasswordInput } from '@/components/ui/password-input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import Link from 'next/link';
-import { WebPage, WithContext } from 'schema-dts';
-import { GoogleAnalytics } from '@next/third-parties/google';
-import Script from 'next/script';
+import { PasswordInput } from '@/components/ui/password-input';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from '@/components/ui/form';
+import { useToast } from '@/lib/hooks/useToast';
+import { authClient } from '@/lib/auth-client';
+import { useSearchParams, useRouter } from 'next/navigation';
 
-const resetPasswordSchema = z.object({
-  password: z.string().min(8, 'Password must be at least 8 characters long').max(255),
-  resetPasswordToken: z.string().min(1, 'Reset token is missing')
-});
+const resetPasswordSchema = z
+  .object({
+    password: z.string().min(8, 'Password must be at least 8 characters long.'),
+    confirmPassword: z.string()
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword']
+  });
 
 type ResetPasswordSchemaType = z.infer<typeof resetPasswordSchema>;
 
-const jsonLd: WithContext<WebPage> = {
-  '@context': 'https://schema.org',
-  '@type': 'WebPage',
-  name: 'Reset Password Page - Expense Tracker',
-  description: 'Reset password page for Expense Tracker application.',
-  url: 'https://expense-pro.vercel.app/auth/reset-password'
-};
-
 const ResetPasswordPage = () => {
+  const [loading, setLoading] = useState(false);
+  const { showSuccess, showError } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const token = searchParams.get('token');
-  const { showError } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const email = searchParams.get('email');
+  const otp = searchParams.get('otp');
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue
-  } = useForm<ResetPasswordSchemaType>({
+  const form = useForm<ResetPasswordSchemaType>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
-      resetPasswordToken: token || ''
+      password: '',
+      confirmPassword: ''
     }
   });
 
   useEffect(() => {
-    if (token) {
-      setValue('resetPasswordToken', token);
-    } else if (!token && !isLoading) {
-      router.replace('/auth/login');
-      showError('Invalid or missing reset token.');
+    if (!email || !otp) {
+      showError('Missing email or OTP.');
+      router.push('/auth/login');
     }
-  }, [token, router, showError, setValue, isLoading]);
+  }, [email, otp, showError, router]);
 
   const handleResetPassword = async (data: ResetPasswordSchemaType) => {
-    if (!data.resetPasswordToken) {
-      showError('Reset token is missing.');
-      return;
-    }
-    setIsLoading(true);
-    try {
-      await authResetPassword(data);
-      router.push('/auth/login');
-    } catch (e: any) {
-      showError(e.message);
-    } finally {
-      setIsLoading(false);
-    }
+    if (!email || !otp) return;
+
+    await authClient.emailOtp.resetPassword(
+      {
+        email,
+        otp,
+        password: data.password
+      },
+      {
+        onRequest: () => setLoading(true),
+        onSuccess: () => {
+          showSuccess('Password has been reset successfully.');
+          router.push('/auth/login');
+        },
+        onError: (ctx: any) => showError(ctx.error.message),
+        onSettled: () => setLoading(false)
+      }
+    );
   };
 
-  if (!token) {
-    return null;
-  }
-
   return (
-    <>
-      <Script
-        id='json-ld'
-        type='application/ld+json'
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      <Card variant='auth'>
-        <CardHeader className='py-4'>
-          <CardTitle className='text-foreground text-center text-xl font-bold tracking-wide'>
-            Reset Password
-          </CardTitle>
-        </CardHeader>
-        <CardContent className='space-y-6 p-0 pb-4'>
-          <form onSubmit={handleSubmit(handleResetPassword)} className='space-y-4'>
-            <div>
-              <label className='text-foreground text-sm font-medium' htmlFor='password'>
-                New Password
-              </label>
-              {/* Use PasswordInput here */}
-              <PasswordInput
-                id='password'
-                placeholder='New Password'
-                {...register('password')}
-                disabled={isLoading}
-              />
-              {errors.password && (
-                <p className='text-destructive py-1 text-xs'>{errors.password.message}</p>
-              )}
-            </div>
-            {/* Hidden input for the token */}
-            <input type='hidden' {...register('resetPasswordToken')} />
-            {errors.resetPasswordToken && (
-              <p className='text-destructive py-1 text-xs'>{errors.resetPasswordToken.message}</p>
-            )}
+    <Card variant='auth'>
+      <CardContent className='space-y-6 p-0 pt-4'>
+        <div className='space-y-2 text-center select-none'>
+          <h2 className='text-foreground text-2xl font-semibold'>Reset Password</h2>
+          <p className='text-muted-foreground text-sm'>Enter your new password below.</p>
+        </div>
 
-            <Button type='submit' className='w-full' disabled={isLoading} variant={'authButton'}>
-              {isLoading ? 'Resetting Password...' : 'Reset Password'}
+        <Form {...form}>
+          <form className='space-y-4' onSubmit={form.handleSubmit(handleResetPassword)}>
+            <FormField
+              control={form.control}
+              name='password'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>New Password</FormLabel>
+                  <FormControl>
+                    <PasswordInput placeholder='••••••••' disabled={loading} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name='confirmPassword'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirm New Password</FormLabel>
+                  <FormControl>
+                    <PasswordInput placeholder='••••••••' disabled={loading} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <Button type='submit' disabled={loading} variant='authButton' className='w-full'>
+              {loading ? 'Resetting...' : 'Reset Password'}
             </Button>
           </form>
-        </CardContent>
-        <CardFooter className='flex justify-center p-4'>
-          <Link href='/auth/login' className='text-primary text-sm hover:underline'>
-            Back to Login
-          </Link>
-        </CardFooter>
-      </Card>
-    </>
+        </Form>
+      </CardContent>
+    </Card>
   );
 };
 

@@ -30,7 +30,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   ];
 
   const isPublicPath = publicRoutes.some((route) => pathname.startsWith(route));
-  console.log('🚀 ~ AuthProvider ~ isPublicPath:', isPublicPath);
 
   useEffect(() => {
     if (!isLoading) {

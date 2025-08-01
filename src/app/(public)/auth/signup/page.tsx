@@ -6,21 +6,30 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
+import Script from 'next/script';
+import { WithContext, WebPage } from 'schema-dts';
+import { Loader2, ImagePlus, User } from 'lucide-react';
 import { useToast } from '@/lib/hooks/useToast';
+import { authClient } from '@/lib/auth-client';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { WebPage, WithContext } from 'schema-dts';
-import Script from 'next/script';
-import { Loader2 } from 'lucide-react';
-import { authClient } from '@/lib/auth-client';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from '@/components/ui/form';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const signUpSchema = z.object({
-  name: z.string().min(3, 'Name must be at least 3 characters long').max(64).trim(),
-  email: z.string().email('Invalid email format'),
-  password: z.string().min(8, 'Password must be at least 8 characters long').max(255),
-  profilePic: z.any().optional(),
+  name: z.string().min(3, 'Name must be at least 3 characters long.').max(64).trim(),
+  email: z.string().email('Invalid email format.'),
+  password: z.string().min(8, 'Password must be at least 8 characters long.').max(255),
+  profilePic: z.instanceof(File).optional().nullable(),
   token: z.string().optional()
 });
 
@@ -36,25 +45,38 @@ const jsonLd: WithContext<WebPage> = {
 
 const SignupPage = () => {
   const [loading, setLoading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const { push } = useRouter();
   const searchParams = useSearchParams();
   const { showError } = useToast();
-  const { register, handleSubmit, formState, setValue, watch } = useForm<SignUpSchemaType>({
+
+  const form = useForm<SignUpSchemaType>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
+      name: '',
+      email: '',
+      password: '',
       profilePic: null,
       token: searchParams.get('token') || undefined
-    }
+    },
+    mode: 'onChange'
   });
 
   useEffect(() => {
     const token = searchParams.get('token');
     if (token) {
-      setValue('token', token);
+      form.setValue('token', token);
     }
-  }, [searchParams, setValue]);
+  }, [searchParams, form]);
 
-  const profilePic = watch('profilePic');
+  // Clean up the object URL to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
 
   const handleSignUp = async (data: SignUpSchemaType) => {
     await authClient.signUp.email(
@@ -62,25 +84,47 @@ const SignupPage = () => {
         email: data.email,
         password: data.password,
         name: data.name,
-        ...(data.profilePic && { image: data.profilePic })
+        ...(data.profilePic && { image: await convertImageToBase64(data.profilePic) }),
+        ...(data.token && { token: data.token }) // Pass the token if it exists
       },
       {
-        onRequest: (ctx) => {
-          setLoading(true);
+        onRequest: () => setLoading(true),
+        onSuccess: async (ctx: any) => {
+          // Send OTP for email verification
+          await authClient.emailOtp.sendVerificationOtp({
+            email: data.email,
+            type: 'email-verification'
+          });
+          push(`/auth/verify-otp?email=${data.email}&type=email-verification`);
         },
-        onSuccess: (ctx) => {
-          push('/auth/login');
-        },
-        onError: (ctx) => {
-          showError(ctx.error.message);
-        }
+        onError: (ctx: any) => showError(ctx.error.message),
+        onSettled: () => setLoading(false)
       }
     );
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) setValue('profilePic', file);
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview); // Clean up previous preview
+    }
+    if (file) {
+      form.setValue('profilePic', file, { shouldValidate: true });
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleRemoveImage = () => {
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setImagePreview(null);
+    form.setValue('profilePic', null, { shouldValidate: true });
+    // Reset the file input value
+    const fileInput = document.getElementById('file-upload') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
   };
 
   return (
@@ -93,119 +137,142 @@ const SignupPage = () => {
       <Card variant='auth'>
         <CardContent className='space-y-6 p-0 pt-4'>
           <div className='space-y-2 text-center select-none'>
-            <h2 className='text-foreground text-2xl font-semibold'>Create Account</h2>
+            <h2 className='text-foreground text-2xl font-semibold'>Create an Account</h2>
             <p className='text-muted-foreground text-sm'>
-              Start your expense tracking journey today
+              Start your expense tracking journey today.
             </p>
           </div>
 
-          <form className='space-y-4' onSubmit={handleSubmit(handleSignUp)}>
-            <div className='space-y-2'>
-              <label className='text-foreground text-sm font-medium' htmlFor='name'>
-                Full Name
-              </label>
-              <Input
-                id='name'
-                type='text'
-                placeholder='John Doe'
-                {...register('name')}
-                disabled={loading}
-                variant='auth'
-                autoComplete='off'
+          <Form {...form}>
+            <form className='space-y-4' onSubmit={form.handleSubmit(handleSignUp)}>
+              <FormField
+                control={form.control}
+                name='name'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        type='text'
+                        placeholder='John Doe'
+                        disabled={loading}
+                        variant='auth'
+                        autoComplete='name'
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {formState.errors.name && (
-                <p className='text-destructive py-1 text-xs'> {formState.errors.name.message}</p>
-              )}
-            </div>
 
-            <div className='space-y-2'>
-              <label className='text-foreground text-sm font-medium' htmlFor='email'>
-                Email
-              </label>
-              <Input
-                id='email'
-                type='email'
-                placeholder='you@example.com'
-                {...register('email')}
-                disabled={loading}
-                variant='auth'
+              <FormField
+                control={form.control}
+                name='email'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email Address</FormLabel>
+                    <FormControl>
+                      <Input
+                        type='email'
+                        placeholder='you@example.com'
+                        disabled={loading}
+                        variant='auth'
+                        autoComplete='email'
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {formState.errors.email && (
-                <p className='text-destructive py-1 text-xs'> {formState.errors.email.message}</p>
-              )}
-            </div>
 
-            <div className='space-y-2'>
-              <label className='text-foreground text-sm font-medium' htmlFor='password'>
-                Password
-              </label>
-              <PasswordInput
-                id='password'
-                placeholder='••••••••'
-                {...register('password')}
-                disabled={loading}
+              <FormField
+                control={form.control}
+                name='password'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <PasswordInput
+                        placeholder='••••••••'
+                        disabled={loading}
+                        autoComplete='new-password'
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {formState.errors.password && (
-                <p className='text-destructive py-1 text-xs'>{formState.errors.password.message}</p>
-              )}
-            </div>
 
-            <div className='space-y-2'>
-              <label className='text-foreground text-sm font-medium'>Profile Picture</label>
-              <label
-                htmlFor='file-upload'
-                className='border-border bg-background hover:border-primary mt-1 flex cursor-pointer justify-center rounded-lg border-2 border-dashed px-2 pt-5 pb-6 transition-colors duration-200'
-              >
-                <div className='w-full max-w-xs space-y-1 text-center'>
-                  <svg
-                    className='text-muted-foreground mx-auto h-12 w-12'
-                    stroke='currentColor'
-                    fill='none'
-                    viewBox='0 0 48 48'
-                    aria-hidden='true'
-                  >
-                    <path
-                      d='M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02'
-                      strokeWidth='2'
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                    />
-                  </svg>
-                  <div className='text-muted-foreground flex flex-col items-center justify-center gap-1 text-sm sm:flex-row'>
-                    <span>Upload a file</span>
-                    <span className='hidden px-1 sm:inline'>or</span>
-                    <span className='block sm:inline'>drag and drop</span>
-                  </div>
-                  <p className='text-muted-foreground text-xs'>PNG, JPG, GIF up to 2MB</p>{' '}
-                  <input
-                    id='file-upload'
-                    name='file-upload'
-                    onChange={handleFileChange}
-                    type='file'
-                    disabled={loading}
-                    className='sr-only'
-                    accept='image/png, image/jpeg, image/gif'
-                  />
-                </div>
-              </label>
-              {profilePic && profilePic instanceof File && (
-                <p className='text-muted-foreground mt-1 text-xs break-all'>
-                  Selected: {profilePic.name}
-                </p>
-              )}
-            </div>
+              <FormField
+                control={form.control}
+                name='profilePic'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Profile Picture (Optional)</FormLabel>
+                    <FormControl>
+                      <div className='flex items-center gap-4'>
+                        <Avatar className='h-20 w-20 border'>
+                          <AvatarImage src={imagePreview ?? undefined} alt='Profile preview' />
+                          <AvatarFallback>
+                            <User className='text-muted-foreground h-8 w-8' />
+                          </AvatarFallback>
+                        </Avatar>
 
-            <Button type='submit' disabled={loading} variant={'authButton'} className='w-full'>
-              {loading ? (
-                <>
-                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                  Creating Account...
-                </>
-              ) : (
-                'Create Account'
-              )}
-            </Button>
-          </form>
+                        {imagePreview ? (
+                          <div className='flex flex-col gap-2'>
+                            <Button asChild variant='outline' size='sm' disabled={loading}>
+                              <label htmlFor='file-upload' className='cursor-pointer'>
+                                Change
+                              </label>
+                            </Button>
+                            <Button
+                              type='button'
+                              variant='destructive'
+                              size='sm'
+                              onClick={handleRemoveImage}
+                              disabled={loading}
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button asChild variant='outline' disabled={loading}>
+                            <label htmlFor='file-upload' className='cursor-pointer'>
+                              <ImagePlus className='mr-2 h-4 w-4' />
+                              Upload
+                            </label>
+                          </Button>
+                        )}
+                        <input
+                          id='file-upload'
+                          type='file'
+                          onChange={handleFileChange}
+                          disabled={loading}
+                          className='sr-only'
+                          accept='image/png, image/jpeg, image/gif'
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <Button type='submit' disabled={loading} variant='authButton' className='w-full'>
+                {loading ? (
+                  <>
+                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                    Creating Account...
+                  </>
+                ) : (
+                  'Create Account'
+                )}
+              </Button>
+            </form>
+          </Form>
         </CardContent>
 
         <CardFooter className='flex flex-col items-center justify-between gap-2 pt-4 sm:flex-row'>
@@ -213,7 +280,7 @@ const SignupPage = () => {
             href='/auth/login'
             className='text-primary hover:text-primary/80 text-sm font-medium transition-colors duration-200'
           >
-            Already have an account?
+            Already have an account? Log in
           </Link>
         </CardFooter>
       </Card>
@@ -222,3 +289,12 @@ const SignupPage = () => {
 };
 
 export default SignupPage;
+
+async function convertImageToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
