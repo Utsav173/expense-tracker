@@ -5,15 +5,13 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  // ADDED: transition-all, duration-200, active:scale-98, and standardized focus-visible
   'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 active:scale-98 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
   {
     variants: {
       variant: {
         default: 'bg-primary text-primary-foreground shadow-sm hover:bg-primary/90',
         destructive: 'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90',
-        // ADDED: shadow transitions and group for icon animation
-        cta: 'cta-gradient group text-primary-foreground shadow-lg hover:shadow-xl hover:shadow-sky-500/30 transition-all duration-300 ease-in-out',
+        cta: 'cta-gradient group text-primary-foreground shadow-lg hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 ease-in-out',
         outline:
           'border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground',
         secondary: 'bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80',

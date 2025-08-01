@@ -31,7 +31,7 @@ const AccountCard = ({ account }: { account: Account }) => {
     >
       <div className='flex items-center gap-4'>
         <Avatar className='h-12 w-12'>
-          <AvatarImage src={account.owner?.profilePic || undefined} alt={account.owner?.name} />
+          <AvatarImage src={account.owner?.image || undefined} alt={account.owner?.name} />
           <AvatarFallback>{getInitials(account.owner?.name)}</AvatarFallback>
         </Avatar>
         <div className='flex flex-col'>

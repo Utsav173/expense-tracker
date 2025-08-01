@@ -29,7 +29,7 @@ import { Label } from '../ui/label';
 const profileUpdateSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters.').max(64).trim(),
   preferredCurrency: z.string().optional().or(z.literal('')),
-  profilePic: z.instanceof(File).optional().nullable()
+  image: z.instanceof(File).optional().nullable()
 });
 
 type ProfileUpdateFormSchema = z.infer<typeof profileUpdateSchema>;
@@ -58,7 +58,6 @@ export const ProfileInformationForm = () => {
     mutationFn: (data: FormData) => authUpdateUser(data),
     onSuccess: async () => {
       await invalidate(['user']);
-      // refetchUser?.(); // No longer needed as invalidate handles it
       setIsEditing(false);
       setPreviewUrl(null);
       showSuccess('Profile updated successfully!');
@@ -71,7 +70,7 @@ export const ProfileInformationForm = () => {
       form.reset({
         name: user.name || '',
         preferredCurrency: user.preferredCurrency || 'INR',
-        profilePic: undefined
+        image: undefined
       });
     }
   }, [user, form, isEditing]);
@@ -89,7 +88,7 @@ export const ProfileInformationForm = () => {
         showError('Profile picture must be less than 5MB');
         return;
       }
-      form.setValue('profilePic', file, { shouldDirty: true });
+      form.setValue('image', file, { shouldDirty: true });
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
     }
@@ -105,7 +104,7 @@ export const ProfileInformationForm = () => {
     const formData = new FormData();
     formData.append('name', data.name);
     if (data.preferredCurrency) formData.append('preferredCurrency', data.preferredCurrency);
-    if (data.profilePic instanceof File) formData.append('profilePic', data.profilePic);
+    if (data.image instanceof File) formData.append('image', data.image);
     mutation.mutate(formData);
   };
 

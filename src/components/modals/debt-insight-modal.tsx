@@ -380,7 +380,7 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                     <CardContent>
                       <div className='flex items-center gap-4'>
                         <Avatar className='h-12 w-12'>
-                          <AvatarImage src={debt.user?.profilePic || undefined} />
+                          <AvatarImage src={debt.user?.image || undefined} />
                           <AvatarFallback>
                             <User className='h-6 w-6' />
                           </AvatarFallback>

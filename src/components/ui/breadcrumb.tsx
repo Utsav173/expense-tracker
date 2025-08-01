@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Slot as SlotPrimitive } from 'radix-ui';
+import { Slot } from '@radix-ui/react-slot';
 import { ChevronRight, MoreHorizontal } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -39,7 +39,7 @@ const BreadcrumbLink = React.forwardRef<
     asChild?: boolean;
   }
 >(({ asChild, className, ...props }, ref) => {
-  const Comp = asChild ? SlotPrimitive.Slot : 'a';
+  const Comp = asChild ? Slot : 'a';
 
   return (
     <Comp
@@ -69,7 +69,7 @@ const BreadcrumbSeparator = ({ children, className, ...props }: React.ComponentP
   <li
     role='presentation'
     aria-hidden='true'
-    className={cn('[&>svg]:h-3.5 [&>svg]:w-3.5', className)}
+    className={cn('[&>svg]:size-3.5', className)}
     {...props}
   >
     {children ?? <ChevronRight />}
@@ -88,7 +88,7 @@ const BreadcrumbEllipsis = ({ className, ...props }: React.ComponentProps<'span'
     <span className='sr-only'>More</span>
   </span>
 );
-BreadcrumbEllipsis.displayName = 'BreadcrumbElipssis';
+BreadcrumbEllipsis.displayName = 'BreadcrumbEllipsis';
 
 export {
   Breadcrumb,

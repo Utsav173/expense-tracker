@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { ScrollArea as ScrollAreaPrimitive } from 'radix-ui';
+import * as ScrollAreaPrimitive from '@radix-ui/react-scroll-area';
 
 import { cn } from '@/lib/utils';
 
@@ -38,7 +38,7 @@ const ScrollBar = React.forwardRef<
     )}
     {...props}
   >
-    <ScrollAreaPrimitive.ScrollAreaThumb className='bg-border relative flex-1 rounded-full' />
+    <ScrollAreaPrimitive.Thumb className='bg-border relative flex-1 rounded-full' />
   </ScrollAreaPrimitive.ScrollAreaScrollbar>
 ));
 ScrollBar.displayName = ScrollAreaPrimitive.ScrollAreaScrollbar.displayName;

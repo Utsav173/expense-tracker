@@ -99,7 +99,8 @@ export function Combobox({
           aria-expanded={open}
           disabled={disabled}
           className={cn(
-            'border-border w-full justify-between bg-transparent font-normal',
+            'w-full justify-between font-normal',
+            !value && 'text-muted-foreground',
             className
           )}
           id={id}

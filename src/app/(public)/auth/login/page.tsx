@@ -77,7 +77,7 @@ const LoginPage = () => {
 
   const handleSocialLogin = async (provider: 'google' | 'github') => {
     await authClient.signIn.social(
-      { provider },
+      { provider, callbackURL: process.env.NEXT_PUBLIC_API_BASE_URL },
       {
         onRequest: () => {
           setLoading(true);

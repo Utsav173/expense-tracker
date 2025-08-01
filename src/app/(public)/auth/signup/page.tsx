@@ -29,7 +29,7 @@ const signUpSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters long.').max(64).trim(),
   email: z.string().email('Invalid email format.'),
   password: z.string().min(8, 'Password must be at least 8 characters long.').max(255),
-  profilePic: z.instanceof(File).optional().nullable(),
+  image: z.instanceof(File).optional().nullable(),
   token: z.string().optional()
 });
 
@@ -56,7 +56,7 @@ const SignupPage = () => {
       name: '',
       email: '',
       password: '',
-      profilePic: null,
+      image: null,
       token: searchParams.get('token') || undefined
     },
     mode: 'onChange'
@@ -84,8 +84,8 @@ const SignupPage = () => {
         email: data.email,
         password: data.password,
         name: data.name,
-        ...(data.profilePic && { image: await convertImageToBase64(data.profilePic) }),
-        ...(data.token && { token: data.token }) // Pass the token if it exists
+        ...(data.image && { image: await convertImageToBase64(data.image) }),
+        ...(data.token && { token: data.token })
       },
       {
         onRequest: () => setLoading(true),
@@ -104,7 +104,7 @@ const SignupPage = () => {
       URL.revokeObjectURL(imagePreview); // Clean up previous preview
     }
     if (file) {
-      form.setValue('profilePic', file, { shouldValidate: true });
+      form.setValue('image', file, { shouldValidate: true });
       setImagePreview(URL.createObjectURL(file));
     }
   };
@@ -114,7 +114,7 @@ const SignupPage = () => {
       URL.revokeObjectURL(imagePreview);
     }
     setImagePreview(null);
-    form.setValue('profilePic', null, { shouldValidate: true });
+    form.setValue('image', null, { shouldValidate: true });
     // Reset the file input value
     const fileInput = document.getElementById('file-upload') as HTMLInputElement;
     if (fileInput) {
@@ -203,7 +203,7 @@ const SignupPage = () => {
 
               <FormField
                 control={form.control}
-                name='profilePic'
+                name='image'
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Profile Picture (Optional)</FormLabel>

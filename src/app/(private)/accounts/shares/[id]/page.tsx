@@ -126,7 +126,7 @@ const AccountSharesPage = ({ params }: PageProps) => {
               <div className='flex items-center justify-between'>
                 <div className='flex items-center gap-3'>
                   <Avatar>
-                    <AvatarImage src={share.profilePic || undefined} />
+                    <AvatarImage src={share.image || undefined} />
                     <AvatarFallback>
                       {share?.name
                         ? share.name

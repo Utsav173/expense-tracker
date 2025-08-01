@@ -6,7 +6,7 @@ export interface User {
   password?: string;
   token?: string;
   isSocial: boolean;
-  profilePic: string | null;
+  image: string | null;
   role: 'user' | 'admin';
   isActive: boolean;
   lastLoginAt?: string | null;
@@ -151,7 +151,7 @@ export interface AccountDetails {
     id: string;
     name: string;
     email: string;
-    profilePic: string | null;
+    image: string | null;
   } | null;
   analytics: Analytics | null;
   currency: string;
@@ -297,14 +297,14 @@ export type PreviousShareAccount = {
   id: string;
   name: string;
   email: number;
-  profilePic?: string | null;
+  image?: string | null;
 };
 
 export type DropdownUser = {
   id: string;
   name: string;
   email: string;
-  profilePic: string | null;
+  image: string | null;
 };
 
 export type TransactionsResponse = ApiResponse<{
