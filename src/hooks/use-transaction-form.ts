@@ -51,7 +51,7 @@ export const useTransactionForm = ({
     refetch: refetchCategories
   } = useQuery({
     queryKey: ['categories'],
-    queryFn: () => categoryGetAll({ limit: 100 }),
+    queryFn: () => categoryGetAll({ limit: '100' }),
     staleTime: 5 * 60 * 1000
   });
 
