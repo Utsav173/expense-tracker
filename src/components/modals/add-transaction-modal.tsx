@@ -65,7 +65,7 @@ const AddTransactionModal = ({
 
   const { data: categoriesData, isLoading: isLoadingCategory } = useQuery({
     queryKey: ['categories'],
-    queryFn: categoryGetAll
+    queryFn: () => categoryGetAll({ limit: '100' })
   });
 
   const { data: accountData, isLoading: isLoadingAccount } = useQuery({

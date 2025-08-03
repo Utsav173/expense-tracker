@@ -40,7 +40,7 @@ const CategoryPage = () => {
     queryKey: ['categories', page, filters.debouncedSearchQuery, filters.sortBy, filters.sortOrder],
     queryFn: () =>
       categoryGetAll({
-        page,
+        page: String(page),
         search: filters.debouncedSearchQuery,
         sortBy: filters.sortBy,
         sortOrder: filters.sortOrder

@@ -170,7 +170,7 @@ export const useAccountDetails = (id: string, searchParams: SearchParams) => {
 
   const { data: categories } = useQuery({
     queryKey: ['categories'],
-    queryFn: categoryGetAll
+    queryFn: () => categoryGetAll()
   });
 
   const handleResetFilters = useCallback(() => {

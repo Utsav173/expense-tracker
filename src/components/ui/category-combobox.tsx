@@ -2,7 +2,7 @@
 
 import React, { useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { categoryGetAll } from '@/lib/endpoints/category';
+import { categoryGetAll, categoryGetById } from '@/lib/endpoints/category';
 import { Combobox, ComboboxOption } from '@/components/ui/combobox';
 import { Category } from '@/lib/types';
 import { Skeleton } from './skeleton';
@@ -34,8 +34,8 @@ const CategoryCombobox: React.FC<CategoryComboboxProps> = ({
         return null;
       }
 
-      const result = await categoryGetAll({ id: value, limit: 1 });
-      return result?.categories?.[0] ?? null;
+      const result = await categoryGetById(value);
+      return result?.data ?? null;
     },
     enabled: !!value && value !== 'all',
     staleTime: Infinity,
@@ -47,7 +47,7 @@ const CategoryCombobox: React.FC<CategoryComboboxProps> = ({
       try {
         const data = await categoryGetAll({
           search: query,
-          limit: 20,
+          limit: '20',
           sortBy: 'name',
           sortOrder: 'asc'
         });

@@ -19,6 +19,55 @@ interface ApiResponse<T> {
   status?: number | string;
 }
 
+const downloadBlob = (blob: Blob, contentDisposition?: string, exportType?: string): void => {
+  let filename = 'download';
+
+  if (contentDisposition) {
+    const filenameMatch = contentDisposition.match(/filename\*?=(?:UTF-8'')?"?([^"]*)"?/);
+    if (filenameMatch?.[1]) {
+      filename = decodeURIComponent(filenameMatch[1]);
+    }
+  } else if (exportType) {
+    filename = `statement.${exportType}`;
+  }
+
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+
+  // More efficient DOM manipulation
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+};
+
+const handleApiError = (error: any, errorMessage?: string): never => {
+  let message = 'Something went wrong!';
+
+  if (axios.isAxiosError(error)) {
+    if (!error.response) {
+      toast.error('Network error. Please check your connection. Redirecting to login.');
+      window.location.href = '/auth/login';
+      throw new Error('Network error');
+    }
+
+    message = error.response.data?.message || error.message;
+
+    // Handle auth errors
+    if (error.response.status === 401 || error.response.status === 403) {
+      toast.error('Session expired or unauthorized. Redirecting to login.');
+      window.location.href = '/auth/login';
+      throw new Error('Session expired or unauthorized');
+    }
+  }
+
+  toast.error(errorMessage || message);
+  throw new Error(message);
+};
+
 const apiFetch = async <T>(
   url: string,
   method: AxiosRequestConfig['method'],
@@ -36,26 +85,13 @@ const apiFetch = async <T>(
       ...config
     });
 
+    // Handle blob downloads
     if (config?.responseType === 'blob') {
-      const contentDisposition = response.headers['content-disposition'];
-      let filename = 'download';
-      if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename\*?=(?:UTF-8'')?"?([^"]*)"?/);
-        if (filenameMatch && filenameMatch[1]) {
-          filename = decodeURIComponent(filenameMatch[1]);
-        }
-      } else if (config?.params?.exportType) {
-        filename = `statement.${config.params.exportType}`;
-      }
-
-      const url = window.URL.createObjectURL(new Blob([response.data as any]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', filename);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+      downloadBlob(
+        response.data as Blob,
+        response.headers['content-disposition'],
+        config.params?.exportType
+      );
 
       if (successMessage) {
         toast.success(successMessage);
@@ -63,38 +99,17 @@ const apiFetch = async <T>(
       return response.data;
     }
 
-    if (successMessage) {
-      toast.success(successMessage);
-    } else if ((response.data as ApiResponse<T>)?.message) {
-      toast.success((response.data as ApiResponse<T>).message || '');
+    // Handle success messages more efficiently
+    const responseData = response.data as ApiResponse<T>;
+    const messageToShow = successMessage || responseData?.message;
+
+    if (messageToShow) {
+      toast.success(messageToShow);
     }
 
-    return response?.data;
+    return response.data;
   } catch (error: any) {
-    let message = 'Something went wrong!';
-
-    if (axios.isAxiosError(error)) {
-      if (!error.response) {
-        window.location.href = '/auth/login';
-        toast.error('Network error. Please check your connection. Redirecting to login.');
-        throw new Error('Network error');
-      }
-
-      message = error?.response?.data?.message || error.message;
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        // better-auth handles session invalidation via cookies, no need to manually remove token.
-        window.location.href = '/auth/login';
-        toast.error('Session expired or unauthorized. Redirecting to login.');
-      }
-    }
-
-    if (errorMessage) {
-      toast.error(errorMessage);
-    } else {
-      toast.error(message || '');
-    }
-
-    throw new Error(message);
+    return handleApiError(error, errorMessage);
   }
 };
 

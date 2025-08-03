@@ -77,12 +77,12 @@ const LoginPage = () => {
 
   const handleSocialLogin = async (provider: 'google' | 'github') => {
     await authClient.signIn.social(
-      { provider, callbackURL: process.env.NEXT_PUBLIC_API_BASE_URL },
+      { provider, callbackURL: 'https://expense-pro.vercel.app/accounts' },
       {
         onRequest: () => {
           setLoading(true);
         },
-        onSuccess: () => {
+        onResponse: () => {
           showSuccess('Successfully logged in');
           setLoading(false);
         },
