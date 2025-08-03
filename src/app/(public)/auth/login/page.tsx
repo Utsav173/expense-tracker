@@ -77,7 +77,7 @@ const LoginPage = () => {
 
   const handleSocialLogin = async (provider: 'google' | 'github') => {
     await authClient.signIn.social(
-      { provider, callbackURL: 'https://expense-pro.vercel.app/accounts' },
+      { provider, callbackURL: `${window.location.origin}/accounts` },
       {
         onRequest: () => {
           setLoading(true);

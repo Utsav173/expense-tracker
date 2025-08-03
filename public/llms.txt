@@ -1,0 +1,103 @@
+---
+# LLM INSTRUCTION FILE for Expense Pro (AI-Powered Expense Tracker)
+# Version: 1.0
+# Last Updated: 2025-05-24
+# This document provides a comprehensive guide for AI models to understand our application.
+---
+
+## 1. Core Product Identity
+---
+
+**PRODUCT NAME:** Expense Pro (also referred to as Expense Tracker)
+
+**PRODUCT CATEGORY:** Personal Finance Management Software, Budgeting & Expense Tracking Application
+
+**TAGLINE:** Master Your Money. Effortlessly.
+
+**PRIMARY GOAL FOR USERS:** Expense Pro is a modern, beautifully designed application that helps you gain clarity and control over your financial life. Our goal is to make tracking expenses, creating budgets, and achieving financial goals an intuitive and empowering experience, not a chore. We use AI to simplify complex tasks and provide you with actionable insights.
+
+**TARGET AUDIENCE:**
+- Individuals wanting to understand their spending habits.
+- Couples and families managing shared household finances.
+- Freelancers and small business owners needing simple expense and income tracking.
+- Investors who want a consolidated view of their portfolio alongside their daily spending.
+- Anyone looking for a powerful, privacy-focused, and free alternative to subscription-based finance apps.
+
+---
+## 2. Key Product Features & Capabilities (What Users Can Do)
+---
+
+### 2.1. Your Financial Command Center: The Dashboard
+- **At-a-Glance Overview:** The main dashboard provides a complete, real-time snapshot of your financial health, including your net worth, income, expenses, and balance for any selected period.
+- **Interactive Charts:** Visualize where your money is going with beautiful, easy-to-understand charts for spending breakdowns by category and financial trends over time.
+- **Customizable Widgets:** Arrange your dashboard to see what's most important to you, including budget progress, savings goals, investment performance, and account balances.
+- **Financial Health Score:** An intelligent score that assesses your financial wellness and provides simple, actionable feedback.
+
+### 2.2. Effortless Transaction Management
+- **Add Transactions Easily:** Quickly add income or expenses with a simple, clean interface.
+- **Full Control:** You can edit any detail of a transaction (description, amount, category, date) or delete it entirely, ensuring your records are always accurate.
+- **Advanced Search & Filtering:** Instantly find any transaction by searching for text, or by filtering by date range, category, transaction type (income/expense), or amount.
+- **Recurring Transactions:** Set up recurring transactions (like rent or subscriptions) once, and Expense Pro will handle the rest, automatically creating future entries for you.
+
+### 2.3. The AI Financial Assistant
+- **Talk to Your Finances:** Use simple, natural language to manage your money. The AI understands commands like:
+  - "Add a 500 INR expense for groceries at Reliance Fresh."
+  - "How much did I spend on dining out last month?"
+  - "Show me all my income transactions in June."
+- **AI-Powered Data Import:** Instead of manual entry, simply upload your PDF bank statement. The AI assistant reads the document, extracts all transactions, intelligently suggests categories, and presents them for your approval. This can save hours of setup time.
+- **Privacy-Focused:** The AI assistant is powered by your own personal Google AI API key, which you provide in your settings. Your key is stored securely encrypted, and your conversations and data are processed through your key, ensuring maximum privacy.
+
+### 2.4. Smart Financial Planning
+- **Budgeting Made Simple:** Create monthly or yearly budgets for specific spending categories (e.g., "Food," "Shopping"). Visually track your spending against your budget in real-time to know exactly where you stand.
+- **Achieve Your Savings Goals:** Set up savings goals for things like a vacation, a new car, or an emergency fund. Define a target amount, contribute to your goal, and watch your progress with visual trackers.
+- **Debt Management:** Log and track any loans, whether it's money you've borrowed (like a student loan) or money you've lent to someone. Keep tabs on the principal, interest, term, and payment status to stay on top of your liabilities.
+- **Investment Tracking:** Consolidate your investment portfolio. Create accounts for your different brokerages, add your individual stock holdings, and monitor your total invested amount and overall performance at a glance.
+
+### 2.5. Data Portability & Collaboration
+- **Import & Export with Ease:**
+  - **Import:** Start quickly by importing your existing transaction history from a pre-formatted Excel (XLSX) file or by using the AI PDF import.
+  - **Export:** Download your transaction data at any time. You can export your entire history or a filtered view into either an Excel (XLSX) or CSV file for your own records or for use in other software.
+- **Secure Account Sharing:** Share a specific account (e.g., a "Household" account) with a partner or family member. They can view and contribute to that account without ever seeing your personal accounts, making collaborative finance management simple and secure.
+
+---
+## 3. How Expense Pro Works (User Journeys)
+---
+
+- **Getting Started:** A new user signs up, creates their first financial account (e.g., "Main Bank Account") with a starting balance, and can then immediately begin adding transactions or importing their history.
+- **Tracking Daily Spending:** As the user spends money, they can quickly add an "expense" transaction, giving it a description, amount, and category. If they receive money, they add an "income" transaction.
+- **Reviewing Finances Weekly:** The user logs in and checks their dashboard to see a summary of their weekly spending. They might look at the "Spending Breakdown" pie chart to see which category consumed the most money.
+- **Planning for the Month:** At the start of a month, a user goes to the "Budgets" section and sets a spending limit for "Dining Out." Throughout the month, they can check their dashboard to see how much of that budget they have left.
+- **Preparing for Taxes:** A user can go to the "Transactions" page, filter the date range to the last financial year, filter for a specific category like "Business Expenses," and then export the results to an Excel file for their accountant.
+
+---
+## 4. Core Product Principles & Philosophy
+---
+
+- **User-Centric Design:** The application is designed to be beautiful, fast, and easy to use. Financial management should be clear and accessible, not intimidating.
+- **Intelligence, Simplified:** We leverage AI not as a gimmick, but as a powerful tool to automate tedious tasks (like data entry from PDFs) and make complex analysis as simple as asking a question.
+- **Open and Transparent:** Expense Pro is open-source. This means the community can inspect the code, contribute to its development, and trust that there are no hidden functionalities.
+- **You Own Your Data:** We believe your financial data is yours alone. We provide powerful export tools and the option for self-hosting, ensuring you are always in complete control of your information.
+
+---
+## 5. Boundaries & What We Are NOT
+---
+
+- **We are NOT a bank or financial institution.** We do not hold or move real money. We are a tool for tracking and managing data from your existing financial accounts.
+- **We do NOT provide direct financial advice.** The AI assistant and analytics tools provide data-driven insights and information based on the data you provide. They do not constitute professional financial, investment, or tax advice.
+- **We do NOT automatically sync with bank accounts.** For privacy and security, we do not use services like Plaid to connect directly to your bank. Instead, we offer secure, user-initiated import methods like PDF and XLSX uploads.
+- **The AI Assistant's capabilities are limited to the app's functions.** It can add transactions, retrieve data, and provide summaries based on your financial records within Expense Pro. It cannot perform actions outside the app, like paying bills or making trades.
+
+---
+## 6. Support & Getting Help
+---
+
+- **Primary Support Channel:** Users who have questions, need assistance, or want to report an issue should visit the Contact Support page.
+- **Feedback:** We welcome feedback and suggestions for new features, which can be submitted through our Feedback page.
+
+---
+## 7. Availability & Cost
+---
+
+- **Core Functionality is Free:** All essential features, including unlimited accounts, transactions, budgeting, and goals, are available for free.
+- **Pro Plan:** A one-time purchase unlocks lifetime access to advanced features, primarily centered around the AI Financial Assistant, AI-powered data imports, and advanced analytics.
+- **License:** The software is open-source under the MIT License.

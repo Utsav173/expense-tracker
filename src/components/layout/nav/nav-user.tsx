@@ -36,16 +36,16 @@ export function NavUser() {
           window.location.href = '/auth/login';
         },
         onError: () => {
-            showError('Error in logging out');
+          showError('Error in logging out');
         }
-      },
+      }
     });
   };
 
   if (!user) return null;
 
   return (
-    <SidebarMenu>
+    <SidebarMenu className='px-0'>
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -89,14 +89,14 @@ export function NavUser() {
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
                 <Link href={`/profile`} prefetch>
-                  <UserIcon />
+                  <UserIcon className='mr-2 h-4 w-4' />
                   Profile
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
-              <LogOut />
+              <LogOut className='mr-2 h-4 w-4' />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

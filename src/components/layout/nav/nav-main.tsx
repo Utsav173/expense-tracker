@@ -6,7 +6,8 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarGroupLabel,
-  SidebarSeparator
+  SidebarSeparator,
+  useSidebar
 } from '@/components/ui/sidebar';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -16,14 +17,16 @@ import React from 'react';
 
 export function NavMain({ groups }: { groups: NavGroup[] }) {
   const pathname = usePathname();
-
+  const { state } = useSidebar();
   return (
     <SidebarGroup>
       {groups.map((group, index) => (
         <React.Fragment key={group.label || `group-${index}`}>
           {index > 0 && <SidebarSeparator className='my-1' />}
 
-          {group.label && <SidebarGroupLabel>{group.label}</SidebarGroupLabel>}
+          {group.label && state === 'expanded' && (
+            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+          )}
 
           <SidebarMenu>
             {group.items.map((item) => {

@@ -199,7 +199,7 @@ function Sidebar({
       <div
         data-slot='sidebar-container'
         className={cn(
-          'fixed inset-y-0 z-40 hidden h-screen w-[var(--sidebar-width)] transition-[left,right,width] duration-300 ease-in-out md:flex',
+          'bg-sidebar fixed inset-y-0 z-40 hidden h-screen w-[var(--sidebar-width)] transition-[left,right,width] duration-300 ease-in-out md:flex',
           side === 'left' ? 'left-0' : 'right-0',
           'group-data-[collapsible=icon]/sidebar:w-[var(--sidebar-width-icon)]',
           className
