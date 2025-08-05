@@ -15,6 +15,7 @@ import { WebPage, WithContext } from 'schema-dts';
 import Script from 'next/script';
 import { Loader2 } from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
+import { toast } from 'sonner';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -76,22 +77,23 @@ const LoginPage = () => {
   };
 
   const handleSocialLogin = async (provider: 'google' | 'github') => {
-    await authClient.signIn.social(
-      { provider, callbackURL: `${window.location.origin}/accounts` },
-      {
-        onRequest: () => {
-          setLoading(true);
-        },
-        onResponse: () => {
-          showSuccess('Successfully logged in');
-          setLoading(false);
-        },
-        onError: (ctx) => {
-          showError(ctx.error.message || 'Failed to login');
-          setLoading(false);
-        }
-      }
-    );
+    toast.info('Feature coming soon!');
+    // await authClient.signIn.social(
+    //   { provider, callbackURL: `${window.location.origin}/accounts` },
+    //   {
+    //     onRequest: () => {
+    //       setLoading(true);
+    //     },
+    //     onResponse: () => {
+    //       showSuccess('Successfully logged in');
+    //       setLoading(false);
+    //     },
+    //     onError: (ctx) => {
+    //       showError(ctx.error.message || 'Failed to login');
+    //       setLoading(false);
+    //     }
+    //   }
+    // );
   };
 
   return (
@@ -169,6 +171,7 @@ const LoginPage = () => {
             className='w-full'
             onClick={() => handleSocialLogin('github')}
             disabled={loading}
+            title='Sign in with GitHub Comming soon'
           >
             <svg role='img' viewBox='0 0 24 24' className='mr-2 h-4 w-4'>
               <path
