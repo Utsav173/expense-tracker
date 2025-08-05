@@ -3,17 +3,14 @@ import { Budget, Pagination, ApiResponse, BudgetSummaryItem } from '../types';
 
 export const budgetCreate = (body: any) => apiFetch('/budget', 'POST', body);
 
-export const budgetGetAll = (
-  id: string,
-  params: {
-    page?: number;
-    limit?: number;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-    q?: string;
-  }
-): Promise<ApiResponse<{ data: Budget[]; pagination: Pagination }>> =>
-  apiFetch(`/budget/${id}/all`, 'GET', undefined, { params });
+export const budgetGetAll = (params: {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  q?: string;
+}): Promise<ApiResponse<{ data: Budget[]; pagination: Pagination }>> =>
+  apiFetch(`/budget/all`, 'GET', undefined, { params });
 
 export const budgetUpdate = (id: string, body: any) => apiFetch(`/budget/${id}`, 'PUT', body);
 

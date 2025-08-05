@@ -33,7 +33,7 @@ const BudgetPage = () => {
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['budgets', debouncedSearch, state.page, state.sortBy, state.sortOrder],
     queryFn: () =>
-      budgetGetAll('all', {
+      budgetGetAll({
         page: state.page,
         limit: 10,
         sortBy: state.sortBy,
