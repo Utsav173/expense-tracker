@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, parseISO, isAfter, addDays, addWeeks, addMonths, addYears } from 'date-fns';
@@ -12,30 +11,27 @@ import {
   User,
   AlertTriangle,
   Percent,
-  type LucideProps
+  type LucideProps,
+  Calendar,
+  FileText
 } from 'lucide-react';
 import { ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, Tooltip } from 'recharts';
-
 import type { DebtAndInterestAPI } from '@/lib/api/api-types';
 import { getDebtSchedule } from '@/lib/endpoints/debt';
 import { formatCurrency, cn } from '@/lib/utils';
-
 import { Dialog, DialogContent, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { TimelineScroller } from '../debt/timeline-scroller';
 import { Skeleton } from '../ui/skeleton';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import NoData from '../ui/no-data';
-
 interface DebtInsightModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   debt: DebtAndInterestAPI.DebtRecord;
 }
-
 const calculateFinalDueDate = (debt: DebtAndInterestAPI.Debt): Date | null => {
   if (!debt.startDate || !debt.termLength || !debt.termUnit) return null;
   const startDate = new Date(debt.startDate);
@@ -52,7 +48,6 @@ const calculateFinalDueDate = (debt: DebtAndInterestAPI.Debt): Date | null => {
       return null;
   }
 };
-
 const StatusBadge = React.memo(
   ({
     isPaid,
@@ -63,24 +58,25 @@ const StatusBadge = React.memo(
     isOverdue: boolean;
     className?: string;
   }) => {
-    if (isPaid) {
+    if (isPaid)
       return (
-        <Badge variant='success' className={cn('gap-1.5', className)}>
+        <Badge
+          variant='outline'
+          className={cn('border-positive/30 bg-positive/10 text-positive gap-1.5', className)}
+        >
           <CheckCircle className='h-3 w-3' />
           Settled
         </Badge>
       );
-    }
-    if (isOverdue) {
+    if (isOverdue)
       return (
         <Badge variant='destructive' className={cn('gap-1.5', className)}>
           <AlertTriangle className='h-3 w-3' />
           Overdue
         </Badge>
       );
-    }
     return (
-      <Badge variant='info' className={cn('gap-1.5', className)}>
+      <Badge variant='secondary' className={cn('gap-1.5', className)}>
         <Clock className='h-3 w-3' />
         Active
       </Badge>
@@ -88,58 +84,46 @@ const StatusBadge = React.memo(
   }
 );
 StatusBadge.displayName = 'StatusBadge';
-
 const MetricCard = React.memo(
   ({
     title,
     value,
     icon: Icon,
-    isLoading,
     subValue
   }: {
     title: string;
     value: React.ReactNode;
     icon: React.ElementType<LucideProps>;
-    isLoading: boolean;
     subValue?: string;
   }) => (
     <Card>
-      <CardHeader className='relative flex-row items-center justify-between space-y-0 pb-2'>
+      <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
         <CardTitle className='text-muted-foreground text-sm font-medium'>{title}</CardTitle>
-        <div className='bg-background/50 absolute -top-2 -right-2 rounded-full border p-2 backdrop-blur-sm'>
-          <Icon className='text-accent-foreground bg-background/50 h-5 w-5 rounded-full' />
-        </div>
+        <Icon className='text-muted-foreground h-4 w-4' />
       </CardHeader>
       <CardContent>
-        {isLoading ? (
-          <Skeleton className='mt-1 h-8 w-24' />
-        ) : (
-          <div className='text-2xl font-bold'>{value}</div>
-        )}
-        {subValue && <p className='text-muted-foreground text-xs'>{subValue}</p>}
+        <div className='text-2xl font-bold'>{value}</div>
+        <p className='text-muted-foreground text-xs'>{subValue}</p>
       </CardContent>
     </Card>
   )
 );
 MetricCard.displayName = 'MetricCard';
-
 const CustomTooltip = React.memo(({ active, payload }: any) => {
   if (!active || !payload || !payload.length) return null;
   return (
-    <div className='bg-background/95 min-w-[200px] rounded-lg border p-3 shadow-lg backdrop-blur-sm'>
-      <div className='space-y-2'>
+    <div className='bg-popover text-popover-foreground min-w-[200px] rounded-lg border p-2 shadow-sm'>
+      <div className='space-y-1'>
         {payload.map((entry: any, index: number) => (
           <div key={`item-${index}`} className='flex items-center justify-between gap-4'>
             <div className='flex items-center gap-2'>
               <div
-                className='h-2.5 w-2.5 flex-shrink-0 rounded-full'
+                className='h-2 w-2 flex-shrink-0 rounded-full'
                 style={{ backgroundColor: entry.payload.color }}
               />
-              <span className='text-foreground text-sm font-medium'>{entry.name}</span>
+              <span className='text-sm'>{entry.name}</span>
             </div>
-            <span className='text-foreground text-sm font-semibold'>
-              {formatCurrency(entry.value)}
-            </span>
+            <span className='text-sm font-semibold'>{formatCurrency(entry.value)}</span>
           </div>
         ))}
       </div>
@@ -147,11 +131,121 @@ const CustomTooltip = React.memo(({ active, payload }: any) => {
   );
 });
 CustomTooltip.displayName = 'CustomTooltip';
-
+const TimelineTick = React.memo(
+  ({
+    payment,
+    index,
+    isSelected,
+    onSelect,
+    isLast,
+    isSettled
+  }: {
+    payment: DebtAndInterestAPI.AmortizationPayment;
+    index: number;
+    isSelected: boolean;
+    onSelect: (index: number) => void;
+    isLast: boolean;
+    isSettled: boolean;
+  }) => {
+    const getStatusStyles = () => {
+      switch (payment.status) {
+        case 'settled':
+          return {
+            icon: CheckCircle,
+            bgColor: 'bg-positive',
+            textColor: 'text-positive',
+            borderColor: 'border-positive'
+          };
+        case 'due':
+          return {
+            icon: AlertTriangle,
+            bgColor: 'bg-destructive',
+            textColor: 'text-destructive',
+            borderColor: 'border-destructive'
+          };
+        case 'upcoming':
+        default:
+          return {
+            icon: Clock,
+            bgColor: 'bg-muted-foreground',
+            textColor: 'text-muted-foreground',
+            borderColor: 'border-border'
+          };
+      }
+    };
+    const { icon: Icon, bgColor, textColor, borderColor } = getStatusStyles();
+    return (
+      <div
+        className='group relative flex cursor-pointer flex-col items-center pt-1'
+        onClick={() => onSelect(index)}
+      >
+        <div
+          className={cn('bg-border absolute top-5 left-1/2 z-0 h-0.5 w-full', isLast && 'hidden')}
+        >
+          <div className={cn('h-full', isSettled ? 'bg-positive' : 'bg-border')} />
+        </div>
+        <div
+          className={cn(
+            'bg-background relative z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all',
+            isSelected
+              ? `scale-110 shadow-lg ${borderColor}`
+              : `${borderColor} group-hover:scale-105`
+          )}
+        >
+          <Icon className={cn('h-4 w-4', textColor)} />
+        </div>
+        <p
+          className={cn(
+            'mt-2 text-center text-[10px] font-medium whitespace-nowrap transition-colors',
+            isSelected ? textColor : 'text-muted-foreground group-hover:text-foreground'
+          )}
+        >
+          {format(payment.date, 'MMM yy')}
+        </p>
+      </div>
+    );
+  }
+);
+TimelineTick.displayName = 'TimelineTick';
+const ModalSkeleton = () => (
+  <div className='flex h-full flex-col'>
+    <div className='flex-shrink-0 border-b p-4 sm:p-6'>
+      <div className='flex items-start justify-between'>
+        <div className='space-y-2'>
+          <Skeleton className='h-6 w-48' />
+          <Skeleton className='h-4 w-32' />
+        </div>
+        <Skeleton className='h-8 w-8 rounded-md' />
+      </div>
+      <div className='mt-4 space-y-2'>
+        <Skeleton className='h-4 w-full' />
+        <Skeleton className='h-2 w-2/3' />
+      </div>
+    </div>
+    <div className='flex-1 overflow-y-auto p-4 sm:p-6'>
+      <Skeleton className='mb-4 h-10 w-48' />
+      <div className='space-y-6'>
+        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+          <Skeleton className='h-24' />
+          <Skeleton className='h-24' />
+          <Skeleton className='h-24' />
+          <Skeleton className='h-24' />
+        </div>
+        <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
+          <div className='space-y-4 lg:col-span-1'>
+            <Skeleton className='h-64' />
+          </div>
+          <div className='space-y-4 lg:col-span-2'>
+            <Skeleton className='h-64' />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChange, debt }) => {
   const finalDueDate = useMemo(() => calculateFinalDueDate(debt.debts), [debt.debts]);
   const isOverdue = !debt.debts.isPaid && finalDueDate && isAfter(new Date(), finalDueDate);
-
   const {
     data: paymentSchedule,
     isLoading,
@@ -164,55 +258,34 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
       return data?.map((p: any) => ({ ...p, date: parseISO(p.date) })) ?? [];
     },
     enabled: isOpen && !!debt.debts.id,
-    staleTime: 1000 * 60 * 5,
-    retry: 1
+    staleTime: 1000 * 60 * 5
   });
-
   const [selectedIndex, setSelectedIndex] = useState(0);
-
   const data = useMemo(() => {
     const totalPrincipal = debt.debts.amount || 0;
     const calculatedTotalInterest =
       paymentSchedule?.reduce((sum, p) => sum + p.interestForPeriod, 0) || 0;
     const totalPayable = totalPrincipal + calculatedTotalInterest;
-    const selected = paymentSchedule?.[selectedIndex] || null;
-
-    const breakdownData = selected
-      ? {
-          principalPaid: selected.cumulativePrincipalPaid,
-          interestPaid: selected.cumulativeInterestPaid,
-          remainingPrincipal: selected.remainingPrincipal
-        }
-      : {
-          principalPaid: debt.debts.isPaid ? totalPrincipal : 0,
-          interestPaid: debt.debts.isPaid ? calculatedTotalInterest : 0,
-          remainingPrincipal: debt.debts.isPaid ? 0 : totalPrincipal
-        };
-
+    const breakdownData = {
+      principalPaid:
+        paymentSchedule?.[selectedIndex]?.cumulativePrincipalPaid ??
+        (debt.debts.isPaid ? totalPrincipal : 0),
+      interestPaid:
+        paymentSchedule?.[selectedIndex]?.cumulativeInterestPaid ??
+        (debt.debts.isPaid ? calculatedTotalInterest : 0),
+      remainingPrincipal:
+        paymentSchedule?.[selectedIndex]?.remainingPrincipal ??
+        (debt.debts.isPaid ? 0 : totalPrincipal)
+    };
     const chartData = [
-      {
-        name: 'Principal Paid',
-        value: breakdownData.principalPaid,
-        color: 'var(--chart-1)'
-      },
-      {
-        name: 'Interest Paid',
-        value: breakdownData.interestPaid,
-        color: 'var(--chart-2)'
-      },
-      {
-        name: 'Remaining Principal',
-        value: breakdownData.remainingPrincipal,
-        color: 'var(--chart-3)'
-      }
+      { name: 'Principal', value: breakdownData.principalPaid, color: 'var(--chart-1)' },
+      { name: 'Interest', value: breakdownData.interestPaid, color: 'var(--chart-2)' },
+      { name: 'Remaining', value: breakdownData.remainingPrincipal, color: 'var(--chart-3)' }
     ].filter((item) => item.value > 0);
-
     const settledPayments = paymentSchedule?.filter((p) => p.status === 'settled').length || 0;
     const totalPayments = paymentSchedule?.length || 0;
     const progressPercentage = totalPayments > 0 ? (settledPayments / totalPayments) * 100 : 0;
-
     return {
-      breakdownData,
       chartData,
       totalInterest: calculatedTotalInterest,
       totalPayable,
@@ -223,237 +296,336 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
       }
     };
   }, [selectedIndex, paymentSchedule, debt.debts]);
-
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent hideClose className='max-h-[95dvh] w-[98vw] max-w-7xl overflow-y-auto p-0'>
-        <div className='flex-shrink-0 border-b px-6 py-4'>
-          <div className='flex items-start justify-between gap-4'>
-            <div className='space-y-1.5'>
-              <div className='flex flex-wrap items-center gap-x-3 gap-y-2'>
-                <DialogTitle className='text-2xl font-bold'>{debt.debts.description}</DialogTitle>
-                <StatusBadge isPaid={!!debt.debts.isPaid} isOverdue={!!isOverdue} />
-                <Badge variant='secondary' className='capitalize'>
-                  {debt.debts.type}
-                </Badge>
-              </div>
-              {data.progressStats.total > 0 && (
-                <p className='text-muted-foreground text-sm'>
-                  {data.progressStats.settled} of {data.progressStats.total} payments completed (
-                  {Math.round(data.progressStats.percentage)}%)
-                </p>
-              )}
-            </div>
-            <DialogClose asChild>
-              <Button variant='ghost' size='icon' className='h-8 w-8 flex-shrink-0'>
-                <X className='h-4 w-4' />
-              </Button>
-            </DialogClose>
-          </div>
-        </div>
-
-        <div className='flex flex-1 flex-col overflow-hidden md:flex-row'>
-          <aside className='bg-muted/30 w-full flex-shrink-0 overflow-y-auto border-b p-6 md:w-80 md:border-r md:border-b-0'>
-            <div className='mb-6'>
-              <h3 className='mb-2 text-base font-semibold'>Payment Breakdown</h3>
-              <div className='relative'>
-                <ResponsiveContainer width='100%' height={240}>
-                  <RechartsPieChart>
-                    <Tooltip cursor={false} content={<CustomTooltip />} />
-                    <Pie
-                      data={data.chartData}
-                      dataKey='value'
-                      nameKey='name'
-                      cx='50%'
-                      cy='50%'
-                      labelLine={false}
-                      innerRadius={65}
-                      outerRadius={95}
-                      paddingAngle={2}
-                    >
-                      {data.chartData.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={entry.color}
-                          stroke='var(--muted)'
-                          className='focus:outline-none'
+      <DialogContent
+        hideClose
+        className='max-h-[95dvh] w-[95vw] max-w-6xl gap-0 overflow-scroll p-0'
+      >
+        {isLoading ? (
+          <ModalSkeleton />
+        ) : (
+          <div className='flex h-full flex-col'>
+            <div className='flex-shrink-0 border-b p-4 sm:px-6 sm:py-4'>
+              <div className='flex items-start justify-between gap-4'>
+                <div className='min-w-0 flex-1 space-y-2'>
+                  <div className='flex flex-wrap items-center gap-x-3 gap-y-2'>
+                    <DialogTitle className='truncate text-lg font-bold sm:text-xl'>
+                      {debt.debts.description}
+                    </DialogTitle>
+                    <div className='flex items-center gap-2'>
+                      <StatusBadge isPaid={!!debt.debts.isPaid} isOverdue={!!isOverdue} />
+                      <Badge variant='outline' className='capitalize'>
+                        {debt.debts.type}
+                      </Badge>
+                    </div>
+                  </div>
+                  {data.progressStats.total > 0 && (
+                    <div className='space-y-1'>
+                      <div className='text-muted-foreground flex justify-between text-xs'>
+                        <span>
+                          {data.progressStats.settled} of {data.progressStats.total} payments
+                        </span>
+                        <span>{Math.round(data.progressStats.percentage)}%</span>
+                      </div>
+                      <div className='bg-muted h-1.5 w-full overflow-hidden rounded-full'>
+                        <div
+                          className='bg-primary h-full rounded-full transition-all'
+                          style={{ width: `${data.progressStats.percentage}%` }}
                         />
-                      ))}
-                    </Pie>
-                  </RechartsPieChart>
-                </ResponsiveContainer>
-                <div className='pointer-events-none absolute inset-0 flex flex-col items-center justify-center'>
-                  <span className='text-xl font-bold tracking-tight'>
-                    {formatCurrency(data.totalPayable)}
-                  </span>
-                  <span className='text-muted-foreground text-xs'>Total Payable</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
+                <DialogClose asChild>
+                  <Button variant='ghost' size='icon' className='-mt-1 h-8 w-8 flex-shrink-0'>
+                    <X className='h-4 w-4' />
+                  </Button>
+                </DialogClose>
               </div>
             </div>
-
-            <div className='space-y-3'>
-              {data.chartData.map((item) => (
-                <div key={item.name} className='flex items-center justify-between text-sm'>
-                  <div className='flex items-center gap-2'>
-                    <div
-                      className='h-2.5 w-2.5 rounded-full'
-                      style={{ backgroundColor: item.color }}
-                    />
-                    <span className='font-medium'>{item.name}</span>
-                  </div>
-                  <span className='font-semibold'>{formatCurrency(item.value)}</span>
+            <div className='flex-1 overflow-hidden'>
+              <Tabs defaultValue='timeline' className='flex h-full flex-col'>
+                <div className='flex-shrink-0 px-4 pt-4 sm:px-6'>
+                  <TabsList className='grid w-full grid-cols-2 sm:w-auto'>
+                    <TabsTrigger value='timeline'>
+                      <Calendar className='mr-2 h-4 w-4' />
+                      Timeline
+                    </TabsTrigger>
+                    <TabsTrigger value='details'>
+                      <FileText className='mr-2 h-4 w-4' />
+                      Details
+                    </TabsTrigger>
+                  </TabsList>
                 </div>
-              ))}
-            </div>
-          </aside>
-
-          <main className='flex min-w-0 flex-1 flex-col overflow-hidden'>
-            <Tabs defaultValue='timeline' className='flex flex-1 flex-col'>
-              <TabsList className='mx-6 mt-6 w-fit flex-shrink-0'>
-                <TabsTrigger value='timeline'>Payment Timeline</TabsTrigger>
-                <TabsTrigger value='details'>Loan Details</TabsTrigger>
-              </TabsList>
-
-              <TabsContent
-                value='timeline'
-                className='min-w-0 flex-1 space-y-6 overflow-y-auto p-6'
-              >
-                <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-                  <MetricCard
-                    title='Principal Amount'
-                    value={formatCurrency(debt.debts.amount || 0)}
-                    icon={IndianRupee}
-                    isLoading={isLoading}
-                    subValue='Original loan amount'
-                  />
-                  <MetricCard
-                    title='Interest Rate'
-                    value={`${debt.debts.interestRate}%`}
-                    subValue={`${debt.debts.interestType} interest`}
-                    icon={Percent}
-                    isLoading={isLoading}
-                  />
-                  <MetricCard
-                    title='Total Interest'
-                    value={formatCurrency(data.totalInterest)}
-                    icon={TrendingUp}
-                    isLoading={isLoading}
-                    subValue='Over the loan term'
-                  />
-                  <MetricCard
-                    title='Total Payable'
-                    value={formatCurrency(data.totalPayable)}
-                    icon={IndianRupee}
-                    isLoading={isLoading}
-                    subValue='Principal + Interest'
-                  />
-                </div>
-
-                {isLoading ? (
-                  <div className='space-y-4 p-4'>
-                    <Skeleton className='h-8 w-full' />
-                    <Skeleton className='h-64 w-full' />
+                <TabsContent value='timeline' className='mt-0 flex-1 overflow-y-auto p-4 sm:p-6'>
+                  <div className='space-y-6'>
+                    <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+                      <MetricCard
+                        title='Principal Amount'
+                        value={formatCurrency(debt.debts.amount || 0)}
+                        icon={IndianRupee}
+                        subValue='Original loan amount'
+                      />
+                      <MetricCard
+                        title='Interest Rate'
+                        value={`${debt.debts.interestRate}%`}
+                        subValue={`${debt.debts.interestType} interest`}
+                        icon={Percent}
+                      />
+                      <MetricCard
+                        title='Total Interest'
+                        value={formatCurrency(data.totalInterest)}
+                        icon={TrendingUp}
+                        subValue='Over the loan term'
+                      />
+                      <MetricCard
+                        title='Total Payable'
+                        value={formatCurrency(data.totalPayable)}
+                        icon={IndianRupee}
+                        subValue='Principal + Interest'
+                      />
+                    </div>
+                    <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
+                      {isError || !paymentSchedule ? (
+                        <div className='lg:col-span-3'>
+                          <NoData
+                            message={`Unable to generate payment schedule. ${error?.message || ''}`}
+                            icon='x-circle'
+                          />
+                        </div>
+                      ) : paymentSchedule.length > 0 ? (
+                        <>
+                          <Card className='lg:col-span-1'>
+                            <CardHeader>
+                              <CardTitle className='text-base'>Payment Breakdown</CardTitle>
+                              <CardDescription className='text-sm'>
+                                For installment #{selectedIndex + 1}
+                              </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <div className='relative'>
+                                <ResponsiveContainer width='100%' height={160}>
+                                  <RechartsPieChart>
+                                    <Tooltip cursor={false} content={<CustomTooltip />} />
+                                    <Pie
+                                      data={data.chartData}
+                                      dataKey='value'
+                                      nameKey='name'
+                                      cx='50%'
+                                      cy='50%'
+                                      innerRadius={50}
+                                      outerRadius={70}
+                                      paddingAngle={2}
+                                    >
+                                      {data.chartData.map((entry) => (
+                                        <Cell key={entry.name} fill={entry.color} />
+                                      ))}
+                                    </Pie>
+                                  </RechartsPieChart>
+                                </ResponsiveContainer>
+                                <div className='pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center'>
+                                  <span className='text-xl font-bold'>
+                                    {formatCurrency(
+                                      paymentSchedule[selectedIndex].installmentAmount
+                                    )}
+                                  </span>
+                                  <span className='text-muted-foreground text-xs'>Installment</span>
+                                </div>
+                              </div>
+                              <div className='mt-4 space-y-2'>
+                                {data.chartData.map((item) => (
+                                  <div
+                                    key={item.name}
+                                    className='flex items-center justify-between text-sm'
+                                  >
+                                    <div className='flex items-center gap-2'>
+                                      <div
+                                        className='h-2 w-2 rounded-full'
+                                        style={{ backgroundColor: item.color }}
+                                      />
+                                      <span className='text-muted-foreground'>{item.name}</span>
+                                    </div>
+                                    <span className='font-semibold'>
+                                      {formatCurrency(item.value)}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </CardContent>
+                          </Card>
+                          <Card className='lg:col-span-2'>
+                            <CardHeader>
+                              <CardTitle className='text-base'>Payment Timeline</CardTitle>
+                              <CardDescription className='text-sm'>
+                                Scroll to see all installments
+                              </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <div className='scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border hover:scrollbar-thumb-muted-foreground -mx-4 flex gap-4 overflow-x-auto px-4 pb-4'>
+                                {paymentSchedule.map((payment, index) => (
+                                  <TimelineTick
+                                    key={payment.date.toISOString()}
+                                    payment={payment}
+                                    index={index}
+                                    isSelected={selectedIndex === index}
+                                    onSelect={setSelectedIndex}
+                                    isLast={index === paymentSchedule.length - 1}
+                                    isSettled={payment.status === 'settled'}
+                                  />
+                                ))}
+                              </div>
+                              {paymentSchedule[selectedIndex] && (
+                                <div className='bg-background mt-2 rounded-lg border p-3'>
+                                  <div className='grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3'>
+                                    <div className='space-y-1'>
+                                      <p className='text-muted-foreground'>Amount</p>
+                                      <p className='font-semibold'>
+                                        {formatCurrency(
+                                          paymentSchedule[selectedIndex].installmentAmount
+                                        )}
+                                      </p>
+                                    </div>
+                                    <div className='space-y-1'>
+                                      <p className='text-muted-foreground'>Principal</p>
+                                      <p className='font-semibold'>
+                                        {formatCurrency(
+                                          paymentSchedule[selectedIndex].principalForPeriod
+                                        )}
+                                      </p>
+                                    </div>
+                                    <div className='space-y-1'>
+                                      <p className='text-muted-foreground'>Interest</p>
+                                      <p className='font-semibold'>
+                                        {formatCurrency(
+                                          paymentSchedule[selectedIndex].interestForPeriod
+                                        )}
+                                      </p>
+                                    </div>
+                                    <div className='space-y-1'>
+                                      <p className='text-muted-foreground'>Date</p>
+                                      <p className='font-semibold'>
+                                        {format(paymentSchedule[selectedIndex].date, 'PP')}
+                                      </p>
+                                    </div>
+                                    <div className='space-y-1'>
+                                      <p className='text-muted-foreground'>Balance</p>
+                                      <p className='font-semibold'>
+                                        {formatCurrency(
+                                          paymentSchedule[selectedIndex].remainingPrincipal
+                                        )}
+                                      </p>
+                                    </div>
+                                    <div className='space-y-1'>
+                                      <p className='text-muted-foreground'>Status</p>
+                                      <p
+                                        className={cn(
+                                          'font-semibold capitalize',
+                                          paymentSchedule[selectedIndex].status === 'settled'
+                                            ? 'text-positive'
+                                            : paymentSchedule[selectedIndex].status === 'due'
+                                              ? 'text-destructive'
+                                              : 'text-muted-foreground'
+                                        )}
+                                      >
+                                        {paymentSchedule[selectedIndex].status}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        </>
+                      ) : (
+                        <div className='lg:col-span-3'>
+                          <NoData message='No payment schedule available for this debt.' />
+                        </div>
+                      )}
+                    </div>
                   </div>
-                ) : isError || !paymentSchedule ? (
-                  <NoData
-                    message={`Unable to generate payment schedule. ${error?.message || ''}`}
-                    icon='x-circle'
-                  />
-                ) : paymentSchedule.length > 0 ? (
-                  <TimelineScroller
-                    schedule={paymentSchedule}
-                    selectedIndex={selectedIndex}
-                    onSelect={setSelectedIndex}
-                  />
-                ) : (
-                  <NoData message='No payment schedule available for this debt.' />
-                )}
-              </TabsContent>
-
-              <TabsContent value='details' className='min-w-0 flex-1 space-y-6 overflow-y-auto p-6'>
-                <div className='grid gap-6 lg:grid-cols-2'>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Counterparty Information</CardTitle>
-                      <CardDescription>Details about the other party in this debt</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className='flex items-center gap-4'>
-                        <Avatar className='h-12 w-12'>
-                          <AvatarImage src={debt.user?.image || undefined} />
-                          <AvatarFallback>
-                            <User className='h-6 w-6' />
-                          </AvatarFallback>
-                        </Avatar>
+                </TabsContent>
+                <TabsContent value='details' className='mt-0 flex-1 overflow-y-auto p-4 sm:p-6'>
+                  <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className='text-base'>Counterparty Information</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className='flex items-center gap-4'>
+                          <Avatar className='h-12 w-12'>
+                            <AvatarImage src={debt.user?.image || undefined} />
+                            <AvatarFallback>
+                              <User />
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className='min-w-0'>
+                            <p className='truncate font-semibold'>
+                              {debt.user?.name || 'Unknown User'}
+                            </p>
+                            <p className='text-muted-foreground truncate text-sm'>
+                              {debt.user?.email || 'No email provided'}
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className='text-base'>Associated Account</CardTitle>
+                      </CardHeader>
+                      <CardContent>
                         <div>
-                          <p className='font-semibold'>{debt.user?.name || 'Unknown User'}</p>
+                          <p className='font-semibold'>
+                            {debt.account?.name || 'No account specified'}
+                          </p>
                           <p className='text-muted-foreground text-sm'>
-                            {debt.user?.email || 'No email provided'}
+                            Financial portfolio integration
                           </p>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Associated Account</CardTitle>
-                      <CardDescription>The account this debt is linked to</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div>
-                        <p className='font-semibold'>
-                          {debt.account?.name || 'No account specified'}
-                        </p>
-                        <p className='text-muted-foreground text-sm'>
-                          Financial portfolio integration
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card className='lg:col-span-2'>
-                    <CardHeader>
-                      <CardTitle>Loan Terms & Conditions</CardTitle>
-                      <CardDescription>Complete terms and timeline for this debt</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className='grid gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-4'>
-                        <div>
-                          <p className='text-muted-foreground text-sm font-medium'>Start Date</p>
-                          <p className='font-semibold'>
-                            {format(new Date(debt.debts.startDate), 'MMM d, yyyy')}
-                          </p>
+                      </CardContent>
+                    </Card>
+                    <Card className='md:col-span-2'>
+                      <CardHeader>
+                        <CardTitle className='text-base'>Loan Terms & Conditions</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className='grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4'>
+                          <div className='space-y-1'>
+                            <p className='text-muted-foreground text-sm'>Start Date</p>
+                            <p className='font-semibold'>
+                              {format(new Date(debt.debts.startDate), 'MMM d, yyyy')}
+                            </p>
+                          </div>
+                          <div className='space-y-1'>
+                            <p className='text-muted-foreground text-sm'>Final Due Date</p>
+                            <p className='font-semibold'>
+                              {finalDueDate ? format(finalDueDate, 'MMM d, yyyy') : 'N/A'}
+                            </p>
+                          </div>
+                          <div className='space-y-1'>
+                            <p className='text-muted-foreground text-sm'>Payment Frequency</p>
+                            <p className='font-semibold capitalize'>
+                              {debt.debts.paymentFrequency}
+                            </p>
+                          </div>
+                          <div className='space-y-1'>
+                            <p className='text-muted-foreground text-sm'>Loan Term</p>
+                            <p className='font-semibold capitalize'>
+                              {debt.debts.termLength} {debt.debts.termUnit}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className='text-muted-foreground text-sm font-medium'>
-                            Final Due Date
-                          </p>
-                          <p className='font-semibold'>
-                            {finalDueDate ? format(finalDueDate, 'MMM d, yyyy') : 'N/A'}
-                          </p>
-                        </div>
-                        <div>
-                          <p className='text-muted-foreground text-sm font-medium'>
-                            Payment Frequency
-                          </p>
-                          <p className='font-semibold capitalize'>{debt.debts.paymentFrequency}</p>
-                        </div>
-                        <div>
-                          <p className='text-muted-foreground text-sm font-medium'>Loan Term</p>
-                          <p className='font-semibold capitalize'>
-                            {debt.debts.termLength} {debt.debts.termUnit}
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </main>
-        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
 };
-
 export default DebtInsightModal;

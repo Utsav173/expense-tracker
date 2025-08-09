@@ -69,7 +69,10 @@ const ResetPasswordPage = () => {
           showSuccess('Password has been reset successfully.');
           router.push('/auth/login');
         },
-        onError: (ctx: any) => showError(ctx.error.message),
+        onError: (ctx: any) => {
+          setLoading(false);
+          showError(ctx.error.message);
+        },
         onSettled: () => setLoading(false)
       }
     );

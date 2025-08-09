@@ -24,7 +24,7 @@ export const AllFeaturesSection = () => {
               <Link
                 key={feature.slug}
                 href={`/features/${feature.slug}`}
-                className='group block h-full transform-gpu transition-all duration-300 hover:-translate-y-2'
+                className='group block h-full transform-gpu transition-all duration-300 hover:-translate-y-[1px]'
               >
                 <Card className='group-hover:border-primary/50 flex h-full flex-col p-6 shadow-lg group-hover:shadow-2xl'>
                   <CardHeader className='p-0'>

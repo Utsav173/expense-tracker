@@ -13,7 +13,7 @@ interface TestimonialProps {
 }
 
 const TestimonialCard: React.FC<TestimonialProps> = ({ quote, name, title, avatar }) => (
-  <Card className='testimonial-card-anim flex flex-col items-center p-6 text-center shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl'>
+  <Card className='testimonial-card-anim flex flex-col items-center p-6 text-center shadow-lg transition-all duration-300 hover:-translate-y-[1px] hover:shadow-xl'>
     <Avatar className='mb-4 h-20 w-20'>
       <AvatarImage src={avatar} alt={name} />
       <AvatarFallback>

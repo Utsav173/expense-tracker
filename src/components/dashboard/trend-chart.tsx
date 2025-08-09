@@ -53,15 +53,15 @@ interface ProcessedDataPoint {
 const trendsChartConfig = {
   income: {
     label: 'Income',
-    color: 'hsl(155 52% 47%)' // Corresponds to your --green
+    color: 'var(--chart-income)'
   },
   expense: {
     label: 'Expense',
-    color: 'hsl(20 82% 52%)' // Corresponds to your --red
+    color: 'var(--chart-expense)'
   },
   balance: {
     label: 'Balance',
-    color: 'hsl(260 55% 61%)' // Corresponds to your --blue
+    color: 'var(--chart-balance)'
   }
 } satisfies ChartConfig;
 
@@ -229,21 +229,21 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               <ChartLegend content={<ChartLegendContent />} />
               <Bar
                 dataKey='income'
-                fill='var(--color-income)'
+                fill='var(--chart-income)'
                 radius={[3, 3, 0, 0]}
                 animationDuration={600}
                 minPointSize={2}
               />
               <Bar
                 dataKey='expense'
-                fill='var(--color-expense)'
+                fill='var(--chart-expense)'
                 radius={[3, 3, 0, 0]}
                 animationDuration={600}
                 minPointSize={2}
               />
               <Bar
                 dataKey='balance'
-                fill='var(--color-balance)'
+                fill='var(--chart-balance)'
                 radius={[3, 3, 0, 0]}
                 animationDuration={600}
                 minPointSize={2}
@@ -253,16 +253,16 @@ export const TrendChart: React.FC<TrendChartProps> = ({
             <RechartsAreaChart {...commonProps}>
               <defs>
                 <linearGradient id='incomeGradient' x1='0' y1='0' x2='0' y2='1'>
-                  <stop offset='5%' stopColor='var(--color-income)' stopOpacity={0.4} />
-                  <stop offset='95%' stopColor='var(--color-income)' stopOpacity={0} />
+                  <stop offset='5%' stopColor='var(--chart-income)' stopOpacity={0.4} />
+                  <stop offset='95%' stopColor='var(--chart-income)' stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id='expenseGradient' x1='0' y1='0' x2='0' y2='1'>
-                  <stop offset='5%' stopColor='var(--color-expense)' stopOpacity={0.4} />
-                  <stop offset='95%' stopColor='var(--color-expense)' stopOpacity={0} />
+                  <stop offset='5%' stopColor='var(--chart-expense)' stopOpacity={0.4} />
+                  <stop offset='95%' stopColor='var(--chart-expense)' stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id='balanceGradient' x1='0' y1='0' x2='0' y2='1'>
-                  <stop offset='5%' stopColor='var(--color-balance)' stopOpacity={0.4} />
-                  <stop offset='95%' stopColor='var(--color-balance)' stopOpacity={0} />
+                  <stop offset='5%' stopColor='var(--chart-balance)' stopOpacity={0.4} />
+                  <stop offset='95%' stopColor='var(--chart-balance)' stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid
@@ -285,7 +285,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               <Area
                 type='monotone'
                 dataKey='income'
-                stroke='var(--color-income)'
+                stroke='var(--chart-income)'
                 strokeWidth={2}
                 fill='url(#incomeGradient)'
                 activeDot={{ r: 5, strokeWidth: 2, stroke: 'var(--background)' }}
@@ -295,7 +295,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               <Area
                 type='monotone'
                 dataKey='expense'
-                stroke='var(--color-expense)'
+                stroke='var(--chart-expense)'
                 strokeWidth={2}
                 fill='url(#expenseGradient)'
                 activeDot={{ r: 5, strokeWidth: 2, stroke: 'var(--background)' }}
@@ -305,7 +305,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               <Area
                 type='monotone'
                 dataKey='balance'
-                stroke='var(--color-balance)'
+                stroke='var(--chart-balance)'
                 strokeWidth={2}
                 fill='url(#balanceGradient)'
                 activeDot={{ r: 5, strokeWidth: 2, stroke: 'var(--background)' }}
@@ -335,11 +335,11 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               <Line
                 type='monotone'
                 dataKey='income'
-                stroke='var(--color-income)'
+                stroke='var(--chart-income)'
                 strokeWidth={2.5}
                 dot={{
                   r: 3,
-                  fill: 'var(--color-income)',
+                  fill: 'var(--chart-income)',
                   strokeWidth: 2,
                   stroke: 'var(--background)'
                 }}
@@ -350,11 +350,11 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               <Line
                 type='monotone'
                 dataKey='expense'
-                stroke='var(--color-expense)'
+                stroke='var(--chart-expense)'
                 strokeWidth={2.5}
                 dot={{
                   r: 3,
-                  fill: 'var(--color-expense)',
+                  fill: 'var(--chart-expense)',
                   strokeWidth: 2,
                   stroke: 'var(--background)'
                 }}
@@ -365,15 +365,15 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               <Line
                 type='monotone'
                 dataKey='balance'
-                stroke='var(--color-balance)'
+                stroke='var(--chart-balance)'
                 strokeWidth={2.5}
                 dot={{
                   r: 3,
-                  fill: 'var(--color-balance)',
+                  fill: 'var(--chart-balance)',
                   strokeWidth: 2,
-                  stroke: 'hsl(var(--background))'
+                  stroke: 'var(--background)'
                 }}
-                activeDot={{ r: 6, strokeWidth: 2, stroke: 'hsl(var(--background))' }}
+                activeDot={{ r: 6, strokeWidth: 2, stroke: 'var(--background)' }}
                 animationDuration={600}
                 connectNulls
               />

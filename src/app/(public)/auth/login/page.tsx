@@ -61,6 +61,7 @@ const LoginPage = () => {
           router.replace('/accounts');
         },
         onError: (ctx: any) => {
+          setLoading(false);
           // Handle unverified email error
           if (ctx.error.status === 403 && ctx.error.code === 'EMAIL_NOT_VERIFIED') {
             showInfo('Your email is not verified. Please check your inbox for an OTP.');

@@ -69,34 +69,34 @@ const KpiCard: React.FC<KpiCardProps> = ({
   };
 
   return (
-    <Card className='group from-background via-background/95 to-muted/30 hover:shadow-primary/5 relative overflow-hidden border-0 bg-gradient-to-br shadow-sm backdrop-blur-sm transition-all duration-300 hover:shadow-lg dark:shadow-white/5'>
-      {/* Subtle gradient overlay */}
-      <div className='from-primary/[0.02] to-primary/[0.01] absolute inset-0 bg-gradient-to-br via-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100' />
-
-      <CardHeader className='relative flex-row items-start justify-between space-y-0 pb-3'>
-        <div className='space-y-1'>
-          <CardTitle className='text-muted-foreground flex items-center gap-2 text-sm font-medium'>
-            <Icon className={cn('h-4 w-4 transition-colors duration-200', colorClass)} />
-            {title}
-          </CardTitle>
-          {description && <CardDescription className='text-xs'>{description}</CardDescription>}
-        </div>
-        {changePercent !== undefined && (
-          <Badge
-            variant={getBadgeVariant(changePercent)}
-            className='px-2 py-0.5 text-xs font-medium shadow-sm'
-          >
-            {changePercent >= 0 ? (
-              <TrendingUp className='mr-1 h-3 w-3' />
-            ) : (
-              <TrendingDown className='mr-1 h-3 w-3' />
+    <Card className='border-border bg-card hover:bg-accent/5 border transition-colors duration-200'>
+      <CardHeader className='space-y-0 pb-3'>
+        <div className='flex items-start justify-between'>
+          <div className='space-y-1.5'>
+            <CardTitle className='text-muted-foreground flex items-center gap-2 text-sm font-medium'>
+              <Icon className={cn('h-4 w-4', colorClass)} />
+              {title}
+            </CardTitle>
+            {description && (
+              <CardDescription className='text-muted-foreground/80 text-xs'>
+                {description}
+              </CardDescription>
             )}
-            {changePercent.toFixed(1)}%
-          </Badge>
-        )}
+          </div>
+          {changePercent !== undefined && (
+            <Badge variant={getBadgeVariant(changePercent)} className='shrink-0'>
+              {changePercent >= 0 ? (
+                <TrendingUp className='mr-1 h-3 w-3' />
+              ) : (
+                <TrendingDown className='mr-1 h-3 w-3' />
+              )}
+              {changePercent.toFixed(1)}%
+            </Badge>
+          )}
+        </div>
       </CardHeader>
 
-      <CardContent className='relative pt-0'>
+      <CardContent className='pt-0'>
         {isLoading ? (
           <div className='space-y-2'>
             <Skeleton className='h-8 w-3/4' />
@@ -105,10 +105,7 @@ const KpiCard: React.FC<KpiCardProps> = ({
         ) : (
           <div className='space-y-1'>
             <SingleLineEllipsis
-              className={cn(
-                'text-2xl font-bold tracking-tight transition-colors duration-200 sm:text-3xl',
-                colorClass
-              )}
+              className={cn('text-2xl font-bold tracking-tight sm:text-3xl', colorClass)}
             >
               {valuePrefix}
               {formatCurrency(value, currency)}
@@ -135,7 +132,7 @@ const CustomTooltip = ({ active, payload, currency, data }: any) => {
     const isPositive = change === null || change >= 0;
 
     return (
-      <Card className='border-border/50 bg-background/95 min-w-[260px] shadow-2xl backdrop-blur-md'>
+      <Card className='bg-popover min-w-[240px] border shadow-lg'>
         <CardContent className='p-4'>
           <p className='text-foreground mb-3 text-sm font-semibold'>
             {format(parseISO(currentData.date), 'EEEE, MMM d, yyyy')}
@@ -146,10 +143,12 @@ const CustomTooltip = ({ active, payload, currency, data }: any) => {
                 <Wallet className='h-4 w-4' />
                 Portfolio Value
               </span>
-              <span className='font-semibold'>{formatCurrency(value, currency)}</span>
+              <span className='text-foreground font-semibold'>
+                {formatCurrency(value, currency)}
+              </span>
             </div>
             {change !== null && percentageChange !== null && (
-              <div className='border-t pt-2'>
+              <div className='border-t pt-3'>
                 <div className='flex items-center justify-between gap-4'>
                   <span className='text-muted-foreground'>Daily Change</span>
                   <div
@@ -228,20 +227,20 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
     }).format(tick);
 
   return (
-    <Card className='from-background via-background/98 to-muted/20 overflow-hidden border-0 bg-gradient-to-br shadow-sm backdrop-blur-sm'>
-      <CardHeader className='from-background/50 to-muted/30 border-b bg-gradient-to-r backdrop-blur-sm'>
-        <div className='flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between'>
-          <div className='space-y-2 max-sm:mx-auto max-sm:text-center'>
-            <CardTitle className='flex items-center gap-2 text-xl font-semibold max-sm:items-center'>
+    <Card className='border-border bg-card border'>
+      <CardHeader className='border-b pb-6'>
+        <div className='flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between'>
+          <div className='space-y-2'>
+            <CardTitle className='flex items-center gap-2 text-xl font-semibold'>
               <BarChart3 className='text-primary h-5 w-5' />
               Portfolio Performance
             </CardTitle>
             <CardDescription className='text-sm'>
-              Track your investment growth over time with interactive charts
+              Track your investment growth over time
             </CardDescription>
           </div>
 
-          <div className='flex items-center gap-2 max-sm:mx-auto'>
+          <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3'>
             <ToggleGroup
               type='single'
               value={selectedTimeRange}
@@ -252,14 +251,18 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
                   setCustomDateRange(undefined);
                 }
               }}
-              className='bg-muted/30 grid grid-cols-5 gap-1 rounded-lg border p-1 sm:flex sm:w-auto'
+              className='grid grid-cols-5 gap-1 sm:flex sm:gap-1'
               aria-label='Select time range'
             >
               {timeRanges.map((range) => (
                 <ToggleGroupItem
                   key={range.value}
                   value={range.value}
-                  className='data-[state=on]:bg-background h-8 rounded-md px-3 text-xs font-medium transition-all data-[state=on]:shadow-sm sm:h-9 sm:text-sm'
+                  className={cn(
+                    'h-9 rounded-md border px-3 text-sm font-medium transition-all',
+                    'hover:bg-accent hover:text-accent-foreground',
+                    'data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary'
+                  )}
                   aria-label={range.label}
                 >
                   {range.label}
@@ -281,8 +284,10 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
                   maxDate={new Date()}
                   noLabel
                   buttonClassName={cn(
-                    'h-8 sm:h-9',
-                    selectedTimeRange === 'custom' ? 'bg-accent text-accent-foreground' : ''
+                    'h-9 border',
+                    selectedTimeRange === 'custom'
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : ''
                   )}
                 />
               ) : (
@@ -290,7 +295,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
                   size='sm'
                   variant='outline'
                   onClick={() => setCustomRangeOpen(!customRangeOpen)}
-                  className='h-8 gap-2 sm:h-9'
+                  className='h-9 gap-2'
                 >
                   <Calendar className='h-4 w-4' />
                   Custom
@@ -301,10 +306,10 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
         </div>
       </CardHeader>
 
-      <CardContent className='p-6 max-sm:p-3'>
+      <CardContent className='p-6'>
         <div className='h-[400px] w-full'>
           {isLoading ? (
-            <div className='from-muted/20 to-muted/40 flex h-full w-full items-center justify-center rounded-lg bg-gradient-to-br'>
+            <div className='bg-muted/20 flex h-full w-full items-center justify-center rounded-lg'>
               <div className='space-y-3 text-center'>
                 <Skeleton className='mx-auto h-8 w-8 rounded-full' />
                 <Skeleton className='h-4 w-32' />
@@ -319,13 +324,13 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
                 >
                   <defs>
                     <linearGradient id='chartFill' x1='0' y1='0' x2='0' y2='1'>
-                      <stop offset='0%' stopColor='var(--primary)' stopOpacity='0.2' />
-                      <stop offset='30%' stopColor='var(--primary)' stopOpacity='0.1' />
-                      <stop offset='100%' stopColor='var(--primary)' stopOpacity='0.02' />
+                      <stop offset='0%' stopColor='var(--primary)' stopOpacity='0.3' />
+                      <stop offset='30%' stopColor='var(--primary)' stopOpacity='0.15' />
+                      <stop offset='100%' stopColor='var(--primary)' stopOpacity='0.05' />
                     </linearGradient>
                     <linearGradient id='strokeGradient' x1='0' y1='0' x2='1' y2='0'>
                       <stop offset='0%' stopColor='var(--primary)' />
-                      <stop offset='50%' stopColor='var(--primary)' stopOpacity='0.8' />
+                      <stop offset='50%' stopColor='var(--primary)' stopOpacity='0.9' />
                       <stop offset='100%' stopColor='var(--primary)' />
                     </linearGradient>
                   </defs>
@@ -333,7 +338,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
                     vertical={false}
                     strokeDasharray='3 3'
                     stroke='var(--border)'
-                    strokeOpacity={0.5}
+                    strokeOpacity={0.6}
                   />
                   <XAxis
                     dataKey='date'
@@ -351,14 +356,14 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
                     tick={{ fontSize: isMobile ? 11 : 12, fill: 'var(--muted-foreground)' }}
                     axisLine={false}
                     tickLine={false}
-                    width={isMobile ? 36 : 40}
+                    width={isMobile ? 40 : 50}
                   />
                   <ChartTooltip
                     cursor={{
                       stroke: 'var(--primary)',
                       strokeWidth: 2,
                       strokeDasharray: '5 5',
-                      strokeOpacity: 0.7
+                      strokeOpacity: 0.8
                     }}
                     content={<CustomTooltip currency={currency} data={chartData} />}
                   />
@@ -367,7 +372,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
                       y={totalInvested}
                       stroke='var(--muted-foreground)'
                       strokeDasharray='6 6'
-                      strokeOpacity={0.6}
+                      strokeOpacity={0.7}
                       strokeWidth={1.5}
                       label={{
                         value: 'Total Invested',
@@ -395,7 +400,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
               </ResponsiveContainer>
             </ChartContainer>
           ) : (
-            <div className='from-muted/20 to-muted/40 flex h-full w-full flex-col items-center justify-center rounded-lg bg-gradient-to-br'>
+            <div className='bg-muted/20 flex h-full w-full flex-col items-center justify-center rounded-lg'>
               <NoData message='Not enough historical data to display chart.' icon={LineChartIcon} />
             </div>
           )}
@@ -467,9 +472,9 @@ const InvestmentAccountOverview: React.FC<InvestmentAccountOverviewProps> = ({
   }, [summary]);
 
   return (
-    <div className='space-y-8'>
+    <div className='space-y-6'>
       {/* KPI Cards Grid */}
-      <div className='grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3'>
+      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
         <KpiCard
           title='Portfolio Value'
           description='Current total value'
@@ -501,17 +506,17 @@ const InvestmentAccountOverview: React.FC<InvestmentAccountOverviewProps> = ({
         />
       </div>
 
-      {/* Performance Summary Banner */}
+      {/* Performance Summary */}
       {!isLoadingSummary && performanceMetrics && (
-        <Card className='border-l-primary from-primary/5 via-primary/[0.02] to-background overflow-hidden border-l-4 bg-gradient-to-r'>
-          <CardContent className='p-4 max-sm:p-2'>
-            <div className='flex items-center gap-4'>
-              <div className='bg-primary/10 ring-primary/20 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full ring-1'>
-                <Info className='text-primary h-6 w-6' />
+        <Card className='border-l-primary bg-card border-l-4'>
+          <CardContent className='p-4'>
+            <div className='flex items-start gap-4'>
+              <div className='bg-primary/10 ring-primary/20 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ring-1'>
+                <Info className='text-primary h-5 w-5' />
               </div>
-              <div className='flex-1 space-y-2'>
-                <div className='flex items-center gap-2 max-sm:flex-col max-sm:items-start'>
-                  <div className='text-muted-foreground text-sm leading-relaxed'>
+              <div className='my-auto flex-1 space-y-2'>
+                <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3'>
+                  <p className='text-muted-foreground text-sm leading-relaxed'>
                     Your portfolio has{' '}
                     <span
                       className={cn(
@@ -525,10 +530,10 @@ const InvestmentAccountOverview: React.FC<InvestmentAccountOverviewProps> = ({
                       {formatCurrency(Math.abs(performanceMetrics.totalGain), accountCurrency)}
                     </span>{' '}
                     ({performanceMetrics.totalReturn.toFixed(1)}%) since inception
-                  </div>
+                  </p>
                   <Badge
                     variant={performanceMetrics.totalGain >= 0 ? 'success' : 'destructive'}
-                    className='w-fit'
+                    className='w-fit shrink-0'
                   >
                     {performanceMetrics.totalGain >= 0 ? 'Profitable' : 'Loss Position'}
                   </Badge>

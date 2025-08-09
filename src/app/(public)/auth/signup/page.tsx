@@ -92,7 +92,10 @@ const SignupPage = () => {
         onSuccess: () => {
           push(`/auth/verify-otp?email=${data.email}&type=email-verification`);
         },
-        onError: (ctx: any) => showError(ctx.error.message),
+        onError: (ctx: any) => {
+          setLoading(false);
+          showError(ctx.error.message);
+        },
         onSettled: () => setLoading(false)
       }
     );
