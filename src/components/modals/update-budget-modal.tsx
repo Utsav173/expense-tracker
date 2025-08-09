@@ -6,27 +6,17 @@ import { UpdateModal } from './update-modal';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { NumericInput } from '../ui/numeric-input';
 import { budgetUpdate } from '@/lib/endpoints/budget';
-import { Budget } from '@/lib/types';
+import type { BudgetAPI } from '@/lib/api/api-types';
 import { monthNames } from '@/lib/utils';
 import { CalendarDays, Tag } from 'lucide-react';
+import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
 
-export const budgetUpdateSchema = z.object({
-  amount: z
-    .string()
-    .min(1, { message: 'Amount is required.' })
-    .refine((value) => !isNaN(parseFloat(value)), {
-      message: 'Amount must be a valid number.'
-    })
-    .refine((val) => parseFloat(val) >= 0, {
-      message: 'Budget amount cannot be negative.'
-    })
-    .transform((val) => parseFloat(val))
-});
+type BudgetUpdateSchema = z.infer<typeof apiEndpoints.budget.update.body>;
 
 interface UpdateBudgetModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  budget: Budget;
+  budget: BudgetAPI.Budget;
   onBudgetUpdated: () => void;
 }
 
@@ -49,7 +39,7 @@ const UpdateBudgetModal: React.FC<UpdateBudgetModalProps> = ({
       initialValues={{
         amount: budget?.amount
       }}
-      validationSchema={budgetUpdateSchema}
+      validationSchema={apiEndpoints.budget.update.body}
       updateFn={(id, data) => budgetUpdate(id, { amount: data.amount })}
       invalidateKeys={[[`budgets`], [`budgetSummaryDashboard`]]}
       onSuccess={onBudgetUpdated}
@@ -87,7 +77,7 @@ const UpdateBudgetModal: React.FC<UpdateBudgetModalProps> = ({
                     disabled={form.formState.isSubmitting}
                     value={String(field.value)}
                     onValueChange={(values: { value: any }) => {
-                      field.onChange(values.value);
+                      field.onChange(parseFloat(values.value));
                     }}
                     ref={field.ref as React.Ref<HTMLInputElement>}
                   />

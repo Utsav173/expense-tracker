@@ -5,8 +5,17 @@ import { useMutation } from '@tanstack/react-query';
 import { aiProcessPrompt } from '@/lib/endpoints/ai';
 import { useInvalidateQueries } from '../../../hooks/useInvalidateQueries';
 import { useToast } from '@/lib/hooks/useToast';
-import { ChatMessage } from '@/lib/types';
+import type { AIAPI } from '@/lib/api/api-types';
 import { safeJsonParse } from '@/lib/utils';
+
+interface ChatMessage extends AIAPI.ParsedAIResponse {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  createdAt?: Date;
+  image?: string;
+  document?: { name: string; type: 'pdf' | 'xlsx' };
+}
 
 const STORAGE_KEY_MESSAGES = 'aiChatMessages';
 const STORAGE_KEY_SESSION_ID = 'aiChatSessionId';
@@ -107,7 +116,10 @@ export const useAiChat = (): UseAiChatReturn => {
       id: crypto.randomUUID(),
       role: 'assistant',
       content: parsedResponse?.message ?? rawResponse,
+      message: parsedResponse?.message ?? rawResponse,
       chart: parsedResponse?.chart,
+      records: parsedResponse?.records,
+      metrics: parsedResponse?.metrics,
       imageAnalysisData: parsedResponse?.imageAnalysisData,
       followUpPrompts: parsedResponse?.followUpPrompts,
       createdAt: new Date()
@@ -155,6 +167,7 @@ export const useAiChat = (): UseAiChatReturn => {
         id: crypto.randomUUID(),
         role: 'user',
         content: prompt,
+        message: prompt,
         createdAt: new Date()
       };
 

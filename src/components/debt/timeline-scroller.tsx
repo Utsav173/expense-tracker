@@ -2,7 +2,7 @@
 
 import React, { memo } from 'react';
 import { cn, formatCurrency } from '@/lib/utils';
-import { Payment } from '@/lib/types';
+import type { DebtAndInterestAPI } from '@/lib/api/api-types';
 import { format } from 'date-fns';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -10,7 +10,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 
 interface TimelineScrollerProps {
-  schedule: Payment[];
+  schedule: DebtAndInterestAPI.AmortizationPayment[];
   selectedIndex: number;
   onSelect: (index: number) => void;
 }
@@ -24,7 +24,7 @@ const TimelineTick = memo(
     isLast,
     isSettled
   }: {
-    payment: Payment;
+    payment: DebtAndInterestAPI.AmortizationPayment;
     index: number;
     isSelected: boolean;
     onSelect: (index: number) => void;

@@ -8,7 +8,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useToast } from '@/lib/hooks/useToast';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { useAuth } from '@/components/providers/auth-provider';
-import { authUpdateUser } from '@/lib/endpoints/auth';
+import { authUpdateUser, UpdateUserBody } from '@/lib/endpoints/auth';
 import { fetchCurrencies, COMMON_CURRENCIES } from '@/lib/endpoints/currency';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -55,7 +55,7 @@ export const ProfileInformationForm = () => {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: FormData) => authUpdateUser(data),
+    mutationFn: (data: UpdateUserBody) => authUpdateUser(data),
     onSuccess: async () => {
       await invalidate(['user']);
       setIsEditing(false);
@@ -101,11 +101,7 @@ export const ProfileInformationForm = () => {
   };
 
   const onSubmit = (data: ProfileUpdateFormSchema) => {
-    const formData = new FormData();
-    formData.append('name', data.name);
-    if (data.preferredCurrency) formData.append('preferredCurrency', data.preferredCurrency);
-    if (data.image instanceof File) formData.append('image', data.image);
-    mutation.mutate(formData);
+    mutation.mutate(data);
   };
 
   if (!user) return null;

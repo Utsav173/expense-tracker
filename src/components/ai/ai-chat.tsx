@@ -225,7 +225,8 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
                   message={{
                     id: 'error',
                     role: 'assistant',
-                    content: `**Assistant Error:**\n\n${error.message}\n\n*Please try rephrasing your request or check your API key settings.*`
+                    content: `**Assistant Error:**\n\n${error.message}\n\n*Please try rephrasing your request or check your API key settings.*`,
+                    message: `**Assistant Error:**\n\n${error.message}\n\n*Please try rephrasing your request or check your API key settings.*`
                   }}
                 />
               </motion.div>
@@ -240,7 +241,7 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
                 className='flex flex-col items-end'
               >
                 <div className='w-full max-w-[85%] space-y-2'>
-                  {lastMessage.followUpPrompts?.map((prompt, index) => (
+                  {lastMessage.followUpPrompts?.map((prompt: string, index: number) => (
                     <PromptSuggestion
                       key={`follow-up-${index}`}
                       text={prompt}

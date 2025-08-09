@@ -4,7 +4,7 @@ import React, { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { accountGetAll, accountGetById } from '@/lib/endpoints/accounts';
 import { Combobox, ComboboxOption } from '@/components/ui/combobox';
-import { Account } from '@/lib/types';
+import type { AccountAPI } from '@/lib/api/api-types';
 import { Skeleton } from './skeleton';
 import { cn } from '@/lib/utils';
 import { DateRange } from 'react-day-picker';
@@ -62,11 +62,12 @@ const AccountCombobox: React.FC<AccountComboboxProps> = ({
           search: query,
           limit: 20,
           sortBy: 'name',
-          sortOrder: 'asc'
+          sortOrder: 'asc',
+          page: 1
         });
 
         let fetchedOptions: ComboboxOption[] =
-          data?.accounts?.map((acc: Account) => ({
+          data?.accounts?.map((acc: AccountAPI.Account) => ({
             value: acc.id,
             label: `${acc.name} (${acc.currency || 'N/A'})`
           })) ?? [];

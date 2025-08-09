@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { categoryGetAll, categoryCreate } from '@/lib/endpoints/category';
 import { accountGetDropdown } from '@/lib/endpoints/accounts';
 import { useToast } from '@/lib/hooks/useToast';
-import { Transaction as TransactionType, Category } from '@/lib/types';
+import type { TransactionAPI, CategoryAPI, AccountAPI } from '@/lib/api/api-types';
 import { ComboboxOption } from '@/components/ui/combobox';
 import { parseISO } from 'date-fns';
 
@@ -30,13 +30,13 @@ export const useTransactionForm = ({
   transaction,
   isOpen
 }: {
-  transaction: TransactionType | null;
+  transaction: TransactionAPI.Transaction | null;
   isOpen: boolean;
 }) => {
   const { showError } = useToast();
   const [categoryComboboxLoading, setCategoryComboboxLoading] = useState(false);
   const [categoryComboboxError, setCategoryComboboxError] = useState<string | null>(null);
-  const [localCategories, setLocalCategories] = useState<Category[]>([]);
+  const [localCategories, setLocalCategories] = useState<CategoryAPI.Category[]>([]);
 
   const isRecurringInstance = useMemo(() => !!transaction?.recurring, [transaction]);
 
@@ -51,7 +51,7 @@ export const useTransactionForm = ({
     refetch: refetchCategories
   } = useQuery({
     queryKey: ['categories'],
-    queryFn: () => categoryGetAll({ limit: '100' }),
+    queryFn: () => categoryGetAll({ page: 1, limit: 100, sortBy: 'name', sortOrder: 'asc' }),
     staleTime: 5 * 60 * 1000
   });
 

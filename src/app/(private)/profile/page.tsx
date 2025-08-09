@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { useAuth } from '@/components/providers/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
 import { User, Lock, Bell, BrainCircuit } from 'lucide-react';
 import { ProfileInformationForm } from '@/components/profile/profile-information-form';
 import { NotificationSettingsForm } from '@/components/profile/notification-settings-form';

@@ -1,5 +1,5 @@
 'use client';
-import { Budget } from '@/lib/types';
+import type { BudgetAPI } from '@/lib/api/api-types';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2 } from 'lucide-react';
 import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
@@ -11,7 +11,7 @@ import { useState } from 'react';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 
 interface BudgetActionsProps {
-  budget: Budget;
+  budget: BudgetAPI.Budget;
 }
 
 export function BudgetActions({ budget }: BudgetActionsProps) {

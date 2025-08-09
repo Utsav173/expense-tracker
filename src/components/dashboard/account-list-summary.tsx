@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import Loader from '../ui/loader';
 import NoData from '../ui/no-data';
-import { DashboardData } from '@/lib/types';
+import type { AccountAPI } from '@/lib/api/api-types';
 import { cn, formatCurrency } from '@/lib/utils';
 import Link from 'next/link';
 import { Button } from '../ui/button';
@@ -11,7 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { accountGetDropdown } from '@/lib/endpoints/accounts';
 
 interface AccountListSummaryProps {
-  accountsInfo: DashboardData['accountsInfo'] | undefined;
+  accountsInfo: AccountAPI.DashboardData['accountsInfo'] | undefined;
   isLoading: boolean;
   className?: string;
 }

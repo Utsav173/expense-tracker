@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
-import { BudgetSummaryItem } from '@/lib/types';
+import type { BudgetAPI } from '@/lib/api/api-types';
 import { cn, formatCurrency } from '@/lib/utils';
 import Loader from '../ui/loader';
 import { Progress } from '../ui/progress';
@@ -26,15 +26,16 @@ export const BudgetProgress: React.FC<{ className?: string }> = ({ className }) 
   const [selectedMonth, setSelectedMonth] = useState<number>(currentMonth);
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
 
-  const { data, isLoading, error, isFetching } = useQuery<BudgetSummaryItem[] | null>({
-    queryKey: ['budgetSummaryDashboard', selectedMonth, selectedYear],
-    queryFn: () => budgetGetSummary(selectedMonth, selectedYear),
-    enabled: true,
-    retry: 1,
-    staleTime: 5 * 60 * 1000,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true
-  });
+  const { data, isLoading, error, isFetching } =
+    useQuery<BudgetAPI.GetBudgetSummaryResponse | null>({
+      queryKey: ['budgetSummaryDashboard', selectedMonth, selectedYear],
+      queryFn: () => budgetGetSummary(selectedMonth, selectedYear),
+      enabled: true,
+      retry: 1,
+      staleTime: 5 * 60 * 1000,
+      refetchOnMount: true,
+      refetchOnWindowFocus: true
+    });
 
   useEffect(() => {
     if (error) {

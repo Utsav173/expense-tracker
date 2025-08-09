@@ -9,38 +9,15 @@ import { NumericInput } from '../ui/numeric-input';
 import DateTimePicker from '../date/date-time-picker';
 import { Target, IndianRupee, CalendarDays, Coins } from 'lucide-react';
 import { goalUpdate } from '@/lib/endpoints/goal';
-import { SavingGoal } from '@/lib/types';
+import type { GoalAPI } from '@/lib/api/api-types';
+import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
 
-const goalSchema = z.object({
-  name: z
-    .string()
-    .min(3, 'Goal name must be at least 3 characters.')
-    .max(100, 'Goal name cannot exceed 100 characters.'),
-  targetAmount: z
-    .string()
-    .min(1, { message: 'Target amount is required.' })
-    .refine((value) => !isNaN(parseFloat(value)) && parseFloat(value) > 0, {
-      message: 'Target amount must be a positive number.'
-    })
-    .transform((val) => parseFloat(val)),
-  savedAmount: z
-    .string()
-    .optional()
-    .refine(
-      (value) =>
-        value === undefined ||
-        value === '' ||
-        (!isNaN(parseFloat(value)) && parseFloat(value) >= 0),
-      { message: 'Saved amount must be a non-negative number.' }
-    )
-    .transform((val) => (val ? parseFloat(val) : undefined)),
-  targetDate: z.date().optional().nullable()
-});
+type GoalUpdateSchema = z.infer<typeof apiEndpoints.goal.update.body>;
 
 interface UpdateGoalModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  goal: SavingGoal;
+  goal: GoalAPI.SavingGoal;
   onGoalUpdated: () => void;
 }
 
@@ -50,11 +27,12 @@ const UpdateGoalModal: React.FC<UpdateGoalModalProps> = ({
   goal,
   onGoalUpdated
 }) => {
-  const handleUpdate = (id: string, data: z.infer<typeof goalSchema>) => {
+  const handleUpdate = (id: string, data: GoalUpdateSchema) => {
     const apiPayload = {
       ...data,
-      targetDate: data.targetDate ? data.targetDate.toISOString() : null
+      targetDate: data.targetDate ? data.targetDate : null
     };
+
     return goalUpdate(id, apiPayload);
   };
 
@@ -70,7 +48,7 @@ const UpdateGoalModal: React.FC<UpdateGoalModalProps> = ({
         savedAmount: goal.savedAmount ?? 0,
         targetDate: goal.targetDate ? new Date(goal.targetDate) : null
       }}
-      validationSchema={goalSchema}
+      validationSchema={apiEndpoints.goal.update.body}
       updateFn={handleUpdate}
       invalidateKeys={[[`goals`]]}
       onSuccess={onGoalUpdated}
@@ -113,9 +91,9 @@ const UpdateGoalModal: React.FC<UpdateGoalModalProps> = ({
                     placeholder='5,000.00'
                     className='w-full'
                     disabled={form.formState.isSubmitting}
-                    value={field.value}
+                    value={String(field.value)}
                     onValueChange={(values: { value: any }) => {
-                      field.onChange(values.value);
+                      field.onChange(parseFloat(values.value));
                     }}
                     ref={field.ref as React.Ref<HTMLInputElement>}
                   />
@@ -139,9 +117,9 @@ const UpdateGoalModal: React.FC<UpdateGoalModalProps> = ({
                     placeholder='Current progress (e.g., 1250.00)'
                     className='w-full'
                     disabled={form.formState.isSubmitting}
-                    value={field.value}
+                    value={String(field.value)}
                     onValueChange={(values: { value: any }) => {
-                      field.onChange(values.value);
+                      field.onChange(parseFloat(values.value));
                     }}
                     ref={field.ref as React.Ref<HTMLInputElement>}
                   />

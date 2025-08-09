@@ -17,13 +17,7 @@ import Loader from '@/components/ui/loader';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/lib/hooks/useToast';
 import { ArrowLeft, PlusCircle, Search } from 'lucide-react';
-import {
-  Investment,
-  StockSearchResult,
-  StockPriceResult,
-  ApiResponse,
-  InvestmentAccountSummary
-} from '@/lib/types';
+import type { InvestmentAPI, InvestmentAccountAPI } from '@/lib/api/api-types';
 import AddInvestmentHoldingModal from '@/components/modals/add-investment-holding-modal';
 import UpdateInvestmentHoldingModal from '@/components/modals/update-investment-holding-modal';
 import DeleteConfirmationModal from '@/components/modals/delete-confirmation-modal';
@@ -33,10 +27,14 @@ import { investmentHoldingsColumns } from '@/components/investment/investment-ho
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { useUrlState } from '@/hooks/useUrlState';
 import { SortingState } from '@tanstack/react-table';
-import InvestmentAccountOverview from '@/components/investment/investment-account-overview';
 import { SingleLineEllipsis } from '@/components/ui/ellipsis-components';
 import { useDebounce } from 'use-debounce';
 import { Input } from '@/components/ui/input';
+import dynamic from 'next/dynamic';
+
+const InvestmentAccountOverview = dynamic(
+  () => import('@/components/investment/investment-account-overview')
+);
 
 const InvestmentAccountDetailPage = () => {
   const params = useParams();
@@ -50,7 +48,9 @@ const InvestmentAccountDetailPage = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [deleteInvestmentId, setDeleteInvestmentId] = useState<string | null>(null);
-  const [selectedInvestment, setSelectedInvestment] = useState<Investment | null>(null);
+  const [selectedInvestment, setSelectedInvestment] = useState<InvestmentAPI.Investment | null>(
+    null
+  );
 
   const { state, setState, handlePageChange } = useUrlState({
     page: 1,
@@ -69,14 +69,13 @@ const InvestmentAccountDetailPage = () => {
     retry: false
   });
 
-  const { data: summary, isLoading: isLoadingSummary } = useQuery<
-    ApiResponse<InvestmentAccountSummary>
-  >({
-    queryKey: ['investmentAccountSummary', accountId],
-    queryFn: () => investmentAccountGetSummary(accountId),
-    enabled: !!accountId,
-    retry: false
-  });
+  const { data: summary, isLoading: isLoadingSummary } =
+    useQuery<InvestmentAccountAPI.GetSummaryResponse>({
+      queryKey: ['investmentAccountSummary', accountId],
+      queryFn: () => investmentAccountGetSummary(accountId),
+      enabled: !!accountId,
+      retry: false
+    });
 
   const {
     data: investments,
@@ -117,7 +116,7 @@ const InvestmentAccountDetailPage = () => {
     }
   });
 
-  const handleEdit = (investment: Investment) => {
+  const handleEdit = (investment: InvestmentAPI.Investment) => {
     setSelectedInvestment(investment);
     setIsEditModalOpen(true);
   };
@@ -132,11 +131,15 @@ const InvestmentAccountDetailPage = () => {
     }
   };
 
-  const handleStockSearch = async (query: string): Promise<ApiResponse<StockSearchResult[]>> => {
+  const handleStockSearch = async (
+    query: string
+  ): Promise<InvestmentAPI.SearchStocksResponse | null> => {
     return investmentStockSearch({ q: query });
   };
 
-  const handleStockPrice = async (symbol: string): Promise<ApiResponse<StockPriceResult>> => {
+  const handleStockPrice = async (
+    symbol: string
+  ): Promise<InvestmentAPI.GetStockPriceResponse | null> => {
     return investmentStockPrice(symbol);
   };
 
@@ -187,14 +190,17 @@ const InvestmentAccountDetailPage = () => {
           <PlusCircle className='mr-2 h-4 w-4' /> Add Investment
         </Button>
       </div>
-
-      <InvestmentAccountOverview
-        accountId={accountId}
-        accountCurrency={account.currency}
-        summary={summary}
-        isLoadingSummary={isLoadingSummary}
-        oldestInvestmentDate={account?.oldestInvestmentDate}
-      />
+      {investments?.data.length !== 0 && (
+        <InvestmentAccountOverview
+          accountId={accountId}
+          accountCurrency={account.currency}
+          summary={summary}
+          isLoadingSummary={isLoadingSummary}
+          oldestInvestmentDate={
+            account?.oldestInvestmentDate ? new Date(account.oldestInvestmentDate) : undefined
+          }
+        />
+      )}
 
       <Card>
         <CardHeader>
@@ -212,7 +218,7 @@ const InvestmentAccountDetailPage = () => {
               className='max-w-full grow pl-9'
             />
           </div>
-          <CommonTable<Investment>
+          <CommonTable<InvestmentAPI.Investment>
             tableId={`investment-holdings-${accountId}`}
             data={investments?.data || []}
             columns={columns}
@@ -252,6 +258,7 @@ const InvestmentAccountDetailPage = () => {
           investment={selectedInvestment}
           accountCurrency={account.currency}
           onInvestmentUpdated={refetchInvestments}
+          getStockPriceFn={handleStockPrice}
         />
       )}
 

@@ -1,86 +1,76 @@
-import apiFetch from '../api-client';
-import {
-  Investment,
-  ApiResponse,
-  PortfolioSummary,
-  Pagination,
-  StockSearchResult,
-  StockPriceResult,
-  HistoricalStockPriceResponse,
-  InvestmentPerformanceData
-} from '../types';
+import apiClient from '@/lib/api/client';
+import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
+import type { InvestmentAPI } from '@/lib/api/api-types';
+import { z } from 'zod';
+
+type CreateInvestmentBody = z.infer<typeof apiEndpoints.investment.create.body>;
+type UpdateInvestmentBody = z.infer<typeof apiEndpoints.investment.update.body>;
+type UpdateDividendBody = z.infer<typeof apiEndpoints.investment.updateDividend.body>;
+type GetAllParams = z.infer<typeof apiEndpoints.investment.getAllForAccount.query>;
+type SearchParams = z.infer<typeof apiEndpoints.investment.searchStocks.query>;
+type HistoricalParams = z.infer<typeof apiEndpoints.investment.getHistoricalPortfolio.query>;
 
 export const investmentCreate = (
-  body: any
-): Promise<ApiResponse<{ message: string; data: Investment }>> =>
-  apiFetch('/investment', 'POST', body);
+  body: CreateInvestmentBody
+): Promise<InvestmentAPI.CreateInvestmentResponse> =>
+  apiClient(apiEndpoints.investment.create, { body });
 
 export const investmentGetAll = (
   accountId: string,
-  params: {
-    page?: number;
-    limit?: number;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-    q?: string;
-  }
-): Promise<ApiResponse<{ data: Investment[]; pagination: Pagination }>> =>
-  apiFetch(`/investment/${accountId}`, 'GET', undefined, { params });
+  params: GetAllParams
+): Promise<InvestmentAPI.GetInvestmentsForAccountResponse> =>
+  apiClient(apiEndpoints.investment.getAllForAccount, { params: { accountId }, query: params });
 
 export const investmentUpdate = (
   id: string,
-  body: any
-): Promise<ApiResponse<{ message: string; id: string }>> =>
-  apiFetch(`/investment/${id}`, 'PUT', body);
+  body: UpdateInvestmentBody
+): Promise<InvestmentAPI.UpdateInvestmentResponse> =>
+  apiClient(apiEndpoints.investment.update, { params: { id }, body });
 
-export const investmentDelete = (id: string): Promise<ApiResponse<{ message: string }>> =>
-  apiFetch(`/investment/${id}`, 'DELETE');
+export const investmentDelete = (id: string): Promise<InvestmentAPI.DeleteInvestmentResponse> =>
+  apiClient(apiEndpoints.investment.delete, { params: { id } });
 
-export const investmentGetDetails = (
-  id: string
-): Promise<ApiResponse<{ investment: Investment }>> => apiFetch(`/investment/details/${id}`, 'GET');
+export const investmentGetDetails = (id: string): Promise<InvestmentAPI.GetDetailsResponse> =>
+  apiClient(apiEndpoints.investment.getDetails, { params: { id } });
 
 export const investmentGetPerformance = (
   id: string
-): Promise<ApiResponse<InvestmentPerformanceData>> =>
-  apiFetch(`/investment/details/${id}/performance`, 'GET');
+): Promise<InvestmentAPI.GetPerformanceResponse> =>
+  apiClient(apiEndpoints.investment.getPerformance, { params: { id } });
 
 export const investmentUpdateDividend = (
   id: string,
-  body: { dividend: number }
-): Promise<ApiResponse<{ message: string; id: string }>> =>
-  apiFetch(`/investment/${id}/update-dividend`, 'PUT', body);
+  body: UpdateDividendBody
+): Promise<InvestmentAPI.UpdateDividendResponse> =>
+  apiClient(apiEndpoints.investment.updateDividend, { params: { id }, body });
 
-export const investmentStockSearch = (params: {
-  q: string;
-}): Promise<ApiResponse<StockSearchResult[]>> =>
-  apiFetch('/investment/stocks/search', 'GET', undefined, { params });
+export const investmentStockSearch = (
+  params: SearchParams
+): Promise<InvestmentAPI.SearchStocksResponse> =>
+  apiClient(apiEndpoints.investment.searchStocks, { query: params });
 
-export const investmentStockPrice = (symbol: string): Promise<ApiResponse<StockPriceResult>> =>
-  apiFetch(`/investment/stocks/price/${symbol}`, 'GET');
+export const investmentStockPrice = (
+  symbol: string
+): Promise<InvestmentAPI.GetStockPriceResponse> =>
+  apiClient(apiEndpoints.investment.getStockPrice, { params: { symbol } });
 
 export const investmentStockHistoricalPrice = (
   symbol: string,
   date: string
-): Promise<ApiResponse<HistoricalStockPriceResponse | null>> =>
-  apiFetch(`/investment/stocks/historical-price/${symbol}?date=${date}`, 'GET');
+): Promise<InvestmentAPI.GetHistoricalStockPriceResponse | null> =>
+  apiClient(apiEndpoints.investment.getHistoricalStockPrice, {
+    params: { symbol },
+    query: { date }
+  });
 
-export const investmentGetPortfolioSummary = (): Promise<ApiResponse<PortfolioSummary>> =>
-  apiFetch('/investment/portfolio-summary', 'GET');
+export const investmentGetPortfolioSummary =
+  (): Promise<InvestmentAPI.GetPortfolioSummaryResponse> =>
+    apiClient(apiEndpoints.investment.getPortfolioSummary);
 
 export const investmentGetPortfolioHistorical = (
-  params: {
-    period?: '7d' | '30d' | '90d' | '1y';
-    startDate?: string;
-    endDate?: string;
-  } = { period: '30d' }
-): Promise<
-  ApiResponse<{
-    data: { date: string; value: number }[];
-    currency: string;
-    valueIsEstimate: boolean;
-  }>
-> => apiFetch('/investment/portfolio-historical', 'GET', undefined, { params });
+  params: HistoricalParams = { period: '30d' }
+): Promise<InvestmentAPI.GetHistoricalPortfolioResponse> =>
+  apiClient(apiEndpoints.investment.getHistoricalPortfolio, { query: params });
 
-export const investmentGetOldestDate = (): Promise<ApiResponse<{ oldestDate: string | null }>> =>
-  apiFetch('/investment/oldest-date', 'GET');
+export const investmentGetOldestDate = (): Promise<InvestmentAPI.GetOldestDateResponse> =>
+  apiClient(apiEndpoints.investment.getOldestDate);

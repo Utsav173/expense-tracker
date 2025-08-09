@@ -20,7 +20,14 @@ import { PasswordInput } from '@/components/ui/password-input';
 import { Button } from '@/components/ui/button';
 import { Loader2, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
 
 const changePasswordSchema = z
   .object({
@@ -51,7 +58,7 @@ export const PasswordSettingsForm = () => {
     mutationFn: async (data: ChangePasswordFormValues) => {
       await authClient.changePassword({
         currentPassword: data.currentPassword,
-        newPassword: data.newPassword,
+        newPassword: data.newPassword
       });
     },
     onSuccess: () => {
@@ -155,7 +162,7 @@ export const PasswordSettingsForm = () => {
         </CardContent>
       </Card>
 
-      <Card className='mt-6 border-destructive'>
+      <Card className='border-destructive mt-6'>
         <CardHeader>
           <CardTitle className='text-destructive'>Delete Account</CardTitle>
           <CardDescription>
@@ -179,12 +186,16 @@ export const PasswordSettingsForm = () => {
           <DialogHeader>
             <DialogTitle>Are you absolutely sure?</DialogTitle>
             <DialogDescription>
-              This action cannot be undone. This will permanently delete your account and remove your
-              data from our servers.
+              This action cannot be undone. This will permanently delete your account and remove
+              your data from our servers.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant='outline' onClick={() => setIsDeleteDialogOpen(false)} disabled={isDeleting}>
+            <Button
+              variant='outline'
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={isDeleting}
+            >
               Cancel
             </Button>
             <Button variant='destructive' onClick={handleDeleteAccount} disabled={isDeleting}>

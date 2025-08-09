@@ -13,7 +13,8 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
       className={cn(
         'bg-card text-card-foreground rounded-xl border shadow-sm',
         {
-          'transition-all duration-300 hover:-translate-y-1 hover:shadow-lg': variant === 'default',
+          'transition-all duration-300 hover:-translate-y-[1px] hover:shadow-xl':
+            variant === 'default',
           'bg-card/90 border-0 p-0 shadow-none backdrop-blur-sm': variant === 'auth'
         },
         className

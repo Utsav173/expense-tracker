@@ -1,32 +1,32 @@
-import { AxiosRequestConfig } from 'axios';
-import apiFetch from '../api-client';
-import { ApiResponse, Category } from '../types';
+import apiClient from '@/lib/api/client';
+import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
+import type { CategoryAPI } from '@/lib/api/api-types';
+import { z } from 'zod';
 
-export const categoryCreate = (
-  body: any
-): Promise<
-  ApiResponse<{
-    data: Category;
-    message: string;
-  }>
-> => apiFetch('/category', 'POST', body);
+type CreateCategoryBody = z.infer<typeof apiEndpoints.category.create.body>;
+type UpdateCategoryBody = z.infer<typeof apiEndpoints.category.update.body>;
+type GetAllParams = z.infer<typeof apiEndpoints.category.getAll.query>;
 
-export const categoryUpdate = (id: string, body: any) => apiFetch(`/category/${id}`, 'PUT', body);
+export const categoryCreate = (body: CreateCategoryBody) =>
+  apiClient<unknown, unknown, CreateCategoryBody, CategoryAPI.CreateCategoryResponse>(
+    apiEndpoints.category.create,
+    { body }
+  );
 
-export const categoryGetAll = (
-  params?:
-    | {
-        page?: string;
-        limit?: string;
-        sortBy?: string;
-        sortOrder?: 'asc' | 'desc';
-        search?: string;
-      }
-    | undefined
-): Promise<ApiResponse<{ categories: Category[]; pagination: any }>> =>
-  apiFetch(`/category`, 'GET', undefined, { params: params });
+export const categoryUpdate = (id: string, body: UpdateCategoryBody) =>
+  apiClient<{ id: string }, unknown, UpdateCategoryBody, CategoryAPI.UpdateCategoryResponse>(
+    apiEndpoints.category.update,
+    { params: { id }, body }
+  );
 
-export const categoryGetById = (id: string): Promise<ApiResponse<{ data: Category }>> =>
-  apiFetch(`/category/${id}`, 'GET');
+export const categoryGetAll = (params?: GetAllParams): Promise<CategoryAPI.GetCategoriesResponse> =>
+  apiClient(apiEndpoints.category.getAll, { query: params });
 
-export const categoryDelete = (id: string) => apiFetch(`/category/${id}`, 'DELETE');
+export const categoryGetById = (id: string): Promise<CategoryAPI.GetCategoryResponse> =>
+  apiClient(apiEndpoints.category.getById, { params: { id } });
+
+export const categoryDelete = (id: string) =>
+  apiClient<{ id: string }, unknown, unknown, CategoryAPI.DeleteCategoryResponse>(
+    apiEndpoints.category.delete,
+    { params: { id } }
+  );

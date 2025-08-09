@@ -22,7 +22,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Search, Filter, X, Download, Loader2, Settings2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Category, Transaction } from '@/lib/types';
+import type { CategoryAPI, TransactionAPI } from '@/lib/api/api-types';
 import { DateRange } from 'react-day-picker';
 import * as XLSX from 'xlsx';
 import { useToast } from '@/lib/hooks/useToast';
@@ -34,7 +34,7 @@ interface FilterDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   filters: AccountTransactionsSectionProps['filters'];
-  categories?: { categories: Category[]; pagination: any };
+  categories?: { categories: CategoryAPI.Category[]; pagination: any };
   isOwner?: boolean;
   handleCategoryChange: (categoryId: string) => void;
   handleIncomeTypeChange: (type: string) => void;
@@ -326,24 +326,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
 };
 
 interface AccountTransactionsSectionProps {
-  transactionsData?: {
-    transactions: Transaction[];
-    pagination: {
-      total: number;
-      totalPages: number;
-      currentPage: number;
-      pageSize: number;
-    };
-    filters: {
-      sortBy: string;
-      sortOrder: string;
-      q: string;
-    };
-    dateRange: {
-      minDate: string;
-      maxDate: string;
-    };
-  };
+  transactionsData?: TransactionAPI.GetTransactionsResponse;
   isTransactionLoading?: boolean;
   filters: {
     searchQuery: string;
@@ -362,7 +345,7 @@ interface AccountTransactionsSectionProps {
   handleSort: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
   page: number;
   handlePageChange: (page: number) => void;
-  categories?: { categories: Category[]; pagination: any };
+  categories?: { categories: CategoryAPI.Category[]; pagination: any };
   setSearchQuery: (query: string) => void;
   handleCategoryChange: (categoryId: string) => void;
   handleIncomeTypeChange: (type: string) => void;

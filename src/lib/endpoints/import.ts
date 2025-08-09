@@ -1,26 +1,22 @@
 import apiFetch from '../api-client';
+import type { AccountAPI } from '@/lib/api/api-types';
 
-export const importTransactions = async (formData: FormData) => {
-  return apiFetch<{ message: string; successId: string; totalRecords: number }>(
-    '/accounts/import/transaction',
-    'POST',
-    formData,
-    {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
+export const importTransactions = async (formData: FormData): Promise<AccountAPI.ImportResult> => {
+  return apiFetch('/accounts/import/transaction', 'POST', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
     }
-  );
+  });
 };
 
-export const confirmImport = async (id: string) => {
-  return apiFetch<{ message: string }>(`/accounts/confirm/import/${id}`, 'POST');
+export const confirmImport = async (id: string): Promise<AccountAPI.ConfirmImportResponse> => {
+  return apiFetch(`/accounts/confirm/import/${id}`, 'POST');
 };
 
-export const getImportData = async (id: string) => {
-  return apiFetch<{ length: number; data: any[] }>(`/accounts/get/import/${id}`, 'GET');
+export const getImportData = async (id: string): Promise<AccountAPI.GetImportDataResponse> => {
+  return apiFetch(`/accounts/get/import/${id}`, 'GET');
 };
 
-export const getSampleFile = async () => {
-  return apiFetch<{ message: string; sampleFile: string }>('/accounts/import/sampleFile', 'GET');
+export const getSampleFile = async (): Promise<{ message: string; sampleFile: string }> => {
+  return apiFetch('/accounts/import/sampleFile', 'GET');
 };

@@ -5,7 +5,7 @@ import { useDebounce } from 'use-debounce';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
 import { DateRange } from 'react-day-picker';
-import { TransactionsResponse } from '@/lib/types';
+import type { TransactionAPI } from '@/lib/api/api-types';
 
 interface Filters {
   accountId?: string;
@@ -22,7 +22,7 @@ interface Filters {
 }
 
 interface UseTransactionsReturn {
-  transactionsData: TransactionsResponse | undefined;
+  transactionsData: TransactionAPI.GetTransactionsResponse | undefined;
   isLoading: boolean;
   isError: boolean;
   error: any;
@@ -156,15 +156,15 @@ export const useTransactions = (
           : undefined;
 
       return transactionGetAll({
-        accountId: filters.accountId === 'all' ? '' : filters.accountId,
+        accountId: filters.accountId === 'all' ? undefined : filters.accountId,
         duration,
         page,
-        pageSize: 10,
+        limit: 10,
         q: filters.debouncedSearchQuery,
         sortBy: filters.sortBy,
         sortOrder: filters.sortOrder,
-        categoryId: filters.categoryId === 'all' ? '' : filters.categoryId,
-        isIncome: filters.isIncome,
+        categoryId: filters.categoryId === 'all' ? undefined : filters.categoryId,
+        isIncome: filters.isIncome?.toString(),
         minAmount: filters.minAmount,
         maxAmount: filters.maxAmount,
         type: filters.type === 'all' ? undefined : filters.type

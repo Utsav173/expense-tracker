@@ -6,7 +6,7 @@ import Loader from '@/components/ui/loader';
 import AddAccountModal from '@/components/modals/add-account-modal';
 import { AccountCard } from '@/components/ui/account-card';
 import { useState } from 'react';
-import { Account } from '@/lib/types';
+import type { AccountAPI } from '@/lib/api/api-types';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/lib/hooks/useToast';
 import { Button } from '@/components/ui/button';
@@ -56,7 +56,7 @@ const AccountListPage = () => {
     }
   };
 
-  const [selectedItem, setSelectedItem] = useState<Account | undefined>();
+  const [selectedItem, setSelectedItem] = useState<AccountAPI.Account | undefined>();
   const { showError } = useToast();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [deleteAccountId, setDeleteAccountId] = useState<string | null>(null);
@@ -89,7 +89,7 @@ const AccountListPage = () => {
     );
   }
 
-  const handleEdit = (account: Account) => {
+  const handleEdit = (account: AccountAPI.Account) => {
     setSelectedItem(account);
     setIsEditModalOpen(true);
   };

@@ -24,9 +24,9 @@ import {
 } from '@/components/ui/form';
 import { NumericInput } from '../ui/numeric-input';
 import DatePicker from '../date/date-picker';
-import { Investment, StockPriceResult } from '@/lib/types';
+import type { InvestmentAPI } from '@/lib/api/api-types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { formatCurrency, cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 import { Card, CardHeader, CardDescription } from '@/components/ui/card';
 import { Loader2, Calendar, Layers, BarChart4, PiggyBank, Pencil } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
@@ -62,10 +62,10 @@ const dividendUpdateSchema = z.object({
 interface UpdateInvestmentHoldingModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  investment: Investment;
+  investment: InvestmentAPI.Investment;
   accountCurrency: string;
   onInvestmentUpdated: () => void;
-  getStockPriceFn?: (symbol: string) => Promise<StockPriceResult | null>;
+  getStockPriceFn?: (symbol: string) => Promise<InvestmentAPI.StockPriceResult | null>;
 }
 
 const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> = ({
@@ -98,7 +98,8 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
   const detailsMutation = useMutation({
     mutationFn: (data: z.infer<typeof investmentHoldingUpdateSchema>) => {
       const apiPayload = {
-        ...data,
+        shares: parseFloat(data.shares),
+        purchasePrice: parseFloat(data.purchasePrice),
         purchaseDate: data.purchaseDate.toISOString()
       };
       return investmentUpdate(investment.id, apiPayload);

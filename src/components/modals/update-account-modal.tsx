@@ -9,15 +9,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Banknote, CircleDollarSign } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { accountUpdate } from '@/lib/endpoints/accounts';
+import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
 
-const formSchema = z.object({
-  name: z
-    .string()
-    .min(2, 'Account name must be at least 2 characters.')
-    .max(64, 'Account name cannot exceed 64 characters.')
-    .trim(),
-  isDefault: z.boolean()
-});
+type FormSchema = z.infer<typeof apiEndpoints.accounts.update.body>;
 
 interface UpdateAccountModalProps {
   open: boolean;
@@ -49,7 +43,7 @@ export function UpdateAccountModal({
         name: initialValues.name,
         isDefault: initialValues.isDefault
       }}
-      validationSchema={formSchema}
+      validationSchema={apiEndpoints.accounts.update.body}
       updateFn={accountUpdate}
       invalidateKeys={[[`accounts`], [`account`, accountId], [`dashboardData`]]}
       onSuccess={onAccountUpdated}

@@ -156,12 +156,12 @@ export const useAccountDetails = (id: string, searchParams: SearchParams) => {
         accountId: id,
         duration,
         page,
-        pageSize: 10,
+        limit: 10,
         q: filters.debouncedSearchQuery,
         sortBy: filters.sortBy,
         sortOrder: filters.sortOrder,
-        categoryId: filters.categoryId === 'all' ? '' : filters.categoryId,
-        isIncome: filters.isIncome,
+        categoryId: filters.categoryId === 'all' ? undefined : filters.categoryId,
+        isIncome: filters.isIncome?.toString(),
         minAmount: filters.minAmount,
         maxAmount: filters.maxAmount,
         type: filters.type === 'all' ? undefined : filters.type
@@ -170,7 +170,7 @@ export const useAccountDetails = (id: string, searchParams: SearchParams) => {
 
   const { data: categories } = useQuery({
     queryKey: ['categories'],
-    queryFn: () => categoryGetAll({ limit: '100' })
+    queryFn: () => categoryGetAll({ limit: 100, sortBy: 'name', sortOrder: 'asc', page: 1 })
   });
 
   const handleResetFilters = useCallback(() => {

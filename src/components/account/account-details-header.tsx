@@ -1,6 +1,6 @@
 'use client';
 
-import { AccountDetails } from '@/lib/types';
+import type { AccountAPI } from '@/lib/api/api-types';
 import { Button } from '@/components/ui/button';
 import { Share, Plus, Download, History } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -10,7 +10,7 @@ import { SingleLineEllipsis } from '../ui/ellipsis-components';
 import Link from 'next/link';
 
 interface AccountDetailsHeaderProps {
-  account?: AccountDetails;
+  account?: AccountAPI.GetAccountByIdResponse;
   isLoading?: boolean;
   refetchData: () => void;
   isMobile?: boolean;

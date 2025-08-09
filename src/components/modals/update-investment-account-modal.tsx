@@ -8,27 +8,17 @@ import { Input } from '@/components/ui/input';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Landmark, Building, CircleDollarSign } from 'lucide-react';
 import { investmentAccountUpdate } from '@/lib/endpoints/investmentAccount';
-import { InvestmentAccount } from '@/lib/types';
+import type { InvestmentAccountAPI } from '@/lib/api/api-types';
 import { fetchCurrencies, COMMON_CURRENCIES } from '@/lib/endpoints/currency';
 import CurrencySelect from '../ui/currency-select';
+import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
 
-const investmentAccountUpdateSchema = z.object({
-  name: z
-    .string()
-    .min(2, 'Account name must be at least 2 characters.')
-    .max(100, 'Account name cannot exceed 100 characters.')
-    .trim(),
-  platform: z
-    .string()
-    .min(1, 'Platform name is required.')
-    .max(64, 'Platform name cannot exceed 64 characters.')
-    .trim()
-});
+type InvestmentAccountUpdateSchema = z.infer<typeof apiEndpoints.investmentAccount.update.body>;
 
 interface UpdateInvestmentAccountModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  account: InvestmentAccount;
+  account: InvestmentAccountAPI.InvestmentAccount;
   onAccountUpdated: () => void;
 }
 
@@ -60,7 +50,7 @@ const UpdateInvestmentAccountModal: React.FC<UpdateInvestmentAccountModalProps> 
         name: account?.name ?? '',
         platform: account?.platform ?? ''
       }}
-      validationSchema={investmentAccountUpdateSchema}
+      validationSchema={apiEndpoints.investmentAccount.update.body}
       updateFn={investmentAccountUpdate}
       invalidateKeys={[
         ['investmentAccounts'],
@@ -107,6 +97,7 @@ const UpdateInvestmentAccountModal: React.FC<UpdateInvestmentAccountModalProps> 
                   <Input
                     placeholder='E.g., Zerodha, Groww, Upstox'
                     {...field}
+                    value={field.value ?? ''}
                     disabled={form.formState.isSubmitting}
                   />
                 </FormControl>

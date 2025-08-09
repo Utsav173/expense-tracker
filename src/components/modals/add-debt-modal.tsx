@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,35 +26,10 @@ import DatePicker from '../date/date-picker';
 import { NumericInput } from '../ui/numeric-input';
 import { Loader2, PlusCircle, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
 
-const debtFormSchema = z.object({
-  description: z.string().min(3, 'Description must be at least 3 characters.').max(255),
-  amount: z
-    .number()
-    .positive('Amount must be positive.')
-    .or(z.string().min(1, 'Amount is required.')),
-  account: z.string().uuid('Account selection is required.'),
-  counterparty: z.object(
-    {
-      label: z.string().email('Counterparty email is required.'),
-      value: z.string()
-    },
-    { required_error: 'Counterparty is required.' }
-  ),
-  type: z.enum(['given', 'taken'], { required_error: 'Debt type is required.' }),
-  interestType: z.enum(['simple', 'compound'], { required_error: 'Interest type is required.' }),
-  interestRate: z
-    .number()
-    .min(0, 'Interest rate cannot be negative.')
-    .optional()
-    .or(z.string().optional()),
-  startDate: z.date().optional(),
-  termLength: z.number().int().positive('Term length must be a positive integer.'),
-  termUnit: z.enum(['days', 'weeks', 'months', 'years']),
-  paymentFrequency: z.enum(['daily', 'weekly', 'monthly', 'yearly'])
-});
-
-type DebtFormValues = z.infer<typeof debtFormSchema>;
+type DebtFormValues = z.infer<typeof apiEndpoints.interest.createDebt.body>;
+type InterestFormSchema = z.infer<typeof apiEndpoints.interest.calculate.body>;
 
 interface AddDebtModalProps {
   onDebtAdded: () => void;
@@ -80,7 +55,7 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
   });
 
   const form = useForm<DebtFormValues>({
-    resolver: zodResolver(debtFormSchema),
+    resolver: zodResolver(apiEndpoints.interest.createDebt.body),
     defaultValues: {
       type: 'taken',
       interestType: 'simple',
@@ -123,7 +98,6 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
       ...formData,
       amount: Number(formData.amount),
       interestRate: Number(formData.interestRate || 0),
-      user: formData.counterparty.value,
       startDate: formData.startDate?.toISOString()
     };
     createDebtMutation.mutate(apiPayload);
@@ -159,6 +133,7 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
                     <Input
                       placeholder='E.g., Loan for rent'
                       {...field}
+                      value={field.value ?? ''}
                       disabled={createDebtMutation.isPending}
                     />
                   </FormControl>
@@ -179,7 +154,9 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
                       className='w-full'
                       disabled={createDebtMutation.isPending}
                       value={String(field.value)}
-                      onValueChange={({ value }: { value: string }) => field.onChange(value)}
+                      onValueChange={({ value }: { value: string }) =>
+                        field.onChange(parseFloat(value))
+                      }
                     />
                   </FormControl>
                   <FormMessage />
@@ -211,14 +188,14 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
 
             <FormField
               control={form.control}
-              name='counterparty'
+              name='user'
               render={({ field }) => (
                 <FormItem className='md:col-span-2'>
                   <FormLabel>Counterparty (Who is involved?)*</FormLabel>
                   <FormControl>
                     <InvitationCombobox
-                      value={field.value}
-                      onChange={field.onChange}
+                      value={{ value: field.value, label: '' }}
+                      onChange={(option) => field.onChange(option?.value ?? '')}
                       disabled={createDebtMutation.isPending}
                       placeholder='Select or invite user by email...'
                     />
@@ -279,7 +256,9 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
                       className='w-full'
                       disabled={createDebtMutation.isPending}
                       value={String(field.value)}
-                      onValueChange={({ value }: { value: string }) => field.onChange(value)}
+                      onValueChange={({ value }: { value: string }) =>
+                        field.onChange(parseFloat(value))
+                      }
                       decimalScale={2}
                     />
                   </FormControl>

@@ -23,20 +23,9 @@ import {
 } from '@/components/ui/form';
 import { NumericFormat } from 'react-number-format';
 import { Loader2, PlusCircle } from 'lucide-react';
+import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
 
-const accountSchema = z.object({
-  name: z
-    .string()
-    .min(2, 'Account name must be at least 2 characters.')
-    .max(64, 'Account name cannot exceed 64 characters.'),
-  balance: z
-    .number()
-    .min(0, 'Starting balance must be a positive number.')
-    .max(9999999999, 'Starting balance cannot exceed 9999999999.'),
-  currency: z.string().min(3, 'Currency is required.')
-});
-
-type AccountFormSchema = z.infer<typeof accountSchema>;
+type AccountFormSchema = z.infer<typeof apiEndpoints.accounts.create.body>;
 
 const AddAccountModal = () => {
   const invalidate = useInvalidateQueries();
@@ -44,7 +33,7 @@ const AddAccountModal = () => {
   const { showError } = useToast();
 
   const form = useForm<AccountFormSchema>({
-    resolver: zodResolver(accountSchema),
+    resolver: zodResolver(apiEndpoints.accounts.create.body),
     defaultValues: {
       name: '',
       balance: 0,
@@ -139,7 +128,7 @@ const AddAccountModal = () => {
                     placeholder='0.00'
                     className='w-full'
                     onValueChange={(values) => {
-                      field.onChange(values.value);
+                      field.onChange(parseFloat(values.value));
                     }}
                     value={field.value}
                     disabled={createAccountMutation.isPending}

@@ -1,14 +1,14 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
-import { Investment } from '@/lib/types';
+import type { InvestmentAPI } from '@/lib/api/api-types';
 import { format } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
 import { DataTableColumnHeader } from '../ui/column-header';
 import { InvestmentHoldingActions } from './investment-holding-actions';
 
 interface InvestmentHoldingsColumnsProps {
-  handleEdit: (investment: Investment) => void;
+  handleEdit: (investment: InvestmentAPI.Investment) => void;
   handleDeleteClick: (id: string) => void;
   accountCurrency: string;
 }
@@ -17,7 +17,7 @@ export const investmentHoldingsColumns = ({
   handleEdit,
   handleDeleteClick,
   accountCurrency
-}: InvestmentHoldingsColumnsProps): ColumnDef<Investment>[] => [
+}: InvestmentHoldingsColumnsProps): ColumnDef<InvestmentAPI.Investment>[] => [
   {
     accessorKey: 'symbol',
     header: ({ column }) => <DataTableColumnHeader column={column} title='Symbol' />,

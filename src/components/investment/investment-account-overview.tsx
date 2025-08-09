@@ -16,7 +16,7 @@ import {
 } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { cn, formatCurrency } from '@/lib/utils';
-import { ApiResponse, InvestmentAccountSummary } from '@/lib/types';
+import type { InvestmentAccountAPI } from '@/lib/api/api-types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
@@ -301,7 +301,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
         </div>
       </CardHeader>
 
-      <CardContent className='p-6'>
+      <CardContent className='p-6 max-sm:p-3'>
         <div className='h-[400px] w-full'>
           {isLoading ? (
             <div className='from-muted/20 to-muted/40 flex h-full w-full items-center justify-center rounded-lg bg-gradient-to-br'>
@@ -408,7 +408,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
 interface InvestmentAccountOverviewProps {
   accountId: string;
   accountCurrency: string;
-  summary: ApiResponse<InvestmentAccountSummary> | undefined;
+  summary: InvestmentAccountAPI.GetSummaryResponse | undefined;
   isLoadingSummary: boolean;
   oldestInvestmentDate: Date | undefined;
 }
@@ -436,7 +436,7 @@ const InvestmentAccountOverview: React.FC<InvestmentAccountOverviewProps> = ({
 
       if (selectedTimeRange === 'all') {
         return investmentAccountGetPerformance(accountId, {
-          startDate: String(oldestInvestmentDate),
+          startDate: oldestInvestmentDate ? format(oldestInvestmentDate, 'yyyy-MM-dd') : undefined,
           endDate: format(new Date(), 'yyyy-MM-dd')
         });
       } else if (selectedTimeRange === 'custom') {

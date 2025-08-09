@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { z } from 'zod';
 import { UpdateModal } from './update-modal';
 import { Input } from '@/components/ui/input';
@@ -12,24 +12,15 @@ import { Card, CardContent } from '../ui/card';
 import { formatCurrency } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { apiUpdateDebt } from '@/lib/endpoints/debt';
-import { Debts } from '@/lib/types';
+import type { DebtAndInterestAPI } from '@/lib/api/api-types';
+import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
 
-const debtUpdateSchema = z.object({
-  description: z
-    .string()
-    .min(3, 'Description must be at least 3 characters.')
-    .max(255, 'Description too long.'),
-  termLength: z.number().int().positive('Term length must be a positive integer.'),
-  termUnit: z.enum(['days', 'weeks', 'months', 'years']),
-  interestRate: z.number().min(0, 'Interest rate cannot be negative.')
-});
-
-type DebtUpdateFormSchema = z.infer<typeof debtUpdateSchema>;
+type DebtUpdateFormSchema = z.infer<typeof apiEndpoints.interest.updateDebt.body>;
 
 interface UpdateDebtModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  debt: Debts;
+  debt: DebtAndInterestAPI.Debt;
   onDebtUpdated: () => void;
 }
 
@@ -51,7 +42,7 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
         termUnit: debt.termUnit,
         interestRate: debt.interestRate
       }}
-      validationSchema={debtUpdateSchema}
+      validationSchema={apiEndpoints.interest.updateDebt.body}
       updateFn={(id, data) => apiUpdateDebt(id, data)}
       invalidateKeys={[['debts']]}
       onSuccess={onDebtUpdated}

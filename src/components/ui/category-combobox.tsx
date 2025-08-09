@@ -4,7 +4,7 @@ import React, { useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { categoryGetAll, categoryGetById } from '@/lib/endpoints/category';
 import { Combobox, ComboboxOption } from '@/components/ui/combobox';
-import { Category } from '@/lib/types';
+import type { CategoryAPI } from '@/lib/api/api-types';
 import { Skeleton } from './skeleton';
 import { cn } from '@/lib/utils';
 
@@ -47,13 +47,14 @@ const CategoryCombobox: React.FC<CategoryComboboxProps> = ({
       try {
         const data = await categoryGetAll({
           search: query,
-          limit: '20',
+          limit: 20,
           sortBy: 'name',
-          sortOrder: 'asc'
+          sortOrder: 'asc',
+          page: 1
         });
 
         let fetchedOptions: ComboboxOption[] =
-          data?.categories?.map((cat: Category) => ({
+          data?.categories?.map((cat: CategoryAPI.Category) => ({
             value: cat.id,
             label: cat.name
           })) ?? [];

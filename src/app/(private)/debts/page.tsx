@@ -23,10 +23,10 @@ import AddDebtModal from '@/components/modals/add-debt-modal';
 import { useAuth } from '@/components/providers/auth-provider';
 import InterestCalculatorModal from '@/components/modals/interest-calculator-modal';
 import { z } from 'zod';
-import { interestSchema } from '@/lib/utils/schema.validations';
+import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
 
-type InterestFormSchema = z.infer<typeof interestSchema>;
-type DebtTypeFilter = '' | 'given' | 'taken' | 'all' | undefined;
+type InterestFormSchema = z.infer<typeof apiEndpoints.interest.calculate.body>;
+type DebtTypeFilter = 'given' | 'taken' | 'all' | undefined;
 
 const DebtsPage = () => {
   const { showError } = useToast();
@@ -62,9 +62,9 @@ const DebtsPage = () => {
     queryFn: () =>
       apiFetchDebts({
         page: state.page,
-        pageSize: 10,
+        limit: 10,
         q: state.q,
-        type: state.type === 'all' ? '' : state.type,
+        type: state.type === 'all' ? undefined : state.type,
         sortBy: state.sortBy,
         sortOrder: state.sortOrder
       }),

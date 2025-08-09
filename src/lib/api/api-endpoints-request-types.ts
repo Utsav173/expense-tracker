@@ -144,7 +144,7 @@ export const apiEndpoints = {
       path: '/accounts',
       body: z.object({
         name: z.string().min(1, 'Account name is required.').max(64).trim(),
-        balance: z.number().min(0).default(0),
+        balance: z.number().min(0),
         currency: z.string().length(3, 'Currency must be 3 characters long.')
       })
     },
@@ -167,8 +167,6 @@ export const apiEndpoints = {
       params: idParamSchema,
       body: z.object({
         name: z.string().min(1).max(64).trim().optional(),
-        balance: z.number().min(0).optional(),
-        currency: z.string().length(3).optional(),
         isDefault: z.boolean().optional()
       })
     },
@@ -185,7 +183,7 @@ export const apiEndpoints = {
         startDate: z.string().optional(),
         endDate: z.string().optional(),
         numTransactions: z.string().optional(),
-        exportType: z.enum(['pdf', 'xlsx']).default('pdf')
+        exportType: z.enum(['pdf', 'xlsx'])
       })
     }
   },
@@ -324,31 +322,23 @@ export const apiEndpoints = {
   user: {
     getMe: {
       method: 'GET',
-      path: '/user/me'
+      path: '/auth/me'
     },
     update: {
       method: 'PUT',
-      path: '/user/update',
-      body: z.object({
-        name: z.string().min(3).optional(),
-        preferredCurrency: z.string().length(3).optional(),
-        image: z.any().optional() // File object
-      })
+      path: '/auth/update'
+      // No body schema here, as it's FormData and can't be validated by Zod on the client.
     },
     updatePreferences: {
       method: 'PUT',
-      path: '/user/preferences',
+      path: '/auth/preferences',
       body: z.object({
         preferredCurrency: z.string().length(3)
       })
     },
     getPreferences: {
       method: 'GET',
-      path: '/user/preferences'
-    },
-    healthCheck: {
-      method: 'GET',
-      path: '/user/hc'
+      path: '/auth/preferences'
     }
   },
   settings: {
@@ -488,7 +478,8 @@ export const apiEndpoints = {
       body: z.object({
         name: z.string().min(1).optional(),
         targetAmount: z.coerce.number().positive().optional(),
-        targetDate: z.string().datetime().optional().nullable()
+        savedAmount: z.coerce.number().nonnegative().optional(),
+        targetDate: z.date().optional().nullable()
       })
     },
     addAmount: {
@@ -535,17 +526,17 @@ export const apiEndpoints = {
       method: 'POST',
       path: '/interest/debts',
       body: z.object({
-        amount: z.number().positive(),
+        amount: z.number().positive('Amount must be positive.'),
         description: z.string().max(255).optional(),
         interestRate: z.number().min(0).default(0),
         interestType: z.enum(['simple', 'compound']),
-        startDate: z.string().datetime().optional(),
-        termLength: z.number().int().positive(),
+        startDate: z.date().optional(),
+        termLength: z.number().int().positive('Term length must be a positive integer.'),
         termUnit: z.enum(['days', 'weeks', 'months', 'years']),
         paymentFrequency: z.enum(['daily', 'weekly', 'monthly', 'yearly']),
         type: z.enum(['given', 'taken']),
-        user: z.string().uuid(),
-        account: z.string().uuid()
+        user: z.string().uuid('Involved user ID must be a valid UUID.'),
+        account: z.string().uuid('Associated account ID must be a valid UUID.')
       })
     },
     getDebts: {
@@ -563,7 +554,6 @@ export const apiEndpoints = {
       path: '/interest/debts/:id',
       params: idParamSchema,
       body: z.object({
-        amount: z.number().positive().optional(),
         description: z.string().max(255).optional(),
         interestRate: z.number().min(0).optional(),
         termLength: z.number().int().positive().optional(),

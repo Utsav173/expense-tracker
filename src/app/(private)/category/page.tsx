@@ -10,6 +10,7 @@ import AddCategoryModal from '@/components/modals/add-category-modal';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
+import type { CategoryAPI } from '@/lib/api/api-types';
 
 const CategoryPage = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -36,11 +37,12 @@ const CategoryPage = () => {
     }
   );
 
-  const { data, isLoading, isError, error, refetch } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery<CategoryAPI.GetCategoriesResponse>({
     queryKey: ['categories', page, filters.debouncedSearchQuery, filters.sortBy, filters.sortOrder],
     queryFn: () =>
       categoryGetAll({
-        page: String(page),
+        page: page,
+        limit: 10,
         search: filters.debouncedSearchQuery,
         sortBy: filters.sortBy,
         sortOrder: filters.sortOrder

@@ -1,13 +1,13 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn, formatCurrency } from '@/lib/utils';
-import { DashboardData } from '@/lib/types';
+import type { AccountAPI } from '@/lib/api/api-types';
 import { ChangeIndicator } from '@/components/ui/change-indicator';
 import NoData from '../ui/no-data';
 import Loader from '../ui/loader';
 
 interface FinancialSnapshotProps {
-  data: DashboardData | null | undefined;
+  data: AccountAPI.DashboardData | null | undefined;
   isLoading: boolean;
   className?: string;
 }

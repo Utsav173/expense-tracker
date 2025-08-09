@@ -1,59 +1,46 @@
-import apiFetch from '../api-client';
-import { Debts, ApiResponse, DebtWithDetails, Payment } from '../types';
+import apiClient from '@/lib/api/client';
+import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
+import type { DebtAndInterestAPI } from '@/lib/api/api-types';
+import { z } from 'zod';
 
-type DebtsPaginatedResponse = ApiResponse<{
-  data: DebtWithDetails[];
-  totalCount: number;
-  totalPages: number;
-  currentPage: number;
-  pageSize: number;
-}>;
-
-type OutstandingDebtsResponse = ApiResponse<{
-  data: DebtWithDetails[];
-  totalCount?: number;
-  totalPages?: number;
-  currentPage?: number;
-  pageSize?: number;
-}>;
+type FetchDebtsParams = z.infer<typeof apiEndpoints.interest.getDebts.query>;
+type CreateDebtBody = z.infer<typeof apiEndpoints.interest.createDebt.body>;
+type UpdateDebtBody = z.infer<typeof apiEndpoints.interest.updateDebt.body>;
+type CalculateInterestBody = z.infer<typeof apiEndpoints.interest.calculate.body>;
 
 export const apiFetchDebts = async (
-  params: {
-    page?: number;
-    pageSize?: number;
-    q?: string;
-    type?: 'given' | 'taken' | '';
-    duration?: string;
-    sortOrder?: 'asc' | 'desc';
-    sortBy?: string;
-    isPaid?: 'true' | 'false';
-  } = {}
-): Promise<DebtsPaginatedResponse> => {
-  return apiFetch('/interest/debts', 'GET', undefined, { params });
+  params?: FetchDebtsParams
+): Promise<DebtAndInterestAPI.GetDebtsResponse> => {
+  return apiClient(apiEndpoints.interest.getDebts, { query: params });
 };
 
-export const debtsMarkAsPaid = (id: string): Promise<ApiResponse<{ message: string }>> =>
-  apiFetch(`/interest/debts/${id}/mark-paid`, 'PUT');
+export const debtsMarkAsPaid = (id: string): Promise<DebtAndInterestAPI.MarkDebtAsPaidResponse> =>
+  apiClient(apiEndpoints.interest.markDebtAsPaid, { params: { id } });
 
-export const apiCreateDebt = (body: any): Promise<ApiResponse<{ message: string; data: Debts }>> =>
-  apiFetch('/interest/debts', 'POST', body);
+export const apiCreateDebt = (
+  body: CreateDebtBody
+): Promise<DebtAndInterestAPI.CreateDebtResponse> =>
+  apiClient(apiEndpoints.interest.createDebt, { body });
 
-export const apiUpdateDebt = (id: string, body: any): Promise<ApiResponse<{ message: string }>> => {
-  return apiFetch(`/interest/debts/${id}`, 'PUT', body);
+export const apiUpdateDebt = (
+  id: string,
+  body: UpdateDebtBody
+): Promise<DebtAndInterestAPI.UpdateDebtResponse> => {
+  return apiClient(apiEndpoints.interest.updateDebt, { params: { id }, body });
 };
 
-export const apiDeleteDebt = (id: string): Promise<ApiResponse<{ message: string }>> =>
-  apiFetch(`/interest/debts/${id}`, 'DELETE');
+export const apiDeleteDebt = (id: string): Promise<DebtAndInterestAPI.DeleteDebtResponse> =>
+  apiClient(apiEndpoints.interest.deleteDebt, { params: { id } });
 
-export const getOutstandingDebts = (): Promise<OutstandingDebtsResponse> =>
-  apiFetch('/interest/debts', 'GET', undefined, {
-    params: { type: 'taken', isPaid: 'false', pageSize: 100 }
+export const getOutstandingDebts = (): Promise<DebtAndInterestAPI.GetDebtsResponse> =>
+  apiClient(apiEndpoints.interest.getDebts, {
+    query: { type: 'taken', isPaid: 'false', limit: 100 }
   });
 
 export const interestCalculate = (
-  data: any
-): Promise<ApiResponse<{ interest: number; totalAmount: number }>> =>
-  apiFetch('/interest/calculate', 'POST', data);
+  data: CalculateInterestBody
+): Promise<DebtAndInterestAPI.CalculateInterestResponse> =>
+  apiClient(apiEndpoints.interest.calculate, { body: data });
 
-export const getDebtSchedule = (id: string): Promise<ApiResponse<Payment[]>> =>
-  apiFetch(`/interest/debts/${id}/schedule`, 'GET');
+export const getDebtSchedule = (id: string): Promise<DebtAndInterestAPI.GetDebtScheduleResponse> =>
+  apiClient(apiEndpoints.interest.getDebtSchedule, { params: { id } });

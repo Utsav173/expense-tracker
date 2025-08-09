@@ -18,7 +18,7 @@ import {
   FormMessage
 } from '@/components/ui/form';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
-import { StockPriceResult, StockSearchResult } from '@/lib/types';
+import type { InvestmentAPI } from '@/lib/api/api-types';
 import { formatCurrency, cn } from '@/lib/utils';
 import {
   Loader2,
@@ -34,15 +34,14 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { Combobox, ComboboxOption } from '../ui/combobox';
-import { Card, CardContent, CardDescription, CardHeader } from '../ui/card';
+import { Card, CardContent } from '../ui/card';
 import {
   format as formatDate,
   isValid as isDateValid,
   isWeekend,
   subDays,
   isFuture,
-  startOfDay,
-  isSameDay
+  startOfDay
 } from 'date-fns';
 import { useDebounce } from 'use-debounce';
 import { NumericInput } from '../ui/numeric-input';
@@ -85,7 +84,7 @@ type InvestmentApiPayload = {
   shares: number;
   purchasePrice: number;
   purchaseDate: string;
-  investmentAccount: string;
+  account: string;
 };
 
 interface AddInvestmentHoldingModalProps {
@@ -94,8 +93,8 @@ interface AddInvestmentHoldingModalProps {
   accountId: string;
   accountCurrency: string;
   onInvestmentAdded: () => void;
-  searchStocksFn: (query: string) => Promise<StockSearchResult[] | null>;
-  getStockPriceFn: (symbol: string) => Promise<StockPriceResult | null>;
+  searchStocksFn: (query: string) => Promise<InvestmentAPI.SearchStocksResponse | null>;
+  getStockPriceFn: (symbol: string) => Promise<InvestmentAPI.StockPriceResult | null>;
   hideTriggerButton?: boolean;
 }
 
@@ -276,7 +275,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
       shares: parseFloat(data.shares),
       purchasePrice: parseFloat(data.purchasePrice),
       purchaseDate: data.purchaseDate.toISOString(),
-      investmentAccount: accountId
+      account: accountId
     };
     createInvestmentMutation.mutate(apiPayload);
   };
@@ -342,109 +341,120 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
       isOpen={isOpen}
       onOpenChange={handleClose}
     >
-      <div className='max-h-[80vh] space-y-4 px-1'>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleCreate)} className='space-y-4'>
-            {/* Stock Symbol Search */}
-            <FormField
-              control={form.control}
-              name='symbol'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className='flex items-center gap-2 text-sm font-medium'>
-                    <Search className='text-muted-foreground h-4 w-4' />
-                    Stock Symbol
-                    <span className='text-destructive'>*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Combobox
-                      value={field.value}
-                      onChange={(option) => {
-                        field.onChange(option);
-                        form.setValue('purchasePrice', '', { shouldValidate: true });
-                      }}
-                      fetchOptions={fetchStocks}
-                      placeholder='Search stocks (e.g., AAPL, MSFT)'
-                      loadingPlaceholder='Searching stocks...'
-                      noOptionsMessage='No stocks found. Try a different term.'
-                      className='w-full'
-                      disabled={createInvestmentMutation.isPending}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+      <Form {...form}>
+        <div className='mt-4 space-y-4 sm:space-y-6'>
+          {/* Stock Symbol Search */}
+          <FormField
+            control={form.control}
+            name='symbol'
+            render={({ field }) => (
+              <FormItem className='space-y-2 sm:space-y-3'>
+                <FormLabel className='flex items-center gap-2 text-sm font-medium'>
+                  <Search className='text-muted-foreground h-4 w-4' />
+                  Stock Symbol
+                  <span className='text-destructive'>*</span>
+                </FormLabel>
+                <FormControl>
+                  <Combobox
+                    value={field.value}
+                    onChange={(option) => {
+                      field.onChange(option);
+                      form.setValue('purchasePrice', '', { shouldValidate: true });
+                    }}
+                    fetchOptions={fetchStocks}
+                    placeholder='Search stocks (e.g., AAPL, MSFT)'
+                    loadingPlaceholder='Searching stocks...'
+                    noOptionsMessage='No stocks found. Try a different term.'
+                    className='w-full'
+                    disabled={createInvestmentMutation.isPending}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-            {/* Current Market Price Card - Responsive */}
-            {selectedSymbolOption?.value && (
-              <Card className='border-muted bg-muted/20 transition-all duration-200'>
-                <CardContent className='p-3 sm:p-4'>
-                  <div className='flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0'>
-                    <div className='space-y-2'>
-                      <div className='flex items-center gap-2'>
-                        <BarChart3 className='text-muted-foreground h-4 w-4' />
-                        <CardDescription className='text-xs font-medium tracking-wide uppercase'>
-                          Current Market Price
-                        </CardDescription>
-                      </div>
-                      <div className='flex flex-wrap items-center gap-2'>
-                        <Badge variant='secondary' className='font-mono text-xs'>
-                          {selectedSymbolOption.value}
-                        </Badge>
-                        <div className='text-lg font-bold'>
-                          {isPriceLoading ? (
-                            <Skeleton className='h-6 w-20' />
-                          ) : currentPriceInfo?.price !== null &&
-                            currentPriceInfo?.price !== undefined ? (
-                            <span className='text-foreground'>
-                              {formatCurrency(
-                                currentPriceInfo.price,
-                                currentPriceInfo.currency ?? accountCurrency
-                              )}
-                            </span>
-                          ) : (
-                            <span className='text-muted-foreground text-sm'>Price unavailable</span>
-                          )}
-                        </div>
-                      </div>
+          {/* Current Market Price Card - Mobile Optimized */}
+          {selectedSymbolOption?.value && (
+            <Card className='border-border bg-muted/30'>
+              <CardContent className='p-3 sm:p-4'>
+                <div className='w-full overflow-hidden'>
+                  <div className='mb-3 flex items-center gap-2'>
+                    <BarChart3 className='text-muted-foreground h-4 w-4 flex-shrink-0' />
+                    <span className='text-muted-foreground truncate text-xs font-medium tracking-wide uppercase'>
+                      Current Market Price
+                    </span>
+                  </div>
+
+                  <div className='space-y-3'>
+                    {/* Symbol Badge - Mobile First */}
+                    <div className='flex min-w-0 items-center gap-2'>
+                      <Badge variant='secondary' className='flex-shrink-0 font-mono text-xs'>
+                        {selectedSymbolOption.value}
+                      </Badge>
                     </div>
 
-                    {/* Price Comparison - Stack on mobile */}
-                    {priceComparison && (
-                      <div className='flex items-center justify-start gap-3 sm:flex-col sm:items-end sm:justify-center'>
-                        <div
-                          className={cn(
-                            'flex items-center gap-1.5 text-sm font-semibold',
-                            priceComparison.isPositive
-                              ? 'text-green-600 dark:text-green-400'
-                              : 'text-red-600 dark:text-red-400'
-                          )}
-                        >
-                          {priceComparison.isPositive ? (
-                            <TrendingUp className='h-4 w-4' />
-                          ) : (
-                            <TrendingDown className='h-4 w-4' />
-                          )}
-                          <span>
-                            {priceComparison.percentage > 0 ? '+' : ''}
-                            {priceComparison.percentage.toFixed(1)}%
+                    {/* Price Display - Mobile Stack */}
+                    <div className='space-y-2'>
+                      <div className='flex min-w-0 items-baseline gap-2'>
+                        {isPriceLoading ? (
+                          <Skeleton className='h-5 w-20 flex-shrink-0' />
+                        ) : currentPriceInfo?.price !== null &&
+                          currentPriceInfo?.price !== undefined ? (
+                          <span className='truncate text-lg font-semibold'>
+                            {formatCurrency(
+                              currentPriceInfo.price,
+                              currentPriceInfo.currency ?? accountCurrency
+                            )}
+                          </span>
+                        ) : (
+                          <span className='text-muted-foreground truncate text-sm'>
+                            Price unavailable
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Price Comparison - Separate Row on Mobile */}
+                      {priceComparison && (
+                        <div className='flex items-center justify-between'>
+                          <div
+                            className={cn(
+                              'flex items-center gap-1 text-sm font-medium',
+                              priceComparison.isPositive
+                                ? 'text-green-600 dark:text-green-400'
+                                : 'text-red-600 dark:text-red-400'
+                            )}
+                          >
+                            {priceComparison.isPositive ? (
+                              <TrendingUp className='h-4 w-4 flex-shrink-0' />
+                            ) : (
+                              <TrendingDown className='h-4 w-4 flex-shrink-0' />
+                            )}
+                            <span className='truncate'>
+                              {priceComparison.percentage > 0 ? '+' : ''}
+                              {priceComparison.percentage.toFixed(1)}%
+                            </span>
+                          </div>
+                          <span className='text-muted-foreground flex-shrink-0 text-xs'>
+                            vs Purchase
                           </span>
                         </div>
-                        <div className='text-muted-foreground text-xs'>vs Purchase</div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
+          {/* Form Fields Container */}
+          <div className='space-y-4 sm:space-y-6'>
             {/* Purchase Date */}
             <FormField
               control={form.control}
               name='purchaseDate'
               render={({ field }) => (
-                <FormItem>
+                <FormItem className='space-y-2 sm:space-y-3'>
                   <FormLabel className='flex items-center gap-2 text-sm font-medium'>
                     <Calendar className='text-muted-foreground h-4 w-4' />
                     Purchase Date
@@ -456,7 +466,12 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                       onChange={(newDate) => {
                         if (newDate) {
                           const validDate = getMostRecentValidDate(newDate);
-                          if (!isSameDay(validDate, field.value)) {
+                          if (
+                            !field.value ||
+                            !isDateValid(field.value) ||
+                            formatDate(validDate, 'yyyy-MM-dd') !==
+                              formatDate(field.value, 'yyyy-MM-dd')
+                          ) {
                             field.onChange(validDate);
                             form.setValue('purchasePrice', '', { shouldValidate: true });
                           }
@@ -468,9 +483,9 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                   </FormControl>
                   <FormMessage />
                   {isWeekend(field.value) && (
-                    <Alert className='mt-2'>
-                      <AlertCircle className='h-4 w-4' />
-                      <AlertDescription className='text-xs'>
+                    <Alert className='border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'>
+                      <AlertCircle className='h-4 w-4 text-amber-600 dark:text-amber-400' />
+                      <AlertDescription className='text-xs text-amber-700 dark:text-amber-300'>
                         Weekend dates are automatically adjusted to the previous trading day.
                       </AlertDescription>
                     </Alert>
@@ -479,14 +494,14 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
               )}
             />
 
-            {/* Shares and Price - Responsive Grid */}
-            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+            {/* Shares and Price Grid - Mobile Optimized */}
+            <div className='space-y-4 sm:grid sm:grid-cols-2 sm:gap-6 sm:space-y-0'>
               {/* Number of Shares */}
               <FormField
                 control={form.control}
                 name='shares'
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className='space-y-2 sm:space-y-3'>
                     <FormLabel className='flex items-center gap-2 text-sm font-medium'>
                       <Layers className='text-muted-foreground h-4 w-4' />
                       Shares
@@ -512,11 +527,13 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                 control={form.control}
                 name='purchasePrice'
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className='flex items-center gap-2 text-sm font-medium'>
-                      <IndianRupee className='text-muted-foreground h-4 w-4' />
-                      Price per Share
-                      <span className='text-destructive'>*</span>
+                  <FormItem className='space-y-2 sm:space-y-3'>
+                    <FormLabel className='flex flex-wrap items-center gap-2 text-sm font-medium'>
+                      <div className='flex items-center gap-2'>
+                        <IndianRupee className='text-muted-foreground h-4 w-4' />
+                        <span>Price per Share</span>
+                        <span className='text-destructive'>*</span>
+                      </div>
                       {isHistoricalPriceLoading && (
                         <TooltipProvider delayDuration={100}>
                           <Tooltip>
@@ -546,84 +563,89 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                 )}
               />
             </div>
+          </div>
 
-            {/* Total Investment Summary - Enhanced */}
-            {totalValue && totalValue > 0 && (
-              <Card className='border-primary/30 bg-primary/5 transition-all duration-200'>
-                <CardContent className='p-4'>
-                  <div className='flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0'>
-                    <div className='flex items-center gap-3'>
-                      <div className='bg-primary/10 rounded-full p-2'>
-                        <BarChart3 className='text-primary h-4 w-4' />
-                      </div>
-                      <div>
-                        <p className='text-foreground text-sm font-semibold'>Total Investment</p>
-                        <p className='text-muted-foreground text-xs'>
-                          {parseFloat(sharesStr) || 0} shares ×{' '}
-                          {formatCurrency(parseFloat(purchasePriceStr) || 0, accountCurrency)}
-                        </p>
-                      </div>
+          {/* Total Investment Summary - Mobile Optimized */}
+          {totalValue && totalValue > 0 && (
+            <Card className='border-primary/20 bg-primary/5 dark:bg-primary/10'>
+              <CardContent className='p-3 sm:p-4'>
+                <div className='w-full space-y-3 overflow-hidden sm:flex sm:items-center sm:justify-between sm:space-y-0'>
+                  <div className='flex min-w-0 items-start gap-3'>
+                    <div className='bg-primary/10 flex-shrink-0 rounded-full p-2'>
+                      <BarChart3 className='text-primary h-4 w-4' />
                     </div>
-                    <div className='text-left sm:text-right'>
-                      <p className='text-primary text-lg font-bold'>
-                        {formatCurrency(totalValue, accountCurrency)}
+                    <div className='min-w-0 flex-1'>
+                      <p className='text-foreground text-sm font-medium'>Total Investment</p>
+                      <p className='text-muted-foreground truncate text-xs'>
+                        {parseFloat(sharesStr) || 0} shares ×{' '}
+                        <span className='inline-block'>
+                          {formatCurrency(parseFloat(purchasePriceStr) || 0, accountCurrency)}
+                        </span>
                       </p>
-                      {priceComparison && (
-                        <p className='text-muted-foreground text-xs'>
-                          Current value:{' '}
-                          {formatCurrency(
-                            (parseFloat(sharesStr) || 0) * (currentPriceInfo?.price || 0),
-                            accountCurrency
-                          )}
-                        </p>
-                      )}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            )}
 
-            {/* Help Text */}
-            {selectedSymbolOption && !totalValue && (
-              <Alert>
-                <Info className='h-4 w-4' />
-                <AlertDescription className='text-xs'>
-                  Enter the number of shares and purchase price to see your total investment.
-                </AlertDescription>
-              </Alert>
-            )}
-          </form>
-        </Form>
+                  <div className='flex-shrink-0 text-left sm:text-right'>
+                    <p className='text-primary text-xl font-bold'>
+                      {formatCurrency(totalValue, accountCurrency)}
+                    </p>
+                    {priceComparison && currentPriceInfo?.price && (
+                      <p className='text-muted-foreground truncate text-xs'>
+                        Current value:{' '}
+                        <span className='inline-block'>
+                          {formatCurrency(
+                            (parseFloat(sharesStr) || 0) * currentPriceInfo.price,
+                            accountCurrency
+                          )}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-        {/* Action Buttons - Fixed at bottom */}
-        <div className='bg-background sticky bottom-0 flex flex-col-reverse gap-3 border-t pt-4 sm:flex-row sm:justify-end'>
-          <Button
-            type='button'
-            variant='outline'
-            onClick={handleClose}
-            disabled={isPending}
-            className='w-full sm:w-auto'
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={form.handleSubmit(handleCreate)}
-            disabled={isPending || !form.formState.isValid || hasErrors}
-            className='w-full sm:w-auto sm:min-w-[140px]'
-          >
-            {createInvestmentMutation.isPending ? (
-              <>
-                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                Adding...
-              </>
-            ) : (
-              <>
-                <PlusCircle className='mr-2 h-4 w-4' />
-                Add Holding
-              </>
-            )}
-          </Button>
+          {/* Help Text */}
+          {selectedSymbolOption && !totalValue && (
+            <Alert className='border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20'>
+              <Info className='h-4 w-4 text-blue-600 dark:text-blue-400' />
+              <AlertDescription className='text-xs text-blue-700 dark:text-blue-300'>
+                Enter the number of shares and purchase price to see your total investment.
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
+      </Form>
+
+      {/* Action Buttons - Mobile Optimized */}
+      <div className='flex flex-col-reverse gap-3 border-t pt-4 sm:flex-row sm:justify-end sm:pt-6'>
+        <Button
+          type='button'
+          variant='outline'
+          onClick={handleClose}
+          disabled={isPending}
+          className='w-full sm:w-auto'
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={form.handleSubmit(handleCreate)}
+          disabled={isPending || !form.formState.isValid || hasErrors}
+          className='w-full sm:w-auto sm:min-w-[140px]'
+        >
+          {createInvestmentMutation.isPending ? (
+            <>
+              <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+              Adding...
+            </>
+          ) : (
+            <>
+              <PlusCircle className='mr-2 h-4 w-4' />
+              Add Holding
+            </>
+          )}
+        </Button>
       </div>
     </AddModal>
   );

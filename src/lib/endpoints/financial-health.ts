@@ -1,11 +1,6 @@
-import apiFetch from '../api-client';
+import apiClient from '@/lib/api/client';
+import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
+import type { AIAPI } from '@/lib/api/api-types';
 
-export interface FinancialHealthAnalysis {
-  score: number;
-  highlights: { emoji: string; statement: string }[];
-  improvements: { emoji: string; statement: string }[];
-  recommendations: { title: string; description: string }[];
-}
-
-export const getFinancialHealthAnalysis = async (): Promise<FinancialHealthAnalysis> =>
-  await apiFetch('/ai/financial-health/analysis', 'GET');
+export const getFinancialHealthAnalysis = async (): Promise<AIAPI.GetFinancialHealthResponse> =>
+  await apiClient(apiEndpoints.ai.getFinancialHealth);

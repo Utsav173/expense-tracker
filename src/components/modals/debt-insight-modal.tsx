@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, Tooltip } from 'recharts';
 
-import { DebtWithDetails, Payment } from '@/lib/types';
+import type { DebtAndInterestAPI } from '@/lib/api/api-types';
 import { getDebtSchedule } from '@/lib/endpoints/debt';
 import { formatCurrency, cn } from '@/lib/utils';
 
@@ -33,10 +33,10 @@ import NoData from '../ui/no-data';
 interface DebtInsightModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  debt: DebtWithDetails;
+  debt: DebtAndInterestAPI.DebtRecord;
 }
 
-const calculateFinalDueDate = (debt: DebtWithDetails['debts']): Date | null => {
+const calculateFinalDueDate = (debt: DebtAndInterestAPI.Debt): Date | null => {
   if (!debt.startDate || !debt.termLength || !debt.termUnit) return null;
   const startDate = new Date(debt.startDate);
   switch (debt.termUnit) {
@@ -157,7 +157,7 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
     isLoading,
     isError,
     error
-  } = useQuery<Payment[]>({
+  } = useQuery({
     queryKey: ['debtSchedule', debt.debts.id],
     queryFn: async () => {
       const data = await getDebtSchedule(debt.debts.id);
@@ -232,7 +232,7 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
             <div className='space-y-1.5'>
               <div className='flex flex-wrap items-center gap-x-3 gap-y-2'>
                 <DialogTitle className='text-2xl font-bold'>{debt.debts.description}</DialogTitle>
-                <StatusBadge isPaid={debt.debts.isPaid} isOverdue={!!isOverdue} />
+                <StatusBadge isPaid={!!debt.debts.isPaid} isOverdue={!!isOverdue} />
                 <Badge variant='secondary' className='capitalize'>
                   {debt.debts.type}
                 </Badge>

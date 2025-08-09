@@ -12,19 +12,9 @@ import { Button } from '../ui/button';
 import AddModal from './add-modal';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { Loader2 } from 'lucide-react';
+import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
 
-const categorySchema = z.object({
-  name: z
-    .string()
-    .min(3, 'Category name must be at least 3 characters')
-    .max(50, 'Category name cannot exceed 50 characters')
-    .trim()
-    .refine((value) => /^[a-zA-Z0-9\s-_]+$/.test(value), {
-      message: 'Category name can only contain letters, numbers, spaces, hyphens, and underscores'
-    })
-});
-
-type CategorySchemaType = z.infer<typeof categorySchema>;
+type CategorySchemaType = z.infer<typeof apiEndpoints.category.create.body>;
 
 interface CreateCategoryModalProps {
   isOpen: boolean;
@@ -52,9 +42,9 @@ const AddCategoryModal: React.FC<CreateCategoryModalProps> = ({
     register,
     handleSubmit,
     reset,
-    formState: { errors, isValid, isSubmitting }
+    formState: { errors, isValid }
   } = useForm<CategorySchemaType>({
-    resolver: zodResolver(categorySchema),
+    resolver: zodResolver(apiEndpoints.category.create.body),
     defaultValues: {
       name: initialValues?.name || ''
     },

@@ -27,9 +27,9 @@ const GoalPage = () => {
   const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebounce(search, 600);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [sortBy, setSortBy] = useState<string | undefined>(searchParams.get('sortBy') || undefined);
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | undefined>(
-    (searchParams.get('sortOrder') as 'asc' | 'desc') || undefined
+  const [sortBy, setSortBy] = useState<string>(searchParams.get('sortBy') || 'createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(
+    (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc'
   );
 
   const { page, handlePageChange } = usePagination(
@@ -61,7 +61,14 @@ const GoalPage = () => {
     refetch
   } = useQuery({
     queryKey: ['goals', page, sortBy, sortOrder, debouncedSearch],
-    queryFn: () => goalGetAll({ page, limit: 10, sortBy, sortOrder, q: debouncedSearch }),
+    queryFn: () =>
+      goalGetAll({
+        page,
+        limit: 10,
+        sortBy,
+        sortOrder,
+        q: debouncedSearch
+      }),
     retry: false,
     enabled: !!user
   });
@@ -71,8 +78,8 @@ const GoalPage = () => {
       setSortBy(sorting[0].id);
       setSortOrder(sorting[0].desc ? 'desc' : 'asc');
     } else {
-      setSortBy(undefined);
-      setSortOrder(undefined);
+      setSortBy('createdAt');
+      setSortOrder('desc');
     }
   };
 

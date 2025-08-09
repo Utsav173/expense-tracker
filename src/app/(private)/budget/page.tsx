@@ -11,7 +11,7 @@ import { useToast } from '@/lib/hooks/useToast';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Search } from 'lucide-react';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
-import { Budget } from '@/lib/types';
+import type { BudgetAPI } from '@/lib/api/api-types';
 import { useUrlState } from '@/hooks/useUrlState';
 import { SortingState } from '@tanstack/react-table';
 import { Input } from '@/components/ui/input';
@@ -86,7 +86,7 @@ const BudgetPage = () => {
         />
       </div>
 
-      <CommonTable<Budget>
+      <CommonTable<BudgetAPI.Budget>
         tableId='budgets-table'
         data={data?.data || []}
         columns={budgetColumns}

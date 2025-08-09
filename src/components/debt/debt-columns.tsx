@@ -1,7 +1,7 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
-import { DebtWithDetails, User } from '@/lib/types';
+import type { DebtAndInterestAPI, UserAPI } from '@/lib/api/api-types';
 import { format } from 'date-fns';
 import { formatCurrency, cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -11,14 +11,14 @@ import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 interface DebtColumnsProps {
-  user: User | undefined;
+  user: UserAPI.UserProfile | undefined;
   refetchDebts: () => void;
 }
 
 export const createDebtColumns = ({
   user,
   refetchDebts
-}: DebtColumnsProps): ColumnDef<DebtWithDetails>[] => [
+}: DebtColumnsProps): ColumnDef<DebtAndInterestAPI.DebtRecord>[] => [
   {
     accessorKey: 'debts.description',
     header: ({ column }) => <DataTableColumnHeader column={column} title='Description' />,

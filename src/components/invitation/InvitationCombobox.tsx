@@ -7,7 +7,7 @@ import { userSearch } from '@/lib/endpoints/users';
 import { useToast } from '@/lib/hooks/useToast';
 import { sendInvitation } from '@/lib/endpoints/invitation';
 import { useDebouncedCallback } from 'use-debounce';
-import { DropdownUser } from '@/lib/types';
+import type { SimpleUser } from '@/lib/api/api-types';
 
 interface InvitationComboboxProps {
   value?: ComboboxOption | null;
@@ -26,23 +26,20 @@ export function InvitationCombobox({
 }: InvitationComboboxProps) {
   const { showSuccess, showError } = useToast();
 
-  // Determine if value is an email (for invited users)
   const isEmail = value?.value ? /\S+@\S+\.\S+/.test(value.value) : false;
 
-  // Fetch user by id if value is set and is not an email
   const { data: user, isLoading: isLoadingUser } = useQuery({
     queryKey: ['userById', value?.value],
     queryFn: async () => {
       if (!value?.value || isEmail) return null;
       const res = await userSearch(value.value);
-      return res?.find((u: DropdownUser) => u.id === value.value) ?? null;
+      return res?.find((u: SimpleUser) => u.id === value.value) ?? null;
     },
     enabled: !!value?.value && !isEmail,
     staleTime: Infinity,
     gcTime: Infinity
   });
 
-  // Debounced fetch for invitation options
   const debouncedFetch = useDebouncedCallback(
     async (query: string, callback: (options: ComboboxOption[]) => void) => {
       const isEmailQuery = /\S+@\S+\.\S+/.test(query);
@@ -50,14 +47,13 @@ export function InvitationCombobox({
       try {
         const res = await userSearch(query);
         options =
-          res?.map((user: DropdownUser) => ({
+          res?.map((user: SimpleUser) => ({
             value: user.id,
             label: user.email
           })) || [];
       } catch (error) {
         console.error('Error searching users:', error);
       }
-      // If query is a valid email and not found, offer to invite
       if (isEmailQuery && !options.some((opt) => opt.label === query)) {
         options.unshift({ value: `invite:${query}`, label: query });
       }
@@ -89,7 +85,7 @@ export function InvitationCombobox({
       if (selected.value.startsWith('invite:')) {
         const emailToInvite = selected.label;
         await inviteUser(emailToInvite);
-        onChange?.(null); // Clear selection after inviting
+        onChange?.(null);
       } else {
         onChange?.(selected);
       }
@@ -97,7 +93,6 @@ export function InvitationCombobox({
     [onChange, inviteUser]
   );
 
-  // Compute the value to show in the combobox
   const comboboxValue = useMemo(() => {
     if (!value) return null;
     if (isLoadingUser) return null;

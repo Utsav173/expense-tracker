@@ -16,10 +16,11 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-  DialogFooter
+  DialogTrigger
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import AddTransactionModal from '@/components/modals/add-transaction-modal';
@@ -38,7 +39,7 @@ import {
 import { accountGetDropdown } from '@/lib/endpoints/accounts';
 import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/lib/hooks/useToast';
-import { AccountDropdown } from '@/lib/types';
+import type { AccountAPI } from '@/lib/api/api-types';
 import { cn } from '@/lib/utils';
 import { useTransactions } from '@/components/transactions/hooks/useTransactions';
 import DateRangePickerV2 from '@/components/date/date-range-picker-v2';
@@ -102,7 +103,7 @@ const TransactionsPage = () => {
     queryFn: accountGetDropdown
   });
 
-  const [accounts, setAccounts] = useState<AccountDropdown[]>([]);
+  const [accounts, setAccounts] = useState<AccountAPI.SimpleAccount[]>([]);
 
   // Calculate active filters for badges
   const getActiveFilters = () => {
@@ -302,7 +303,7 @@ const TransactionsPage = () => {
         const exportUrl = `${API_BASE_URL}/transactions/export?${params.toString()}`;
 
         const response = await fetch(exportUrl, {
-          method: 'GET',
+          method: 'GET'
         });
 
         if (!response.ok) {
@@ -550,7 +551,7 @@ const TransactionsPage = () => {
                     </label>
                     <Select
                       onValueChange={(value) =>
-                        setTempFilters((prev) => ({ ...prev, categoryId: value ?? 'all' }))
+                        setTempFilters((prev) => ({ ...prev, type: value as any }))
                       }
                       value={tempFilters.type || 'all'}
                     >
@@ -673,7 +674,7 @@ const TransactionsPage = () => {
           refetchData={async () => {
             await refetch();
           }}
-          accountsData={accountsData!}
+          accountsData={accountsData}
         />
       ) : (
         <div className='flex flex-col items-center justify-center space-y-4 py-12'>

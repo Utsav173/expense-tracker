@@ -1,72 +1,82 @@
-import apiFetch from '../api-client';
-import {
-  Account,
-  AccountDetails,
-  AccountDropdown,
-  ApiResponse,
-  CustomAnalytics,
-  DashboardData,
-  PreviousShareAccount
-} from '../types';
+import apiClient from '@/lib/api/client';
+import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
+import type { AccountAPI } from '@/lib/api/api-types';
+import { z } from 'zod';
 
-export const accountCreate = (body: any) => apiFetch('/accounts', 'POST', body);
+type CreateAccountBody = z.infer<typeof apiEndpoints.accounts.create.body>;
+type UpdateAccountBody = z.infer<typeof apiEndpoints.accounts.update.body>;
+type ShareAccountBody = z.infer<typeof apiEndpoints.accounts.shareAccount.body>;
+type RevokeShareBody = z.infer<typeof apiEndpoints.accounts.revokeShare.body>;
+type GetStatementParams = z.infer<typeof apiEndpoints.accounts.getStatement.query>;
+type GetAllParams = z.infer<typeof apiEndpoints.accounts.getAll.query>;
+type GetSharedParams = z.infer<typeof apiEndpoints.accounts.getSharedAccounts.query>;
 
-export const accountGetAll = (
-  params: any
-): Promise<
-  ApiResponse<{
-    accounts: Account[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-    };
-  }>
-> => apiFetch('/accounts', 'GET', undefined, { params });
+export const accountCreate = (body: CreateAccountBody) =>
+  apiClient<unknown, unknown, CreateAccountBody, AccountAPI.CreateAccountResponse>(
+    apiEndpoints.accounts.create,
+    { body }
+  );
 
-export const accountUpdate = (id: string, body: any) => apiFetch(`/accounts/${id}`, 'PUT', body);
+export const accountGetAll = (params: GetAllParams): Promise<AccountAPI.GetAccountsResponse> =>
+  apiClient(apiEndpoints.accounts.getAll, { query: params });
 
-export const accountDelete = (id: string) => apiFetch(`/accounts/${id}`, 'DELETE');
+export const accountUpdate = (id: string, body: UpdateAccountBody) =>
+  apiClient<{ id: string }, unknown, UpdateAccountBody, AccountAPI.UpdateAccountResponse>(
+    apiEndpoints.accounts.update,
+    { params: { id }, body }
+  );
 
-export const accountGetDropdown = (): Promise<ApiResponse<AccountDropdown[]>> =>
-  apiFetch('/accounts/list', 'GET');
+export const accountDelete = (id: string) =>
+  apiClient<{ id: string }, unknown, unknown, AccountAPI.DeleteAccountResponse>(
+    apiEndpoints.accounts.delete,
+    { params: { id } }
+  );
 
-export const accountGetById = (id: string): Promise<ApiResponse<AccountDetails>> =>
-  apiFetch(`/accounts/${id}`, 'GET');
+export const accountGetDropdown = (): Promise<AccountAPI.GetAccountListSimpleResponse> =>
+  apiClient(apiEndpoints.accounts.getList);
 
-type getStatementParams = {
-  startDate?: string;
-  endDate?: string;
-  numTransactions?: string;
-  exportType?: string;
-};
+export const accountGetById = (id: string): Promise<AccountAPI.GetAccountByIdResponse> =>
+  apiClient<{ id: string }, unknown, unknown, AccountAPI.GetAccountByIdResponse>(
+    apiEndpoints.accounts.getById,
+    { params: { id } }
+  );
 
-export const accountGetStatement = (id: string, params: getStatementParams) =>
-  apiFetch(`/accounts/${id}/statement`, 'GET', undefined, { params, responseType: 'blob' });
+export const accountGetStatement = (id: string, params: GetStatementParams) =>
+  apiClient<{ id: string }, GetStatementParams, unknown, Blob>(apiEndpoints.accounts.getStatement, {
+    params: { id },
+    query: { ...params, exportType: params.exportType || 'pdf' },
+    axiosConfig: { responseType: 'blob' }
+  });
 
 export const accountGetDashboard = (
   params: { duration?: string; startDate?: string; endDate?: string } = {}
-): Promise<ApiResponse<DashboardData>> =>
-  apiFetch('/accounts/dashboard', 'GET', undefined, { params });
+): Promise<AccountAPI.GetDashboardResponse> =>
+  apiClient(apiEndpoints.accounts.getDashboard, { query: params });
 
 export const accountGetCustomAnalytics = (
   id: string,
-  params: any
-): Promise<ApiResponse<CustomAnalytics>> =>
-  apiFetch(`/accounts/customAnalytics/${id}`, 'GET', undefined, { params });
+  params: { duration: string }
+): Promise<AccountAPI.GetCustomAnalyticsResponse> =>
+  apiClient(apiEndpoints.accounts.getCustomAnalytics, { params: { id }, query: params });
 
-export const accountShare = (body: any) => apiFetch('/accounts/share', 'POST', body);
+export const accountShare = (body: ShareAccountBody) =>
+  apiClient<unknown, unknown, ShareAccountBody, AccountAPI.ShareAccountResponse>(
+    apiEndpoints.accounts.shareAccount,
+    { body }
+  );
 
 export const accountGetPreviousShares = (
   id: string
-): Promise<ApiResponse<PreviousShareAccount[]>> =>
-  apiFetch(`/accounts/previous/share/${id}`, 'GET');
+): Promise<AccountAPI.GetPreviousSharesResponse> =>
+  apiClient(apiEndpoints.accounts.getPreviousShares, { params: { id } });
 
 export const accountGetSharedWithMe = (
-  params: any
-): Promise<ApiResponse<{ data: Account[]; pagination: any }>> =>
-  apiFetch('/accounts/get-shares', 'GET', undefined, { params });
+  params: GetSharedParams
+): Promise<AccountAPI.GetSharedAccountsResponse> =>
+  apiClient(apiEndpoints.accounts.getSharedAccounts, { query: params });
 
-export const accountRevokeShare = (body: { accountId: string; userId: string }) =>
-  apiFetch('/accounts/revoke-share', 'POST', body);
+export const accountRevokeShare = (body: RevokeShareBody) =>
+  apiClient<unknown, unknown, RevokeShareBody, AccountAPI.RevokeShareResponse>(
+    apiEndpoints.accounts.revokeShare,
+    { body }
+  );

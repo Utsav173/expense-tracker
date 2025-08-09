@@ -17,7 +17,7 @@ interface GoalHighlightsProps {
 export const GoalHighlights: React.FC<GoalHighlightsProps> = ({ className }) => {
   const { data: highlightedGoals, isLoading } = useQuery({
     queryKey: ['goalsDashboard'],
-    queryFn: () => goalGetAll({ page: 1, limit: 5 }),
+    queryFn: () => goalGetAll({ page: 1, limit: 5, sortBy: 'targetDate', sortOrder: 'asc' }),
     staleTime: 15 * 60 * 1000,
     refetchOnMount: true,
     refetchOnWindowFocus: true

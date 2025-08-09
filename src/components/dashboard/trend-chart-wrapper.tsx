@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useCallback } from 'react';
-import { DashboardData } from '@/lib/types';
+import type { AccountAPI } from '@/lib/api/api-types';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, LineChart, AreaChart } from 'lucide-react';
 import Loader from '../ui/loader';
@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { startOfDay, subDays } from 'date-fns';
 
 interface TrendChartWrapperProps {
-  data: DashboardData | null | undefined;
+  data: AccountAPI.DashboardData | null | undefined;
   chartType: 'line' | 'bar' | 'area';
   isLoading: boolean;
   setChartType: (type: 'line' | 'bar' | 'area') => void;
@@ -49,51 +49,17 @@ const TrendChartWrapper = ({
     [setChartType]
   );
 
-  // Memoize chart data transformation with early returns for performance
-  const { chartData, hasData } = useMemo(() => {
-    if (!data) return { chartData: [], hasData: false };
+  const { hasData } = useMemo(() => {
+    if (!data) return { hasData: false };
 
     const incomeData = data.incomeChartData || [];
     const expenseData = data.expenseChartData || [];
     const balanceData = data.balanceChartData || [];
 
-    // Early return if no data
-    if (!incomeData.length && !expenseData.length && !balanceData.length) {
-      return { chartData: [], hasData: false };
-    }
-
-    // Use Map for O(1) lookups
-    const incomeMap = new Map(incomeData.map((p) => [p.x, p.y ?? null]));
-    const expenseMap = new Map(expenseData.map((p) => [p.x, p.y ?? null]));
-    const balanceMap = new Map(balanceData.map((p) => [p.x, p.y ?? null]));
-
-    // Get all unique timestamps and sort once
-    const allTimestamps = new Set([
-      ...incomeData.map((p) => p.x),
-      ...expenseData.map((p) => p.x),
-      ...balanceData.map((p) => p.x)
-    ]);
-
-    const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b);
-
-    const processedData = sortedTimestamps.map((ts) => ({
-      date: new Date(ts * 1000).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric'
-      }),
-      timestamp: ts,
-      income: incomeMap.get(ts) ?? null,
-      expense: expenseMap.get(ts) ?? null,
-      balance: balanceMap.get(ts) ?? null
-    }));
-
-    return {
-      chartData: processedData,
-      hasData: processedData.length > 0
-    };
+    return { hasData: incomeData.length > 0 || expenseData.length > 0 || balanceData.length > 0 };
   }, [data]);
 
-  const currency = useMemo(() => data?.accountsInfo?.[0]?.currency ?? 'INR', [data?.accountsInfo]);
+  const currency = useMemo(() => 'INR', []);
 
   const renderContent = () => {
     if (isLoading) {

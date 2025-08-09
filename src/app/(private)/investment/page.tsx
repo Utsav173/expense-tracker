@@ -11,8 +11,8 @@ import { Button } from '@/components/ui/button';
 import { usePagination } from '@/hooks/usePagination';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useToast } from '@/lib/hooks/useToast';
-import { PlusCircle, Edit, TrendingUp } from 'lucide-react';
-import { InvestmentAccount } from '@/lib/types';
+import { PlusCircle, TrendingUp } from 'lucide-react';
+import type { InvestmentAccountAPI } from '@/lib/api/api-types';
 import AddInvestmentAccountModal from '@/components/modals/add-investment-account-modal';
 import UpdateInvestmentAccountModal from '@/components/modals/update-investment-account-modal';
 import DeleteConfirmationModal from '@/components/modals/delete-confirmation-modal';
@@ -41,7 +41,8 @@ const InvestmentPage = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [deleteAccountId, setDeleteAccountId] = useState<string | null>(null);
-  const [selectedAccount, setSelectedAccount] = useState<InvestmentAccount | null>(null);
+  const [selectedAccount, setSelectedAccount] =
+    useState<InvestmentAccountAPI.InvestmentAccount | null>(null);
 
   const { page, handlePageChange } = usePagination(
     Number(searchParams.get('page')) || 1,
@@ -66,7 +67,7 @@ const InvestmentPage = () => {
     refetch
   } = useQuery({
     queryKey: ['investmentAccounts', page],
-    queryFn: () => investmentAccountGetAll({ page, limit: 10 }),
+    queryFn: () => investmentAccountGetAll({ page, limit: 10, sortBy: 'name', sortOrder: 'asc' }),
     retry: false
   });
 
@@ -83,7 +84,7 @@ const InvestmentPage = () => {
     }
   });
 
-  const handleEdit = (account: InvestmentAccount) => {
+  const handleEdit = (account: InvestmentAccountAPI.InvestmentAccount) => {
     setSelectedAccount(account);
     setIsEditModalOpen(true);
   };

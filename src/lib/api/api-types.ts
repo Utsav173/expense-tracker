@@ -67,6 +67,7 @@ export namespace AccountAPI {
       balance: number;
       income: number;
       expense: number;
+      currency: string;
     }[];
     transactionsCountByAccount: Record<string, number>;
     totalTransaction: number;
@@ -231,7 +232,6 @@ export namespace UserAPI {
   export type GetSettingsResponse = UserSettings;
   export type UpdateSettingsResponse = SuccessMessageWithData<UserSettings>;
   export type UpdateApiKeyResponse = SuccessMessage;
-  export type HealthCheckResponse = { message: string };
 }
 
 export namespace CategoryAPI {
@@ -241,7 +241,7 @@ export namespace CategoryAPI {
     owner: string | null;
   }
   export type GetCategoriesResponse = { categories: Category[]; pagination: Pagination };
-  export type GetCategoryResponse = Category;
+  export type GetCategoryResponse = SuccessMessageWithData<Category>;
   export type CreateCategoryResponse = SuccessMessageWithData<Category>;
   export type UpdateCategoryResponse = SuccessMessage;
   export type DeleteCategoryResponse = SuccessMessage;
@@ -360,6 +360,7 @@ export namespace InvestmentAccountAPI {
     platform: string | null;
     balance: number | null;
     currency: string;
+    oldestInvestmentDate?: string;
   }
   export interface InvestmentAccountSummary {
     accountId: string;

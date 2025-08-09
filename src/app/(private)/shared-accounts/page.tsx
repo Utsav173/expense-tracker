@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
-import { Account } from '@/lib/types';
+import type { AccountAPI } from '@/lib/api/api-types';
 
 // Helper to generate initials for the avatar fallback
 const getInitials = (name?: string) => {
@@ -23,7 +23,7 @@ const getInitials = (name?: string) => {
   return name.substring(0, 2).toUpperCase();
 };
 
-const AccountCard = ({ account }: { account: Account }) => {
+const AccountCard = ({ account }: { account: AccountAPI.Account }) => {
   return (
     <Link
       href={`/accounts/${account.id}`}

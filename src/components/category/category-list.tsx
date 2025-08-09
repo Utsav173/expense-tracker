@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState, useCallback } from 'react';
 import CommonTable from '../ui/CommonTable';
-import { Category, CategoryListResponse } from '@/lib/types';
+import type { CategoryAPI } from '@/lib/api/api-types';
 import { ColumnDef, SortingState } from '@tanstack/react-table';
 import { useMutation } from '@tanstack/react-query';
 import { categoryDelete } from '@/lib/endpoints/category';
@@ -14,7 +14,7 @@ import CategoryActions from './category-actions';
 import { DataTableColumnHeader } from '../ui/column-header';
 
 interface CategoryListProps {
-  data: CategoryListResponse | undefined;
+  data: CategoryAPI.GetCategoriesResponse | undefined;
   isLoading: boolean;
   onSort: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
   sortBy: string;
@@ -38,7 +38,7 @@ const CategoryList = React.memo(
     tableId
   }: CategoryListProps) => {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [selectedCategory, setSelectedCategory] = useState<Category | undefined>();
+    const [selectedCategory, setSelectedCategory] = useState<CategoryAPI.Category | undefined>();
     const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null);
     const invalidate = useInvalidateQueries();
     const { showError } = useToast();
@@ -61,7 +61,7 @@ const CategoryList = React.memo(
       }
     }, [deleteCategoryId, deleteCategoryMutation]);
 
-    const handleEdit = useCallback((category: Category) => {
+    const handleEdit = useCallback((category: CategoryAPI.Category) => {
       setSelectedCategory(category);
       setIsEditModalOpen(true);
     }, []);
@@ -70,7 +70,7 @@ const CategoryList = React.memo(
       setDeleteCategoryId(id);
     }, []);
 
-    const columns: ColumnDef<Category>[] = useMemo(
+    const columns: ColumnDef<CategoryAPI.Category>[] = useMemo(
       () => [
         {
           accessorKey: 'name',

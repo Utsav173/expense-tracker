@@ -12,7 +12,7 @@ import {
 } from '@/lib/endpoints/investment';
 import { useToast } from '@/lib/hooks/useToast';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
-import { Investment, StockPriceResult } from '@/lib/types';
+import type { InvestmentAPI } from '@/lib/api/api-types';
 import {
   format as formatDate,
   isValid as isDateValid,
@@ -20,7 +20,6 @@ import {
   subDays,
   isFuture,
   startOfDay,
-  isSameDay,
   parseISO
 } from 'date-fns';
 
@@ -69,9 +68,9 @@ export const useInvestmentHoldingForm = ({
   getStockPriceFn,
   isOpen
 }: {
-  investment: Investment;
+  investment: InvestmentAPI.Investment;
   onInvestmentUpdated: () => void;
-  getStockPriceFn?: (symbol: string) => Promise<StockPriceResult | null>;
+  getStockPriceFn?: (symbol: string) => Promise<InvestmentAPI.StockPriceResult | null>;
   isOpen: boolean;
 }) => {
   const { showSuccess, showError } = useToast();
@@ -129,7 +128,7 @@ export const useInvestmentHoldingForm = ({
     refetchOnWindowFocus: true
   });
 
-  const { isLoading: isHistQueryLoading, data: historicalPriceData } = useQuery({
+  const { data: historicalPriceData } = useQuery({
     queryKey: ['historicalStockPrice', investment?.symbol, formattedPurchaseDate],
     queryFn: async () => {
       if (!investment?.symbol || !formattedPurchaseDate) return null;

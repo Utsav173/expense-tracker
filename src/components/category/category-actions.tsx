@@ -1,12 +1,12 @@
 import React from 'react';
-import { Category } from '@/lib/types';
+import type { CategoryAPI } from '@/lib/api/api-types';
 import { Button } from '../ui/button';
 import { Edit, Trash2 } from 'lucide-react';
 import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
 
 interface CategoryActionsProps {
-  category: Category;
-  onEdit: (category: Category) => void;
+  category: CategoryAPI.Category;
+  onEdit: (category: CategoryAPI.Category) => void;
   onDelete: (id: string) => void;
 }
 

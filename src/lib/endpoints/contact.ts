@@ -1,5 +1,5 @@
 import apiFetch from '../api-client';
-import { ApiResponse } from '../types';
+import type { ContactAPI } from '@/lib/api/api-types';
 
 interface ContactFormPayload {
   name: string;
@@ -8,10 +8,6 @@ interface ContactFormPayload {
   message: string;
 }
 
-interface ContactFormResponse {
-  message: string;
-}
-
 export const submitContactForm = (
   body: ContactFormPayload
-): Promise<ApiResponse<ContactFormResponse>> => apiFetch('/contact', 'POST', body);
+): Promise<ContactAPI.SubmitContactFormResponse> => apiFetch('/contact', 'POST', body);

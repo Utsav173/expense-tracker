@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import { ChatMessage } from '@/lib/types';
+import type { AIAPI } from '@/lib/api/api-types';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Bot, User, ClipboardCopy, Check, FileText } from 'lucide-react';
 import { format } from 'date-fns';
@@ -17,6 +17,15 @@ import AiChartRenderer from './ai-chart-renderer';
 import AiTransactionPreview from '@/components/transactions/ai-transaction-preview';
 import AiRecordsTable from './ai-records-table';
 import AiMetricsDisplay from './ai-metrics-display';
+
+interface ChatMessage extends AIAPI.ParsedAIResponse {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  createdAt?: Date;
+  image?: string;
+  document?: { name: string; type: 'pdf' | 'xlsx' };
+}
 
 interface ChatMessageBubbleProps {
   message: ChatMessage;

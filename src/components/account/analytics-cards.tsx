@@ -1,7 +1,7 @@
 'use-client';
 
 import React from 'react';
-import { AccountDetails, CustomAnalytics } from '@/lib/types';
+import type { AccountAPI } from '@/lib/api/api-types';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatCurrency, cn } from '@/lib/utils';
@@ -191,9 +191,9 @@ export const AnalyticsCards = ({
   isLoading,
   account
 }: {
-  analytics?: CustomAnalytics;
+  analytics?: AccountAPI.CustomAnalytics;
   isLoading?: boolean;
-  account?: AccountDetails;
+  account?: AccountAPI.GetAccountByIdResponse;
 }) => {
   const currency = account?.currency ?? 'INR';
   const lastUpdated = account?.updatedAt

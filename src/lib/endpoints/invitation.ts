@@ -1,10 +1,19 @@
-import apiFetch from '../api-client';
-import { ApiResponse } from '@/lib/types';
+import apiClient from '@/lib/api/client';
+import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
+import type { InvitationAPI } from '@/lib/api/api-types';
+import { z } from 'zod';
 
-export const verifyInvitation = (token: string): Promise<ApiResponse<any>> => {
-  return apiFetch(`/invite/verify?token=${token}`, 'GET');
+type VerifyInvitationQuery = z.infer<typeof apiEndpoints.invitation.verify.query>;
+type CreateInvitationBody = z.infer<typeof apiEndpoints.invitation.create.body>;
+
+export const verifyInvitation = (
+  token: string
+): Promise<InvitationAPI.VerifyInvitationResponse> => {
+  const query: VerifyInvitationQuery = { token };
+  return apiClient(apiEndpoints.invitation.verify, { query });
 };
 
-export const sendInvitation = (email: string): Promise<ApiResponse<any>> => {
-  return apiFetch('/invite', 'POST', { email });
+export const sendInvitation = (email: string): Promise<InvitationAPI.CreateInvitationResponse> => {
+  const body: CreateInvitationBody = { email };
+  return apiClient(apiEndpoints.invitation.create, { body });
 };

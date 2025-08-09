@@ -182,13 +182,13 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
 
       {/* Transactions Section */}
       <AccountTransactionsSection
-        transactionsData={transactionsData ?? undefined}
+        transactionsData={transactionsData}
         isTransactionLoading={isTransactionLoading}
         filters={filters}
         handleSort={handleSort}
         page={page}
         handlePageChange={handlePageChange}
-        categories={categories ?? undefined}
+        categories={categories}
         setSearchQuery={setSearchQuery}
         handleCategoryChange={handleCategoryChange}
         handleIncomeTypeChange={handleIncomeTypeChange}

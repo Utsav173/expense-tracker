@@ -1,5 +1,5 @@
 'use client';
-import { DebtWithDetails } from '@/lib/types';
+import type { DebtAndInterestAPI } from '@/lib/api/api-types';
 import { Button } from '@/components/ui/button';
 import { debtsMarkAsPaid, apiDeleteDebt } from '@/lib/endpoints/debt';
 import { useMutation } from '@tanstack/react-query';
@@ -12,7 +12,7 @@ import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import DebtInsightModal from '../modals/debt-insight-modal';
 
 interface DebtActionsProps {
-  debt: DebtWithDetails;
+  debt: DebtAndInterestAPI.DebtRecord;
   refetchDebts: () => void;
 }
 
@@ -48,7 +48,7 @@ export function DebtActions({ debt, refetchDebts }: DebtActionsProps) {
         size='icon'
         variant='ghost'
         onClick={() => markAsPaidMutation.mutate(debt.debts.id)}
-        disabled={debt.debts.isPaid || markAsPaidMutation.isPending}
+        disabled={!!debt.debts.isPaid || markAsPaidMutation.isPending}
         className='h-8 w-8 text-green-600 hover:text-green-700'
         aria-label='Mark as Paid'
       >
@@ -69,7 +69,7 @@ export function DebtActions({ debt, refetchDebts }: DebtActionsProps) {
         onClick={() => setIsUpdateModalOpen(true)}
         className='h-8 w-8 hover:text-blue-600'
         aria-label='Edit Debt'
-        disabled={debt.debts.isPaid}
+        disabled={!!debt.debts.isPaid}
       >
         <Pencil size={16} />
       </Button>

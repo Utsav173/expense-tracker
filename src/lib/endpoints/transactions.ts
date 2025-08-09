@@ -1,38 +1,55 @@
-import apiFetch from '../api-client';
-import {
-  ApiResponse,
-  IncomeExpenseChartData,
-  TransactionsResponse,
-  TransactionWithContext
-} from '../types';
+import apiClient from '@/lib/api/client';
+import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
+import type { TransactionAPI } from '@/lib/api/api-types';
+import { z } from 'zod';
 
-export const transactionCreate = (body: any) => apiFetch('/transactions', 'POST', body, undefined);
+type CreateTransactionBody = z.infer<typeof apiEndpoints.transactions.create.body>;
+type BulkCreateBody = z.infer<typeof apiEndpoints.transactions.bulkCreate.body>;
+type GetAllParams = z.infer<typeof apiEndpoints.transactions.getAll.query>;
+type UpdateTransactionBody = z.infer<typeof apiEndpoints.transactions.update.body>;
+type ChartParams = z.infer<typeof apiEndpoints.transactions.getIncomeExpenseChart.query>;
 
-export const transactionBulkCreate = (body: {
-  transactions: any[];
-}): Promise<ApiResponse<{ created: number; skipped: number }>> =>
-  apiFetch('/transactions/bulk-create', 'POST', body);
+export const transactionCreate = (body: CreateTransactionBody) =>
+  apiClient<unknown, unknown, CreateTransactionBody, TransactionAPI.CreateTransactionResponse>(
+    apiEndpoints.transactions.create,
+    { body }
+  );
 
-export const transactionGetAll = (params: any): Promise<TransactionsResponse> =>
-  apiFetch(`/transactions`, 'GET', undefined, { params });
+export const transactionBulkCreate = (
+  body: BulkCreateBody
+): Promise<TransactionAPI.BulkCreateResponse> =>
+  apiClient(apiEndpoints.transactions.bulkCreate, { body });
 
-export const transactionGetById = (id: string): Promise<ApiResponse<TransactionWithContext>> =>
-  apiFetch(`/transactions/${id}`, 'GET', undefined, undefined);
+export const transactionGetAll = (
+  params: GetAllParams
+): Promise<TransactionAPI.GetTransactionsResponse> =>
+  apiClient(apiEndpoints.transactions.getAll, { query: params });
 
-export const transactionUpdate = (id: string, body: any) =>
-  apiFetch(`/transactions/${id}`, 'PUT', body, undefined);
+export const transactionGetById = (
+  id: string
+): Promise<TransactionAPI.GetTransactionByIdResponse> =>
+  apiClient(apiEndpoints.transactions.getById, { params: { id } });
+
+export const transactionUpdate = (id: string, body: UpdateTransactionBody) =>
+  apiClient<
+    { id: string },
+    unknown,
+    UpdateTransactionBody,
+    TransactionAPI.UpdateTransactionResponse
+  >(apiEndpoints.transactions.update, { params: { id }, body });
 
 export const transactionDelete = (id: string) =>
-  apiFetch(`/transactions/${id}`, 'DELETE', undefined, undefined);
+  apiClient<{ id: string }, unknown, unknown, TransactionAPI.DeleteTransactionResponse>(
+    apiEndpoints.transactions.delete,
+    { params: { id } }
+  );
 
-export const transactionGetIncomeExpenseChart = (params: {
-  accountId?: string;
-  duration: string;
-}): Promise<ApiResponse<IncomeExpenseChartData>> =>
-  apiFetch('/transactions/by/income/expense/chart', 'GET', undefined, { params });
+export const transactionGetIncomeExpenseChart = (
+  params: ChartParams
+): Promise<TransactionAPI.GetIncomeExpenseChartDataResponse> =>
+  apiClient(apiEndpoints.transactions.getIncomeExpenseChart, { query: params });
 
-export const transactionGetCategoryChart = (params: {
-  duration: string;
-  accountId?: string;
-}): Promise<ApiResponse<{ name: string[]; totalIncome: number[]; totalExpense: number[] }>> =>
-  apiFetch('/transactions/by/category/chart', 'GET', undefined, { params });
+export const transactionGetCategoryChart = (
+  params: ChartParams
+): Promise<TransactionAPI.GetCategoryChartDataResponse> =>
+  apiClient(apiEndpoints.transactions.getCategoryChart, { query: params });

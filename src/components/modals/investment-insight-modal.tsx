@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
-import { Investment, InvestmentPerformanceData } from '@/lib/types';
+import type { InvestmentAPI } from '@/lib/api/api-types';
 import { investmentGetPerformance } from '@/lib/endpoints/investment';
 import {
   AreaChart as RechartsAreaChart,
@@ -154,7 +154,7 @@ const CustomTooltip = ({
 interface InvestmentInsightModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  investment: Investment;
+  investment: InvestmentAPI.Investment;
   accountCurrency: string;
 }
 
@@ -244,7 +244,7 @@ const InvestmentSummaryCard = ({
   performanceMetrics,
   accountCurrency
 }: {
-  investment: Investment;
+  investment: InvestmentAPI.Investment;
   performanceMetrics: any;
   accountCurrency: string;
 }) => {
@@ -333,13 +333,14 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
 
-  const { data: performanceData, isLoading } = useQuery<InvestmentPerformanceData | null>({
-    queryKey: ['investmentPerformance', investment.id],
-    queryFn: () => investmentGetPerformance(investment.id),
-    enabled: isOpen,
-    staleTime: 5 * 60 * 1000,
-    retry: 1
-  });
+  const { data: performanceData, isLoading } =
+    useQuery<InvestmentAPI.GetPerformanceResponse | null>({
+      queryKey: ['investmentPerformance', investment.id],
+      queryFn: () => investmentGetPerformance(investment.id),
+      enabled: isOpen,
+      staleTime: 5 * 60 * 1000,
+      retry: 1
+    });
 
   const { purchaseDate, today } = useMemo(() => {
     return {
@@ -375,18 +376,18 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
     if (!performanceData?.holdingPerformance) {
       return [];
     }
-    return performanceData.holdingPerformance.map((point) => {
-      const gainLoss = point.gainLoss ?? 0;
-      return {
-        date: point.date,
-        positive: gainLoss >= 0 ? gainLoss : null,
-        negative: gainLoss < 0 ? gainLoss : null,
-        value: gainLoss
-      };
-    });
+    return performanceData.holdingPerformance.map(
+      (point: { date: string; gainLoss: number | null }) => {
+        const gainLoss = point.gainLoss ?? 0;
+        return {
+          date: point.date,
+          positive: gainLoss >= 0 ? gainLoss : null,
+          negative: gainLoss < 0 ? gainLoss : null,
+          value: gainLoss
+        };
+      }
+    );
   }, [performanceData]);
-
-  // --- AXIS MAGIC STARTS HERE ---
 
   // Y-Axis Magic: A clearer formatter using k/M/B suffixes
   const yAxisFormatter = (tick: number) => {
@@ -425,8 +426,6 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
 
     return [minVal - padding, maxVal + padding];
   }, [gainLossChartData]);
-
-  // --- AXIS MAGIC ENDS HERE ---
 
   const gainLossTrend = (performanceMetrics?.totalGainLoss ?? 0) >= 0 ? 'up' : 'down';
   const dayChangeTrend = (performanceMetrics?.dayChange ?? 0) >= 0 ? 'up' : 'down';
@@ -757,7 +756,9 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                             Purchase Date
                           </span>
                           <span className='text-foreground text-base font-semibold sm:text-lg'>
-                            {format(purchaseDate, 'MMM dd, yyyy')}
+                            {investment.purchaseDate
+                              ? format(parseISO(investment.purchaseDate), 'MMM dd, yyyy')
+                              : 'N/A'}
                           </span>
                         </div>
                       </div>

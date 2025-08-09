@@ -1,13 +1,16 @@
-import apiFetch from '../api-client';
-import { ApiResponse, UserSettings } from '../types';
+import apiClient from '@/lib/api/client';
+import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
+import type { UserAPI } from '@/lib/api/api-types';
+import { z } from 'zod';
 
-export const getSettings = (): Promise<ApiResponse<UserSettings>> => apiFetch('/settings', 'GET');
+type UpdateSettingsBody = z.infer<typeof apiEndpoints.settings.update.body>;
+type UpdateAiKeyBody = z.infer<typeof apiEndpoints.settings.updateAiKey.body>;
 
-export const updateSettings = (
-  body: Partial<UserSettings>
-): Promise<ApiResponse<{ message: string; data: UserSettings }>> =>
-  apiFetch('/settings', 'PUT', body);
+export const getSettings = (): Promise<UserAPI.GetSettingsResponse> =>
+  apiClient(apiEndpoints.settings.get);
 
-export const updateAiApiKey = (body: {
-  apiKey: string | null;
-}): Promise<ApiResponse<{ message: string }>> => apiFetch('/settings/ai-key', 'PUT', body);
+export const updateSettings = (body: UpdateSettingsBody): Promise<UserAPI.UpdateSettingsResponse> =>
+  apiClient(apiEndpoints.settings.update, { body });
+
+export const updateAiApiKey = (body: UpdateAiKeyBody): Promise<UserAPI.UpdateApiKeyResponse> =>
+  apiClient(apiEndpoints.settings.updateAiKey, { body });

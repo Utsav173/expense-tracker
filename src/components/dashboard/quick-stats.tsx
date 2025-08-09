@@ -2,13 +2,13 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 
 import NoData from '../ui/no-data';
-import { DashboardData } from '@/lib/types';
+import type { AccountAPI } from '@/lib/api/api-types';
 import { cn, formatCurrency } from '@/lib/utils';
 import { ArrowUp, ArrowDown } from 'lucide-react';
 import Loader from '../ui/loader';
 
 interface QuickStatsProps {
-  data: DashboardData | null | undefined;
+  data: AccountAPI.DashboardData | null | undefined;
   isLoading: boolean;
   className?: string;
 }

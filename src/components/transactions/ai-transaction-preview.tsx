@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState, useMemo, useCallback } from 'react';
-import { ParsedTransactionFromAI } from '@/lib/types';
+import type { AIAPI } from '@/lib/api/api-types';
 import { transactionBulkCreate } from '@/lib/endpoints/transactions';
 import { useToast } from '@/lib/hooks/useToast';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
+import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Loader2, Save, ArrowUpCircle, ArrowDownCircle, X, Edit, CheckCircle } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
@@ -27,11 +27,11 @@ import { accountGetDropdown } from '@/lib/endpoints/accounts';
 import { Label } from '../ui/label';
 import { NumericInput } from '../ui/numeric-input';
 
-type EditableTransaction = ParsedTransactionFromAI & { id: string };
+type EditableTransaction = AIAPI.ExtractedTransaction & { id: string };
 
 interface TransactionItemProps {
   transaction: EditableTransaction;
-  onFieldChange: (id: string, field: keyof ParsedTransactionFromAI, value: any) => void;
+  onFieldChange: (id: string, field: keyof AIAPI.ExtractedTransaction, value: any) => void;
   onRemove: (id: string) => void;
   currency: string;
 }
@@ -131,7 +131,7 @@ const TransactionItem: React.FC<TransactionItemProps> = ({
   );
 };
 
-const AiTransactionPreview: React.FC<{ transactions: ParsedTransactionFromAI[] }> = ({
+const AiTransactionPreview: React.FC<{ transactions: AIAPI.ExtractedTransaction[] }> = ({
   transactions
 }) => {
   const [editableTransactions, setEditableTransactions] = useState<EditableTransaction[]>(() =>
@@ -140,7 +140,7 @@ const AiTransactionPreview: React.FC<{ transactions: ParsedTransactionFromAI[] }
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isImported, setIsImported] = useState(false); // New state to track import status
+  const [isImported, setIsImported] = useState(false);
   const { showSuccess, showError } = useToast();
   const invalidate = useInvalidateQueries();
 
@@ -154,7 +154,7 @@ const AiTransactionPreview: React.FC<{ transactions: ParsedTransactionFromAI[] }
   }, [selectedAccountId, accounts]);
 
   const handleFieldChange = useCallback(
-    (id: string, field: keyof ParsedTransactionFromAI, value: any) => {
+    (id: string, field: keyof AIAPI.ExtractedTransaction, value: any) => {
       setEditableTransactions((prev) =>
         prev.map((tx) => (tx.id === id ? { ...tx, [field]: value } : tx))
       );
@@ -184,7 +184,7 @@ const AiTransactionPreview: React.FC<{ transactions: ParsedTransactionFromAI[] }
 
           return {
             text: tx.description,
-            amount: tx.debit !== undefined ? tx.debit : tx.credit,
+            amount: tx.debit !== undefined ? tx.debit : (tx.credit ?? 0),
             isIncome: tx.debit === undefined,
             categoryName: tx.category,
             transfer: tx.transfer,
@@ -200,7 +200,7 @@ const AiTransactionPreview: React.FC<{ transactions: ParsedTransactionFromAI[] }
       );
       await invalidate(['transactions', 'dashboardData', 'accounts', 'customAnalytics']);
       setIsModalOpen(false);
-      setIsImported(true); // Set import status to true on success
+      setIsImported(true);
     } catch (error: any) {
       showError(error.message || 'Failed to save transactions.');
     } finally {
@@ -272,7 +272,6 @@ const AiTransactionPreview: React.FC<{ transactions: ParsedTransactionFromAI[] }
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  {/* Span wrapper to allow tooltip on a disabled button */}
                   <span className='mt-3 block w-full' tabIndex={isImported ? 0 : -1}>
                     <Button
                       onClick={() => setIsModalOpen(true)}

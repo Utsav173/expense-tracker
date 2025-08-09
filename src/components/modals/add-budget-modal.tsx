@@ -24,32 +24,11 @@ import { NumericInput } from '../ui/numeric-input';
 import { Loader2, PlusCircle, CalendarDays, Tag } from 'lucide-react';
 import { monthNames } from '@/lib/utils';
 import CategoryCombobox from '../ui/category-combobox';
+import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
 
-export const budgetSchema = z.object({
-  categoryId: z.string().uuid('Category is required.'),
-  month: z
-    .string()
-    .min(1, 'Month is required.')
-    .refine((val) => Number(val) >= 1 && Number(val) <= 12, 'Invalid month.'),
-  year: z
-    .string()
-    .min(4, 'Year is required.')
-    .refine((val) => Number(val) >= 2000 && Number(val) <= 2100, 'Invalid year.'),
-  amount: z
-    .string()
-    .min(1, { message: 'Amount is required.' })
-    .refine((value) => !isNaN(parseFloat(value)), {
-      message: 'Amount must be a valid number.'
-    })
-    .transform((val) => parseFloat(val))
-    .refine((val) => val >= 0, {
-      message: 'Budget amount cannot be negative.'
-    })
-});
-
-type BudgetFormSchema = z.infer<typeof budgetSchema>;
+type BudgetFormSchema = z.infer<typeof apiEndpoints.budget.create.body>;
 type BudgetApiPayload = {
-  categoryId: string;
+  category: string;
   month: number;
   year: number;
   amount: number;
@@ -75,11 +54,11 @@ const AddBudgetModal: React.FC<AddBudgetModalProps> = ({
   const currentMonth = new Date().getMonth() + 1;
 
   const form = useForm<BudgetFormSchema>({
-    resolver: zodResolver(budgetSchema),
+    resolver: zodResolver(apiEndpoints.budget.create.body),
     defaultValues: {
-      categoryId: '',
-      month: String(currentMonth),
-      year: String(currentYear),
+      category: '',
+      month: currentMonth,
+      year: currentYear,
       amount: 0
     },
     mode: 'onChange'
@@ -88,9 +67,9 @@ const AddBudgetModal: React.FC<AddBudgetModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       form.reset({
-        categoryId: '',
-        month: String(currentMonth),
-        year: String(currentYear),
+        category: '',
+        month: currentMonth,
+        year: currentYear,
         amount: 0
       });
     }
@@ -114,7 +93,8 @@ const AddBudgetModal: React.FC<AddBudgetModalProps> = ({
     const apiPayload: BudgetApiPayload = {
       ...data,
       month: Number(data.month),
-      year: Number(data.year)
+      year: Number(data.year),
+      amount: Number(data.amount)
     };
     createBudgetMutation.mutate(apiPayload);
   };
@@ -144,10 +124,9 @@ const AddBudgetModal: React.FC<AddBudgetModalProps> = ({
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleCreate)} className='space-y-5 pt-2'>
-          {/* --- Use CategoryCombobox --- */}
           <FormField
             control={form.control}
-            name='categoryId'
+            name='category'
             render={({ field }) => (
               <FormItem>
                 <FormLabel className='flex items-center gap-1.5'>
@@ -167,7 +146,6 @@ const AddBudgetModal: React.FC<AddBudgetModalProps> = ({
               </FormItem>
             )}
           />
-          {/* --- End CategoryCombobox --- */}
 
           <div className='grid grid-cols-2 gap-4'>
             <FormField
@@ -180,8 +158,8 @@ const AddBudgetModal: React.FC<AddBudgetModalProps> = ({
                     Month*
                   </FormLabel>
                   <Select
-                    onValueChange={field.onChange}
-                    value={field.value}
+                    onValueChange={(value) => field.onChange(Number(value))}
+                    value={String(field.value)}
                     disabled={createBudgetMutation.isPending}
                   >
                     <FormControl>
@@ -212,8 +190,8 @@ const AddBudgetModal: React.FC<AddBudgetModalProps> = ({
                     Year*
                   </FormLabel>
                   <Select
-                    onValueChange={field.onChange}
-                    value={field.value}
+                    onValueChange={(value) => field.onChange(Number(value))}
+                    value={String(field.value)}
                     disabled={createBudgetMutation.isPending}
                   >
                     <FormControl>
@@ -248,7 +226,7 @@ const AddBudgetModal: React.FC<AddBudgetModalProps> = ({
                     disabled={createBudgetMutation.isPending}
                     value={String(field.value)}
                     onValueChange={(values: { value: any }) => {
-                      field.onChange(values.value);
+                      field.onChange(parseFloat(values.value));
                     }}
                     ref={field.ref as React.Ref<HTMLInputElement>}
                   />

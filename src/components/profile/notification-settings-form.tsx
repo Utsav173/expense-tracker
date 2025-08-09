@@ -6,7 +6,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useToast } from '@/lib/hooks/useToast';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { getSettings, updateSettings } from '@/lib/endpoints/settings';
-import { UserSettings } from '@/lib/types';
+import type { UserAPI } from '@/lib/api/api-types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
@@ -16,7 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2 } from 'lucide-react';
 
 type NotificationSettingsFormValues = {
-  notifications: UserSettings['notifications'];
+  notifications: UserAPI.UserSettings['notifications'];
 };
 
 export const NotificationSettingsForm = () => {
@@ -36,7 +36,7 @@ export const NotificationSettingsForm = () => {
   }, [settings, form]);
 
   const mutation = useMutation({
-    mutationFn: (data: Partial<UserSettings>) => updateSettings(data),
+    mutationFn: (data: Partial<UserAPI.UserSettings>) => updateSettings(data),
     onSuccess: () => {
       showSuccess('Notification settings saved!');
       invalidate(['userSettings']);

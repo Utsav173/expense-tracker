@@ -1,5 +1,5 @@
 import React from 'react';
-import { InvestmentAccount } from '@/lib/types';
+import type { InvestmentAccountAPI } from '@/lib/api/api-types';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash, TrendingUp, ChevronRight } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
@@ -10,13 +10,12 @@ import { motion, Variants } from 'framer-motion';
 
 const cardVariants: Variants = {
   initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 1, 0.5, 1] } },
-  hover: { y: -6, transition: { duration: 0.3, ease: [0.25, 1, 0.5, 1] } }
+  animate: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 1, 0.5, 1] } }
 };
 
 interface InvestmentAccountCardProps {
-  account: InvestmentAccount & { lastUpdated?: string };
-  onEdit: (account: InvestmentAccount) => void;
+  account: InvestmentAccountAPI.InvestmentAccount;
+  onEdit: (account: InvestmentAccountAPI.InvestmentAccount) => void;
   onDelete: (id: string) => void;
   className?: string;
 }
@@ -29,17 +28,19 @@ const InvestmentAccountCard: React.FC<InvestmentAccountCardProps> = ({
 }) => {
   const formatDate = (dateString?: string) => {
     if (!dateString || isNaN(new Date(dateString).getTime())) return null;
-    return new Date(dateString).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+    return new Date(dateString).toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
   };
 
-  const lastUpdated = formatDate(account.updatedAt);
+  const lastUpdated = formatDate(account.updatedAt ?? undefined);
 
   return (
     <motion.div
       variants={cardVariants}
-      initial='initial'
-      animate='animate'
-      whileHover='hover'
+      whileHover={{ y: -5, transition: { duration: 0.2 } }}
       className={cn(
         'group bg-card relative flex h-full flex-col overflow-hidden rounded-xl border shadow-sm',
         className
@@ -53,7 +54,10 @@ const InvestmentAccountCard: React.FC<InvestmentAccountCardProps> = ({
         <div className='flex-1'>
           <h3 className='text-foreground mb-1 line-clamp-1 font-semibold'>{account.name}</h3>
           {account.platform && (
-            <Badge className='border-transparent bg-amber-100 text-amber-800 transition-colors hover:bg-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:hover:bg-amber-900'>
+            <Badge
+              variant='outline'
+              className='border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300'
+            >
               {account.platform}
             </Badge>
           )}
@@ -88,7 +92,7 @@ const InvestmentAccountCard: React.FC<InvestmentAccountCardProps> = ({
 
       <div className='flex flex-grow flex-col justify-center px-4 pb-4'>
         <div className='flex items-center gap-3'>
-          <div className='bg-primary/10 text-primary flex h-9 w-9 items-center justify-center rounded-lg transition-transform duration-300 group-hover:scale-110'>
+          <div className='bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-lg transition-transform duration-300 group-hover:scale-110'>
             <TrendingUp className='h-5 w-5' />
           </div>
           <div className='flex-1'>
@@ -100,7 +104,7 @@ const InvestmentAccountCard: React.FC<InvestmentAccountCardProps> = ({
         </div>
       </div>
 
-      <div className='bg-background/30 mt-auto border-t p-4'>
+      <div className='bg-muted/30 mt-auto border-t p-4'>
         <div className='flex items-center justify-between'>
           <div className='text-muted-foreground flex items-center gap-2 text-xs'>
             <motion.div

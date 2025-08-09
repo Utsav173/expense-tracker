@@ -11,9 +11,9 @@ import {
 } from '@/components/ui/dialog';
 import InterestCalculator from '../debt/interest-calculator';
 import { z } from 'zod';
-import { interestSchema } from '@/lib/utils/schema.validations';
+import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
 
-type InterestFormSchema = z.infer<typeof interestSchema>;
+type InterestFormSchema = z.infer<typeof apiEndpoints.interest.calculate.body>;
 
 interface InterestCalculatorModalProps {
   isOpen: boolean;

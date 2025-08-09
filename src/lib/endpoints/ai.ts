@@ -1,15 +1,13 @@
-import apiFetch from '../api-client';
-import {
-  AiProcessPdfRequest,
-  AiProcessPdfResponse,
-  AiProcessRequest,
-  AiProcessResponse,
-  ApiResponse
-} from '../types';
+import apiClient from '@/lib/api/client';
+import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
+import type { AIAPI } from '@/lib/api/api-types';
+import { z } from 'zod';
 
-export const aiProcessPrompt = (body: AiProcessRequest): Promise<ApiResponse<AiProcessResponse>> =>
-  apiFetch('/ai/process', 'POST', body);
+type AiProcessBody = z.infer<typeof apiEndpoints.ai.process.body>;
+type PdfProcessBody = z.infer<typeof apiEndpoints.ai.processPdf.body>;
 
-export const aiProcessTransactionPdf = (
-  body: AiProcessPdfRequest
-): Promise<ApiResponse<AiProcessPdfResponse>> => apiFetch('/ai/process-pdf', 'POST', body);
+export const aiProcessPrompt = (body: AiProcessBody): Promise<AIAPI.ProcessPromptResponse> =>
+  apiClient(apiEndpoints.ai.process, { body });
+
+export const aiProcessTransactionPdf = (body: PdfProcessBody): Promise<AIAPI.ProcessPdfResponse> =>
+  apiClient(apiEndpoints.ai.processPdf, { body });

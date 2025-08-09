@@ -4,10 +4,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import { accountGetDashboard } from '@/lib/endpoints/accounts';
-import { ApiResponse, DashboardData } from '@/lib/types';
+import type { AccountAPI } from '@/lib/api/api-types';
 
 export const useDashboardData = (): {
-  data: ApiResponse<DashboardData> | undefined;
+  data: AccountAPI.GetDashboardResponse | undefined;
   isLoading: boolean;
   isFetching: boolean;
   isError: boolean;

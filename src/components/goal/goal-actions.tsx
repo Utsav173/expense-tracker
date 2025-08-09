@@ -1,5 +1,5 @@
 'use client';
-import { SavingGoal, User } from '@/lib/types';
+import type { GoalAPI, UserAPI } from '@/lib/api/api-types';
 import { Button } from '@/components/ui/button';
 import { Pencil, Target, Trash2 } from 'lucide-react';
 import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
@@ -12,8 +12,8 @@ import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import AddWithdrawGoalAmountModal from '../modals/add-withdraw-goal-amount-modal';
 
 interface GoalActionsProps {
-  goal: SavingGoal;
-  user: User | undefined;
+  goal: GoalAPI.SavingGoal;
+  user: UserAPI.UserProfile | undefined;
   refetchGoals: () => void;
 }
 

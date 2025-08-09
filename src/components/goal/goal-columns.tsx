@@ -1,32 +1,22 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
-import { SavingGoal, User } from '@/lib/types';
-import { Button } from '@/components/ui/button';
+import type { GoalAPI, UserAPI } from '@/lib/api/api-types';
 import { format } from 'date-fns';
-import { Pencil, Target, Trash2 } from 'lucide-react';
-import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
-import { useToast } from '@/lib/hooks/useToast';
-import { useMutation } from '@tanstack/react-query';
-import { goalDelete } from '@/lib/endpoints/goal';
-import UpdateGoalModal from '../modals/update-goal-modal';
-import { useState } from 'react';
-import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { formatCurrency } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
-import AddWithdrawGoalAmountModal from '../modals/add-withdraw-goal-amount-modal';
 import { DataTableColumnHeader } from '../ui/column-header';
 import { GoalActions } from './goal-actions';
 
 interface GoalColumnsProps {
-  user: User | undefined;
+  user: UserAPI.UserProfile | undefined;
   refetchGoals: () => void;
 }
 
 export const createGoalColumns = ({
   user,
   refetchGoals
-}: GoalColumnsProps): ColumnDef<SavingGoal>[] => [
+}: GoalColumnsProps): ColumnDef<GoalAPI.SavingGoal>[] => [
   {
     accessorKey: 'name',
     header: ({ column }) => <DataTableColumnHeader column={column} title='Goal Name' />,

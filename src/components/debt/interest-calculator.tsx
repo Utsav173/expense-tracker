@@ -1,7 +1,6 @@
 'use client';
 
-import { ApiResponse } from '@/lib/types';
-
+import type { DebtAndInterestAPI } from '@/lib/api/api-types';
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,7 +13,6 @@ import {
 import { Card, CardContent } from '../ui/card';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { interestSchema } from '@/lib/utils/schema.validations';
 import { useMutation } from '@tanstack/react-query';
 import { interestCalculate } from '@/lib/endpoints/debt';
 import { useToast } from '@/lib/hooks/useToast';
@@ -31,13 +29,9 @@ import {
 import { Input } from '../ui/input';
 import { formatCurrency } from '@/lib/utils';
 import { Loader2, ArrowRight } from 'lucide-react';
+import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
 
-type InterestFormSchema = z.infer<typeof interestSchema>;
-
-interface InterestResponse {
-  interest: number;
-  totalAmount: number;
-}
+type InterestFormSchema = z.infer<typeof apiEndpoints.interest.calculate.body>;
 
 interface InterestCalculatorProps {
   onUseCalculation?: (data: InterestFormSchema) => void;
@@ -48,7 +42,7 @@ const InterestCalculator: React.FC<InterestCalculatorProps> = ({ onUseCalculatio
   const { showError } = useToast();
 
   const form = useForm<InterestFormSchema>({
-    resolver: zodResolver(interestSchema),
+    resolver: zodResolver(apiEndpoints.interest.calculate.body),
     defaultValues: {
       amount: 0,
       interestType: 'simple',
@@ -61,7 +55,7 @@ const InterestCalculator: React.FC<InterestCalculatorProps> = ({ onUseCalculatio
   });
 
   const calculateInterestMutation = useMutation<
-    ApiResponse<InterestResponse>,
+    DebtAndInterestAPI.CalculateInterestResponse,
     Error,
     InterestFormSchema
   >({

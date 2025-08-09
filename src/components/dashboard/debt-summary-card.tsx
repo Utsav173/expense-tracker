@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
-import { DebtWithDetails, ApiResponse } from '@/lib/types';
+import type { DebtAndInterestAPI } from '@/lib/api/api-types';
 import { cn, formatCurrency } from '@/lib/utils';
 import NoData from '../ui/no-data';
 import { getOutstandingDebts } from '@/lib/endpoints/debt';
@@ -11,17 +11,12 @@ import Link from 'next/link';
 import { formatDistanceToNowStrict, parseISO, isValid } from 'date-fns';
 import Loader from '../ui/loader';
 
-type OutstandingDebtsResponse = ApiResponse<{
-  data: DebtWithDetails[];
-  totalCount?: number;
-}>;
-
 export const DebtSummaryCard: React.FC<{
   className?: string;
 }> = ({ className }) => {
   const { showError } = useToast();
 
-  const { data, isLoading, error } = useQuery<OutstandingDebtsResponse>({
+  const { data, isLoading, error } = useQuery<DebtAndInterestAPI.GetDebtsResponse>({
     queryKey: ['outstandingDebtsDashboard'],
     queryFn: () => getOutstandingDebts(),
     retry: 1,

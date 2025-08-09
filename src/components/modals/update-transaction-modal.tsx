@@ -6,7 +6,7 @@ import { UpdateModal } from './update-modal';
 import { Input } from '@/components/ui/input';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Label } from '../ui/label';
-import { Transaction as TransactionType } from '@/lib/types';
+import type { TransactionAPI, AccountAPI } from '@/lib/api/api-types';
 import {
   ArrowDownCircle,
   ArrowUpCircle,
@@ -44,7 +44,7 @@ const updateTransactionSchema = z.object({
 interface UpdateTransactionModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  transaction: TransactionType | null;
+  transaction: TransactionAPI.Transaction | null;
   onUpdate: () => void;
   queryKey?: any[];
 }
@@ -75,35 +75,20 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
 
     if (isRecurringInstance) {
       apiPayload = {
-        ...transaction,
         id: transaction.id,
         text: data.text,
         category: data.categoryId || '',
-        transfer: data.transfer || '',
-        amount: transaction.amount,
-        isIncome: transaction.isIncome,
-        createdAt: transaction.createdAt,
-        account: transaction.account,
-        currency: transaction.currency,
-        recurring: transaction.recurring,
-        recurrenceType: transaction.recurrenceType,
-        recurrenceEndDate: transaction.recurrenceEndDate
+        transfer: data.transfer || ''
       };
     } else {
       apiPayload = {
-        ...transaction,
         id: transaction.id,
         text: data.text,
         amount: parseFloat(data.amount),
         isIncome: data.isIncome,
         category: data.categoryId || '',
         createdAt: data.createdAt.toISOString(),
-        transfer: data.transfer || '',
-        account: transaction.account,
-        currency: transaction.currency,
-        recurring: transaction.recurring,
-        recurrenceType: transaction.recurrenceType,
-        recurrenceEndDate: transaction.recurrenceEndDate
+        transfer: data.transfer || ''
       };
     }
 

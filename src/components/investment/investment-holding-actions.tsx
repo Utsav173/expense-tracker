@@ -1,13 +1,13 @@
 'use client';
-import { Investment } from '@/lib/types';
+import type { InvestmentAPI } from '@/lib/api/api-types';
 import { Button } from '@/components/ui/button';
 import { Eye, Pencil, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 import InvestmentInsightModal from '../modals/investment-insight-modal';
 
 interface InvestmentHoldingActionsProps {
-  investment: Investment;
-  handleEdit: (investment: Investment) => void;
+  investment: InvestmentAPI.Investment;
+  handleEdit: (investment: InvestmentAPI.Investment) => void;
   handleDeleteClick: (id: string) => void;
   accountCurrency: string;
 }

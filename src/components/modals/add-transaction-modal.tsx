@@ -14,7 +14,7 @@ import { categoryGetAll, categoryCreate } from '@/lib/endpoints/category';
 import { accountGetDropdown } from '@/lib/endpoints/accounts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { ArrowDownCircle, ArrowUpCircle, Calendar, CreditCard, Tag } from 'lucide-react';
-import { AccountDropdown, Category } from '@/lib/types';
+import type { AccountAPI, CategoryAPI } from '@/lib/api/api-types';
 import { Label } from '../ui/label';
 import { Card } from '../ui/card';
 import { NumericFormat } from 'react-number-format';
@@ -54,8 +54,8 @@ const AddTransactionModal = ({
 }: AddTransactionModalProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isIncome, setIsIncome] = useState(false);
-  const [accounts, setAccounts] = useState<AccountDropdown[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [accounts, setAccounts] = useState<AccountAPI.SimpleAccount[]>([]);
+  const [categories, setCategories] = useState<CategoryAPI.Category[]>([]);
   const [createdAt, setCreatedAt] = useState<Date>(new Date());
   const [recurrenceEndDate, setRecurrenceEndDate] = useState<Date | null>(null);
   const [categoryComboboxLoading, setCategoryComboboxLoading] = useState(false);
@@ -65,7 +65,7 @@ const AddTransactionModal = ({
 
   const { data: categoriesData, isLoading: isLoadingCategory } = useQuery({
     queryKey: ['categories'],
-    queryFn: () => categoryGetAll({ limit: '100' })
+    queryFn: () => categoryGetAll({ limit: 100, page: 1, sortBy: 'name', sortOrder: 'asc' })
   });
 
   const { data: accountData, isLoading: isLoadingAccount } = useQuery({
@@ -151,15 +151,6 @@ const AddTransactionModal = ({
         return;
       }
 
-      if (
-        !data.isIncome &&
-        selectedAccount.balance &&
-        selectedAccount.balance < Number(data.amount)
-      ) {
-        showError('Insufficient account balance for this transaction.');
-        return;
-      }
-
       const currency = selectedAccount.currency || data.currency || '';
       if (!currency) {
         showError('Currency information is missing. Please select an account with currency.');
@@ -208,7 +199,13 @@ const AddTransactionModal = ({
     setCategoryComboboxError(null);
     setCategoryComboboxLoading(true);
     try {
-      const res = await categoryGetAll({ search: query });
+      const res = await categoryGetAll({
+        search: query,
+        page: 1,
+        limit: 20,
+        sortBy: 'name',
+        sortOrder: 'asc'
+      });
       const cats = res?.categories || [];
       const options = cats.map((cat) => ({ value: cat.id, label: cat.name }));
       if (query && !options.some((opt) => opt.label.toLowerCase() === query.toLowerCase())) {

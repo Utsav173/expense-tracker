@@ -20,13 +20,11 @@ import {
 import { Input } from '../ui/input';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { InvitationCombobox } from '../invitation/InvitationCombobox';
+import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
 
 const shareAccountSchema = z.object({
   accountId: z.string().uuid(),
-  user: z.object({
-    value: z.string().uuid(),
-    label: z.string().email()
-  })
+  userId: z.string().uuid()
 });
 
 type ShareAccountFormSchema = z.infer<typeof shareAccountSchema>;
@@ -45,10 +43,7 @@ const ShareAccountModal = ({
     resolver: zodResolver(shareAccountSchema),
     defaultValues: {
       accountId: accountId,
-      user: {
-        value: '',
-        label: ''
-      }
+      userId: ''
     }
   });
 
@@ -67,26 +62,21 @@ const ShareAccountModal = ({
   });
 
   const handleShareAccount = async (data: ShareAccountFormSchema) => {
-    if (!data.user || !data.user.value) return;
-    if (data.user.value.startsWith('invite:')) {
+    if (!data.userId) return;
+    if (data.userId.startsWith('invite:')) {
       return;
     }
-    const payload = { accountId: data.accountId, userId: data.user.value };
+    const payload = { accountId: data.accountId, userId: data.userId };
     await shareAccountMutation.mutate(payload);
   };
-
-  // Keep form userId in sync with selectedUser
-  const handleUserChange = (option: { label: string; value: string }) => {};
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
 
     if (open) {
-      form.reset();
-      form.setValue('accountId', accountId);
-      form.setValue('user', {
-        value: '',
-        label: ''
+      form.reset({
+        accountId: accountId,
+        userId: ''
       });
     }
   };
@@ -117,14 +107,14 @@ const ShareAccountModal = ({
 
           <FormField
             control={form.control}
-            name='user'
+            name='userId'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Select User</FormLabel>
                 <FormControl>
                   <InvitationCombobox
-                    value={field.value}
-                    onChange={field.onChange}
+                    value={{ value: field.value, label: '' }}
+                    onChange={(option) => field.onChange(option?.value ?? '')}
                     placeholder='Select a user to share with or invite by email'
                   />
                 </FormControl>

@@ -1,11 +1,11 @@
 'use client';
 import { ColumnDef } from '@tanstack/react-table';
-import { Budget } from '@/lib/types';
+import type { BudgetAPI } from '@/lib/api/api-types';
 import { formatCurrency } from '@/lib/utils';
 import { DataTableColumnHeader } from '../ui/column-header';
 import { BudgetActions } from './budget-actions';
 
-export const budgetColumns: ColumnDef<Budget>[] = [
+export const budgetColumns: ColumnDef<BudgetAPI.Budget>[] = [
   {
     accessorKey: 'category.name',
     header: ({ column }) => <DataTableColumnHeader column={column} title='Category' />,

@@ -6,9 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Pencil, Trash2, Repeat, ArrowUpCircle, ArrowDownCircle, Eye } from 'lucide-react';
 import UpdateTransactionModal from '../modals/update-transaction-modal';
 import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
-import { transactionDelete, transactionGetById } from '@/lib/endpoints/transactions';
+import { transactionDelete } from '@/lib/endpoints/transactions';
 import { useToast } from '@/lib/hooks/useToast';
-import { Transaction as TransactionType, AccountDropdown } from '@/lib/types';
+import type { TransactionAPI, AccountAPI } from '@/lib/api/api-types';
 import { cn, formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
 import CommonTable from '../ui/CommonTable';
@@ -20,7 +20,7 @@ import { DataTableColumnHeader } from '../ui/column-header';
 import RecurringInsightModal from '../modals/recurring-insight-modal';
 
 interface TransactionTableProps {
-  transactions: TransactionType[] | undefined;
+  transactions: TransactionAPI.Transaction[] | undefined;
   onSort: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
   sortBy: string;
   sortOrder: 'asc' | 'desc';
@@ -31,7 +31,7 @@ interface TransactionTableProps {
   refetchData: () => Promise<void>;
   isOwner?: boolean;
   tableId: string;
-  accountsData?: AccountDropdown[];
+  accountsData?: AccountAPI.SimpleAccount[];
 }
 
 const TransactionTable = ({
@@ -48,7 +48,9 @@ const TransactionTable = ({
   tableId,
   accountsData
 }: TransactionTableProps) => {
-  const [selectedTransaction, setSelectedTransaction] = useState<TransactionType | null>(null);
+  const [selectedTransaction, setSelectedTransaction] = useState<TransactionAPI.Transaction | null>(
+    null
+  );
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [deleteTransactionId, setDeleteTransactionId] = useState<string | null>(null);
   const [insightTransactionId, setInsightTransactionId] = useState<string | null>(null);
@@ -72,7 +74,7 @@ const TransactionTable = ({
     }
   }, [deleteTransactionId, deleteMutation]);
 
-  const handleEditClick = (transaction: TransactionType) => {
+  const handleEditClick = (transaction: TransactionAPI.Transaction) => {
     setSelectedTransaction(transaction);
     setIsUpdateModalOpen(true);
   };
@@ -85,7 +87,7 @@ const TransactionTable = ({
     setInsightTransactionId(transactionId);
   }, []);
 
-  const columns = useMemo<ColumnDef<TransactionType>[]>(
+  const columns = useMemo<ColumnDef<TransactionAPI.Transaction>[]>(
     () => [
       {
         accessorKey: 'text',
@@ -153,7 +155,7 @@ const TransactionTable = ({
                 <DataTableColumnHeader column={column} title='Account' />
               ),
               meta: { header: 'Account' },
-              cell: ({ row }: { row: Row<TransactionType> }) => {
+              cell: ({ row }: { row: Row<TransactionAPI.Transaction> }) => {
                 const account = accountsData?.find((acc) => acc.id === row.original.account);
                 return (
                   <SingleLineEllipsis
