@@ -2,15 +2,13 @@
 
 import React from 'react';
 import { z } from 'zod';
-import { useQuery } from '@tanstack/react-query';
 import { UpdateModal } from './update-modal';
 import { Input } from '@/components/ui/input';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Landmark, Building, CircleDollarSign } from 'lucide-react';
 import { investmentAccountUpdate } from '@/lib/endpoints/investmentAccount';
 import type { InvestmentAccountAPI } from '@/lib/api/api-types';
-import { fetchCurrencies, COMMON_CURRENCIES } from '@/lib/endpoints/currency';
-import CurrencySelect from '../ui/currency-select';
+import { CurrencyCombobox } from '../ui/currency-combobox';
 import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
 
 type InvestmentAccountUpdateSchema = z.infer<typeof apiEndpoints.investmentAccount.update.body>;
@@ -28,18 +26,6 @@ const UpdateInvestmentAccountModal: React.FC<UpdateInvestmentAccountModalProps> 
   account,
   onAccountUpdated
 }) => {
-  const { data: currencies, isLoading: isLoadingCurrencies } = useQuery({
-    queryKey: ['currencies'],
-    queryFn: fetchCurrencies,
-    staleTime: 24 * 60 * 60 * 1000,
-    gcTime: 7 * 24 * 60 * 60 * 1000,
-    retry: 2,
-    placeholderData: Object.entries(COMMON_CURRENCIES).map(([code, name]) => ({
-      code,
-      name
-    }))
-  });
-
   return (
     <UpdateModal
       isOpen={isOpen}
@@ -111,13 +97,7 @@ const UpdateInvestmentAccountModal: React.FC<UpdateInvestmentAccountModalProps> 
               <CircleDollarSign className='h-4 w-4' />
               Currency (Read-only)
             </FormLabel>
-            <CurrencySelect
-              currencies={currencies}
-              value={account.currency}
-              isLoading={isLoadingCurrencies}
-              disabled
-              disabledTooltip='Currency cannot be changed after creation.'
-            />
+            <CurrencyCombobox value={account.currency} disabled />
           </FormItem>
         </>
       )}

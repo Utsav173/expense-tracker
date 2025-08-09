@@ -1,29 +1,19 @@
-export const COMMON_CURRENCIES: Record<string, string> = {
-  USD: 'US Dollar',
-  EUR: 'Euro',
-  GBP: 'British Pound',
-  JPY: 'Japanese Yen',
-  AUD: 'Australian Dollar',
-  CAD: 'Canadian Dollar',
-  CHF: 'Swiss Franc',
-  CNY: 'Chinese Yuan',
-  INR: 'Indian Rupee',
-  NZD: 'New Zealand Dollar',
-  SGD: 'Singapore Dollar',
-  HKD: 'Hong Kong Dollar',
-  AED: 'UAE Dirham',
-  ZAR: 'South African Rand',
-  THB: 'Thai Baht',
-  SAR: 'Saudi Riyal',
-  MYR: 'Malaysian Ringgit',
-  IDR: 'Indonesian Rupiah',
-  PKR: 'Pakistani Rupee',
-  BRL: 'Brazilian Real'
-};
+import apiClient from '@/lib/api/client';
+import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
 
 export const fetchCurrencies = async (): Promise<{ code: string; name: string }[]> => {
-  return Object.entries(COMMON_CURRENCIES).map(([code, name]) => ({
-    code,
-    name
-  }));
+  const response = await apiClient<unknown, unknown, unknown, Record<string, string>>(
+    apiEndpoints.currency.getSupported
+  );
+  return Object.entries(response).map(([code, name]) => ({ code: code.toUpperCase(), name }));
+};
+
+export const convertCurrency = async (
+  amount: number,
+  from: string,
+  to: string
+): Promise<{ convertedAmount: number; rate: number }> => {
+  return apiClient(apiEndpoints.currency.convert, {
+    query: { amount, from, to }
+  });
 };

@@ -113,6 +113,7 @@ const AccountCard = React.forwardRef<HTMLDivElement, AccountCardProps>(
                 'font-mono text-4xl font-bold tracking-tight tabular-nums',
                 balance >= 0 ? 'text-foreground' : 'text-destructive'
               )}
+              tooltipContent={balance.toFixed(2)}
             >
               {formatCurrency(balance, currency)}
             </SingleLineEllipsis>

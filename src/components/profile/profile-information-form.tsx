@@ -4,12 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { useToast } from '@/lib/hooks/useToast';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { useAuth } from '@/components/providers/auth-provider';
 import { authUpdateUser, UpdateUserBody } from '@/lib/endpoints/auth';
-import { fetchCurrencies, COMMON_CURRENCIES } from '@/lib/endpoints/currency';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
@@ -22,7 +21,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import CurrencySelect from '../ui/currency-select';
+import { CurrencyCombobox } from '../ui/currency-combobox';
 import { Loader2, Camera, Edit3, X, Save } from 'lucide-react';
 import { Label } from '../ui/label';
 
@@ -45,13 +44,6 @@ export const ProfileInformationForm = () => {
   const form = useForm<ProfileUpdateFormSchema>({
     resolver: zodResolver(profileUpdateSchema),
     mode: 'onChange'
-  });
-
-  const { data: currencies, isLoading: isLoadingCurrencies } = useQuery({
-    queryKey: ['currencies'],
-    queryFn: fetchCurrencies,
-    staleTime: Infinity,
-    placeholderData: Object.entries(COMMON_CURRENCIES).map(([code, name]) => ({ code, name }))
   });
 
   const mutation = useMutation({
@@ -174,11 +166,9 @@ export const ProfileInformationForm = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Preferred Currency</FormLabel>
-                  <CurrencySelect
-                    currencies={currencies}
+                  <CurrencyCombobox
                     value={field.value ?? undefined}
                     onValueChange={field.onChange}
-                    isLoading={isLoadingCurrencies}
                     disabled={!isEditing || mutation.isPending}
                   />
                   <FormMessage />

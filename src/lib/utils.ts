@@ -10,7 +10,7 @@ export function cn(...inputs: ClassValue[]) {
 export function formatCurrency(
   amount: number | null | undefined,
   currencyCode: string = 'INR',
-  mode?: 'standard' | 'scientific' | 'engineering' | 'compact' | undefined
+  mode?: 'standard' | 'scientific' | 'engineering' | 'compact' | 'auto' | undefined
 ): string {
   const numAmount = Number(amount ?? 0);
 
@@ -26,7 +26,7 @@ export function formatCurrency(
       maximumFractionDigits: 2
     };
 
-    if (mode) {
+    if (mode && mode !== 'auto') {
       options.notation = mode;
     }
 

@@ -731,5 +731,20 @@ export const apiEndpoints = {
         token: z.string().min(1)
       })
     }
+  },
+  currency: {
+    getSupported: {
+      method: 'GET',
+      path: '/currency/supported'
+    },
+    convert: {
+      method: 'GET',
+      path: '/currency/convert',
+      query: z.object({
+        amount: z.coerce.number().positive(),
+        from: z.string().length(3),
+        to: z.string().length(3)
+      })
+    }
   }
 } as const;

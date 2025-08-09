@@ -10,6 +10,7 @@ interface BaseEllipsisProps extends HTMLAttributes<HTMLDivElement> {
   className?: string;
   showTooltip?: boolean;
   children?: ReactNode;
+  tooltipContent?: ReactNode;
 }
 
 interface MultiLineEllipsisProps extends BaseEllipsisProps {
@@ -35,6 +36,7 @@ export const SingleLineEllipsis: React.FC<BaseEllipsisProps> = ({
   className,
   showTooltip = true,
   children,
+  tooltipContent,
   ...props
 }) => {
   const content = text || (children as string);
@@ -46,7 +48,9 @@ export const SingleLineEllipsis: React.FC<BaseEllipsisProps> = ({
           {content}
         </div>
       </TooltipTrigger>
-      {showTooltip && <TooltipContent>{content}</TooltipContent>}
+      {showTooltip && (
+        <TooltipContent className='relative'>{tooltipContent ?? content}</TooltipContent>
+      )}
     </Tooltip>
   );
 };

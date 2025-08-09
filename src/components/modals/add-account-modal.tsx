@@ -4,15 +4,14 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { useToast } from '@/lib/hooks/useToast';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { accountCreate } from '@/lib/endpoints/accounts';
-import { fetchCurrencies, COMMON_CURRENCIES } from '@/lib/endpoints/currency';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import AddModal from './add-modal';
-import CurrencySelect from '../ui/currency-select';
+import { CurrencyCombobox } from '../ui/currency-combobox';
 import {
   Form,
   FormControl,
@@ -40,18 +39,6 @@ const AddAccountModal = () => {
       currency: 'INR'
     },
     mode: 'onChange'
-  });
-
-  const { data: currencies, isLoading: isLoadingCurrencies } = useQuery({
-    queryKey: ['currencies'],
-    queryFn: fetchCurrencies,
-    staleTime: 24 * 60 * 60 * 1000,
-    gcTime: 7 * 24 * 60 * 60 * 1000,
-    retry: 2,
-    placeholderData: Object.entries(COMMON_CURRENCIES).map(([code, name]) => ({
-      code,
-      name
-    }))
   });
 
   const createAccountMutation = useMutation({
@@ -145,11 +132,9 @@ const AddAccountModal = () => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Currency</FormLabel>
-                <CurrencySelect
-                  currencies={currencies}
+                <CurrencyCombobox
                   value={field.value}
                   onValueChange={field.onChange}
-                  isLoading={isLoadingCurrencies}
                   disabled={createAccountMutation.isPending}
                 />
                 <FormMessage />

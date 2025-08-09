@@ -14,7 +14,7 @@ export function TeamSwitcher() {
   const { isMobile, state } = useSidebar();
   const isCollapsed = !isMobile && state === 'collapsed';
   return (
-    <SidebarMenu>
+    <SidebarMenu className={cn(isCollapsed && 'p-0! group-data-[collapsible=icon]:p-0!')}>
       <SidebarMenuItem>
         <SidebarMenuButton className={cn(isCollapsed && 'p-0! group-data-[collapsible=icon]:p-0!')}>
           <div className='flex items-center gap-2'>

@@ -295,7 +295,9 @@ const DashboardCardContent: React.FC<DashboardCardContentProps> = ({
           </div>
         )}
       </CardHeader>
-      <CardContent className={cn('flex flex-1 flex-col p-0')}>{children}</CardContent>
+      <CardContent className={cn('flex max-h-[calc(100vh-12rem)] flex-1 flex-col p-0')}>
+        {children}
+      </CardContent>
     </Card>
   );
 };

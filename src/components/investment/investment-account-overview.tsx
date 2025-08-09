@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-
 import DateRangePickerV2 from '@/components/date/date-range-picker-v2';
 import { DateRange } from 'react-day-picker';
 import { useQuery } from '@tanstack/react-query';
@@ -22,7 +21,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import NoData from '@/components/ui/no-data';
+import NoData from '../ui/no-data';
 import {
   IndianRupee,
   Info,
@@ -69,7 +68,7 @@ const KpiCard: React.FC<KpiCardProps> = ({
   };
 
   return (
-    <Card className='border-border bg-card hover:bg-accent/5 border transition-colors duration-200'>
+    <Card className='border-border bg-card border transition-colors duration-200'>
       <CardHeader className='space-y-0 pb-3'>
         <div className='flex items-start justify-between'>
           <div className='space-y-1.5'>
@@ -103,14 +102,12 @@ const KpiCard: React.FC<KpiCardProps> = ({
             <Skeleton className='h-4 w-1/2' />
           </div>
         ) : (
-          <div className='space-y-1'>
-            <SingleLineEllipsis
-              className={cn('text-2xl font-bold tracking-tight sm:text-3xl', colorClass)}
-            >
-              {valuePrefix}
-              {formatCurrency(value, currency)}
-            </SingleLineEllipsis>
-          </div>
+          <SingleLineEllipsis
+            className={cn('text-2xl font-bold tracking-tight sm:text-3xl', colorClass)}
+          >
+            {valuePrefix}
+            {formatCurrency(value, currency)}
+          </SingleLineEllipsis>
         )}
       </CardContent>
     </Card>
@@ -473,7 +470,6 @@ const InvestmentAccountOverview: React.FC<InvestmentAccountOverviewProps> = ({
 
   return (
     <div className='space-y-6'>
-      {/* KPI Cards Grid */}
       <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
         <KpiCard
           title='Portfolio Value'
@@ -506,7 +502,6 @@ const InvestmentAccountOverview: React.FC<InvestmentAccountOverviewProps> = ({
         />
       </div>
 
-      {/* Performance Summary */}
       {!isLoadingSummary && performanceMetrics && (
         <Card className='border-l-primary bg-card border-l-4'>
           <CardContent className='p-4'>
@@ -544,7 +539,6 @@ const InvestmentAccountOverview: React.FC<InvestmentAccountOverviewProps> = ({
         </Card>
       )}
 
-      {/* Performance Chart */}
       <PerformanceChart
         performanceData={performanceData}
         isLoading={isLoadingChart}

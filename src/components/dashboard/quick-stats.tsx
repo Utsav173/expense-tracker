@@ -15,8 +15,10 @@ interface QuickStatsProps {
 
 export const QuickStats: React.FC<QuickStatsProps> = ({ data, isLoading, className }) => {
   return (
-    <Card className={cn('flex h-full flex-col border-0 py-4 shadow-none', className)}>
-      <CardContent className='scrollbar h-full grow space-y-3 overflow-y-auto text-sm'>
+    <Card
+      className={cn('flex h-full flex-col justify-center border-0 py-4 shadow-none', className)}
+    >
+      <CardContent className='scrollbar my-auto h-full grow space-y-3 overflow-y-auto pb-0 text-sm'>
         {isLoading || !data ? (
           <Loader />
         ) : data.totalTransaction < 1 ? (

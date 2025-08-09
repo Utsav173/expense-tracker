@@ -201,13 +201,20 @@
 
   /* --- Sizing & Radius --- */
   /* A proportional, consistent radius scale derived from a single base value in :root. */
-  --radius-xs: calc(var(--radius) * 0.5); /* 0.25rem */
-  --radius-sm: calc(var(--radius) * 0.75); /* 0.375rem */
-  --radius-md: var(--radius); /* 0.5rem (base) */
-  --radius-lg: calc(var(--radius) * 1.5); /* 0.75rem */
-  --radius-xl: calc(var(--radius) * 2); /* 1.0rem */
-  --radius-2xl: calc(var(--radius) * 3); /* 1.5rem */
-  --radius-3xl: calc(var(--radius) * 4); /* 2.0rem */
+  --radius-xs: calc(var(--radius) * 0.5);
+  /* 0.25rem */
+  --radius-sm: calc(var(--radius) * 0.75);
+  /* 0.375rem */
+  --radius-md: var(--radius);
+  /* 0.5rem (base) */
+  --radius-lg: calc(var(--radius) * 1.5);
+  /* 0.75rem */
+  --radius-xl: calc(var(--radius) * 2);
+  /* 1.0rem */
+  --radius-2xl: calc(var(--radius) * 3);
+  /* 1.5rem */
+  --radius-3xl: calc(var(--radius) * 4);
+  /* 2.0rem */
   --radius-full: 9999px;
 
   /* --- Fonts --- */
@@ -330,25 +337,14 @@
 }
 
 :root {
-  /* =================================================================================
-   * CORE THEME SYSTEM: LIGHT MODE
-   * =================================================================================
-   * Defines foundational tokens for the light theme.
-   * All semantic color variables below are mapped to this core palette for consistency.
-   */
-
-  /* --- Core Hues (OKLCH Color Space) --- */
-  --hue-neutral: 155;
-  --hue-primary: 148; /* Green */
-  --hue-info: 260; /* Blue */
-  --hue-warning: 85; /* Yellow */
-  --hue-destructive: 20; /* Red */
-
-  /* --- Core Design Constants --- */
+  --hue-neutral: 250;
+  --hue-primary: 250;
+  --hue-success: 165;
+  --hue-info: 260;
+  --hue-warning: 85;
+  --hue-destructive: 15;
   --radius: 0.5rem;
   --border-width: 1px;
-
-  /* --- Light Theme Core Palette --- */
   --gray-0: oklch(1 0 0);
   --gray-50: oklch(0.99 0.006 var(--hue-neutral));
   --gray-100: oklch(0.97 0.008 var(--hue-neutral));
@@ -358,259 +354,127 @@
   --gray-500: oklch(0.45 0.015 var(--hue-neutral));
   --gray-700: oklch(0.2 0.015 var(--hue-neutral));
   --gray-900: oklch(0.15 0.01 var(--hue-neutral));
-
-  --green-base: oklch(50% 0.141 var(--hue-primary));
-  --green-fg: oklch(0.98 0.005 var(--hue-primary));
-
-  --red-base: oklch(0.58 0.18 var(--hue-destructive));
+  --blue-base: oklch(55% 0.12 var(--hue-primary));
+  --blue-fg: oklch(0.98 0.005 var(--hue-primary));
+  --green-base: oklch(58% 0.13 var(--hue-success));
+  --green-fg: oklch(0.98 0.005 var(--hue-success));
+  --red-base: oklch(58% 0.16 var(--hue-destructive));
   --red-fg: oklch(0.98 0.005 var(--hue-destructive));
-
   --yellow-base: oklch(0.75 0.14 var(--hue-warning));
   --yellow-fg: oklch(0.25 0.03 var(--hue-warning));
-
-  --blue-base: oklch(0.6 0.15 var(--hue-info));
-  --blue-fg: oklch(0.98 0.005 var(--hue-info));
-
-  /* --- Semantic & Component-Specific Color Mappings --- */
-  --green: var(--green-base);
-  --blue: var(--blue-base);
-  --yellow: var(--yellow-base);
-  --red: var(--red-base);
-
   --background: var(--gray-50);
   --foreground: var(--gray-900);
   --card: var(--gray-0);
   --card-foreground: var(--foreground);
   --popover: var(--card);
   --popover-foreground: var(--foreground);
-  --primary: var(--green);
-  --primary-foreground: var(--green-fg);
+  --primary: var(--blue-base);
+  --primary-foreground: var(--blue-fg);
   --secondary: var(--gray-200);
   --secondary-foreground: var(--gray-700);
   --muted: var(--gray-150);
   --muted-foreground: var(--gray-500);
   --accent: var(--gray-150);
   --accent-foreground: var(--primary);
-  --success: var(--green);
-  --success-foreground: var(--green-fg);
-  --warning: var(--yellow);
-  --warning-foreground: var(--yellow-fg);
-  --destructive: var(--red);
-  --destructive-foreground: var(--red-fg);
-  --info: var(--blue);
-  --info-foreground: var(--blue-fg);
   --border: var(--gray-300);
   --input: var(--gray-100);
   --input-foreground: var(--foreground);
   --ring: oklch(from var(--primary) l c h / 0.4);
-  --chart-1: oklch(0.6 0.15 265);
-  --chart-2: oklch(0.55 0.16 140);
-  --chart-3: oklch(0.8 0.16 90);
-  --chart-4: oklch(0.65 0.18 45);
-  --chart-5: oklch(0.6 0.17 310);
-  --chart-6: oklch(0.6 0.15 190);
-  --chart-7: oklch(0.6 0.19 350);
-  --chart-8: oklch(0.75 0.18 115);
-  --chart-9: oklch(0.65 0.14 230);
-  --chart-10: oklch(0.6 0.1 70);
-  --chart-income: var(--green);
-  --chart-expense: var(--red);
-  --chart-balance: var(--blue);
-  --chart-savings: oklch(0.48 0.16 145);
-  --chart-investment: var(--yellow);
-  --chart-debt: var(--red);
-  --chart-other: oklch(0.58 0.008 155);
   --sidebar: var(--gray-100);
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-foreground);
   --sidebar-accent: var(--gray-200);
   --sidebar-accent-foreground: var(--primary);
-  --sidebar-border: oklch(0.88 0.015 155);
+  --sidebar-border: oklch(0.88 0.015 250);
   --sidebar-ring: var(--ring);
-  --navigation: var(--background);
-  --navigation-foreground: var(--foreground);
-  --navigation-border: var(--border);
-  --tooltip: var(--gray-900);
-  --tooltip-foreground: var(--gray-50);
-  --overlay: oklch(0.1 0.01 155 / 0.5);
-  --overlay-foreground: var(--gray-50);
-  --separator: var(--border);
-  --brand: var(--green);
-  --brand-foreground: var(--primary-foreground);
-  --error: var(--red);
-  --error-foreground: var(--destructive-foreground);
-  --danger: var(--red);
-  --danger-foreground: var(--destructive-foreground);
-  --ghost: transparent;
-  --ghost-foreground: var(--secondary-foreground);
-  --ghost-hover: var(--secondary);
-  --outline: transparent;
-  --outline-foreground: var(--secondary-foreground);
-  --outline-hover: var(--secondary);
-  --link: var(--primary);
-  --link-foreground: var(--primary);
-  --link-hover: oklch(from var(--primary) calc(l - 0.05) c h);
-  --income: var(--green);
-  --income-foreground: var(--primary-foreground);
-  --expense: var(--red);
-  --expense-foreground: var(--destructive-foreground);
-  --balance: var(--blue);
-  --balance-foreground: var(--info-foreground);
-  --positive: var(--green);
-  --positive-foreground: var(--primary-foreground);
-  --negative: var(--red);
-  --negative-foreground: var(--destructive-foreground);
+  --success: var(--green-base);
+  --success-foreground: var(--green-fg);
+  --warning: var(--yellow-base);
+  --warning-foreground: var(--yellow-fg);
+  --destructive: var(--red-base);
+  --destructive-foreground: var(--red-fg);
+  --info: var(--blue-base);
+  --info-foreground: var(--blue-fg);
+  --income: var(--success);
+  --expense: var(--destructive);
+  --balance: var(--primary);
+  --positive: var(--success);
+  --negative: var(--destructive);
   --neutral: var(--gray-700);
-  --neutral-foreground: var(--gray-50);
-  --font-sans: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --font-serif: 'Playfair Display', Georgia, serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
-  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --shadow-color: oklch(0.15 0.01 155 / 0.08);
-  --shadow-2xs: 0 1px 2px 0 var(--shadow-color);
-  --shadow-xs: 0 1px 3px 0 var(--shadow-color), 0 1px 2px -1px var(--shadow-color);
-  --shadow-sm: 0 1px 3px 0 var(--shadow-color), 0 1px 2px -1px var(--shadow-color);
-  --shadow: 0 4px 6px -1px var(--shadow-color), 0 2px 4px -2px var(--shadow-color);
-  --shadow-md: 0 6px 10px -2px var(--shadow-color), 0 4px 6px -4px var(--shadow-color);
-  --shadow-lg: 0 10px 15px -3px var(--shadow-color), 0 4px 6px -4px var(--shadow-color);
-  --shadow-xl: 0 20px 25px -5px var(--shadow-color), 0 8px 10px -6px var(--shadow-color);
-  --shadow-2xl: 0 25px 50px -12px var(--shadow-color);
-  --shadow-3xl: 0 30px 60px -15px var(--shadow-color);
-  --shadow-inner: inset 0 2px 4px 0 var(--shadow-color);
+  --brand: var(--primary);
+  --brand-foreground: var(--primary-foreground);
+  --chart-1: oklch(0.6 0.1 250);
+  --chart-2: oklch(0.6 0.12 175);
+  --chart-3: oklch(0.7 0.13 290);
+  --chart-4: oklch(0.75 0.14 85);
+  --chart-5: oklch(0.65 0.15 15);
+  --chart-income: var(--income);
+  --chart-expense: var(--expense);
+  --chart-balance: var(--balance);
+  --chart-other: oklch(0.58 0.008 240);
 }
 
-/* =================================================================================
-   * CORE THEME SYSTEM: REFINED DARK MODE
-   * =================================================================================
-   */
 .dark {
-  /* --- Core Hues (Slightly adjusted for dark mode vibrancy) --- */
-  --hue-primary: 146;
-
-  /* --- Dark Theme Core Palette --- */
-  --gray-50: oklch(0.1 0.016 var(--hue-neutral));
-  --gray-100: oklch(0.12 0.018 var(--hue-neutral));
-  --gray-150: oklch(0.15 0.022 var(--hue-neutral));
-  --gray-200: oklch(0.17 0.024 var(--hue-neutral));
-  --gray-300: oklch(0.2 0.02 var(--hue-neutral));
-  --gray-400: oklch(0.22 0.025 var(--hue-neutral));
-  --gray-500: oklch(0.27 0.028 var(--hue-neutral));
+  --hue-neutral: 250;
+  --hue-primary: 250;
+  --hue-success: 165;
+  --hue-destructive: 15;
+  --hue-warning: 85;
+  --gray-50: oklch(0.12 0.012 var(--hue-neutral));
+  --gray-100: oklch(0.15 0.015 var(--hue-neutral));
+  --gray-150: oklch(0.18 0.018 var(--hue-neutral));
+  --gray-200: oklch(0.21 0.021 var(--hue-neutral));
+  --gray-300: oklch(0.24 0.024 var(--hue-neutral));
+  --gray-400: oklch(0.27 0.025 var(--hue-neutral));
+  --gray-500: oklch(0.35 0.028 var(--hue-neutral));
   --gray-600: oklch(0.65 0.012 var(--hue-neutral));
-  --gray-800: oklch(0.92 0.01 var(--hue-neutral));
-  --gray-900: oklch(0.96 0.008 var(--hue-neutral));
-
-  --green-base: oklch(60.4% 0.181 var(--hue-primary));
-  --green-fg: oklch(0.1 0.02 var(--hue-primary));
-
-  --red-base: oklch(0.62 0.16 var(--hue-destructive));
-  /* --red-fg from light mode is suitable */
-
-  --yellow-base: oklch(0.78 0.13 var(--hue-warning));
-  /* --yellow-fg from light mode is suitable */
-
-  --blue-base: oklch(0.65 0.14 var(--hue-info));
-  /* --blue-fg from light mode is suitable */
-
-  /* --- Semantic & Component-Specific Color Mappings --- */
-  --green: var(--green-base);
-  --blue: var(--blue-base);
-  --yellow: var(--yellow-base);
-  --red: var(--red-base);
-
-  --background: var(--gray-50);
-  --sidebar: var(--gray-100);
+  --gray-800: oklch(0.85 0.01 var(--hue-neutral));
+  --gray-900: oklch(0.95 0.008 var(--hue-neutral));
+  --background: var(--gray-100);
+  --sidebar: var(--gray-50);
   --card: var(--gray-150);
   --popover: var(--gray-200);
-
   --foreground: var(--gray-900);
   --card-foreground: var(--foreground);
   --popover-foreground: var(--foreground);
-
-  --primary: var(--green);
-  --primary-foreground: var(--green-fg);
+  --primary: oklch(68% 0.1 var(--hue-primary));
+  --primary-foreground: oklch(0.1 0.02 var(--hue-primary));
   --secondary: var(--gray-400);
   --secondary-foreground: var(--gray-800);
   --muted: var(--gray-300);
   --muted-foreground: var(--gray-600);
-  --accent: var(--gray-400);
-  --accent-foreground: var(--primary);
-
-  --destructive: var(--red);
-  --destructive-foreground: var(--red-fg);
-  --border: var(--gray-500);
-  --sidebar-border: var(--gray-400);
+  --accent: var(--gray-300);
+  --accent-foreground: var(--foreground);
+  --border: var(--gray-400);
+  --sidebar-border: var(--gray-300);
   --input: var(--gray-300);
-  --input-foreground: var(--foreground);
   --ring: oklch(from var(--primary) l c h / 0.5);
-
-  --success: var(--green);
-  --success-foreground: var(--primary-foreground);
-  --warning: var(--yellow);
-  --warning-foreground: var(--yellow-fg);
-  --info: var(--blue);
-  --info-foreground: var(--blue-fg);
-
-  --chart-1: oklch(0.7 0.15 265);
-  --chart-2: oklch(0.65 0.16 140);
-  --chart-3: oklch(0.85 0.16 90);
-  --chart-4: oklch(0.75 0.18 45);
-  --chart-5: oklch(0.7 0.17 310);
-  --chart-6: oklch(0.7 0.15 190);
-  --chart-7: oklch(0.7 0.19 350);
-  --chart-8: oklch(0.8 0.18 115);
-  --chart-9: oklch(0.75 0.14 230);
-  --chart-10: oklch(0.7 0.1 70);
-  --chart-income: var(--green);
-  --chart-expense: var(--red);
-  --chart-balance: var(--blue);
-  --chart-savings: oklch(0.58 0.16 145);
-  --chart-investment: var(--yellow);
-  --chart-debt: var(--red);
-  --chart-other: oklch(0.65 0.012 155);
-
-  --sidebar-foreground: var(--foreground);
-  --sidebar-primary: var(--primary);
-  --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: var(--gray-200);
-  --sidebar-accent-foreground: var(--primary);
-  --sidebar-ring: var(--ring);
-  --navigation: var(--gray-100);
-  --navigation-foreground: var(--foreground);
-  --navigation-border: var(--gray-400);
-  --tooltip: var(--foreground);
-  --tooltip-foreground: var(--background);
-  --overlay: oklch(0 0 0 / 0.8);
-  --overlay-foreground: var(--foreground);
-  --separator: var(--border);
-  --brand: var(--green);
-  --brand-foreground: var(--primary-foreground);
-  --error: var(--red);
-  --error-foreground: var(--destructive-foreground);
-  --danger: var(--red);
-  --danger-foreground: var(--destructive-foreground);
-  --ghost: transparent;
-  --ghost-foreground: var(--gray-800);
-  --ghost-hover: var(--gray-300);
-  --outline: transparent;
-  --outline-foreground: var(--gray-800);
-  --outline-hover: var(--gray-300);
-  --link: var(--primary);
-  --link-foreground: var(--primary);
-  --link-hover: oklch(from var(--primary) calc(l + 0.05) c h);
-  --income: var(--green);
-  --income-foreground: var(--primary-foreground);
-  --expense: var(--red);
-  --expense-foreground: var(--destructive-foreground);
-  --balance: var(--blue);
-  --balance-foreground: var(--info-foreground);
-  --positive: var(--green);
-  --positive-foreground: var(--primary-foreground);
-  --negative: var(--red);
-  --negative-foreground: var(--destructive-foreground);
+  --success: oklch(68% 0.12 var(--hue-success));
+  --success-foreground: oklch(0.1 0.02 var(--hue-success));
+  --destructive: oklch(65% 0.15 var(--hue-destructive));
+  --destructive-foreground: oklch(0.98 0.005 var(--hue-destructive));
+  --warning: oklch(0.78 0.13 var(--hue-warning));
+  --warning-foreground: oklch(0.25 0.03 var(--hue-warning));
+  --info: oklch(0.65 0.14 260);
+  --info-foreground: oklch(0.98 0.005 260);
+  --income: var(--success);
+  --expense: var(--destructive);
+  --balance: var(--primary);
+  --positive: var(--success);
+  --negative: var(--destructive);
   --neutral: var(--gray-600);
-  --neutral-foreground: var(--green-fg);
-
+  --brand: var(--primary);
+  --brand-foreground: var(--primary-foreground);
+  --chart-1: oklch(0.7 0.09 250);
+  --chart-2: oklch(0.7 0.1 170);
+  --chart-3: oklch(0.75 0.11 290);
+  --chart-4: oklch(0.8 0.12 85);
+  --chart-5: oklch(0.7 0.13 15);
+  --chart-income: var(--income);
+  --chart-expense: var(--expense);
+  --chart-balance: var(--balance);
+  --chart-other: oklch(0.65 0.012 240);
   --shadow-color: oklch(0 0 0 / 0.2);
 }
 
@@ -648,11 +512,9 @@ body {
   }
 
   .hero-gradient {
-    background: linear-gradient(
-      160deg,
-      oklch(from var(--background) l c h / 0) 0%,
-      oklch(from var(--primary) l c h / 0.15) 100%
-    );
+    background: linear-gradient(160deg,
+        oklch(from var(--background) l c h / 0) 0%,
+        oklch(from var(--primary) l c h / 0.15) 100%);
   }
 
   .scrollbar {

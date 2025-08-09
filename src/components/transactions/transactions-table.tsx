@@ -14,10 +14,53 @@ import { format } from 'date-fns';
 import CommonTable from '../ui/CommonTable';
 import { useMutation } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { SingleLineEllipsis } from '../ui/ellipsis-components';
 import { DataTableColumnHeader } from '../ui/column-header';
 import RecurringInsightModal from '../modals/recurring-insight-modal';
+import { useAuth } from '@/components/providers/auth-provider';
+import { useConvertedCurrency } from '@/hooks/use-converted-currency';
+
+// Helper Component for Currency Conversion Tooltip
+const ConvertedAmountTooltip = ({
+  transaction,
+  children
+}: {
+  transaction: TransactionAPI.Transaction;
+  children: React.ReactNode;
+}) => {
+  const { session } = useAuth();
+  const preferredCurrency = session?.user?.preferredCurrency || 'INR';
+
+  const needsConversion = transaction.currency.toUpperCase() !== preferredCurrency.toUpperCase();
+
+  const { data: converted, isLoading } = useConvertedCurrency(
+    transaction.amount,
+    transaction.currency
+  );
+
+  if (!needsConversion) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{children}</TooltipTrigger>
+        <TooltipContent>{transaction.amount}</TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent>
+        {isLoading ? (
+          <p>Converting...</p>
+        ) : converted ? (
+          <p>Approx. {formatCurrency(converted.convertedAmount, preferredCurrency)}</p>
+        ) : null}
+      </TooltipContent>
+    </Tooltip>
+  );
+};
 
 interface TransactionTableProps {
   transactions: TransactionAPI.Transaction[] | undefined;
@@ -120,15 +163,17 @@ const TransactionTable = ({
           const transaction = row.original;
           const sign = transaction.isIncome ? '+' : '-';
           return (
-            <div
-              className={cn(
-                'font-mono font-semibold whitespace-nowrap tabular-nums', // <-- ADDED HERE
-                transaction.isIncome ? 'text-success' : 'text-destructive'
-              )}
-            >
-              {sign}
-              {formatCurrency(transaction.amount, transaction.currency)}
-            </div>
+            <ConvertedAmountTooltip transaction={transaction}>
+              <div
+                className={cn(
+                  'font-mono font-semibold whitespace-nowrap tabular-nums',
+                  transaction.isIncome ? 'text-success' : 'text-destructive'
+                )}
+              >
+                {sign}
+                {formatCurrency(transaction.amount, transaction.currency)}
+              </div>
+            </ConvertedAmountTooltip>
           );
         }
       },

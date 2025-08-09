@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { investmentAccountCreate } from '@/lib/endpoints/investmentAccount';
 import { useToast } from '@/lib/hooks/useToast';
 import { z } from 'zod';
@@ -18,9 +18,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '../ui/button';
 import AddModal from './add-modal';
-import { fetchCurrencies, COMMON_CURRENCIES } from '@/lib/endpoints/currency';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
-import CurrencySelect from '../ui/currency-select';
+import { CurrencyCombobox } from '../ui/currency-combobox';
 import { Building, Landmark, PlusCircle, Loader2 } from 'lucide-react';
 
 export const investmentAccountSchema = z.object({
@@ -54,18 +53,6 @@ const AddInvestmentAccountModal: React.FC<AddInvestmentAccountModalProps> = ({
 }) => {
   const { showError } = useToast();
   const invalidate = useInvalidateQueries();
-
-  const { data: currencies, isLoading: isLoadingCurrencies } = useQuery({
-    queryKey: ['currencies'],
-    queryFn: fetchCurrencies,
-    staleTime: 24 * 60 * 60 * 1000,
-    gcTime: 7 * 24 * 60 * 60 * 1000,
-    retry: 2,
-    placeholderData: Object.entries(COMMON_CURRENCIES).map(([code, name]) => ({
-      code,
-      name
-    }))
-  });
 
   const form = useForm<InvestmentAccountFormSchema>({
     resolver: zodResolver(investmentAccountSchema),
@@ -175,11 +162,9 @@ const AddInvestmentAccountModal: React.FC<AddInvestmentAccountModalProps> = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Account Currency*</FormLabel>
-                <CurrencySelect
-                  currencies={currencies}
+                <CurrencyCombobox
                   value={field.value}
                   onValueChange={field.onChange}
-                  isLoading={isLoadingCurrencies}
                   disabled={createAccountMutation.isPending}
                 />
                 <FormMessage />

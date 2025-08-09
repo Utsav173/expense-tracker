@@ -16,50 +16,38 @@ import { UpdateAccountModal } from '@/components/modals/update-account-modal';
 import NoData from '@/components/ui/no-data';
 import { Search, Wallet } from 'lucide-react';
 import { motion, Variants } from 'framer-motion';
+import { useUrlState } from '@/hooks/useUrlState';
+import { useDebounce } from 'use-debounce';
 
 const AccountListPage = () => {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
+  const { showError } = useToast();
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [deleteAccountId, setDeleteAccountId] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<AccountAPI.Account | undefined>();
+
+  const { state, setState, handlePageChange } = useUrlState({
+    page: 1,
+    sortBy: 'createdAt',
+    sortOrder: 'desc' as 'asc' | 'desc',
+    q: ''
+  });
+
+  const [search, setSearch] = useState(state.q);
+  const [debouncedSearch] = useDebounce(search, 600);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['accounts', page, search],
+    queryKey: ['accounts', state.page, debouncedSearch, state.sortBy, state.sortOrder],
     queryFn: () =>
       accountGetAll({
-        page,
+        page: state.page,
         limit: 10,
-        search,
-        sortBy: 'createdAt',
-        sortOrder: 'asc'
+        search: debouncedSearch,
+        sortBy: state.sortBy,
+        sortOrder: state.sortOrder
       }),
     retry: false
   });
-
-  const containerVariants: Variants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const itemVariants: Variants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        duration: 0.5,
-        ease: 'easeOut'
-      }
-    }
-  };
-
-  const [selectedItem, setSelectedItem] = useState<AccountAPI.Account | undefined>();
-  const { showError } = useToast();
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [deleteAccountId, setDeleteAccountId] = useState<string | null>(null);
 
   const deleteAccountMutation = useMutation({
     mutationFn: (id: string) => accountDelete(id),
@@ -78,6 +66,15 @@ const AccountListPage = () => {
     }
   };
 
+  const handleEdit = (account: AccountAPI.Account) => {
+    setSelectedItem(account);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDeleteClick = (id: string) => {
+    setDeleteAccountId(id);
+  };
+
   if (isError) {
     showError(
       error instanceof Error ? error.message : 'An unknown error occurred loading accounts.'
@@ -89,13 +86,14 @@ const AccountListPage = () => {
     );
   }
 
-  const handleEdit = (account: AccountAPI.Account) => {
-    setSelectedItem(account);
-    setIsEditModalOpen(true);
+  const containerVariants: Variants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
   };
 
-  const handleDeleteClick = (id: string) => {
-    setDeleteAccountId(id);
+  const itemVariants: Variants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: 'easeOut' } }
   };
 
   return (
@@ -113,7 +111,10 @@ const AccountListPage = () => {
           type='text'
           placeholder='Search accounts...'
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setState({ q: e.target.value, page: 1 });
+          }}
           className='pl-9'
         />
       </div>
@@ -156,19 +157,19 @@ const AccountListPage = () => {
             <Button
               variant='outline'
               size='sm'
-              onClick={() => setPage((old) => Math.max(old - 1, 1))}
-              disabled={page === 1}
+              onClick={() => handlePageChange(state.page - 1)}
+              disabled={state.page === 1}
             >
               Previous
             </Button>
             <span className='text-muted-foreground p-2 text-sm'>
-              Page {page} of {data.pagination.totalPages}
+              Page {state.page} of {data.pagination.totalPages}
             </span>
             <Button
               variant='outline'
               size='sm'
-              onClick={() => setPage((old) => old + 1)}
-              disabled={!data.accounts || page >= data.pagination.totalPages}
+              onClick={() => handlePageChange(state.page + 1)}
+              disabled={!data.accounts || state.page >= data.pagination.totalPages}
             >
               Next
             </Button>
