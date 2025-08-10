@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Combobox, ComboboxOption } from '@/components/ui/combobox';
 import { userSearch } from '@/lib/endpoints/users';
@@ -18,13 +18,20 @@ interface InvitationComboboxProps {
 }
 
 export function InvitationCombobox({
-  value,
+  value: controlledValue,
   onChange,
   disabled,
   placeholder = 'Select user or invite...',
   className
 }: InvitationComboboxProps) {
   const { showSuccess, showError } = useToast();
+
+  // Internal state for uncontrolled mode
+  const [internalValue, setInternalValue] = useState<ComboboxOption | null>(null);
+
+  // Determine if we're controlled or uncontrolled
+  const isControlled = controlledValue !== undefined;
+  const value = isControlled ? controlledValue : internalValue;
 
   const isEmail = value?.value ? /\S+@\S+\.\S+/.test(value.value) : false;
 
@@ -35,9 +42,7 @@ export function InvitationCombobox({
       const res = await userSearch(value.value);
       return res?.find((u: SimpleUser) => u.id === value.value) ?? null;
     },
-    enabled: !!value?.value && !isEmail,
-    staleTime: Infinity,
-    gcTime: Infinity
+    enabled: !!value?.value && !isEmail
   });
 
   const debouncedFetch = useDebouncedCallback(
@@ -79,18 +84,22 @@ export function InvitationCombobox({
   const handleComboboxChange = useCallback(
     async (selected: ComboboxOption | null) => {
       if (!selected) {
+        if (!isControlled) setInternalValue(null);
         onChange?.(null);
         return;
       }
+
       if (selected.value.startsWith('invite:')) {
         const emailToInvite = selected.label;
         await inviteUser(emailToInvite);
+        if (!isControlled) setInternalValue(null);
         onChange?.(null);
       } else {
+        if (!isControlled) setInternalValue(selected);
         onChange?.(selected);
       }
     },
-    [onChange, inviteUser]
+    [onChange, inviteUser, isControlled]
   );
 
   const comboboxValue = useMemo(() => {

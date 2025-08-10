@@ -190,7 +190,7 @@ const EnhancedPagination: React.FC<EnhancedPaginationProps> = ({
                   onClick={() => handlePageNavigation(page)}
                   variant={page === currentPage ? 'default' : 'outline'}
                   className={cn(
-                    'h-9 min-w-9',
+                    'mx-1 h-9 min-w-9',
                     variant === 'pill' && 'rounded-full',
                     variant === 'minimalist' &&
                       page === currentPage &&

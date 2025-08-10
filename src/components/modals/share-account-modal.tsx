@@ -20,11 +20,10 @@ import {
 import { Input } from '../ui/input';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { InvitationCombobox } from '../invitation/InvitationCombobox';
-import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
 
 const shareAccountSchema = z.object({
   accountId: z.string().uuid(),
-  userId: z.string().uuid()
+  userId: z.string()
 });
 
 type ShareAccountFormSchema = z.infer<typeof shareAccountSchema>;

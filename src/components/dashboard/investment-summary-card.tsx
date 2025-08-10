@@ -75,31 +75,21 @@ export const InvestmentSummaryCard: React.FC<{
   return (
     <Card className={cn('flex h-full flex-col shadow-sm', className)}>
       <CardHeader className='pb-4'>
-        <div className='flex items-start justify-between gap-3'>
-          <div className='min-w-0 flex-1'>
-            <CardTitle className='text-lg font-semibold tracking-tight'>
-              Investment Summary
-            </CardTitle>
-            <CardDescription className='text-muted-foreground mt-1 text-sm leading-relaxed'>
-              {numberOfHoldings} holding{numberOfHoldings !== 1 ? 's' : ''} across{' '}
-              {numberOfAccounts} account{numberOfAccounts !== 1 ? 's' : ''}
-              {valueIsEstimate && (
-                <TooltipElement tooltipContent='Values are estimated due to mixed currencies or missing price data.'>
-                  <span className='ml-2 inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-300'>
-                    <AlertTriangle className='mr-1 h-3 w-3' />
-                    Est.
-                  </span>
-                </TooltipElement>
-              )}
-            </CardDescription>
-          </div>
-          <div className='bg-primary/10 rounded-full p-2'>
-            <WalletCards className='text-primary h-5 w-5' />
-          </div>
-        </div>
+        <CardTitle className='text-lg font-semibold tracking-tight'>
+          {numberOfHoldings} holding{numberOfHoldings !== 1 ? 's' : ''} across {numberOfAccounts}{' '}
+          account{numberOfAccounts !== 1 ? 's' : ''}
+          {valueIsEstimate && (
+            <TooltipElement tooltipContent='Values are estimated due to mixed currencies or missing price data.'>
+              <span className='ml-2 inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-300'>
+                <AlertTriangle className='mr-1 h-3 w-3' />
+                Est.
+              </span>
+            </TooltipElement>
+          )}
+        </CardTitle>
       </CardHeader>
 
-      <CardContent className='flex flex-1 flex-col items-stretch justify-evenly space-y-6'>
+      <CardContent className='flex flex-1 flex-col items-stretch justify-evenly'>
         {/* Primary Metrics */}
         <div className='grid grid-cols-2 gap-4'>
           <MetricCard
@@ -204,7 +194,7 @@ const MetricCard: React.FC<{
           {label}
         </div>
       </div>
-      <div className='space-y-1'>
+      <div className='flex items-center gap-2'>
         <div className={cn('text-xl leading-none font-bold', styles.text)}>{value}</div>
         {secondaryValue && (
           <div className={cn('text-sm font-medium opacity-80', styles.text)}>{secondaryValue}</div>

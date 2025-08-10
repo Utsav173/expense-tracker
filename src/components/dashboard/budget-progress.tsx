@@ -17,6 +17,90 @@ import {
 import { useToast } from '@/lib/hooks/useToast';
 import Link from 'next/link';
 import { Button } from '../ui/button';
+import { CheckCircle2, AlertCircle, TrendingUp } from 'lucide-react';
+import { ScrollArea } from '../ui/scroll-area';
+
+interface BudgetItemProps {
+  item: {
+    category: string;
+    categoryName: string;
+    budgetedAmount: number;
+    actualSpend: number;
+  };
+}
+
+const BudgetItem: React.FC<BudgetItemProps> = ({ item }) => {
+  const spent = item.actualSpend || 0;
+  const budgeted = item.budgetedAmount || 0;
+  const progress = budgeted > 0 ? Math.min((spent / budgeted) * 100, 100) : 0;
+  const remaining = budgeted - spent;
+  const isOverBudget = spent > budgeted;
+  const isNearLimit = progress > 85 && progress <= 100;
+
+  const getStatusIcon = () => {
+    if (isOverBudget) return <AlertCircle className='text-destructive h-3.5 w-3.5' />;
+    if (isNearLimit) return <TrendingUp className='h-3.5 w-3.5 text-orange-500' />;
+    return <CheckCircle2 className='h-3.5 w-3.5 text-green-500' />;
+  };
+
+  const getProgressColor = () => {
+    if (isOverBudget) return '[&>div]:bg-destructive';
+    if (isNearLimit) return '[&>div]:bg-orange-500';
+    return '[&>div]:bg-green-500';
+  };
+
+  const getStatusBadge = () => {
+    if (isOverBudget) return 'Over Budget';
+    if (isNearLimit) return 'Near Limit';
+    return 'On Track';
+  };
+
+  const getBadgeColor = () => {
+    if (isOverBudget) return 'bg-destructive/10 text-destructive border-destructive/20';
+    if (isNearLimit) return 'bg-orange-500/10 text-orange-600 border-orange-500/20';
+    return 'bg-green-500/10 text-green-600 border-green-500/20';
+  };
+
+  return (
+    <div className='group bg-card hover:bg-accent/50 rounded-lg border-none transition-all duration-200'>
+      <div className='p-3'>
+        <div className='mb-2 flex items-center justify-between'>
+          <div className='flex min-w-0 items-center gap-2'>
+            {getStatusIcon()}
+            <span className='text-foreground truncate text-sm font-medium'>
+              {item.categoryName}
+            </span>
+          </div>
+          <span
+            className={cn(
+              'rounded-full border px-2 py-0.5 text-xs font-medium whitespace-nowrap',
+              getBadgeColor()
+            )}
+          >
+            {getStatusBadge()}
+          </span>
+        </div>
+
+        <div className='space-y-2'>
+          <Progress value={progress} className={cn('h-1.5', getProgressColor())} />
+
+          <div className='flex items-center justify-between text-xs'>
+            <span className='text-muted-foreground'>
+              {formatCurrency(spent)} / {formatCurrency(budgeted)}
+            </span>
+            <span
+              className={cn('font-medium', isOverBudget ? 'text-destructive' : 'text-green-600')}
+            >
+              {isOverBudget ? '+' : ''}
+              {formatCurrency(isOverBudget ? Math.abs(remaining) : remaining)}
+              <span className='text-muted-foreground ml-1'>{isOverBudget ? 'over' : 'left'}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const BudgetProgress: React.FC<{ className?: string }> = ({ className }) => {
   const currentMonth = new Date().getMonth() + 1;
@@ -49,16 +133,21 @@ export const BudgetProgress: React.FC<{ className?: string }> = ({ className }) 
   }));
   const years = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
 
+  const totalBudgeted = data?.reduce((sum, item) => sum + (item.budgetedAmount || 0), 0) || 0;
+  const totalSpent = data?.reduce((sum, item) => sum + (item.actualSpend || 0), 0) || 0;
+  const overallProgress = totalBudgeted > 0 ? (totalSpent / totalBudgeted) * 100 : 0;
+
   return (
     <Card className={cn('flex h-full flex-col', className)}>
-      <div className='flex w-full items-center gap-2 p-4'>
+      {/* Controls */}
+      <div className='flex gap-2 border-b p-3'>
         <Select
           value={String(selectedMonth)}
           onValueChange={(value) => setSelectedMonth(Number(value))}
           disabled={isLoading || isFetching}
         >
-          <SelectTrigger className='h-8 w-full text-xs'>
-            <SelectValue placeholder='Select Month' />
+          <SelectTrigger className='h-8 text-xs'>
+            <SelectValue placeholder='Month' />
           </SelectTrigger>
           <SelectContent>
             {months.map((month) => (
@@ -73,8 +162,8 @@ export const BudgetProgress: React.FC<{ className?: string }> = ({ className }) 
           onValueChange={(value) => setSelectedYear(Number(value))}
           disabled={isLoading || isFetching}
         >
-          <SelectTrigger className='h-8 w-full text-xs'>
-            <SelectValue placeholder='Select Year' />
+          <SelectTrigger className='h-8 w-20 text-xs'>
+            <SelectValue placeholder='Year' />
           </SelectTrigger>
           <SelectContent>
             {years.map((year) => (
@@ -85,70 +174,81 @@ export const BudgetProgress: React.FC<{ className?: string }> = ({ className }) 
           </SelectContent>
         </Select>
       </div>
-      <CardContent className='h-auto max-h-[60vh] w-full flex-1 overflow-y-auto p-0'>
-        {isLoading || isFetching ? (
-          <div className='flex h-full items-center justify-center'>
-            <Loader />
-          </div>
-        ) : error ? (
-          <div className='flex h-full items-center justify-center py-8'>
-            <NoData message={'Could not load budget data.'} icon='x-circle' />
-          </div>
-        ) : !data || data.length === 0 ? (
-          <div className='flex h-full items-center justify-center py-8'>
-            <NoData
-              message={`No budgets set for ${months.find((m) => m.value === selectedMonth)?.label} ${selectedYear}.`}
-              icon='inbox'
-            />
-          </div>
-        ) : (
-          <div className='space-y-4 px-4 py-2'>
-            {data.map((item) => {
-              const spent = item.actualSpend || 0;
-              const budgeted = item.budgetedAmount || 0;
-              const progress = budgeted > 0 ? Math.min((spent / budgeted) * 100, 100) : 0;
-              const remaining = budgeted - spent;
-              const isOverBudget = spent > budgeted;
 
-              return (
-                <div
-                  key={item.category || item.categoryName}
-                  className='rounded-lg border p-3 shadow-sm transition-all hover:shadow-md'
-                >
-                  <div className='mb-2 flex justify-between text-sm'>
-                    <span className='truncate pr-2 font-medium'>{item.categoryName}</span>
-                    <span
-                      className={`text-xs font-medium ${
-                        isOverBudget ? 'text-red-600' : 'text-muted-foreground'
-                      }`}
-                    >
-                      {formatCurrency(spent)} / {formatCurrency(budgeted)}
-                    </span>
-                  </div>
-                  <Progress
-                    value={progress}
-                    className={`h-2 transition-all duration-500 ${
-                      isOverBudget ? '[&>div]:bg-destructive' : '[&>div]:bg-lime-600'
-                    }`}
-                  />
-                  <p
-                    className={`mt-2 text-right text-xs ${
-                      isOverBudget ? 'text-destructive' : 'text-muted-foreground'
-                    }`}
-                  >
-                    {isOverBudget
-                      ? `${formatCurrency(Math.abs(remaining))} over budget`
-                      : `${formatCurrency(remaining)} remaining`}
-                  </p>
+      <CardContent className='flex-1 p-0'>
+        <ScrollArea className='h-[450px]'>
+          {isLoading || isFetching ? (
+            <div className='flex h-full items-center justify-center py-8'>
+              <Loader />
+            </div>
+          ) : error ? (
+            <div className='flex h-full items-center justify-center py-8'>
+              <NoData message='Could not load budget data' icon='x-circle' />
+            </div>
+          ) : !data || data.length === 0 ? (
+            <div className='flex h-full items-center justify-center py-8'>
+              <NoData
+                message={`No budgets for ${months.find((m) => m.value === selectedMonth)?.label} ${selectedYear}`}
+                icon='inbox'
+              />
+            </div>
+          ) : (
+            <>
+              {/* Overall Progress */}
+              <div className='bg-muted/30 border-b p-3'>
+                <div className='mb-2 flex items-center justify-between'>
+                  <span className='text-muted-foreground text-xs font-medium'>
+                    Overall Progress
+                  </span>
+                  <span className='text-foreground text-xs font-medium'>
+                    {formatCurrency(totalSpent)} / {formatCurrency(totalBudgeted)}
+                  </span>
                 </div>
-              );
-            })}
-          </div>
-        )}
+                <Progress
+                  value={Math.min(overallProgress, 100)}
+                  className={cn(
+                    'h-2',
+                    overallProgress > 100
+                      ? '[&>div]:bg-destructive'
+                      : overallProgress > 85
+                        ? '[&>div]:bg-orange-500'
+                        : '[&>div]:bg-green-500'
+                  )}
+                />
+                <div className='text-muted-foreground mt-1 text-right text-xs'>
+                  {Math.round(overallProgress)}% of total budget used
+                </div>
+              </div>
+
+              {/* Budget Items */}
+              <div className='space-y-2 p-3'>
+                {data
+                  .sort((a, b) => {
+                    const aProgress =
+                      a.budgetedAmount > 0 ? (a.actualSpend / a.budgetedAmount) * 100 : 0;
+                    const bProgress =
+                      b.budgetedAmount > 0 ? (b.actualSpend / b.budgetedAmount) * 100 : 0;
+
+                    if (aProgress > 100 && bProgress <= 100) return -1;
+                    if (bProgress > 100 && aProgress <= 100) return 1;
+                    if (aProgress > 85 && bProgress <= 85) return -1;
+                    if (bProgress > 85 && aProgress <= 85) return 1;
+
+                    return b.actualSpend - a.actualSpend;
+                  })
+                  .map((item) => (
+                    <BudgetItem key={item.category || item.categoryName} item={item} />
+                  ))}
+              </div>
+            </>
+          )}
+        </ScrollArea>
       </CardContent>
+
+      {/* Footer */}
       {!isLoading && !error && data && data.length > 0 && (
-        <div className='border-t p-3 text-center'>
-          <Button variant='link' size='sm' asChild className='text-xs'>
+        <div className='border-t p-3'>
+          <Button variant='link' size='sm' asChild className='text-muted-foreground w-full text-xs'>
             <Link href='/budget'>Manage Budgets</Link>
           </Button>
         </div>

@@ -16,7 +16,6 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -40,7 +39,6 @@ import { accountGetDropdown } from '@/lib/endpoints/accounts';
 import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/lib/hooks/useToast';
 import type { AccountAPI } from '@/lib/api/api-types';
-import { cn } from '@/lib/utils';
 import { useTransactions } from '@/components/transactions/hooks/useTransactions';
 import DateRangePickerV2 from '@/components/date/date-range-picker-v2';
 import { API_BASE_URL } from '@/lib/api-client';
@@ -703,3 +701,5 @@ const TransactionsPage = () => {
     </div>
   );
 };
+
+export default TransactionsPage;

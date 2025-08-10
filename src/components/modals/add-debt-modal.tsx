@@ -98,7 +98,7 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
       ...formData,
       amount: Number(formData.amount),
       interestRate: Number(formData.interestRate || 0),
-      startDate: formData.startDate?.toISOString()
+      startDate: (formData.startDate as Date)?.toISOString()
     };
     createDebtMutation.mutate(apiPayload);
   };
@@ -194,7 +194,6 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
                   <FormLabel>Counterparty (Who is involved?)*</FormLabel>
                   <FormControl>
                     <InvitationCombobox
-                      value={{ value: field.value, label: '' }}
                       onChange={(option) => field.onChange(option?.value ?? '')}
                       disabled={createDebtMutation.isPending}
                       placeholder='Select or invite user by email...'
@@ -311,7 +310,7 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
                 <FormItem>
                   <FormLabel>Start Date*</FormLabel>
                   <FormControl>
-                    <DatePicker value={field.value} onChange={field.onChange} />
+                    <DatePicker value={field.value as Date} onChange={field.onChange} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

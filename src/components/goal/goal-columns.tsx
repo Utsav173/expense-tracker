@@ -2,11 +2,15 @@
 
 import { ColumnDef } from '@tanstack/react-table';
 import type { GoalAPI, UserAPI } from '@/lib/api/api-types';
-import { format } from 'date-fns';
+import { format, isAfter, differenceInDays } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 import { DataTableColumnHeader } from '../ui/column-header';
 import { GoalActions } from './goal-actions';
+import { CheckCircle2, AlertTriangle, Clock, Target } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { SingleLineEllipsis } from '../ui/ellipsis-components';
 
 interface GoalColumnsProps {
   user: UserAPI.UserProfile | undefined;
@@ -21,17 +25,45 @@ export const createGoalColumns = ({
     accessorKey: 'name',
     header: ({ column }) => <DataTableColumnHeader column={column} title='Goal Name' />,
     meta: { header: 'Goal Name' },
-    cell: ({ row }) => <span className='font-medium'>{row.original.name}</span>
+    cell: ({ row }) => {
+      const goal = row.original;
+      const saved = goal.savedAmount || 0;
+      const target = goal.targetAmount;
+      const progress = target > 0 ? (saved / target) * 100 : 0;
+      const isCompleted = progress >= 100;
+
+      return (
+        <div className='flex max-w-[320px] items-center gap-2'>
+          {isCompleted ? (
+            <CheckCircle2 className='text-success h-4 w-4 shrink-0' />
+          ) : (
+            <Target className='text-muted-foreground h-4 w-4 shrink-0' />
+          )}
+          <div className='flex min-w-0 flex-col'>
+            <SingleLineEllipsis className={cn('font-medium', isCompleted && 'text-success')}>
+              {goal.name}
+            </SingleLineEllipsis>
+            {isCompleted && <span className='text-success text-xs'>Completed</span>}
+          </div>
+        </div>
+      );
+    }
   },
   {
     accessorKey: 'targetAmount',
     header: ({ column }) => <DataTableColumnHeader column={column} title='Target Amount' />,
     meta: { header: 'Target Amount' },
-    cell: ({ row }) => (
-      <span className='text-primary font-semibold'>
-        {formatCurrency(row.original.targetAmount, user?.preferredCurrency || 'INR')}
-      </span>
-    )
+    cell: ({ row }) => {
+      const amount = row.original.targetAmount;
+      return (
+        <div className='flex flex-col items-start'>
+          <span className='text-primary text-sm font-semibold'>
+            {formatCurrency(amount, user?.preferredCurrency || 'INR')}
+          </span>
+          <span className='text-muted-foreground text-xs'>Target</span>
+        </div>
+      );
+    }
   },
   {
     accessorKey: 'savedAmount',
@@ -43,16 +75,58 @@ export const createGoalColumns = ({
       const target = goal.targetAmount;
       const progress = target > 0 ? Math.min((saved / target) * 100, 100) : 0;
       const remaining = Math.max(0, target - saved);
+      const isCompleted = progress >= 100;
+
+      // Determine progress color based on percentage
+      const getProgressColor = (progress: number) => {
+        if (progress >= 100) return 'bg-success';
+        if (progress >= 75) return 'bg-blue-500';
+        if (progress >= 50) return 'bg-yellow-500';
+        if (progress >= 25) return 'bg-orange-500';
+        return 'bg-red-500';
+      };
 
       return (
-        <div className='flex min-w-[150px] flex-col gap-1'>
-          <span className='text-success font-semibold'>
-            {formatCurrency(saved, user?.preferredCurrency || 'INR')}
-          </span>
-          <Progress value={progress} className='h-2' />
-          <span className='text-muted-foreground text-xs'>
-            {formatCurrency(remaining, user?.preferredCurrency || 'INR')} remaining
-          </span>
+        <div className='flex min-w-[180px] flex-col gap-2'>
+          <div className='flex items-center justify-between'>
+            <span className='text-success text-sm font-semibold'>
+              {formatCurrency(saved, user?.preferredCurrency || 'INR')}
+            </span>
+            <Badge
+              variant={isCompleted ? 'default' : 'secondary'}
+              className={cn(
+                'px-2 py-0.5 text-xs',
+                isCompleted && 'bg-success text-success-foreground'
+              )}
+            >
+              {progress.toFixed(1)}%
+            </Badge>
+          </div>
+          <div className='relative'>
+            <Progress
+              value={progress}
+              className='h-2.5'
+              // Custom progress bar color
+              style={
+                {
+                  '--progress-foreground': isCompleted
+                    ? 'hsl(var(--success))'
+                    : progress >= 75
+                      ? 'hsl(220 70% 50%)'
+                      : progress >= 50
+                        ? 'hsl(45 93% 47%)'
+                        : progress >= 25
+                          ? 'hsl(25 95% 53%)'
+                          : 'hsl(0 84% 60%)'
+                } as React.CSSProperties
+              }
+            />
+          </div>
+          {!isCompleted && (
+            <span className='text-muted-foreground text-xs'>
+              {formatCurrency(remaining, user?.preferredCurrency || 'INR')} remaining
+            </span>
+          )}
         </div>
       );
     }
@@ -62,9 +136,63 @@ export const createGoalColumns = ({
     header: ({ column }) => <DataTableColumnHeader column={column} title='Target Date' />,
     meta: { header: 'Target Date' },
     cell: ({ row }) => {
-      const date = row.original.targetDate;
+      const goal = row.original;
+      const date = goal.targetDate;
+      const saved = goal.savedAmount || 0;
+      const target = goal.targetAmount;
+      const isCompleted = (saved / target) * 100 >= 100;
+
+      if (!date) {
+        return <span className='text-muted-foreground text-sm'>No deadline</span>;
+      }
+
       const dateObj = typeof date === 'string' ? new Date(date) : date;
-      return dateObj && !isNaN(dateObj.getTime()) ? format(dateObj, 'MMM d, yyyy') : 'N/A';
+      if (!dateObj || isNaN(dateObj.getTime())) {
+        return <span className='text-muted-foreground text-sm'>Invalid date</span>;
+      }
+
+      const today = new Date();
+      const daysLeft = differenceInDays(dateObj, today);
+      const isOverdue = isAfter(today, dateObj) && !isCompleted;
+      const isUrgent = daysLeft <= 30 && daysLeft > 0 && !isCompleted;
+
+      const getDateStatus = () => {
+        if (isCompleted) return { color: 'text-success', icon: CheckCircle2, label: 'Completed' };
+        if (isOverdue) return { color: 'text-destructive', icon: AlertTriangle, label: 'Overdue' };
+        if (isUrgent) return { color: 'text-orange-500', icon: Clock, label: 'Urgent' };
+        return { color: 'text-foreground', icon: Clock, label: 'On track' };
+      };
+
+      const status = getDateStatus();
+      const StatusIcon = status.icon;
+
+      return (
+        <div className='flex flex-col gap-1'>
+          <div className='flex items-center gap-1.5'>
+            <StatusIcon className={cn('h-3.5 w-3.5', status.color)} />
+            <span className={cn('text-sm font-medium', status.color)}>
+              {format(dateObj, 'MMM d, yyyy')}
+            </span>
+          </div>
+          <div className='flex items-center gap-1'>
+            {isCompleted ? (
+              <Badge variant='default' className='bg-success text-success-foreground text-xs'>
+                Completed
+              </Badge>
+            ) : isOverdue ? (
+              <Badge variant='destructive' className='text-xs'>
+                {Math.abs(daysLeft)} days overdue
+              </Badge>
+            ) : isUrgent ? (
+              <Badge variant='secondary' className='bg-orange-50 text-xs text-orange-600'>
+                {daysLeft} days left
+              </Badge>
+            ) : daysLeft > 0 ? (
+              <span className='text-muted-foreground text-xs'>{daysLeft} days left</span>
+            ) : null}
+          </div>
+        </div>
+      );
     }
   },
   {

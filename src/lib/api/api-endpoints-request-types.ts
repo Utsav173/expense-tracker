@@ -83,7 +83,7 @@ export const apiEndpoints = {
       path: '/accounts/share',
       body: z.object({
         accountId: z.string().uuid(),
-        userId: z.string().uuid()
+        userId: z.string()
       })
     },
     importTransactions: {
@@ -153,7 +153,7 @@ export const apiEndpoints = {
       path: '/accounts/revoke-share',
       body: z.object({
         accountId: z.string().uuid(),
-        userId: z.string().uuid()
+        userId: z.string()
       })
     },
     getById: {
@@ -530,13 +530,13 @@ export const apiEndpoints = {
         description: z.string().max(255).optional(),
         interestRate: z.number().min(0).default(0),
         interestType: z.enum(['simple', 'compound']),
-        startDate: z.date().optional(),
+        startDate: z.union([z.date(), z.string()]).optional(),
         termLength: z.number().int().positive('Term length must be a positive integer.'),
         termUnit: z.enum(['days', 'weeks', 'months', 'years']),
         paymentFrequency: z.enum(['daily', 'weekly', 'monthly', 'yearly']),
         type: z.enum(['given', 'taken']),
-        user: z.string().uuid('Involved user ID must be a valid UUID.'),
-        account: z.string().uuid('Associated account ID must be a valid UUID.')
+        user: z.string(),
+        account: z.string()
       })
     },
     getDebts: {

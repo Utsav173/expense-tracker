@@ -14,7 +14,7 @@ import { format } from 'date-fns';
 import CommonTable from '../ui/CommonTable';
 import { useMutation } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { SingleLineEllipsis } from '../ui/ellipsis-components';
 import { DataTableColumnHeader } from '../ui/column-header';
 import RecurringInsightModal from '../modals/recurring-insight-modal';
@@ -137,7 +137,7 @@ const TransactionTable = ({
         header: ({ column }) => <DataTableColumnHeader column={column} title='Description' />,
         meta: { header: 'Description' },
         cell: ({ row }) => (
-          <div className='flex flex-col space-y-1'>
+          <div className='flex flex-col'>
             <SingleLineEllipsis
               showTooltip
               className='max-w-[200px] text-sm font-medium md:max-w-[250px]'
@@ -218,7 +218,7 @@ const TransactionTable = ({
         cell: ({ row }) => {
           const date = new Date(row.original.createdAt);
           return (
-            <div className='flex items-center gap-2 text-sm'>
+            <div className='flex flex-col items-start gap-1 text-sm'>
               <span className='font-medium whitespace-nowrap'>{format(date, 'MMM d, yyyy')}</span>
               <span className='text-muted-foreground text-xs'>{format(date, 'h:mm a')}</span>
             </div>

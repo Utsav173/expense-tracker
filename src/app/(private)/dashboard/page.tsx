@@ -282,12 +282,16 @@ const DashboardCardContent: React.FC<DashboardCardContentProps> = ({
                   <Maximize2 className='h-4 w-4' />
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className='sm:max-w-6xl'>
                 <DialogHeader>
                   <DialogTitle>{title}</DialogTitle>
                   {description && <DialogDescription>{description}</DialogDescription>}
                 </DialogHeader>
-                <div className={cn('flex min-h-fit flex-1 flex-col justify-center p-0')}>
+                <div
+                  className={cn(
+                    'flex min-h-fit flex-1 flex-col justify-center overflow-y-scroll p-0'
+                  )}
+                >
                   {children}
                 </div>
               </DialogContent>
@@ -295,9 +299,7 @@ const DashboardCardContent: React.FC<DashboardCardContentProps> = ({
           </div>
         )}
       </CardHeader>
-      <CardContent className={cn('flex max-h-[calc(100vh-12rem)] flex-1 flex-col p-0')}>
-        {children}
-      </CardContent>
+      <CardContent className={cn('flex max-h-[600px] flex-1 flex-col p-0')}>{children}</CardContent>
     </Card>
   );
 };
