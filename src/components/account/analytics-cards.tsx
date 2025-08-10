@@ -54,17 +54,17 @@ const TrendIndicator = ({ value }: { value: number }) => {
 
   const trendColorClasses =
     direction === 'up'
-      ? 'text-green-700 dark:text-green-300'
+      ? 'text-green-600'
       : direction === 'down'
-        ? 'text-red-700 dark:text-red-300'
-        : 'text-slate-600 dark:text-slate-400';
+        ? 'text-red-600'
+        : 'text-muted-foreground';
 
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
           <div className='flex items-center gap-3'>
-            <div className='flex h-12 w-12 items-center justify-center rounded-full border border-black/10 bg-black/5 backdrop-blur-sm dark:border-white/20 dark:bg-white/10'>
+            <div className='bg-background/5 flex h-12 w-12 items-center justify-center rounded-full border backdrop-blur-sm'>
               <Icon className={cn('h-6 w-6', trendColorClasses)} />
             </div>
             <div className='text-base font-bold text-inherit'>
@@ -111,19 +111,19 @@ const AnalyticsCard = ({
       // Hero Card Layout remains the same
       <div className='relative flex h-full min-h-[180px] flex-col justify-between p-6'>
         <div>
-          <p className='font-medium text-inherit opacity-70'>{title}</p>
-          <p className='font-display mt-2 text-4xl font-bold tracking-tighter text-inherit'>
+          <p className='text-muted-foreground font-medium'>{title}</p>
+          <p className='font-display text-foreground mt-2 text-4xl font-bold tracking-tighter'>
             {formatCurrency(value, currency)}
           </p>
         </div>
         <div className='mt-4'>
           {totalBalance !== undefined && (
-            <p className='text-sm text-inherit opacity-70'>
+            <p className='text-muted-foreground text-sm'>
               <span className='opacity-80'>Total in Account:</span>{' '}
               {formatCurrency(totalBalance, currency)}
             </p>
           )}
-          {footerText && <p className='mt-1 text-xs text-inherit opacity-60'>{footerText}</p>}
+          {footerText && <p className='text-muted-foreground mt-1 text-xs'>{footerText}</p>}
         </div>
       </div>
     ) : (
@@ -131,8 +131,8 @@ const AnalyticsCard = ({
       <div className='relative flex h-full min-h-[140px] flex-col justify-between p-6'>
         {/* Top-left content */}
         <div>
-          <p className='font-medium text-inherit opacity-70'>{title}</p>
-          <p className='font-display mt-1 text-3xl font-bold tracking-tight text-inherit'>
+          <p className='text-muted-foreground font-medium'>{title}</p>
+          <p className='font-display text-foreground mt-1 text-3xl font-bold tracking-tight'>
             {formatCurrency(value, currency)}
           </p>
         </div>
@@ -153,7 +153,7 @@ const AnalyticsCard = ({
 const SkeletonCard = ({ isHero = false }: { isHero?: boolean }) => {
   if (isHero) {
     return (
-      <div className='bg-card flex min-h-[180px] flex-col justify-between rounded-2xl p-6 shadow-md'>
+      <Card className='flex min-h-[180px] flex-col justify-between p-6'>
         <div className='space-y-2'>
           <Skeleton className='h-5 w-2/5' />
           <Skeleton className='h-12 w-3/4' />
@@ -162,13 +162,13 @@ const SkeletonCard = ({ isHero = false }: { isHero?: boolean }) => {
           <Skeleton className='h-4 w-1/2' />
           <Skeleton className='h-3 w-1/3' />
         </div>
-      </div>
+      </Card>
     );
   }
 
   // Updated skeleton to match the new corner-aligned layout
   return (
-    <div className='bg-card flex min-h-[140px] flex-col justify-between rounded-2xl p-6 shadow-md'>
+    <Card className='flex min-h-[140px] flex-col justify-between p-6'>
       {/* Top-left skeleton */}
       <div className='space-y-2'>
         <Skeleton className='h-5 w-24' />
@@ -180,7 +180,7 @@ const SkeletonCard = ({ isHero = false }: { isHero?: boolean }) => {
         <Skeleton className='h-12 w-12 rounded-full' />
         <Skeleton className='h-6 w-16' />
       </div>
-    </div>
+    </Card>
   );
 };
 

@@ -51,8 +51,8 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
       {(form) => {
         return (
           <>
-            <Card className='border-border/50 bg-muted/50 mt-4 p-4'>
-              <CardContent className='space-y-2 p-0 text-sm'>
+            <Card>
+              <CardContent className='space-y-2 p-4 text-sm'>
                 <h4 className='text-foreground mb-2 font-medium'>Original Details</h4>
                 <div className='grid grid-cols-2 gap-x-4 gap-y-1'>
                   <span className='text-muted-foreground'>Amount:</span>
@@ -161,13 +161,10 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
               />
             </div>
 
-            <Alert
-              variant='default'
-              className='border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950'
-            >
-              <Info className='h-4 w-4 text-blue-600 dark:text-blue-400' />
-              <AlertTitle className='text-blue-800 dark:text-blue-300'>Note</AlertTitle>
-              <AlertDescription className='text-blue-700 dark:text-blue-300/90'>
+            <Alert variant='default'>
+              <Info className='h-4 w-4' />
+              <AlertTitle>Note</AlertTitle>
+              <AlertDescription>
                 Changing the term will affect the calculated final due date but does not alter
                 payment schedules.
               </AlertDescription>

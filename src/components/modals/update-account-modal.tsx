@@ -106,7 +106,7 @@ export function UpdateAccountModal({
               control={form.control}
               name='isDefault'
               render={({ field }) => (
-                <FormItem className='flex flex-row items-center space-y-0 space-x-3'>
+                <FormItem className='flex flex-row items-start space-y-0 space-x-3'>
                   <FormControl>
                     <Checkbox
                       checked={field.value}

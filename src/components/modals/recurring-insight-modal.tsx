@@ -88,7 +88,7 @@ const RecurringInsightModal: React.FC<RecurringInsightModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className='max-h-[95vh] w-full max-w-4xl gap-0 overflow-hidden p-0' hideClose>
         {/* Header */}
-        <DialogHeader className='bg-muted/30 border-b px-4 py-4 sm:px-6 sm:py-5'>
+        <DialogHeader className='bg-muted/30 border-b px-4 py-4 backdrop-blur-sm sm:px-6 sm:py-5'>
           <div className='flex items-start justify-between gap-4'>
             <div className='flex min-w-0 flex-1 items-start gap-3'>
               <div className='bg-primary/10 text-primary flex-shrink-0 rounded-lg p-2'>

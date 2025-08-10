@@ -76,8 +76,8 @@ const InterestCalculator: React.FC<InterestCalculatorProps> = ({ onUseCalculatio
   };
 
   return (
-    <Card className='border-none shadow-none'>
-      <CardContent className='p-0'>
+    <Card>
+      <CardContent className='p-6'>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleCalculate)} className='space-y-4'>
             <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>

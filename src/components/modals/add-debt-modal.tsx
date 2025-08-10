@@ -109,7 +109,7 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
       description='Log money you owe or money owed to you.'
       triggerButton={
         hideTriggerButton ? null : (
-          <Button>
+          <Button variant='default'>
             <PlusCircle className='mr-2 h-4 w-4' /> Add Debt
           </Button>
         )

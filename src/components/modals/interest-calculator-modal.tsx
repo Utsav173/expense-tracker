@@ -31,7 +31,7 @@ const InterestCalculatorModal: React.FC<InterestCalculatorModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       {triggerButton && <DialogTrigger asChild>{triggerButton}</DialogTrigger>}
-      <DialogContent className='sm:max-w-lg'>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Interest Calculator</DialogTitle>
           <DialogDescription>

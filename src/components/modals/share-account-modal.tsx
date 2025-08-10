@@ -85,7 +85,7 @@ const ShareAccountModal = ({
     <AddModal
       title='Share Account'
       description='Share this account with another user. They will be able to view and manage transactions.'
-      triggerButton={triggerButton ?? <Button>Share Account</Button>}
+      triggerButton={triggerButton ?? <Button variant='default'>Share Account</Button>}
       isOpen={isOpen}
       onOpenChange={handleOpenChange}
     >

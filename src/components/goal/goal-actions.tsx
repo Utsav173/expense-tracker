@@ -54,7 +54,7 @@ export function GoalActions({ goal, user, refetchGoals }: GoalActionsProps) {
         onClick={() => handleOpenAddWithdrawModal('add')}
         aria-label='Add Amount to Goal'
       >
-        <Target size={18} />
+        <Target className='h-4 w-4' />
         <span className='sr-only'>Add Amount</span>
       </Button>
       <Button
@@ -66,8 +66,8 @@ export function GoalActions({ goal, user, refetchGoals }: GoalActionsProps) {
       >
         <svg
           xmlns='http://www.w3.org/2000/svg'
-          width='18'
-          height='18'
+          width='16'
+          height='16'
           viewBox='0 0 24 24'
           fill='none'
           stroke='currentColor'
@@ -86,7 +86,7 @@ export function GoalActions({ goal, user, refetchGoals }: GoalActionsProps) {
         onClick={() => setIsUpdateModalOpen(true)}
         aria-label='Edit Goal'
       >
-        <Pencil size={18} />
+        <Pencil className='h-4 w-4' />
         <span className='sr-only'>Edit Goal</span>
       </Button>
       <DeleteConfirmationModal
@@ -108,7 +108,7 @@ export function GoalActions({ goal, user, refetchGoals }: GoalActionsProps) {
             onClick={() => setIsDeleteModalOpen(true)}
             aria-label='Delete Goal'
           >
-            <Trash2 size={18} />
+            <Trash2 className='h-4 w-4' />
             <span className='sr-only'>Delete Goal</span>
           </Button>
         }

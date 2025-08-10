@@ -49,10 +49,10 @@ export function DebtActions({ debt, refetchDebts }: DebtActionsProps) {
         variant='ghost'
         onClick={() => markAsPaidMutation.mutate(debt.debts.id)}
         disabled={!!debt.debts.isPaid || markAsPaidMutation.isPending}
-        className='h-8 w-8 text-green-600 hover:text-green-700'
+        className='text-success hover:text-success/80 h-8 w-8'
         aria-label='Mark as Paid'
       >
-        <Check size={18} />
+        <Check className='h-4 w-4' />
       </Button>
       <Button
         size='icon'
@@ -61,7 +61,7 @@ export function DebtActions({ debt, refetchDebts }: DebtActionsProps) {
         onClick={() => setIsInsightModalOpen(true)}
         aria-label='View Debt Insight'
       >
-        <Eye size={16} />
+        <Eye className='h-4 w-4' />
       </Button>
       <Button
         size='icon'
@@ -71,7 +71,7 @@ export function DebtActions({ debt, refetchDebts }: DebtActionsProps) {
         aria-label='Edit Debt'
         disabled={!!debt.debts.isPaid}
       >
-        <Pencil size={16} />
+        <Pencil className='h-4 w-4' />
       </Button>
       <DeleteConfirmationModal
         title='Delete Debt'
@@ -92,7 +92,7 @@ export function DebtActions({ debt, refetchDebts }: DebtActionsProps) {
             onClick={() => setIsDeleteModalOpen(true)}
             aria-label='Delete Debt'
           >
-            <Trash2 size={16} />
+            <Trash2 className='h-4 w-4' />
           </Button>
         }
       />

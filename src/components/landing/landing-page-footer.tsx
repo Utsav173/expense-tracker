@@ -37,7 +37,7 @@ const LandingPageFooter = () => {
             </p>
             <div className='mt-4 flex justify-center sm:justify-start lg:mt-6'>
               <Link href='/auth/signup'>
-                <Button variant='cta' size='sm' className='group'>
+                <Button size='sm' className='group'>
                   Get Started Free
                   <ArrowRight className='ml-2 h-4 w-4 transition-transform group-hover:translate-x-1' />
                 </Button>

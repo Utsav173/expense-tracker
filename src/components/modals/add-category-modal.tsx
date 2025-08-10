@@ -13,6 +13,14 @@ import AddModal from './add-modal';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { Loader2 } from 'lucide-react';
 import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from '@/components/ui/form';
 
 type CategorySchemaType = z.infer<typeof apiEndpoints.category.create.body>;
 
@@ -38,12 +46,7 @@ const AddCategoryModal: React.FC<CreateCategoryModalProps> = ({
   const { showError } = useToast();
   const invalidate = useInvalidateQueries();
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors, isValid }
-  } = useForm<CategorySchemaType>({
+  const form = useForm<CategorySchemaType>({
     resolver: zodResolver(apiEndpoints.category.create.body),
     defaultValues: {
       name: initialValues?.name || ''
@@ -73,7 +76,7 @@ const AddCategoryModal: React.FC<CreateCategoryModalProps> = ({
   });
 
   const handleModalClose = () => {
-    reset();
+    form.reset();
     onCategoryAdded();
     onOpenChange(false);
   };
@@ -86,7 +89,7 @@ const AddCategoryModal: React.FC<CreateCategoryModalProps> = ({
     }
   };
 
-  const isSubmitDisabled = isPending || !isValid;
+  const isSubmitDisabled = isPending || !form.formState.isValid;
 
   return (
     <AddModal
@@ -111,55 +114,51 @@ const AddCategoryModal: React.FC<CreateCategoryModalProps> = ({
             )
       }
     >
-      <form onSubmit={handleSubmit(onSubmit)} className='space-y-6' autoComplete='off'>
-        <div className='space-y-2'>
-          <Input
-            id='category-name'
-            placeholder='e.g., Groceries, Utilities'
-            {...register('name')}
-            disabled={isPending}
-            className='mt-2'
-            autoFocus
-            aria-invalid={!!errors.name}
-            aria-describedby={errors.name ? 'category-name-error' : undefined}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                if (!isSubmitDisabled) {
-                  handleSubmit(onSubmit)();
-                }
-              }
-            }}
-          />
-          {errors.name && (
-            <p id='category-name-error' className='text-destructive text-xs font-medium'>
-              {errors.name.message}
-            </p>
-          )}
-        </div>
-        <div className='flex justify-end gap-3'>
-          <Button
-            type='button'
-            variant='outline'
-            onClick={() => onOpenChange(false)}
-            disabled={isPending}
-          >
-            Cancel
-          </Button>
-          <Button type='submit' disabled={isSubmitDisabled} className='min-w-[100px]'>
-            {isPending ? (
-              <>
-                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                {categoryId ? 'Updating...' : 'Creating...'}
-              </>
-            ) : categoryId ? (
-              'Update'
-            ) : (
-              'Create'
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6' autoComplete='off'>
+          <FormField
+            control={form.control}
+            name='name'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Category Name</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder='e.g., Groceries, Utilities'
+                    {...field}
+                    disabled={isPending}
+                    autoFocus
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
-          </Button>
-        </div>
-      </form>
+          />
+
+          <div className='flex justify-end gap-3'>
+            <Button
+              type='button'
+              variant='outline'
+              onClick={() => onOpenChange(false)}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+            <Button type='submit' disabled={isSubmitDisabled} className='min-w-[100px]'>
+              {isPending ? (
+                <>
+                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  {categoryId ? 'Updating...' : 'Creating...'}
+                </>
+              ) : categoryId ? (
+                'Update'
+              ) : (
+                'Create'
+              )}
+            </Button>
+          </div>
+        </form>
+      </Form>
     </AddModal>
   );
 };

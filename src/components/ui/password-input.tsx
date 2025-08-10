@@ -21,14 +21,13 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
           type={showPassword ? 'text' : 'password'}
           className={cn('pr-10', className)}
           ref={ref}
-          variant='auth' // Assuming this should use the auth variant consistently
           {...props}
         />
         {!noEyeIcon && (
           <Button
             type='button'
             variant='ghost'
-            size='sm'
+            size='icon'
             className='absolute top-0 right-0 h-full px-3 py-2 hover:bg-transparent'
             onClick={togglePasswordVisibility}
             tabIndex={-1}

@@ -133,11 +133,9 @@ const CommonTable = <T extends object>({
 
   return (
     <>
-      <div
-        className={cn('bg-card w-full overflow-x-auto rounded-lg border shadow-sm', tableClassName)}
-      >
+      <div className={cn('w-full overflow-x-auto rounded-md border', tableClassName)}>
         <Table className={cn('min-w-full')} style={{ width: table.getTotalSize() }}>
-          <TableHeader className={cn('bg-muted', headerClassName)}>
+          <TableHeader className={cn('[&_tr]:border-b', headerClassName)}>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
@@ -145,10 +143,8 @@ const CommonTable = <T extends object>({
                     key={header.id}
                     colSpan={header.colSpan}
                     className={cn(
-                      'group/th text-muted-foreground relative px-3 py-2 text-left text-xs font-medium tracking-wider uppercase',
-                      { 'whitespace-nowrap': !isMobile },
-                      headerClassName,
-                      header.index < headerGroup.headers.length - 1 && 'border-r' // Add border-r to all but the last header
+                      'text-muted-foreground h-10 px-2 text-left align-middle font-medium [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
+                      headerClassName
                     )}
                     style={{
                       width: header.getSize(),
@@ -169,12 +165,9 @@ const CommonTable = <T extends object>({
           <TableBody>
             {loading ? (
               Array.from({ length: pageSize }).map((_, i) => (
-                <TableRow key={`loading-${i}`} className={cn(i < pageSize - 1 && 'border-b')}>
+                <TableRow key={`loading-${i}`}>
                   {columns.map((_col, j) => (
-                    <TableCell
-                      key={`skeleton-${i}-${j}`}
-                      className={cn('p-3', j < columns.length - 1 && 'border-r')}
-                    >
+                    <TableCell key={`skeleton-${i}-${j}`} className={cn('p-3')}>
                       <Skeleton className='h-5 w-full' />
                     </TableCell>
                   ))}
@@ -182,21 +175,13 @@ const CommonTable = <T extends object>({
               ))
             ) : table.getRowModel().rows.length > 0 ? (
               table.getRowModel().rows.map((row, rowIndex) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
-                  className={cn(
-                    'hover:bg-muted/50 transition-colors',
-                    rowIndex < table.getRowModel().rows.length - 1 && 'border-b' // Add border-b to all but the last row
-                  )}
-                >
+                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
                   {row.getVisibleCells().map((cell, cellIndex) => (
                     <TableCell
                       key={cell.id}
                       className={cn(
-                        'truncate p-3 align-middle text-sm',
-                        cellClassName,
-                        cellIndex < row.getVisibleCells().length - 1 && 'border-r' // Add border-r to all but the last cell
+                        'p-2 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
+                        cellClassName
                       )}
                       style={{ width: cell.column.getSize() }}
                     >

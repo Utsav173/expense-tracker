@@ -89,7 +89,6 @@ const LandingPageHeader = () => {
             <Link href='/auth/signup'>
               <Button
                 size='sm'
-                variant='cta'
                 className='text-sm text-white shadow-md transition-all hover:shadow-sky-500/40'
               >
                 Sign Up Free
@@ -178,7 +177,7 @@ const LandingPageHeader = () => {
                 transition={{ delay: 0.7 }}
               >
                 <Link href='/auth/signup'>
-                  <Button size='lg' variant='cta' className='w-full'>
+                  <Button size='lg' className='w-full'>
                     Sign Up Free
                   </Button>
                 </Link>

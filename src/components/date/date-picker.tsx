@@ -60,16 +60,15 @@ const DatePicker: React.FC<DatePickerProps> = ({
         <Button
           variant='outline'
           className={cn(
-            'w-full pl-3 text-left font-normal',
-            !selectedDate && 'text-muted-foreground'
+            'w-full justify-start text-left font-normal',
+            !value && 'text-muted-foreground'
           )}
-          disabled={!!buttonDisabled}
         >
-          {selectedDate ? format(selectedDate, 'MM/dd/yyyy') : 'MM/DD/YYYY'}
-          <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
+          <CalendarIcon className='mr-2 h-4 w-4' />
+          {value ? format(value, 'PPP') : <span>Pick a date</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className='w-auto p-0'>
+      <PopoverContent className='w-auto p-0' align='start'>
         <Calendar
           mode='single'
           selected={selectedDate}

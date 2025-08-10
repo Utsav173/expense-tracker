@@ -330,7 +330,7 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
                 type='button'
                 variant='outline'
                 className={cn(
-                  'border-border w-full justify-between bg-transparent px-3 text-xs sm:h-10 sm:text-sm',
+                  'w-full items-center justify-between px-3 text-xs sm:h-10 sm:text-sm',
                   !(tempDate?.from || date?.from) && 'text-muted-foreground',
                   disabled && 'cursor-not-allowed opacity-50',
                   buttonClassName
@@ -341,7 +341,7 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
                 aria-describedby={error ? `${id}-error` : undefined}
               >
                 <span className='truncate'>{getDisplayText()}</span>
-                <CalendarIcon size={16} aria-hidden='true' />
+                <CalendarIcon size={16} aria-hidden='true' className='ml-2' />
               </Button>
             </PopoverTrigger>
             <PopoverContent className='w-auto p-0' align='start'>
@@ -400,7 +400,7 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
                 autoFocus
               />
               {error && (
-                <p className='mt-1 mb-2 px-3 text-sm text-red-500' id={`${id}-error`}>
+                <p className='text-destructive mt-1 mb-2 px-3 text-sm' id={`${id}-error`}>
                   {error}
                 </p>
               )}
@@ -572,7 +572,7 @@ function CollapsibleYear({ title, children, open }: CollapsibleYearProps) {
     <Collapsible className='border-t px-2 py-1.5' defaultOpen={open}>
       <CollapsibleTrigger asChild>
         <Button
-          className='flex w-full justify-start gap-2 text-sm font-medium hover:bg-transparent [&[data-state=open]>svg]:rotate-180'
+          className='data-[state=open]:text-muted-foreground/80 flex w-full justify-start gap-2 text-sm font-medium hover:bg-transparent [&[data-state=open]>svg]:rotate-180'
           variant='ghost'
           size='sm'
           type='button'

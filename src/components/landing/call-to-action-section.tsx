@@ -48,7 +48,6 @@ const CallToActionSection = () => {
         <div className='section-content-anim mt-12 inline-block'>
           <Link href='/auth/signup'>
             <Button
-              variant='cta'
               size='lg'
               className='hover:shadow-primary/40 focus:ring-primary/60 dark:focus:ring-offset-background px-12 py-4 text-xl font-semibold shadow-xl transition-all duration-300 hover:scale-105 focus:ring-4 focus:ring-offset-2'
             >

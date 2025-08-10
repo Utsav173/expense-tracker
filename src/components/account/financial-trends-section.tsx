@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FinancialTrendsChart } from './financial-trends-chart';
 import { SpendingBreakdown } from '@/components/dashboard/spending-breakdown';
 import { cn } from '@/lib/utils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 
 interface FinancialTrendsSectionProps {
   chartData: Array<{
@@ -27,44 +28,26 @@ export const FinancialTrendsSection: React.FC<FinancialTrendsSectionProps> = ({
 
   return (
     <div className='flex h-full flex-col'>
-      <div className='flex w-full flex-wrap items-center justify-between gap-2 border-b px-4 py-2 sm:justify-start'>
-        <button
-          className={cn(
-            'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors sm:flex-initial',
-            activeTab === 'trends'
-              ? 'bg-primary/10 text-primary'
-              : 'text-muted-foreground hover:bg-muted/50'
-          )}
-          onClick={() => setActiveTab('trends')}
-        >
-          Financial Trends
-        </button>
-        <button
-          className={cn(
-            'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors sm:flex-initial',
-            activeTab === 'analysis'
-              ? 'bg-primary/10 text-primary'
-              : 'text-muted-foreground hover:bg-muted/50'
-          )}
-          onClick={() => setActiveTab('analysis')}
-        >
-          Spending Analysis
-        </button>
-      </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className='flex h-full flex-col'>
+        <div className='flex w-full flex-wrap items-center justify-between gap-2 border-b px-4 py-2 sm:justify-start'>
+          <TabsList className='grid w-full grid-cols-2 sm:w-auto'>
+            <TabsTrigger value='trends'>Financial Trends</TabsTrigger>
+            <TabsTrigger value='analysis'>Spending Analysis</TabsTrigger>
+          </TabsList>
+        </div>
 
-      <div className='flex-1 p-2 sm:p-4'>
-        {activeTab === 'trends' && (
+        <TabsContent value='trends' className='flex-1 p-2 sm:p-4'>
           <FinancialTrendsChart data={chartData} isLoading={isChartLoading} currency={currency} />
-        )}
-        {activeTab === 'analysis' && (
+        </TabsContent>
+        <TabsContent value='analysis' className='flex-1 p-2 sm:p-4'>
           <SpendingBreakdown
             accountId={accountId}
             showDurationSelector={false}
             defaultDuration={duration}
             chartTypes={['column', 'pie']}
           />
-        )}
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

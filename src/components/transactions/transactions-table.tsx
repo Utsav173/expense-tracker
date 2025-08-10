@@ -182,10 +182,7 @@ const TransactionTable = ({
         header: ({ column }) => <DataTableColumnHeader column={column} title='Category' />,
         meta: { header: 'Category' },
         cell: ({ row }) => (
-          <Badge
-            variant='secondary'
-            className='bg-muted/30 max-w-[120px] truncate md:max-w-[150px]'
-          >
+          <Badge variant='secondary' className='max-w-[120px] truncate md:max-w-[150px]'>
             <SingleLineEllipsis>
               {row.original.category?.name ?? 'Uncategorized'}
             </SingleLineEllipsis>
@@ -275,7 +272,7 @@ const TransactionTable = ({
                       size='icon'
                       variant='ghost'
                       onClick={() => handleInsightClick(row.original.id)}
-                      className='hover:bg-muted h-8 w-8'
+                      className='h-8 w-8'
                     >
                       <Eye className='text-muted-foreground h-3.5 w-3.5' />
                       <span className='sr-only'>View Recurring Details</span>
@@ -285,7 +282,7 @@ const TransactionTable = ({
                     size='icon'
                     variant='ghost'
                     onClick={() => handleEditClick(row.original)}
-                    className='hover:bg-muted h-8 w-8'
+                    className='h-8 w-8'
                   >
                     <Pencil className='text-muted-foreground h-3.5 w-3.5' />
                     <span className='sr-only'>Edit</span>

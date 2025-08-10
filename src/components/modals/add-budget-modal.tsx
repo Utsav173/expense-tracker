@@ -114,7 +114,7 @@ const AddBudgetModal: React.FC<AddBudgetModalProps> = ({
       description='Set a spending limit for a specific category and period.'
       triggerButton={
         hideTriggerButton ? null : (
-          <Button>
+          <Button variant='default'>
             <PlusCircle className='mr-2 h-4 w-4' /> Add Budget
           </Button>
         )

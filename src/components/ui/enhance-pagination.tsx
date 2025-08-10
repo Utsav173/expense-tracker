@@ -135,7 +135,7 @@ const EnhancedPagination: React.FC<EnhancedPaginationProps> = ({
       )}
     >
       {showTotal && (
-        <div className='order-2 text-sm text-gray-500 sm:order-1'>
+        <div className='text-muted-foreground order-2 text-sm sm:order-1'>
           {isMobile ? (
             <span>
               Page {currentPage} of {totalPages}
@@ -160,7 +160,7 @@ const EnhancedPagination: React.FC<EnhancedPaginationProps> = ({
             onClick={() => handlePageNavigation(1)}
             disabled={isFirstPage}
             size='icon'
-            variant='ghost'
+            variant='outline'
             aria-label='First page'
           >
             <ChevronsLeft className='h-4 w-4' />
@@ -171,7 +171,7 @@ const EnhancedPagination: React.FC<EnhancedPaginationProps> = ({
           onClick={() => handlePageNavigation(currentPage - 1)}
           disabled={isFirstPage}
           size='icon'
-          variant='ghost'
+          variant='outline'
           aria-label='Previous page'
         >
           <ChevronLeft className='h-4 w-4' />
@@ -182,13 +182,13 @@ const EnhancedPagination: React.FC<EnhancedPaginationProps> = ({
             {pagesToShow.map((page, index) =>
               page === 'ellipsis' ? (
                 <div key={`ellipsis-${index}`} className='flex items-center justify-center px-2'>
-                  <MoreHorizontal className='h-4 w-4 text-gray-400' />
+                  <MoreHorizontal className='text-muted-foreground h-4 w-4' />
                 </div>
               ) : (
                 <Button
                   key={page}
                   onClick={() => handlePageNavigation(page)}
-                  variant={page === currentPage ? 'default' : 'ghost'}
+                  variant={page === currentPage ? 'default' : 'outline'}
                   className={cn(
                     'h-9 min-w-9',
                     variant === 'pill' && 'rounded-full',
@@ -215,7 +215,7 @@ const EnhancedPagination: React.FC<EnhancedPaginationProps> = ({
               aria-label='Page number'
               placeholder='Go to'
             />
-            <span className='mx-2 text-sm text-gray-500'>of {totalPages}</span>
+            <span className='text-muted-foreground mx-2 text-sm'>of {totalPages}</span>
           </div>
         )}
 
@@ -223,7 +223,7 @@ const EnhancedPagination: React.FC<EnhancedPaginationProps> = ({
           onClick={() => handlePageNavigation(currentPage + 1)}
           disabled={isLastPage}
           size='icon'
-          variant='ghost'
+          variant='outline'
           aria-label='Next page'
         >
           <ChevronRight className='h-4 w-4' />
@@ -234,7 +234,7 @@ const EnhancedPagination: React.FC<EnhancedPaginationProps> = ({
             onClick={() => handlePageNavigation(totalPages)}
             disabled={isLastPage}
             size='icon'
-            variant='ghost'
+            variant='outline'
             aria-label='Last page'
           >
             <ChevronsRight className='h-4 w-4' />

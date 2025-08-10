@@ -104,7 +104,7 @@ const AddInvestmentAccountModal: React.FC<AddInvestmentAccountModalProps> = ({
       description='Create a new account to track your investments (e.g., stocks, mutual funds).'
       triggerButton={
         hideTriggerButton ? null : (
-          <Button>
+          <Button variant='default'>
             <PlusCircle className='mr-2 h-4 w-4' /> Add Investment Account
           </Button>
         )

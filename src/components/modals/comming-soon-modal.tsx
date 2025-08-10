@@ -26,7 +26,7 @@ const ComingSoonModal: React.FC<ComingSoonModalProps> = ({
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-md'>
+      <DialogContent>
         <DialogHeader className='mb-4'>
           <DialogTitle className='text-center text-lg font-medium'>{featureName}</DialogTitle>
         </DialogHeader>

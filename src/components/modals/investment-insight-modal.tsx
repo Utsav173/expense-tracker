@@ -60,7 +60,7 @@ const CustomTooltip = ({
     const isPositive = value >= 0;
     const TrendIcon = isPositive ? TrendingUp : TrendingDown;
     return (
-      <div className='bg-popover text-popover-foreground min-w-[240px] rounded-lg border p-3 shadow-md backdrop-blur-sm'>
+      <div className='bg-popover min-w-[240px] rounded-lg border p-3 shadow-md'>
         <div className='mb-2 flex items-center justify-between'>
           <p className='text-sm font-medium'>{format(parseISO(date), 'MMM dd, yyyy')}</p>
           <div
@@ -97,7 +97,7 @@ const KPICard = ({
   return (
     <Card>
       <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-        <CardTitle className='text-muted-foreground text-sm font-medium'>{title}</CardTitle>
+        <CardTitle className='text-sm font-medium'>{title}</CardTitle>
         <Icon className='text-muted-foreground h-4 w-4' />
       </CardHeader>
       <CardContent>
@@ -126,11 +126,11 @@ const DetailItem = ({
   <div
     className={cn(
       'flex flex-col items-start gap-1 pt-3 sm:flex-row sm:items-center sm:justify-between',
-      !isLast && 'border-border border-b pb-3'
+      !isLast && 'border-b pb-3'
     )}
   >
     <p className='text-muted-foreground text-sm font-medium'>{label}</p>
-    <div className='text-foreground text-right text-base font-semibold'>{children}</div>
+    <div className='text-foreground text-base font-semibold'>{children}</div>
   </div>
 );
 const ModalLoadingSkeleton = () => (
@@ -351,7 +351,7 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                       icon={Activity}
                     />
                   </div>
-                  <Card className='h-full min-h-[300px] flex-1'>
+                  <Card className='flex h-full min-h-[300px] flex-1 flex-col'>
                     <CardHeader>
                       <CardTitle className='flex items-center gap-2 text-lg'>
                         <Activity className='text-primary h-5 w-5' />
@@ -361,7 +361,7 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                         Profit and loss performance over the holding period.
                       </DialogDescription>
                     </CardHeader>
-                    <CardContent className='pt-4 pr-4 pl-2'>
+                    <CardContent className='flex-1 pt-4 pr-4 pl-2'>
                       {chartData.length > 1 ? (
                         <ChartContainer config={{}} className='h-[250px] w-full sm:h-[300px]'>
                           <ResponsiveContainer>
@@ -441,7 +441,7 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                   </Card>
                 </TabsContent>
                 <TabsContent value='performance' className='mt-6'>
-                  <Card>
+                  <Card className='flex h-full flex-col'>
                     <CardHeader>
                       <CardTitle className='flex items-center gap-2'>
                         Performance Timeline
@@ -450,7 +450,7 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                         A detailed view of your investment's profit and loss over time.
                       </DialogDescription>
                     </CardHeader>
-                    <CardContent className='h-[400px] pt-4 pr-4 pl-2'>
+                    <CardContent className='flex-1 pt-4 pr-4 pl-2'>
                       {chartData.length > 1 ? (
                         <ChartContainer config={{}} className='h-full w-full'>
                           <ResponsiveContainer>
@@ -628,4 +628,5 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
     </Dialog>
   );
 };
+
 export default InvestmentInsightModal;

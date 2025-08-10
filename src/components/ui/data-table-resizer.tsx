@@ -14,8 +14,7 @@ export function DataTableResizer<TData, TValue>({ header }: { header: Header<TDa
       onMouseDown={header.getResizeHandler()}
       onTouchStart={header.getResizeHandler()}
       className={cn(
-        'absolute top-0 right-0 flex h-full w-4 cursor-col-resize touch-none items-center justify-center select-none',
-        'z-10 opacity-0 group-hover/th:opacity-100',
+        'absolute top-0 right-0 z-10 flex h-full w-4 cursor-col-resize touch-none items-center justify-center opacity-0 select-none group-hover/th:opacity-100',
         isResizing && 'opacity-100'
       )}
       aria-hidden='true'

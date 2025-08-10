@@ -134,7 +134,7 @@ const AddWithdrawGoalAmountModal: React.FC<AddWithdrawGoalAmountModalProps> = ({
       <DialogTrigger asChild onClick={(e) => e.stopPropagation()}>
         {triggerButton}
       </DialogTrigger>
-      <DialogContent className='sm:max-w-[425px]'>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
             <Icon className='h-5 w-5' />

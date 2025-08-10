@@ -98,7 +98,7 @@ const MetricCard = React.memo(
   }) => (
     <Card>
       <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-        <CardTitle className='text-muted-foreground text-sm font-medium'>{title}</CardTitle>
+        <CardTitle className='text-sm font-medium'>{title}</CardTitle>
         <Icon className='text-muted-foreground h-4 w-4' />
       </CardHeader>
       <CardContent>
@@ -112,7 +112,7 @@ MetricCard.displayName = 'MetricCard';
 const CustomTooltip = React.memo(({ active, payload }: any) => {
   if (!active || !payload || !payload.length) return null;
   return (
-    <div className='bg-popover text-popover-foreground min-w-[200px] rounded-lg border p-2 shadow-sm'>
+    <div className='bg-popover min-w-[200px] rounded-lg border p-2 shadow-sm'>
       <div className='space-y-1'>
         {payload.map((entry: any, index: number) => (
           <div key={`item-${index}`} className='flex items-center justify-between gap-4'>

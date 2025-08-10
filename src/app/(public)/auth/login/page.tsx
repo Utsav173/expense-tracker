@@ -145,14 +145,10 @@ const LoginPage = () => {
               <span className='bg-background text-muted-foreground px-2'>Or continue with</span>
             </div>
           </div>
-          <TooltipProvider>
+          {/* <TooltipProvider delayDuration={100}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant='outline'
-                  className='w-full'
-                  disabled={true} // Button is always disabled
-                >
+                <Button variant='outline' className='w-full' disabled={true} title='Coming soon'>
                   <svg role='img' viewBox='0 0 24 24' className='mr-2 h-4 w-4'>
                     <path
                       fill='currentColor'
@@ -162,9 +158,11 @@ const LoginPage = () => {
                   Sign in with GitHub
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>GitHub Sign-In is coming soon!</TooltipContent>
+              <TooltipContent>
+                <p>GitHub Sign-In is coming soon!</p>
+              </TooltipContent>
             </Tooltip>
-          </TooltipProvider>
+          </TooltipProvider> */}
         </CardContent>
 
         <CardFooter className='flex items-center justify-between gap-2 pt-4 max-sm:mt-2 max-sm:flex-col max-sm:justify-center'>

@@ -274,7 +274,7 @@ const SignupPage = () => {
         <CardFooter className='flex flex-col items-center justify-between gap-2 pt-4 sm:flex-row'>
           <Link
             href='/auth/login'
-            className='text-primary hover:text-primary/80 text-sm font-medium transition-colors duration-200'
+            className='text-primary hover:text-primary/80 my-auto text-sm font-medium transition-colors duration-200'
           >
             Already have an account? Log in
           </Link>

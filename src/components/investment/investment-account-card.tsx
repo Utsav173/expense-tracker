@@ -42,7 +42,7 @@ const InvestmentAccountCard: React.FC<InvestmentAccountCardProps> = ({
       variants={cardVariants}
       whileHover={{ y: -5, transition: { duration: 0.2 } }}
       className={cn(
-        'group bg-card relative flex h-full flex-col overflow-hidden rounded-xl border shadow-sm',
+        'group bg-card group-hover:border-primary/30 relative flex h-full flex-col overflow-hidden rounded-xl border shadow-sm transition-all duration-300 group-hover:shadow-lg',
         className
       )}
     >
@@ -54,10 +54,7 @@ const InvestmentAccountCard: React.FC<InvestmentAccountCardProps> = ({
         <div className='flex-1'>
           <h3 className='text-foreground mb-1 line-clamp-1 font-semibold'>{account.name}</h3>
           {account.platform && (
-            <Badge
-              variant='outline'
-              className='border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300'
-            >
+            <Badge variant='outline' className='text-amber-700 dark:text-amber-300'>
               {account.platform}
             </Badge>
           )}
@@ -73,7 +70,7 @@ const InvestmentAccountCard: React.FC<InvestmentAccountCardProps> = ({
               onEdit(account);
             }}
           >
-            <Edit size={13} />
+            <Edit className='text-muted-foreground h-3.5 w-3.5' />
           </Button>
           <Button
             size='icon'
@@ -85,7 +82,7 @@ const InvestmentAccountCard: React.FC<InvestmentAccountCardProps> = ({
               onDelete(account.id);
             }}
           >
-            <Trash size={13} />
+            <Trash className='text-destructive h-3.5 w-3.5' />
           </Button>
         </div>
       </div>
@@ -97,7 +94,7 @@ const InvestmentAccountCard: React.FC<InvestmentAccountCardProps> = ({
           </div>
           <div className='flex-1'>
             <p className='text-muted-foreground text-xs font-medium'>Current Balance</p>
-            <p className='text-foreground text-2xl font-bold tracking-tight'>
+            <p className='text-foreground font-mono text-2xl font-bold tracking-tight'>
               {formatCurrency(account.balance || 0, account.currency)}
             </p>
           </div>

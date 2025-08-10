@@ -69,7 +69,7 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
 
   if (isLoading) {
     return (
-      <Card className='border-border/40 border shadow-xs'>
+      <Card>
         <CardHeader className='pb-4'>
           <Skeleton className='h-6 w-48 rounded-md' />
           <Skeleton className='h-4 w-72 rounded-md opacity-70' />
@@ -83,7 +83,7 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
 
   if (!data || data.length === 0) {
     return (
-      <Card className='border-border/40 flex h-[440px] items-center justify-center border shadow-xs'>
+      <Card className='flex h-[440px] items-center justify-center'>
         <NoData message='No trend data available.' icon='inbox' />
       </Card>
     );
@@ -99,8 +99,8 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
   const lineActiveDotRadius = isMobile ? 4 : 5;
 
   return (
-    <Card className='border-border/40 overflow-hidden border shadow-xs transition-all duration-200'>
-      <CardHeader className='flex flex-none gap-2 pb-2'>
+    <Card className='overflow-hidden transition-all duration-200'>
+      <CardHeader className='flex-none gap-2 pb-2'>
         <Tabs defaultValue='bar' className='w-full' onValueChange={(v) => setChartType(v)}>
           <TabsList className='grid w-full grid-cols-2 max-sm:w-full'>
             <TabsTrigger value='bar' className='flex items-center gap-1'>

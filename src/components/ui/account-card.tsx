@@ -8,6 +8,7 @@ import { Button } from './button';
 import type { AccountAPI } from '@/lib/api/api-types';
 import { SingleLineEllipsis } from './ellipsis-components';
 import { motion, Variants } from 'framer-motion';
+import { Badge } from './badge';
 
 interface AccountCardProps {
   href: string;
@@ -27,9 +28,9 @@ const ChangePill: React.FC<{ change: number; isExpense?: boolean }> = ({
   const isPositive = isExpense ? change < 0 : change > 0;
   const displayChange = Math.abs(change);
   return (
-    <div
+    <Badge
       className={cn(
-        'flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-semibold',
+        'flex items-center gap-1 px-1.5 py-0.5 text-xs font-semibold',
         isPositive
           ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'
           : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300'
@@ -37,7 +38,7 @@ const ChangePill: React.FC<{ change: number; isExpense?: boolean }> = ({
     >
       {isPositive ? <ArrowUp className='h-3 w-3' /> : <ArrowDown className='h-3 w-3' />}
       <span>{displayChange.toFixed(1)}%</span>
-    </div>
+    </Badge>
   );
 };
 
@@ -54,15 +55,15 @@ const AccountCard = React.forwardRef<HTMLDivElement, AccountCardProps>(
       >
         <Link
           href={href}
-          className='from-card to-card/90 group-hover:border-primary/30 flex h-full flex-col overflow-hidden rounded-xl border bg-gradient-to-br shadow-sm transition-all duration-300 group-hover:shadow-lg'
+          className='bg-card group-hover:border-primary/30 flex h-full flex-col overflow-hidden rounded-xl border shadow-sm transition-all duration-300 group-hover:shadow-lg'
         >
           {/* Header */}
           <div className='flex items-start justify-between p-4'>
-            <div className='flex items-center gap-3'>
+            <div className='flex min-w-0 items-center gap-3'>
               <div className='bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-lg'>
                 <CreditCard className='h-5 w-5' />
               </div>
-              <div>
+              <div className='min-w-0'>
                 <SingleLineEllipsis className='font-semibold'>{name}</SingleLineEllipsis>
                 <p className='text-muted-foreground text-xs'>
                   {account.isDefault ? 'Default Account' : 'Standard Account'}
@@ -105,9 +106,7 @@ const AccountCard = React.forwardRef<HTMLDivElement, AccountCardProps>(
 
           {/* Balance Section */}
           <div className='flex flex-grow flex-col items-center justify-center px-4 py-6'>
-            <p className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
-              Balance
-            </p>
+            <p className='text-muted-foreground text-xs font-medium uppercase'>Balance</p>
             <SingleLineEllipsis
               className={cn(
                 'font-mono text-4xl font-bold tracking-tight tabular-nums',

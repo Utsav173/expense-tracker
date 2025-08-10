@@ -20,6 +20,16 @@ import { Card } from '../ui/card';
 import { NumericFormat } from 'react-number-format';
 import DateTimePicker from '../date/date-time-picker';
 import { Combobox, ComboboxOption } from '../ui/combobox';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from '../ui/form';
+import { cn } from '@/lib/utils';
 
 const transactionSchema = z.object({
   text: z.string().min(3, 'Description must be at least 3 characters').max(255),
@@ -36,7 +46,8 @@ const transactionSchema = z.object({
   recurring: z.boolean().optional(),
   recurrenceType: z.enum(['daily', 'weekly', 'monthly', 'yearly', 'hourly']).optional().nullable(),
   recurrenceEndDate: z.string().optional().nullable(),
-  currency: z.string().optional().default('')
+  currency: z.string().optional().default(''),
+  createdAt: z.string().optional().nullable()
 });
 
 type TransactionFormSchema = z.infer<typeof transactionSchema>;
@@ -73,14 +84,7 @@ const AddTransactionModal = ({
     queryFn: accountGetDropdown
   });
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    reset,
-    setValue,
-    watch
-  } = useForm<TransactionFormSchema>({
+  const form = useForm<TransactionFormSchema>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       isIncome: false,
@@ -88,6 +92,16 @@ const AddTransactionModal = ({
       ...(accountId && { accountId })
     }
   });
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+    setValue,
+    watch,
+    control
+  } = form;
 
   useEffect(() => {
     if (categoriesData?.categories) {
@@ -319,292 +333,359 @@ const AddTransactionModal = ({
       onOpenChange={handleOpenChange}
       isOpen={isOpen}
     >
-      <form onSubmit={handleSubmit(handleCreateTransaction)} className='space-y-4 overflow-hidden'>
-        {/* Transaction Type Selection */}
-        <div className='grid grid-cols-2 gap-4'>
-          <Card
-            className={`cursor-pointer border-2 p-3 transition-all ${!isIncome ? 'border-destructive bg-destructive/10' : 'border-border hover:border-destructive hover:bg-destructive/10'} ${isSubmitting ? 'pointer-events-none opacity-50' : ''}`}
-            onClick={() => {
-              if (!isSubmitting) {
-                setIsIncome(false);
-                setValue('isIncome', false);
-              }
-            }}
-          >
-            <div className='flex flex-col items-center justify-center gap-1.5'>
-              <ArrowDownCircle
-                className={`h-6 w-6 ${!isIncome ? 'text-destructive' : 'text-muted-foreground'}`}
-              />
-              <span
-                className={`text-sm font-medium ${!isIncome ? 'text-destructive' : 'text-muted-foreground'}`}
-              >
-                Expense
-              </span>
-            </div>
-          </Card>
-
-          <Card
-            className={`cursor-pointer border-2 p-3 transition-all ${isIncome ? 'border-success bg-success/10' : 'border-border hover:border-success hover:bg-success/10'} ${isSubmitting ? 'pointer-events-none opacity-50' : ''}`}
-            onClick={() => {
-              if (!isSubmitting) {
-                setIsIncome(true);
-                setValue('isIncome', true);
-              }
-            }}
-          >
-            <div className='flex flex-col items-center justify-center gap-1.5'>
-              <ArrowUpCircle
-                className={`h-6 w-6 ${isIncome ? 'text-success' : 'text-muted-foreground'}`}
-              />
-              <span
-                className={`text-sm font-medium ${isIncome ? 'text-success' : 'text-muted-foreground'}`}
-              >
-                Income
-              </span>
-            </div>
-          </Card>
-        </div>
-
-        <div className='max-h-full overflow-y-auto px-1'>
-          <div className='space-y-4'>
-            {/* Account Selection */}
-            {accountId ? (
-              <input type='hidden' {...register('accountId')} value={accountId} />
-            ) : (
-              <div className='space-y-2'>
-                <div className='flex items-center gap-2'>
-                  <CreditCard className='text-muted-foreground h-4 w-4' />
-                  <Label htmlFor='account' className='font-medium'>
-                    Account
-                  </Label>
-                </div>
-                <Select onValueChange={handleAccountChange} required disabled={isSubmitting}>
-                  <SelectTrigger id='account' className='w-full'>
-                    <SelectValue
-                      placeholder={isLoadingAccount ? 'Loading accounts...' : 'Select account'}
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {accounts && accounts.length > 0 ? (
-                      accounts.map((acc) => (
-                        <SelectItem key={acc.id} value={acc.id}>
-                          {acc.name}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value='no-account' disabled>
-                        No account added
-                      </SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-                {errors.accountId && (
-                  <p className='text-destructive text-sm'>{errors.accountId.message}</p>
-                )}
-              </div>
-            )}
-
-            {/* Description */}
-            <div className='space-y-2'>
-              <Label htmlFor='description' className='text-sm font-medium'>
-                Description
-              </Label>
-              <Input
-                id='description'
-                type='text'
-                placeholder='Enter transaction description'
-                {...register('text')}
-                className='w-full'
-                disabled={isSubmitting}
-                autoComplete='off'
-                autoCorrect='on'
-                autoCapitalize='off'
-                spellCheck
-              />
-              {errors.text && <p className='text-destructive text-xs'>{errors.text.message}</p>}
-            </div>
-
-            {/* Amount */}
-            <div className='space-y-2'>
-              <Label htmlFor='amount' className='text-sm font-medium'>
-                Amount
-              </Label>
-              <div className='relative'>
-                <span className='text-muted-foreground pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-sm'>
-                  {accounts.find((acc) => acc.id === (accountId || watch('accountId')))?.currency ||
-                    ''}
+      <Form {...form}>
+        <form
+          onSubmit={handleSubmit(handleCreateTransaction)}
+          className='space-y-4 overflow-hidden'
+        >
+          {/* Transaction Type Selection */}
+          <div className='grid grid-cols-2 gap-4'>
+            <Card
+              className={cn(
+                'cursor-pointer border-2 p-3 transition-all',
+                !isIncome
+                  ? 'border-destructive bg-destructive/10'
+                  : 'border-border hover:border-destructive hover:bg-destructive/10',
+                isSubmitting && 'pointer-events-none opacity-50'
+              )}
+              onClick={() => {
+                if (!isSubmitting) {
+                  setIsIncome(false);
+                  setValue('isIncome', false);
+                }
+              }}
+            >
+              <div className='flex flex-col items-center justify-center gap-1.5'>
+                <ArrowDownCircle
+                  className={cn(
+                    'h-6 w-6',
+                    !isIncome ? 'text-destructive' : 'text-muted-foreground'
+                  )}
+                />
+                <span
+                  className={cn(
+                    'text-sm font-medium',
+                    !isIncome ? 'text-destructive' : 'text-muted-foreground'
+                  )}
+                >
+                  Expense
                 </span>
-                <NumericFormat
-                  customInput={Input}
-                  id='amount'
-                  thousandSeparator=','
-                  decimalSeparator='.'
-                  allowNegative={false}
-                  decimalScale={2}
-                  placeholder='0.00'
-                  autoComplete='off'
-                  autoCorrect='on'
-                  autoCapitalize='off'
-                  spellCheck
-                  onValueChange={(values) => {
-                    setValue('amount', values.value);
-                  }}
-                  className='w-full pr-10'
-                  disabled={isSubmitting}
-                />
               </div>
-              {errors.amount && <p className='text-destructive text-xs'>{errors.amount.message}</p>}
-            </div>
+            </Card>
 
-            {/* Transfer Field - Only show for expenses */}
-            {!isIncome && (
-              <div className='space-y-2'>
-                <Label htmlFor='transfer' className='text-sm font-medium'>
-                  Transfer (Optional)
-                </Label>
-                <Input
-                  id='transfer'
-                  type='text'
-                  placeholder='Enter transfer details'
-                  {...register('transfer')}
-                  className='w-full'
-                  disabled={isSubmitting}
-                  autoComplete='off'
-                  autoCorrect='on'
-                  autoCapitalize='off'
-                  spellCheck
+            <Card
+              className={cn(
+                'cursor-pointer border-2 p-3 transition-all',
+                isIncome
+                  ? 'border-success bg-success/10'
+                  : 'border-border hover:border-success hover:bg-success/10',
+                isSubmitting && 'pointer-events-none opacity-50'
+              )}
+              onClick={() => {
+                if (!isSubmitting) {
+                  setIsIncome(true);
+                  setValue('isIncome', true);
+                }
+              }}
+            >
+              <div className='flex flex-col items-center justify-center gap-1.5'>
+                <ArrowUpCircle
+                  className={cn('h-6 w-6', isIncome ? 'text-success' : 'text-muted-foreground')}
                 />
-                {errors.transfer && (
-                  <p className='text-destructive text-xs'>{errors.transfer.message}</p>
+                <span
+                  className={cn(
+                    'text-sm font-medium',
+                    isIncome ? 'text-success' : 'text-muted-foreground'
+                  )}
+                >
+                  Income
+                </span>
+              </div>
+            </Card>
+          </div>
+
+          <div className='max-h-full overflow-y-auto px-1'>
+            <div className='space-y-4'>
+              {/* Account Selection */}
+              {accountId ? (
+                <input type='hidden' {...form.register('accountId')} value={accountId} />
+              ) : (
+                <FormField
+                  control={form.control}
+                  name='accountId'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className='flex items-center gap-2'>
+                        <CreditCard className='text-muted-foreground h-4 w-4' />
+                        Account
+                      </FormLabel>
+                      <Select
+                        onValueChange={handleAccountChange}
+                        value={field.value}
+                        disabled={isSubmitting}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder={
+                                isLoadingAccount ? 'Loading accounts...' : 'Select account'
+                              }
+                            />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {accounts && accounts.length > 0 ? (
+                            accounts.map((acc) => (
+                              <SelectItem key={acc.id} value={acc.id}>
+                                {acc.name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value='no-account' disabled>
+                              No account added
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {/* Description */}
+              <FormField
+                control={form.control}
+                name='text'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder='Enter transaction description'
+                        {...field}
+                        disabled={isSubmitting}
+                        autoComplete='off'
+                        autoCorrect='on'
+                        autoCapitalize='off'
+                        spellCheck
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Amount */}
+              <FormField
+                control={form.control}
+                name='amount'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Amount</FormLabel>
+                    <FormControl>
+                      <div className='relative'>
+                        <span className='text-muted-foreground pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-sm'>
+                          {accounts.find((acc) => acc.id === (accountId || watch('accountId')))
+                            ?.currency || ''}
+                        </span>
+                        <NumericFormat
+                          customInput={Input}
+                          thousandSeparator=','
+                          decimalSeparator='.'
+                          allowNegative={false}
+                          decimalScale={2}
+                          placeholder='0.00'
+                          autoComplete='off'
+                          autoCorrect='on'
+                          autoCapitalize='off'
+                          spellCheck
+                          onValueChange={(values) => {
+                            field.onChange(values.value);
+                          }}
+                          className='w-full pr-10'
+                          disabled={isSubmitting}
+                          value={field.value}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Transfer Field - Only show for expenses */}
+              {!isIncome && (
+                <FormField
+                  control={form.control}
+                  name='transfer'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Transfer (Optional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder='Enter transfer details'
+                          {...field}
+                          disabled={isSubmitting}
+                          autoComplete='off'
+                          autoCorrect='on'
+                          autoCapitalize='off'
+                          spellCheck
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {/* Date and Time */}
+              <FormField
+                control={form.control}
+                name='createdAt'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className='flex items-center gap-2'>
+                      <Calendar className='text-muted-foreground h-4 w-4' />
+                      Date and Time
+                    </FormLabel>
+                    <FormControl>
+                      <DateTimePicker
+                        value={createdAt}
+                        onChange={handleCreatedAtChange}
+                        disabled={isSubmitting ? true : { after: new Date() }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Recurring Transaction Options */}
+              <div className='space-y-4'>
+                <FormField
+                  control={form.control}
+                  name='recurring'
+                  render={({ field }) => (
+                    <FormItem className='flex flex-row items-start space-y-0 space-x-3 rounded-md border p-4'>
+                      <FormControl>
+                        <input
+                          type='checkbox'
+                          checked={field.value}
+                          onChange={field.onChange}
+                          disabled={isSubmitting}
+                        />
+                      </FormControl>
+                      <div className='space-y-1 leading-none'>
+                        <FormLabel>Recurring Transaction</FormLabel>
+                        <FormDescription>
+                          Set up this transaction to repeat automatically.
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                {watch('recurring') && (
+                  <div className='space-y-4 pl-6'>
+                    <FormField
+                      control={form.control}
+                      name='recurrenceType'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Recurrence Type</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value || ''}
+                            disabled={isSubmitting}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder='Select recurrence type' />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value='hourly'>Hourly</SelectItem>
+                              <SelectItem value='daily'>Daily</SelectItem>
+                              <SelectItem value='weekly'>Weekly</SelectItem>
+                              <SelectItem value='monthly'>Monthly</SelectItem>
+                              <SelectItem value='yearly'>Yearly</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name='recurrenceEndDate'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>End Date (Optional)</FormLabel>
+                          <FormControl>
+                            <DateTimePicker
+                              value={recurrenceEndDate || undefined}
+                              onChange={handleRecurrenceEndDateChange}
+                              disabled={isSubmitting ? true : recurrenceEndDateDisabled}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 )}
               </div>
-            )}
 
-            {/* Date and Time */}
-            <div className='space-y-2'>
-              <div className='flex items-center gap-2'>
-                <Calendar className='text-muted-foreground h-4 w-4' />
-                <Label htmlFor='date' className='text-sm font-medium'>
-                  Date and Time
-                </Label>
-              </div>
-              <DateTimePicker
-                value={createdAt}
-                onChange={handleCreatedAtChange}
-                disabled={isSubmitting ? true : { after: new Date() }}
+              {/* Category */}
+              <FormField
+                control={form.control}
+                name='categoryId'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className='flex items-center gap-2'>
+                      <Tag className='text-muted-foreground h-4 w-4' />
+                      Category
+                    </FormLabel>
+                    <FormControl>
+                      <Combobox
+                        value={
+                          categories.find((cat) => cat.id === field.value)
+                            ? {
+                                value: field.value!,
+                                label: categories.find((cat) => cat.id === field.value)?.name || ''
+                              }
+                            : null
+                        }
+                        onChange={handleCategoryComboboxChange}
+                        fetchOptions={fetchCategoryOptions}
+                        placeholder={
+                          isLoadingCategory ? 'Loading categories...' : 'Select or create category'
+                        }
+                        noOptionsMessage={
+                          categoryComboboxLoading
+                            ? 'Loading...'
+                            : categoryComboboxError || 'No categories found. Type to create.'
+                        }
+                        loadingPlaceholder='Loading categories...'
+                        disabled={isSubmitting}
+                        className='w-full'
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-
-            {/* Recurring Transaction Options */}
-            <div className='space-y-4'>
-              <div className='flex items-center space-x-2'>
-                <input
-                  type='checkbox'
-                  id='recurring'
-                  {...register('recurring')}
-                  className='text-primary focus:ring-primary h-4 w-4 rounded border-gray-300'
-                  autoComplete='off'
-                />
-                <Label htmlFor='recurring' className='text-sm font-medium'>
-                  Recurring Transaction
-                </Label>
-              </div>
-
-              {watch('recurring') && (
-                <div className='space-y-4 pl-6'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='recurrenceType' className='text-sm font-medium'>
-                      Recurrence Type
-                    </Label>
-                    <Select
-                      onValueChange={(value) =>
-                        setValue(
-                          'recurrenceType',
-                          value as 'daily' | 'weekly' | 'monthly' | 'yearly'
-                        )
-                      }
-                      disabled={isSubmitting}
-                    >
-                      <SelectTrigger id='recurrenceType' className='w-full'>
-                        <SelectValue placeholder='Select recurrence type' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value='hourly'>Hourly</SelectItem>
-                        <SelectItem value='daily'>Daily</SelectItem>
-                        <SelectItem value='weekly'>Weekly</SelectItem>
-                        <SelectItem value='monthly'>Monthly</SelectItem>
-                        <SelectItem value='yearly'>Yearly</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {errors.recurrenceType && (
-                      <p className='text-destructive text-xs'>{errors.recurrenceType.message}</p>
-                    )}
-                  </div>
-
-                  <div className='space-y-2'>
-                    <Label htmlFor='recurrenceEndDate' className='text-sm font-medium'>
-                      End Date (Optional)
-                    </Label>
-                    <DateTimePicker
-                      value={recurrenceEndDate || undefined}
-                      onChange={handleRecurrenceEndDateChange}
-                      disabled={isSubmitting ? true : recurrenceEndDateDisabled}
-                    />
-                    {errors.recurrenceEndDate && (
-                      <p className='text-destructive text-xs'>{errors.recurrenceEndDate.message}</p>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Category */}
-            <div className='space-y-2'>
-              <div className='flex items-center gap-2'>
-                <Tag className='text-muted-foreground h-4 w-4' />
-                <Label htmlFor='category' className='text-sm font-medium'>
-                  Category
-                </Label>
-              </div>
-              <Combobox
-                value={
-                  categories.find((cat) => cat.id === watch('categoryId'))
-                    ? {
-                        value: watch('categoryId')!,
-                        label: categories.find((cat) => cat.id === watch('categoryId'))?.name || ''
-                      }
-                    : null
-                }
-                onChange={handleCategoryComboboxChange}
-                fetchOptions={fetchCategoryOptions}
-                placeholder={
-                  isLoadingCategory ? 'Loading categories...' : 'Select or create category'
-                }
-                noOptionsMessage={
-                  categoryComboboxLoading
-                    ? 'Loading...'
-                    : categoryComboboxError || 'No categories found. Type to create.'
-                }
-                loadingPlaceholder='Loading categories...'
-                disabled={isSubmitting}
-                className='w-full'
-              />
-              {errors.categoryId && (
-                <p className='text-destructive text-xs'>{errors.categoryId.message}</p>
-              )}
             </div>
           </div>
-        </div>
 
-        {/* Submit Button */}
-        <Button
-          type='submit'
-          className='disabled:bg-muted disabled:text-muted-foreground w-full disabled:cursor-not-allowed'
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? 'Adding...' : `Add ${isIncome ? 'Income' : 'Expense'}`}
-        </Button>
-      </form>
+          {/* Submit Button */}
+          <Button type='submit' className='w-full' disabled={isSubmitting}>
+            {isSubmitting ? 'Adding...' : `Add ${isIncome ? 'Income' : 'Expense'}`}
+          </Button>
+        </form>
+      </Form>
     </AddModal>
   );
 };

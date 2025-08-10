@@ -72,40 +72,26 @@ export function Combobox({
     loadOptions();
   }, [open, debouncedSearchQuery, fetchOptions]);
 
-  React.useEffect(() => {
-    if (value && value.label !== searchQuery && !open) {
-      setSearchQuery(value.label);
-    } else if (!value && !open) {
-      setSearchQuery('');
-    }
-  }, [value, open, searchQuery]);
-
   const handleSelect = (currentValue: string) => {
     const selectedOption = options.find(
       (option) => option.value.toLowerCase() === currentValue.toLowerCase()
     );
     onChange(selectedOption || null);
-    setSearchQuery(selectedOption?.label || ''); // Update input display
     setOpen(false);
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen} modal={true}>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           ref={triggerRef}
           variant='outline'
           role='combobox'
           aria-expanded={open}
+          className='w-full justify-between'
           disabled={disabled}
-          className={cn(
-            'w-full justify-between font-normal',
-            !value && 'text-muted-foreground',
-            className
-          )}
-          id={id}
         >
-          <span className='truncate'>{value?.label || placeholder}</span>
+          {value ? value.label : placeholder}
           <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
         </Button>
       </PopoverTrigger>
@@ -118,40 +104,31 @@ export function Combobox({
         }}
         align='start'
       >
-        <Command shouldFilter={false}>
-          <CommandInput
-            placeholder={placeholder}
-            value={searchQuery}
-            onValueChange={setSearchQuery}
-            disabled={disabled}
-          />
+        <Command>
+          <CommandInput placeholder={placeholder} onValueChange={setSearchQuery} />
           <CommandList>
             {isLoading ? (
               <div className='text-muted-foreground flex items-center justify-center p-2 text-sm'>
                 <Loader2 className='mr-2 h-4 w-4 animate-spin' />
                 {loadingPlaceholder}
               </div>
-            ) : options.length === 0 ? (
-              <CommandEmpty>{noOptionsMessage}</CommandEmpty>
             ) : (
-              <CommandGroup>
-                {options.map((option) => (
-                  <CommandItem
-                    key={option.value}
-                    value={option.value}
-                    onSelect={handleSelect}
-                    disabled={disabled}
-                  >
-                    <Check
-                      className={cn(
-                        'mr-2 h-4 w-4',
-                        value?.value === option.value ? 'opacity-100' : 'opacity-0'
-                      )}
-                    />
-                    {option.label}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
+              <>
+                <CommandEmpty>{noOptionsMessage}</CommandEmpty>
+                <CommandGroup>
+                  {options.map((option) => (
+                    <CommandItem key={option.value} value={option.value} onSelect={handleSelect}>
+                      <Check
+                        className={cn(
+                          'mr-2 h-4 w-4',
+                          value?.value === option.value ? 'opacity-100' : 'opacity-0'
+                        )}
+                      />
+                      {option.label}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </>
             )}
           </CommandList>
         </Command>

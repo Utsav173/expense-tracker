@@ -75,7 +75,7 @@ const CustomTooltip = ({ active, payload, label, totalExpense }: any) => {
     const percentage = totalExpense > 0 ? (data.value / totalExpense) * 100 : 0;
 
     return (
-      <div className='bg-background/95 min-w-[200px] rounded-lg border p-3 shadow-lg backdrop-blur-sm'>
+      <div className='bg-popover min-w-[200px] rounded-lg border p-3 shadow-md'>
         <div className='mb-2 flex items-center gap-2'>
           <div
             className='h-3 w-3 flex-shrink-0 rounded-full'
@@ -110,7 +110,7 @@ const ColumnTooltip = ({ active, payload, totalExpense }: any) => {
     const percentage = totalExpense > 0 ? (data.value / totalExpense) * 100 : 0;
 
     return (
-      <div className='bg-background/95 min-w-[180px] rounded-lg border p-3 shadow-lg backdrop-blur-sm'>
+      <div className='bg-popover min-w-[180px] rounded-lg border p-3 shadow-md'>
         <div className='mb-2 flex items-center gap-2'>
           <div
             className='h-3 w-3 flex-shrink-0 rounded-sm'
@@ -141,7 +141,7 @@ const RadarTooltip = ({ active, payload, totalExpense }: any) => {
     const percentage = totalExpense > 0 ? (data.value / totalExpense) * 100 : 0;
 
     return (
-      <div className='bg-background/95 min-w-[180px] rounded-lg border p-3 shadow-lg backdrop-blur-sm'>
+      <div className='bg-popover min-w-[180px] rounded-lg border p-3 shadow-md'>
         <div className='mb-2 flex items-center gap-2'>
           <div className='bg-primary h-3 w-3 flex-shrink-0 rounded-full' />
           <p className='text-foreground text-sm font-medium'>{data.name}</p>

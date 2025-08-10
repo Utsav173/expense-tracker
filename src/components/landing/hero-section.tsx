@@ -78,7 +78,7 @@ const HeroSection = () => {
 
         <div className='hero-anim mt-10'>
           <Link href='/auth/signup'>
-            <Button size='lg' variant='cta' className='group h-12 px-8 text-base font-bold'>
+            <Button size='lg' className='group h-12 px-8 text-base font-bold'>
               Get Started for Free
               <ArrowRight className='ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1' />
             </Button>

@@ -40,14 +40,14 @@ export function BudgetActions({ budget }: BudgetActionsProps) {
   return (
     <div className='flex justify-end gap-2'>
       <Button
-        size='sm'
+        size='icon'
         variant='ghost'
         onClick={() => {
           setIsUpdateModalOpen(true);
         }}
         aria-label='Edit Budget'
       >
-        <Pencil size={18} />
+        <Pencil className='text-muted-foreground h-4 w-4' />
       </Button>
       <DeleteConfirmationModal
         title='Delete Budget'
@@ -59,12 +59,12 @@ export function BudgetActions({ budget }: BudgetActionsProps) {
         }}
         triggerButton={
           <Button
-            size='sm'
+            size='icon'
             variant='ghost'
             onClick={() => setDeleteBudgetId(budget.id)}
             aria-label='Delete Budget'
           >
-            <Trash2 size={18} />
+            <Trash2 className='text-destructive h-4 w-4' />
           </Button>
         }
       />

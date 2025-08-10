@@ -92,7 +92,7 @@ export function UpdateModal<TFormValues extends z.ZodType<any, any>>({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className='sm:max-w-[480px]'>
+      <DialogContent className='max-h-[90dvh] w-[50vw] max-w-[95vw] overflow-y-auto max-sm:w-full'>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
             <Pencil className='h-5 w-5' />

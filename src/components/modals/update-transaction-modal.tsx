@@ -126,15 +126,10 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
       {(form) => (
         <>
           {isRecurringInstance && (
-            <Alert
-              variant='default'
-              className='border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950'
-            >
-              <Info className='h-4 w-4 text-blue-600 dark:text-blue-400' />
-              <AlertTitle className='text-blue-800 dark:text-blue-300'>
-                Recurring Transaction Instance
-              </AlertTitle>
-              <AlertDescription className='text-blue-700 dark:text-blue-300/90'>
+            <Alert variant='default'>
+              <Info className='h-4 w-4' />
+              <AlertTitle>Recurring Transaction Instance</AlertTitle>
+              <AlertDescription>
                 Only the Description can be edited for this recurring transaction instance.
                 Financial details, category, and transfer information must be edited on the
                 recurring template.
@@ -142,12 +137,12 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
             </Alert>
           )}
 
-          <div className='bg-muted/50 grid grid-cols-2 gap-4 rounded-md border p-4'>
+          <Card className='grid grid-cols-2 gap-4 p-4'>
             <div className='space-y-1'>
               <Label className='text-muted-foreground flex items-center gap-1.5 text-xs'>
                 <CreditCard size={14} /> Account
               </Label>
-              <p className='truncate text-sm font-medium'>
+              <p className='text-foreground truncate font-medium'>
                 {transaction
                   ? accountsData?.find((acc) => acc.id === transaction.account)?.name
                   : '...'}
@@ -157,14 +152,14 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
               <Label className='text-muted-foreground flex items-center gap-1.5 text-xs'>
                 <IndianRupee size={14} /> Currency
               </Label>
-              <p className='text-sm font-medium'>{transaction?.currency ?? 'N/A'}</p>
+              <p className='text-foreground font-medium'>{transaction?.currency ?? 'N/A'}</p>
             </div>
             {transaction?.recurring && (
               <div className='col-span-2 space-y-1'>
                 <Label className='text-muted-foreground flex items-center gap-1.5 text-xs'>
                   <Repeat size={14} /> Recurring Info
                 </Label>
-                <p className='text-sm font-medium'>
+                <p className='text-foreground font-medium'>
                   {transaction.recurrenceType
                     ? `${transaction.recurrenceType.charAt(0).toUpperCase()}${transaction.recurrenceType.slice(1)}`
                     : 'Recurring'}
@@ -181,7 +176,7 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
                   <Label className='text-muted-foreground flex items-center gap-1.5 text-xs'>
                     <Clock size={14} /> Created At
                   </Label>
-                  <p className='text-sm font-medium'>
+                  <p className='text-foreground font-medium'>
                     {transaction.createdAt
                       ? format(parseISO(transaction.createdAt), 'MMM d, yyyy')
                       : 'N/A'}
@@ -191,18 +186,20 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
                   <Label className='text-muted-foreground flex items-center gap-1.5 text-xs'>
                     Amount
                   </Label>
-                  <p className='text-sm font-medium'>{transaction.amount ?? 'N/A'}</p>
+                  <p className='text-foreground font-medium'>{transaction.amount ?? 'N/A'}</p>
                 </div>
 
                 <div className='space-y-1'>
                   <Label className='text-muted-foreground flex items-center gap-1.5 text-xs'>
                     Category
                   </Label>
-                  <p className='text-sm font-medium'>{transaction.category?.name ?? 'N/A'}</p>
+                  <p className='text-foreground font-medium'>
+                    {transaction.category?.name ?? 'N/A'}
+                  </p>
                 </div>
               </>
             )}
-          </div>
+          </Card>
 
           {!isRecurringInstance && (
             <div className='grid grid-cols-2 gap-4'>

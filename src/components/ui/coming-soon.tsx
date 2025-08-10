@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { BarChart3 } from 'lucide-react';
+import { Progress } from './progress';
+import { cn } from '@/lib/utils';
 
 interface ComingSoonProps {
   message?: string;
@@ -18,11 +20,14 @@ const ComingSoon: React.FC<ComingSoonProps> = ({
 }) => {
   return (
     <div
-      className={`flex h-full w-full flex-col items-center justify-center bg-white dark:bg-gray-900 ${className}`}
+      className={cn(
+        'bg-background flex h-full w-full flex-col items-center justify-center',
+        className
+      )}
     >
-      <div className='relative flex w-full max-w-lg flex-col items-center justify-center rounded-lg border border-gray-100 bg-white p-8 shadow-xs dark:border-gray-800 dark:bg-gray-900'>
+      <div className='bg-card relative flex w-full max-w-lg flex-col items-center justify-center rounded-lg border p-8 shadow-sm'>
         {/* Small decorative sparkles like in the screenshot */}
-        <div className='absolute -top-2 -right-2 text-gray-200 dark:text-gray-700'>
+        <div className='text-muted absolute -top-2 -right-2'>
           <svg
             width='20'
             height='20'
@@ -36,7 +41,7 @@ const ComingSoon: React.FC<ComingSoonProps> = ({
             />
           </svg>
         </div>
-        <div className='absolute right-24 bottom-8 text-gray-200 dark:text-gray-700'>
+        <div className='text-muted absolute right-24 bottom-8'>
           <svg
             width='16'
             height='16'
@@ -50,7 +55,7 @@ const ComingSoon: React.FC<ComingSoonProps> = ({
             />
           </svg>
         </div>
-        <div className='absolute top-12 left-12 text-gray-200 dark:text-gray-700'>
+        <div className='text-muted absolute top-12 left-12'>
           <svg
             width='12'
             height='12'
@@ -64,7 +69,7 @@ const ComingSoon: React.FC<ComingSoonProps> = ({
             />
           </svg>
         </div>
-        <div className='absolute -bottom-2 -left-2 text-gray-200 dark:text-gray-700'>
+        <div className='text-muted absolute -bottom-2 -left-2'>
           <svg
             width='20'
             height='20'
@@ -80,24 +85,19 @@ const ComingSoon: React.FC<ComingSoonProps> = ({
         </div>
 
         {/* Icon from the screenshot */}
-        <div className='mb-6 flex h-16 w-16 items-center justify-center rounded bg-blue-50 text-blue-500 dark:bg-blue-900/20 dark:text-blue-400'>
+        <div className='bg-primary/10 text-primary mb-6 flex h-16 w-16 items-center justify-center rounded'>
           <BarChart3 className='h-8 w-8' />
         </div>
 
         {/* Main content */}
-        <h2 className='mb-2 text-2xl font-semibold text-gray-900 dark:text-white'>{featureName}</h2>
+        <h2 className='text-foreground mb-2 text-2xl font-semibold'>{featureName}</h2>
 
-        <p className='mb-6 text-center text-sm text-gray-600 dark:text-gray-300'>{message}</p>
+        <p className='text-muted-foreground mb-6 text-center text-sm'>{message}</p>
 
         {/* Progress bar */}
-        <div className='mb-2 h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800'>
-          <div
-            className='h-full rounded-full bg-blue-500 transition-all duration-300 ease-out'
-            style={{ width: `${progress}%` }}
-          />
-        </div>
+        <Progress value={progress} className='mb-2 w-full' />
 
-        <p className='text-xs text-gray-500 dark:text-gray-400'>{progress}% completed</p>
+        <p className='text-muted-foreground text-xs'>{progress}% completed</p>
       </div>
     </div>
   );

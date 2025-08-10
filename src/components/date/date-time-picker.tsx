@@ -207,32 +207,32 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
     type: TimeType;
     label: string;
   }) => (
-    <ScrollArea className='w-16 sm:w-auto' aria-label={label}>
-      <div className='flex p-2 sm:flex-col'>
-        {values.map((val) => {
-          const displayValue =
-            typeof val === 'number'
-              ? (type === 'hour' && !use24Hour && val === 0 ? 12 : val).toString().padStart(2, '0')
-              : val;
-          const isSelected = val === currentValue;
+    <div
+      className='flex overflow-scroll max-sm:mx-auto max-sm:w-[250px] sm:ml-2 sm:flex-col'
+      aria-label={label}
+    >
+      {values.map((val) => {
+        const displayValue =
+          typeof val === 'number'
+            ? (type === 'hour' && !use24Hour && val === 0 ? 12 : val).toString().padStart(2, '0')
+            : val;
+        const isSelected = val === currentValue;
 
-          return (
-            <Button
-              key={val}
-              size='icon'
-              variant={isSelected ? 'default' : 'ghost'}
-              className='aspect-square shrink-0 text-xs sm:w-full'
-              onClick={() => handleTimeChange(type, val.toString())}
-              aria-pressed={isSelected}
-              aria-label={`${label} ${displayValue}`}
-            >
-              {displayValue}
-            </Button>
-          );
-        })}
-      </div>
-      <ScrollBar orientation='horizontal' className='sm:hidden' />
-    </ScrollArea>
+        return (
+          <Button
+            key={val}
+            size='icon'
+            variant={isSelected ? 'default' : 'ghost'}
+            className='aspect-square shrink-0 text-xs sm:w-full'
+            onClick={() => handleTimeChange(type, val.toString())}
+            aria-pressed={isSelected}
+            aria-label={`${label} ${displayValue}`}
+          >
+            {displayValue}
+          </Button>
+        );
+      })}
+    </div>
   );
 
   return (
@@ -267,7 +267,14 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent className={cn('w-auto p-0', popoverClassName)} onKeyDown={handleKeyDown}>
+      <PopoverContent
+        className={cn(
+          'w-full max-w-[95vw] p-0 sm:w-auto',
+          'max-h-[80vh] overflow-y-auto',
+          popoverClassName
+        )}
+        onKeyDown={handleKeyDown}
+      >
         <div className='relative sm:flex'>
           <Calendar
             mode='single'
@@ -278,12 +285,12 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
             autoFocus={autoFocus}
             fromDate={minDate}
             toDate={maxDate}
-            className={calendarClassName}
+            className={cn('p-2', calendarClassName)}
           />
 
           <div
             className={cn(
-              'flex flex-col divide-y border-l sm:h-[300px] sm:flex-row sm:divide-x sm:divide-y-0',
+              'flex w-full flex-col divide-y border-l sm:my-auto sm:h-[300px] sm:flex-row sm:divide-x sm:divide-y-0',
               timeClassName
             )}
           >
@@ -303,7 +310,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
               label='Minutes'
             />
 
-            {/* Seconds (if enabled) */}
+            {/* Seconds */}
             {showSeconds && (
               <TimeScrollArea
                 values={timeOptions.seconds}
@@ -313,10 +320,10 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
               />
             )}
 
-            {/* AM/PM (if not 24-hour) */}
+            {/* AM/PM */}
             {!use24Hour && (
-              <ScrollArea className='w-16 sm:w-auto' aria-label='AM/PM'>
-                <div className='flex p-2 sm:flex-col'>
+              <ScrollArea className='w-16 max-sm:mx-auto max-sm:w-[250px]' aria-label='AM/PM'>
+                <div className='flex sm:flex-col'>
                   {['AM', 'PM'].map((ampm) => (
                     <Button
                       key={ampm}
