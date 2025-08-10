@@ -359,7 +359,7 @@ const TransactionsPage = () => {
         <div className='flex gap-2'>
           <AddTransactionModal onTransactionAdded={refetch} />
           <Link href='/transactions/import'>
-            <Button variant='outline' className='flex items-center gap-2'>
+            <Button variant='outline' className='gap-2'>
               <Import className='h-4 w-4' />
               Import
             </Button>
@@ -386,7 +386,7 @@ const TransactionsPage = () => {
           <div className='flex gap-2'>
             <Dialog open={isFilterDialogOpen} onOpenChange={setIsFilterDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant='outline' className='flex items-center gap-2'>
+                <Button variant='outline' className='gap-2'>
                   <Filter className='h-4 w-4' />
                   Filters
                   {activeFilters.length > 0 && (
@@ -399,7 +399,7 @@ const TransactionsPage = () => {
                   )}
                 </Button>
               </DialogTrigger>
-              <DialogContent className='max-h-[80vh] max-w-4xl overflow-y-auto'>
+              <DialogContent>
                 <DialogHeader>
                   <DialogTitle className='flex items-center gap-2'>
                     <Filter className='h-5 w-5' />
@@ -580,7 +580,7 @@ const TransactionsPage = () => {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant='outline'
-                  className='flex items-center gap-2'
+                  className='gap-2'
                   disabled={
                     isExporting ||
                     isLoading ||
@@ -703,5 +703,3 @@ const TransactionsPage = () => {
     </div>
   );
 };
-
-export default TransactionsPage;

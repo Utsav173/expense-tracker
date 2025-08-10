@@ -115,7 +115,7 @@ const ResetPasswordPage = () => {
               )}
             />
 
-            <Button type='submit' disabled={loading} variant='authButton' className='w-full'>
+            <Button type='submit' disabled={loading} className='w-full'>
               {loading ? 'Resetting...' : 'Reset Password'}
             </Button>
           </form>

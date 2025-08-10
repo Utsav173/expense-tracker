@@ -512,9 +512,11 @@ body {
   }
 
   .hero-gradient {
-    background: linear-gradient(160deg,
-        oklch(from var(--background) l c h / 0) 0%,
-        oklch(from var(--primary) l c h / 0.15) 100%);
+    background: linear-gradient(
+      160deg,
+      oklch(from var(--background) l c h / 0) 0%,
+      oklch(from var(--primary) l c h / 0.15) 100%
+    );
   }
 
   .scrollbar {

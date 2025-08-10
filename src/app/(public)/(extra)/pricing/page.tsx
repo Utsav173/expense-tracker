@@ -196,12 +196,7 @@ const PricingPage = () => {
                   ))}
                 </CardContent>
                 <CardFooter className='mt-8'>
-                  <Button
-                    size='lg'
-                    variant='cta'
-                    className='w-full font-semibold'
-                    onClick={handlePurchaseClick}
-                  >
+                  <Button size='lg' className='w-full font-semibold' onClick={handlePurchaseClick}>
                     Get Lifetime Pro
                   </Button>
                 </CardFooter>

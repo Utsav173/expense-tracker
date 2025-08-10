@@ -9,13 +9,14 @@ import AddBudgetModal from '@/components/modals/add-budget-modal';
 import Loader from '@/components/ui/loader';
 import { useToast } from '@/lib/hooks/useToast';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search } from 'lucide-react';
+import { Frown, PlusCircle, Search } from 'lucide-react';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import type { BudgetAPI } from '@/lib/api/api-types';
 import { useUrlState } from '@/hooks/useUrlState';
 import { SortingState } from '@tanstack/react-table';
 import { Input } from '@/components/ui/input';
 import { useDebounce } from 'use-debounce';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const BudgetPage = () => {
   const { showError } = useToast();
@@ -62,8 +63,22 @@ const BudgetPage = () => {
   }
 
   if (isError) {
-    showError(`Failed to get Budgets Details : ${(error as Error).message}`);
-    return null;
+    return (
+      <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
+        <Alert variant='destructive' className='mx-auto mt-6'>
+          <Frown className='h-4 w-4' />
+          <AlertTitle>Oops! Something went wrong.</AlertTitle>
+          <AlertDescription>
+            We couldn&apos;t load your budget data. Please check your connection and try refreshing.
+            {error && (
+              <div className='text-muted-foreground mt-2 text-xs'>
+                Error: {(error as Error).message}
+              </div>
+            )}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
   }
 
   return (

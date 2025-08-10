@@ -145,7 +145,7 @@ const VerifyOtpPage = () => {
             <Button
               type='submit'
               disabled={loading || isResending}
-              variant='authButton'
+              variant='default'
               className='w-full'
             >
               {loading ? (

@@ -11,10 +11,11 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useToast } from '@/lib/hooks/useToast';
 import AddGoalModal from '@/components/modals/add-goal-modal';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search } from 'lucide-react';
+import { Frown, PlusCircle, Search } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
 import { Input } from '@/components/ui/input';
 import { useDebounce } from 'use-debounce';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const GoalPage = () => {
   const router = useRouter();
@@ -90,8 +91,22 @@ const GoalPage = () => {
   }
 
   if (error) {
-    showError(`Failed to get Goal Details : ${(error as Error).message}`);
-    return null;
+    return (
+      <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
+        <Alert variant='destructive' className='mx-auto mt-6'>
+          <Frown className='h-4 w-4' />
+          <AlertTitle>Oops! Something went wrong.</AlertTitle>
+          <AlertDescription>
+            We couldn&apos;t load your goal data. Please check your connection and try refreshing.
+            {error && (
+              <div className='text-muted-foreground mt-2 text-xs'>
+                Error: {(error as Error).message}
+              </div>
+            )}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
   }
 
   return (

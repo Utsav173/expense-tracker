@@ -78,7 +78,6 @@ const ForgotPasswordPage = () => {
                       type='email'
                       placeholder='you@example.com'
                       disabled={loading}
-                      variant='auth'
                       autoComplete='email'
                       {...field}
                     />
@@ -88,7 +87,7 @@ const ForgotPasswordPage = () => {
               )}
             />
 
-            <Button type='submit' disabled={loading} variant='authButton' className='w-full'>
+            <Button type='submit' disabled={loading} className='w-full'>
               {loading ? 'Sending...' : 'Send Reset Link'}
             </Button>
           </form>

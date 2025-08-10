@@ -154,7 +154,6 @@ const SignupPage = () => {
                         type='text'
                         placeholder='John Doe'
                         disabled={loading}
-                        variant='auth'
                         autoComplete='name'
                         {...field}
                       />
@@ -175,7 +174,6 @@ const SignupPage = () => {
                         type='email'
                         placeholder='you@example.com'
                         disabled={loading}
-                        variant='auth'
                         autoComplete='email'
                         {...field}
                       />
@@ -259,7 +257,7 @@ const SignupPage = () => {
                 )}
               />
 
-              <Button type='submit' disabled={loading} variant='authButton' className='w-full'>
+              <Button type='submit' disabled={loading} className='w-full'>
                 {loading ? (
                   <>
                     <Loader2 className='mr-2 h-4 w-4 animate-spin' />

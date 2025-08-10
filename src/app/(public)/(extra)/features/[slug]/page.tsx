@@ -45,7 +45,7 @@ const FeatureDetailPage = async ({ params }: { params: Promise<{ slug: string }>
             Take control of your finances today with Expense Pro. It’s free to sign up.
           </p>
           <div className='mt-8'>
-            <Button asChild size='lg' variant='cta' className='group'>
+            <Button asChild size='lg' className='group'>
               <Link href='/auth/signup'>
                 Sign Up Now
                 <ArrowRight className='ml-2 h-4 w-4 transition-transform group-hover:translate-x-1' />

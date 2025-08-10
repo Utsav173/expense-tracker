@@ -76,7 +76,7 @@ const renderSkeleton = () => (
 );
 
 const renderErrorState = ({ error }: { error?: any }) => (
-  <Alert variant='destructive' className='max-auto mt-6'>
+  <Alert variant='destructive' className='mx-auto mt-6'>
     <Frown className='h-4 w-4' />
     <AlertTitle>Oops! Something went wrong.</AlertTitle>
     <AlertDescription>
@@ -282,7 +282,7 @@ const DashboardCardContent: React.FC<DashboardCardContentProps> = ({
                   <Maximize2 className='h-4 w-4' />
                 </Button>
               </DialogTrigger>
-              <DialogContent className='h-fit max-h-[90vh] w-[90%]! overflow-y-auto sm:max-w-2xl md:max-w-4xl lg:max-w-6xl'>
+              <DialogContent>
                 <DialogHeader>
                   <DialogTitle>{title}</DialogTitle>
                   {description && <DialogDescription>{description}</DialogDescription>}

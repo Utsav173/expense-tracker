@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { usePagination } from '@/hooks/usePagination';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useToast } from '@/lib/hooks/useToast';
-import { PlusCircle, TrendingUp } from 'lucide-react';
+import { Frown, PlusCircle, TrendingUp } from 'lucide-react';
 import type { InvestmentAccountAPI } from '@/lib/api/api-types';
 import AddInvestmentAccountModal from '@/components/modals/add-investment-account-modal';
 import UpdateInvestmentAccountModal from '@/components/modals/update-investment-account-modal';
@@ -20,6 +20,7 @@ import { Card } from '@/components/ui/card';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import InvestmentAccountCard from '@/components/investment/investment-account-card';
 import { motion } from 'framer-motion';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -104,8 +105,23 @@ const InvestmentPage = () => {
   }
 
   if (error) {
-    showError(`Failed to get Investment Accounts: ${(error as Error).message}`);
-    return null;
+    return (
+      <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
+        <Alert variant='destructive' className='mx-auto mt-6'>
+          <Frown className='h-4 w-4' />
+          <AlertTitle>Oops! Something went wrong.</AlertTitle>
+          <AlertDescription>
+            We couldn&apos;t load your investment accounts. Please check your connection and try
+            refreshing.
+            {error && (
+              <div className='text-muted-foreground mt-2 text-xs'>
+                Error: {(error as Error).message}
+              </div>
+            )}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
   }
 
   return (
@@ -115,7 +131,7 @@ const InvestmentPage = () => {
           <h1 className='text-3xl font-bold'>Investment Accounts</h1>
           <p className='text-muted-foreground mt-1'>Manage your investment portfolios</p>
         </div>
-        <Button onClick={() => setIsAddModalOpen(true)} className='shadow-xs hover:shadow-sm'>
+        <Button onClick={() => setIsAddModalOpen(true)}>
           <PlusCircle className='mr-2 h-5 w-5' /> Add New Account
         </Button>
       </div>

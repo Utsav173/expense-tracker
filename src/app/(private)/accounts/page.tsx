@@ -14,10 +14,19 @@ import DeleteConfirmationModal from '@/components/modals/delete-confirmation-mod
 import AddTransactionModal from '@/components/modals/add-transaction-modal';
 import { UpdateAccountModal } from '@/components/modals/update-account-modal';
 import NoData from '@/components/ui/no-data';
-import { Search, Wallet } from 'lucide-react';
+import { Frown, Search, Wallet } from 'lucide-react';
 import { motion, Variants } from 'framer-motion';
 import { useUrlState } from '@/hooks/useUrlState';
 import { useDebounce } from 'use-debounce';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious
+} from '@/components/ui/pagination';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const AccountListPage = () => {
   const { showError } = useToast();
@@ -76,12 +85,9 @@ const AccountListPage = () => {
   };
 
   if (isError) {
-    showError(
-      error instanceof Error ? error.message : 'An unknown error occurred loading accounts.'
-    );
     return (
-      <div className='flex h-full items-center justify-center'>
-        <NoData message='Could not load accounts.' icon='x-circle' />
+      <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
+        {renderErrorState({ error })}
       </div>
     );
   }
@@ -153,27 +159,32 @@ const AccountListPage = () => {
 
       <div className='mt-6 flex justify-center'>
         {data && data.pagination.totalPages > 1 && (
-          <div className='flex space-x-2'>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => handlePageChange(state.page - 1)}
-              disabled={state.page === 1}
-            >
-              Previous
-            </Button>
-            <span className='text-muted-foreground p-2 text-sm'>
-              Page {state.page} of {data.pagination.totalPages}
-            </span>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => handlePageChange(state.page + 1)}
-              disabled={!data.accounts || state.page >= data.pagination.totalPages}
-            >
-              Next
-            </Button>
-          </div>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => handlePageChange(state.page - 1)}
+                  disabled={state.page === 1}
+                />
+              </PaginationItem>
+              {Array.from({ length: data.pagination.totalPages }, (_, i) => i + 1).map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    isActive={state.page === page}
+                    onClick={() => handlePageChange(page)}
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => handlePageChange(state.page + 1)}
+                  disabled={state.page >= data.pagination.totalPages}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         )}
       </div>
 
@@ -204,5 +215,18 @@ const AccountListPage = () => {
     </div>
   );
 };
+
+const renderErrorState = ({ error }: { error?: any }) => (
+  <Alert variant='destructive' className='mx-auto mt-6'>
+    <Frown className='h-4 w-4' />
+    <AlertTitle>Oops! Something went wrong.</AlertTitle>
+    <AlertDescription>
+      We couldn&apos;t load your dashboard data. Please check your connection and try refreshing.
+      {error && (
+        <div className='text-muted-foreground mt-2 text-xs'>Error: {(error as Error).message}</div>
+      )}
+    </AlertDescription>
+  </Alert>
+);
 
 export default AccountListPage;

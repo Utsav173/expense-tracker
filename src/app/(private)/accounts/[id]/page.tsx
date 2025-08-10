@@ -112,19 +112,25 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
 
   if (!id) {
     return (
-      <Alert variant='destructive' className='m-4'>
-        <AlertCircle className='h-4 w-4' />
-        <AlertDescription>Account ID is required</AlertDescription>
-      </Alert>
+      <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
+        <Alert variant='destructive' className='mx-auto mt-6'>
+          <AlertCircle className='h-4 w-4' />
+          <AlertDescription>Account ID is required</AlertDescription>
+        </Alert>
+      </div>
     );
   }
 
   if (accountError) {
     return (
-      <Alert variant='destructive' className='m-4'>
-        <AlertCircle className='h-4 w-4' />
-        <AlertDescription>Failed to load account details: {accountError.message}</AlertDescription>
-      </Alert>
+      <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
+        <Alert variant='destructive' className='mx-auto mt-6'>
+          <AlertCircle className='h-4 w-4' />
+          <AlertDescription>
+            Failed to load account details: {accountError.message}
+          </AlertDescription>
+        </Alert>
+      </div>
     );
   }
 

@@ -111,9 +111,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         className={cn(openSans.className, 'bg-background text-foreground dark:subtle-noise-bg')}
       >
         <ReactQueryProvider>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
+          <AuthProvider>{children}</AuthProvider>
         </ReactQueryProvider>
       </body>
       <GoogleAnalytics gaId='GTM-NRXZ2WPR' />
