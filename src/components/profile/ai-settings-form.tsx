@@ -12,7 +12,7 @@ import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
-import { Loader2, Shield, Key, Save, Trash2, ExternalLink, Edit3, X } from 'lucide-react';
+import { Icon } from '../ui/icon';
 
 export const AiSettingsForm = () => {
   const {
@@ -87,7 +87,7 @@ export const AiSettingsForm = () => {
       </CardHeader>
       <CardContent className='space-y-6'>
         <Alert>
-          <Shield className='h-4 w-4' />
+          <Icon name='shield' className='h-4 w-4' />
           <AlertTitle>Security & Privacy</AlertTitle>
           <AlertDescription>
             Your API key is securely encrypted and only used to process your requests.
@@ -106,11 +106,11 @@ export const AiSettingsForm = () => {
                 className='cursor-default'
               />
               <Button variant='outline' onClick={() => setIsEditing(true)}>
-                <Edit3 className='mr-2 h-4 w-4' />
+                <Icon name='edit' className='mr-2 h-4 w-4' />
                 Edit
               </Button>
               <Button variant='destructive' onClick={() => setIsRemoveKeyConfirmOpen(true)}>
-                <Trash2 className='mr-2 h-4 w-4' />
+                <Icon name='trash' className='mr-2 h-4 w-4' />
                 Remove
               </Button>
             </div>
@@ -136,14 +136,14 @@ export const AiSettingsForm = () => {
             </div>
             <div className='flex justify-end gap-2'>
               <Button variant='ghost' onClick={handleCancelEdit} disabled={mutation.isPending}>
-                <X className='mr-2 h-4 w-4' />
+                <Icon name='x' className='mr-2 h-4 w-4' />
                 Cancel
               </Button>
               <Button onClick={handleSave} disabled={mutation.isPending || !apiKeyInput.trim()}>
                 {mutation.isPending ? (
-                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
                 ) : (
-                  <Save className='mr-2 h-4 w-4' />
+                  <Icon name='save' className='mr-2 h-4 w-4' />
                 )}
                 Save Key
               </Button>
@@ -159,7 +159,7 @@ export const AiSettingsForm = () => {
             rel='noopener noreferrer'
             className='text-primary hover:text-primary/80 inline-flex items-center gap-1 font-medium underline'
           >
-            Google AI Studio <ExternalLink className='h-3 w-3' />
+            Google AI Studio <Icon name='externalLink' className='h-3 w-3' />
           </a>
         </div>
       </CardContent>

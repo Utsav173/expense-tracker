@@ -20,7 +20,7 @@ import { Button } from '../ui/button';
 import AddModal from './add-modal';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { CurrencyCombobox } from '../ui/currency-combobox';
-import { Building, Landmark, PlusCircle, Loader2 } from 'lucide-react';
+import { Icon } from '../ui/icon';
 
 export const investmentAccountSchema = z.object({
   name: z
@@ -105,7 +105,7 @@ const AddInvestmentAccountModal: React.FC<AddInvestmentAccountModalProps> = ({
       triggerButton={
         hideTriggerButton ? null : (
           <Button variant='default'>
-            <PlusCircle className='mr-2 h-4 w-4' /> Add Investment Account
+            <Icon name='plusCircle' className='mr-2 h-4 w-4' /> Add Investment Account
           </Button>
         )
       }
@@ -120,7 +120,7 @@ const AddInvestmentAccountModal: React.FC<AddInvestmentAccountModalProps> = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel className='flex items-center gap-1.5'>
-                  <Landmark className='text-muted-foreground h-4 w-4' />
+                  <Icon name='landmark' className='text-muted-foreground h-4 w-4' />
                   Account Name*
                 </FormLabel>
                 <FormControl>
@@ -141,7 +141,7 @@ const AddInvestmentAccountModal: React.FC<AddInvestmentAccountModalProps> = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel className='flex items-center gap-1.5'>
-                  <Building className='text-muted-foreground h-4 w-4' />
+                  <Icon name='building' className='text-muted-foreground h-4 w-4' />
                   Platform / Broker*
                 </FormLabel>
                 <FormControl>
@@ -188,7 +188,7 @@ const AddInvestmentAccountModal: React.FC<AddInvestmentAccountModalProps> = ({
             >
               {createAccountMutation.isPending ? (
                 <>
-                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
                   Adding...
                 </>
               ) : (

@@ -29,7 +29,7 @@ import {
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { formatCurrency } from '@/lib/utils';
 import { NumericInput } from '../ui/numeric-input';
-import { Loader2, MinusCircle, PlusCircle } from 'lucide-react';
+import { Icon } from '../ui/icon';
 
 const createAmountSchema = (maxAmount?: number, actionType: 'add' | 'withdraw' = 'add') =>
   z.object({
@@ -99,7 +99,7 @@ const AddWithdrawGoalAmountModal: React.FC<AddWithdrawGoalAmountModalProps> = ({
   const loadingText = mode === 'add' ? 'Adding...' : 'Withdrawing...';
   const modalTitle = mode === 'add' ? 'Add Amount to Goal' : 'Withdraw Amount from Goal';
   const modalDescription = `${mode === 'add' ? 'Contribute towards' : 'Withdraw from'} "${goalName}".`;
-  const Icon = mode === 'add' ? PlusCircle : MinusCircle;
+  const icon = mode === 'add' ? 'plusCircle' : 'minusCircle';
 
   const addWithdrawMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: { amount: number } }) => mutationFn(id, data),
@@ -137,7 +137,7 @@ const AddWithdrawGoalAmountModal: React.FC<AddWithdrawGoalAmountModalProps> = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
-            <Icon className='h-5 w-5' />
+            <Icon name={icon} className='h-5 w-5' />
             {modalTitle}
           </DialogTitle>
           <DialogDescription>
@@ -185,7 +185,7 @@ const AddWithdrawGoalAmountModal: React.FC<AddWithdrawGoalAmountModalProps> = ({
               >
                 {addWithdrawMutation.isPending ? (
                   <>
-                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                    <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
                     {loadingText}
                   </>
                 ) : (

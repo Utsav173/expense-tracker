@@ -10,7 +10,7 @@ import { Button } from '../ui/button';
 import Link from 'next/link';
 import { formatDistanceToNowStrict, parseISO, isValid, isPast } from 'date-fns';
 import Loader from '../ui/loader';
-import { AlertTriangle, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Icon } from '../ui/icon';
 
 export const DebtSummaryCard: React.FC<{
   className?: string;
@@ -37,7 +37,6 @@ export const DebtSummaryCard: React.FC<{
 
   const numberOfDebts = data?.data?.length ?? 0;
 
-  // Enhanced debt analysis
   const debtAnalysis = React.useMemo(() => {
     if (!data?.data) return null;
 
@@ -75,9 +74,9 @@ export const DebtSummaryCard: React.FC<{
 
   const getStatusIcon = (isOverdue: boolean) => {
     return isOverdue ? (
-      <AlertTriangle className='text-destructive h-4 w-4' />
+      <Icon name='alertTriangle' className='text-destructive h-4 w-4' />
     ) : (
-      <Clock className='text-muted-foreground h-4 w-4' />
+      <Icon name='clock' className='text-muted-foreground h-4 w-4' />
     );
   };
 
@@ -93,12 +92,11 @@ export const DebtSummaryCard: React.FC<{
             <div className='flex h-full items-center justify-center'>
               <NoData
                 message={error ? 'Could not load debt data.' : 'No outstanding debts! 🎉'}
-                icon={error ? XCircle : CheckCircle}
+                icon={error ? 'xCircle' : 'checkCircle2'}
               />
             </div>
           ) : (
             <div className='space-y-4'>
-              {/* Main debt overview */}
               <div className='space-y-3'>
                 <div className='flex items-baseline justify-between'>
                   <div>
@@ -112,7 +110,7 @@ export const DebtSummaryCard: React.FC<{
                   {debtAnalysis && debtAnalysis?.overdue > 0 && (
                     <div className='text-right'>
                       <div className='text-destructive flex items-center gap-1'>
-                        <AlertTriangle className='h-4 w-4' />
+                        <Icon name='alertTriangle' className='h-4 w-4' />
                         <span className='text-sm font-medium'>{debtAnalysis.overdue} overdue</span>
                       </div>
                       <p className='text-muted-foreground text-xs'>
@@ -122,18 +120,17 @@ export const DebtSummaryCard: React.FC<{
                   )}
                 </div>
 
-                {/* Status indicators */}
                 {debtAnalysis && (
                   <div className='flex gap-4 text-sm'>
                     {debtAnalysis.overdue > 0 && (
                       <div className='text-destructive flex items-center gap-1'>
-                        <AlertTriangle className='h-3 w-3' />
+                        <Icon name='alertTriangle' className='h-3 w-3' />
                         <span>{debtAnalysis.overdue} overdue</span>
                       </div>
                     )}
                     {debtAnalysis.upcoming > 0 && (
                       <div className='text-muted-foreground flex items-center gap-1'>
-                        <Clock className='h-3 w-3' />
+                        <Icon name='clock' className='h-3 w-3' />
                         <span>{debtAnalysis.upcoming} upcoming</span>
                       </div>
                     )}
@@ -141,7 +138,6 @@ export const DebtSummaryCard: React.FC<{
                 )}
               </div>
 
-              {/* Next due payment */}
               {debtAnalysis?.nextDue && (
                 <div className='space-y-2'>
                   <p className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
@@ -189,7 +185,6 @@ export const DebtSummaryCard: React.FC<{
                 </div>
               )}
 
-              {/* Additional context for multiple debts */}
               {numberOfDebts > 1 && (
                 <div className='border-t pt-3'>
                   <div className='text-muted-foreground flex justify-between text-xs'>

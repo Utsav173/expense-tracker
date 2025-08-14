@@ -27,7 +27,7 @@ const AiRecordsTable: React.FC<AiRecordsTableProps> = ({ records }) => {
 
   const headers = useMemo(() => {
     if (!records || records.length === 0) return [];
-    return Object.keys(records[0]);
+    return Object.keys(records);
   }, [records]);
 
   const formatCellValue = (value: any): string => {

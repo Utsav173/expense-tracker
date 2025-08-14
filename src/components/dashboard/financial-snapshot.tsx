@@ -30,7 +30,7 @@ export const FinancialSnapshot: React.FC<FinancialSnapshotProps> = ({
     return (
       <Card className={cn('col-span-1 sm:col-span-2 lg:col-span-4', className)}>
         <CardContent className='py-10'>
-          <NoData message='Snapshot data unavailable.' icon='x-circle' />
+          <NoData message='Snapshot data unavailable.' icon='xCircle' />
         </CardContent>
       </Card>
     );

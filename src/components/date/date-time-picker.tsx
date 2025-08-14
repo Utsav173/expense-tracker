@@ -4,11 +4,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { CalendarIcon, Clock } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { DayPickerProps } from 'react-day-picker';
+import { Icon } from '../ui/icon';
 
 interface DateTimePickerProps {
   value?: Date;
@@ -261,8 +261,8 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
             <span className='text-muted-foreground'>{placeholderText}</span>
           )}
           <div className='ml-auto flex items-center gap-1'>
-            {showTimeIcon && <Clock className='h-4 w-4 opacity-50' />}
-            <CalendarIcon className='h-4 w-4 opacity-50' />
+            {showTimeIcon && <Icon name='clock' className='h-4 w-4 opacity-50' />}
+            <Icon name='calendar' className='h-4 w-4 opacity-50' />
           </div>
         </Button>
       </PopoverTrigger>

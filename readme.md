@@ -92,7 +92,7 @@ This project uses a modern, type-safe, and performant technology stack.
 | **Data Fetching** | [TanStack Query](https://tanstack.com/query/v5)                           | Manages all server state: fetching, caching, and updating data with hooks for a seamless developer experience. |
 | **Forms**         | [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/) | The standard for building performant, flexible, and type-safe forms with robust validation.                    |
 | **Charting**      | [Recharts](https://recharts.org/en-US/)                                   | A composable charting library built on React components for creating beautiful data visualizations.            |
-| **Icons**         | [Lucide React](https://lucide.dev/icons/)                                 | A simply beautiful and consistent icon toolkit.                                                                |
+| **Icons**         | [iconify](https://iconify.design/)                                 | A simply beautiful and consistent icon toolkit.                                                                |
 | **Utilities**     | `date-fns`, `clsx`, `tailwind-merge`                                      | Best-in-class utilities for date manipulation and robust class name management.                                |
 
 ---

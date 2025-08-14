@@ -28,11 +28,11 @@ import type { InvestmentAPI } from '@/lib/api/api-types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency } from '@/lib/utils';
 import { Card, CardHeader, CardDescription } from '@/components/ui/card';
-import { Loader2, Calendar, Layers, BarChart4, PiggyBank, Pencil } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 import { useInvestmentHoldingForm } from '@/hooks/use-investment-holding-form';
 import { investmentUpdate, investmentUpdateDividend } from '@/lib/endpoints/investment';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
+import { Icon } from '../ui/icon';
 
 const investmentHoldingUpdateSchema = z.object({
   shares: z
@@ -159,7 +159,7 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
       <DialogContent className='sm:max-w-[480px]'>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
-            <Pencil className='h-5 w-5' />
+            <Icon name='pencil' className='h-5 w-5' />
             Edit Investment: {investment.symbol}
           </DialogTitle>
           <DialogDescription>
@@ -170,11 +170,11 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
         <Tabs value={activeTab} onValueChange={setActiveTab} className='mt-2'>
           <TabsList className='mb-2 grid w-full grid-cols-2'>
             <TabsTrigger value='details' className='flex items-center gap-1.5'>
-              <BarChart4 className='h-4 w-4' />
+              <Icon name='barChart4' className='h-4 w-4' />
               <span>Purchase Details</span>
             </TabsTrigger>
             <TabsTrigger value='dividends' className='flex items-center gap-1.5'>
-              <PiggyBank className='h-4 w-4' />
+              <Icon name='piggyBank' className='h-4 w-4' />
               <span>Dividend Info</span>
             </TabsTrigger>
           </TabsList>
@@ -214,7 +214,7 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
                   render={({ field }) => (
                     <FormItem className='flex flex-col'>
                       <FormLabel className='flex items-center gap-1.5'>
-                        <Calendar className='text-muted-foreground h-4 w-4' />
+                        <Icon name='calendar' className='text-muted-foreground h-4 w-4' />
                         Purchase Date*
                       </FormLabel>
                       <FormControl>
@@ -235,7 +235,7 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className='flex items-center gap-1.5'>
-                          <Layers className='text-muted-foreground h-4 w-4' />
+                          <Icon name='layers' className='text-muted-foreground h-4 w-4' />
                           Number of Shares*
                         </FormLabel>
                         <FormControl>
@@ -260,7 +260,7 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
                         <FormLabel className='flex items-center gap-1.5'>
                           Purchase Price / Share*{' '}
                           {isHistoricalPriceLoading && (
-                            <Loader2 className='text-primary h-3 w-3 animate-spin' />
+                            <Icon name='loader2' className='text-primary h-3 w-3 animate-spin' />
                           )}
                         </FormLabel>
                         <FormControl>
@@ -295,7 +295,7 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
                   >
                     {detailsMutation.isPending ? (
                       <>
-                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                        <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
                         Saving...
                       </>
                     ) : (
@@ -319,7 +319,7 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className='flex items-center gap-1.5'>
-                        <PiggyBank className='text-muted-foreground h-4 w-4' />
+                        <Icon name='piggyBank' className='text-muted-foreground h-4 w-4' />
                         Total Dividend Received*
                       </FormLabel>
                       <FormControl>
@@ -355,7 +355,7 @@ const UpdateInvestmentHoldingModal: React.FC<UpdateInvestmentHoldingModalProps> 
                   >
                     {dividendMutation.isPending ? (
                       <>
-                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                        <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
                         Saving...
                       </>
                     ) : (

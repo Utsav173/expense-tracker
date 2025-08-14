@@ -3,12 +3,12 @@
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ModeToggle } from '@/components/theme-toggle';
 import { SidebarTrigger } from '../ui/sidebar';
 import { Separator } from '../ui/separator';
+import { Icon } from '../ui/icon';
 
 const getPageTitle = (pathname: string | null): string => {
   if (!pathname) return 'Loading...';
@@ -44,7 +44,8 @@ const PageHeader: React.FC = () => {
         <div className='flex h-full w-full items-center gap-2'>
           <Link href='/accounts' aria-label='Go to Home'>
             <Button variant='ghost' size='icon' className='h-7 w-7'>
-              <Home
+              <Icon
+                name='home'
                 className={cn('h-4 w-4', isHomePage ? 'text-primary' : 'text-muted-foreground')}
               />
             </Button>

@@ -2,7 +2,7 @@
 
 import { Column } from '@tanstack/react-table';
 import { cn } from '@/lib/utils';
-import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react';
+import { Icon } from './icon';
 
 interface DataTableColumnHeaderProps<TData, TValue> extends React.HTMLAttributes<HTMLDivElement> {
   column: Column<TData, TValue>;
@@ -35,11 +35,11 @@ export function DataTableColumnHeader<TData, TValue>({
     >
       <span>{title}</span>
       {sortDirection === 'desc' ? (
-        <ArrowDown className='ml-2 h-4 w-4' />
+        <Icon name='arrowDown' className='ml-2 h-4 w-4' />
       ) : sortDirection === 'asc' ? (
-        <ArrowUp className='ml-2 h-4 w-4' />
+        <Icon name='arrowUp' className='ml-2 h-4 w-4' />
       ) : (
-        <ChevronsUpDown className='ml-2 h-4 w-4' />
+        <Icon name='chevronsUpDown' className='ml-2 h-4 w-4' />
       )}
     </div>
   );

@@ -6,12 +6,10 @@ import { UpdateModal } from './update-modal';
 import { Input } from '@/components/ui/input';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Banknote, CircleDollarSign } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { accountUpdate } from '@/lib/endpoints/accounts';
 import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
-
-type FormSchema = z.infer<typeof apiEndpoints.accounts.update.body>;
+import { Icon } from '../ui/icon';
 
 interface UpdateAccountModalProps {
   open: boolean;
@@ -73,7 +71,7 @@ export function UpdateAccountModal({
           <div className='grid grid-cols-2 gap-4'>
             <FormItem>
               <FormLabel className='text-muted-foreground flex items-center gap-1.5 text-sm'>
-                <Banknote className='h-4 w-4' />
+                <Icon name='banknote' className='h-4 w-4' />
                 Current Balance
               </FormLabel>
               <FormControl>
@@ -87,7 +85,7 @@ export function UpdateAccountModal({
             </FormItem>
             <FormItem>
               <FormLabel className='text-muted-foreground flex items-center gap-1.5 text-sm'>
-                <CircleDollarSign className='h-4 w-4' />
+                <Icon name='dollarSign' className='h-4 w-4' />
                 Currency
               </FormLabel>
               <FormControl>

@@ -5,9 +5,9 @@ import { AiChat } from '@/components/ai/ai-chat';
 import { useAuth } from '@/components/providers/auth-provider';
 import Loader from '@/components/ui/loader';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { Icon } from '@/components/ui/icon';
 
 const AiChatPage = () => {
   const { session, isLoading } = useAuth();
@@ -25,7 +25,7 @@ const AiChatPage = () => {
     return (
       <div className='flex h-full flex-1 items-center justify-center p-4'>
         <Alert variant='destructive' className='max-w-md'>
-          <AlertCircle className='h-4 w-4' />
+          <Icon name='alertCircle' className='h-4 w-4' />
           <AlertTitle>Error Loading User</AlertTitle>
           <AlertDescription>
             Could not load user information. Please try refreshing the page.
@@ -39,7 +39,7 @@ const AiChatPage = () => {
     return (
       <div className='flex h-full flex-1 items-center justify-center p-4'>
         <Alert variant='default' className='mx-auto max-w-lg text-center'>
-          <KeyRound className='mx-auto h-5 w-5' />
+          <Icon name='keyRound' className='mx-auto h-5 w-5' />
           <AlertTitle className='mt-2 text-lg font-semibold'>AI Assistant Disabled</AlertTitle>
           <AlertDescription className='mt-2'>
             To use the AI Assistant, please add your Google AI API key in your profile settings.

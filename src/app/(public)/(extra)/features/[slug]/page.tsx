@@ -5,8 +5,9 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowRight, LucideProps } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { Icon } from '@/components/ui/icon';
+import { IconName } from '@/components/ui/icon-map';
 
 const FeatureDetailPage = async ({ params }: { params: Promise<{ slug: string }> }) => {
   const slug = (await params).slug;
@@ -16,14 +17,12 @@ const FeatureDetailPage = async ({ params }: { params: Promise<{ slug: string }>
     notFound();
   }
 
-  const Icon = feature.icon as React.ElementType<LucideProps>;
-
   return (
     <div className='bg-muted/30 min-h-screen py-16 md:py-24 lg:py-32'>
       <div className='container mx-auto max-w-4xl px-4'>
         <header className='mb-12 text-center'>
           <div className='bg-primary/10 text-primary mx-auto mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl shadow-lg'>
-            <Icon className='h-8 w-8' />
+            <Icon name={feature.icon as IconName} className='h-8 w-8' />
           </div>
           <h1 className='text-foreground mb-4 text-4xl font-extrabold tracking-tighter sm:text-5xl lg:text-6xl'>
             {feature.title}
@@ -48,7 +47,10 @@ const FeatureDetailPage = async ({ params }: { params: Promise<{ slug: string }>
             <Button asChild size='lg' className='group'>
               <Link href='/auth/signup'>
                 Sign Up Now
-                <ArrowRight className='ml-2 h-4 w-4 transition-transform group-hover:translate-x-1' />
+                <Icon
+                  name='arrowRight'
+                  className='ml-2 h-4 w-4 transition-transform group-hover:translate-x-1'
+                />
               </Link>
             </Button>
           </div>

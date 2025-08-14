@@ -1,6 +1,6 @@
 import React from 'react';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Icon } from './icon';
 
 interface ChangeIndicatorProps {
   change: number | undefined | null;
@@ -23,7 +23,7 @@ export const ChangeIndicator: React.FC<ChangeIndicatorProps> = ({
   const isPositiveDisplay = inverse ? isNegativeActual : isPositiveActual;
   const isNegativeDisplay = inverse ? isPositiveActual : isNegativeActual;
 
-  const Icon = isPositiveDisplay ? TrendingUp : isNegativeDisplay ? TrendingDown : Minus;
+  const icon = isPositiveDisplay ? 'trendingUp' : isNegativeDisplay ? 'trendingDown' : 'minus';
   const colorClass = isPositiveDisplay
     ? 'text-green-500'
     : isNegativeDisplay
@@ -38,7 +38,7 @@ export const ChangeIndicator: React.FC<ChangeIndicatorProps> = ({
         className
       )}
     >
-      <Icon className='mr-1 h-3 w-3 shrink-0' />
+      <Icon name={icon} className='mr-1 h-3 w-3 shrink-0' />
       {change.toFixed(1)}%
     </span>
   );

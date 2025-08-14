@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { BarChart2, LineChart } from 'lucide-react';
 import {
   Bar,
   BarChart,
@@ -24,6 +23,7 @@ import { Skeleton } from '../ui/skeleton';
 import NoData from '../ui/no-data';
 import { formatCurrency } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Icon } from '../ui/icon';
 
 interface FinancialTrendsChartProps {
   data: Array<{
@@ -104,11 +104,11 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
         <Tabs defaultValue='bar' className='w-full' onValueChange={(v) => setChartType(v)}>
           <TabsList className='grid w-full grid-cols-2 max-sm:w-full'>
             <TabsTrigger value='bar' className='flex items-center gap-1'>
-              <BarChart2 className='h-3.5 w-3.5' />
+              <Icon name='barChart' className='h-3.5 w-3.5' />
               <span>Bar</span>
             </TabsTrigger>
             <TabsTrigger value='line' className='flex items-center gap-1'>
-              <LineChart className='h-3.5 w-3.5' />
+              <Icon name='lineChart' className='h-3.5 w-3.5' />
               <span>Line</span>
             </TabsTrigger>
           </TabsList>

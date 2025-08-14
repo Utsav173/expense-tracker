@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/lib/hooks/useToast';
 import { verifyInvitation } from '@/lib/endpoints/invitation';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Icon } from '@/components/ui/icon';
 
 const VerifyInvitationPage = () => {
   const [loading, setLoading] = useState(true);
@@ -48,7 +48,7 @@ const VerifyInvitationPage = () => {
         </div>
         {loading && (
           <div className='flex justify-center'>
-            <Loader2 className='text-primary h-8 w-8 animate-spin' />
+            <Icon name='loader2' className='text-primary h-8 w-8 animate-spin' />
           </div>
         )}
       </CardContent>

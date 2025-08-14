@@ -17,14 +17,14 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search, Calculator, Frown } from 'lucide-react';
 import { createDebtColumns } from '@/components/debt/debt-columns';
 import AddDebtModal from '@/components/modals/add-debt-modal';
 import { useAuth } from '@/components/providers/auth-provider';
 import InterestCalculatorModal from '@/components/modals/interest-calculator-modal';
 import { z } from 'zod';
 import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import QueryErrorDisplay from '@/components/ui/query-error-display';
+import { Icon } from '@/components/ui/icon';
 
 type InterestFormSchema = z.infer<typeof apiEndpoints.interest.calculate.body>;
 type DebtTypeFilter = 'given' | 'taken' | 'all' | undefined;
@@ -74,7 +74,7 @@ const DebtsPage = () => {
 
   const handleSortChange = (sorting: any) => {
     if (sorting.length > 0) {
-      setState({ sortBy: sorting[0].id, sortOrder: sorting[0].desc ? 'desc' : 'asc' });
+      setState({ sortBy: sorting.id, sortOrder: sorting.desc ? 'desc' : 'asc' });
     } else {
       setState({ sortBy: 'startDate', sortOrder: 'desc' });
     }
@@ -99,22 +99,7 @@ const DebtsPage = () => {
   }
 
   if (error) {
-    return (
-      <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
-        <Alert variant='destructive' className='mx-auto mt-6'>
-          <Frown className='h-4 w-4' />
-          <AlertTitle>Oops! Something went wrong.</AlertTitle>
-          <AlertDescription>
-            We couldn&apos;t load your debt data. Please check your connection and try refreshing.
-            {error && (
-              <div className='text-muted-foreground mt-2 text-xs'>
-                Error: {(error as Error).message}
-              </div>
-            )}
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
+    return <QueryErrorDisplay error={error} message="We couldn't load your debt data." />;
   }
 
   return (
@@ -123,22 +108,27 @@ const DebtsPage = () => {
         <h1 className='text-2xl font-semibold md:text-3xl'>Debts</h1>
         <div className='flex items-center gap-2'>
           <Button variant='outline' onClick={() => setIsCalcModalOpen(true)}>
-            <Calculator className='mr-2 h-4 w-4' /> Calculator
+            <Icon name='calculator' className='mr-2 h-4 w-4' /> Calculator
           </Button>
           <Button
+            variant='planning'
+            className='h-10 px-4 py-2'
             onClick={() => {
               setInitialDebtData(undefined);
               setIsAddModalOpen(true);
             }}
           >
-            <PlusCircle className='mr-2 h-4 w-4' /> Add Debt
+            <Icon name='coins' className='mr-2 h-4 w-4' /> Add Debt
           </Button>
         </div>
       </div>
 
       <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4'>
         <div className='relative flex-1'>
-          <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+          <Icon
+            name='search'
+            className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2'
+          />
           <Input
             type='text'
             placeholder='Search description, amount, counterparty...'

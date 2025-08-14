@@ -1,22 +1,28 @@
 'use client';
 
-import { use, useMemo } from 'react';
+import React, { useMemo, Suspense, use } from 'react';
 import dynamic from 'next/dynamic';
-import { useAccountDetails } from '@/components/account/hooks/useAccountDetails';
-import { AccountDetailsHeader } from '@/components/account/account-details-header';
+import { useAccountDetailsData } from '@/components/account/hooks/useAccountDetailsData';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
+import QueryErrorDisplay from '@/components/ui/query-error-display';
 
-// Dynamically import the heaviest components
 const AccountTransactionsSection = dynamic(
   () => import('@/components/account/account-transactions-section'),
   {
     loading: () => <Skeleton className='h-96 w-full' />,
+    ssr: false
+  }
+);
+
+const AccountDetailsHeader = dynamic(
+  () =>
+    import('@/components/account/account-details-header').then((mod) => mod.AccountDetailsHeader),
+  {
+    loading: () => <Skeleton className='h-24 w-full' />,
     ssr: false
   }
 );
@@ -57,7 +63,7 @@ interface PageProps {
   }>;
 }
 
-const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
+const AccountDetailsPageContent = ({ params, searchParams }: PageProps) => {
   const { id } = use(params);
   const parsedSearchParams = use(searchParams);
   const isMobile = useIsMobile();
@@ -74,6 +80,7 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
     isChartLoading,
     transactionsData,
     isTransactionLoading,
+    refetchData,
     filters,
     setSearchQuery,
     handleCategoryChange,
@@ -85,11 +92,10 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
     handlePageChange,
     categories,
     handleResetFilters,
-    refetchData,
     duration,
     handleAmountChange,
     handleTypeChange
-  } = useAccountDetails(id, parsedSearchParams);
+  } = useAccountDetailsData(id, parsedSearchParams);
 
   const transformedChartData = useMemo(() => {
     if (!chartData?.date) return [];
@@ -112,25 +118,19 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
 
   if (!id) {
     return (
-      <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
-        <Alert variant='destructive' className='mx-auto mt-6'>
-          <AlertCircle className='h-4 w-4' />
-          <AlertDescription>Account ID is required</AlertDescription>
-        </Alert>
-      </div>
+      <QueryErrorDisplay
+        error={new Error('Account ID is required')}
+        message='Failed to load account details. Please check your connection and try refreshing.'
+      />
     );
   }
 
   if (accountError) {
     return (
-      <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
-        <Alert variant='destructive' className='mx-auto mt-6'>
-          <AlertCircle className='h-4 w-4' />
-          <AlertDescription>
-            Failed to load account details: {accountError.message}
-          </AlertDescription>
-        </Alert>
-      </div>
+      <QueryErrorDisplay
+        error={accountError}
+        message='Failed to load account details. Please check your connection and try refreshing.'
+      />
     );
   }
 
@@ -149,7 +149,6 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
 
   return (
     <div className='mx-auto h-full w-full space-y-6 p-4 md:p-6'>
-      {/* Header Section */}
       <AccountDetailsHeader
         account={account!}
         isLoading={isAccountLoading}
@@ -158,7 +157,6 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
         isOwner={isOwner}
       />
 
-      {/* Analytics Cards + Chart Section */}
       {isOwner && (
         <div
           className={cn(
@@ -186,7 +184,6 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
         </div>
       )}
 
-      {/* Transactions Section */}
       <AccountTransactionsSection
         transactionsData={transactionsData}
         isTransactionLoading={isTransactionLoading}
@@ -207,6 +204,14 @@ const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
         handleTypeChange={handleTypeChange}
       />
     </div>
+  );
+};
+
+const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
+  return (
+    <Suspense fallback={<Skeleton className='h-screen w-full' />}>
+      <AccountDetailsPageContent params={params} searchParams={searchParams} />
+    </Suspense>
   );
 };
 

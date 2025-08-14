@@ -1,10 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import { Eye, EyeOff } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Icon } from './icon';
 
 export interface PasswordInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   noEyeIcon?: boolean;
@@ -34,9 +34,9 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
             aria-label={showPassword ? 'Hide password' : 'Show password'}
           >
             {showPassword ? (
-              <EyeOff className='text-muted-foreground h-4 w-4' aria-hidden='true' />
+              <Icon name='eyeOff' className='text-muted-foreground h-4 w-4' aria-hidden='true' />
             ) : (
-              <Eye className='text-muted-foreground h-4 w-4' aria-hidden='true' />
+              <Icon name='eye' className='text-muted-foreground h-4 w-4' aria-hidden='true' />
             )}
           </Button>
         )}

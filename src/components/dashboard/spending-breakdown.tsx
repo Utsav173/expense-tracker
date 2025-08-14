@@ -590,7 +590,7 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
           <Loader />
         ) : error ? (
           <div className='flex h-full items-center justify-center'>
-            <NoData message='Could not load spending data.' icon='x-circle' />
+            <NoData message='Could not load spending data.' icon='xCircle' />
           </div>
         ) : formattedData.length === 0 ? (
           <div className='flex h-full items-center justify-center'>

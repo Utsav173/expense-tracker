@@ -22,28 +22,18 @@ import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import NoData from '../ui/no-data';
-import {
-  IndianRupee,
-  Info,
-  LineChart as LineChartIcon,
-  PiggyBank,
-  TrendingDown,
-  TrendingUp,
-  Wallet,
-  Calendar,
-  BarChart3,
-  LucideProps
-} from 'lucide-react';
 import { SingleLineEllipsis } from '../ui/ellipsis-components';
 import { investmentAccountGetPerformance } from '@/lib/endpoints/investmentAccount';
 import { Button } from '../ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { IconName } from '../ui/icon-map';
+import { Icon } from '../ui/icon';
 
 interface KpiCardProps {
   title: string;
   value: number;
   currency: string;
-  icon: React.ElementType<LucideProps>;
+  icon: IconName;
   isLoading: boolean;
   changePercent?: number;
   valuePrefix?: string;
@@ -55,7 +45,7 @@ const KpiCard: React.FC<KpiCardProps> = ({
   title,
   value,
   currency,
-  icon: Icon,
+  icon,
   isLoading,
   changePercent,
   valuePrefix = '',
@@ -73,7 +63,7 @@ const KpiCard: React.FC<KpiCardProps> = ({
         <div className='flex items-start justify-between'>
           <div className='space-y-1.5'>
             <CardTitle className='text-muted-foreground flex items-center gap-2 text-sm font-medium'>
-              <Icon className={cn('h-4 w-4', colorClass)} />
+              <Icon name={icon} className={cn('h-4 w-4', colorClass)} />
               {title}
             </CardTitle>
             {description && (
@@ -85,9 +75,9 @@ const KpiCard: React.FC<KpiCardProps> = ({
           {changePercent !== undefined && (
             <Badge variant={getBadgeVariant(changePercent)} className='shrink-0'>
               {changePercent >= 0 ? (
-                <TrendingUp className='mr-1 h-3 w-3' />
+                <Icon name='trendingUp' className='mr-1 h-3 w-3' />
               ) : (
-                <TrendingDown className='mr-1 h-3 w-3' />
+                <Icon name='trendingDown' className='mr-1 h-3 w-3' />
               )}
               {changePercent.toFixed(1)}%
             </Badge>
@@ -137,7 +127,7 @@ const CustomTooltip = ({ active, payload, currency, data }: any) => {
           <div className='space-y-3 text-sm'>
             <div className='flex items-center justify-between gap-4'>
               <span className='text-muted-foreground flex items-center gap-2'>
-                <Wallet className='h-4 w-4' />
+                <Icon name='wallet' className='h-4 w-4' />
                 Portfolio Value
               </span>
               <span className='text-foreground font-semibold'>
@@ -157,9 +147,9 @@ const CustomTooltip = ({ active, payload, currency, data }: any) => {
                     )}
                   >
                     {isPositive ? (
-                      <TrendingUp className='h-4 w-4' />
+                      <Icon name='trendingUp' className='h-4 w-4' />
                     ) : (
-                      <TrendingDown className='h-4 w-4' />
+                      <Icon name='trendingDown' className='h-4 w-4' />
                     )}
                     <span>
                       {formatCurrency(change, currency)} ({percentageChange.toFixed(2)}%)
@@ -229,7 +219,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
         <div className='flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between'>
           <div className='space-y-2'>
             <CardTitle className='flex items-center gap-2 text-xl font-semibold'>
-              <BarChart3 className='text-primary h-5 w-5' />
+              <Icon name='barChart3' className='text-primary h-5 w-5' />
               Portfolio Performance
             </CardTitle>
             <CardDescription className='text-sm'>
@@ -294,7 +284,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
                   onClick={() => setCustomRangeOpen(!customRangeOpen)}
                   className='h-9 gap-2'
                 >
-                  <Calendar className='h-4 w-4' />
+                  <Icon name='calendar' className='h-4 w-4' />
                   Custom
                 </Button>
               )}
@@ -398,7 +388,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
             </ChartContainer>
           ) : (
             <div className='bg-muted/20 flex h-full w-full flex-col items-center justify-center rounded-lg'>
-              <NoData message='Not enough historical data to display chart.' icon={LineChartIcon} />
+              <NoData message='Not enough historical data to display chart.' icon={'lineChart'} />
             </div>
           )}
         </div>
@@ -474,7 +464,7 @@ const InvestmentAccountOverview: React.FC<InvestmentAccountOverviewProps> = ({
         <KpiCard
           title='Portfolio Value'
           description='Current total value'
-          icon={Wallet}
+          icon={'wallet'}
           isLoading={isLoadingSummary}
           value={performanceMetrics?.totalValue || 0}
           currency={accountCurrency}
@@ -484,7 +474,7 @@ const InvestmentAccountOverview: React.FC<InvestmentAccountOverviewProps> = ({
         <KpiCard
           title='Total Invested'
           description='Amount contributed'
-          icon={PiggyBank}
+          icon={'piggyBank'}
           isLoading={isLoadingSummary}
           value={performanceMetrics?.totalInvested || 0}
           currency={accountCurrency}
@@ -493,7 +483,7 @@ const InvestmentAccountOverview: React.FC<InvestmentAccountOverviewProps> = ({
         <KpiCard
           title='Total Dividends'
           description='Income received'
-          icon={IndianRupee}
+          icon={'indianRupee'}
           isLoading={isLoadingSummary}
           value={performanceMetrics?.totalDividends || 0}
           currency={accountCurrency}
@@ -507,7 +497,7 @@ const InvestmentAccountOverview: React.FC<InvestmentAccountOverviewProps> = ({
           <CardContent className='p-4'>
             <div className='flex items-start gap-4'>
               <div className='bg-primary/10 ring-primary/20 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ring-1'>
-                <Info className='text-primary h-5 w-5' />
+                <Icon name='info' className='text-primary h-5 w-5' />
               </div>
               <div className='my-auto flex-1 space-y-2'>
                 <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3'>

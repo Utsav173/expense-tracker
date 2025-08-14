@@ -10,6 +10,7 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 interface AddModalProps {
   title: string;
@@ -19,6 +20,8 @@ interface AddModalProps {
   onOpenChange?: (open: boolean) => void;
   isOpen?: boolean;
   hideClose?: boolean;
+  icon?: React.ReactNode;
+  iconClassName?: string;
 }
 
 const AddModal = ({
@@ -28,7 +31,9 @@ const AddModal = ({
   triggerButton,
   isOpen,
   onOpenChange,
-  hideClose = false
+  hideClose = false,
+  icon,
+  iconClassName
 }: AddModalProps) => {
   const id = useId();
 
@@ -44,9 +49,9 @@ const AddModal = ({
     <Dialog open={isOpen} onOpenChange={onOpenChange} key={id + 'dialog'}>
       {triggerButton && (
         <DialogTrigger asChild>
-          <span onClick={handleTriggerClick} style={{ display: 'contents' }}>
+          <div onClick={handleTriggerClick} style={{ display: 'contents' }}>
             {triggerButton}
-          </span>
+          </div>
         </DialogTrigger>
       )}
       <DialogContent
@@ -58,7 +63,10 @@ const AddModal = ({
         hideClose={hideClose}
       >
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle className='flex items-center gap-2'>
+            {icon && <div className={cn('rounded-full p-2', iconClassName)}>{icon}</div>}
+            {title}
+          </DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         {children}

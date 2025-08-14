@@ -1,22 +1,15 @@
 'use client';
 
 import React from 'react';
-import { FileQuestion, Inbox, XCircle, LucideProps } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-type IconMapKeys = 'file-question' | 'inbox' | 'x-circle';
-
-const iconMap: Record<IconMapKeys, React.ElementType<LucideProps>> = {
-  'file-question': FileQuestion,
-  inbox: Inbox,
-  'x-circle': XCircle
-};
+import { Icon } from './icon';
+import { IconName } from './icon-map';
 
 interface NoDataProps {
   message?: string;
   description?: string;
   className?: string;
-  icon?: IconMapKeys | 'none' | React.ElementType<LucideProps>;
+  icon?: IconName | 'none';
   action?: React.ReactNode;
 }
 
@@ -27,15 +20,6 @@ const NoData: React.FC<NoDataProps> = ({
   icon = 'inbox',
   action
 }) => {
-  let IconComponent: React.ElementType<LucideProps> | null = null;
-  if (typeof icon === 'string') {
-    if (icon !== 'none') {
-      IconComponent = iconMap[icon as IconMapKeys];
-    }
-  } else {
-    IconComponent = icon;
-  }
-
   return (
     <div
       className={cn(
@@ -43,9 +27,9 @@ const NoData: React.FC<NoDataProps> = ({
         className
       )}
     >
-      {IconComponent && (
+      {icon !== 'none' && (
         <div className='bg-muted mb-4 flex h-16 w-16 items-center justify-center rounded-full'>
-          <IconComponent className='text-muted-foreground h-8 w-8' />
+          <Icon name={icon} className='text-muted-foreground h-8 w-8' />
         </div>
       )}
       <h3 className='text-lg font-semibold'>{message}</h3>

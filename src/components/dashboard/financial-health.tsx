@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { getFinancialHealthAnalysis } from '@/lib/endpoints/financial-health';
-import { AlertTriangle, Lightbulb, TrendingUp, TrendingDown } from 'lucide-react';
 import { RadialBarChart, RadialBar, ResponsiveContainer, PolarAngleAxis } from 'recharts';
 import {
   Dialog,
@@ -14,6 +13,8 @@ import {
   DialogTrigger
 } from '@/components/ui/dialog';
 import Loader from '../ui/loader';
+import QueryErrorDisplay from '../ui/query-error-display';
+import { Icon } from '../ui/icon';
 
 const FinancialHealth: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -61,17 +62,7 @@ const FinancialHealth: React.FC = () => {
   }
 
   if (isError) {
-    return (
-      <div className='text-destructive mx-4 my-auto flex flex-col items-center justify-center p-2'>
-        <AlertTriangle className='mr-2 h-6 w-6' />
-        <div className='text-center font-light'>
-          <p className='font-bold'>Error Fetching Analysis</p>
-          <p className='text-xs'>
-            {error instanceof Error ? error.message : 'An unknown error occurred'}
-          </p>
-        </div>
-      </div>
-    );
+    return <QueryErrorDisplay error={error} noFill />;
   }
 
   if (!analysis) return null;
@@ -122,7 +113,7 @@ const FinancialHealth: React.FC = () => {
                 <div className='grid gap-4 py-4'>
                   <div className='space-y-2'>
                     <h4 className='flex items-center font-semibold'>
-                      <TrendingUp className='mr-2 h-5 w-5 text-green-500' /> Highlights
+                      <Icon name='trendingUp' className='mr-2 h-5 w-5 text-green-500' /> Highlights
                     </h4>
                     <ul className='list-none space-y-1'>
                       {analysis.highlights.map((item, index) => (
@@ -134,7 +125,8 @@ const FinancialHealth: React.FC = () => {
                   </div>
                   <div className='space-y-2'>
                     <h4 className='flex items-center font-semibold'>
-                      <TrendingDown className='mr-2 h-5 w-5 text-red-500' /> Areas for Improvement
+                      <Icon name='trendingDown' className='mr-2 h-5 w-5 text-red-500' /> Areas for
+                      Improvement
                     </h4>
                     <ul className='list-none space-y-1'>
                       {analysis.improvements.map((item, index) => (
@@ -146,7 +138,8 @@ const FinancialHealth: React.FC = () => {
                   </div>
                   <div className='space-y-2'>
                     <h4 className='flex items-center font-semibold'>
-                      <Lightbulb className='mr-2 h-5 w-5 text-yellow-400' /> Recommendations
+                      <Icon name='lightbulb' className='mr-2 h-5 w-5 text-yellow-400' />{' '}
+                      Recommendations
                     </h4>
                     <ul className='list-none space-y-1'>
                       {analysis.recommendations.map((rec, index) => (

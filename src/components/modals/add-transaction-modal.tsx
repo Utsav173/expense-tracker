@@ -13,9 +13,7 @@ import { useQuery } from '@tanstack/react-query';
 import { categoryGetAll, categoryCreate } from '@/lib/endpoints/category';
 import { accountGetDropdown } from '@/lib/endpoints/accounts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { ArrowDownCircle, ArrowUpCircle, Calendar, CreditCard, Tag } from 'lucide-react';
 import type { AccountAPI, CategoryAPI } from '@/lib/api/api-types';
-import { Label } from '../ui/label';
 import { Card } from '../ui/card';
 import { NumericFormat } from 'react-number-format';
 import DateTimePicker from '../date/date-time-picker';
@@ -30,6 +28,7 @@ import {
   FormMessage
 } from '../ui/form';
 import { cn } from '@/lib/utils';
+import { Icon } from '../ui/icon';
 
 const transactionSchema = z.object({
   text: z.string().min(3, 'Description must be at least 3 characters').max(255),
@@ -64,7 +63,6 @@ const AddTransactionModal = ({
   accountId = ''
 }: AddTransactionModalProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isIncome, setIsIncome] = useState(false);
   const [accounts, setAccounts] = useState<AccountAPI.SimpleAccount[]>([]);
   const [categories, setCategories] = useState<CategoryAPI.Category[]>([]);
   const [createdAt, setCreatedAt] = useState<Date>(new Date());
@@ -94,14 +92,15 @@ const AddTransactionModal = ({
   });
 
   const {
-    register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { isSubmitting },
     reset,
     setValue,
     watch,
     control
   } = form;
+
+  const isIncome = watch('isIncome');
 
   useEffect(() => {
     if (categoriesData?.categories) {
@@ -114,15 +113,6 @@ const AddTransactionModal = ({
       setAccounts(accountData);
     }
   }, [accountData]);
-
-  useEffect(() => {
-    register('isIncome');
-    register('currency');
-  }, [register]);
-
-  useEffect(() => {
-    setValue('isIncome', isIncome);
-  }, [isIncome, setValue]);
 
   useEffect(() => {
     const selectedAccountId = accountId || watch('accountId');
@@ -141,7 +131,6 @@ const AddTransactionModal = ({
         currency: '',
         ...(accountId && { accountId })
       });
-      setIsIncome(false);
       setCreatedAt(new Date());
       setRecurrenceEndDate(null);
     }
@@ -318,14 +307,13 @@ const AddTransactionModal = ({
 
   return (
     <AddModal
-      title='Add Transaction'
+      title={isIncome ? 'Add Income' : 'Add Expense'}
       description='Add a new transaction to your expense tracker.'
+      icon={<Icon name={isIncome ? 'arrowUpCircle' : 'arrowDownCircle'} className='h-5 w-5' />}
+      iconClassName={isIncome ? 'bg-income-muted text-income' : 'bg-expense-muted text-expense'}
       triggerButton={
         triggerButton ?? (
-          <Button
-            className='from-success to-success hover:from-success/80 hover:to-success/80 bg-linear-to-r text-white shadow-md max-sm:w-full'
-            disabled={isSubmitting}
-          >
+          <Button variant={'transaction'} disabled={isSubmitting}>
             Add Transaction
           </Button>
         )
@@ -338,7 +326,6 @@ const AddTransactionModal = ({
           onSubmit={handleSubmit(handleCreateTransaction)}
           className='space-y-4 overflow-hidden'
         >
-          {/* Transaction Type Selection */}
           <div className='grid grid-cols-2 gap-4'>
             <Card
               className={cn(
@@ -350,13 +337,13 @@ const AddTransactionModal = ({
               )}
               onClick={() => {
                 if (!isSubmitting) {
-                  setIsIncome(false);
                   setValue('isIncome', false);
                 }
               }}
             >
               <div className='flex flex-col items-center justify-center gap-1.5'>
-                <ArrowDownCircle
+                <Icon
+                  name={'arrowDownCircle'}
                   className={cn(
                     'h-6 w-6',
                     !isIncome ? 'text-destructive' : 'text-muted-foreground'
@@ -383,13 +370,13 @@ const AddTransactionModal = ({
               )}
               onClick={() => {
                 if (!isSubmitting) {
-                  setIsIncome(true);
                   setValue('isIncome', true);
                 }
               }}
             >
               <div className='flex flex-col items-center justify-center gap-1.5'>
-                <ArrowUpCircle
+                <Icon
+                  name={'arrowUpCircle'}
                   className={cn('h-6 w-6', isIncome ? 'text-success' : 'text-muted-foreground')}
                 />
                 <span
@@ -406,17 +393,16 @@ const AddTransactionModal = ({
 
           <div className='max-h-full overflow-y-auto px-1'>
             <div className='space-y-4'>
-              {/* Account Selection */}
               {accountId ? (
                 <input type='hidden' {...form.register('accountId')} value={accountId} />
               ) : (
                 <FormField
-                  control={form.control}
+                  control={control}
                   name='accountId'
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className='flex items-center gap-2'>
-                        <CreditCard className='text-muted-foreground h-4 w-4' />
+                        <Icon name='creditCard' className='text-muted-foreground h-4 w-4' />
                         Account
                       </FormLabel>
                       <Select
@@ -453,9 +439,8 @@ const AddTransactionModal = ({
                 />
               )}
 
-              {/* Description */}
               <FormField
-                control={form.control}
+                control={control}
                 name='text'
                 render={({ field }) => (
                   <FormItem>
@@ -476,9 +461,8 @@ const AddTransactionModal = ({
                 )}
               />
 
-              {/* Amount */}
               <FormField
-                control={form.control}
+                control={control}
                 name='amount'
                 render={({ field }) => (
                   <FormItem>
@@ -514,10 +498,9 @@ const AddTransactionModal = ({
                 )}
               />
 
-              {/* Transfer Field - Only show for expenses */}
               {!isIncome && (
                 <FormField
-                  control={form.control}
+                  control={control}
                   name='transfer'
                   render={({ field }) => (
                     <FormItem>
@@ -539,14 +522,13 @@ const AddTransactionModal = ({
                 />
               )}
 
-              {/* Date and Time */}
               <FormField
-                control={form.control}
+                control={control}
                 name='createdAt'
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className='flex items-center gap-2'>
-                      <Calendar className='text-muted-foreground h-4 w-4' />
+                      <Icon name='calendar' className='text-muted-foreground h-4 w-4' />
                       Date and Time
                     </FormLabel>
                     <FormControl>
@@ -561,10 +543,9 @@ const AddTransactionModal = ({
                 )}
               />
 
-              {/* Recurring Transaction Options */}
               <div className='space-y-4'>
                 <FormField
-                  control={form.control}
+                  control={control}
                   name='recurring'
                   render={({ field }) => (
                     <FormItem className='flex flex-row items-start space-y-0 space-x-3 rounded-md border p-4'>
@@ -589,7 +570,7 @@ const AddTransactionModal = ({
                 {watch('recurring') && (
                   <div className='space-y-4 pl-6'>
                     <FormField
-                      control={form.control}
+                      control={control}
                       name='recurrenceType'
                       render={({ field }) => (
                         <FormItem>
@@ -618,7 +599,7 @@ const AddTransactionModal = ({
                     />
 
                     <FormField
-                      control={form.control}
+                      control={control}
                       name='recurrenceEndDate'
                       render={({ field }) => (
                         <FormItem>
@@ -638,14 +619,13 @@ const AddTransactionModal = ({
                 )}
               </div>
 
-              {/* Category */}
               <FormField
-                control={form.control}
+                control={control}
                 name='categoryId'
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className='flex items-center gap-2'>
-                      <Tag className='text-muted-foreground h-4 w-4' />
+                      <Icon name='tag' className='text-muted-foreground h-4 w-4' />
                       Category
                     </FormLabel>
                     <FormControl>
@@ -680,7 +660,6 @@ const AddTransactionModal = ({
             </div>
           </div>
 
-          {/* Submit Button */}
           <Button type='submit' className='w-full' disabled={isSubmitting}>
             {isSubmitting ? 'Adding...' : `Add ${isIncome ? 'Income' : 'Expense'}`}
           </Button>

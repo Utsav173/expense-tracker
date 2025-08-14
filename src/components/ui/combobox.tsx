@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,6 +13,7 @@ import {
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useDebounce } from 'use-debounce';
+import { Icon } from './icon';
 
 export interface ComboboxOption {
   value: string;
@@ -92,7 +92,7 @@ export function Combobox({
           disabled={disabled}
         >
           {value ? value.label : placeholder}
-          <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+          <Icon name='chevronsUpDown' className='ml-2 h-4 w-4 shrink-0 opacity-50' />
         </Button>
       </PopoverTrigger>
       <PopoverContent
@@ -109,7 +109,7 @@ export function Combobox({
           <CommandList>
             {isLoading ? (
               <div className='text-muted-foreground flex items-center justify-center p-2 text-sm'>
-                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
                 {loadingPlaceholder}
               </div>
             ) : (
@@ -118,7 +118,8 @@ export function Combobox({
                 <CommandGroup>
                   {options.map((option) => (
                     <CommandItem key={option.value} value={option.value} onSelect={handleSelect}>
-                      <Check
+                      <Icon
+                        name='check'
                         className={cn(
                           'mr-2 h-4 w-4',
                           value?.value === option.value ? 'opacity-100' : 'opacity-0'

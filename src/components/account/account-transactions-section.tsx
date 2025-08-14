@@ -1,4 +1,5 @@
 'use client';
+
 import { useState, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -20,15 +21,14 @@ import {
   DialogTitle
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Search, Filter, X, Download, Loader2, Settings2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { CategoryAPI, TransactionAPI } from '@/lib/api/api-types';
 import { DateRange } from 'react-day-picker';
-import * as XLSX from 'xlsx';
 import { useToast } from '@/lib/hooks/useToast';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '../ui/label';
+import { Icon } from '../ui/icon';
 
 interface FilterDialogProps {
   open: boolean;
@@ -77,7 +77,7 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
-            <Settings2 className='h-5 w-5' />
+            <Icon name='filter' className='h-5 w-5' />
             Filter Transactions
           </DialogTitle>
           <DialogDescription>
@@ -217,7 +217,7 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
             className='w-full sm:w-auto'
             disabled={activeFiltersCount === 0}
           >
-            <X className='mr-2 h-4 w-4' />
+            <Icon name='x' className='mr-2 h-4 w-4' />
             Reset All Filters
           </Button>
           <Button onClick={handleApplyAndClose} className='w-full sm:w-auto'>
@@ -264,7 +264,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
-            <Download className='h-5 w-5' />
+            <Icon name='download' className='h-5 w-5' />
             Export Transactions
           </DialogTitle>
           <DialogDescription>
@@ -309,12 +309,12 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
           <Button onClick={handleExportAndClose} disabled={isExporting || transactionsCount === 0}>
             {isExporting ? (
               <>
-                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
                 Exporting...
               </>
             ) : (
               <>
-                <Download className='mr-2 h-4 w-4' />
+                <Icon name='download' className='mr-2 h-4 w-4' />
                 Export Now
               </>
             )}
@@ -441,7 +441,7 @@ export const AccountTransactionsSection = ({
     return badges;
   };
 
-  const handleExport = useCallback(() => {
+  const handleExport = useCallback(async () => {
     if (!transactionsData?.transactions || transactionsData.transactions.length === 0) {
       showError('No transactions available to export with the current filters.');
       return;
@@ -473,6 +473,8 @@ export const AccountTransactionsSection = ({
         window.URL.revokeObjectURL(url);
         showSuccess('CSV export started successfully!');
       } else {
+        const XLSX = await import('xlsx');
+
         const ws = XLSX.utils.json_to_sheet(exportData);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
@@ -496,7 +498,10 @@ export const AccountTransactionsSection = ({
         {/* Search and Action Bar */}
         <div className='flex items-center gap-3'>
           <div className='relative flex-1'>
-            <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+            <Icon
+              name='search'
+              className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2'
+            />
             <Input
               placeholder='Search transactions...'
               value={filters.searchQuery}
@@ -513,7 +518,7 @@ export const AccountTransactionsSection = ({
               activeFiltersCount > 0 && 'border-primary text-primary'
             )}
           >
-            <Filter className='h-4 w-4' />
+            <Icon name='filter' className='h-4 w-4' />
             Filters
             {activeFiltersCount > 0 && (
               <Badge variant='secondary' className='ml-1 h-5 px-1.5 text-xs'>
@@ -528,7 +533,7 @@ export const AccountTransactionsSection = ({
             disabled={!transactionsData?.transactions?.length || isTransactionLoading}
             className='gap-2'
           >
-            <Download className='h-4 w-4' />
+            <Icon name='download' className='h-4 w-4' />
             Export
           </Button>
         </div>
@@ -546,7 +551,7 @@ export const AccountTransactionsSection = ({
                   className='h-auto p-0.5 hover:bg-transparent'
                   onClick={badge.onRemove}
                 >
-                  <X className='h-3 w-3' />
+                  <Icon name='x' className='h-3 w-3' />
                 </Button>
               </Badge>
             ))}
@@ -569,7 +574,7 @@ export const AccountTransactionsSection = ({
         <Card className='border-dashed'>
           <CardContent className='flex flex-col items-center justify-center py-12 text-center'>
             <div className='text-muted-foreground mb-4'>
-              <Search className='mx-auto mb-4 h-12 w-12 opacity-50' />
+              <Icon name='search' className='mx-auto mb-4 h-12 w-12 opacity-50' />
               <h3 className='mb-2 text-lg font-semibold'>No transactions found</h3>
               <p className='text-sm'>
                 {activeFiltersCount > 0
@@ -579,7 +584,7 @@ export const AccountTransactionsSection = ({
             </div>
             {activeFiltersCount > 0 && isOwner && (
               <Button variant='outline' onClick={handleResetFilters}>
-                <X className='mr-2 h-4 w-4' />
+                <Icon name='x' className='mr-2 h-4 w-4' />
                 Clear all filters
               </Button>
             )}

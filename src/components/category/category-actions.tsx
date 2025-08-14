@@ -1,8 +1,8 @@
 import React from 'react';
 import type { CategoryAPI } from '@/lib/api/api-types';
 import { Button } from '../ui/button';
-import { Edit, Trash2 } from 'lucide-react';
 import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
+import { Icon } from '@/components/ui/icon';
 
 interface CategoryActionsProps {
   category: CategoryAPI.Category;
@@ -20,7 +20,7 @@ const CategoryActions: React.FC<CategoryActionsProps> = ({ category, onEdit, onD
         onClick={() => onEdit(category)}
         aria-label={`Edit ${category.name}`}
       >
-        <Edit size={18} />
+        <Icon name='edit' className='h-[18px] w-[18px]' />
       </Button>
       <DeleteConfirmationModal
         title='Delete Category'
@@ -32,7 +32,7 @@ const CategoryActions: React.FC<CategoryActionsProps> = ({ category, onEdit, onD
             className='p-0'
             aria-label={`Delete ${category.name}`}
           >
-            <Trash2 size={18} />
+            <Icon name='trash2' className='h-[18px] w-[18px]' />
           </Button>
         }
         onConfirm={() => onDelete(category.id)}

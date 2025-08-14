@@ -2,19 +2,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, parseISO, isAfter, addDays, addWeeks, addMonths, addYears } from 'date-fns';
-import {
-  CheckCircle,
-  X,
-  TrendingUp,
-  Clock,
-  IndianRupee,
-  User,
-  AlertTriangle,
-  Percent,
-  type LucideProps,
-  Calendar,
-  FileText
-} from 'lucide-react';
 import { ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, Tooltip } from 'recharts';
 import type { DebtAndInterestAPI } from '@/lib/api/api-types';
 import { getDebtSchedule } from '@/lib/endpoints/debt';
@@ -27,6 +14,8 @@ import { Skeleton } from '../ui/skeleton';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import NoData from '../ui/no-data';
+import { Icon } from '../ui/icon';
+import { IconName } from '../ui/icon-map';
 interface DebtInsightModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -64,42 +53,44 @@ const StatusBadge = React.memo(
           variant='outline'
           className={cn('border-positive/30 bg-positive/10 text-positive gap-1.5', className)}
         >
-          <CheckCircle className='h-3 w-3' />
+          <Icon name='checkCircle' className='h-3 w-3' />
           Settled
         </Badge>
       );
     if (isOverdue)
       return (
         <Badge variant='destructive' className={cn('gap-1.5', className)}>
-          <AlertTriangle className='h-3 w-3' />
+          <Icon name='alertTriangle' className='h-3 w-3' />
           Overdue
         </Badge>
       );
     return (
       <Badge variant='secondary' className={cn('gap-1.5', className)}>
-        <Clock className='h-3 w-3' />
+        <Icon name='clock' className='h-3 w-3' />
         Active
       </Badge>
     );
   }
 );
+
 StatusBadge.displayName = 'StatusBadge';
+
 const MetricCard = React.memo(
   ({
     title,
     value,
-    icon: Icon,
+    icon,
     subValue
   }: {
     title: string;
     value: React.ReactNode;
-    icon: React.ElementType<LucideProps>;
+    icon: IconName;
     subValue?: string;
   }) => (
     <Card>
       <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
         <CardTitle className='text-sm font-medium'>{title}</CardTitle>
-        <Icon className='text-muted-foreground h-4 w-4' />
+        <Icon name={icon} className='text-muted-foreground h-4 w-4' />
       </CardHeader>
       <CardContent>
         <div className='text-2xl font-bold'>{value}</div>
@@ -147,33 +138,34 @@ const TimelineTick = React.memo(
     isLast: boolean;
     isSettled: boolean;
   }) => {
-    const getStatusStyles = () => {
+    const getStatusStyles = (): {
+      icon: IconName;
+      textColor: string;
+      borderColor: string;
+    } => {
       switch (payment.status) {
         case 'settled':
           return {
-            icon: CheckCircle,
-            bgColor: 'bg-positive',
+            icon: 'checkCircle2',
             textColor: 'text-positive',
             borderColor: 'border-positive'
           };
         case 'due':
           return {
-            icon: AlertTriangle,
-            bgColor: 'bg-destructive',
+            icon: 'alertTriangle',
             textColor: 'text-destructive',
             borderColor: 'border-destructive'
           };
         case 'upcoming':
         default:
           return {
-            icon: Clock,
-            bgColor: 'bg-muted-foreground',
+            icon: 'clock',
             textColor: 'text-muted-foreground',
             borderColor: 'border-border'
           };
       }
     };
-    const { icon: Icon, bgColor, textColor, borderColor } = getStatusStyles();
+    const { icon, textColor, borderColor } = getStatusStyles();
     return (
       <div
         className='group relative flex cursor-pointer flex-col items-center pt-1'
@@ -192,7 +184,7 @@ const TimelineTick = React.memo(
               : `${borderColor} group-hover:scale-105`
           )}
         >
-          <Icon className={cn('h-4 w-4', textColor)} />
+          <Icon name={icon} className={cn('h-4 w-4', textColor)} />
         </div>
         <p
           className={cn(
@@ -339,7 +331,7 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                 </div>
                 <DialogClose asChild>
                   <Button variant='ghost' size='icon' className='-mt-1 h-8 w-8 flex-shrink-0'>
-                    <X className='h-4 w-4' />
+                    <Icon name='x' className='h-4 w-4' />
                   </Button>
                 </DialogClose>
               </div>
@@ -349,11 +341,11 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                 <div className='flex-shrink-0 px-4 pt-4 sm:px-6'>
                   <TabsList className='grid w-full grid-cols-2 sm:w-auto'>
                     <TabsTrigger value='timeline'>
-                      <Calendar className='mr-2 h-4 w-4' />
+                      <Icon name='calendar' className='mr-2 h-4 w-4' />
                       Timeline
                     </TabsTrigger>
                     <TabsTrigger value='details'>
-                      <FileText className='mr-2 h-4 w-4' />
+                      <Icon name='fileText' className='mr-2 h-4 w-4' />
                       Details
                     </TabsTrigger>
                   </TabsList>
@@ -364,25 +356,25 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                       <MetricCard
                         title='Principal Amount'
                         value={formatCurrency(debt.debts.amount || 0)}
-                        icon={IndianRupee}
+                        icon={'indianRupee'}
                         subValue='Original loan amount'
                       />
                       <MetricCard
                         title='Interest Rate'
                         value={`${debt.debts.interestRate}%`}
                         subValue={`${debt.debts.interestType} interest`}
-                        icon={Percent}
+                        icon={'percent'}
                       />
                       <MetricCard
                         title='Total Interest'
                         value={formatCurrency(data.totalInterest)}
-                        icon={TrendingUp}
+                        icon={'trendingUp'}
                         subValue='Over the loan term'
                       />
                       <MetricCard
                         title='Total Payable'
                         value={formatCurrency(data.totalPayable)}
-                        icon={IndianRupee}
+                        icon={'indianRupee'}
                         subValue='Principal + Interest'
                       />
                     </div>
@@ -391,7 +383,7 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                         <div className='lg:col-span-3'>
                           <NoData
                             message={`Unable to generate payment schedule. ${error?.message || ''}`}
-                            icon='x-circle'
+                            icon='xCircle'
                           />
                         </div>
                       ) : paymentSchedule.length > 0 ? (
@@ -417,6 +409,7 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                                       innerRadius={50}
                                       outerRadius={70}
                                       paddingAngle={2}
+                                      stroke='none'
                                     >
                                       {data.chartData.map((entry) => (
                                         <Cell key={entry.name} fill={entry.color} />
@@ -556,7 +549,7 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                           <Avatar className='h-12 w-12'>
                             <AvatarImage src={debt.user?.image || undefined} />
                             <AvatarFallback>
-                              <User />
+                              <Icon name='user' className='h-4 w-4' />
                             </AvatarFallback>
                           </Avatar>
                           <div className='min-w-0'>

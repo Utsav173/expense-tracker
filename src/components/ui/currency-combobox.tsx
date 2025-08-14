@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { fetchCurrencies } from '@/lib/endpoints/currency';
 import { Skeleton } from './skeleton';
 import type { Currency } from './currency-select';
+import { Icon } from './icon';
 
 interface CurrencyComboboxProps {
   value?: string;
@@ -72,7 +72,7 @@ export const CurrencyCombobox: React.FC<CurrencyComboboxProps> = ({
           disabled={disabled}
         >
           {value ? `${value} - ${selectedCurrencyLabel || ''}` : placeholder}
-          <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+          <Icon name='chevronsUpDown' className='ml-2 h-4 w-4 shrink-0 opacity-50' />
         </Button>
       </PopoverTrigger>
       <PopoverContent className='w-[--radix-popover-trigger-width] p-0'>
@@ -90,7 +90,8 @@ export const CurrencyCombobox: React.FC<CurrencyComboboxProps> = ({
                     setOpen(false);
                   }}
                 >
-                  <Check
+                  <Icon
+                    name='check'
                     className={cn(
                       'mr-2 h-4 w-4',
                       value === currency.code ? 'opacity-100' : 'opacity-0'

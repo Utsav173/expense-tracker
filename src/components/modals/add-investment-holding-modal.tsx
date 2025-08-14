@@ -20,19 +20,6 @@ import {
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import type { InvestmentAPI } from '@/lib/api/api-types';
 import { formatCurrency, cn } from '@/lib/utils';
-import {
-  Loader2,
-  TrendingUp,
-  Calendar,
-  Layers,
-  Search,
-  PlusCircle,
-  TrendingDown,
-  BarChart3,
-  IndianRupee,
-  Info,
-  AlertCircle
-} from 'lucide-react';
 import { Combobox, ComboboxOption } from '../ui/combobox';
 import { Card, CardContent } from '../ui/card';
 import {
@@ -50,6 +37,7 @@ import DatePicker from '../date/date-picker';
 import { Skeleton } from '../ui/skeleton';
 import { Badge } from '../ui/badge';
 import { Alert, AlertDescription } from '../ui/alert';
+import { Icon } from '../ui/icon';
 
 const investmentHoldingSchema = z.object({
   symbol: z
@@ -333,7 +321,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
       triggerButton={
         hideTriggerButton ? null : (
           <Button className='w-full sm:w-auto'>
-            <PlusCircle className='mr-2 h-4 w-4' />
+            <Icon name='plusCircle' className='mr-2 h-4 w-4' />
             Add Holding
           </Button>
         )
@@ -350,7 +338,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
             render={({ field }) => (
               <FormItem className='space-y-2 sm:space-y-3'>
                 <FormLabel className='flex items-center gap-2 text-sm font-medium'>
-                  <Search className='text-muted-foreground h-4 w-4' />
+                  <Icon name='search' className='text-muted-foreground h-4 w-4' />
                   Stock Symbol
                   <span className='text-destructive'>*</span>
                 </FormLabel>
@@ -380,7 +368,10 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
               <CardContent className='p-3 sm:p-4'>
                 <div className='w-full overflow-hidden'>
                   <div className='mb-3 flex items-center gap-2'>
-                    <BarChart3 className='text-muted-foreground h-4 w-4 flex-shrink-0' />
+                    <Icon
+                      name='barChart3'
+                      className='text-muted-foreground h-4 w-4 flex-shrink-0'
+                    />
                     <span className='text-muted-foreground truncate text-xs font-medium tracking-wide uppercase'>
                       Current Market Price
                     </span>
@@ -426,9 +417,9 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                             )}
                           >
                             {priceComparison.isPositive ? (
-                              <TrendingUp className='h-4 w-4 flex-shrink-0' />
+                              <Icon name='trendingUp' className='h-4 w-4 flex-shrink-0' />
                             ) : (
-                              <TrendingDown className='h-4 w-4 flex-shrink-0' />
+                              <Icon name='trendingDown' className='h-4 w-4 flex-shrink-0' />
                             )}
                             <span className='truncate'>
                               {priceComparison.percentage > 0 ? '+' : ''}
@@ -456,7 +447,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
               render={({ field }) => (
                 <FormItem className='space-y-2 sm:space-y-3'>
                   <FormLabel className='flex items-center gap-2 text-sm font-medium'>
-                    <Calendar className='text-muted-foreground h-4 w-4' />
+                    <Icon name='calendar' className='text-muted-foreground h-4 w-4' />
                     Purchase Date
                     <span className='text-destructive'>*</span>
                   </FormLabel>
@@ -484,7 +475,10 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                   <FormMessage />
                   {isWeekend(field.value) && (
                     <Alert className='border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'>
-                      <AlertCircle className='h-4 w-4 text-amber-600 dark:text-amber-400' />
+                      <Icon
+                        name='alertCircle'
+                        className='h-4 w-4 text-amber-600 dark:text-amber-400'
+                      />
                       <AlertDescription className='text-xs text-amber-700 dark:text-amber-300'>
                         Weekend dates are automatically adjusted to the previous trading day.
                       </AlertDescription>
@@ -503,7 +497,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                 render={({ field }) => (
                   <FormItem className='space-y-2 sm:space-y-3'>
                     <FormLabel className='flex items-center gap-2 text-sm font-medium'>
-                      <Layers className='text-muted-foreground h-4 w-4' />
+                      <Icon name='layers' className='text-muted-foreground h-4 w-4' />
                       Shares
                       <span className='text-destructive'>*</span>
                     </FormLabel>
@@ -530,7 +524,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                   <FormItem className='space-y-2 sm:space-y-3'>
                     <FormLabel className='flex flex-wrap items-center gap-2 text-sm font-medium'>
                       <div className='flex items-center gap-2'>
-                        <IndianRupee className='text-muted-foreground h-4 w-4' />
+                        <Icon name='indianRupee' className='text-muted-foreground h-4 w-4' />
                         <span>Price per Share</span>
                         <span className='text-destructive'>*</span>
                       </div>
@@ -538,7 +532,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                         <TooltipProvider delayDuration={100}>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Loader2 className='text-primary h-3 w-3 animate-spin' />
+                              <Icon name='loader2' className='text-primary h-3 w-3 animate-spin' />
                             </TooltipTrigger>
                             <TooltipContent>
                               <p>Auto-filling historical price...</p>
@@ -572,7 +566,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
                 <div className='w-full space-y-3 overflow-hidden sm:flex sm:items-center sm:justify-between sm:space-y-0'>
                   <div className='flex min-w-0 items-start gap-3'>
                     <div className='bg-primary/10 flex-shrink-0 rounded-full p-2'>
-                      <BarChart3 className='text-primary h-4 w-4' />
+                      <Icon name='barChart3' className='text-primary h-4 w-4' />
                     </div>
                     <div className='min-w-0 flex-1'>
                       <p className='text-foreground text-sm font-medium'>Total Investment</p>
@@ -609,7 +603,7 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
           {/* Help Text */}
           {selectedSymbolOption && !totalValue && (
             <Alert className='border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20'>
-              <Info className='h-4 w-4 text-blue-600 dark:text-blue-400' />
+              <Icon name='info' className='h-4 w-4 text-blue-600 dark:text-blue-400' />
               <AlertDescription className='text-xs text-blue-700 dark:text-blue-300'>
                 Enter the number of shares and purchase price to see your total investment.
               </AlertDescription>
@@ -636,12 +630,12 @@ const AddInvestmentHoldingModal: React.FC<AddInvestmentHoldingModalProps> = ({
         >
           {createInvestmentMutation.isPending ? (
             <>
-              <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+              <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
               Adding...
             </>
           ) : (
             <>
-              <PlusCircle className='mr-2 h-4 w-4' />
+              <Icon name='plusCircle' className='mr-2 h-4 w-4' />
               Add Holding
             </>
           )}

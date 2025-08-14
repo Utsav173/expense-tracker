@@ -17,7 +17,6 @@ import {
   endOfMonth as dateFnsEndOfMonth,
   subDays
 } from 'date-fns';
-import { CalendarIcon, X, ChevronDownIcon } from 'lucide-react';
 import { DateRange, CaptionLabelProps, MonthGridProps, DayPickerProps } from 'react-day-picker';
 import type { Dispatch, SetStateAction } from 'react';
 
@@ -28,6 +27,7 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Icon } from '../ui/icon';
 
 interface DateRangePickerV2Props {
   date?: DateRange;
@@ -330,7 +330,7 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
                 type='button'
                 variant='outline'
                 className={cn(
-                  'w-full items-center justify-between px-3 text-xs sm:h-10 sm:text-sm',
+                  'h-9 w-full items-center justify-between text-xs sm:text-sm',
                   !(tempDate?.from || date?.from) && 'text-muted-foreground',
                   disabled && 'cursor-not-allowed opacity-50',
                   buttonClassName
@@ -341,7 +341,7 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
                 aria-describedby={error ? `${id}-error` : undefined}
               >
                 <span className='truncate'>{getDisplayText()}</span>
-                <CalendarIcon size={16} aria-hidden='true' className='ml-2' />
+                <Icon name='calendar' aria-hidden='true' className='ml-2 h-4 w-4' />
               </Button>
             </PopoverTrigger>
             <PopoverContent className='w-auto p-0' align='start'>
@@ -417,7 +417,7 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
               aria-label='Clear date selection'
               className='h-7 px-2 text-xs'
             >
-              <X className='mr-1 h-3 w-3' />
+              <Icon name='x' className='mr-1 h-3 w-3' />
             </Button>
           )}
         </div>
@@ -443,9 +443,9 @@ function CustomCaptionLabel({ displayMonth, isYearView, setIsYearView }: CustomC
       type='button'
     >
       {format(displayMonth, 'MMMM yyyy')}
-      <ChevronDownIcon
-        size={16}
-        className='text-muted-foreground/80 shrink-0 transition-transform duration-200'
+      <Icon
+        name='chevronDown'
+        className='text-muted-foreground/80 h-4 w-4 shrink-0 transition-transform duration-200'
         aria-hidden='true'
       />
     </Button>
@@ -577,9 +577,9 @@ function CollapsibleYear({ title, children, open }: CollapsibleYearProps) {
           size='sm'
           type='button'
         >
-          <ChevronDownIcon
-            size={16}
-            className='text-muted-foreground/80 shrink-0 transition-transform duration-200'
+          <Icon
+            name='chevronDown'
+            className='text-muted-foreground/80 h-4 w-4 shrink-0 transition-transform duration-200'
             aria-hidden='true'
           />
           {title}

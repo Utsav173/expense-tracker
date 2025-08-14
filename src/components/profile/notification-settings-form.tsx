@@ -13,7 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Loader2 } from 'lucide-react';
+import { Icon } from '../ui/icon';
 
 type NotificationSettingsFormValues = {
   notifications: UserAPI.UserSettings['notifications'];
@@ -120,7 +120,9 @@ export const NotificationSettingsForm = () => {
             </div>
             <div className='flex justify-end border-t pt-6'>
               <Button type='submit' disabled={mutation.isPending || !form.formState.isDirty}>
-                {mutation.isPending && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+                {mutation.isPending && (
+                  <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
+                )}
                 Save Notifications
               </Button>
             </div>

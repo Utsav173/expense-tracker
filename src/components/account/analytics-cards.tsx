@@ -6,18 +6,8 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatCurrency, cn } from '@/lib/utils';
 import { cva, type VariantProps } from 'class-variance-authority';
-import {
-  TrendingDown,
-  TrendingUp,
-  Minus,
-  Wallet,
-  ArrowLeftRight,
-  Banknote,
-  type LucideProps
-} from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-
-// --- STYLES (cva) ---
+import { Icon } from '@/components/ui/icon';
 
 const cardVariants = cva(
   'relative group overflow-hidden rounded-2xl border-none shadow-lg transition-all duration-300 ease-out hover:scale-[1.01] hover:shadow-2xl hover:brightness-105',
@@ -42,15 +32,16 @@ const DotPattern = () => (
   <div className='absolute h-full w-full bg-[radial-gradient(theme(colors.slate.900/15)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)] [background-size:16px_16px] opacity-55 transition-transform duration-500 ease-out group-hover:scale-105 dark:bg-[radial-gradient(theme(colors.slate.100/10)_1px,transparent_1px)]' />
 );
 
-const GhostIcon = ({ icon: Icon }: { icon: React.ElementType<LucideProps> }) => (
-  <Icon className='absolute -right-8 -bottom-8 h-40 w-40 opacity-10 transition-transform duration-500 ease-out group-hover:scale-110 dark:opacity-8' />
+const GhostIcon = ({ name }: { name: any }) => (
+  <Icon
+    name={name}
+    className='absolute -right-8 -bottom-8 h-40 w-40 opacity-10 transition-transform duration-500 ease-out group-hover:scale-110 dark:opacity-8'
+  />
 );
-
-// --- SUB-COMPONENTS ---
 
 const TrendIndicator = ({ value }: { value: number }) => {
   const direction = value > 0 ? 'up' : value < 0 ? 'down' : 'neutral';
-  const Icon = value > 0 ? TrendingUp : value < 0 ? TrendingDown : Minus;
+  const iconName = value > 0 ? 'trendingUp' : value < 0 ? 'trendingDown' : 'minus';
 
   const trendColorClasses =
     direction === 'up'
@@ -65,7 +56,7 @@ const TrendIndicator = ({ value }: { value: number }) => {
         <TooltipTrigger asChild>
           <div className='flex items-center gap-3'>
             <div className='bg-background/5 flex h-12 w-12 items-center justify-center rounded-full border backdrop-blur-sm'>
-              <Icon className={cn('h-6 w-6', trendColorClasses)} />
+              <Icon name={iconName} className={cn('h-6 w-6', trendColorClasses)} />
             </div>
             <div className='text-base font-bold text-inherit'>
               <span>
@@ -87,7 +78,7 @@ interface AnalyticsCardProps extends VariantProps<typeof cardVariants> {
   title: string;
   value: number;
   currency: string;
-  icon: React.ElementType<LucideProps>;
+  icon: any;
   trendValue?: number;
   footerText?: string;
   totalBalance?: number;
@@ -97,7 +88,7 @@ const AnalyticsCard = ({
   title,
   value,
   currency,
-  icon: Icon,
+  icon,
   trendValue,
   footerText,
   variant,
@@ -105,10 +96,9 @@ const AnalyticsCard = ({
 }: AnalyticsCardProps) => (
   <Card className={cn(cardVariants({ variant }))}>
     {variant === 'primary' && <DotPattern />}
-    <GhostIcon icon={Icon} />
+    <GhostIcon name={icon} />
 
     {variant === 'primary' ? (
-      // Hero Card Layout remains the same
       <div className='relative flex h-full min-h-[180px] flex-col justify-between p-6'>
         <div>
           <p className='text-muted-foreground font-medium'>{title}</p>
@@ -127,17 +117,13 @@ const AnalyticsCard = ({
         </div>
       </div>
     ) : (
-      // New Corner-Aligned Layout for Income & Expense Cards
       <div className='relative flex h-full min-h-[140px] flex-col justify-between p-6'>
-        {/* Top-left content */}
         <div>
           <p className='text-muted-foreground font-medium'>{title}</p>
           <p className='font-display text-foreground mt-1 text-3xl font-bold tracking-tight'>
             {formatCurrency(value, currency)}
           </p>
         </div>
-
-        {/* Bottom-right content, pushed with self-end */}
         {trendValue !== undefined && (
           <div className='self-end'>
             <TrendIndicator value={trendValue} />
@@ -147,8 +133,6 @@ const AnalyticsCard = ({
     )}
   </Card>
 );
-
-// --- SKELETON COMPONENTS ---
 
 const SkeletonCard = ({ isHero = false }: { isHero?: boolean }) => {
   if (isHero) {
@@ -166,16 +150,12 @@ const SkeletonCard = ({ isHero = false }: { isHero?: boolean }) => {
     );
   }
 
-  // Updated skeleton to match the new corner-aligned layout
   return (
     <Card className='flex min-h-[140px] flex-col justify-between p-6'>
-      {/* Top-left skeleton */}
       <div className='space-y-2'>
         <Skeleton className='h-5 w-24' />
         <Skeleton className='h-9 w-40' />
       </div>
-
-      {/* Bottom-right skeleton */}
       <div className='flex items-center gap-3 self-end'>
         <Skeleton className='h-12 w-12 rounded-full' />
         <Skeleton className='h-6 w-16' />
@@ -183,8 +163,6 @@ const SkeletonCard = ({ isHero = false }: { isHero?: boolean }) => {
     </Card>
   );
 };
-
-// --- MAIN EXPORTED COMPONENT ---
 
 export const AnalyticsCards = ({
   analytics,
@@ -222,7 +200,7 @@ export const AnalyticsCards = ({
         value={analytics.balance}
         totalBalance={account.balance ?? 0}
         currency={currency}
-        icon={Wallet}
+        icon='wallet'
         footerText={lastUpdated}
       />
       <div className='grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2'>
@@ -231,7 +209,7 @@ export const AnalyticsCards = ({
           title='Income'
           value={analytics.income}
           currency={currency}
-          icon={Banknote}
+          icon='banknote'
           trendValue={analytics.IncomePercentageChange}
         />
         <AnalyticsCard
@@ -239,7 +217,7 @@ export const AnalyticsCards = ({
           title='Expenses'
           value={analytics.expense}
           currency={currency}
-          icon={ArrowLeftRight}
+          icon='arrowLeftRight'
           trendValue={analytics.ExpensePercentageChange}
         />
       </div>

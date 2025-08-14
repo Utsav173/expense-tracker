@@ -1,7 +1,5 @@
 'use client';
 
-import { ChevronsUpDown, LogOut, UserIcon } from 'lucide-react';
-
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -21,6 +19,7 @@ import {
 import { useToast } from '@/lib/hooks/useToast';
 import Link from 'next/link';
 import { authClient } from '@/lib/auth-client';
+import { Icon } from '@/components/ui/icon';
 
 export function NavUser() {
   const { data: session } = authClient.useSession();
@@ -64,7 +63,7 @@ export function NavUser() {
                   <span className='truncate text-xs'>{user.email}</span>
                 </div>
               )}
-              {state !== 'collapsed' && <ChevronsUpDown className='ml-auto size-4' />}
+              {state !== 'collapsed' && <Icon name='chevronsUpDown' className='ml-auto size-4' />}
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -89,14 +88,14 @@ export function NavUser() {
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
                 <Link href={`/profile`} prefetch>
-                  <UserIcon className='mr-2 h-4 w-4' />
+                  <Icon name='user' className='mr-2 h-4 w-4' />
                   Profile
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
-              <LogOut className='mr-2 h-4 w-4' />
+              <Icon name='logOut' className='mr-2 h-4 w-4' />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

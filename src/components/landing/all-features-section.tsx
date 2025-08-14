@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { featuresList } from '@/lib/data/features-list';
-import { LucideProps } from 'lucide-react';
+import { Icon } from '../ui/icon';
 
 export const AllFeaturesSection = () => {
   return (
@@ -19,7 +19,6 @@ export const AllFeaturesSection = () => {
 
         <div className='mt-16 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
           {featuresList.map((feature) => {
-            const Icon = feature.icon as React.ElementType<LucideProps>;
             return (
               <Link
                 key={feature.slug}
@@ -29,7 +28,7 @@ export const AllFeaturesSection = () => {
                 <Card className='group-hover:border-primary/50 flex h-full flex-col p-6 shadow-lg group-hover:shadow-2xl'>
                   <CardHeader className='p-0'>
                     <div className='bg-primary/10 text-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg'>
-                      <Icon className='h-6 w-6' />
+                      <Icon name={feature.icon} className='h-6 w-6' />
                     </div>
                     <CardTitle>{feature.title}</CardTitle>
                   </CardHeader>

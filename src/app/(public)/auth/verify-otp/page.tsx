@@ -18,7 +18,7 @@ import {
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { useToast } from '@/lib/hooks/useToast';
 import { authClient } from '@/lib/auth-client';
-import { Loader2 } from 'lucide-react';
+import { Icon } from '@/components/ui/icon';
 
 const otpSchema = z.object({
   otp: z.string().min(6, 'OTP must be 6 digits.')
@@ -53,7 +53,6 @@ const VerifyOtpPage = () => {
     }
   }, [email, type, showError, router]);
 
-  // Cooldown timer effect
   useEffect(() => {
     if (resendCooldown <= 0) return;
     const timer = setInterval(() => {
@@ -101,7 +100,7 @@ const VerifyOtpPage = () => {
       }
     } catch (error: any) {
       showError(error.message || 'An error occurred during verification.');
-      form.reset({ otp: '' }); // Clear input on error
+      form.reset({ otp: '' });
     } finally {
       setLoading(false);
     }
@@ -150,7 +149,7 @@ const VerifyOtpPage = () => {
             >
               {loading ? (
                 <>
-                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
                   Verifying...
                 </>
               ) : (

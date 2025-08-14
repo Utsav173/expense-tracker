@@ -2,9 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { FileText } from 'lucide-react';
 import { WebPage, WithContext } from 'schema-dts';
 import Script from 'next/script';
+import { Icon } from '@/components/ui/icon';
 
 const jsonLd: WithContext<WebPage> = {
   '@context': 'https://schema.org',
@@ -26,7 +26,10 @@ const TermsOfServicePage = () => {
       <div className='bg-background min-h-screen px-4 py-16'>
         <div className='container mx-auto max-w-4xl'>
           <div className='mb-12 text-center'>
-            <FileText className='mx-auto mb-4 h-16 w-16 text-sky-500 dark:text-sky-400' />
+            <Icon
+              name='fileText'
+              className='mx-auto mb-4 h-16 w-16 text-sky-500 dark:text-sky-400'
+            />
             <h1 className='text-foreground text-4xl font-bold md:text-5xl'>Terms of Service</h1>
           </div>
           <article className='prose prose-slate dark:prose-invert lg:prose-lg mx-auto'>

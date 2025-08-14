@@ -5,13 +5,10 @@ import {
   investmentAccountGetAll,
   investmentAccountDelete
 } from '@/lib/endpoints/investmentAccount';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Loader from '@/components/ui/loader';
 import { Button } from '@/components/ui/button';
-import { usePagination } from '@/hooks/usePagination';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useToast } from '@/lib/hooks/useToast';
-import { Frown, PlusCircle, TrendingUp } from 'lucide-react';
 import type { InvestmentAccountAPI } from '@/lib/api/api-types';
 import AddInvestmentAccountModal from '@/components/modals/add-investment-account-modal';
 import UpdateInvestmentAccountModal from '@/components/modals/update-investment-account-modal';
@@ -19,8 +16,20 @@ import DeleteConfirmationModal from '@/components/modals/delete-confirmation-mod
 import { Card } from '@/components/ui/card';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import InvestmentAccountCard from '@/components/investment/investment-account-card';
-import { motion } from 'framer-motion';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { motion, Variants } from 'framer-motion';
+import QueryErrorDisplay from '@/components/ui/query-error-display';
+import { useUrlState } from '@/hooks/useUrlState';
+import { useDebounce } from 'use-debounce';
+import { Input } from '@/components/ui/input';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious
+} from '@/components/ui/pagination';
+import { Icon } from '@/components/ui/icon';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -33,9 +42,6 @@ const containerVariants = {
 };
 
 const InvestmentPage = () => {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
   const { showError } = useToast();
   const invalidate = useInvalidateQueries();
 
@@ -45,21 +51,12 @@ const InvestmentPage = () => {
   const [selectedAccount, setSelectedAccount] =
     useState<InvestmentAccountAPI.InvestmentAccount | null>(null);
 
-  const { page, handlePageChange } = usePagination(
-    Number(searchParams.get('page')) || 1,
-    (params) => {
-      const currentParams = new URLSearchParams(searchParams.toString());
-      Object.keys(params).forEach((key) => {
-        if (params[key] === undefined || params[key] === null || params[key] === '') {
-          currentParams.delete(key);
-        } else {
-          currentParams.set(key.toString(), params[key]);
-        }
-      });
-      const newUrl = `${pathname}?${currentParams.toString()}`;
-      router.push(newUrl, { scroll: false });
-    }
-  );
+  const { state, handlePageChange } = useUrlState({
+    page: 1,
+    sortBy: 'name',
+    sortOrder: 'asc' as 'asc' | 'desc',
+    q: ''
+  });
 
   const {
     data: accounts,
@@ -67,15 +64,21 @@ const InvestmentPage = () => {
     error,
     refetch
   } = useQuery({
-    queryKey: ['investmentAccounts', page],
-    queryFn: () => investmentAccountGetAll({ page, limit: 10, sortBy: 'name', sortOrder: 'asc' }),
+    queryKey: ['investmentAccounts', state.page, state.q, state.sortBy, state.sortOrder],
+    queryFn: () =>
+      investmentAccountGetAll({
+        page: state.page,
+        limit: 10,
+        sortBy: state.sortBy,
+        sortOrder: state.sortOrder
+      }),
     retry: false
   });
 
   const deleteAccountMutation = useMutation({
     mutationFn: (id: string) => investmentAccountDelete(id),
     onSuccess: async () => {
-      await invalidate(['investmentAccounts', page]);
+      await invalidate(['investmentAccounts', state.page]);
       await invalidate(['investmentPortfolioSummaryDashboard']);
       setDeleteAccountId(null);
       refetch();
@@ -105,23 +108,7 @@ const InvestmentPage = () => {
   }
 
   if (error) {
-    return (
-      <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
-        <Alert variant='destructive' className='mx-auto mt-6'>
-          <Frown className='h-4 w-4' />
-          <AlertTitle>Oops! Something went wrong.</AlertTitle>
-          <AlertDescription>
-            We couldn&apos;t load your investment accounts. Please check your connection and try
-            refreshing.
-            {error && (
-              <div className='text-muted-foreground mt-2 text-xs'>
-                Error: {(error as Error).message}
-              </div>
-            )}
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
+    return <QueryErrorDisplay error={error} message="We couldn't load your investment accounts." />;
   }
 
   return (
@@ -131,8 +118,12 @@ const InvestmentPage = () => {
           <h1 className='text-3xl font-bold'>Investment Accounts</h1>
           <p className='text-muted-foreground mt-1'>Manage your investment portfolios</p>
         </div>
-        <Button onClick={() => setIsAddModalOpen(true)}>
-          <PlusCircle className='mr-2 h-5 w-5' /> Add New Account
+        <Button
+          variant='planning'
+          className='h-10 px-4 py-2'
+          onClick={() => setIsAddModalOpen(true)}
+        >
+          <Icon name='plusCircle' className='mr-2 h-5 w-5' /> Add New Account
         </Button>
       </div>
 
@@ -155,17 +146,54 @@ const InvestmentPage = () => {
       ) : (
         <Card className='flex flex-col items-center justify-center p-10 text-center'>
           <div className='bg-muted rounded-full p-6'>
-            <TrendingUp className='text-muted-foreground h-10 w-10' />
+            <Icon name='trendingUp' className='text-muted-foreground h-10 w-10' />
           </div>
           <h3 className='mt-4 text-xl font-semibold'>No investment accounts yet</h3>
           <p className='text-muted-foreground mt-2 max-w-md'>
             Add your first investment account to start tracking your portfolio performance in one
             place.
           </p>
-          <Button onClick={() => setIsAddModalOpen(true)} className='mt-6'>
-            <PlusCircle className='mr-2 h-4 w-4' /> Add Your First Account
+          <Button
+            variant='planning'
+            className='mt-6 h-10 px-4 py-2'
+            onClick={() => setIsAddModalOpen(true)}
+          >
+            <Icon name='plusCircle' className='mr-2 h-4 w-4' /> Add Your First Account
           </Button>
         </Card>
+      )}
+
+      {accounts?.pagination && accounts.pagination.totalPages > 1 && (
+        <div className='mt-6 flex justify-center'>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => handlePageChange(state.page - 1)}
+                  disabled={state.page === 1}
+                />
+              </PaginationItem>
+              {Array.from({ length: accounts.pagination.totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      isActive={state.page === page}
+                      onClick={() => handlePageChange(page)}
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              )}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => handlePageChange(state.page + 1)}
+                  disabled={state.page >= accounts.pagination.totalPages}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
       )}
 
       <AddInvestmentAccountModal

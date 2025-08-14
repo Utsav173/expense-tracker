@@ -2,13 +2,13 @@
 
 import Link from 'next/link';
 import * as React from 'react';
-import { CreditCard, Edit, Trash, ArrowUp, ArrowDown } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { Button } from './button';
 import type { AccountAPI } from '@/lib/api/api-types';
 import { SingleLineEllipsis } from './ellipsis-components';
 import { motion, Variants } from 'framer-motion';
 import { Badge } from './badge';
+import { Icon } from '@/components/ui/icon';
 
 interface AccountCardProps {
   href: string;
@@ -36,7 +36,7 @@ const ChangePill: React.FC<{ change: number; isExpense?: boolean }> = ({
           : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300'
       )}
     >
-      {isPositive ? <ArrowUp className='h-3 w-3' /> : <ArrowDown className='h-3 w-3' />}
+      <Icon name={isPositive ? 'arrowUp' : 'arrowDown'} className='h-3 w-3' />
       <span>{displayChange.toFixed(1)}%</span>
     </Badge>
   );
@@ -57,11 +57,10 @@ const AccountCard = React.forwardRef<HTMLDivElement, AccountCardProps>(
           href={href}
           className='bg-card group-hover:border-primary/30 flex h-full flex-col overflow-hidden rounded-xl border shadow-sm transition-all duration-300 group-hover:shadow-lg'
         >
-          {/* Header */}
           <div className='flex items-start justify-between p-4'>
             <div className='flex min-w-0 items-center gap-3'>
               <div className='bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-lg'>
-                <CreditCard className='h-5 w-5' />
+                <Icon name='creditCard' className='h-5 w-5' />
               </div>
               <div className='min-w-0'>
                 <SingleLineEllipsis className='font-semibold'>{name}</SingleLineEllipsis>
@@ -84,7 +83,7 @@ const AccountCard = React.forwardRef<HTMLDivElement, AccountCardProps>(
                     }}
                     aria-label={`Edit ${name}`}
                   >
-                    <Edit size={14} />
+                    <Icon name='edit' className='h-[14px] w-[14px]' />
                   </Button>
                   <Button
                     size='icon'
@@ -97,14 +96,13 @@ const AccountCard = React.forwardRef<HTMLDivElement, AccountCardProps>(
                     }}
                     aria-label={`Delete ${name}`}
                   >
-                    <Trash size={14} />
+                    <Icon name='trash' className='h-[14px] w-[14px]' />
                   </Button>
                 </>
               )}
             </div>
           </div>
 
-          {/* Balance Section */}
           <div className='flex flex-grow flex-col items-center justify-center px-4 py-6'>
             <p className='text-muted-foreground text-xs font-medium uppercase'>Balance</p>
             <SingleLineEllipsis
@@ -118,7 +116,6 @@ const AccountCard = React.forwardRef<HTMLDivElement, AccountCardProps>(
             </SingleLineEllipsis>
           </div>
 
-          {/* Footer with Analytics */}
           {analytics && (
             <div className='bg-muted/30 mt-auto border-t p-4'>
               <div className='grid grid-cols-2 gap-4'>

@@ -1,21 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import {
-  ArrowLeftRight,
-  BarChart3,
-  BookOpen,
-  Coins,
-  FileDown,
-  LayoutGrid,
-  PiggyBank,
-  Tags,
-  Users2,
-  Wallet,
-  BrainCircuit,
-  Lock,
-  UploadCloud
-} from 'lucide-react';
 
 import { NavMain } from '@/components/layout/nav/nav-main';
 import { NavUser } from '@/components/layout/nav/nav-user';
@@ -29,11 +14,12 @@ import {
 } from '@/components/ui/sidebar';
 import { useAuth } from '@/components/providers/auth-provider';
 import { Skeleton } from '../ui/skeleton';
+import { IconName } from '../ui/icon-map';
 
 export interface NavItem {
   title: string;
   url: string;
-  icon: React.ElementType;
+  icon: IconName;
   disabled?: boolean;
   tooltip?: string;
 }
@@ -55,27 +41,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {
         label: 'Overview',
         items: [
-          { title: 'Dashboard', url: '/dashboard', icon: LayoutGrid },
-          { title: 'Transactions', url: '/transactions', icon: ArrowLeftRight }
+          { title: 'Dashboard', url: '/dashboard', icon: 'layoutGrid' },
+          { title: 'Transactions', url: '/transactions', icon: 'transaction' }
         ]
       },
       {
         label: 'Manage',
         items: [
-          { title: 'Accounts', url: '/accounts', icon: Wallet },
-          { title: 'Shared Accounts', url: '/shared-accounts', icon: Users2 },
-          { title: 'Categories', url: '/category', icon: Tags },
-          { title: 'Import', url: '/transactions/import', icon: UploadCloud }
+          { title: 'Accounts', url: '/accounts', icon: 'wallet' },
+          { title: 'Shared Accounts', url: '/shared-accounts', icon: 'users2' },
+          { title: 'Categories', url: '/category', icon: 'category' },
+          { title: 'Import', url: '/transactions/import', icon: 'uploadCloud' }
         ]
       },
       {
         label: 'Plan',
         items: [
-          { title: 'Budgets', url: '/budget', icon: BookOpen },
-          { title: 'Goals', url: '/goal', icon: PiggyBank },
-          { title: 'Investments', url: '/investment', icon: BarChart3 },
-          { title: 'Debts', url: '/debts', icon: Coins },
-          { title: 'Statement', url: '/accounts/statement', icon: FileDown }
+          { title: 'Budgets', url: '/budget', icon: 'budget' },
+          { title: 'Goals', url: '/goal', icon: 'piggyBank' },
+          { title: 'Investments', url: '/investment', icon: 'investment' },
+          { title: 'Debts', url: '/debts', icon: 'coins' },
+          { title: 'Statement', url: '/accounts/statement', icon: 'fileDown' }
         ]
       },
       {
@@ -84,7 +70,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           {
             title: 'AI Assistant',
             url: '/ai-chat',
-            icon: hasApiKey ? BrainCircuit : Lock,
+            icon: hasApiKey ? 'brainCircuit' : 'lock',
             disabled: !hasApiKey,
             tooltip: !hasApiKey
               ? 'Add your AI API Key in Profile to enable.'

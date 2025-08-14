@@ -21,10 +21,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { NumericInput } from '../ui/numeric-input';
-import { Loader2, PlusCircle, CalendarDays, Tag } from 'lucide-react';
 import { monthNames } from '@/lib/utils';
 import CategoryCombobox from '../ui/category-combobox';
 import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
+import { Icon } from '../ui/icon';
 
 type BudgetFormSchema = z.infer<typeof apiEndpoints.budget.create.body>;
 type BudgetApiPayload = {
@@ -112,10 +112,12 @@ const AddBudgetModal: React.FC<AddBudgetModalProps> = ({
     <AddModal
       title='Add Budget'
       description='Set a spending limit for a specific category and period.'
+      icon={<Icon name='bookOpen' className='h-5 w-5' />}
+      iconClassName='bg-balance-muted text-balance'
       triggerButton={
         hideTriggerButton ? null : (
-          <Button variant='default'>
-            <PlusCircle className='mr-2 h-4 w-4' /> Add Budget
+          <Button className='btn-balance h-10 px-4 py-2'>
+            <Icon name='bookOpen' className='mr-2 h-4 w-4' /> Add Budget
           </Button>
         )
       }
@@ -130,7 +132,7 @@ const AddBudgetModal: React.FC<AddBudgetModalProps> = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel className='flex items-center gap-1.5'>
-                  <Tag className='text-muted-foreground h-4 w-4' />
+                  <Icon name='tag' className='text-muted-foreground h-4 w-4' />
                   Category*
                 </FormLabel>
                 <FormControl>
@@ -154,7 +156,7 @@ const AddBudgetModal: React.FC<AddBudgetModalProps> = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className='flex items-center gap-1.5'>
-                    <CalendarDays className='text-muted-foreground h-4 w-4' />
+                    <Icon name='calendarDays' className='text-muted-foreground h-4 w-4' />
                     Month*
                   </FormLabel>
                   <Select
@@ -186,7 +188,7 @@ const AddBudgetModal: React.FC<AddBudgetModalProps> = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className='flex items-center gap-1.5'>
-                    <CalendarDays className='text-muted-foreground h-4 w-4' />
+                    <Icon name='calendarDays' className='text-muted-foreground h-4 w-4' />
                     Year*
                   </FormLabel>
                   <Select
@@ -252,7 +254,7 @@ const AddBudgetModal: React.FC<AddBudgetModalProps> = ({
             >
               {createBudgetMutation.isPending ? (
                 <>
-                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
                   Adding...
                 </>
               ) : (

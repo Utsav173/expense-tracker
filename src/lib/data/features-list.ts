@@ -1,18 +1,7 @@
-import {
-  Users,
-  Target,
-  Scale,
-  TrendingUp,
-  Lock,
-  ArrowLeftRight,
-  Filter,
-  FileDown,
-  Tag
-} from 'lucide-react';
-
+import { IconName } from '@/components/ui/icon-map';
 export interface FeatureDetails {
   slug: string;
-  icon: React.ElementType;
+  icon: IconName;
   title: string;
   description: string;
   longDescription: string;
@@ -21,7 +10,7 @@ export interface FeatureDetails {
 export const featuresList: FeatureDetails[] = [
   {
     slug: 'secure-authentication',
-    icon: Lock,
+    icon: 'lock',
     title: 'Secure Authentication',
     description: 'JWT-based login, registration, and password reset flows.',
     longDescription: `
@@ -43,7 +32,7 @@ By implementing these comprehensive security measures, Expense Pro provides a tr
   },
   {
     slug: 'account-sharing',
-    icon: Users,
+    icon: 'users',
     title: 'Account Sharing',
     description: 'Securely share accounts with other users and manage permissions.',
     longDescription: `
@@ -65,7 +54,7 @@ Account Sharing is perfect for couples managing joint finances, families teachin
   },
   {
     slug: 'crud-operations',
-    icon: ArrowLeftRight,
+    icon: 'arrowLeftRight',
     title: 'Full CRUD Operations',
     description: 'Create, read, edit, and delete transactions with ease.',
     longDescription: `
@@ -87,7 +76,7 @@ Having full CRUD control means you can trust your data implicitly. It turns Expe
   },
   {
     slug: 'advanced-filtering',
-    icon: Filter,
+    icon: 'filter',
     title: 'Advanced Filtering',
     description: 'Powerful filters for date, category, type, and text search.',
     longDescription: `
@@ -111,7 +100,7 @@ You can combine these filters to create highly specific queries, such as: "Show 
   },
   {
     slug: 'data-export',
-    icon: FileDown,
+    icon: 'fileDown',
     title: 'Data Export',
     description: 'Export your filtered transaction data to XLSX or CSV formats.',
     longDescription: `
@@ -134,7 +123,7 @@ The ability to export your data provides ultimate flexibility and peace of mind.
   },
   {
     slug: 'smart-categorization',
-    icon: Tag,
+    icon: 'tag',
     title: 'Smart Categorization',
     description: 'Intuitive category management with inline creation.',
     longDescription: `
@@ -163,7 +152,7 @@ By combining AI-driven suggestions with flexible, on-the-fly user controls, Smar
   },
   {
     slug: 'budgeting-and-goals',
-    icon: Target,
+    icon: 'target',
     title: 'Budgeting & Goals',
     description: 'Set monthly budgets and track savings goals visually.',
     longDescription: `
@@ -194,7 +183,7 @@ Together, Budgeting and Goals provide a powerful one-two punch for financial suc
   },
   {
     slug: 'debt-management',
-    icon: Scale,
+    icon: 'scale',
     title: 'Debt Management',
     description: 'Track loans with details on interest, duration, and status.',
     longDescription: `
@@ -225,7 +214,7 @@ By consolidating all your debt information into one place and providing powerful
   },
   {
     slug: 'investment-tracking',
-    icon: TrendingUp,
+    icon: 'trendingUp',
     title: 'Investment Tracking',
     description: 'Monitor holdings and overall portfolio performance.',
     longDescription: `

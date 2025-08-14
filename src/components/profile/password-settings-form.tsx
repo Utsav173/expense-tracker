@@ -18,7 +18,6 @@ import {
 } from '@/components/ui/form';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Button } from '@/components/ui/button';
-import { Loader2, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
   Dialog,
@@ -28,6 +27,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
+import { Icon } from '../ui/icon';
 
 const changePasswordSchema = z
   .object({
@@ -153,7 +153,9 @@ export const PasswordSettingsForm = () => {
               />
               <div className='flex justify-end border-t pt-6'>
                 <Button type='submit' disabled={mutation.isPending || !form.formState.isValid}>
-                  {mutation.isPending && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+                  {mutation.isPending && (
+                    <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
+                  )}
                   Update Password
                 </Button>
               </div>
@@ -175,7 +177,7 @@ export const PasswordSettingsForm = () => {
             onClick={() => setIsDeleteDialogOpen(true)}
             disabled={isDeleting}
           >
-            <Trash2 className='mr-2 h-4 w-4' />
+            <Icon name='trash2' className='mr-2 h-4 w-4' />
             Delete My Account
           </Button>
         </CardContent>
@@ -199,7 +201,7 @@ export const PasswordSettingsForm = () => {
               Cancel
             </Button>
             <Button variant='destructive' onClick={handleDeleteAccount} disabled={isDeleting}>
-              {isDeleting && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+              {isDeleting && <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />}
               Delete Account
             </Button>
           </DialogFooter>

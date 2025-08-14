@@ -1,9 +1,9 @@
 'use client';
 import type { InvestmentAPI } from '@/lib/api/api-types';
 import { Button } from '@/components/ui/button';
-import { Eye, Pencil, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 import InvestmentInsightModal from '../modals/investment-insight-modal';
+import { Icon } from '../ui/icon';
 
 interface InvestmentHoldingActionsProps {
   investment: InvestmentAPI.Investment;
@@ -29,7 +29,7 @@ export function InvestmentHoldingActions({
         onClick={() => setIsInsightModalOpen(true)}
         aria-label='View Investment Insight'
       >
-        <Eye size={16} />
+        <Icon name='eye' className='h-4 w-4' />
       </Button>
       <Button
         size='icon'
@@ -38,7 +38,7 @@ export function InvestmentHoldingActions({
         onClick={() => handleEdit(investment)}
         aria-label='Edit Investment'
       >
-        <Pencil size={16} />
+        <Icon name='pencil' className='h-4 w-4' />
       </Button>
       <Button
         size='icon'
@@ -47,7 +47,7 @@ export function InvestmentHoldingActions({
         onClick={() => handleDeleteClick(investment.id)}
         aria-label='Delete Investment'
       >
-        <Trash2 size={16} />
+        <Icon name='trash2' className='h-4 w-4' />
       </Button>
 
       {isInsightModalOpen && (

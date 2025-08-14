@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
-import { Loader2, Pencil } from 'lucide-react';
+import { Icon } from '../ui/icon';
 
 interface UpdateModalProps<TFormValues extends z.ZodType<any, any>> {
   isOpen: boolean;
@@ -95,7 +95,7 @@ export function UpdateModal<TFormValues extends z.ZodType<any, any>>({
       <DialogContent className='max-h-[90dvh] w-[50vw] max-w-[95vw] overflow-y-auto max-sm:w-full'>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
-            <Pencil className='h-5 w-5' />
+            <Icon name='pencil' className='h-5 w-5' />
             {title}
           </DialogTitle>
           <DialogDescription>{description}</DialogDescription>
@@ -116,7 +116,7 @@ export function UpdateModal<TFormValues extends z.ZodType<any, any>>({
               >
                 {mutation.isPending ? (
                   <>
-                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                    <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
                     Saving...
                   </>
                 ) : (

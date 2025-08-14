@@ -3,8 +3,8 @@
 import React, { useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Zap } from 'lucide-react';
 import { gsap } from 'gsap';
+import { Icon } from '../ui/icon';
 
 const CallToActionSection = () => {
   const sectionRef = useRef(null);
@@ -32,7 +32,7 @@ const CallToActionSection = () => {
       <div className='container mx-auto text-center'>
         <div className='section-content-anim mb-6 inline-block'>
           <div className='from-primary rounded-full bg-gradient-to-r to-blue-500 p-3 shadow-lg'>
-            <Zap className='text-primary-foreground h-8 w-8' />
+            <Icon name='zap' className='text-primary-foreground h-8 w-8' />
           </div>
         </div>
         <div className='section-content-anim'>

@@ -1,9 +1,9 @@
 'use client';
 
 import React from 'react';
-import { BarChart3 } from 'lucide-react';
 import { Progress } from './progress';
 import { cn } from '@/lib/utils';
+import { Icon } from './icon';
 
 interface ComingSoonProps {
   message?: string;
@@ -86,7 +86,7 @@ const ComingSoon: React.FC<ComingSoonProps> = ({
 
         {/* Icon from the screenshot */}
         <div className='bg-primary/10 text-primary mb-6 flex h-16 w-16 items-center justify-center rounded'>
-          <BarChart3 className='h-8 w-8' />
+          <Icon name='barChart3' className='h-8 w-8' />
         </div>
 
         {/* Main content */}

@@ -3,9 +3,7 @@
 import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import NoData from '@/components/ui/no-data';
-import { Frown, LayoutGrid, Maximize2 } from 'lucide-react';
 import { DASHBOARD_CARD_CONFIG } from '@/config/dashboard-config';
 import { DashboardControls } from '@/components/dashboard/dashboard-controls';
 import { useDashboardData } from '@/components/dashboard/hooks/useDashboardData';
@@ -23,6 +21,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import QueryErrorDisplay from '@/components/ui/query-error-display';
+import { Icon } from '@/components/ui/icon';
 
 // Dynamically import heavy components
 const FinancialSnapshot = dynamic(
@@ -75,19 +75,6 @@ const renderSkeleton = () => (
   </div>
 );
 
-const renderErrorState = ({ error }: { error?: any }) => (
-  <Alert variant='destructive' className='mx-auto mt-6'>
-    <Frown className='h-4 w-4' />
-    <AlertTitle>Oops! Something went wrong.</AlertTitle>
-    <AlertDescription>
-      We couldn&apos;t load your dashboard data. Please check your connection and try refreshing.
-      {error && (
-        <div className='text-muted-foreground mt-2 text-xs'>Error: {(error as Error).message}</div>
-      )}
-    </AlertDescription>
-  </Alert>
-);
-
 const DashboardPage = () => {
   const [chartType, setChartType] = useState<'line' | 'bar' | 'area'>('line');
 
@@ -98,7 +85,7 @@ const DashboardPage = () => {
   }
 
   if (isError && !dashboardPageData) {
-    return renderErrorState({ error });
+    return <QueryErrorDisplay error={error} />;
   }
 
   if (!isLoading && dashboardPageData && (dashboardPageData?.totalTransaction ?? 0) < 1) {
@@ -106,7 +93,7 @@ const DashboardPage = () => {
       <div className='mx-auto w-full max-w-7xl min-w-0 space-y-4 p-4 pt-6 select-none max-sm:max-w-full md:space-y-6 lg:p-8 lg:pt-8'>
         <NoData
           message='Your Dashboard is Ready! Add some accounts and transactions to see your trends.'
-          icon={LayoutGrid}
+          icon={'layoutGrid'}
           className='h-[calc(100vh-250px)]'
         />
       </div>
@@ -116,17 +103,6 @@ const DashboardPage = () => {
   return (
     <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 select-none md:space-y-6'>
       <DashboardControls />
-
-      {isError && dashboardPageData && (
-        <Alert variant='destructive' className='mt-4'>
-          <Frown className='h-4 w-4' />
-          <AlertTitle>Data Update Issue</AlertTitle>
-          <AlertDescription>
-            Could not update all dashboard sections. Some data might be stale.
-            {error && <div className='mt-1 text-xs'>Details: {(error as Error).message}</div>}
-          </AlertDescription>
-        </Alert>
-      )}
 
       <BentoGrid>
         <BentoGridItem className='col-span-12 row-span-2 md:col-span-6 lg:col-span-4'>
@@ -279,7 +255,7 @@ const DashboardCardContent: React.FC<DashboardCardContentProps> = ({
                   className='hidden h-7 w-7 md:flex'
                   aria-label={'Maximize'}
                 >
-                  <Maximize2 className='h-4 w-4' />
+                  <Icon name='maximize2' className='h-4 w-4' />
                 </Button>
               </DialogTrigger>
               <DialogContent className='sm:max-w-6xl'>

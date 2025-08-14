@@ -8,9 +8,10 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { DataTableColumnHeader } from '../ui/column-header';
 import { GoalActions } from './goal-actions';
-import { CheckCircle2, AlertTriangle, Clock, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SingleLineEllipsis } from '../ui/ellipsis-components';
+import { Icon } from '../ui/icon';
+import { IconName } from '../ui/icon-map';
 
 interface GoalColumnsProps {
   user: UserAPI.UserProfile | undefined;
@@ -35,9 +36,9 @@ export const createGoalColumns = ({
       return (
         <div className='flex max-w-[320px] items-center gap-2'>
           {isCompleted ? (
-            <CheckCircle2 className='text-success h-4 w-4 shrink-0' />
+            <Icon name='checkCircle2' className='text-success h-4 w-4 shrink-0' />
           ) : (
-            <Target className='text-muted-foreground h-4 w-4 shrink-0' />
+            <Icon name='target' className='text-muted-foreground h-4 w-4 shrink-0' />
           )}
           <div className='flex min-w-0 flex-col'>
             <SingleLineEllipsis className={cn('font-medium', isCompleted && 'text-success')}>
@@ -77,15 +78,6 @@ export const createGoalColumns = ({
       const remaining = Math.max(0, target - saved);
       const isCompleted = progress >= 100;
 
-      // Determine progress color based on percentage
-      const getProgressColor = (progress: number) => {
-        if (progress >= 100) return 'bg-success';
-        if (progress >= 75) return 'bg-blue-500';
-        if (progress >= 50) return 'bg-yellow-500';
-        if (progress >= 25) return 'bg-orange-500';
-        return 'bg-red-500';
-      };
-
       return (
         <div className='flex min-w-[180px] flex-col gap-2'>
           <div className='flex items-center justify-between'>
@@ -106,18 +98,17 @@ export const createGoalColumns = ({
             <Progress
               value={progress}
               className='h-2.5'
-              // Custom progress bar color
               style={
                 {
                   '--progress-foreground': isCompleted
-                    ? 'hsl(var(--success))'
+                    ? 'hsl(var(--hue-success))'
                     : progress >= 75
-                      ? 'hsl(220 70% 50%)'
+                      ? 'hsl(var(--hue-primary))'
                       : progress >= 50
-                        ? 'hsl(45 93% 47%)'
+                        ? 'hsl(var(--hue-warning))'
                         : progress >= 25
-                          ? 'hsl(25 95% 53%)'
-                          : 'hsl(0 84% 60%)'
+                          ? 'hsl(var(--hue-destructive))'
+                          : 'hsl(var(--hue-destructive))'
                 } as React.CSSProperties
               }
             />
@@ -156,20 +147,24 @@ export const createGoalColumns = ({
       const isOverdue = isAfter(today, dateObj) && !isCompleted;
       const isUrgent = daysLeft <= 30 && daysLeft > 0 && !isCompleted;
 
-      const getDateStatus = () => {
-        if (isCompleted) return { color: 'text-success', icon: CheckCircle2, label: 'Completed' };
-        if (isOverdue) return { color: 'text-destructive', icon: AlertTriangle, label: 'Overdue' };
-        if (isUrgent) return { color: 'text-orange-500', icon: Clock, label: 'Urgent' };
-        return { color: 'text-foreground', icon: Clock, label: 'On track' };
+      const getDateStatus = (): {
+        color: string;
+        icon: IconName;
+        label: string;
+      } => {
+        if (isCompleted) return { color: 'text-success', icon: 'checkCircle2', label: 'Completed' };
+        if (isOverdue)
+          return { color: 'text-destructive', icon: 'alertTriangle', label: 'Overdue' };
+        if (isUrgent) return { color: 'text-warning', icon: 'clock', label: 'Urgent' };
+        return { color: 'text-foreground', icon: 'clock', label: 'On track' };
       };
 
       const status = getDateStatus();
-      const StatusIcon = status.icon;
 
       return (
         <div className='flex flex-col gap-1'>
           <div className='flex items-center gap-1.5'>
-            <StatusIcon className={cn('h-3.5 w-3.5', status.color)} />
+            <Icon name={status.icon} className={cn('h-3.5 w-3.5', status.color)} />
             <span className={cn('text-sm font-medium', status.color)}>
               {format(dateObj, 'MMM d, yyyy')}
             </span>
@@ -184,7 +179,10 @@ export const createGoalColumns = ({
                 {Math.abs(daysLeft)} days overdue
               </Badge>
             ) : isUrgent ? (
-              <Badge variant='secondary' className='bg-orange-50 text-xs text-orange-600'>
+              <Badge
+                variant='secondary'
+                className='bg-warning-muted text-warning-foreground text-xs'
+              >
                 {daysLeft} days left
               </Badge>
             ) : daysLeft > 0 ? (

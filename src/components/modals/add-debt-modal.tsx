@@ -24,9 +24,9 @@ import { apiCreateDebt } from '@/lib/endpoints/debt';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import DatePicker from '../date/date-picker';
 import { NumericInput } from '../ui/numeric-input';
-import { Loader2, PlusCircle, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
+import { Icon } from '../ui/icon';
 
 type DebtFormValues = z.infer<typeof apiEndpoints.interest.createDebt.body>;
 type InterestFormSchema = z.infer<typeof apiEndpoints.interest.calculate.body>;
@@ -110,7 +110,7 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
       triggerButton={
         hideTriggerButton ? null : (
           <Button variant='default'>
-            <PlusCircle className='mr-2 h-4 w-4' /> Add Debt
+            <Icon name='plusCircle' className='mr-2 h-4 w-4' /> Add Debt
           </Button>
         )
       }
@@ -242,7 +242,7 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
                     Interest Rate (% p.a.)
                     <Tooltip delayDuration={100}>
                       <TooltipTrigger type='button' onClick={(e) => e.preventDefault()}>
-                        <Info className='text-muted-foreground h-3 w-3' />
+                        <Icon name='info' className='text-muted-foreground h-3 w-3' />
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>The annual interest rate for the loan. Enter 0 for no interest.</p>
@@ -275,7 +275,7 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
                     Interest Type*
                     <Tooltip delayDuration={100}>
                       <TooltipTrigger type='button' onClick={(e) => e.preventDefault()}>
-                        <Info className='text-muted-foreground h-3 w-3' />
+                        <Icon name='info' className='text-muted-foreground h-3 w-3' />
                       </TooltipTrigger>
                       <TooltipContent className='max-w-xs'>
                         <p>
@@ -327,7 +327,7 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
                       <p className='w-full'>Term Length*</p>
                       <Tooltip delayDuration={100}>
                         <TooltipTrigger type='button' onClick={(e) => e.preventDefault()}>
-                          <Info className='text-muted-foreground h-3 w-3' />
+                          <Icon name='info' className='text-muted-foreground h-3 w-3' />
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>The total duration of the loan.</p>
@@ -380,7 +380,7 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
                     Payment Frequency*
                     <Tooltip delayDuration={100}>
                       <TooltipTrigger type='button' onClick={(e) => e.preventDefault()}>
-                        <Info className='text-muted-foreground h-3 w-3' />
+                        <Icon name='info' className='text-muted-foreground h-3 w-3' />
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>How often are payments expected?</p>
@@ -412,7 +412,7 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
               <Button type='submit' disabled={createDebtMutation.isPending}>
                 {createDebtMutation.isPending ? (
                   <>
-                    <Loader2 className='mr-2 h-4 w-4 animate-spin' /> Creating...
+                    <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' /> Creating...
                   </>
                 ) : (
                   'Create Debt'

@@ -7,10 +7,10 @@ import { Input } from '@/components/ui/input';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { NumericInput } from '../ui/numeric-input';
 import DateTimePicker from '../date/date-time-picker';
-import { Target, IndianRupee, CalendarDays, Coins } from 'lucide-react';
 import { goalUpdate } from '@/lib/endpoints/goal';
 import type { GoalAPI } from '@/lib/api/api-types';
 import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
+import { Icon } from '../ui/icon';
 
 type GoalUpdateSchema = z.infer<typeof apiEndpoints.goal.update.body>;
 
@@ -62,7 +62,7 @@ const UpdateGoalModal: React.FC<UpdateGoalModalProps> = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel className='flex items-center gap-1.5'>
-                  <Target className='text-muted-foreground h-4 w-4' />
+                  <Icon name='target' className='text-muted-foreground h-4 w-4' />
                   Goal Name*
                 </FormLabel>
                 <FormControl>
@@ -83,7 +83,7 @@ const UpdateGoalModal: React.FC<UpdateGoalModalProps> = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel className='flex items-center gap-1.5'>
-                  <IndianRupee className='text-muted-foreground h-4 w-4' />
+                  <Icon name='indianRupee' className='text-muted-foreground h-4 w-4' />
                   Target Amount*
                 </FormLabel>
                 <FormControl>
@@ -109,7 +109,7 @@ const UpdateGoalModal: React.FC<UpdateGoalModalProps> = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel className='flex items-center gap-1.5'>
-                  <Coins className='text-muted-foreground h-4 w-4' />
+                  <Icon name='coins' className='text-muted-foreground h-4 w-4' />
                   Current Saved Amount (Optional)
                 </FormLabel>
                 <FormControl>
@@ -135,7 +135,7 @@ const UpdateGoalModal: React.FC<UpdateGoalModalProps> = ({
             render={({ field }) => (
               <FormItem className='flex flex-col'>
                 <FormLabel className='flex items-center gap-1.5'>
-                  <CalendarDays className='text-muted-foreground h-4 w-4' />
+                  <Icon name='calendarDays' className='text-muted-foreground h-4 w-4' />
                   Target Date (Optional)
                 </FormLabel>
                 <FormControl>

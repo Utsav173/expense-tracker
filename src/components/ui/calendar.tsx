@@ -1,11 +1,11 @@
 'use client';
 
 import * as React from 'react';
-import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import { ClassNames, DayFlag, DayPicker, SelectionState, UI } from 'react-day-picker';
 
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
+import { Icon } from './icon';
 
 function Calendar({
   className,
@@ -87,9 +87,9 @@ function Calendar({
       orientation?: 'left' | 'right' | 'up' | 'down';
     }) => {
       if (props.orientation === 'left') {
-        return <ChevronLeftIcon size={16} {...props} aria-hidden='true' />;
+        return <Icon name='chevronLeft' size={16} {...props} aria-hidden='true' />;
       }
-      return <ChevronRightIcon size={16} {...props} aria-hidden='true' />;
+      return <Icon name='chevronRight' size={16} {...props} aria-hidden='true' />;
     }
   };
 

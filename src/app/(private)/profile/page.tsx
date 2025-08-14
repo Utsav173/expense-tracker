@@ -4,11 +4,11 @@ import React, { useState } from 'react';
 import { useAuth } from '@/components/providers/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { User, Lock, Bell, BrainCircuit } from 'lucide-react';
 import { ProfileInformationForm } from '@/components/profile/profile-information-form';
 import { NotificationSettingsForm } from '@/components/profile/notification-settings-form';
 import { AiSettingsForm } from '@/components/profile/ai-settings-form';
 import { PasswordSettingsForm } from '@/components/profile/password-settings-form';
+import { Icon } from '@/components/ui/icon';
 
 type SettingsTab = 'profile' | 'security' | 'notifications' | 'ai';
 
@@ -17,10 +17,10 @@ const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
 
   const navItems = [
-    { id: 'profile', label: 'Profile Settings', icon: User },
-    { id: 'security', label: 'Password', icon: Lock },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'ai', label: 'AI Assistant', icon: BrainCircuit }
+    { id: 'profile', label: 'Profile Settings', icon: 'user' as const },
+    { id: 'security', label: 'Password', icon: 'lock' as const },
+    { id: 'notifications', label: 'Notifications', icon: 'bell' as const },
+    { id: 'ai', label: 'AI Assistant', icon: 'brainCircuit' as const }
   ];
 
   if (userIsLoading) {
@@ -72,7 +72,7 @@ const ProfilePage = () => {
                 className='shrink-0 justify-start'
                 onClick={() => setActiveTab(item.id as SettingsTab)}
               >
-                <item.icon className='mr-2 h-4 w-4' />
+                <Icon name={item.icon} className='mr-2 h-4 w-4' />
                 <span className='truncate'>{item.label}</span>
               </Button>
             ))}

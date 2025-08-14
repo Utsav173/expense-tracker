@@ -1,7 +1,6 @@
 'use client';
 import type { BudgetAPI } from '@/lib/api/api-types';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2 } from 'lucide-react';
 import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
 import { useMutation } from '@tanstack/react-query';
 import { budgetDelete } from '@/lib/endpoints/budget';
@@ -9,6 +8,7 @@ import { useToast } from '@/lib/hooks/useToast';
 import UpdateBudgetModal from '../modals/update-budget-modal';
 import { useState } from 'react';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
+import { Icon } from '@/components/ui/icon';
 
 interface BudgetActionsProps {
   budget: BudgetAPI.Budget;
@@ -47,7 +47,7 @@ export function BudgetActions({ budget }: BudgetActionsProps) {
         }}
         aria-label='Edit Budget'
       >
-        <Pencil className='text-muted-foreground h-4 w-4' />
+        <Icon name='pencil' className='text-muted-foreground h-4 w-4' />
       </Button>
       <DeleteConfirmationModal
         title='Delete Budget'
@@ -64,7 +64,7 @@ export function BudgetActions({ budget }: BudgetActionsProps) {
             onClick={() => setDeleteBudgetId(budget.id)}
             aria-label='Delete Budget'
           >
-            <Trash2 className='text-destructive h-4 w-4' />
+            <Icon name='trash2' className='text-destructive h-4 w-4' />
           </Button>
         }
       />

@@ -8,7 +8,6 @@ import { z } from 'zod';
 import Link from 'next/link';
 import Script from 'next/script';
 import { WithContext, WebPage } from 'schema-dts';
-import { Loader2, ImagePlus, User } from 'lucide-react';
 import { useToast } from '@/lib/hooks/useToast';
 import { authClient } from '@/lib/auth-client';
 import { Input } from '@/components/ui/input';
@@ -24,6 +23,8 @@ import {
   FormMessage
 } from '@/components/ui/form';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { processProfileImage } from '@/lib/image-utils';
+import { Icon } from '@/components/ui/icon';
 
 const signUpSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters long.').max(64).trim(),
@@ -69,7 +70,6 @@ const SignupPage = () => {
     }
   }, [searchParams, form]);
 
-  // Clean up the object URL to prevent memory leaks
   useEffect(() => {
     return () => {
       if (imagePreview) {
@@ -79,34 +79,55 @@ const SignupPage = () => {
   }, [imagePreview]);
 
   const handleSignUp = async (data: SignUpSchemaType) => {
-    await authClient.signUp.email(
-      {
-        email: data.email,
-        password: data.password,
-        name: data.name,
-        ...(data.image && { image: await convertImageToBase64(data.image) }),
-        ...(data.token && { token: data.token })
-      },
-      {
-        onRequest: () => setLoading(true),
-        onSuccess: () => {
-          push(`/auth/verify-otp?email=${data.email}&type=email-verification`);
-        },
-        onError: (ctx: any) => {
+    setLoading(true);
+    try {
+      let processedImage: string | undefined = undefined;
+      if (data.image) {
+        try {
+          processedImage = await processProfileImage(data.image);
+        } catch (error) {
+          console.error('Image processing failed:', error);
+          showError('There was an error processing your image. Please try another one.');
           setLoading(false);
-          showError(ctx.error.message);
-        },
-        onSettled: () => setLoading(false)
+          return;
+        }
       }
-    );
+
+      await authClient.signUp.email(
+        {
+          email: data.email,
+          password: data.password,
+          name: data.name,
+          ...(processedImage && { image: processedImage }),
+          ...(data.token && { token: data.token })
+        },
+        {
+          onSuccess: () => {
+            push(`/auth/verify-otp?email=${data.email}&type=email-verification`);
+          },
+          onError: (ctx: any) => {
+            showError(ctx.error.message);
+          }
+        }
+      );
+    } catch (error: any) {
+      showError(error.message || 'An unexpected error occurred.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (imagePreview) {
-      URL.revokeObjectURL(imagePreview); // Clean up previous preview
+      URL.revokeObjectURL(imagePreview);
     }
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        showError('Profile picture must be less than 5MB');
+        form.setValue('image', null);
+        return;
+      }
       form.setValue('image', file, { shouldValidate: true });
       setImagePreview(URL.createObjectURL(file));
     }
@@ -118,7 +139,6 @@ const SignupPage = () => {
     }
     setImagePreview(null);
     form.setValue('image', null, { shouldValidate: true });
-    // Reset the file input value
     const fileInput = document.getElementById('file-upload') as HTMLInputElement;
     if (fileInput) {
       fileInput.value = '';
@@ -213,7 +233,7 @@ const SignupPage = () => {
                         <Avatar className='h-20 w-20 border'>
                           <AvatarImage src={imagePreview ?? undefined} alt='Profile preview' />
                           <AvatarFallback>
-                            <User className='text-muted-foreground h-8 w-8' />
+                            <Icon name='user' className='text-muted-foreground h-8 w-8' />
                           </AvatarFallback>
                         </Avatar>
 
@@ -237,7 +257,7 @@ const SignupPage = () => {
                         ) : (
                           <Button asChild variant='outline' disabled={loading}>
                             <label htmlFor='file-upload' className='cursor-pointer'>
-                              <ImagePlus className='mr-2 h-4 w-4' />
+                              <Icon name='addCircle' className='mr-2 h-4 w-4' />
                               Upload
                             </label>
                           </Button>
@@ -260,7 +280,7 @@ const SignupPage = () => {
               <Button type='submit' disabled={loading} className='w-full'>
                 {loading ? (
                   <>
-                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                    <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
                     Creating Account...
                   </>
                 ) : (
@@ -285,12 +305,3 @@ const SignupPage = () => {
 };
 
 export default SignupPage;
-
-async function convertImageToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}

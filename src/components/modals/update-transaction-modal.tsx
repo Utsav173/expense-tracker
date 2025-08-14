@@ -7,16 +7,6 @@ import { Input } from '@/components/ui/input';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Label } from '../ui/label';
 import type { TransactionAPI, AccountAPI } from '@/lib/api/api-types';
-import {
-  ArrowDownCircle,
-  ArrowUpCircle,
-  Clock,
-  CreditCard,
-  IndianRupee,
-  Info,
-  Repeat,
-  Tag
-} from 'lucide-react';
 import { Card } from '../ui/card';
 import DateTimePicker from '../date/date-time-picker';
 import { NumericInput } from '../ui/numeric-input';
@@ -26,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { useTransactionForm } from '@/hooks/use-transaction-form';
 import { transactionUpdate } from '@/lib/endpoints/transactions';
+import { Icon } from '../ui/icon';
 
 const updateTransactionSchema = z.object({
   text: z.string().min(3, 'Description must be at least 3 characters.').max(255),
@@ -127,7 +118,7 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
         <>
           {isRecurringInstance && (
             <Alert variant='default'>
-              <Info className='h-4 w-4' />
+              <Icon name='info' className='h-4 w-4' />
               <AlertTitle>Recurring Transaction Instance</AlertTitle>
               <AlertDescription>
                 Only the Description can be edited for this recurring transaction instance.
@@ -140,7 +131,7 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
           <Card className='grid grid-cols-2 gap-4 p-4'>
             <div className='space-y-1'>
               <Label className='text-muted-foreground flex items-center gap-1.5 text-xs'>
-                <CreditCard size={14} /> Account
+                <Icon name='creditCard' className='h-3 w-3' /> Account
               </Label>
               <p className='text-foreground truncate font-medium'>
                 {transaction
@@ -150,14 +141,14 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
             </div>
             <div className='space-y-1'>
               <Label className='text-muted-foreground flex items-center gap-1.5 text-xs'>
-                <IndianRupee size={14} /> Currency
+                <Icon name='dollarSign' className='h-3 w-3' /> Currency
               </Label>
               <p className='text-foreground font-medium'>{transaction?.currency ?? 'N/A'}</p>
             </div>
             {transaction?.recurring && (
               <div className='col-span-2 space-y-1'>
                 <Label className='text-muted-foreground flex items-center gap-1.5 text-xs'>
-                  <Repeat size={14} /> Recurring Info
+                  <Icon name='repeat' className='h-3 w-3' /> Recurring Info
                 </Label>
                 <p className='text-foreground font-medium'>
                   {transaction.recurrenceType
@@ -174,7 +165,7 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
               <>
                 <div className='space-y-1'>
                   <Label className='text-muted-foreground flex items-center gap-1.5 text-xs'>
-                    <Clock size={14} /> Created At
+                    <Icon name='clock' className='h-3 w-3' /> Created At
                   </Label>
                   <p className='text-foreground font-medium'>
                     {transaction.createdAt
@@ -216,7 +207,8 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
                 aria-disabled={form.formState.isSubmitting}
               >
                 <div className='flex flex-col items-center justify-center gap-1.5'>
-                  <ArrowDownCircle
+                  <Icon
+                    name='arrowDownCircle'
                     className={cn(
                       'h-6 w-6',
                       !form.watch('isIncome') ? 'text-destructive' : 'text-muted-foreground'
@@ -246,7 +238,8 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
                 aria-disabled={form.formState.isSubmitting}
               >
                 <div className='flex flex-col items-center justify-center gap-1.5'>
-                  <ArrowUpCircle
+                  <Icon
+                    name='arrowUpCircle'
                     className={cn(
                       'h-6 w-6',
                       form.watch('isIncome') ? 'text-success' : 'text-muted-foreground'
@@ -350,7 +343,8 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
                 render={({ field }) => (
                   <FormItem className='flex flex-col'>
                     <FormLabel className='flex items-center gap-1.5'>
-                      <Tag size={16} className='text-muted-foreground' /> Category (Optional)
+                      <Icon name='tag' className='text-muted-foreground h-4 w-4' /> Category
+                      (Optional)
                     </FormLabel>
                     <Combobox
                       value={

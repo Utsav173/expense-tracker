@@ -7,17 +7,10 @@ import { formatCurrency, cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { DataTableColumnHeader } from '../ui/column-header';
 import { DebtActions } from './debt-actions';
-import {
-  ArrowDownLeft,
-  ArrowUpRight,
-  Clock,
-  AlertTriangle,
-  CheckCircle2,
-  Circle
-} from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Icon } from '../ui/icon';
 
 interface DebtColumnsProps {
   user: UserAPI.UserProfile | undefined;
@@ -42,12 +35,14 @@ export const createDebtColumns = ({
           <div
             className={cn(
               'flex h-8 w-8 items-center justify-center rounded-full',
-              isGiven
-                ? 'bg-red-50 text-red-600 dark:bg-red-800 dark:text-red-300'
-                : 'bg-green-50 text-green-600 dark:bg-green-800 dark:text-green-200'
+              isGiven ? 'bg-expense-muted text-expense' : 'bg-income-muted text-income'
             )}
           >
-            {isGiven ? <ArrowUpRight className='h-4 w-4' /> : <ArrowDownLeft className='h-4 w-4' />}
+            {isGiven ? (
+              <Icon name='arrowUpRight' className='h-4 w-4' />
+            ) : (
+              <Icon name='arrowDownRight' className='h-4 w-4' />
+            )}
           </div>
           <div className='flex flex-col'>
             <span className='max-w-[180px] truncate text-sm font-medium'>
@@ -57,7 +52,7 @@ export const createDebtColumns = ({
               {isGiven ? 'Money Lent' : 'Money Borrowed'}
             </span>
           </div>
-          {isOverdue && <AlertTriangle className='h-4 w-4 shrink-0 text-orange-500' />}
+          {isOverdue && <Icon name='alertTriangle' className='text-warning h-4 w-4 shrink-0' />}
         </div>
       );
     }
@@ -98,7 +93,7 @@ export const createDebtColumns = ({
 
       return (
         <div className='text-right'>
-          <div className={cn('text-lg font-semibold', isGiven ? 'text-red-600' : 'text-green-600')}>
+          <div className={cn('text-lg font-semibold', isGiven ? 'text-expense' : 'text-income')}>
             {formatCurrency(debt.amount, currency)}
           </div>
           <div className='text-muted-foreground text-xs'>Principal Amount</div>
@@ -155,13 +150,13 @@ export const createDebtColumns = ({
       return (
         <div className='flex flex-col gap-1'>
           <div className='flex items-center gap-2'>
-            {isOverdue && <Clock className='h-3 w-3 text-red-500' />}
-            {isDueSoon && <Clock className='h-3 w-3 text-orange-500' />}
+            {isOverdue && <Icon name='clock' className='text-destructive h-3 w-3' />}
+            {isDueSoon && <Icon name='clock' className='text-warning h-3 w-3' />}
             <span
               className={cn(
                 'text-sm font-medium',
-                isOverdue && 'text-red-600',
-                isDueSoon && 'text-orange-600'
+                isOverdue && 'text-destructive',
+                isDueSoon && 'text-warning'
               )}
             >
               {format(dueDate, 'MMM d, yyyy')}
@@ -170,7 +165,7 @@ export const createDebtColumns = ({
           <span
             className={cn(
               'text-xs',
-              isOverdue ? 'text-red-500' : isDueSoon ? 'text-orange-500' : 'text-muted-foreground'
+              isOverdue ? 'text-destructive' : isDueSoon ? 'text-warning' : 'text-muted-foreground'
             )}
           >
             {isOverdue
@@ -197,20 +192,20 @@ export const createDebtColumns = ({
         differenceInDays(dueDate, new Date()) > 0;
 
       let variant: 'default' | 'secondary' | 'destructive' | 'outline' = 'default';
-      let icon = <Circle className='h-3 w-3' />;
+      let icon = <Icon name='circle' className='h-3 w-3' />;
       let text = 'Active';
 
       if (debt.isPaid) {
         variant = 'outline';
-        icon = <CheckCircle2 className='h-3 w-3 text-green-600' />;
+        icon = <Icon name='checkCircle' className='text-success h-3 w-3' />;
         text = 'Paid';
       } else if (isOverdue) {
         variant = 'destructive';
-        icon = <AlertTriangle className='h-3 w-3' />;
+        icon = <Icon name='alertTriangle' className='h-3 w-3' />;
         text = 'Overdue';
       } else if (isDueSoon) {
         variant = 'secondary';
-        icon = <Clock className='h-3 w-3 text-orange-500' />;
+        icon = <Icon name='clock' className='text-warning h-3 w-3' />;
         text = 'Due Soon';
       }
 
@@ -235,8 +230,8 @@ export const createDebtColumns = ({
       if (debt.isPaid) {
         return (
           <div className='flex items-center gap-2'>
-            <CheckCircle2 className='h-4 w-4 text-green-600' />
-            <span className='text-xs font-medium text-green-600'>Complete</span>
+            <Icon name='checkCircle' className='text-success h-4 w-4' />
+            <span className='text-success text-xs font-medium'>Complete</span>
           </div>
         );
       }
@@ -244,7 +239,6 @@ export const createDebtColumns = ({
       const totalDuration = differenceInDays(dueDate, startDate);
       const elapsed = differenceInDays(today, startDate);
 
-      // Handle edge cases
       if (totalDuration <= 0) {
         return (
           <div className='flex min-w-[80px] flex-col gap-1'>
@@ -253,7 +247,6 @@ export const createDebtColumns = ({
         );
       }
 
-      // If loan hasn't started yet
       if (elapsed < 0) {
         return (
           <div className='flex min-w-[80px] flex-col gap-1'>
@@ -263,12 +256,11 @@ export const createDebtColumns = ({
         );
       }
 
-      // If loan is overdue
       if (elapsed > totalDuration) {
         return (
           <div className='flex min-w-[80px] flex-col gap-1'>
             <Progress value={100} className='h-2' />
-            <span className='text-center text-xs text-red-500'>Overdue</span>
+            <span className='text-destructive text-center text-xs'>Overdue</span>
           </div>
         );
       }

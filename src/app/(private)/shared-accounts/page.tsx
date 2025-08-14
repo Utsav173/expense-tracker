@@ -3,17 +3,18 @@
 import { useQuery } from '@tanstack/react-query';
 import { accountGetSharedWithMe } from '@/lib/endpoints/accounts';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, ChevronRight, Search, Share2 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
 import type { AccountAPI } from '@/lib/api/api-types';
+import QueryErrorDisplay from '@/components/ui/query-error-display';
+import { useUrlState } from '@/hooks/useUrlState';
+import { useDebounce } from 'use-debounce';
+import { Icon } from '@/components/ui/icon';
 
-// Helper to generate initials for the avatar fallback
 const getInitials = (name?: string) => {
   if (!name) return '??';
   const names = name.split(' ');
@@ -44,16 +45,24 @@ const AccountCard = ({ account }: { account: AccountAPI.Account }) => {
           <span className='font-bold'>{formatCurrency(account.balance, account.currency)}</span>
           <span className='text-muted-foreground text-xs'>Current Balance</span>
         </div>
-        <ChevronRight className='text-muted-foreground h-5 w-5 transition-transform group-hover:translate-x-1' />
+        <Icon
+          name='chevronRight'
+          className='text-muted-foreground h-5 w-5 transition-transform group-hover:translate-x-1'
+        />
       </div>
     </Link>
   );
 };
 
-// Main page component
 const SharedAccountsPage = () => {
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
+  const { state, setState, handlePageChange } = useUrlState({ page: 1, q: '' });
+  const [search, setSearch] = useState(state.q);
+  const [debouncedSearch] = useDebounce(search, 600);
+
+  useEffect(() => {
+    setState({ q: debouncedSearch, page: 1 });
+  }, [debouncedSearch, setState]);
+
   const limit = 10;
 
   const {
@@ -62,12 +71,12 @@ const SharedAccountsPage = () => {
     isError,
     error
   } = useQuery({
-    queryKey: ['sharedAccounts', page, search],
+    queryKey: ['sharedAccounts', state.page, state.q],
     queryFn: () =>
       accountGetSharedWithMe({
-        page,
+        page: state.page,
         limit,
-        search,
+        search: state.q,
         sortBy: 'createdAt',
         sortOrder: 'desc'
       }),
@@ -92,21 +101,14 @@ const SharedAccountsPage = () => {
     }
 
     if (isError) {
-      return (
-        <Alert variant='destructive'>
-          <AlertCircle className='h-4 w-4' />
-          <AlertDescription>
-            Failed to load shared accounts: {(error as Error).message}
-          </AlertDescription>
-        </Alert>
-      );
+      return <QueryErrorDisplay error={error} message='Failed to load shared accounts.' />;
     }
 
     if (!sharedAccounts || sharedAccounts.data.length === 0) {
       return (
         <div className='bg-card rounded-lg border p-12 text-center'>
           <div className='mx-auto flex max-w-sm flex-col items-center gap-4'>
-            <Share2 className='text-muted-foreground h-16 w-16' />
+            <Icon name='share2' className='text-muted-foreground h-16 w-16' />
             <h3 className='text-xl font-medium'>No Shared Accounts</h3>
             <p className='text-muted-foreground'>
               {search
@@ -134,18 +136,20 @@ const SharedAccountsPage = () => {
     <div className='mx-auto w-full max-w-7xl space-y-6 p-4'>
       <header className='flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <h1 className='flex items-center gap-3 text-2xl font-bold tracking-tight'>
-          <Share2 className='h-7 w-7' />
+          <Icon name='share2' className='h-7 w-7' />
           Shared With Me
         </h1>
         <div className='relative w-full sm:w-64'>
-          <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+          <Icon
+            name='search'
+            className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2'
+          />
           <Input
             type='text'
             placeholder='Search accounts...'
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
-              setPage(1); // Reset to first page on search
             }}
             className='pl-9'
           />
@@ -159,19 +163,19 @@ const SharedAccountsPage = () => {
           <Button
             variant='outline'
             size='sm'
-            onClick={() => setPage((old) => Math.max(old - 1, 1))}
-            disabled={page === 1}
+            onClick={() => handlePageChange(state.page - 1)}
+            disabled={state.page === 1}
           >
             Previous
           </Button>
           <span className='text-muted-foreground text-sm'>
-            Page {page} of {totalPages}
+            Page {state.page} of {totalPages}
           </span>
           <Button
             variant='outline'
             size='sm'
-            onClick={() => setPage((old) => old + 1)}
-            disabled={page >= totalPages}
+            onClick={() => handlePageChange(state.page + 1)}
+            disabled={state.page >= totalPages}
           >
             Next
           </Button>

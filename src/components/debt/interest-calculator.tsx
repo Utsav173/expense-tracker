@@ -28,8 +28,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '../ui/input';
 import { formatCurrency } from '@/lib/utils';
-import { Loader2, ArrowRight } from 'lucide-react';
 import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
+import { Icon } from '../ui/icon';
 
 type InterestFormSchema = z.infer<typeof apiEndpoints.interest.calculate.body>;
 
@@ -210,7 +210,7 @@ const InterestCalculator: React.FC<InterestCalculatorProps> = ({ onUseCalculatio
 
             <Button type='submit' disabled={calculateInterestMutation.isPending} className='w-full'>
               {calculateInterestMutation.isPending ? (
-                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
               ) : null}
               {calculateInterestMutation.isPending ? 'Calculating...' : 'Calculate Interest'}
             </Button>
@@ -236,7 +236,8 @@ const InterestCalculator: React.FC<InterestCalculatorProps> = ({ onUseCalculatio
                 className='h-auto p-0 text-sm'
                 onClick={() => onUseCalculation(form.getValues())}
               >
-                Create Debt from this Calculation <ArrowRight className='ml-1 h-4 w-4' />
+                Create Debt from this Calculation{' '}
+                <Icon name='arrowRight' className='ml-1 h-4 w-4' />
               </Button>
             )}
           </div>

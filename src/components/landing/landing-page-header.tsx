@@ -4,9 +4,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { ModeToggle } from '../theme-toggle';
-import { Menu, X } from 'lucide-react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { usePathname } from 'next/navigation';
+import { Icon } from '../ui/icon';
 
 const navLinks = [
   { name: 'Features', href: '#features' },
@@ -112,7 +112,7 @@ const LandingPageHeader = () => {
                     animate={{ rotate: 0, scale: 1 }}
                     exit={{ rotate: 90, scale: 0.5 }}
                   >
-                    <X className='h-6 w-6' />
+                    <Icon name='x' className='h-6 w-6' />
                   </motion.div>
                 ) : (
                   <motion.div
@@ -121,7 +121,7 @@ const LandingPageHeader = () => {
                     animate={{ rotate: 0, scale: 1 }}
                     exit={{ rotate: -90, scale: 0.5 }}
                   >
-                    <Menu className='h-6 w-6' />
+                    <Icon name='menu' className='h-6 w-6' />
                   </motion.div>
                 )}
               </AnimatePresence>

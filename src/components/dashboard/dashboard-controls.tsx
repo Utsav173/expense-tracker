@@ -2,9 +2,9 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
 import { ModeToggle } from '../theme-toggle';
 import { useRouter } from 'next/navigation';
+import { Icon } from '../ui/icon';
 
 export const DashboardControls: React.FC = () => {
   const router = useRouter();
@@ -22,7 +22,7 @@ export const DashboardControls: React.FC = () => {
               onClick={() => router.back()}
               className='h-9 w-9 rounded-full'
             >
-              <ArrowLeft className='h-4 w-4' />
+              <Icon name='arrowLeft' className='h-4 w-4' />
             </Button>
           </div>
 

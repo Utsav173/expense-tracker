@@ -1,12 +1,12 @@
 import React from 'react';
 import type { InvestmentAccountAPI } from '@/lib/api/api-types';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash, TrendingUp, ChevronRight } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { motion, Variants } from 'framer-motion';
+import { Icon } from '../ui/icon';
 
 const cardVariants: Variants = {
   initial: { opacity: 0, y: 20 },
@@ -70,7 +70,7 @@ const InvestmentAccountCard: React.FC<InvestmentAccountCardProps> = ({
               onEdit(account);
             }}
           >
-            <Edit className='text-muted-foreground h-3.5 w-3.5' />
+            <Icon name='edit' className='text-muted-foreground h-3.5 w-3.5' />
           </Button>
           <Button
             size='icon'
@@ -82,7 +82,7 @@ const InvestmentAccountCard: React.FC<InvestmentAccountCardProps> = ({
               onDelete(account.id);
             }}
           >
-            <Trash className='text-destructive h-3.5 w-3.5' />
+            <Icon name='trash' className='text-destructive h-3.5 w-3.5' />
           </Button>
         </div>
       </div>
@@ -90,7 +90,7 @@ const InvestmentAccountCard: React.FC<InvestmentAccountCardProps> = ({
       <div className='flex flex-grow flex-col justify-center px-4 pb-4'>
         <div className='flex items-center gap-3'>
           <div className='bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-lg transition-transform duration-300 group-hover:scale-110'>
-            <TrendingUp className='h-5 w-5' />
+            <Icon name='trendingUp' className='h-5 w-5' />
           </div>
           <div className='flex-1'>
             <p className='text-muted-foreground text-xs font-medium'>Current Balance</p>
@@ -122,9 +122,9 @@ const InvestmentAccountCard: React.FC<InvestmentAccountCardProps> = ({
             className='group/link text-primary flex items-center gap-1 text-sm font-medium'
           >
             <span className='underline-offset-4 group-hover/link:underline'>View Details</span>
-            <ChevronRight
-              size={14}
-              className='transition-transform duration-200 group-hover/link:translate-x-0.5'
+            <Icon
+              name='chevronRight'
+              className='h-4 w-4 transition-transform duration-200 group-hover/link:translate-x-0.5'
             />
           </Link>
         </div>

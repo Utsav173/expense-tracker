@@ -4,7 +4,6 @@ import React, { useRef } from 'react';
 import { useGSAP } from '@gsap/react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Upload, LayoutGrid, Target } from 'lucide-react';
 import { HowItWorksStep } from './how-it-works-step';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -65,19 +64,19 @@ export const HowItWorksSection = () => {
         <div className='relative mt-20 grid grid-cols-1 gap-y-20 md:grid-cols-3 md:gap-x-8 lg:hidden'>
           <HowItWorksStep
             stepNumber='1'
-            icon={<Upload />}
+            icon={'upload'}
             title='Import & Sync'
             description='Connect accounts, upload spreadsheets, or let our AI process your PDF bank statements automatically.'
           />
           <HowItWorksStep
             stepNumber='2'
-            icon={<LayoutGrid />}
+            icon={'layoutGrid'}
             title='Visualize & Understand'
             description='Watch your data come to life on the interactive dashboard. See where your money goes with beautiful charts.'
           />
           <HowItWorksStep
             stepNumber='3'
-            icon={<Target />}
+            icon={'target'}
             title='Plan & Act'
             description='Set budgets, create savings goals, and track debts. Use the AI assistant to make smarter decisions on the fly.'
           />
@@ -103,21 +102,21 @@ export const HowItWorksSection = () => {
 
           <HowItWorksStep
             stepNumber='1'
-            icon={<Upload />}
+            icon={'upload'}
             title='Import & Sync'
             description='Connect accounts, upload spreadsheets, or let our AI process your PDF bank statements automatically.'
             className='w-1/3'
           />
           <HowItWorksStep
             stepNumber='2'
-            icon={<LayoutGrid />}
+            icon={'layoutGrid'}
             title='Visualize & Understand'
             description='Watch your data come to life on the interactive dashboard. See where your money goes with beautiful charts.'
             className='w-1/3 self-start' // Aligns to the top
           />
           <HowItWorksStep
             stepNumber='3'
-            icon={<Target />}
+            icon={'target'}
             title='Plan & Act'
             description='Set budgets, create savings goals, and track debts. Use the AI assistant to make smarter decisions on the fly.'
             className='w-1/3'

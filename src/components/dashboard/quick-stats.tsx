@@ -4,8 +4,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import NoData from '../ui/no-data';
 import type { AccountAPI } from '@/lib/api/api-types';
 import { cn, formatCurrency } from '@/lib/utils';
-import { ArrowUp, ArrowDown } from 'lucide-react';
 import Loader from '../ui/loader';
+import { Icon } from '../ui/icon';
 
 interface QuickStatsProps {
   data: AccountAPI.DashboardData | null | undefined;
@@ -29,7 +29,7 @@ export const QuickStats: React.FC<QuickStatsProps> = ({ data, isLoading, classNa
           <>
             <div className='flex justify-between'>
               <span className='text-muted-foreground flex items-center gap-1'>
-                <ArrowUp className='text-income h-4 w-4' />
+                <Icon name='arrowUp' className='text-income h-4 w-4' />
                 Highest Income
               </span>
               <span className='text-income font-medium'>
@@ -38,7 +38,7 @@ export const QuickStats: React.FC<QuickStatsProps> = ({ data, isLoading, classNa
             </div>
             <div className='flex justify-between'>
               <span className='text-muted-foreground flex items-center gap-1'>
-                <ArrowUp className='text-income/70 h-4 w-4' />
+                <Icon name='arrowUp' className='text-income/70 h-4 w-4' />
                 Lowest Income
               </span>
               <span className='text-income font-medium'>
@@ -47,7 +47,7 @@ export const QuickStats: React.FC<QuickStatsProps> = ({ data, isLoading, classNa
             </div>
             <div className='flex justify-between'>
               <span className='text-muted-foreground flex items-center gap-1'>
-                <ArrowDown className='text-expense h-4 w-4' />
+                <Icon name='arrowDown' className='text-expense h-4 w-4' />
                 Highest Expense
               </span>
               <span className='text-expense font-medium'>
@@ -58,7 +58,7 @@ export const QuickStats: React.FC<QuickStatsProps> = ({ data, isLoading, classNa
             </div>
             <div className='flex justify-between'>
               <span className='text-muted-foreground flex items-center gap-1'>
-                <ArrowDown className='text-expense/70 h-4 w-4' />
+                <Icon name='arrowDown' className='text-expense/70 h-4 w-4' />
                 Lowest Expense
               </span>
               <span className='text-expense font-medium'>

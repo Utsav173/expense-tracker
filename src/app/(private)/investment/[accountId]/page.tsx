@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   investmentGetAll,
   investmentDelete,
@@ -12,11 +12,10 @@ import {
   investmentAccountGetById,
   investmentAccountGetSummary
 } from '@/lib/endpoints/investmentAccount';
-import { useState } from 'react';
+import { use, useState } from 'react';
 import Loader from '@/components/ui/loader';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/lib/hooks/useToast';
-import { ArrowLeft, PlusCircle, Search } from 'lucide-react';
 import type { InvestmentAPI, InvestmentAccountAPI } from '@/lib/api/api-types';
 import AddInvestmentHoldingModal from '@/components/modals/add-investment-holding-modal';
 import UpdateInvestmentHoldingModal from '@/components/modals/update-investment-holding-modal';
@@ -31,15 +30,16 @@ import { SingleLineEllipsis } from '@/components/ui/ellipsis-components';
 import { useDebounce } from 'use-debounce';
 import { Input } from '@/components/ui/input';
 import dynamic from 'next/dynamic';
+import { Icon } from '@/components/ui/icon';
 
 const InvestmentAccountOverview = dynamic(
   () => import('@/components/investment/investment-account-overview')
 );
 
-const InvestmentAccountDetailPage = () => {
-  const params = useParams();
+const InvestmentAccountDetailPage = ({ params }: { params: Promise<{ accountId: string }> }) => {
+  const parsedParams = use(params);
   const router = useRouter();
-  const accountId = params.accountId as string;
+  const accountId = parsedParams.accountId as string;
   const { showError } = useToast();
   const invalidate = useInvalidateQueries();
 
@@ -55,7 +55,8 @@ const InvestmentAccountDetailPage = () => {
   const { state, setState, handlePageChange } = useUrlState({
     page: 1,
     sortBy: 'purchaseDate',
-    sortOrder: 'desc' as 'asc' | 'desc'
+    sortOrder: 'desc' as 'asc' | 'desc',
+    q: ''
   });
 
   const {
@@ -139,7 +140,7 @@ const InvestmentAccountDetailPage = () => {
 
   const handleStockPrice = async (
     symbol: string
-  ): Promise<InvestmentAPI.GetStockPriceResponse | null> => {
+  ): Promise<InvestmentAPI.StockPriceResult | null> => {
     return investmentStockPrice(symbol);
   };
 
@@ -180,14 +181,18 @@ const InvestmentAccountDetailPage = () => {
             onClick={() => router.replace('/investment')}
             className='shrink-0'
           >
-            <ArrowLeft size={16} className='mr-2' />
+            <Icon name='arrowLeft' className='mr-2 h-4 w-4' />
           </Button>
           <SingleLineEllipsis className='min-w-0 text-xl font-semibold md:text-2xl'>
             {account.name} ({account.platform || 'N/A'})
           </SingleLineEllipsis>
         </div>
-        <Button onClick={() => setIsAddModalOpen(true)} className='shrink-0'>
-          <PlusCircle className='mr-2 h-4 w-4' /> Add Investment
+        <Button
+          variant='planning'
+          className='h-10 shrink-0 px-4 py-2'
+          onClick={() => setIsAddModalOpen(true)}
+        >
+          <Icon name='barChart4' className='mr-2 h-4 w-4' /> Add Investment
         </Button>
       </div>
       {investments?.data.length !== 0 && (
@@ -209,7 +214,10 @@ const InvestmentAccountDetailPage = () => {
         </CardHeader>
         <CardContent>
           <div className='relative mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4'>
-            <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+            <Icon
+              name='search'
+              className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2'
+            />
             <Input
               type='text'
               placeholder='Search investments...'

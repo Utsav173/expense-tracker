@@ -9,8 +9,8 @@ import { formatDistanceToNowStrict, isValid, parseISO, isPast, differenceInDays 
 import Loader from '../ui/loader';
 import { useQuery } from '@tanstack/react-query';
 import { goalGetAll } from '@/lib/endpoints/goal';
-import { Target, TrendingUp, Calendar, CheckCircle2 } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
+import { Icon } from '../ui/icon';
 
 interface GoalHighlightsProps {
   className?: string;
@@ -77,11 +77,11 @@ export const GoalHighlights: React.FC<GoalHighlightsProps> = ({ className }) => 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle2 className='h-4 w-4 text-emerald-600 dark:text-emerald-400' />;
+        return <Icon name='checkCircle2' className='text-success h-4 w-4' />;
       case 'overdue':
-        return <Calendar className='text-destructive h-4 w-4' />;
+        return <Icon name='calendar' className='text-destructive h-4 w-4' />;
       default:
-        return <Target className='text-primary h-4 w-4' />;
+        return <Icon name='target' className='text-primary h-4 w-4' />;
     }
   };
 
@@ -94,12 +94,11 @@ export const GoalHighlights: React.FC<GoalHighlightsProps> = ({ className }) => 
     <Card className={cn('flex flex-col', className)}>
       <CardContent className='w-full overflow-y-auto p-0'>
         <ScrollArea className='h-[507px] max-h-[60vh] px-4 py-4'>
-          {/* Overview Stats */}
           {goalAnalysis && (
             <div className='mb-4 space-y-3'>
               <div className='flex items-baseline justify-between'>
                 <div>
-                  <p className='text-2xl font-bold text-emerald-600 dark:text-emerald-400'>
+                  <p className='text-success text-2xl font-bold'>
                     {formatCurrency(goalAnalysis.totalSaved)}
                   </p>
                   <p className='text-muted-foreground text-sm'>
@@ -108,7 +107,7 @@ export const GoalHighlights: React.FC<GoalHighlightsProps> = ({ className }) => 
                 </div>
                 <div className='text-right'>
                   <div className='flex items-center gap-1'>
-                    <TrendingUp className='h-4 w-4 text-emerald-600 dark:text-emerald-400' />
+                    <Icon name='trendingUp' className='text-success h-4 w-4' />
                     <span className='text-sm font-medium'>
                       {goalAnalysis.completed}/{goalAnalysis.totalGoals}
                     </span>
@@ -132,7 +131,6 @@ export const GoalHighlights: React.FC<GoalHighlightsProps> = ({ className }) => 
             </div>
           )}
 
-          {/* Individual Goals */}
           <div className='space-y-3'>
             {highlightedGoals.data.map((goal) => {
               const goalStatus = getGoalStatus(goal);
@@ -142,10 +140,9 @@ export const GoalHighlights: React.FC<GoalHighlightsProps> = ({ className }) => 
                   key={goal.id}
                   className={cn(
                     'rounded-lg border p-3 transition-all hover:shadow-md',
-                    goalStatus.status === 'completed' &&
-                      'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/30',
+                    goalStatus.status === 'completed' && 'border-success-muted bg-success-muted',
                     goalStatus.status === 'overdue' &&
-                      'border-destructive/20 bg-destructive/5 dark:bg-destructive/10'
+                      'border-destructive-muted bg-destructive-muted'
                   )}
                 >
                   <div className='mb-2 flex items-start justify-between'>
@@ -155,24 +152,20 @@ export const GoalHighlights: React.FC<GoalHighlightsProps> = ({ className }) => 
                         <p
                           className={cn(
                             'truncate text-sm font-medium',
-                            goalStatus.status === 'completed' &&
-                              'text-emerald-700 dark:text-emerald-300'
+                            goalStatus.status === 'completed' && 'text-success'
                           )}
                         >
                           {goal.name}
                         </p>
                         {goalStatus.status === 'completed' && (
-                          <p className='text-xs font-medium text-emerald-600 dark:text-emerald-400'>
-                            Goal achieved!
-                          </p>
+                          <p className='text-success text-xs font-medium'>Goal achieved!</p>
                         )}
                       </div>
                     </div>
                     <span
                       className={cn(
                         'shrink-0 text-sm font-medium',
-                        goalStatus.status === 'completed' &&
-                          'text-emerald-600 dark:text-emerald-400',
+                        goalStatus.status === 'completed' && 'text-success',
                         goalStatus.status === 'overdue' && 'text-destructive'
                       )}
                     >

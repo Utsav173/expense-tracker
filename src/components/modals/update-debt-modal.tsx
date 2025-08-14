@@ -7,13 +7,13 @@ import { Input } from '@/components/ui/input';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { NumericInput } from '../ui/numeric-input';
-import { Info } from 'lucide-react';
 import { Card, CardContent } from '../ui/card';
 import { formatCurrency } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { apiUpdateDebt } from '@/lib/endpoints/debt';
 import type { DebtAndInterestAPI } from '@/lib/api/api-types';
 import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
+import { Icon } from '../ui/icon';
 
 type DebtUpdateFormSchema = z.infer<typeof apiEndpoints.interest.updateDebt.body>;
 
@@ -162,7 +162,7 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
             </div>
 
             <Alert variant='default'>
-              <Info className='h-4 w-4' />
+              <Icon name='info' className='h-4 w-4' />
               <AlertTitle>Note</AlertTitle>
               <AlertDescription>
                 Changing the term will affect the calculated final due date but does not alter

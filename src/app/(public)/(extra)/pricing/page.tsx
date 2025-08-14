@@ -10,7 +10,6 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import { Check, Star, Zap, Rocket } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Product, WithContext } from 'schema-dts';
 import Script from 'next/script';
@@ -21,8 +20,8 @@ import {
   AccordionItem,
   AccordionTrigger
 } from '@/components/ui/accordion';
-// --- STEP 1: Import the modal ---
 import ComingSoonModal from '@/components/modals/comming-soon-modal';
+import { Icon } from '@/components/ui/icon';
 
 const jsonLd: WithContext<Product> = {
   '@context': 'https://schema.org',
@@ -109,7 +108,6 @@ const PricingPage = () => {
       />
       <div className='bg-background min-h-screen px-4 py-16 sm:py-24'>
         <div className='container mx-auto max-w-6xl'>
-          {/* Header Section */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -128,14 +126,12 @@ const PricingPage = () => {
             </p>
           </motion.div>
 
-          {/* Pricing Cards */}
           <div className='mx-auto grid max-w-5xl items-stretch gap-8 lg:grid-cols-2'>
-            {/* Free Plan */}
             <motion.div custom={0} initial='hidden' animate='visible' variants={cardVariants}>
               <Card className='flex h-full flex-col border-2 transition-shadow duration-300 hover:shadow-xl'>
                 <CardHeader className='pb-8'>
                   <CardTitle className='text-foreground flex items-center gap-2 text-2xl font-bold'>
-                    <Rocket className='h-6 w-6' />
+                    <Icon name='rocket' className='h-6 w-6' />
                     Start Your Journey
                   </CardTitle>
                   <CardDescription className='mt-2 text-base'>
@@ -150,7 +146,7 @@ const PricingPage = () => {
                   {freeFeatures.map((feature, index) => (
                     <div key={index} className='flex items-start gap-3'>
                       <div className='bg-primary/10 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full'>
-                        <Check className='text-primary h-3.5 w-3.5' />
+                        <Icon name='check' className='text-primary h-3.5 w-3.5' />
                       </div>
                       <span className='text-foreground'>{feature}</span>
                     </div>
@@ -164,17 +160,16 @@ const PricingPage = () => {
               </Card>
             </motion.div>
 
-            {/* Pro Plan */}
             <motion.div custom={1} initial='hidden' animate='visible' variants={cardVariants}>
               <Card className='border-primary bg-card shadow-primary/10 relative flex h-full flex-col border-2 shadow-2xl'>
                 <div className='absolute top-0 left-1/2 -z-10 h-full w-[200%] -translate-x-1/2 bg-[radial-gradient(circle_farthest-side_at_50%_0,hsl(var(--primary)/0.1),transparent)]' />
                 <CardHeader className='pb-8'>
                   <Badge className='bg-primary text-primary-foreground absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 text-sm font-medium'>
-                    <Star className='mr-1 h-3 w-3' />
+                    <Icon name='star' className='mr-1 h-3 w-3' />
                     Lifetime Access
                   </Badge>
                   <CardTitle className='text-foreground flex items-center gap-2 text-2xl font-bold'>
-                    <Zap className='h-6 w-6' />
+                    <Icon name='zap' className='h-6 w-6' />
                     Unlock Pro
                   </CardTitle>
                   <CardDescription className='mt-2 text-base'>
@@ -189,7 +184,7 @@ const PricingPage = () => {
                   {proFeatures.map((feature, index) => (
                     <div key={index} className='flex items-start gap-3'>
                       <div className='bg-primary/10 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full'>
-                        <Check className='text-primary h-3.5 w-3.5' />
+                        <Icon name='check' className='text-primary h-3.5 w-3.5' />
                       </div>
                       <span className='text-foreground font-medium'>{feature}</span>
                     </div>
@@ -204,7 +199,6 @@ const PricingPage = () => {
             </motion.div>
           </div>
 
-          {/* FAQ Section */}
           <div className='mx-auto mt-24 max-w-3xl text-center'>
             <h3 className='text-foreground mb-4 text-3xl font-bold'>Frequently Asked Questions</h3>
             <p className='text-muted-foreground mx-auto mb-8 max-w-2xl'>

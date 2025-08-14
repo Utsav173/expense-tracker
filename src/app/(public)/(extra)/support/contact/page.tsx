@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Mail, MessageSquare, User, Send, Loader2, LifeBuoy, BookUser } from 'lucide-react';
 import { useToast } from '@/lib/hooks/useToast';
 import { submitContactForm } from '@/lib/endpoints/contact';
 import { Input } from '@/components/ui/input';
@@ -12,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { ContactPage, WithContext } from 'schema-dts';
 import Script from 'next/script';
+import { Icon } from '@/components/ui/icon';
 
 const contactFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }).max(100),
@@ -66,7 +66,10 @@ const ContactSupportPage = () => {
       <div className='bg-background min-h-screen px-4 py-16'>
         <div className='container mx-auto max-w-4xl'>
           <div className='mb-12 text-center'>
-            <MessageSquare className='mx-auto mb-4 h-16 w-16 text-sky-500 dark:text-sky-400' />
+            <Icon
+              name='messageSquare'
+              className='mx-auto mb-4 h-16 w-16 text-sky-500 dark:text-sky-400'
+            />
             <h1 className='text-foreground text-4xl font-bold md:text-5xl'>Contact Support</h1>
             <p className='text-muted-foreground mx-auto mt-4 max-w-2xl text-xl'>
               Have questions or need help? We're here for you.
@@ -74,7 +77,6 @@ const ContactSupportPage = () => {
           </div>
 
           <div className='mx-auto mt-12 grid max-w-4xl grid-cols-1 gap-12 md:grid-cols-2'>
-            {/* Contact Form */}
             <div className='border-border bg-card rounded-lg border p-6 shadow-lg sm:p-8'>
               <form onSubmit={handleSubmit(onSubmit)} className='space-y-6'>
                 <div>
@@ -82,7 +84,10 @@ const ContactSupportPage = () => {
                     Your Name
                   </label>
                   <div className='relative'>
-                    <User className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+                    <Icon
+                      name='user'
+                      className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2'
+                    />
                     <Input
                       id='name'
                       {...register('name')}
@@ -103,7 +108,10 @@ const ContactSupportPage = () => {
                     Your Email
                   </label>
                   <div className='relative'>
-                    <Mail className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+                    <Icon
+                      name='mail'
+                      className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2'
+                    />
                     <Input
                       id='email'
                       type='email'
@@ -163,11 +171,11 @@ const ContactSupportPage = () => {
                   >
                     {isSubmitting ? (
                       <>
-                        <Loader2 className='mr-2 h-4 w-4 animate-spin' /> Sending...
+                        <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' /> Sending...
                       </>
                     ) : (
                       <>
-                        <Send size={16} className='mr-2' /> Send Message
+                        <Icon name='send' className='mr-2' /> Send Message
                       </>
                     )}
                   </Button>
@@ -175,11 +183,10 @@ const ContactSupportPage = () => {
               </form>
             </div>
 
-            {/* Info Block */}
             <div className='space-y-8'>
               <div className='border-border bg-card rounded-lg border p-6 shadow-lg'>
                 <h3 className='text-text-heading flex items-center gap-2 text-lg font-semibold'>
-                  <LifeBuoy className='h-5 w-5 text-sky-500' />
+                  <Icon name='lifeBuoy' className='h-5 w-5 text-sky-500' />
                   Direct Contact
                 </h3>
                 <p className='text-text-body mt-2'>
@@ -194,7 +201,7 @@ const ContactSupportPage = () => {
               </div>
               <div className='border-border bg-card rounded-lg border p-6 shadow-lg'>
                 <h3 className='text-text-heading flex items-center gap-2 text-lg font-semibold'>
-                  <BookUser className='h-5 w-5 text-emerald-500' />
+                  <Icon name='bookUser' className='h-5 w-5 text-emerald-500' />
                   Looking for Answers?
                 </h3>
                 <p className='text-text-body mt-2'>

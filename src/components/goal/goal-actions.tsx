@@ -1,7 +1,6 @@
 'use client';
 import type { GoalAPI, UserAPI } from '@/lib/api/api-types';
 import { Button } from '@/components/ui/button';
-import { Pencil, Target, Trash2 } from 'lucide-react';
 import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
 import { useToast } from '@/lib/hooks/useToast';
 import { useMutation } from '@tanstack/react-query';
@@ -10,6 +9,7 @@ import UpdateGoalModal from '../modals/update-goal-modal';
 import { useState } from 'react';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import AddWithdrawGoalAmountModal from '../modals/add-withdraw-goal-amount-modal';
+import { Icon } from '../ui/icon';
 
 interface GoalActionsProps {
   goal: GoalAPI.SavingGoal;
@@ -54,7 +54,7 @@ export function GoalActions({ goal, user, refetchGoals }: GoalActionsProps) {
         onClick={() => handleOpenAddWithdrawModal('add')}
         aria-label='Add Amount to Goal'
       >
-        <Target className='h-4 w-4' />
+        <Icon name='target' className='h-4 w-4' />
         <span className='sr-only'>Add Amount</span>
       </Button>
       <Button
@@ -86,7 +86,7 @@ export function GoalActions({ goal, user, refetchGoals }: GoalActionsProps) {
         onClick={() => setIsUpdateModalOpen(true)}
         aria-label='Edit Goal'
       >
-        <Pencil className='h-4 w-4' />
+        <Icon name='pencil' className='h-4 w-4' />
         <span className='sr-only'>Edit Goal</span>
       </Button>
       <DeleteConfirmationModal
@@ -108,7 +108,7 @@ export function GoalActions({ goal, user, refetchGoals }: GoalActionsProps) {
             onClick={() => setIsDeleteModalOpen(true)}
             aria-label='Delete Goal'
           >
-            <Trash2 className='h-4 w-4' />
+            <Icon name='trash2' className='h-4 w-4' />
             <span className='sr-only'>Delete Goal</span>
           </Button>
         }

@@ -3,8 +3,8 @@
 import React from 'react';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { GripVertical } from 'lucide-react';
 import { Header } from '@tanstack/react-table';
+import { Icon } from './icon';
 
 export function DataTableResizer<TData, TValue>({ header }: { header: Header<TData, TValue> }) {
   const isResizing = header.column.getIsResizing();
@@ -29,11 +29,11 @@ export function DataTableResizer<TData, TValue>({ header }: { header: Header<TDa
             'bg-border': !isResizing
           })}
         />
-        <GripVertical
+        <Icon
+          name='gripVertical'
           className={cn('text-muted-foreground/70 absolute h-4 w-4', {
             'text-primary': isResizing
           })}
-          strokeWidth={1.5}
         />
       </div>
     </div>

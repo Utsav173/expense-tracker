@@ -1,25 +1,15 @@
-'use client';
-
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn, formatCurrency } from '@/lib/utils';
 import NoData from '../ui/no-data';
-import {
-  WalletCards,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  AlertTriangle,
-  DollarSign,
-  PiggyBank
-} from 'lucide-react';
 import { investmentGetPortfolioSummary } from '@/lib/endpoints/investment';
 import { useToast } from '@/lib/hooks/useToast';
 import Link from 'next/link';
 import { Button } from '../ui/button';
 import TooltipElement from '../ui/tooltip-element';
 import Loader from '../ui/loader';
+import { Icon } from '../ui/icon';
 
 export const InvestmentSummaryCard: React.FC<{
   className?: string;
@@ -51,7 +41,7 @@ export const InvestmentSummaryCard: React.FC<{
     return (
       <NoData
         message={error ? 'Could not load data.' : 'No investments tracked yet.'}
-        icon={error ? 'x-circle' : 'inbox'}
+        icon={error ? 'xCircle' : 'inbox'}
       />
     );
   }
@@ -70,7 +60,11 @@ export const InvestmentSummaryCard: React.FC<{
 
   const isPositiveReturn = overallGainLoss >= 0;
   const returnVariant = isPositiveReturn ? 'positive' : 'negative';
-  const ReturnIcon = isPositiveReturn ? TrendingUp : overallGainLoss < 0 ? TrendingDown : Minus;
+  const returnIcon = isPositiveReturn
+    ? 'trendingUp'
+    : overallGainLoss < 0
+      ? 'trendingDown'
+      : 'minus';
 
   return (
     <Card className={cn('flex h-full flex-col shadow-sm', className)}>
@@ -80,8 +74,8 @@ export const InvestmentSummaryCard: React.FC<{
           account{numberOfAccounts !== 1 ? 's' : ''}
           {valueIsEstimate && (
             <TooltipElement tooltipContent='Values are estimated due to mixed currencies or missing price data.'>
-              <span className='ml-2 inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-300'>
-                <AlertTriangle className='mr-1 h-3 w-3' />
+              <span className='bg-warning-muted text-warning-foreground ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium'>
+                <Icon name='alertTriangle' className='mr-1 h-3 w-3' />
                 Est.
               </span>
             </TooltipElement>
@@ -89,37 +83,35 @@ export const InvestmentSummaryCard: React.FC<{
         </CardTitle>
       </CardHeader>
 
-      <CardContent className='flex flex-1 flex-col items-stretch justify-evenly'>
-        {/* Primary Metrics */}
+      <CardContent className='flex flex-1 flex-col items-stretch justify-evenly gap-2'>
         <div className='grid grid-cols-2 gap-4'>
           <MetricCard
             label='Current Value'
             value={formatCurrency(currentMarketValue, currency)}
-            icon={<DollarSign className='h-4 w-4' />}
+            icon={<Icon name={returnIcon} className='h-4 w-4' />}
             variant='primary'
           />
           <MetricCard
             label='Total Invested'
             value={formatCurrency(totalInvestedAmount, currency)}
-            icon={<PiggyBank className='h-4 w-4' />}
+            icon={<Icon name='piggyBank' className='h-4 w-4' />}
             variant='secondary'
           />
         </div>
 
-        {/* Performance Metrics */}
         <div className='grid grid-cols-2 gap-4'>
           <MetricCard
             label='Total Return'
             value={formatCurrency(overallGainLoss, currency)}
             secondaryValue={`${overallGainLossPercentage?.toFixed(1) ?? '0.0'}%`}
-            icon={<ReturnIcon className='h-4 w-4' />}
+            icon={<Icon name={returnIcon} className='h-4 w-4' />}
             variant={returnVariant}
             highlight={true}
           />
           <MetricCard
             label='Dividends Earned'
             value={formatCurrency(totalDividends, currency)}
-            icon={<TrendingUp className='h-4 w-4' />}
+            icon={<Icon name='trendingUp' className='h-4 w-4' />}
             variant='positive'
           />
         </div>
@@ -146,7 +138,7 @@ const MetricCard: React.FC<{
     switch (variant) {
       case 'primary':
         return {
-          container: 'bg-primary/5 border border-primary/20 dark:bg-primary/10',
+          container: 'bg-primary-muted border border-primary/20',
           text: 'text-primary',
           icon: 'text-primary'
         };
@@ -158,16 +150,15 @@ const MetricCard: React.FC<{
         };
       case 'positive':
         return {
-          container:
-            'bg-emerald-50 border border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800/30',
-          text: 'text-emerald-700 dark:text-emerald-400',
-          icon: 'text-emerald-600 dark:text-emerald-400'
+          container: 'bg-success-muted border border-success-muted',
+          text: 'text-success',
+          icon: 'text-success'
         };
       case 'negative':
         return {
-          container: 'bg-red-50 border border-red-200 dark:bg-red-950/20 dark:border-red-800/30',
-          text: 'text-red-700 dark:text-red-400',
-          icon: 'text-red-600 dark:text-red-400'
+          container: 'bg-destructive-muted border border-destructive-muted',
+          text: 'text-destructive',
+          icon: 'text-destructive'
         };
       default:
         return {

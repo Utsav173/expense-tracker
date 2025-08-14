@@ -8,12 +8,11 @@ import { useToast } from '@/lib/hooks/useToast';
 import { submitContactForm } from '@/lib/endpoints/contact';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Loader2, MessageSquare, Send, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Icon } from '@/components/ui/icon';
 
-// Add the optional email field to the schema for validation
 const feedbackFormSchema = z.object({
   experience: z.string().min(1, { message: 'Please select your experience.' }),
   suggestion: z.string().min(10, { message: 'Feedback must be at least 10 characters.' }).max(2000),
@@ -30,7 +29,6 @@ const FeedbackPage = () => {
   const { showSuccess, showError } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // No longer need useAuth here
   const form = useForm<FeedbackFormValues>({
     resolver: zodResolver(feedbackFormSchema),
     defaultValues: {
@@ -43,10 +41,9 @@ const FeedbackPage = () => {
   const onSubmit = async (data: FeedbackFormValues) => {
     setIsSubmitting(true);
     try {
-      // Construct the payload dynamically
       const payload = {
         name: data.email || 'Anonymous Feedback',
-        email: data.email || 'no-reply@expensepro.app', // Use a no-reply address if email is not provided
+        email: data.email || 'no-reply@expensepro.app',
         subject: `Feedback: ${data.experience}`,
         message: `User Experience: ${data.experience}\n\nSuggestion:\n${data.suggestion}\n\nUser Email: ${data.email || 'Not Provided'}`
       };
@@ -65,7 +62,10 @@ const FeedbackPage = () => {
     <div className='bg-background min-h-screen px-4 py-16'>
       <div className='container mx-auto max-w-2xl'>
         <div className='mb-12 text-center'>
-          <MessageSquare className='mx-auto mb-4 h-16 w-16 text-sky-500 dark:text-sky-400' />
+          <Icon
+            name='messageSquare'
+            className='mx-auto mb-4 h-16 w-16 text-sky-500 dark:text-sky-400'
+          />
           <h1 className='text-foreground text-4xl font-bold md:text-5xl'>Share Your Feedback</h1>
           <p className='text-muted-foreground mx-auto mt-4 max-w-2xl text-xl'>
             We're constantly working to improve Expense Pro. Your thoughts and suggestions are
@@ -90,7 +90,7 @@ const FeedbackPage = () => {
                     disabled={isSubmitting}
                   >
                     <ToggleGroupItem value='Excellent' aria-label='Excellent' className='gap-2'>
-                      <ThumbsUp className='h-4 w-4' /> Excellent
+                      <Icon name='thumbsUp' className='h-4 w-4' /> Excellent
                     </ToggleGroupItem>
                     <ToggleGroupItem value='Good' aria-label='Good'>
                       Good
@@ -103,7 +103,7 @@ const FeedbackPage = () => {
                       aria-label='Needs Improvement'
                       className='gap-2'
                     >
-                      <ThumbsDown className='h-4 w-4' /> Improvement
+                      <Icon name='thumbsDown' className='h-4 w-4' /> Improvement
                     </ToggleGroupItem>
                   </ToggleGroup>
                   {fieldState.error && (
@@ -167,11 +167,12 @@ const FeedbackPage = () => {
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className='mr-2 h-4 w-4 animate-spin' /> Sending Feedback...
+                    <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' /> Sending
+                    Feedback...
                   </>
                 ) : (
                   <>
-                    <Send size={16} className='mr-2' /> Submit Feedback
+                    <Icon name='send' className='mr-2' /> Submit Feedback
                   </>
                 )}
               </Button>

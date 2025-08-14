@@ -2,12 +2,12 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { BrainCircuit, X } from 'lucide-react';
 import { AiChat } from './ai-chat';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/components/providers/auth-provider';
+import { Icon } from '@/components/ui/icon';
 
 export const AiChatTrigger = () => {
   const isMobile = useIsMobile();
@@ -42,10 +42,8 @@ export const AiChatTrigger = () => {
                 className={cn(buttonClasses)}
                 aria-label={'AI Assistant'}
               >
-                {/* Pulsing ring for attention */}
                 <span className='bg-primary absolute h-full w-full animate-ping rounded-full opacity-20' />
 
-                {/* Icon transition */}
                 <AnimatePresence mode='wait' initial={false}>
                   <motion.div
                     key='ai'
@@ -54,7 +52,7 @@ export const AiChatTrigger = () => {
                     animate='animate'
                     exit='exit'
                   >
-                    <BrainCircuit className='h-6 w-6' />
+                    <Icon name='brainCircuit' className='h-6 w-6' />
                   </motion.div>
                 </AnimatePresence>
               </motion.button>

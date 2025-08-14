@@ -1,53 +1,49 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { categoryGetAll } from '@/lib/endpoints/category';
-import { useCategoryFilters } from '@/components/category/hooks/useCategoryFilters';
-import { usePagination } from '@/hooks/usePagination';
 import CategoryList from '@/components/category/category-list';
 import AddCategoryModal from '@/components/modals/add-category-modal';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
 import type { CategoryAPI } from '@/lib/api/api-types';
+import { Button } from '@/components/ui/button';
+import { useUrlState } from '@/hooks/useUrlState';
+import { useDebounce } from 'use-debounce';
+import { Icon } from '@/components/ui/icon';
 
 const CategoryPage = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
 
-  const { filters, setSearchQuery, handleSort } = useCategoryFilters();
+  const { state, setState, handlePageChange } = useUrlState({
+    page: 1,
+    q: '',
+    sortBy: 'createdAt',
+    sortOrder: 'asc' as 'asc' | 'desc'
+  });
 
-  const { page, handlePageChange } = usePagination(
-    Number(searchParams.get('page')) || 1,
-    (params) => {
-      const currentParams = new URLSearchParams(searchParams.toString());
-      Object.keys(params).forEach((key) => {
-        if (params[key] === undefined || params[key] === null || params[key] === '') {
-          currentParams.delete(key);
-        } else {
-          currentParams.set(key.toString(), params[key]);
-        }
-      });
-      const newUrl = `${pathname}?${currentParams.toString()}`;
+  const [searchQuery, setSearchQuery] = useState(state.q);
+  const [debouncedSearchQuery] = useDebounce(searchQuery, 600);
 
-      router.push(newUrl, { scroll: false });
-    }
-  );
+  useEffect(() => {
+    setState({ q: debouncedSearchQuery, page: 1 });
+  }, [debouncedSearchQuery, setState]);
 
   const { data, isLoading, isError, error, refetch } = useQuery<CategoryAPI.GetCategoriesResponse>({
-    queryKey: ['categories', page, filters.debouncedSearchQuery, filters.sortBy, filters.sortOrder],
+    queryKey: ['categories', state.page, state.q, state.sortBy, state.sortOrder],
     queryFn: () =>
       categoryGetAll({
-        page: page,
+        page: state.page,
         limit: 10,
-        search: filters.debouncedSearchQuery,
-        sortBy: filters.sortBy,
-        sortOrder: filters.sortOrder
+        search: state.q,
+        sortBy: state.sortBy,
+        sortOrder: state.sortOrder
       })
   });
+
+  const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    setState({ sortBy, sortOrder, page: 1 });
+  };
 
   return (
     <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
@@ -55,17 +51,25 @@ const CategoryPage = () => {
         <h1 className='text-3xl font-semibold'>Category</h1>
         <AddCategoryModal
           isOpen={isAddModalOpen}
-          onOpenChange={() => setIsAddModalOpen(!isAddModalOpen)}
+          onOpenChange={setIsAddModalOpen}
           onCategoryAdded={refetch}
+          triggerButton={
+            <Button variant='category' className='h-10 px-4 py-2'>
+              <Icon name='tag' className='mr-2 h-4 w-4' />
+              Create Category
+            </Button>
+          }
         />
       </div>
       <div className='relative flex-1'>
-        <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
-
+        <Icon
+          name='search'
+          className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2'
+        />
         <Input
           type='text'
           placeholder='Search by category name...'
-          value={filters.searchQuery}
+          value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className='pl-9'
         />
@@ -76,9 +80,9 @@ const CategoryPage = () => {
         data={data}
         isLoading={isLoading}
         onSort={handleSort}
-        sortBy={filters.sortBy}
-        sortOrder={filters.sortOrder}
-        page={page}
+        sortBy={state.sortBy}
+        sortOrder={state.sortOrder}
+        page={state.page}
         handlePageChange={handlePageChange}
         refetch={refetch}
       />

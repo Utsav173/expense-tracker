@@ -22,8 +22,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CurrencyCombobox } from '../ui/currency-combobox';
-import { Loader2, Camera, Edit3, X, Save } from 'lucide-react';
 import { Label } from '../ui/label';
+import { Icon } from '../ui/icon';
 
 const profileUpdateSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters.').max(64).trim(),
@@ -118,7 +118,7 @@ export const ProfileInformationForm = () => {
                     htmlFor='profile-upload'
                     className='bg-primary text-primary-foreground absolute -right-2 -bottom-2 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-transform hover:scale-110'
                   >
-                    <Camera className='h-4 w-4' />
+                    <Icon name='camera' className='h-4 w-4' />
                     <input
                       id='profile-upload'
                       type='file'
@@ -131,7 +131,7 @@ export const ProfileInformationForm = () => {
               <div className='flex items-center gap-2'>
                 {!isEditing && (
                   <Button variant='outline' onClick={() => setIsEditing(true)}>
-                    <Edit3 className='mr-2 h-4 w-4' /> Edit Profile
+                    <Icon name='edit3' className='mr-2 h-4 w-4' /> Edit Profile
                   </Button>
                 )}
               </div>
@@ -183,11 +183,13 @@ export const ProfileInformationForm = () => {
                   onClick={handleCancel}
                   disabled={mutation.isPending}
                 >
-                  <X className='mr-2 h-4 w-4' /> Cancel
+                  <Icon name='x' className='mr-2 h-4 w-4' /> Cancel
                 </Button>
                 <Button type='submit' disabled={mutation.isPending || !form.formState.isDirty}>
-                  {mutation.isPending && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-                  <Save className='mr-2 h-4 w-4' /> Save Changes
+                  {mutation.isPending && (
+                    <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
+                  )}
+                  <Icon name='save' className='mr-2 h-4 w-4' /> Save Changes
                 </Button>
               </div>
             )}

@@ -6,14 +6,14 @@ import dynamic from 'next/dynamic';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { Icon } from '../ui/icon';
 
-const FinancialOrb = dynamic(
-  () => import('@/components/landing/3d/financial-orb').then((mod) => mod.FinancialOrb),
-  { ssr: false }
-);
+// const FinancialOrb = dynamic(
+//   () => import('@/components/landing/3d/financial-orb').then((mod) => mod.FinancialOrb),
+//   { ssr: false }
+// );
 
 const HeroSection = () => {
   const mainRef = useRef<HTMLDivElement>(null);
@@ -48,7 +48,7 @@ const HeroSection = () => {
       <div className='relative z-10 container mx-auto flex flex-col items-center justify-center px-4 pt-20 text-center max-sm:mb-40 sm:pt-24 lg:pt-0'>
         <div className='hero-anim'>
           <Badge variant='outline' className='border-primary/20 bg-primary/10 text-primary'>
-            <Sparkles className='mr-2 h-3 w-3' />
+            <Icon name='sparkles' className='mr-2 h-3 w-3' />
             Your Personal AI Financial Analyst
           </Badge>
         </div>
@@ -80,7 +80,10 @@ const HeroSection = () => {
           <Link href='/auth/signup'>
             <Button size='lg' className='group h-12 px-8 text-base font-bold'>
               Get Started for Free
-              <ArrowRight className='ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1' />
+              <Icon
+                name='arrowRight'
+                className='ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1'
+              />
             </Button>
           </Link>
         </div>
@@ -93,9 +96,7 @@ const HeroSection = () => {
           '[mask-image:linear-gradient(to_top,rgba(249,250,251,1)_20%,transparent)]'
         )}
       >
-        <Suspense fallback={null}>
-          <FinancialOrb />
-        </Suspense>
+        <Suspense fallback={null}>{/* <FinancialOrb /> */}</Suspense>
       </div>
     </section>
   );

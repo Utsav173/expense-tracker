@@ -11,7 +11,6 @@ import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import AddModal from './add-modal';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
-import { Loader2 } from 'lucide-react';
 import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
 import {
   Form,
@@ -21,6 +20,7 @@ import {
   FormLabel,
   FormMessage
 } from '@/components/ui/form';
+import { Icon } from '../ui/icon';
 
 type CategorySchemaType = z.infer<typeof apiEndpoints.category.create.body>;
 
@@ -147,7 +147,7 @@ const AddCategoryModal: React.FC<CreateCategoryModalProps> = ({
             <Button type='submit' disabled={isSubmitDisabled} className='min-w-[100px]'>
               {isPending ? (
                 <>
-                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
                   {categoryId ? 'Updating...' : 'Creating...'}
                 </>
               ) : categoryId ? (

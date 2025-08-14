@@ -5,8 +5,6 @@ import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import type { AIAPI } from '@/lib/api/api-types';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Bot, User, ClipboardCopy, Check, FileText } from 'lucide-react';
-import { format } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -17,6 +15,8 @@ import AiChartRenderer from './ai-chart-renderer';
 import AiTransactionPreview from '@/components/transactions/ai-transaction-preview';
 import AiRecordsTable from './ai-records-table';
 import AiMetricsDisplay from './ai-metrics-display';
+import { Icon } from '@/components/ui/icon';
+import { format } from 'date-fns';
 
 interface ChatMessage extends AIAPI.ParsedAIResponse {
   id: string;
@@ -61,7 +61,7 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
       {!isUser && (
         <Avatar className='h-8 w-8 shrink-0 border'>
           <AvatarFallback className='bg-muted'>
-            <Bot className='h-4 w-4' />
+            <Icon name='bot' className='h-4 w-4' />
           </AvatarFallback>
         </Avatar>
       )}
@@ -82,9 +82,9 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
             aria-label='Copy message'
           >
             {copied ? (
-              <Check className='h-3.5 w-3.5 text-green-500' />
+              <Icon name='check' className='h-3.5 w-3.5 text-green-500' />
             ) : (
-              <ClipboardCopy className='h-3.5 w-3.5' />
+              <Icon name='clipboardCopy' className='h-3.5 w-3.5' />
             )}
           </Button>
         )}
@@ -97,7 +97,7 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
 
         {message.document && (
           <div className='bg-muted/50 mb-2 flex items-center gap-3 rounded-lg border p-3'>
-            <FileText className='text-muted-foreground h-6 w-6 shrink-0' />
+            <Icon name='fileText' className='text-muted-foreground h-6 w-6 shrink-0' />
             <div className='min-w-0'>
               <p className='truncate text-sm font-medium'>{message.document.name}</p>
               <p className='text-muted-foreground text-xs uppercase'>{message.document.type}</p>
@@ -150,7 +150,7 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
       {isUser && (
         <Avatar className='h-8 w-8 shrink-0 border'>
           <AvatarFallback>
-            <User className='h-4 w-4' />
+            <Icon name='user' className='h-4 w-4' />
           </AvatarFallback>
         </Avatar>
       )}

@@ -3,13 +3,13 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { useAiChat } from '@/components/ai/hooks/useAiChat';
 import { Button } from '@/components/ui/button';
-import { Send, Loader2, Wand2, Bot, Paperclip, X, FileText } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatMessageBubble } from './chat-message-bubble';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { useToast } from '@/lib/hooks/useToast';
+import { Icon } from '@/components/ui/icon';
 
 const PromptSuggestion = ({ text, onClick }: { text: string; onClick: () => void }) => (
   <motion.button
@@ -159,7 +159,7 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
                 className='text-muted-foreground flex h-full flex-col items-center justify-center p-8 text-center'
               >
                 <div className='bg-primary/10 mb-4 rounded-full p-3'>
-                  <Wand2 className='text-primary h-8 w-8' />
+                  <Icon name='wand2' className='text-primary h-8 w-8' />
                 </div>
                 <h3 className='text-foreground text-xl font-semibold'>How can I help you today?</h3>
                 <p className='mt-2 mb-6 text-sm'>
@@ -201,7 +201,7 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
                 <div className='flex items-end justify-start space-x-3'>
                   <Avatar className='h-8 w-8 shrink-0 border'>
                     <AvatarFallback className='bg-muted'>
-                      <Bot className='h-4 w-4' />
+                      <Icon name='bot' className='h-4 w-4' />
                     </AvatarFallback>
                   </Avatar>
                   <div className='bg-muted flex items-center space-x-1.5 rounded-2xl rounded-bl-none px-4 py-3 shadow-sm'>
@@ -266,7 +266,7 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
               className='absolute top-1 right-1 h-6 w-6 rounded-full'
               onClick={resetFileInput}
             >
-              <X className='h-4 w-4' />
+              <Icon name='x' className='h-4 w-4' />
             </Button>
             {filePreview ? (
               <Image
@@ -278,7 +278,7 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
               />
             ) : (
               <div className='flex items-center gap-3'>
-                <FileText className='text-muted-foreground h-8 w-8 shrink-0' />
+                <Icon name='fileText' className='text-muted-foreground h-8 w-8 shrink-0' />
                 <p className='truncate text-sm font-medium'>{attachedFile.name}</p>
               </div>
             )}
@@ -299,7 +299,7 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
             onClick={() => fileInputRef.current?.click()}
             disabled={isInputDisabled}
           >
-            <Paperclip className='h-4 w-4' />
+            <Icon name='paperclip' className='h-4 w-4' />
           </Button>
           <input
             type='file'
@@ -333,9 +333,9 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
             onClick={() => handleSendMessage()}
           >
             {isLoading || isStreaming ? (
-              <Loader2 className='h-4 w-4 animate-spin' />
+              <Icon name='loader2' className='h-4 w-4 animate-spin' />
             ) : (
-              <Send className='h-4 w-4' />
+              <Icon name='send' className='h-4 w-4' />
             )}
           </Button>
         </div>

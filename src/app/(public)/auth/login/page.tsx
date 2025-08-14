@@ -13,9 +13,8 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { PasswordInput } from '@/components/ui/password-input';
 import { WebPage, WithContext } from 'schema-dts';
 import Script from 'next/script';
-import { Loader2 } from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Icon } from '@/components/ui/icon';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -62,7 +61,6 @@ const LoginPage = () => {
         },
         onError: (ctx: any) => {
           setLoading(false);
-          // Handle unverified email error
           if (ctx.error.status === 403 && ctx.error.code === 'EMAIL_NOT_VERIFIED') {
             showInfo('Your email is not verified. Please check your inbox for an OTP.');
             router.push(`/auth/verify-otp?email=${data.email}&type=email-verification`);
@@ -128,7 +126,7 @@ const LoginPage = () => {
             <Button type='submit' disabled={loading} className='w-full'>
               {loading ? (
                 <>
-                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
                   Signing In ..
                 </>
               ) : (
@@ -145,24 +143,6 @@ const LoginPage = () => {
               <span className='bg-background text-muted-foreground px-2'>Or continue with</span>
             </div>
           </div>
-          {/* <TooltipProvider delayDuration={100}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant='outline' className='w-full' disabled={true} title='Coming soon'>
-                  <svg role='img' viewBox='0 0 24 24' className='mr-2 h-4 w-4'>
-                    <path
-                      fill='currentColor'
-                      d='M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.542-1.37-1.32-1.735-1.32-1.735-1.08-.744.08-.73.08-.73 1.19.08 1.82 1.22 1.82 1.22 1.06 1.81 2.809 1.289 3.495.98.108-.76.417-1.285.76-1.577-2.665-.295-5.464-1.334-5.464-5.93 0-1.31.465-2.38 1.235-3.22-.12-.3-.54-1.52.115-3.175 0 0 1-.32 3.3-.12.965-.26 1.98-.39 3-.39 1.02.0 2.035.13 3 .39 2.295-.2 3.295.12 3.295.12.655 1.65.235 2.875.115 3.175.77.84 1.235 1.91 1.235 3.22 0 4.61-2.8 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.6-.01 2.89-.01 3.285 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12'
-                    />
-                  </svg>
-                  Sign in with GitHub
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>GitHub Sign-In is coming soon!</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider> */}
         </CardContent>
 
         <CardFooter className='flex items-center justify-between gap-2 pt-4 max-sm:mt-2 max-sm:flex-col max-sm:justify-center'>

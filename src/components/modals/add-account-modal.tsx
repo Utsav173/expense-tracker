@@ -21,8 +21,8 @@ import {
   FormMessage
 } from '@/components/ui/form';
 import { NumericFormat } from 'react-number-format';
-import { Loader2, PlusCircle } from 'lucide-react';
 import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
+import { Icon } from '../ui/icon';
 
 type AccountFormSchema = z.infer<typeof apiEndpoints.accounts.create.body>;
 
@@ -71,9 +71,11 @@ const AddAccountModal = () => {
     <AddModal
       title='Add Account'
       description='Create a new financial account to track your transactions.'
+      icon={<Icon name='wallet' className='h-5 w-5' />}
+      iconClassName='bg-primary-muted text-primary'
       triggerButton={
-        <Button className='w-full' variant='default'>
-          <PlusCircle className='mr-2 h-4 w-4' /> Create Account
+        <Button className='btn-primary h-10 w-full px-4 py-2'>
+          <Icon name='wallet2' className='mr-2 h-4 w-4' /> Create Account
         </Button>
       }
       isOpen={isOpen}
@@ -158,7 +160,7 @@ const AddAccountModal = () => {
             >
               {createAccountMutation.isPending ? (
                 <>
-                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
                   Creating...
                 </>
               ) : (

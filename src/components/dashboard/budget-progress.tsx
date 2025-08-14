@@ -17,8 +17,8 @@ import {
 import { useToast } from '@/lib/hooks/useToast';
 import Link from 'next/link';
 import { Button } from '../ui/button';
-import { CheckCircle2, AlertCircle, TrendingUp } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
+import { Icon } from '../ui/icon';
 
 interface BudgetItemProps {
   item: {
@@ -38,9 +38,9 @@ const BudgetItem: React.FC<BudgetItemProps> = ({ item }) => {
   const isNearLimit = progress > 85 && progress <= 100;
 
   const getStatusIcon = () => {
-    if (isOverBudget) return <AlertCircle className='text-destructive h-3.5 w-3.5' />;
-    if (isNearLimit) return <TrendingUp className='h-3.5 w-3.5 text-orange-500' />;
-    return <CheckCircle2 className='h-3.5 w-3.5 text-green-500' />;
+    if (isOverBudget) return <Icon name='shieldAlert' className='text-destructive h-3.5 w-3.5' />;
+    if (isNearLimit) return <Icon name='trendingUp' className='h-3.5 w-3.5 text-orange-500' />;
+    return <Icon name='checkCircle2' className='h-3.5 w-3.5 text-green-500' />;
   };
 
   const getProgressColor = () => {
@@ -183,7 +183,7 @@ export const BudgetProgress: React.FC<{ className?: string }> = ({ className }) 
             </div>
           ) : error ? (
             <div className='flex h-full items-center justify-center py-8'>
-              <NoData message='Could not load budget data' icon='x-circle' />
+              <NoData message='Could not load budget data' icon='xCircle' />
             </div>
           ) : !data || data.length === 0 ? (
             <div className='flex h-full items-center justify-center py-8'>

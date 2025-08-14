@@ -1,10 +1,10 @@
 'use client';
 import React from 'react';
 import { useDropzone } from 'react-dropzone';
-import { FileUp } from 'lucide-react';
 import { useToast } from '@/lib/hooks/useToast';
 import { cn } from '@/lib/utils';
 import Loader from '../ui/loader';
+import { Icon } from '../ui/icon';
 
 interface ImportDropzoneProps {
   onFileDrop: (file: File) => void;
@@ -49,7 +49,7 @@ const ImportDropzone: React.FC<ImportDropzoneProps> = ({ onFileDrop, isLoading, 
         <Loader />
       ) : (
         <>
-          <FileUp className='text-muted-foreground h-12 w-12' />
+          <Icon name='fileUp' className='text-muted-foreground h-12 w-12' />
           <p className='mt-4 text-sm font-medium'>
             {isDragActive
               ? 'Drop the file here...'

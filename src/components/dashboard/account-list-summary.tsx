@@ -9,6 +9,7 @@ import { Button } from '../ui/button';
 import { SingleLineEllipsis } from '../ui/ellipsis-components';
 import { useQuery } from '@tanstack/react-query';
 import { accountGetDropdown } from '@/lib/endpoints/accounts';
+import { Icon } from '@/components/ui/icon';
 
 interface AccountListSummaryProps {
   accountsInfo: AccountAPI.DashboardData['accountsInfo'] | undefined;

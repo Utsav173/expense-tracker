@@ -2,17 +2,6 @@
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import {
-  FileText,
-  AlertCircle,
-  KeyRound,
-  Upload,
-  CheckCircle2,
-  ArrowRight,
-  Sparkles,
-  Database,
-  Shield
-} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/lib/hooks/useToast';
 import {
@@ -25,7 +14,6 @@ import {
 import { accountGetDropdown } from '@/lib/endpoints/accounts';
 import { useQuery } from '@tanstack/react-query';
 import { importTransactions, confirmImport } from '@/lib/endpoints/import';
-import * as XLSX from 'xlsx';
 import {
   Dialog,
   DialogContent,
@@ -46,6 +34,8 @@ import { aiProcessTransactionPdf } from '@/lib/endpoints/ai';
 // --- CSS Imports for React-PDF (these are safe) ---
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
+import { Icon } from '@/components/ui/icon';
+import { IconName } from '@/components/ui/icon-map';
 
 const ImportTransactionsPage = () => {
   const [loading, setLoading] = useState(false);
@@ -140,6 +130,8 @@ const ImportTransactionsPage = () => {
             Category: tx.category || 'Uncategorized'
           }));
         } else {
+          const XLSX = await import('xlsx');
+
           const data = await file.arrayBuffer();
           const workbook = XLSX.read(data, { type: 'buffer' });
           const worksheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -208,6 +200,8 @@ const ImportTransactionsPage = () => {
 
     setLoading(true);
     try {
+      const XLSX = await import('xlsx');
+
       const ws = XLSX.utils.json_to_sheet(selectedRows);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
@@ -266,10 +260,10 @@ const ImportTransactionsPage = () => {
 
   const selectedRowCount = Object.keys(rowSelection).length;
 
-  const steps = [
-    { id: 1, name: 'Upload', icon: Upload, description: 'Choose your file' },
-    { id: 2, name: 'Review', icon: FileText, description: 'Verify transactions' },
-    { id: 3, name: 'Complete', icon: CheckCircle2, description: 'Finalize import' }
+  const steps: Array<{ id: number; name: string; icon: IconName; description: string }> = [
+    { id: 1, name: 'Upload', icon: 'upload', description: 'Choose your file' },
+    { id: 2, name: 'Review', icon: 'fileText', description: 'Verify transactions' },
+    { id: 3, name: 'Complete', icon: 'checkCircle2', description: 'Finalize import' }
   ];
 
   return (
@@ -278,7 +272,10 @@ const ImportTransactionsPage = () => {
         {/* Header Section */}
         <div className='mb-6 text-center max-sm:mb-3'>
           <div className='bg-primary mb-3 inline-flex items-center justify-center rounded-full p-2 max-sm:p-1'>
-            <Database className='text-primary-foreground h-8 w-8 max-sm:h-6 max-sm:w-6' />
+            <Icon
+              name='database'
+              className='text-primary-foreground h-8 w-8 max-sm:h-6 max-sm:w-6'
+            />
           </div>
           <h1 className='text-foreground mb-2 text-3xl font-bold max-sm:text-2xl'>
             Import Transactions
@@ -301,7 +298,7 @@ const ImportTransactionsPage = () => {
                       : 'border-border bg-card text-muted-foreground'
                   } `}
                 >
-                  <step.icon className='h-5 w-5 max-sm:h-4 max-sm:w-4' />
+                  <Icon name={step.icon} className='h-5 w-5 max-sm:h-4 max-sm:w-4' />
                 </div>
                 <div className='mt-1 text-center'>
                   <p
@@ -325,7 +322,10 @@ const ImportTransactionsPage = () => {
             <Card className='bg-card/70 border-0 shadow-xl backdrop-blur-sm max-sm:shadow-md'>
               <CardHeader className='pb-4 max-sm:pb-2'>
                 <CardTitle className='text-foreground flex items-center text-xl font-bold max-sm:text-lg'>
-                  <Sparkles className='text-primary mr-2 h-5 w-5 max-sm:h-4 max-sm:w-4' />
+                  <Icon
+                    name='sparkles'
+                    className='text-primary mr-2 h-5 w-5 max-sm:h-4 max-sm:w-4'
+                  />
                   Upload & Process
                 </CardTitle>
                 <CardDescription className='text-foreground/80 max-sm:text-xs'>
@@ -336,7 +336,7 @@ const ImportTransactionsPage = () => {
                 {/* Account Selection */}
                 <div className='space-y-2'>
                   <label className='text-foreground/80 flex items-center text-sm font-semibold max-sm:text-xs'>
-                    <Database className='mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
+                    <Icon name='database' className='mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
                     Destination Account *
                   </label>
                   <Select onValueChange={setAccountId} value={accountId}>
@@ -375,7 +375,7 @@ const ImportTransactionsPage = () => {
                     disabled={loading}
                     className='border-primary/20 bg-card/50 text-primary hover:border-primary/30 hover:bg-primary/10 backdrop-blur-sm transition-all duration-200 max-sm:px-2 max-sm:py-1 max-sm:text-xs'
                   >
-                    <FileText className='mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
+                    <Icon name='fileText' className='mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
                     Download Excel Template
                   </Button>
                 </div>
@@ -386,27 +386,36 @@ const ImportTransactionsPage = () => {
           {/* Right Column - Info Cards */}
           <div className='space-y-4 max-sm:space-y-2'>
             {/* AI Features Card */}
-            <Card className='from-primary/10 to-info/10 border-0 bg-gradient-to-br shadow-lg backdrop-blur-sm max-sm:rounded-lg max-sm:border max-sm:border-zinc-200 max-sm:bg-white max-sm:shadow-none max-sm:dark:border-zinc-700 max-sm:dark:bg-zinc-900'>
+            <Card className='from-primary/10 to-info/10 border-0 bg-gradient-to-br shadow-lg backdrop-blur-sm max-sm:rounded-lg max-sm:border'>
               <CardContent className='p-4 max-sm:p-3 max-sm:pr-2 max-sm:pl-4'>
                 <div className='mb-2 flex items-center max-sm:mb-1'>
                   <div className='bg-primary/10 dark:bg-primary/20 mr-2 rounded-full p-1 max-sm:p-0.5'>
-                    <Sparkles className='text-primary h-5 w-5 max-sm:h-4 max-sm:w-4' />
+                    <Icon name='sparkles' className='text-primary h-5 w-5 max-sm:h-4 max-sm:w-4' />
                   </div>
-                  <h3 className='text-foreground font-semibold max-sm:text-left max-sm:text-base max-sm:font-bold dark:text-zinc-100'>
+                  <h3 className='text-foreground font-semibold max-sm:text-left max-sm:text-base max-sm:font-bold'>
                     AI-Powered Processing
                   </h3>
                 </div>
-                <ul className='text-foreground/80 space-y-1 text-xs max-sm:space-y-0.5 max-sm:pl-7 max-sm:text-[13px] dark:text-zinc-300'>
+                <ul className='text-foreground/80 space-y-1 text-xs max-sm:space-y-0.5 max-sm:pl-7 max-sm:text-[13px]'>
                   <li className='flex items-center max-sm:mb-1'>
-                    <CheckCircle2 className='text-success mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
+                    <Icon
+                      name='checkCircle2'
+                      className='text-success mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3'
+                    />
                     Intelligent PDF text extraction
                   </li>
                   <li className='flex items-center max-sm:mb-1'>
-                    <CheckCircle2 className='text-success mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
+                    <Icon
+                      name='checkCircle2'
+                      className='text-success mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3'
+                    />
                     Automatic transaction categorization
                   </li>
                   <li className='flex items-center'>
-                    <CheckCircle2 className='text-success mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
+                    <Icon
+                      name='checkCircle2'
+                      className='text-success mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3'
+                    />
                     Smart data validation
                   </li>
                 </ul>
@@ -414,27 +423,36 @@ const ImportTransactionsPage = () => {
             </Card>
 
             {/* Security Card */}
-            <Card className='from-success/10 to-success/10 border-0 bg-gradient-to-br shadow-lg backdrop-blur-sm max-sm:rounded-lg max-sm:border max-sm:border-zinc-200 max-sm:bg-white max-sm:shadow-none max-sm:dark:border-zinc-700 max-sm:dark:bg-zinc-900'>
+            <Card className='from-success/10 to-success/10 border-0 bg-gradient-to-br shadow-lg backdrop-blur-sm max-sm:rounded-lg max-sm:border'>
               <CardContent className='p-4 max-sm:p-3 max-sm:pr-2 max-sm:pl-4'>
                 <div className='mb-2 flex items-center max-sm:mb-1'>
                   <div className='bg-success/10 dark:bg-success/20 mr-2 rounded-full p-1 max-sm:p-0.5'>
-                    <Shield className='text-success h-5 w-5 max-sm:h-4 max-sm:w-4' />
+                    <Icon name='shield' className='text-success h-5 w-5 max-sm:h-4 max-sm:w-4' />
                   </div>
-                  <h3 className='text-foreground font-semibold max-sm:text-left max-sm:text-base max-sm:font-bold dark:text-zinc-100'>
+                  <h3 className='text-foreground font-semibold max-sm:text-left max-sm:text-base max-sm:font-bold'>
                     Secure & Private
                   </h3>
                 </div>
-                <ul className='text-foreground/80 space-y-1 text-xs max-sm:space-y-0.5 max-sm:pl-7 max-sm:text-[13px] dark:text-zinc-300'>
+                <ul className='text-foreground/80 space-y-1 text-xs max-sm:space-y-0.5 max-sm:pl-7 max-sm:text-[13px]'>
                   <li className='flex items-center max-sm:mb-1'>
-                    <CheckCircle2 className='text-success mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
+                    <Icon
+                      name='checkCircle2'
+                      className='text-success mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3'
+                    />
                     End-to-end encryption
                   </li>
                   <li className='flex items-center max-sm:mb-1'>
-                    <CheckCircle2 className='text-success mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
+                    <Icon
+                      name='checkCircle2'
+                      className='text-success mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3'
+                    />
                     Password-protected files supported
                   </li>
                   <li className='flex items-center'>
-                    <CheckCircle2 className='text-success mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
+                    <Icon
+                      name='checkCircle2'
+                      className='text-success mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3'
+                    />
                     No data stored permanently
                   </li>
                 </ul>
@@ -442,12 +460,12 @@ const ImportTransactionsPage = () => {
             </Card>
 
             {/* Instructions */}
-            <Alert className='border-warning/20 bg-warning/10 max-sm:rounded-lg max-sm:border max-sm:border-zinc-200 max-sm:bg-white max-sm:p-3 max-sm:text-[13px] dark:bg-zinc-900 max-sm:dark:border-zinc-700 max-sm:dark:bg-zinc-900'>
-              <AlertCircle className='h-4 w-4 text-orange-200 max-sm:h-3 max-sm:w-3' />
-              <AlertTitle className='text-orange-300 max-sm:text-xs max-sm:font-bold dark:text-orange-200'>
+            <Alert className='border-warning/20 bg-warning/10 max-sm:rounded-lg max-sm:border max-sm:border-zinc-200 max-sm:bg-white max-sm:p-3 max-sm:text-[13px]'>
+              <Icon name='alertCircle' className='h-4 w-4 text-orange-200 max-sm:h-3 max-sm:w-3' />
+              <AlertTitle className='text-orange-300 max-sm:text-xs max-sm:font-bold'>
                 Pro Tips
               </AlertTitle>
-              <AlertDescription className='text-orange-500/60 max-sm:text-xs max-sm:font-normal dark:text-orange-300'>
+              <AlertDescription className='text-orange-500/60 max-sm:text-xs max-sm:font-normal'>
                 For best results, use our Excel template. PDF processing is powered by AI but may
                 require review before final import.
               </AlertDescription>
@@ -461,7 +479,7 @@ const ImportTransactionsPage = () => {
         <DialogContent className='bg-card/95 max-h-[90vh] max-w-full backdrop-blur-sm max-sm:p-2 sm:max-w-lg md:max-w-xl lg:max-w-6xl'>
           <DialogHeader>
             <DialogTitle className='flex items-center text-lg max-sm:text-base'>
-              <FileText className='text-primary mr-2 h-5 w-5 max-sm:h-4 max-sm:w-4' />
+              <Icon name='fileText' className='text-primary mr-2 h-5 w-5 max-sm:h-4 max-sm:w-4' />
               Review Transactions
             </DialogTitle>
             <DialogDescription className='max-sm:text-xs'>
@@ -515,7 +533,7 @@ const ImportTransactionsPage = () => {
                   ) : (
                     <>
                       Stage {selectedRowCount} Transactions
-                      <ArrowRight className='ml-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
+                      <Icon name='arrowRight' className='ml-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
                     </>
                   )}
                 </Button>
@@ -530,7 +548,10 @@ const ImportTransactionsPage = () => {
         <DialogContent className='bg-card/95 backdrop-blur-sm max-sm:p-2'>
           <DialogHeader>
             <DialogTitle className='flex items-center text-lg max-sm:text-base'>
-              <CheckCircle2 className='text-success mr-2 h-5 w-5 max-sm:h-4 max-sm:w-4' />
+              <Icon
+                name='checkCircle2'
+                className='text-success mr-2 h-5 w-5 max-sm:h-4 max-sm:w-4'
+              />
               Final Confirmation
             </DialogTitle>
             <DialogDescription className='max-sm:text-xs'>
@@ -560,7 +581,7 @@ const ImportTransactionsPage = () => {
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className='mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
+                  <Icon name='checkCircle2' className='mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
                   Confirm Import
                 </>
               )}
@@ -577,7 +598,7 @@ const ImportTransactionsPage = () => {
         >
           <DialogHeader>
             <DialogTitle className='flex items-center text-lg max-sm:text-base'>
-              <KeyRound className='text-primary mr-2 h-5 w-5 max-sm:h-4 max-sm:w-4' />
+              <Icon name='keyRound' className='text-primary mr-2 h-5 w-5 max-sm:h-4 max-sm:w-4' />
               Password Required
             </DialogTitle>
             <DialogDescription className='max-sm:text-xs'>
@@ -630,7 +651,7 @@ const ImportTransactionsPage = () => {
                 </>
               ) : (
                 <>
-                  <KeyRound className='mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
+                  <Icon name='keyRound' className='mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
                   Unlock & Continue
                 </>
               )}

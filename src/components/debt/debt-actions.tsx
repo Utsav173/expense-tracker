@@ -4,12 +4,12 @@ import { Button } from '@/components/ui/button';
 import { debtsMarkAsPaid, apiDeleteDebt } from '@/lib/endpoints/debt';
 import { useMutation } from '@tanstack/react-query';
 import { useToast } from '@/lib/hooks/useToast';
-import { Check, Eye, Pencil, Trash2 } from 'lucide-react';
 import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
 import { useState } from 'react';
 import UpdateDebtModal from '../modals/update-debt-modal';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import DebtInsightModal from '../modals/debt-insight-modal';
+import { Icon } from '../ui/icon';
 
 interface DebtActionsProps {
   debt: DebtAndInterestAPI.DebtRecord;
@@ -52,7 +52,7 @@ export function DebtActions({ debt, refetchDebts }: DebtActionsProps) {
         className='text-success hover:text-success/80 h-8 w-8'
         aria-label='Mark as Paid'
       >
-        <Check className='h-4 w-4' />
+        <Icon name='check' className='h-4 w-4' />
       </Button>
       <Button
         size='icon'
@@ -61,7 +61,7 @@ export function DebtActions({ debt, refetchDebts }: DebtActionsProps) {
         onClick={() => setIsInsightModalOpen(true)}
         aria-label='View Debt Insight'
       >
-        <Eye className='h-4 w-4' />
+        <Icon name='eye' className='h-4 w-4' />
       </Button>
       <Button
         size='icon'
@@ -71,7 +71,7 @@ export function DebtActions({ debt, refetchDebts }: DebtActionsProps) {
         aria-label='Edit Debt'
         disabled={!!debt.debts.isPaid}
       >
-        <Pencil className='h-4 w-4' />
+        <Icon name='pencil' className='h-4 w-4' />
       </Button>
       <DeleteConfirmationModal
         title='Delete Debt'
@@ -92,7 +92,7 @@ export function DebtActions({ debt, refetchDebts }: DebtActionsProps) {
             onClick={() => setIsDeleteModalOpen(true)}
             aria-label='Delete Debt'
           >
-            <Trash2 className='h-4 w-4' />
+            <Icon name='trash2' className='h-4 w-4' />
           </Button>
         }
       />

@@ -2,12 +2,12 @@
 
 import type { AccountAPI } from '@/lib/api/api-types';
 import { Button } from '@/components/ui/button';
-import { Share, Plus, Download, History } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import AddTransactionModal from '@/components/modals/add-transaction-modal';
 import ShareAccountModal from '@/components/modals/share-account-modal';
 import { SingleLineEllipsis } from '../ui/ellipsis-components';
 import Link from 'next/link';
+import { Icon } from '@/components/ui/icon';
 
 interface AccountDetailsHeaderProps {
   account?: AccountAPI.GetAccountByIdResponse;
@@ -59,20 +59,20 @@ export const AccountDetailsHeader = ({
         {isOwner && (
           <div className='flex items-center gap-2 max-sm:w-full max-sm:justify-center'>
             <Button variant='outline' size='sm' className='gap-2' onClick={() => window.print()}>
-              <Download className='h-4 w-4' />
+              <Icon name='download' className='h-4 w-4' />
               {!isMobile && 'Export'}
             </Button>
 
             <Link href={`/accounts/statement`} className='shrink-0'>
               <Button variant='outline' size='sm' className='gap-2'>
-                <Download className='h-4 w-4' />
+                <Icon name='download' className='h-4 w-4' />
                 {!isMobile && 'Statement'}
               </Button>
             </Link>
 
             <Link href={`/accounts/shares/${account?.id}`} className='shrink-0'>
               <Button variant='outline' size='sm' className='gap-2'>
-                <History className='h-4 w-4' />
+                <Icon name='history' className='h-4 w-4' />
                 {!isMobile && 'View Account Sharing'}
               </Button>
             </Link>
@@ -81,7 +81,7 @@ export const AccountDetailsHeader = ({
               accountId={account.id}
               triggerButton={
                 <Button variant='outline' size='sm' className='gap-2'>
-                  <Share className='h-4 w-4' />
+                  <Icon name='share' className='h-4 w-4' />
                   {!isMobile && 'Share'}
                 </Button>
               }
@@ -94,7 +94,7 @@ export const AccountDetailsHeader = ({
               }}
               triggerButton={
                 <Button variant='default' size='sm' className='gap-2'>
-                  <Plus className='h-4 w-4' />
+                  <Icon name='plus' className='h-4 w-4' />
                   {!isMobile && 'Add Transaction'}
                 </Button>
               }

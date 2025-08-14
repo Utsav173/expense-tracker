@@ -14,7 +14,6 @@ import DeleteConfirmationModal from '@/components/modals/delete-confirmation-mod
 import AddTransactionModal from '@/components/modals/add-transaction-modal';
 import { UpdateAccountModal } from '@/components/modals/update-account-modal';
 import NoData from '@/components/ui/no-data';
-import { Frown, Search, Wallet } from 'lucide-react';
 import { motion, Variants } from 'framer-motion';
 import { useUrlState } from '@/hooks/useUrlState';
 import { useDebounce } from 'use-debounce';
@@ -26,7 +25,8 @@ import {
   PaginationNext,
   PaginationPrevious
 } from '@/components/ui/pagination';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import QueryErrorDisplay from '@/components/ui/query-error-display';
+import { Icon } from '@/components/ui/icon';
 
 const AccountListPage = () => {
   const { showError } = useToast();
@@ -85,11 +85,7 @@ const AccountListPage = () => {
   };
 
   if (isError) {
-    return (
-      <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
-        {renderErrorState({ error })}
-      </div>
-    );
+    return <QueryErrorDisplay error={error} message="We couldn't load your accounts." />;
   }
 
   const containerVariants: Variants = {
@@ -108,11 +104,22 @@ const AccountListPage = () => {
         <h1 className='text-2xl font-bold'>Accounts</h1>
         <div className='flex items-center gap-2 max-sm:w-full max-sm:flex-col max-sm:gap-2'>
           <AddAccountModal />
-          <AddTransactionModal onTransactionAdded={refetch} />
+          <AddTransactionModal
+            onTransactionAdded={refetch}
+            triggerButton={
+              <Button variant='transaction' className='h-10 w-full px-4 py-2 font-semibold'>
+                <Icon name='plusCircle' className='mr-2 h-4 w-4' />
+                Add Transaction
+              </Button>
+            }
+          />
         </div>
       </div>
       <div className='relative mb-6 flex-1'>
-        <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+        <Icon
+          name='search'
+          className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2'
+        />
         <Input
           type='text'
           placeholder='Search accounts...'
@@ -136,7 +143,7 @@ const AccountListPage = () => {
           {!data || !data.accounts || data.accounts.length === 0 ? (
             <div className='col-span-full'>
               <NoData
-                icon={Wallet}
+                icon={'wallet'}
                 message='No Accounts Yet'
                 description='Get started by creating your first financial account to track your income and expenses.'
                 action={<AddAccountModal />}
@@ -215,18 +222,5 @@ const AccountListPage = () => {
     </div>
   );
 };
-
-const renderErrorState = ({ error }: { error?: any }) => (
-  <Alert variant='destructive' className='mx-auto mt-6'>
-    <Frown className='h-4 w-4' />
-    <AlertTitle>Oops! Something went wrong.</AlertTitle>
-    <AlertDescription>
-      We couldn&apos;t load your dashboard data. Please check your connection and try refreshing.
-      {error && (
-        <div className='text-muted-foreground mt-2 text-xs'>Error: {(error as Error).message}</div>
-      )}
-    </AlertDescription>
-  </Alert>
-);
 
 export default AccountListPage;

@@ -8,8 +8,8 @@ import { DataTableColumnHeader } from '../ui/column-header';
 import { InvestmentHoldingActions } from './investment-holding-actions';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { TrendingUp, TrendingDown, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Icon } from '../ui/icon';
 
 interface InvestmentHoldingsColumnsProps {
   handleEdit: (investment: InvestmentAPI.Investment) => void;
@@ -78,7 +78,7 @@ export const investmentHoldingsColumns = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <div className='flex items-center gap-2'>
-              <Calendar className='text-muted-foreground h-3 w-3' />
+              <Icon name='calendar' className='text-muted-foreground h-3 w-3' />
               <div className='flex flex-col'>
                 <span className='text-sm'>{format(purchaseDate, 'MMM d, yyyy')}</span>
                 {isRecent && (
@@ -203,9 +203,9 @@ export const investmentHoldingsColumns = ({
           >
             {isSignificant &&
               (isPositive ? (
-                <TrendingUp className='h-3 w-3' />
+                <Icon name='trendingUp' className='h-3 w-3' />
               ) : (
-                <TrendingDown className='h-3 w-3' />
+                <Icon name='trendingDown' className='h-3 w-3' />
               ))}
             {returnPercentage > 0 ? '+' : ''}
             {returnPercentage.toFixed(2)}%

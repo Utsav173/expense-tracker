@@ -2,14 +2,14 @@ import React from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Frown } from 'lucide-react';
+import { Icon } from '@/components/ui/icon';
 
 const NotFoundPage = () => {
   return (
     <Card variant='auth'>
       <CardContent className='space-y-6 p-0 pt-4'>
         <div className='space-y-2 text-center select-none'>
-          <Frown className='text-primary mx-auto mb-4 h-16 w-16' />
+          <Icon name='frown' className='text-primary mx-auto mb-4 h-16 w-16' />
           <h2 className='text-foreground text-3xl font-semibold'>404 - Page Not Found</h2>
           <p className='text-muted-foreground text-sm'>
             The page you are looking for does not exist or has been moved.

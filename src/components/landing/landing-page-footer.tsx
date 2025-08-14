@@ -3,7 +3,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { Icon } from '../ui/icon';
 
 const LandingPageFooter = () => {
   const productLinks = [
@@ -39,7 +39,10 @@ const LandingPageFooter = () => {
               <Link href='/auth/signup'>
                 <Button size='sm' className='group'>
                   Get Started Free
-                  <ArrowRight className='ml-2 h-4 w-4 transition-transform group-hover:translate-x-1' />
+                  <Icon
+                    name='arrowRight'
+                    className='ml-2 h-4 w-4 transition-transform group-hover:translate-x-1'
+                  />
                 </Button>
               </Link>
             </div>

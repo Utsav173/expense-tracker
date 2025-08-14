@@ -5,11 +5,11 @@ import { z } from 'zod';
 import { UpdateModal } from './update-modal';
 import { Input } from '@/components/ui/input';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { Landmark, Building, CircleDollarSign } from 'lucide-react';
 import { investmentAccountUpdate } from '@/lib/endpoints/investmentAccount';
 import type { InvestmentAccountAPI } from '@/lib/api/api-types';
 import { CurrencyCombobox } from '../ui/currency-combobox';
 import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
+import { Icon } from '../ui/icon';
 
 type InvestmentAccountUpdateSchema = z.infer<typeof apiEndpoints.investmentAccount.update.body>;
 
@@ -54,7 +54,7 @@ const UpdateInvestmentAccountModal: React.FC<UpdateInvestmentAccountModalProps> 
             render={({ field }) => (
               <FormItem>
                 <FormLabel className='flex items-center gap-1.5'>
-                  <Landmark className='text-muted-foreground h-4 w-4' />
+                  <Icon name='landmark' className='text-muted-foreground h-4 w-4' />
                   Account Name*
                 </FormLabel>
                 <FormControl>
@@ -76,7 +76,7 @@ const UpdateInvestmentAccountModal: React.FC<UpdateInvestmentAccountModalProps> 
             render={({ field }) => (
               <FormItem>
                 <FormLabel className='flex items-center gap-1.5'>
-                  <Building className='text-muted-foreground h-4 w-4' />
+                  <Icon name='building' className='text-muted-foreground h-4 w-4' />
                   Platform / Broker*
                 </FormLabel>
                 <FormControl>
@@ -94,7 +94,7 @@ const UpdateInvestmentAccountModal: React.FC<UpdateInvestmentAccountModalProps> 
 
           <FormItem>
             <FormLabel className='text-muted-foreground flex items-center gap-1.5 text-sm'>
-              <CircleDollarSign className='h-4 w-4' />
+              <Icon name='dollarSign' className='h-4 w-4' />
               Currency (Read-only)
             </FormLabel>
             <CurrencyCombobox value={account.currency} disabled />

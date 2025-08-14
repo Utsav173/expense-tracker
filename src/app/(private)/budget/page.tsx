@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { budgetGetAll } from '@/lib/endpoints/budget';
 import CommonTable from '@/components/ui/CommonTable';
@@ -9,27 +9,33 @@ import AddBudgetModal from '@/components/modals/add-budget-modal';
 import Loader from '@/components/ui/loader';
 import { useToast } from '@/lib/hooks/useToast';
 import { Button } from '@/components/ui/button';
-import { Frown, PlusCircle, Search } from 'lucide-react';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import type { BudgetAPI } from '@/lib/api/api-types';
 import { useUrlState } from '@/hooks/useUrlState';
 import { SortingState } from '@tanstack/react-table';
 import { Input } from '@/components/ui/input';
 import { useDebounce } from 'use-debounce';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import QueryErrorDisplay from '@/components/ui/query-error-display';
+import { Icon } from '@/components/ui/icon';
 
 const BudgetPage = () => {
   const { showError } = useToast();
   const invalidate = useInvalidateQueries();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const [debouncedSearch] = useDebounce(search, 600);
 
   const { state, setState, handlePageChange } = useUrlState({
     page: 1,
     sortBy: 'year',
-    sortOrder: 'desc' as 'asc' | 'desc'
+    sortOrder: 'desc' as 'asc' | 'desc',
+    q: ''
   });
+
+  const [search, setSearch] = useState(state.q);
+  const [debouncedSearch] = useDebounce(search, 600);
+
+  useEffect(() => {
+    setState({ q: debouncedSearch, page: 1 });
+  }, [debouncedSearch, setState]);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['budgets', debouncedSearch, state.page, state.sortBy, state.sortOrder],
@@ -63,35 +69,27 @@ const BudgetPage = () => {
   }
 
   if (isError) {
-    return (
-      <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
-        <Alert variant='destructive' className='mx-auto mt-6'>
-          <Frown className='h-4 w-4' />
-          <AlertTitle>Oops! Something went wrong.</AlertTitle>
-          <AlertDescription>
-            We couldn&apos;t load your budget data. Please check your connection and try refreshing.
-            {error && (
-              <div className='text-muted-foreground mt-2 text-xs'>
-                Error: {(error as Error).message}
-              </div>
-            )}
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
+    return <QueryErrorDisplay error={error} message="We couldn't load your budget data." />;
   }
 
   return (
     <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 md:space-y-6'>
       <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <h1 className='text-3xl font-semibold'>Budgets</h1>
-        <Button onClick={() => setIsAddModalOpen(true)}>
-          <PlusCircle className='mr-2 h-4 w-4' /> Add Budget
+        <Button
+          variant='planning'
+          className='h-10 px-4 py-2'
+          onClick={() => setIsAddModalOpen(true)}
+        >
+          <Icon name='bookOpen' className='mr-2 h-4 w-4' /> Add Budget
         </Button>
       </div>
 
       <div className='relative flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4'>
-        <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+        <Icon
+          name='search'
+          className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2'
+        />
         <Input
           type='text'
           placeholder='Search Budgets...'

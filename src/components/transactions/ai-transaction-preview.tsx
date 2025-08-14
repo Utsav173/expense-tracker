@@ -7,7 +7,6 @@ import { useToast } from '@/lib/hooks/useToast';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
-import { Loader2, Save, ArrowUpCircle, ArrowDownCircle, X, Edit, CheckCircle } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -26,6 +25,7 @@ import { useQuery } from '@tanstack/react-query';
 import { accountGetDropdown } from '@/lib/endpoints/accounts';
 import { Label } from '../ui/label';
 import { NumericInput } from '../ui/numeric-input';
+import { Icon } from '../ui/icon';
 
 type EditableTransaction = AIAPI.ExtractedTransaction & { id: string };
 
@@ -53,7 +53,7 @@ const TransactionItem: React.FC<TransactionItemProps> = ({
         onClick={() => onRemove(transaction.id)}
         aria-label='Remove transaction'
       >
-        <X className='h-3 w-3' />
+        <Icon name='x' className='h-3 w-3' />
       </Button>
       <div className='flex items-start gap-3'>
         <div
@@ -62,11 +62,7 @@ const TransactionItem: React.FC<TransactionItemProps> = ({
             isIncome ? 'bg-success/20 text-success' : 'bg-destructive/20 text-destructive'
           )}
         >
-          {isIncome ? (
-            <ArrowUpCircle className='h-4 w-4' />
-          ) : (
-            <ArrowDownCircle className='h-4 w-4' />
-          )}
+          <Icon name={isIncome ? 'arrowUpCircle' : 'arrowDownCircle'} className='h-4 w-4' />
         </div>
         <div className='flex-1 space-y-2'>
           <Input
@@ -223,12 +219,12 @@ const AiTransactionPreview: React.FC<{ transactions: AIAPI.ExtractedTransaction[
 
   const editButtonContent = isImported ? (
     <>
-      <CheckCircle className='text-success mr-2 h-4 w-4' />
+      <Icon name='checkCircle' className='text-success mr-2 h-4 w-4' />
       Imported Successfully
     </>
   ) : (
     <>
-      <Edit className='mr-2 h-4 w-4' />
+      <Icon name='edit' className='mr-2 h-4 w-4' />
       View & Edit {editableTransactions.length} Transactions
     </>
   );
@@ -350,9 +346,9 @@ const AiTransactionPreview: React.FC<{ transactions: AIAPI.ExtractedTransaction[
               className='min-w-[120px]'
             >
               {isLoading ? (
-                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
               ) : (
-                <Save className='mr-2 h-4 w-4' />
+                <Icon name='save' className='mr-2 h-4 w-4' />
               )}
               Save {editableTransactions.length} Transactions
             </Button>

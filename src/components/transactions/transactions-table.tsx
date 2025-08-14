@@ -3,7 +3,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { ColumnDef, Row } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2, Repeat, ArrowUpCircle, ArrowDownCircle, Eye } from 'lucide-react';
 import UpdateTransactionModal from '../modals/update-transaction-modal';
 import DeleteConfirmationModal from '../modals/delete-confirmation-modal';
 import { transactionDelete } from '@/lib/endpoints/transactions';
@@ -20,6 +19,7 @@ import { DataTableColumnHeader } from '../ui/column-header';
 import RecurringInsightModal from '../modals/recurring-insight-modal';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useConvertedCurrency } from '@/hooks/use-converted-currency';
+import { Icon } from '../ui/icon';
 
 // Helper Component for Currency Conversion Tooltip
 const ConvertedAmountTooltip = ({
@@ -233,9 +233,9 @@ const TransactionTable = ({
           <div className='flex flex-col items-start gap-1.5'>
             <div className='flex items-center gap-1.5'>
               {row.original.isIncome ? (
-                <ArrowUpCircle className='text-success h-4 w-4' />
+                <Icon name='arrowUpCircle' className='text-success h-4 w-4' />
               ) : (
-                <ArrowDownCircle className='text-destructive h-4 w-4' />
+                <Icon name='arrowDownCircle' className='text-destructive h-4 w-4' />
               )}
               <span className='text-muted-foreground text-sm'>
                 {row.original.isIncome ? 'Income' : 'Expense'}
@@ -245,7 +245,7 @@ const TransactionTable = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Badge variant='secondary' className='flex items-center gap-1 text-xs'>
-                    <Repeat className='h-3 w-3' />
+                    <Icon name='repeat' className='h-3 w-3' />
                     {row.original.recurrenceType
                       ? row.original.recurrenceType.charAt(0).toUpperCase() +
                         row.original.recurrenceType.slice(1)
@@ -274,7 +274,7 @@ const TransactionTable = ({
                       onClick={() => handleInsightClick(row.original.id)}
                       className='h-8 w-8'
                     >
-                      <Eye className='text-muted-foreground h-3.5 w-3.5' />
+                      <Icon name='eye' className='text-muted-foreground h-3.5 w-3.5' />
                       <span className='sr-only'>View Recurring Details</span>
                     </Button>
                   )}
@@ -284,7 +284,7 @@ const TransactionTable = ({
                     onClick={() => handleEditClick(row.original)}
                     className='h-8 w-8'
                   >
-                    <Pencil className='text-muted-foreground h-3.5 w-3.5' />
+                    <Icon name='pencil' className='text-muted-foreground h-3.5 w-3.5' />
                     <span className='sr-only'>Edit</span>
                   </Button>
                   <DeleteConfirmationModal
@@ -315,7 +315,7 @@ const TransactionTable = ({
                         className='text-destructive hover:bg-destructive/10 h-8 w-8'
                         onClick={() => handleDeleteClick(row.original.id)}
                       >
-                        <Trash2 className='h-3.5 w-3.5' />
+                        <Icon name='trash2' className='h-3.5 w-3.5' />
                         <span className='sr-only'>Delete</span>
                       </Button>
                     }

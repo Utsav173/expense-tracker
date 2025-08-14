@@ -11,10 +11,10 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { DayPickerProps, DropdownNavProps, DropdownProps } from 'react-day-picker';
+import { Icon } from '../ui/icon';
 
 interface DatePickerProps {
   value?: Date;
@@ -64,7 +64,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
             !value && 'text-muted-foreground'
           )}
         >
-          <CalendarIcon className='mr-2 h-4 w-4' />
+          <Icon name='calendar' className='mr-2 h-4 w-4' />
           {value ? format(value, 'PPP') : <span>Pick a date</span>}
         </Button>
       </PopoverTrigger>

@@ -17,20 +17,14 @@ import {
   XAxis,
   YAxis
 } from 'recharts';
-import {
-  AlertCircle,
-  BarChart3,
-  LineChart as LineChartIcon,
-  PieChart as PieChartIcon
-} from 'lucide-react';
-import { motion } from 'framer-motion';
-
 import { Card, CardContent } from '@/components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useAuth } from '@/components/providers/auth-provider';
-import { cn, formatCurrency } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 import NoData from '../ui/no-data';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Icon } from '@/components/ui/icon';
+import { motion } from 'framer-motion';
 
 interface AiChartRendererProps {
   chart: {
@@ -176,7 +170,7 @@ const AiChartRenderer: React.FC<AiChartRendererProps> = ({ chart }) => {
     return (
       <Card className='mt-4'>
         <CardContent className='p-4'>
-          <NoData message='No chart data available for this query.' icon={BarChart3} />
+          <NoData message='No chart data available for this query.' icon='barChart3' />
         </CardContent>
       </Card>
     );
@@ -186,7 +180,7 @@ const AiChartRenderer: React.FC<AiChartRendererProps> = ({ chart }) => {
     return (
       <Card className='mt-4'>
         <CardContent className='p-4'>
-          <NoData message='Could not determine how to display the data.' icon={AlertCircle} />
+          <NoData message='Could not determine how to display the data.' icon='alertCircle' />
         </CardContent>
       </Card>
     );
@@ -388,14 +382,14 @@ const AiChartRenderer: React.FC<AiChartRendererProps> = ({ chart }) => {
                 aria-label='Bar chart'
                 className='data-[state=on]:bg-background dark:data-[state=on]:bg-card h-6 w-8 px-2'
               >
-                <BarChart3 className='h-4 w-4' />
+                <Icon name='barChart3' className='h-4 w-4' />
               </ToggleGroupItem>
               <ToggleGroupItem
                 value='line'
                 aria-label='Line chart'
                 className='data-[state=on]:bg-background dark:data-[state=on]:bg-card h-6 w-8 px-2'
               >
-                <LineChartIcon className='h-4 w-4' />
+                <Icon name='lineChart' className='h-4 w-4' />
               </ToggleGroupItem>
               <ToggleGroupItem
                 value='pie'
@@ -403,7 +397,7 @@ const AiChartRenderer: React.FC<AiChartRendererProps> = ({ chart }) => {
                 className='data-[state=on]:bg-background dark:data-[state=on]:bg-card h-6 w-8 px-2'
                 disabled={valueKeys.length > 1}
               >
-                <PieChartIcon className='h-4 w-4' />
+                <Icon name='pieChart' className='h-4 w-4' />
               </ToggleGroupItem>
             </ToggleGroup>
           </div>

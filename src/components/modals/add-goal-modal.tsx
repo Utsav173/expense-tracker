@@ -21,7 +21,7 @@ import AddModal from './add-modal';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { NumericInput } from '../ui/numeric-input';
 import DateTimePicker from '../date/date-time-picker';
-import { Loader2, PlusCircle, Target, CalendarDays } from 'lucide-react';
+import { Icon } from '../ui/icon';
 
 const goalSchema = z.object({
   name: z
@@ -109,10 +109,12 @@ const AddGoalModal: React.FC<AddGoalModalProps> = ({
     <AddModal
       title='Add New Saving Goal'
       description='Define your financial target and track your progress.'
+      icon={<Icon name='piggyBank' className='h-5 w-5' />}
+      iconClassName='bg-balance-muted text-balance'
       triggerButton={
         hideTriggerButton ? null : (
-          <Button variant='default'>
-            <PlusCircle className='mr-2 h-4 w-4' /> Add Goal
+          <Button className='btn-balance h-10 px-4 py-2'>
+            <Icon name='piggyBank' className='mr-2 h-4 w-4' /> Add Goal
           </Button>
         )
       }
@@ -127,7 +129,7 @@ const AddGoalModal: React.FC<AddGoalModalProps> = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel className='flex items-center gap-1.5'>
-                  <Target className='text-muted-foreground h-4 w-4' />
+                  <Icon name='target' className='text-muted-foreground h-4 w-4' />
                   Goal Name*
                 </FormLabel>
                 <FormControl>
@@ -171,7 +173,7 @@ const AddGoalModal: React.FC<AddGoalModalProps> = ({
             render={({ field }) => (
               <FormItem className='flex flex-col'>
                 <FormLabel className='flex items-center gap-1.5'>
-                  <CalendarDays className='text-muted-foreground h-4 w-4' />
+                  <Icon name='calendarDays' className='text-muted-foreground h-4 w-4' />
                   Target Date*
                 </FormLabel>
                 <FormControl>
@@ -198,7 +200,7 @@ const AddGoalModal: React.FC<AddGoalModalProps> = ({
             <Button type='submit' disabled={createGoalMutation.isPending} className='min-w-[100px]'>
               {createGoalMutation.isPending ? (
                 <>
-                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
                   Adding...
                 </>
               ) : (

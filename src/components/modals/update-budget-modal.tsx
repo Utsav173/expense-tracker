@@ -8,9 +8,9 @@ import { NumericInput } from '../ui/numeric-input';
 import { budgetUpdate } from '@/lib/endpoints/budget';
 import type { BudgetAPI } from '@/lib/api/api-types';
 import { monthNames } from '@/lib/utils';
-import { CalendarDays, Tag } from 'lucide-react';
 import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
 import { Card } from '../ui/card';
+import { Icon } from '../ui/icon';
 
 type BudgetUpdateSchema = z.infer<typeof apiEndpoints.budget.update.body>;
 
@@ -50,14 +50,14 @@ const UpdateBudgetModal: React.FC<UpdateBudgetModalProps> = ({
         <>
           <Card className='space-y-3 p-4'>
             <div className='flex items-center gap-2 text-sm'>
-              <Tag className='text-muted-foreground h-4 w-4' />
+              <Icon name='tag' className='text-muted-foreground h-4 w-4' />
               <span className='text-muted-foreground font-medium'>Category:</span>
               <span className='text-foreground font-semibold'>
                 {budget?.category?.name ?? 'N/A'}
               </span>
             </div>
             <div className='flex items-center gap-2 text-sm'>
-              <CalendarDays className='text-muted-foreground h-4 w-4' />
+              <Icon name='calendarDays' className='text-muted-foreground h-4 w-4' />
               <span className='text-muted-foreground font-medium'>Period:</span>
               <span className='text-foreground font-semibold'>
                 {budget ? `${getMonthName(budget.month)} ${budget.year}` : 'N/A'}

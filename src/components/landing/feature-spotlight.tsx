@@ -1,11 +1,11 @@
 'use client';
 
 import React from 'react';
-import { Check } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { Card } from '../ui/card';
 import { imageToTheme } from '@/lib/data/features-landing';
+import { Icon } from '../ui/icon';
 
 interface FeatureSpotlightProps {
   id: string;
@@ -49,7 +49,7 @@ export const FeatureSpotlight = ({
           <ul className='mt-8 space-y-4'>
             {bullets.map((bullet, i) => (
               <li key={i} className='flex items-start'>
-                <Check className='text-primary mt-1 mr-3 h-6 w-6 flex-shrink-0' />
+                <Icon name='check' className='text-primary mt-1 mr-3 h-6 w-6 flex-shrink-0' />
                 <span className='text-base'>{bullet}</span>
               </li>
             ))}

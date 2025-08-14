@@ -1,16 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  MoreHorizontal
-} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Icon } from './icon';
 
 interface EnhancedPaginationProps {
   totalRecords: number;
@@ -163,7 +157,7 @@ const EnhancedPagination: React.FC<EnhancedPaginationProps> = ({
             variant='outline'
             aria-label='First page'
           >
-            <ChevronsLeft className='h-4 w-4' />
+            <Icon name='chevronsLeft' className='h-4 w-4' />
           </Button>
         )}
 
@@ -174,7 +168,7 @@ const EnhancedPagination: React.FC<EnhancedPaginationProps> = ({
           variant='outline'
           aria-label='Previous page'
         >
-          <ChevronLeft className='h-4 w-4' />
+          <Icon name='chevronLeft' className='h-4 w-4' />
         </Button>
 
         {!isMobile || totalPages <= 5 ? (
@@ -182,7 +176,7 @@ const EnhancedPagination: React.FC<EnhancedPaginationProps> = ({
             {pagesToShow.map((page, index) =>
               page === 'ellipsis' ? (
                 <div key={`ellipsis-${index}`} className='flex items-center justify-center px-2'>
-                  <MoreHorizontal className='text-muted-foreground h-4 w-4' />
+                  <Icon name='moreHorizontal' className='text-muted-foreground h-4 w-4' />
                 </div>
               ) : (
                 <Button
@@ -226,7 +220,7 @@ const EnhancedPagination: React.FC<EnhancedPaginationProps> = ({
           variant='outline'
           aria-label='Next page'
         >
-          <ChevronRight className='h-4 w-4' />
+          <Icon name='chevronRight' className='h-4 w-4' />
         </Button>
 
         {showFirstLast && (
@@ -237,7 +231,7 @@ const EnhancedPagination: React.FC<EnhancedPaginationProps> = ({
             variant='outline'
             aria-label='Last page'
           >
-            <ChevronsRight className='h-4 w-4' />
+            <Icon name='chevronsRight' className='h-4 w-4' />
           </Button>
         )}
       </div>

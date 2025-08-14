@@ -6,8 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { accountGetPreviousShares, accountRevokeShare } from '@/lib/endpoints/accounts';
 import { useToast } from '@/lib/hooks/useToast';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, Share2, Mail, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ShareAccountModal from '@/components/modals/share-account-modal';
 import {
@@ -16,9 +14,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { MoreVertical } from 'lucide-react';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import QueryErrorDisplay from '@/components/ui/query-error-display';
+import { Icon } from '@/components/ui/icon';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -72,14 +71,7 @@ const AccountSharesPage = ({ params }: PageProps) => {
   }
 
   if (error) {
-    return (
-      <Alert variant='destructive' className='m-4'>
-        <AlertCircle className='h-4 w-4' />
-        <AlertDescription>
-          Failed to load account shares: {(error as Error).message}
-        </AlertDescription>
-      </Alert>
-    );
+    return <QueryErrorDisplay error={error} message='Failed to load account shares.' />;
   }
 
   if (!shares || shares.length === 0) {
@@ -87,14 +79,14 @@ const AccountSharesPage = ({ params }: PageProps) => {
       <div className='space-y-4 p-4'>
         <div className='flex items-center justify-between'>
           <h1 className='flex items-center gap-2 text-2xl font-bold'>
-            <Share2 className='h-6 w-6' />
+            <Icon name='share2' className='h-6 w-6' />
             Account Shares
           </h1>
           <ShareAccountModal accountId={id} />
         </div>
         <Card className='p-8 text-center'>
           <div className='flex flex-col items-center gap-2'>
-            <Share2 className='text-muted-foreground h-12 w-12' />
+            <Icon name='share2' className='text-muted-foreground h-12 w-12' />
             <h3 className='text-lg font-medium'>No shares found</h3>
             <p className='text-muted-foreground'>
               This account hasn&apos;t been shared with anyone yet.
@@ -113,7 +105,7 @@ const AccountSharesPage = ({ params }: PageProps) => {
     <div className='space-y-4 p-4'>
       <div className='flex items-center justify-between'>
         <h1 className='flex items-center gap-2 text-2xl font-bold'>
-          <Share2 className='h-6 w-6' />
+          <Icon name='share2' className='h-6 w-6' />
           Account Shares
         </h1>
         <ShareAccountModal accountId={id} />
@@ -131,7 +123,7 @@ const AccountSharesPage = ({ params }: PageProps) => {
                       {share?.name
                         ? share.name
                             .split(' ')
-                            .map((n) => n[0])
+                            .map((n) => n)
                             .join('')
                         : ''}
                     </AvatarFallback>
@@ -141,7 +133,7 @@ const AccountSharesPage = ({ params }: PageProps) => {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant='ghost' size='icon'>
-                      <MoreVertical className='h-4 w-4' />
+                      <Icon name='moreVertical' className='h-4 w-4' />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align='end'>
@@ -149,7 +141,7 @@ const AccountSharesPage = ({ params }: PageProps) => {
                       className='text-destructive'
                       onClick={() => revokeShareMutation.mutate(share.id)}
                     >
-                      <Trash2 className='mr-2 h-4 w-4' />
+                      <Icon name='trash2' className='mr-2 h-4 w-4' />
                       Revoke Access
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -159,7 +151,7 @@ const AccountSharesPage = ({ params }: PageProps) => {
             <CardContent>
               <div className='space-y-3'>
                 <div className='flex items-center gap-2 text-sm'>
-                  <Mail className='text-muted-foreground h-4 w-4' />
+                  <Icon name='mail' className='text-muted-foreground h-4 w-4' />
                   <span className='text-muted-foreground'>{share?.email || 'N/A'}</span>
                 </div>
               </div>

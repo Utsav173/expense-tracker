@@ -26,24 +26,10 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  TrendingDown,
-  TrendingUp,
-  X,
-  Maximize2,
-  Minimize2,
-  Building2,
-  Activity,
-  IndianRupee,
-  Percent,
-  Share,
-  PieChart,
-  BarChart3,
-  Info,
-  Clock,
-  LucideProps
-} from 'lucide-react';
 import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
+import { IconName } from '../ui/icon-map';
+import { Icon } from '../ui/icon';
+
 const CustomTooltip = ({
   active,
   payload,
@@ -58,7 +44,7 @@ const CustomTooltip = ({
     const value = data.value;
     const date = data.date;
     const isPositive = value >= 0;
-    const TrendIcon = isPositive ? TrendingUp : TrendingDown;
+    const trendIcon = isPositive ? 'trendingUp' : 'trendingDown';
     return (
       <div className='bg-popover min-w-[240px] rounded-lg border p-3 shadow-md'>
         <div className='mb-2 flex items-center justify-between'>
@@ -69,7 +55,7 @@ const CustomTooltip = ({
               isPositive ? 'text-positive' : 'text-negative'
             )}
           >
-            <TrendIcon className='h-3.5 w-3.5' />
+            <Icon name={trendIcon} className='h-3.5 w-3.5' />
             {isPositive ? 'Gain' : 'Loss'}
           </div>
         </div>
@@ -81,31 +67,31 @@ const CustomTooltip = ({
 const KPICard = ({
   title,
   value,
-  icon: Icon,
+  icon,
   change,
   changeType
 }: {
   title: string;
   value: React.ReactNode;
-  icon: React.ElementType<LucideProps>;
+  icon: IconName;
   change?: string;
   changeType?: 'up' | 'down';
 }) => {
   const isPositive = changeType === 'up';
   const changeColor = isPositive ? 'text-positive' : 'text-negative';
-  const ChangeIcon = changeType ? (isPositive ? TrendingUp : TrendingDown) : null;
+  const changeIcon = changeType ? (isPositive ? 'trendingUp' : 'trendingDown') : null;
   return (
     <Card>
       <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
         <CardTitle className='text-sm font-medium'>{title}</CardTitle>
-        <Icon className='text-muted-foreground h-4 w-4' />
+        <Icon name={icon} className='text-muted-foreground h-4 w-4' />
       </CardHeader>
       <CardContent>
         <div className='text-2xl font-bold'>{value}</div>
-        {change && ChangeIcon && (
+        {change && changeIcon && (
           <p className={cn('text-xs', changeColor)}>
             <span className='inline-flex items-center gap-1 font-medium'>
-              <ChangeIcon className='h-3 w-3' />
+              <Icon name={changeIcon} className='h-3 w-3' />
               {change}
             </span>
           </p>
@@ -249,7 +235,7 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
               <div className='flex flex-wrap items-center justify-between gap-x-4 gap-y-2'>
                 <div className='flex items-center gap-3'>
                   <div className='bg-muted flex-shrink-0 rounded-lg p-2'>
-                    <Building2 className='text-primary h-6 w-6' />
+                    <Icon name={'building2'} className='text-primary h-6 w-6' />
                   </div>
                   <div>
                     <DialogTitle className='text-lg font-bold sm:text-xl'>
@@ -265,7 +251,7 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                     variant='outline'
                     className='border-positive/30 bg-positive/10 text-positive'
                   >
-                    <Activity className='mr-1.5 h-3 w-3' />
+                    <Icon name={'activity'} className='mr-1.5 h-3 w-3' />
                     Live Data
                   </Badge>
                   <Button
@@ -274,11 +260,7 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                     onClick={() => setIsExpanded(!isExpanded)}
                     className='text-muted-foreground h-8 w-8'
                   >
-                    {isExpanded ? (
-                      <Minimize2 className='h-4 w-4' />
-                    ) : (
-                      <Maximize2 className='h-4 w-4' />
-                    )}
+                    <Icon name={isExpanded ? 'minimize2' : 'maximize2'} className='h-4 w-4' />
                   </Button>
                   <Button
                     variant='ghost'
@@ -286,7 +268,7 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                     onClick={() => onOpenChange(false)}
                     className='text-muted-foreground h-8 w-8'
                   >
-                    <X className='h-4 w-4' />
+                    <Icon name={'x'} className='h-4 w-4' />
                   </Button>
                 </div>
               </div>
@@ -295,15 +277,15 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
               <Tabs value={activeTab} onValueChange={setActiveTab} className='flex h-full flex-col'>
                 <TabsList className='grid w-full grid-cols-3'>
                   <TabsTrigger value='overview'>
-                    <PieChart className='mr-2 h-4 w-4' />
+                    <Icon name='pieChart' className='mr-2 h-4 w-4' />
                     Overview
                   </TabsTrigger>
                   <TabsTrigger value='performance'>
-                    <BarChart3 className='mr-2 h-4 w-4' />
+                    <Icon name='barChart3' className='mr-2 h-4 w-4' />
                     Performance
                   </TabsTrigger>
                   <TabsTrigger value='details'>
-                    <Info className='mr-2 h-4 w-4' />
+                    <Icon name='info' className='mr-2 h-4 w-4' />
                     Details
                   </TabsTrigger>
                 </TabsList>
@@ -315,7 +297,7 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                         performanceMetrics?.currentMarketValue || 0,
                         accountCurrency
                       )}
-                      icon={IndianRupee}
+                      icon={'indianRupee'}
                     />
                     <KPICard
                       title='Total P&L'
@@ -328,7 +310,7 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                           {formatCurrency(performanceMetrics?.totalGainLoss || 0, accountCurrency)}
                         </span>
                       }
-                      icon={TrendingUp}
+                      icon={'trendingUp'}
                       change={`${(performanceMetrics?.gainLossPercentage || 0).toFixed(2)}%`}
                       changeType={totalGainLossTrend}
                     />
@@ -341,20 +323,20 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                           {formatCurrency(performanceMetrics?.dayChange || 0, accountCurrency)}
                         </span>
                       }
-                      icon={Clock}
+                      icon={'clock'}
                       change={`${(performanceMetrics?.dayChangePercent || 0).toFixed(2)}%`}
                       changeType={dayChangeTrend}
                     />
                     <KPICard
                       title='Current Price'
                       value={formatCurrency(performanceMetrics?.currentPrice || 0, accountCurrency)}
-                      icon={Activity}
+                      icon={'activity'}
                     />
                   </div>
                   <Card className='flex h-full min-h-[300px] flex-1 flex-col'>
                     <CardHeader>
                       <CardTitle className='flex items-center gap-2 text-lg'>
-                        <Activity className='text-primary h-5 w-5' />
+                        <Icon name='activity' className='text-primary h-5 w-5' />
                         P&L Timeline
                       </CardTitle>
                       <DialogDescription>
@@ -526,7 +508,7 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                         </ChartContainer>
                       ) : (
                         <div className='bg-muted/50 flex h-full flex-col items-center justify-center gap-3 rounded-md border border-dashed p-8 text-center'>
-                          <Activity className='text-muted-foreground h-10 w-10' />
+                          <Icon name='activity' className='text-muted-foreground h-10 w-10' />
                           <p className='font-semibold'>No Performance Data Available</p>
                           <p className='text-muted-foreground text-sm'>
                             Historical data could not be loaded for this investment.
@@ -542,7 +524,7 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                       <div className='space-y-6'>
                         <div className='space-y-1'>
                           <h3 className='flex items-center gap-2 font-semibold'>
-                            <Share className='text-primary h-4 w-4' />
+                            <Icon name='share' className='text-primary h-4 w-4' />
                             Holding Details
                           </h3>
                           <div className='rounded-md border p-3'>
@@ -569,7 +551,7 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                         </div>
                         <div className='space-y-1'>
                           <h3 className='flex items-center gap-2 font-semibold'>
-                            <Percent className='text-primary h-4 w-4' />
+                            <Icon name='percent' className='text-primary h-4 w-4' />
                             Valuation & Returns
                           </h3>
                           <div className='rounded-md border p-3'>
@@ -604,7 +586,7 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                         {investment.dividend && investment.dividend > 0 && (
                           <div className='space-y-1'>
                             <h3 className='flex items-center gap-2 font-semibold'>
-                              <IndianRupee className='text-primary h-4 w-4' />
+                              <Icon name='indianRupee' className='text-primary h-4 w-4' />
                               Dividends
                             </h3>
                             <div className='rounded-md border p-3'>

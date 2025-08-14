@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useToast } from '@/lib/hooks/useToast';
 import { accountGetStatement } from '@/lib/endpoints/accounts';
 import { Button } from '@/components/ui/button';
-import { Download, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AccountCombobox from '@/components/ui/account-combobox';
@@ -12,6 +11,7 @@ import DatePickerWithRange from '@/components/date/date-range-picker-v2';
 import { DateRange } from 'react-day-picker';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Icon } from '@/components/ui/icon';
 
 const StatementPage = () => {
   const [accountId, setAccountId] = useState<string | undefined>(undefined);
@@ -126,9 +126,9 @@ const StatementPage = () => {
 
             <Button type='submit' disabled={isGenerating} className='w-full'>
               {isGenerating ? (
-                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
               ) : (
-                <Download className='mr-2 h-4 w-4' />
+                <Icon name='download' className='mr-2 h-4 w-4' />
               )}
               Generate Statement
             </Button>
