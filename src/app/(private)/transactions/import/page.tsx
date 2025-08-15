@@ -1,41 +1,24 @@
 'use client';
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/lib/hooks/useToast';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
-import { accountGetDropdown } from '@/lib/endpoints/accounts';
+import { useState, useCallback, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useToast } from '@/lib/hooks/useToast';
+import { accountGetDropdown } from '@/lib/endpoints/accounts';
 import { importTransactions, confirmImport } from '@/lib/endpoints/import';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { API_BASE_URL } from '@/lib/api-client';
-import ImportDropzone from '@/components/transactions/import-dropzone';
-import { ImportPreviewTable } from '@/components/transactions/import-preview-table';
-import { ColumnDef, RowSelectionState } from '@tanstack/react-table';
 import { aiProcessTransactionPdf } from '@/lib/endpoints/ai';
+import { RowSelectionState } from '@tanstack/react-table';
+import { API_BASE_URL } from '@/lib/api-client';
 
-// --- CSS Imports for React-PDF (these are safe) ---
+import { ImportHeader } from '@/components/transactions/import/import-header';
+import { ImportStepper } from '@/components/transactions/import/import-stepper';
+import { UploadStep } from '@/components/transactions/import/upload-step';
+import { InfoPanel } from '@/components/transactions/import/info-panel';
+import { PreviewDialog } from '@/components/transactions/import/preview-dialog';
+import { ConfirmationDialog } from '@/components/transactions/import/confirmation-dialog';
+import { PasswordDialog } from '@/components/transactions/import/password-dialog';
+
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
-import { Icon } from '@/components/ui/icon';
-import { IconName } from '@/components/ui/icon-map';
 
 const ImportTransactionsPage = () => {
   const [loading, setLoading] = useState(false);
@@ -58,7 +41,6 @@ const ImportTransactionsPage = () => {
     queryFn: accountGetDropdown
   });
 
-  // --- React-PDF Worker Setup ---
   useEffect(() => {
     import('react-pdf').then(({ pdfjs }) => {
       pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -67,18 +49,6 @@ const ImportTransactionsPage = () => {
       ).toString();
     });
   }, []);
-
-  const previewColumns: ColumnDef<any>[] = useMemo(
-    () => [
-      { accessorKey: 'Date', header: 'Date' },
-      { accessorKey: 'Text', header: 'Description' },
-      { accessorKey: 'Amount', header: 'Amount' },
-      { accessorKey: 'Type', header: 'Type' },
-      { accessorKey: 'Category', header: 'Category' },
-      { accessorKey: 'Transfer', header: 'Transfer' }
-    ],
-    []
-  );
 
   const processFile = useCallback(
     async (file: File, filePassword?: string) => {
@@ -92,9 +62,7 @@ const ImportTransactionsPage = () => {
         let parsedData;
         if (file.type === 'application/pdf') {
           const { pdfjs } = await import('react-pdf');
-
           const arrayBuffer = await file.arrayBuffer();
-
           const pdf = await pdfjs.getDocument({ data: arrayBuffer, password: filePassword })
             .promise;
 
@@ -107,9 +75,7 @@ const ImportTransactionsPage = () => {
           }
 
           if (!fullText || fullText.trim().length < 50) {
-            throw new Error(
-              'Could not extract sufficient text from the PDF. The document might be empty or image-based.'
-            );
+            throw new Error('Could not extract sufficient text from the PDF.');
           }
 
           const aiResponse = await aiProcessTransactionPdf({ documentContent: fullText });
@@ -131,7 +97,6 @@ const ImportTransactionsPage = () => {
           }));
         } else {
           const XLSX = await import('xlsx');
-
           const data = await file.arrayBuffer();
           const workbook = XLSX.read(data, { type: 'buffer' });
           const worksheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -148,6 +113,7 @@ const ImportTransactionsPage = () => {
           showError('No transactions could be extracted from the file.');
           return;
         }
+
         setTransactions(parsedData);
         setRowSelection({});
         setCurrentStep(2);
@@ -155,11 +121,10 @@ const ImportTransactionsPage = () => {
       } catch (error: any) {
         if (error.name === 'PasswordException') {
           setPendingFile(file);
-          if (error.message.includes('Invalid')) {
-            setPasswordError('The provided password was incorrect.');
-          } else {
-            setIsPasswordDialogOpen(true);
-          }
+          setPasswordError(
+            error.message.includes('Invalid') ? 'The provided password was incorrect.' : null
+          );
+          setIsPasswordDialogOpen(true);
         } else {
           showError(`Error parsing file: ${error.message}`);
         }
@@ -190,18 +155,14 @@ const ImportTransactionsPage = () => {
       showError('Please select an account.');
       return;
     }
-
     const selectedRows = Object.keys(rowSelection).map((index) => transactions[parseInt(index)]);
-
     if (selectedRows.length === 0) {
       showError('Please select at least one transaction to import.');
       return;
     }
-
     setLoading(true);
     try {
       const XLSX = await import('xlsx');
-
       const ws = XLSX.utils.json_to_sheet(selectedRows);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
@@ -212,7 +173,6 @@ const ImportTransactionsPage = () => {
       const formData = new FormData();
       formData.append('accountId', accountId);
       formData.append('document', new File([blob], 'transactions.xlsx'));
-
       const result = await importTransactions(formData);
       setSuccessId(result.successId);
       setCurrentStep(3);
@@ -229,6 +189,7 @@ const ImportTransactionsPage = () => {
     setLoading(true);
     try {
       await confirmImport(successId);
+      showSuccess('Transactions imported successfully!');
       setSuccessId(null);
       setTransactions([]);
       setRowSelection({});
@@ -258,407 +219,56 @@ const ImportTransactionsPage = () => {
     }
   };
 
-  const selectedRowCount = Object.keys(rowSelection).length;
-
-  const steps: Array<{ id: number; name: string; icon: IconName; description: string }> = [
-    { id: 1, name: 'Upload', icon: 'upload', description: 'Choose your file' },
-    { id: 2, name: 'Review', icon: 'fileText', description: 'Verify transactions' },
-    { id: 3, name: 'Complete', icon: 'checkCircle2', description: 'Finalize import' }
-  ];
-
   return (
-    <div className='min-h-screen p-2 max-sm:p-0'>
-      <div className='mx-auto max-w-6xl max-sm:max-w-full'>
-        {/* Header Section */}
-        <div className='mb-6 text-center max-sm:mb-3'>
-          <div className='bg-primary mb-3 inline-flex items-center justify-center rounded-full p-2 max-sm:p-1'>
-            <Icon
-              name='database'
-              className='text-primary-foreground h-8 w-8 max-sm:h-6 max-sm:w-6'
+    <div className='p-4 md:p-8'>
+      <div className='mx-auto max-w-6xl space-y-8'>
+        <ImportHeader />
+        <ImportStepper currentStep={currentStep} />
+
+        <div className='grid grid-cols-1 gap-8 lg:grid-cols-3'>
+          <div className='lg:col-span-2'>
+            <UploadStep
+              accountId={accountId}
+              setAccountId={setAccountId}
+              accountsData={accountsData}
+              isLoadingAccounts={isLoadingAccounts}
+              onFileDrop={onFileDrop}
+              loading={loading}
+              handleDownloadSample={handleDownloadSample}
             />
           </div>
-          <h1 className='text-foreground mb-2 text-3xl font-bold max-sm:text-2xl'>
-            Import Transactions
-          </h1>
-          <p className='text-foreground/80 mx-auto max-w-2xl text-base max-sm:max-w-xs max-sm:text-sm'>
-            Seamlessly import your financial data with AI-powered processing and intelligent
-            categorization
-          </p>
+          <InfoPanel />
         </div>
 
-        {/* Progress Steps */}
-        <div className='mb-6 max-sm:mb-3'>
-          <div className='flex flex-wrap items-center justify-center space-x-4 max-sm:space-x-2 md:space-x-8'>
-            {steps.map((step, index) => (
-              <div key={step.id} className='flex flex-col items-center'>
-                <div
-                  className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all duration-300 max-sm:h-8 max-sm:w-8 ${
-                    currentStep >= step.id
-                      ? 'border-primary bg-primary text-primary-foreground shadow-lg'
-                      : 'border-border bg-card text-muted-foreground'
-                  } `}
-                >
-                  <Icon name={step.icon} className='h-5 w-5 max-sm:h-4 max-sm:w-4' />
-                </div>
-                <div className='mt-1 text-center'>
-                  <p
-                    className={`text-xs font-medium max-sm:text-[11px] ${currentStep >= step.id ? 'text-primary' : 'text-muted-foreground'}`}
-                  >
-                    {step.name}
-                  </p>
-                  <p className='text-muted-foreground text-[10px] max-sm:text-[9px]'>
-                    {step.description}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <PreviewDialog
+          isOpen={isConfirmOpen}
+          onOpenChange={setIsConfirmOpen}
+          transactions={transactions}
+          rowSelection={rowSelection}
+          setRowSelection={setRowSelection}
+          onConfirm={handleConfirmAndStage}
+          loading={loading}
+        />
 
-        {/* Main Content */}
-        <div className='grid gap-6 max-sm:grid-cols-1 max-sm:gap-3 lg:grid-cols-3'>
-          {/* Left Column - Form */}
-          <div className='max-sm:col-span-1 lg:col-span-2'>
-            <Card className='bg-card/70 border-0 shadow-xl backdrop-blur-sm max-sm:shadow-md'>
-              <CardHeader className='pb-4 max-sm:pb-2'>
-                <CardTitle className='text-foreground flex items-center text-xl font-bold max-sm:text-lg'>
-                  <Icon
-                    name='sparkles'
-                    className='text-primary mr-2 h-5 w-5 max-sm:h-4 max-sm:w-4'
-                  />
-                  Upload & Process
-                </CardTitle>
-                <CardDescription className='text-foreground/80 max-sm:text-xs'>
-                  Support for Excel (.xlsx, .xls) and PDF formats with AI-powered extraction
-                </CardDescription>
-              </CardHeader>
-              <CardContent className='space-y-4 max-sm:space-y-2'>
-                {/* Account Selection */}
-                <div className='space-y-2'>
-                  <label className='text-foreground/80 flex items-center text-sm font-semibold max-sm:text-xs'>
-                    <Icon name='database' className='mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
-                    Destination Account *
-                  </label>
-                  <Select onValueChange={setAccountId} value={accountId}>
-                    <SelectTrigger className='border-border bg-card/50 hover:border-primary/50 focus:border-primary h-10 border-2 backdrop-blur-sm transition-all duration-200 max-sm:h-9'>
-                      <SelectValue
-                        placeholder={isLoadingAccounts ? 'Loading accounts...' : 'Select account'}
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {accountsData?.map((acc) => (
-                        <SelectItem key={acc.id} value={acc.id}>
-                          <div className='flex items-center'>
-                            <div className='bg-primary mr-2 h-2 w-2 rounded-full'></div>
-                            {acc.name} ({acc.currency})
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+        <ConfirmationDialog
+          isOpen={!!successId}
+          onOpenChange={() => setSuccessId(null)}
+          onConfirm={handleFinalImport}
+          loading={loading}
+          stagedCount={Object.keys(rowSelection).length}
+        />
 
-                {/* File Upload */}
-                <div className='border-primary/20 bg-primary/10 rounded-lg border-2 border-dashed p-3 max-sm:p-2 md:p-4'>
-                  <ImportDropzone
-                    onFileDrop={onFileDrop}
-                    isLoading={loading}
-                    disabled={!accountId}
-                  />
-                </div>
-
-                {/* Download Sample */}
-                <div className='flex justify-center'>
-                  <Button
-                    onClick={handleDownloadSample}
-                    variant='outline'
-                    disabled={loading}
-                    className='border-primary/20 bg-card/50 text-primary hover:border-primary/30 hover:bg-primary/10 backdrop-blur-sm transition-all duration-200 max-sm:px-2 max-sm:py-1 max-sm:text-xs'
-                  >
-                    <Icon name='fileText' className='mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
-                    Download Excel Template
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right Column - Info Cards */}
-          <div className='space-y-4 max-sm:space-y-2'>
-            {/* AI Features Card */}
-            <Card className='from-primary/10 to-info/10 border-0 bg-gradient-to-br shadow-lg backdrop-blur-sm max-sm:rounded-lg max-sm:border'>
-              <CardContent className='p-4 max-sm:p-3 max-sm:pr-2 max-sm:pl-4'>
-                <div className='mb-2 flex items-center max-sm:mb-1'>
-                  <div className='bg-primary/10 dark:bg-primary/20 mr-2 rounded-full p-1 max-sm:p-0.5'>
-                    <Icon name='sparkles' className='text-primary h-5 w-5 max-sm:h-4 max-sm:w-4' />
-                  </div>
-                  <h3 className='text-foreground font-semibold max-sm:text-left max-sm:text-base max-sm:font-bold'>
-                    AI-Powered Processing
-                  </h3>
-                </div>
-                <ul className='text-foreground/80 space-y-1 text-xs max-sm:space-y-0.5 max-sm:pl-7 max-sm:text-[13px]'>
-                  <li className='flex items-center max-sm:mb-1'>
-                    <Icon
-                      name='checkCircle2'
-                      className='text-success mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3'
-                    />
-                    Intelligent PDF text extraction
-                  </li>
-                  <li className='flex items-center max-sm:mb-1'>
-                    <Icon
-                      name='checkCircle2'
-                      className='text-success mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3'
-                    />
-                    Automatic transaction categorization
-                  </li>
-                  <li className='flex items-center'>
-                    <Icon
-                      name='checkCircle2'
-                      className='text-success mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3'
-                    />
-                    Smart data validation
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            {/* Security Card */}
-            <Card className='from-success/10 to-success/10 border-0 bg-gradient-to-br shadow-lg backdrop-blur-sm max-sm:rounded-lg max-sm:border'>
-              <CardContent className='p-4 max-sm:p-3 max-sm:pr-2 max-sm:pl-4'>
-                <div className='mb-2 flex items-center max-sm:mb-1'>
-                  <div className='bg-success/10 dark:bg-success/20 mr-2 rounded-full p-1 max-sm:p-0.5'>
-                    <Icon name='shield' className='text-success h-5 w-5 max-sm:h-4 max-sm:w-4' />
-                  </div>
-                  <h3 className='text-foreground font-semibold max-sm:text-left max-sm:text-base max-sm:font-bold'>
-                    Secure & Private
-                  </h3>
-                </div>
-                <ul className='text-foreground/80 space-y-1 text-xs max-sm:space-y-0.5 max-sm:pl-7 max-sm:text-[13px]'>
-                  <li className='flex items-center max-sm:mb-1'>
-                    <Icon
-                      name='checkCircle2'
-                      className='text-success mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3'
-                    />
-                    End-to-end encryption
-                  </li>
-                  <li className='flex items-center max-sm:mb-1'>
-                    <Icon
-                      name='checkCircle2'
-                      className='text-success mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3'
-                    />
-                    Password-protected files supported
-                  </li>
-                  <li className='flex items-center'>
-                    <Icon
-                      name='checkCircle2'
-                      className='text-success mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3'
-                    />
-                    No data stored permanently
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            {/* Instructions */}
-            <Alert className='border-warning/20 bg-warning/10 max-sm:rounded-lg max-sm:border max-sm:border-zinc-200 max-sm:bg-white max-sm:p-3 max-sm:text-[13px]'>
-              <Icon name='alertCircle' className='h-4 w-4 text-orange-200 max-sm:h-3 max-sm:w-3' />
-              <AlertTitle className='text-orange-300 max-sm:text-xs max-sm:font-bold'>
-                Pro Tips
-              </AlertTitle>
-              <AlertDescription className='text-orange-500/60 max-sm:text-xs max-sm:font-normal'>
-                For best results, use our Excel template. PDF processing is powered by AI but may
-                require review before final import.
-              </AlertDescription>
-            </Alert>
-          </div>
-        </div>
+        <PasswordDialog
+          isOpen={isPasswordDialogOpen}
+          onOpenChange={setIsPasswordDialogOpen}
+          fileName={pendingFile?.name}
+          password={password}
+          setPassword={setPassword}
+          onSubmit={handlePasswordSubmit}
+          error={passwordError}
+          loading={loading}
+        />
       </div>
-
-      {/* Preview Dialog */}
-      <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-        <DialogContent className='bg-card/95 max-h-[90vh] max-w-full backdrop-blur-sm max-sm:p-2 sm:max-w-lg md:max-w-xl lg:max-w-6xl'>
-          <DialogHeader>
-            <DialogTitle className='flex items-center text-lg max-sm:text-base'>
-              <Icon name='fileText' className='text-primary mr-2 h-5 w-5 max-sm:h-4 max-sm:w-4' />
-              Review Transactions
-            </DialogTitle>
-            <DialogDescription className='max-sm:text-xs'>
-              Select the transactions you want to import. Deselect any rows you wish to exclude.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className='flex-1 overflow-hidden'>
-            <ImportPreviewTable
-              columns={previewColumns}
-              data={transactions}
-              rowSelection={rowSelection}
-              setRowSelection={setRowSelection}
-            />
-          </div>
-
-          <DialogFooter className='bg-muted/50 border-t p-4 max-sm:p-2 md:p-6'>
-            <div className='flex w-full items-center justify-between max-sm:flex-col max-sm:items-center max-sm:space-y-2'>
-              <div className='flex items-center space-x-4 max-sm:flex-col max-sm:items-center max-sm:space-y-2'>
-                <p className='text-muted-foreground text-xs max-sm:text-[11px]'>
-                  <span className='text-primary font-semibold'>{selectedRowCount}</span> of{' '}
-                  {transactions.length} rows selected
-                </p>
-                {selectedRowCount > 0 && (
-                  <div className='bg-success/10 rounded-full px-3 py-1 max-sm:px-2 max-sm:py-0.5'>
-                    <span className='text-success-foreground text-xs font-medium max-sm:text-[10px]'>
-                      Ready to import
-                    </span>
-                  </div>
-                )}
-              </div>
-              <div className='flex gap-3 max-sm:flex-col max-sm:items-center max-sm:space-y-2'>
-                <Button
-                  variant='outline'
-                  onClick={() => setIsConfirmOpen(false)}
-                  disabled={loading}
-                  className='bg-card/50 max-sm:text-xs'
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleConfirmAndStage}
-                  disabled={loading || selectedRowCount === 0}
-                  className='from-primary to-info text-primary-foreground bg-gradient-to-r shadow-lg transition-all duration-200 hover:shadow-xl max-sm:px-2 max-sm:py-1 max-sm:text-xs'
-                >
-                  {loading ? (
-                    <>
-                      <div className='border-primary-foreground mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent max-sm:h-3 max-sm:w-3'></div>
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      Stage {selectedRowCount} Transactions
-                      <Icon name='arrowRight' className='ml-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Final Confirmation Dialog */}
-      <Dialog open={!!successId} onOpenChange={() => setSuccessId(null)}>
-        <DialogContent className='bg-card/95 backdrop-blur-sm max-sm:p-2'>
-          <DialogHeader>
-            <DialogTitle className='flex items-center text-lg max-sm:text-base'>
-              <Icon
-                name='checkCircle2'
-                className='text-success mr-2 h-5 w-5 max-sm:h-4 max-sm:w-4'
-              />
-              Final Confirmation
-            </DialogTitle>
-            <DialogDescription className='max-sm:text-xs'>
-              <span className='text-primary font-semibold'>{Object.keys(rowSelection).length}</span>{' '}
-              transactions are staged and ready. This action will add them to your account and
-              cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant='outline'
-              onClick={() => setSuccessId(null)}
-              disabled={loading}
-              className='bg-card/50 max-sm:mb-2 max-sm:text-xs'
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleFinalImport}
-              disabled={loading}
-              className='from-success to-success text-success-foreground bg-gradient-to-r shadow-lg transition-all duration-200 hover:shadow-xl max-sm:px-2 max-sm:py-1 max-sm:text-xs'
-            >
-              {loading ? (
-                <>
-                  <div className='border-success-foreground mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent max-sm:h-3 max-sm:w-3'></div>
-                  Importing...
-                </>
-              ) : (
-                <>
-                  <Icon name='checkCircle2' className='mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
-                  Confirm Import
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Password Dialog */}
-      <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
-        <DialogContent
-          onCloseAutoFocus={(e) => e.preventDefault()}
-          className='bg-card/95 max-w-full backdrop-blur-sm max-sm:p-2 sm:max-w-lg md:max-w-xl'
-        >
-          <DialogHeader>
-            <DialogTitle className='flex items-center text-lg max-sm:text-base'>
-              <Icon name='keyRound' className='text-primary mr-2 h-5 w-5 max-sm:h-4 max-sm:w-4' />
-              Password Required
-            </DialogTitle>
-            <DialogDescription className='max-sm:text-xs'>
-              <span className='text-foreground font-medium'>{pendingFile?.name}</span>&quot; is
-              encrypted. Please enter the password to unlock it.
-            </DialogDescription>
-          </DialogHeader>
-          <div className='grid gap-3 py-3 max-sm:gap-2 max-sm:py-2'>
-            <div className='space-y-1'>
-              <Label htmlFor='password-input' className='text-xs font-medium'>
-                Password
-              </Label>
-              <Input
-                id='password-input'
-                type='password'
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handlePasswordSubmit();
-                }}
-                className='border-border bg-card/50 focus:border-primary h-10 border-2 backdrop-blur-sm transition-all duration-200 max-sm:h-9 max-sm:text-xs'
-                placeholder='Enter file password'
-                autoFocus
-              />
-            </div>
-            {passwordError && (
-              <p className='bg-destructive/10 text-destructive rounded p-2 text-xs max-sm:text-[11px]'>
-                {passwordError}
-              </p>
-            )}
-          </div>
-          <DialogFooter>
-            <Button
-              variant='outline'
-              onClick={() => setIsPasswordDialogOpen(false)}
-              disabled={loading}
-              className='bg-card/50 max-sm:text-xs'
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handlePasswordSubmit}
-              disabled={loading || !password}
-              className='from-primary to-info text-primary-foreground bg-gradient-to-r max-sm:mb-2 max-sm:px-2 max-sm:py-1 max-sm:text-xs'
-            >
-              {loading ? (
-                <>
-                  <div className='border-primary-foreground mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent max-sm:h-3 max-sm:w-3'></div>
-                  Unlocking...
-                </>
-              ) : (
-                <>
-                  <Icon name='keyRound' className='mr-2 h-4 w-4 max-sm:h-3 max-sm:w-3' />
-                  Unlock & Continue
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

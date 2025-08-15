@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
+import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Select,
@@ -57,16 +57,17 @@ const DatePicker: React.FC<DatePickerProps> = ({
   return (
     <Popover open={openPopover} onOpenChange={setOpenPopover} modal>
       <PopoverTrigger asChild>
-        <Button
-          variant='outline'
-          className={cn(
-            'w-full justify-start text-left font-normal',
-            !value && 'text-muted-foreground'
-          )}
-        >
-          <Icon name='calendar' className='mr-2 h-4 w-4' />
-          {value ? format(value, 'PPP') : <span>Pick a date</span>}
-        </Button>
+        <div className='relative'>
+          <Input
+            readOnly
+            value={value ? format(value, 'PPP') : 'Pick a date'}
+            className={cn(
+              'w-full justify-start pr-10 text-left font-normal',
+              !value && 'text-muted-foreground'
+            )}
+          />
+          <Icon name='calendar' className='absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2' />
+        </div>
       </PopoverTrigger>
       <PopoverContent className='w-auto p-0' align='start'>
         <Calendar

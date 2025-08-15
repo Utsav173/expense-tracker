@@ -10,14 +10,12 @@ import { Input } from '../ui/input';
 import { transactionCreate } from '@/lib/endpoints/transactions';
 import AddModal from './add-modal';
 import { useQuery } from '@tanstack/react-query';
-import { categoryGetAll, categoryCreate } from '@/lib/endpoints/category';
 import { accountGetDropdown } from '@/lib/endpoints/accounts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import type { AccountAPI, CategoryAPI } from '@/lib/api/api-types';
+import type { AccountAPI } from '@/lib/api/api-types';
 import { Card } from '../ui/card';
 import { NumericFormat } from 'react-number-format';
 import DateTimePicker from '../date/date-time-picker';
-import { Combobox, ComboboxOption } from '../ui/combobox';
 import {
   Form,
   FormControl,
@@ -29,6 +27,7 @@ import {
 } from '../ui/form';
 import { cn } from '@/lib/utils';
 import { Icon } from '../ui/icon';
+import CategoryCombobox from '../ui/category-combobox';
 
 const transactionSchema = z.object({
   text: z.string().min(3, 'Description must be at least 3 characters').max(255),
@@ -39,7 +38,7 @@ const transactionSchema = z.object({
       'Amount must be a positive number'
     ),
   isIncome: z.boolean(),
-  categoryId: z.string().optional(),
+  categoryId: z.string().optional().nullable(),
   accountId: z.string().min(1, 'Please select an account'),
   transfer: z.string().optional(),
   recurring: z.boolean().optional(),
@@ -64,18 +63,10 @@ const AddTransactionModal = ({
 }: AddTransactionModalProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [accounts, setAccounts] = useState<AccountAPI.SimpleAccount[]>([]);
-  const [categories, setCategories] = useState<CategoryAPI.Category[]>([]);
   const [createdAt, setCreatedAt] = useState<Date>(new Date());
   const [recurrenceEndDate, setRecurrenceEndDate] = useState<Date | null>(null);
-  const [categoryComboboxLoading, setCategoryComboboxLoading] = useState(false);
-  const [categoryComboboxError, setCategoryComboboxError] = useState<string | null>(null);
 
   const { showError } = useToast();
-
-  const { data: categoriesData, isLoading: isLoadingCategory } = useQuery({
-    queryKey: ['categories'],
-    queryFn: () => categoryGetAll({ limit: 100, page: 1, sortBy: 'name', sortOrder: 'asc' })
-  });
 
   const { data: accountData, isLoading: isLoadingAccount } = useQuery({
     queryKey: ['accountDropdown'],
@@ -101,12 +92,6 @@ const AddTransactionModal = ({
   } = form;
 
   const isIncome = watch('isIncome');
-
-  useEffect(() => {
-    if (categoriesData?.categories) {
-      setCategories(categoriesData.categories);
-    }
-  }, [categoriesData?.categories]);
 
   useEffect(() => {
     if (accountData) {
@@ -171,7 +156,7 @@ const AddTransactionModal = ({
         text: data.text,
         amount: Number(data.amount),
         isIncome: data.isIncome,
-        category: data.categoryId,
+        category: data.categoryId || undefined,
         account: data.accountId,
         transfer: data.transfer || '',
         recurring: data.recurring || false,
@@ -197,71 +182,6 @@ const AddTransactionModal = ({
       setValue('currency', selectedAccount.currency);
     }
   };
-
-  const fetchCategoryOptions = useCallback(async (query: string): Promise<ComboboxOption[]> => {
-    setCategoryComboboxError(null);
-    setCategoryComboboxLoading(true);
-    try {
-      const res = await categoryGetAll({
-        search: query,
-        page: 1,
-        limit: 20,
-        sortBy: 'name',
-        sortOrder: 'asc'
-      });
-      const cats = res?.categories || [];
-      const options = cats.map((cat) => ({ value: cat.id, label: cat.name }));
-      if (query && !options.some((opt) => opt.label.toLowerCase() === query.toLowerCase())) {
-        options.push({ value: '__create__', label: `Create "${query}"` });
-      }
-      return options;
-    } catch (err: any) {
-      setCategoryComboboxError('Failed to load categories');
-      return [];
-    } finally {
-      setCategoryComboboxLoading(false);
-    }
-  }, []);
-
-  const handleCreateCategoryInline = useCallback(
-    async (name: string): Promise<ComboboxOption | null> => {
-      try {
-        const res = await categoryCreate({ name });
-        if (res && res.data.id) {
-          setCategories((prev) => [...prev, res.data]);
-          setValue('categoryId', res.data.id);
-          return { value: res.data.id, label: res.data.name };
-        }
-        throw new Error('Invalid response');
-      } catch (err: any) {
-        showError(err.message || 'Failed to create category');
-        return null;
-      }
-    },
-    [setCategories, setValue, showError]
-  );
-
-  const handleCategoryComboboxChange = useCallback(
-    async (option: ComboboxOption | null) => {
-      if (!option) {
-        setValue('categoryId', '');
-        return;
-      }
-      if (option.value === '__create__') {
-        const match = option.label.match(/^Create\s+"(.+)"$/);
-        const name = match ? match[1] : '';
-        if (name) {
-          const created = await handleCreateCategoryInline(name);
-          if (created) {
-            setValue('categoryId', created.value);
-          }
-        }
-        return;
-      }
-      setValue('categoryId', option.value);
-    },
-    [setValue, handleCreateCategoryInline]
-  );
 
   const recurrenceEndDateDisabled = useCallback(
     (date: Date) => {
@@ -391,7 +311,7 @@ const AddTransactionModal = ({
             </Card>
           </div>
 
-          <div className='max-h-full overflow-y-auto px-1'>
+          <div className='scrollbar max-h-full overflow-y-auto px-1'>
             <div className='space-y-4'>
               {accountId ? (
                 <input type='hidden' {...form.register('accountId')} value={accountId} />
@@ -525,7 +445,7 @@ const AddTransactionModal = ({
               <FormField
                 control={control}
                 name='createdAt'
-                render={({ field }) => (
+                render={() => (
                   <FormItem>
                     <FormLabel className='flex items-center gap-2'>
                       <Icon name='calendar' className='text-muted-foreground h-4 w-4' />
@@ -555,6 +475,7 @@ const AddTransactionModal = ({
                           checked={field.value}
                           onChange={field.onChange}
                           disabled={isSubmitting}
+                          className='my-auto'
                         />
                       </FormControl>
                       <div className='space-y-1 leading-none'>
@@ -601,7 +522,7 @@ const AddTransactionModal = ({
                     <FormField
                       control={control}
                       name='recurrenceEndDate'
-                      render={({ field }) => (
+                      render={() => (
                         <FormItem>
                           <FormLabel>End Date (Optional)</FormLabel>
                           <FormControl>
@@ -618,7 +539,6 @@ const AddTransactionModal = ({
                   </div>
                 )}
               </div>
-
               <FormField
                 control={control}
                 name='categoryId'
@@ -629,26 +549,12 @@ const AddTransactionModal = ({
                       Category
                     </FormLabel>
                     <FormControl>
-                      <Combobox
-                        value={
-                          categories.find((cat) => cat.id === field.value)
-                            ? {
-                                value: field.value!,
-                                label: categories.find((cat) => cat.id === field.value)?.name || ''
-                              }
-                            : null
-                        }
-                        onChange={handleCategoryComboboxChange}
-                        fetchOptions={fetchCategoryOptions}
-                        placeholder={
-                          isLoadingCategory ? 'Loading categories...' : 'Select or create category'
-                        }
-                        noOptionsMessage={
-                          categoryComboboxLoading
-                            ? 'Loading...'
-                            : categoryComboboxError || 'No categories found. Type to create.'
-                        }
-                        loadingPlaceholder='Loading categories...'
+                      <CategoryCombobox
+                        value={field.value}
+                        onChange={field.onChange}
+                        creatable
+                        allowClear
+                        placeholder='Select or create a category...'
                         disabled={isSubmitting}
                         className='w-full'
                       />

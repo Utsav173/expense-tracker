@@ -9,6 +9,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { DayPickerProps } from 'react-day-picker';
 import { Icon } from '../ui/icon';
+import { Input } from '../ui/input';
 
 interface DateTimePickerProps {
   value?: Date;
@@ -238,33 +239,28 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   return (
     <Popover open={openPopover} onOpenChange={setOpenPopover} modal>
       <PopoverTrigger asChild>
-        <Button
-          variant='outline'
-          className={cn(
-            'w-full justify-start text-left font-normal',
-            !selectedDate && 'text-muted-foreground',
-            className
-          )}
-          disabled={!!buttonDisabled}
-          onKeyDown={handleKeyDown}
-          id={id}
-          name={name}
-          aria-label={ariaLabel || 'Select date and time'}
-          aria-describedby={ariaDescribedBy}
-          aria-required={required}
-          aria-expanded={openPopover}
-          aria-haspopup='dialog'
-        >
-          {selectedDate ? (
-            <span className='truncate'>{format(selectedDate, displayFormat)}</span>
-          ) : (
-            <span className='text-muted-foreground'>{placeholderText}</span>
-          )}
-          <div className='ml-auto flex items-center gap-1'>
-            {showTimeIcon && <Icon name='clock' className='h-4 w-4 opacity-50' />}
+        <div className='relative w-full'>
+          <Input
+            type='text'
+            id={id}
+            name={name}
+            value={selectedDate ? format(selectedDate, displayFormat) : ''}
+            placeholder={placeholderText}
+            readOnly
+            disabled={!!buttonDisabled}
+            onKeyDown={handleKeyDown}
+            aria-label={ariaLabel || 'Select date and time'}
+            aria-describedby={ariaDescribedBy}
+            aria-required={required}
+            aria-expanded={openPopover}
+            aria-haspopup='dialog'
+            className={cn('w-full cursor-pointer pr-10', className)}
+          />
+          <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3'>
+            {showTimeIcon && <Icon name='clock' className='mr-1 h-4 w-4 opacity-50' />}
             <Icon name='calendar' className='h-4 w-4 opacity-50' />
           </div>
-        </Button>
+        </div>
       </PopoverTrigger>
 
       <PopoverContent
@@ -322,14 +318,17 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 
             {/* AM/PM */}
             {!use24Hour && (
-              <ScrollArea className='w-16 max-sm:mx-auto max-sm:w-[250px]' aria-label='AM/PM'>
+              <ScrollArea
+                className='w-16 px-2 max-sm:mx-auto max-sm:w-[250px] max-sm:px-0 max-sm:py-2'
+                aria-label='AM/PM'
+              >
                 <div className='flex sm:flex-col'>
                   {['AM', 'PM'].map((ampm) => (
                     <Button
                       key={ampm}
                       size='icon'
                       variant={currentTimeValues.ampm === ampm ? 'default' : 'ghost'}
-                      className='aspect-square shrink-0 text-xs sm:w-full'
+                      className='m-auto aspect-square p-2 text-xs sm:w-full'
                       onClick={() => handleTimeChange('ampm', ampm)}
                       aria-pressed={currentTimeValues.ampm === ampm}
                       aria-label={ampm}

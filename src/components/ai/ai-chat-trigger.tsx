@@ -52,7 +52,7 @@ export const AiChatTrigger = () => {
                     animate='animate'
                     exit='exit'
                   >
-                    <Icon name='brainCircuit' className='h-6 w-6' />
+                    <Icon name='ai' className='h-8 w-8' />
                   </motion.div>
                 </AnimatePresence>
               </motion.button>

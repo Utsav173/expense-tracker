@@ -14,6 +14,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useDebounce } from 'use-debounce';
 import { Icon } from './icon';
+import { Input } from './input';
 
 export interface ComboboxOption {
   value: string;
@@ -48,7 +49,7 @@ export function Combobox({
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
   const [isLoading, setIsLoading] = React.useState(false);
   const [options, setOptions] = React.useState<ComboboxOption[]>([]);
-  const triggerRef = React.useRef<HTMLButtonElement>(null);
+  const triggerRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     if (!open) {
@@ -83,17 +84,22 @@ export function Combobox({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          ref={triggerRef}
-          variant='outline'
-          role='combobox'
-          aria-expanded={open}
-          className='w-full justify-between'
-          disabled={disabled}
-        >
-          {value ? value.label : placeholder}
-          <Icon name='chevronsUpDown' className='ml-2 h-4 w-4 shrink-0 opacity-50' />
-        </Button>
+        <div className={cn('relative', className, disabled && 'cursor-not-allowed')}>
+          <Input
+            readOnly
+            value={value ? value.label : placeholder}
+            className='w-full cursor-pointer justify-between'
+            disabled={disabled}
+            role='combobox'
+            aria-expanded={open}
+            ref={triggerRef}
+            onClick={() => setOpen(!open)}
+          />
+          <Icon
+            name='chevronsUpDown'
+            className='absolute top-1/2 right-2 h-4 w-4 shrink-0 -translate-y-1/2 opacity-50'
+          />
+        </div>
       </PopoverTrigger>
       <PopoverContent
         className='w-full p-0'

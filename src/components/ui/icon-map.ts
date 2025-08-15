@@ -1,16 +1,13 @@
 export const iconMap = {
-  add: 'material-symbols:add',
   addCircle: 'material-symbols:add-circle-outline',
   alertCircle: 'material-symbols:error-outline',
   alertTriangle: 'material-symbols:warning-outline',
   arrowDown: 'material-symbols:arrow-downward',
   arrowDownCircle: 'material-symbols:arrow-circle-down-outline',
-  arrowDownLeft: 'material-symbols:subdirectory-arrow-left',
   arrowLeft: 'material-symbols:arrow-back',
   arrowRight: 'material-symbols:arrow-forward',
   arrowUp: 'material-symbols:arrow-upward',
   arrowUpCircle: 'material-symbols:arrow-circle-up-outline',
-  arrowsUpDown: 'material-symbols:unfold-more',
   banknote: 'material-symbols:payments-outline',
   barChart: 'material-symbols:bar-chart',
   barChart3: 'material-symbols:bar-chart-4-bars',
@@ -19,9 +16,8 @@ export const iconMap = {
   bookUser: 'material-symbols:contact-page-outline',
   bookOpen: 'material-symbols:menu-book-outline',
   bot: 'material-symbols:robot-2-outline',
-  brainCircuit: 'material-symbols:psychology-outline',
+  brainCircuit: 'hugeicons:artificial-intelligence-02',
   building: 'material-symbols:corporate-fare',
-  building2: 'material-symbols:apartment',
   calculator: 'material-symbols:calculate-outline',
   calendar: 'material-symbols:calendar-today-outline',
   calendarDays: 'material-symbols:event-outline',
@@ -46,7 +42,6 @@ export const iconMap = {
   download: 'material-symbols:download',
   edit: 'material-symbols:edit-outline',
   edit3: 'material-symbols:edit',
-  ellipsis: 'material-symbols:more-horiz',
   externalLink: 'material-symbols:open-in-new',
   eye: 'material-symbols:visibility-outline',
   eyeOff: 'material-symbols:visibility-off-outline',
@@ -141,7 +136,8 @@ export const iconMap = {
   transaction: 'material-symbols:receipt-long-outline',
   category: 'material-symbols:category-outline',
   investment: 'material-symbols:monitoring',
-  budget: 'material-symbols:request-quote-outline'
+  budget: 'material-symbols:request-quote-outline',
+  ai: 'healthicons:artificial-intelligence'
 } as const;
 
 export type IconName = keyof typeof iconMap;

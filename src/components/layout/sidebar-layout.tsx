@@ -14,14 +14,14 @@ const SidebarLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <React.Suspense
       fallback={
-        <div className='flex h-screen items-center justify-center'>
+        <div className='flex min-h-screen items-center justify-center'>
           <Loader />
         </div>
       }
     >
       <SidebarProvider>
         <AppSidebar />
-        <SidebarInset className='scrollbar bg-muted/40 relative flex min-h-[calc(100dvh-4rem)] w-[100dvw] flex-1 flex-col gap-4 pb-12'>
+        <SidebarInset className='scrollbar bg-muted/40 relative flex min-h-[calc(100dvh-4rem)] w-[100dvw] flex-1 flex-col gap-4 pb-2'>
           <PageHeader />
           <AnimatePresence mode='wait'>
             <motion.main

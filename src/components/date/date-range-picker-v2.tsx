@@ -22,6 +22,7 @@ import type { Dispatch, SetStateAction } from 'react';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -325,24 +326,29 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
         <div className='flex items-center justify-between'>
           <Popover open={open && !disabled} onOpenChange={handleOpenChange}>
             <PopoverTrigger asChild>
-              <Button
-                id={id}
-                type='button'
-                variant='outline'
-                className={cn(
-                  'h-9 w-full items-center justify-between text-xs sm:text-sm',
-                  !(tempDate?.from || date?.from) && 'text-muted-foreground',
-                  disabled && 'cursor-not-allowed opacity-50',
-                  buttonClassName
-                )}
-                disabled={disabled}
-                aria-expanded={open}
-                aria-haspopup='dialog'
-                aria-describedby={error ? `${id}-error` : undefined}
-              >
-                <span className='truncate'>{getDisplayText()}</span>
-                <Icon name='calendar' aria-hidden='true' className='ml-2 h-4 w-4' />
-              </Button>
+              <div className='relative'>
+                <Input
+                  id={id}
+                  type='text'
+                  readOnly
+                  value={getDisplayText()}
+                  className={cn(
+                    'h-9 w-full items-center justify-between pr-10 text-xs sm:text-sm',
+                    !(tempDate?.from || date?.from) && 'text-muted-foreground',
+                    disabled && 'cursor-not-allowed opacity-50',
+                    buttonClassName
+                  )}
+                  disabled={disabled}
+                  aria-expanded={open}
+                  aria-haspopup='dialog'
+                  aria-describedby={error ? `${id}-error` : undefined}
+                />
+                <Icon
+                  name='calendar'
+                  aria-hidden='true'
+                  className='absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2'
+                />
+              </div>
             </PopoverTrigger>
             <PopoverContent className='w-auto p-0' align='start'>
               <Calendar

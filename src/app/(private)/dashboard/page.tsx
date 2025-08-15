@@ -235,7 +235,7 @@ const DashboardCardContent: React.FC<DashboardCardContentProps> = ({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   return (
-    <Card className={cn('flex h-full flex-col', className)}>
+    <Card className={cn('flex h-full flex-col border-0', className)}>
       <CardHeader className='flex flex-row items-start justify-between space-y-0 pt-4 pb-2'>
         <div className='flex-1 pr-4'>
           <CardTitle className='flex items-center gap-2 text-base font-semibold md:text-lg'>

@@ -46,7 +46,7 @@ const StatementPage = () => {
 
   return (
     <div className='mx-auto w-full max-w-2xl p-4 sm:p-8'>
-      <Card className='shadow-lg'>
+      <Card className='border-0 shadow-lg'>
         <CardHeader>
           <CardTitle className='text-2xl'>Generate Account Statement</CardTitle>
           <CardDescription>
@@ -96,7 +96,7 @@ const StatementPage = () => {
             </div>
 
             <div className='grid grid-cols-1 gap-6 sm:grid-cols-2'>
-              <div className='space-y-2'>
+              <div className='w-full space-y-2'>
                 <Label htmlFor='dateRange'>By Date Range</Label>
                 <DatePickerWithRange
                   date={dateRange}

@@ -74,7 +74,7 @@ const AddAccountModal = () => {
       icon={<Icon name='wallet' className='h-5 w-5' />}
       iconClassName='bg-primary-muted text-primary'
       triggerButton={
-        <Button className='btn-primary h-10 w-full px-4 py-2'>
+        <Button variant={'account'}>
           <Icon name='wallet2' className='mr-2 h-4 w-4' /> Create Account
         </Button>
       }

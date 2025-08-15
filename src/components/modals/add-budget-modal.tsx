@@ -142,6 +142,7 @@ const AddBudgetModal: React.FC<AddBudgetModalProps> = ({
                     disabled={createBudgetMutation.isPending}
                     placeholder='Search and select category...'
                     allowClear={false}
+                    creatable
                   />
                 </FormControl>
                 <FormMessage />

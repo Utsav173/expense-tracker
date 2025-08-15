@@ -3,7 +3,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 import {
   Command,
   CommandEmpty,
@@ -15,8 +14,13 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { fetchCurrencies } from '@/lib/endpoints/currency';
 import { Skeleton } from './skeleton';
-import type { Currency } from './currency-select';
 import { Icon } from './icon';
+import { Input } from './input';
+
+export interface Currency {
+  code: string;
+  name: string;
+}
 
 interface CurrencyComboboxProps {
   value?: string;
@@ -64,16 +68,21 @@ export const CurrencyCombobox: React.FC<CurrencyComboboxProps> = ({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          variant='outline'
-          role='combobox'
-          aria-expanded={open}
-          className='w-full justify-between'
-          disabled={disabled}
-        >
-          {value ? `${value} - ${selectedCurrencyLabel || ''}` : placeholder}
-          <Icon name='chevronsUpDown' className='ml-2 h-4 w-4 shrink-0 opacity-50' />
-        </Button>
+        <div className={cn('relative', className, disabled && 'cursor-not-allowed')}>
+          <Input
+            readOnly
+            value={value ? `${value} - ${selectedCurrencyLabel || ''}` : placeholder}
+            className='w-full cursor-pointer justify-between'
+            disabled={disabled}
+            role='combobox'
+            aria-expanded={open}
+            onClick={() => setOpen(!open)}
+          />
+          <Icon
+            name='chevronsUpDown'
+            className='absolute top-1/2 right-2 h-4 w-4 shrink-0 -translate-y-1/2 opacity-50'
+          />
+        </div>
       </PopoverTrigger>
       <PopoverContent className='w-[--radix-popover-trigger-width] p-0'>
         <Command>

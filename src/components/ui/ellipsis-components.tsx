@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useRef, useEffect, ReactNode, HTMLAttributes } from 'react';
+import React, { useState, useRef, useEffect, ReactNode, HTMLAttributes, useCallback } from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
-interface BaseEllipsisProps extends HTMLAttributes<HTMLDivElement> {
+interface BaseEllipsisProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
   text?: string;
   className?: string;
   showTooltip?: boolean;
@@ -28,9 +28,34 @@ interface ResponsiveEllipsisProps extends BaseEllipsisProps {
   lines?: number;
 }
 
-/**
- * SingleLineEllipsis - Truncates text to a single line with ellipsis
- */
+const getTextContent = (text?: string, children?: ReactNode): string => {
+  if (text) return text;
+  if (typeof children === 'string') return children;
+  if (typeof children === 'number') return children.toString();
+  return '';
+};
+
+const EllipsisWrapper: React.FC<{
+  children: ReactNode;
+  showTooltip: boolean;
+  content: string;
+  tooltipContent?: ReactNode;
+  shouldShowTooltip?: boolean;
+}> = ({ children, showTooltip, content, tooltipContent, shouldShowTooltip = true }) => {
+  if (!showTooltip || !shouldShowTooltip) {
+    return <>{children}</>;
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent side='top' className='max-w-xs break-words'>
+        {tooltipContent || content}
+      </TooltipContent>
+    </Tooltip>
+  );
+};
+
 export const SingleLineEllipsis: React.FC<BaseEllipsisProps> = ({
   text,
   className,
@@ -39,65 +64,61 @@ export const SingleLineEllipsis: React.FC<BaseEllipsisProps> = ({
   tooltipContent,
   ...props
 }) => {
-  const content = text || (children as string);
+  const content = getTextContent(text, children);
+
+  if (!content) return null;
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div className={cn('max-w-full truncate sm:w-auto', className)} {...props}>
-          {content}
-        </div>
-      </TooltipTrigger>
-      {showTooltip && (
-        <TooltipContent className='relative'>{tooltipContent ?? content}</TooltipContent>
-      )}
-    </Tooltip>
+    <EllipsisWrapper showTooltip={showTooltip} content={content} tooltipContent={tooltipContent}>
+      <div
+        className={cn('truncate', className)}
+        title={!showTooltip ? content : undefined}
+        {...props}
+      >
+        {content}
+      </div>
+    </EllipsisWrapper>
   );
 };
 
-/**
- * MultiLineEllipsis - Truncates text to specified number of lines with ellipsis
- */
 export const MultiLineEllipsis: React.FC<MultiLineEllipsisProps> = ({
   text,
   lines = 2,
   className,
   showTooltip = true,
   children,
+  tooltipContent,
   ...props
 }) => {
-  const content = text || (children as string);
+  const content = getTextContent(text, children);
+
+  if (!content) return null;
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div
-          className={cn('overflow-hidden', className)}
-          style={{
-            display: '-webkit-box',
-            WebkitLineClamp: lines,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden'
-          }}
-          {...props}
-        >
-          {content}
-        </div>
-      </TooltipTrigger>
-      {showTooltip && <TooltipContent>{content}</TooltipContent>}
-    </Tooltip>
+    <EllipsisWrapper showTooltip={showTooltip} content={content} tooltipContent={tooltipContent}>
+      <div
+        className={cn('overflow-hidden', className)}
+        style={{
+          display: '-webkit-box',
+          WebkitLineClamp: lines,
+          WebkitBoxOrient: 'vertical'
+        }}
+        title={!showTooltip ? content : undefined}
+        {...props}
+      >
+        {content}
+      </div>
+    </EllipsisWrapper>
   );
 };
 
-/**
- * EllipsisMiddle - Truncates text in the middle with ellipsis
- */
 export const EllipsisMiddle: React.FC<EllipsisMiddleProps> = ({
   text,
   startChars = 10,
   endChars = 10,
   className,
   showTooltip = true,
+  tooltipContent,
   ...props
 }) => {
   if (!text) return null;
@@ -108,20 +129,23 @@ export const EllipsisMiddle: React.FC<EllipsisMiddleProps> = ({
     : text;
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div className={cn('overflow-hidden', className)} {...props}>
-          {displayText}
-        </div>
-      </TooltipTrigger>
-      {showTooltip && shouldTruncate && <TooltipContent>{text}</TooltipContent>}
-    </Tooltip>
+    <EllipsisWrapper
+      showTooltip={showTooltip}
+      content={text}
+      tooltipContent={tooltipContent}
+      shouldShowTooltip={shouldTruncate}
+    >
+      <div
+        className={cn('overflow-hidden', className)}
+        title={!showTooltip && shouldTruncate ? text : undefined}
+        {...props}
+      >
+        {displayText}
+      </div>
+    </EllipsisWrapper>
   );
 };
 
-/**
- * ResponsiveEllipsis - Shows full text on larger screens, truncates on smaller screens
- */
 export const ResponsiveEllipsis: React.FC<ResponsiveEllipsisProps> = ({
   text,
   className,
@@ -129,84 +153,109 @@ export const ResponsiveEllipsis: React.FC<ResponsiveEllipsisProps> = ({
   lines = 1,
   showTooltip = true,
   children,
+  tooltipContent,
   ...props
 }) => {
-  const content = text || (children as string);
+  const content = getTextContent(text, children);
 
-  const mobileClasses: Record<string, string> = {
-    sm: 'sm:hidden',
-    md: 'md:hidden',
-    lg: 'lg:hidden',
-    xl: 'xl:hidden',
-    '2xl': '2xl:hidden'
+  if (!content) return null;
+
+  const breakpointClasses: Record<string, string> = {
+    sm: 'sm:line-clamp-none sm:whitespace-normal',
+    md: 'md:line-clamp-none md:whitespace-normal',
+    lg: 'lg:line-clamp-none lg:whitespace-normal',
+    xl: 'xl:line-clamp-none xl:whitespace-normal',
+    '2xl': '2xl:line-clamp-none 2xl:whitespace-normal'
   };
 
   return (
-    <>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div
-            className={cn(mobileClasses[breakpoint], className)}
-            style={{
-              display: '-webkit-box',
-              WebkitLineClamp: lines,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden'
-            }}
-            {...props}
-          >
-            {content}
-          </div>
-        </TooltipTrigger>
-        {showTooltip && <TooltipContent>{content}</TooltipContent>}
-      </Tooltip>
-    </>
+    <EllipsisWrapper showTooltip={showTooltip} content={content} tooltipContent={tooltipContent}>
+      <div
+        className={cn(
+          'overflow-hidden',
+          lines === 1 ? 'truncate' : '',
+          breakpointClasses[breakpoint],
+          className
+        )}
+        style={
+          lines > 1
+            ? {
+                display: '-webkit-box',
+                WebkitLineClamp: lines,
+                WebkitBoxOrient: 'vertical'
+              }
+            : undefined
+        }
+        title={!showTooltip ? content : undefined}
+        {...props}
+      >
+        {content}
+      </div>
+    </EllipsisWrapper>
   );
 };
 
-/**
- * DynamicEllipsis - Measures container and truncates text if it overflows
- */
 export const DynamicEllipsis: React.FC<BaseEllipsisProps> = ({
   text,
   className,
   showTooltip = true,
   children,
+  tooltipContent,
   ...props
 }) => {
-  const content = text || (children as string);
+  const content = getTextContent(text, children);
   const containerRef = useRef<HTMLDivElement>(null);
-  const textRef = useRef<HTMLSpanElement>(null);
   const [isOverflowing, setIsOverflowing] = useState(false);
 
+  const checkOverflow = useCallback(() => {
+    if (!containerRef.current) return;
+
+    const element = containerRef.current;
+    const isOverflow = element.scrollWidth > element.clientWidth;
+    setIsOverflowing(isOverflow);
+  }, []);
+
   useEffect(() => {
-    const checkOverflow = () => {
-      if (containerRef.current && textRef.current) {
-        const isOverflow = textRef.current.scrollWidth > containerRef.current.clientWidth;
-        setIsOverflowing(isOverflow);
-      }
-    };
+    if (!content) return;
 
     checkOverflow();
 
-    window.addEventListener('resize', checkOverflow);
+    const resizeObserver = new ResizeObserver(checkOverflow);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
     return () => {
-      window.removeEventListener('resize', checkOverflow);
+      resizeObserver.disconnect();
     };
-  }, [content]);
+  }, [content, checkOverflow]);
+
+  if (!content) return null;
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div
-          ref={containerRef}
-          className={cn('overflow-hidden whitespace-nowrap', className)}
-          {...props}
-        >
-          <span ref={textRef}>{content}</span>
-        </div>
-      </TooltipTrigger>
-      {showTooltip && isOverflowing && <TooltipContent>{content}</TooltipContent>}
-    </Tooltip>
+    <EllipsisWrapper
+      showTooltip={showTooltip}
+      content={content}
+      tooltipContent={tooltipContent}
+      shouldShowTooltip={isOverflowing}
+    >
+      <div
+        ref={containerRef}
+        className={cn('truncate', className)}
+        title={!showTooltip && isOverflowing ? content : undefined}
+        {...props}
+      >
+        {content}
+      </div>
+    </EllipsisWrapper>
   );
+};
+
+// Combined export for common use cases
+export const Ellipsis = {
+  Single: SingleLineEllipsis,
+  Multi: MultiLineEllipsis,
+  Middle: EllipsisMiddle,
+  Responsive: ResponsiveEllipsis,
+  Dynamic: DynamicEllipsis
 };

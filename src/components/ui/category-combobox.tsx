@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useCallback, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { categoryGetAll, categoryGetById } from '@/lib/endpoints/category';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { categoryGetAll, categoryGetById, categoryCreate } from '@/lib/endpoints/category';
 import { Combobox, ComboboxOption } from '@/components/ui/combobox';
 import type { CategoryAPI } from '@/lib/api/api-types';
 import { Skeleton } from './skeleton';
@@ -16,6 +16,7 @@ interface CategoryComboboxProps {
   className?: string;
   allowClear?: boolean;
   clearLabel?: string;
+  creatable?: boolean;
 }
 
 const CategoryCombobox: React.FC<CategoryComboboxProps> = ({
@@ -25,8 +26,11 @@ const CategoryCombobox: React.FC<CategoryComboboxProps> = ({
   placeholder = 'Select or search category...',
   className,
   allowClear = false,
-  clearLabel = 'All Categories'
+  clearLabel = 'All Categories',
+  creatable = false
 }) => {
+  const queryClient = useQueryClient();
+
   const { data: initialCategoryData, isLoading: isLoadingInitial } = useQuery({
     queryKey: ['categoryById', value],
     queryFn: async () => {
@@ -40,6 +44,24 @@ const CategoryCombobox: React.FC<CategoryComboboxProps> = ({
     enabled: !!value && value !== 'all',
     staleTime: Infinity,
     gcTime: Infinity
+  });
+
+  const { mutate: createCategory, isPending: isCreating } = useMutation({
+    mutationFn: async (categoryName: string) => {
+      const result = await categoryCreate({ name: categoryName });
+      if (!result?.data) {
+        throw new Error('Failed to create category.');
+      }
+      return result.data;
+    },
+    onSuccess: (newCategory) => {
+      onChange(newCategory.id);
+      queryClient.invalidateQueries({ queryKey: ['categoryGetAll'] });
+      queryClient.setQueryData(['categoryById', newCategory.id], newCategory);
+    },
+    onError: (err) => {
+      console.error('Failed to create category:', err);
+    }
   });
 
   const fetchCategoryOptions = useCallback(
@@ -59,6 +81,17 @@ const CategoryCombobox: React.FC<CategoryComboboxProps> = ({
             label: cat.name
           })) ?? [];
 
+        if (
+          creatable &&
+          query &&
+          !fetchedOptions.some((opt) => opt.label.toLowerCase() === query.toLowerCase())
+        ) {
+          fetchedOptions.unshift({
+            value: `_create_${query}`,
+            label: `Create "${query}"`
+          });
+        }
+
         if (allowClear && !query) {
           fetchedOptions.unshift({ value: 'all', label: clearLabel });
         }
@@ -66,16 +99,22 @@ const CategoryCombobox: React.FC<CategoryComboboxProps> = ({
         return fetchedOptions;
       } catch (err) {
         console.error('Failed to search categories:', err);
-
         return [];
       }
     },
-    [allowClear, clearLabel]
+    [allowClear, clearLabel, creatable]
   );
 
   const handleComboboxChange = useCallback(
     (selected: ComboboxOption | null) => {
       const newValue = selected?.value;
+
+      // 5. Handle the "Create" action
+      if (creatable && newValue?.startsWith('_create_')) {
+        const categoryNameToCreate = newValue.substring(8); // Remove '_create_' prefix
+        createCategory(categoryNameToCreate);
+        return;
+      }
 
       if (allowClear && newValue === 'all') {
         onChange(undefined);
@@ -83,7 +122,7 @@ const CategoryCombobox: React.FC<CategoryComboboxProps> = ({
         onChange(newValue);
       }
     },
-    [onChange, allowClear]
+    [onChange, allowClear, creatable, createCategory]
   );
 
   const comboboxValue = useMemo(() => {
@@ -115,7 +154,7 @@ const CategoryCombobox: React.FC<CategoryComboboxProps> = ({
       noOptionsMessage='No matching categories found.'
       loadingPlaceholder='Searching categories...'
       className={className}
-      disabled={disabled || isLoadingInitial}
+      disabled={disabled || isLoadingInitial || isCreating}
     />
   );
 };

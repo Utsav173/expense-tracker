@@ -61,16 +61,14 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
       {!isUser && (
         <Avatar className='h-8 w-8 shrink-0 border'>
           <AvatarFallback className='bg-muted'>
-            <Icon name='bot' className='h-4 w-4' />
+            <Icon name='ai' className='h-4 w-4' />
           </AvatarFallback>
         </Avatar>
       )}
       <div
         className={cn(
           'relative w-auto max-w-[85%] space-y-1 rounded-2xl px-4 py-3 shadow-sm max-sm:px-2 max-sm:py-2 sm:max-w-[80%]',
-          isUser
-            ? 'bg-primary text-primary-foreground rounded-br-none'
-            : 'bg-card rounded-bl-none border'
+          isUser ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-card rounded-bl-none'
         )}
       >
         {!isUser && message.content && !isStreaming && (

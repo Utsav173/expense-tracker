@@ -235,7 +235,7 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
               <div className='flex flex-wrap items-center justify-between gap-x-4 gap-y-2'>
                 <div className='flex items-center gap-3'>
                   <div className='bg-muted flex-shrink-0 rounded-lg p-2'>
-                    <Icon name={'building2'} className='text-primary h-6 w-6' />
+                    <Icon name={'building'} className='text-primary h-6 w-6' />
                   </div>
                   <div>
                     <DialogTitle className='text-lg font-bold sm:text-xl'>

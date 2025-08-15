@@ -9,14 +9,21 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
+        // --- CORRECTED VARIANTS ---
         default:
-          'bg-primary text-primary-foreground border-b-4 border-b-primary-border-b hover:bg-primary-hover active:border-b-0 active:bg-primary-active active:translate-y-1',
+          'bg-primary text-primary-foreground hover:bg-primary-hover active:bg-primary-active',
         destructive:
-          'bg-destructive text-destructive-foreground border-b-4 border-b-destructive-border-b hover:bg-destructive-hover active:border-b-0 active:bg-destructive-active active:translate-y-1',
+          'bg-destructive text-destructive-foreground hover:bg-destructive-hover active:bg-destructive-active',
         secondary:
-          'bg-secondary text-secondary-foreground border-b-4 border-b-secondary-border-b hover:bg-secondary-hover active:border-b-0 active:bg-secondary-active active:translate-y-1',
+          'bg-secondary text-secondary-foreground hover:bg-secondary-hover active:bg-secondary-active',
         success:
-          'bg-success text-success-foreground border-b-4 border-b-success-border-b hover:bg-success-hover active:border-b-0 active:bg-success-active active:translate-y-1',
+          'bg-success text-success-foreground hover:bg-success-hover active:bg-success-active',
+        outline:
+          'border border-border bg-transparent text-foreground hover:bg-accent hover:text-accent-foreground',
+        ghost: 'bg-transparent text-foreground hover:bg-accent hover:text-accent-foreground',
+        link: 'bg-transparent text-primary underline-offset-4 hover:underline',
+
+        // --- ALREADY CORRECT ---
         account:
           'bg-account text-account-foreground border-b-4 border-b-account-border-b hover:bg-account-hover active:border-b-0 active:bg-account-active active:translate-y-1',
         transaction:
@@ -24,18 +31,12 @@ const buttonVariants = cva(
         planning:
           'bg-planning text-planning-foreground border-b-4 border-b-planning-border-b hover:bg-planning-hover active:border-b-0 active:bg-planning-active active:translate-y-1',
         category:
-          'bg-category text-category-foreground border-b-4 border-b-category-border-b hover:bg-category-hover active:border-b-0 active:bg-category-active active:translate-y-1',
-
-        // --- Flat/Link Style Buttons ---
-        // These do not have the 3D press effect.
-        outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
-        ghost: 'hover:bg-accent hover:text-accent-foreground',
-        link: 'text-primary underline-offset-4 hover:underline'
+          'bg-category text-category-foreground border-b-4 border-b-category-border-b hover:bg-category-hover active:border-b-0 active:bg-category-active active:translate-y-1'
       },
       size: {
-        default: 'h-10 px-4 py-2',
-        sm: 'h-9 rounded-md px-3',
-        lg: 'h-11 rounded-md px-8',
+        default: 'h-10 px-3 py-1',
+        sm: 'h-9 rounded-md px-2',
+        lg: 'h-11 rounded-md px-5',
         icon: 'h-10 w-10'
       }
     },

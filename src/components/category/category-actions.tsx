@@ -12,27 +12,21 @@ interface CategoryActionsProps {
 
 const CategoryActions: React.FC<CategoryActionsProps> = ({ category, onEdit, onDelete }) => {
   return (
-    <div className='flex justify-end gap-2'>
+    <div className='flex w-full justify-end gap-2'>
       <Button
         type='button'
         variant='ghost'
-        className='p-0'
         onClick={() => onEdit(category)}
         aria-label={`Edit ${category.name}`}
       >
-        <Icon name='edit' className='h-[18px] w-[18px]' />
+        <Icon name='edit' className='h-4 w-4' />
       </Button>
       <DeleteConfirmationModal
         title='Delete Category'
         description={`Are you sure you want to delete ${category.name} category?`}
         triggerButton={
-          <Button
-            type='button'
-            variant='ghost'
-            className='p-0'
-            aria-label={`Delete ${category.name}`}
-          >
-            <Icon name='trash2' className='h-[18px] w-[18px]' />
+          <Button type='button' variant='ghost' aria-label={`Delete ${category.name}`}>
+            <Icon name='trash2' className='h-4 w-4' />
           </Button>
         }
         onConfirm={() => onDelete(category.id)}
