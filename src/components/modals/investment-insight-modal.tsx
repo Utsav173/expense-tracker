@@ -26,44 +26,16 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartConfig,
+  ChartTooltipContent
+} from '@/components/ui/chart';
 import { IconName } from '../ui/icon-map';
 import { Icon } from '../ui/icon';
+import { useIsMobile } from '@/hooks/use-mobile';
 
-const CustomTooltip = ({
-  active,
-  payload,
-  currency
-}: {
-  active?: boolean;
-  payload?: any[];
-  currency: string;
-}) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    const value = data.value;
-    const date = data.date;
-    const isPositive = value >= 0;
-    const trendIcon = isPositive ? 'trendingUp' : 'trendingDown';
-    return (
-      <div className='bg-popover min-w-[240px] rounded-lg border p-3 shadow-md'>
-        <div className='mb-2 flex items-center justify-between'>
-          <p className='text-sm font-medium'>{format(parseISO(date), 'MMM dd, yyyy')}</p>
-          <div
-            className={cn(
-              'flex items-center gap-1.5 text-xs font-semibold',
-              isPositive ? 'text-positive' : 'text-negative'
-            )}
-          >
-            <Icon name={trendIcon} className='h-3.5 w-3.5' />
-            {isPositive ? 'Gain' : 'Loss'}
-          </div>
-        </div>
-        <div className='text-2xl font-bold'>{formatCurrency(value, currency)}</div>
-      </div>
-    );
-  }
-};
 const KPICard = ({
   title,
   value,
@@ -153,6 +125,18 @@ interface InvestmentInsightModalProps {
   investment: InvestmentAPI.Investment;
   accountCurrency: string;
 }
+
+const chartConfig = {
+  positive: {
+    label: 'Gain',
+    color: 'var(--chart-positive)'
+  },
+  negative: {
+    label: 'Loss',
+    color: 'var(--chart-negative)'
+  }
+} satisfies ChartConfig;
+
 const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
   isOpen,
   onOpenChange,
@@ -161,6 +145,7 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const isMobile = useIsMobile();
   const { data: performanceData, isLoading } =
     useQuery<InvestmentAPI.GetPerformanceResponse | null>({
       queryKey: ['investmentPerformance', investment.id],
@@ -193,19 +178,29 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
     return performanceData.holdingPerformance.map((point) => ({
       date: point.date,
       value: point.gainLoss ?? 0,
-      positive: point.gainLoss >= 0 ? point.gainLoss : null,
-      negative: point.gainLoss < 0 ? point.gainLoss : null
+      positive: (point.gainLoss ?? 0) >= 0 ? point.gainLoss : null,
+      negative: (point.gainLoss ?? 0) < 0 ? point.gainLoss : null
     }));
   }, [performanceData]);
+
+  const dateSpan = useMemo(() => {
+    if (chartData.length < 2) return 'day';
+    const firstDate = parseISO(chartData[0].date);
+    const lastDate = parseISO(chartData[chartData.length - 1].date);
+    return lastDate.getFullYear() > firstDate.getFullYear() ? 'year' : 'day';
+  }, [chartData]);
+
+  const tickFormatter = (tick: string) => {
+    const date = parseISO(tick);
+    return format(date, dateSpan === 'year' ? "MMM 'yy" : 'd MMM');
+  };
+
   const yAxisFormatter = (tick: number) => {
     if (Math.abs(tick) >= 1_000_000) return `${(tick / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`;
     if (Math.abs(tick) >= 1_000) return `${(tick / 1_000).toFixed(1).replace(/\.0$/, '')}k`;
     return tick.toString();
   };
-  const xAxisTickInterval = useMemo(
-    () => (chartData.length < 15 ? 'preserveStartEnd' : Math.floor(chartData.length / 8)),
-    [chartData]
-  );
+
   const yAxisDomain = useMemo(() => {
     if (chartData.length === 0) return ['auto', 'auto'];
     const values = chartData.map((p) => p.value).filter((v) => v !== null) as number[];
@@ -345,22 +340,37 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                     </CardHeader>
                     <CardContent className='flex-1 pt-4 pr-4 pl-2'>
                       {chartData.length > 1 ? (
-                        <ChartContainer config={{}} className='h-[250px] w-full sm:h-[300px]'>
+                        <ChartContainer
+                          config={chartConfig}
+                          className='h-[250px] w-full sm:h-[300px]'
+                        >
                           <ResponsiveContainer>
                             <RechartsAreaChart
                               data={chartData}
-                              margin={{ top: 5, right: 10, left: 10, bottom: 20 }}
+                              margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
                             >
                               <defs>
                                 <linearGradient id='positiveGradient' x1='0' y1='0' x2='0' y2='1'>
-                                  <stop offset='5%' stopColor='var(--positive)' stopOpacity={0.4} />
-                                  <stop offset='95%' stopColor='var(--positive)' stopOpacity={0} />
-                                </linearGradient>
-                                <linearGradient id='negativeGradient' x1='0' y1='0' x2='0' y2='1'>
-                                  <stop offset='5%' stopColor='var(--negative)' stopOpacity={0} />
+                                  <stop
+                                    offset='5%'
+                                    stopColor='var(--color-positive)'
+                                    stopOpacity={0.4}
+                                  />
                                   <stop
                                     offset='95%'
-                                    stopColor='var(--negative)'
+                                    stopColor='var(--color-positive)'
+                                    stopOpacity={0}
+                                  />
+                                </linearGradient>
+                                <linearGradient id='negativeGradient' x1='0' y1='0' x2='0' y2='1'>
+                                  <stop
+                                    offset='5%'
+                                    stopColor='var(--color-negative)'
+                                    stopOpacity={0}
+                                  />
+                                  <stop
+                                    offset='95%'
+                                    stopColor='var(--color-negative)'
                                     stopOpacity={0.4}
                                   />
                                 </linearGradient>
@@ -368,14 +378,14 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                               <CartesianGrid vertical={false} className='stroke-border/50' />
                               <XAxis
                                 dataKey='date'
-                                tickFormatter={(tick) => format(parseISO(tick), "d MMM 'yy")}
-                                angle={-45}
-                                textAnchor='end'
+                                tickFormatter={tickFormatter}
                                 className='text-muted-foreground text-[10px]'
                                 axisLine={false}
                                 tickLine={false}
-                                interval={xAxisTickInterval}
-                                tickMargin={5}
+                                interval={'preserveStartEnd'}
+                                minTickGap={isMobile ? 40 : 50}
+                                height={40}
+                                tickMargin={10}
                               />
                               <YAxis
                                 tickFormatter={yAxisFormatter}
@@ -390,13 +400,22 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                                   strokeDasharray: '3 3',
                                   className: 'stroke-muted-foreground/50'
                                 }}
-                                content={<CustomTooltip currency={accountCurrency} />}
+                                content={
+                                  <ChartTooltipContent
+                                    formatter={(value) =>
+                                      formatCurrency(value as number, accountCurrency)
+                                    }
+                                    labelFormatter={(label) =>
+                                      format(parseISO(label), 'MMM dd, yyyy')
+                                    }
+                                  />
+                                }
                               />
                               <ReferenceLine y={0} stroke='var(--border)' strokeDasharray='2 2' />
                               <Area
                                 type='monotone'
                                 dataKey='positive'
-                                stroke='var(--positive)'
+                                stroke='var(--color-positive)'
                                 fill='url(#positiveGradient)'
                                 strokeWidth={2}
                                 dot={false}
@@ -404,7 +423,7 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                               <Area
                                 type='monotone'
                                 dataKey='negative'
-                                stroke='var(--negative)'
+                                stroke='var(--color-negative)'
                                 fill='url(#negativeGradient)'
                                 strokeWidth={2}
                                 dot={false}
@@ -434,7 +453,7 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                     </CardHeader>
                     <CardContent className='flex-1 pt-4 pr-4 pl-2'>
                       {chartData.length > 1 ? (
-                        <ChartContainer config={{}} className='h-full w-full'>
+                        <ChartContainer config={chartConfig} className='h-full w-full'>
                           <ResponsiveContainer>
                             <RechartsAreaChart
                               data={chartData}
@@ -442,14 +461,26 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                             >
                               <defs>
                                 <linearGradient id='positiveGradient' x1='0' y1='0' x2='0' y2='1'>
-                                  <stop offset='5%' stopColor='var(--positive)' stopOpacity={0.4} />
-                                  <stop offset='95%' stopColor='var(--positive)' stopOpacity={0} />
-                                </linearGradient>
-                                <linearGradient id='negativeGradient' x1='0' y1='0' x2='0' y2='1'>
-                                  <stop offset='5%' stopColor='var(--negative)' stopOpacity={0} />
+                                  <stop
+                                    offset='5%'
+                                    stopColor='var(--color-positive)'
+                                    stopOpacity={0.4}
+                                  />
                                   <stop
                                     offset='95%'
-                                    stopColor='var(--negative)'
+                                    stopColor='var(--color-positive)'
+                                    stopOpacity={0}
+                                  />
+                                </linearGradient>
+                                <linearGradient id='negativeGradient' x1='0' y1='0' x2='0' y2='1'>
+                                  <stop
+                                    offset='5%'
+                                    stopColor='var(--color-negative)'
+                                    stopOpacity={0}
+                                  />
+                                  <stop
+                                    offset='95%'
+                                    stopColor='var(--color-negative)'
                                     stopOpacity={0.4}
                                   />
                                 </linearGradient>
@@ -457,14 +488,14 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                               <CartesianGrid strokeDasharray='3 3' className='stroke-border/50' />
                               <XAxis
                                 dataKey='date'
-                                tickFormatter={(tick) => format(parseISO(tick), "d MMM 'yy")}
-                                angle={-45}
-                                textAnchor='end'
+                                tickFormatter={tickFormatter}
                                 className='text-muted-foreground text-xs'
                                 axisLine={false}
                                 tickLine={false}
-                                interval={xAxisTickInterval}
-                                tickMargin={10}
+                                interval={'preserveStartEnd'}
+                                minTickGap={isMobile ? 40 : 50}
+                                height={40}
+                                tickMargin={15}
                               />
                               <YAxis
                                 tickCount={8}
@@ -479,7 +510,16 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                                   strokeDasharray: '3 3',
                                   className: 'stroke-muted-foreground/50'
                                 }}
-                                content={<CustomTooltip currency={accountCurrency} />}
+                                content={
+                                  <ChartTooltipContent
+                                    formatter={(value) =>
+                                      formatCurrency(value as number, accountCurrency)
+                                    }
+                                    labelFormatter={(label) =>
+                                      format(parseISO(label), 'MMM dd, yyyy')
+                                    }
+                                  />
+                                }
                               />
                               <ReferenceLine
                                 y={0}
@@ -490,7 +530,7 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                               <Area
                                 type='monotone'
                                 dataKey='positive'
-                                stroke='var(--positive)'
+                                stroke='var(--color-positive)'
                                 fill='url(#positiveGradient)'
                                 strokeWidth={2.5}
                                 dot={false}
@@ -498,7 +538,7 @@ const InvestmentInsightModal: React.FC<InvestmentInsightModalProps> = ({
                               <Area
                                 type='monotone'
                                 dataKey='negative'
-                                stroke='var(--negative)'
+                                stroke='var(--color-negative)'
                                 fill='url(#negativeGradient)'
                                 strokeWidth={2.5}
                                 dot={false}

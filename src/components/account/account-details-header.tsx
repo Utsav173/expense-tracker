@@ -59,20 +59,20 @@ export const AccountDetailsHeader = ({
         {isOwner && (
           <div className='flex items-center gap-2 max-sm:w-full max-sm:justify-center'>
             <Button variant='outline' size='sm' className='gap-2' onClick={() => window.print()}>
-              <Icon name='download' className='h-4 w-4' />
+              <Icon name='download2' className='h-4 w-4' />
               {!isMobile && 'Export'}
             </Button>
 
             <Link href={`/accounts/statement`} className='shrink-0'>
               <Button variant='outline' size='sm' className='gap-2'>
-                <Icon name='download' className='h-4 w-4' />
+                <Icon name='statement' className='h-4 w-4' />
                 {!isMobile && 'Statement'}
               </Button>
             </Link>
 
             <Link href={`/accounts/shares/${account?.id}`} className='shrink-0'>
               <Button variant='outline' size='sm' className='gap-2'>
-                <Icon name='history' className='h-4 w-4' />
+                <Icon name='groups' className='h-4 w-4' />
                 {!isMobile && 'View Account Sharing'}
               </Button>
             </Link>
@@ -93,7 +93,7 @@ export const AccountDetailsHeader = ({
                 refetchData();
               }}
               triggerButton={
-                <Button variant='default' size='sm' className='gap-2'>
+                <Button variant='transaction' size='sm' className='gap-2'>
                   <Icon name='plus' className='h-4 w-4' />
                   {!isMobile && 'Add Transaction'}
                 </Button>

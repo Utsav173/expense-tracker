@@ -40,6 +40,7 @@ export const iconMap = {
   database: 'material-symbols:database-outline',
   dollarSign: 'material-symbols:attach-money',
   download: 'material-symbols:download',
+  download2: 'mdi:file-download-outline',
   edit: 'material-symbols:edit-outline',
   edit3: 'material-symbols:edit',
   externalLink: 'material-symbols:open-in-new',
@@ -93,7 +94,7 @@ export const iconMap = {
   send: 'material-symbols:send',
   settings: 'material-symbols:settings-outline',
   settings2: 'material-symbols:tune',
-  share: 'material-symbols:share-outline',
+  share: 'material-symbols:battery-android-share-outline',
   share2: 'material-symbols:group-add-outline',
   shield: 'material-symbols:shield-outline',
   shieldAlert: 'material-symbols:privacy-tip-outline',
@@ -137,7 +138,10 @@ export const iconMap = {
   category: 'material-symbols:category-outline',
   investment: 'material-symbols:monitoring',
   budget: 'material-symbols:request-quote-outline',
-  ai: 'healthicons:artificial-intelligence'
+  ai: 'healthicons:artificial-intelligence',
+  statement: 'material-symbols:description',
+  groups: 'material-symbols:groups',
+  receipt: 'material-symbols:receipt'
 } as const;
 
 export type IconName = keyof typeof iconMap;

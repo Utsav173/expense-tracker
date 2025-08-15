@@ -93,7 +93,7 @@ export const HowItWorksSection = () => {
             <path
               ref={pathRef}
               d='M 100 50 C 250 50, 250 0, 500 0 S 750 50, 900 50'
-              stroke='hsl(var(--border))'
+              stroke='var(--border)'
               strokeWidth='2'
               strokeLinecap='round'
               fill='none'

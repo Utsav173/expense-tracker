@@ -15,6 +15,7 @@ import { Badge } from '../ui/badge';
 import NoData from '../ui/no-data';
 import { Icon } from '../ui/icon';
 import { IconName } from '../ui/icon-map';
+import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 
 interface DebtInsightModalProps {
   isOpen: boolean;
@@ -72,29 +73,6 @@ const MetricItem = React.memo(
   )
 );
 MetricItem.displayName = 'MetricItem';
-
-const CustomTooltip = React.memo(({ active, payload }: any) => {
-  if (!active || !payload || !payload.length) return null;
-  return (
-    <div className='bg-popover min-w-[180px] rounded-lg border p-2 shadow-sm'>
-      <div className='space-y-1.5'>
-        {payload.map((entry: any) => (
-          <div key={entry.name} className='flex items-center justify-between gap-4'>
-            <div className='flex items-center gap-2'>
-              <div
-                className='h-2.5 w-2.5 flex-shrink-0 rounded-full'
-                style={{ backgroundColor: entry.payload.color }}
-              />
-              <span className='text-muted-foreground text-sm'>{entry.name}</span>
-            </div>
-            <span className='text-sm font-semibold'>{formatCurrency(entry.value)}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-});
-CustomTooltip.displayName = 'CustomTooltip';
 
 const TimelineTick = React.memo(
   ({
@@ -211,38 +189,51 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
 
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const data = useMemo(() => {
-    const totalPrincipal = debt.debts.amount || 0;
-    const totalInterest = paymentSchedule?.reduce((sum, p) => sum + p.interestForPeriod, 0) || 0;
-    const totalPayable = totalPrincipal + totalInterest;
-    const principalPaid =
-      paymentSchedule?.[selectedIndex]?.cumulativePrincipalPaid ??
-      (debt.debts.isPaid ? totalPrincipal : 0);
-    const interestPaid =
-      paymentSchedule?.[selectedIndex]?.cumulativeInterestPaid ??
-      (debt.debts.isPaid ? totalInterest : 0);
-    const remainingPrincipal =
-      paymentSchedule?.[selectedIndex]?.remainingPrincipal ??
-      (debt.debts.isPaid ? 0 : totalPrincipal);
-    const chartData = [
-      { name: 'Principal Paid', value: principalPaid, color: 'var(--color-chart-1)' },
-      { name: 'Interest Paid', value: interestPaid, color: 'var(--color-chart-4)' },
-      { name: 'Remaining', value: remainingPrincipal, color: 'var(--color-chart-other)' }
-    ].filter((item) => item.value > 0);
-    const settledPayments = paymentSchedule?.filter((p) => p.status === 'settled').length || 0;
-    const totalPayments = paymentSchedule?.length || 0;
-    const progressPercentage = totalPayments > 0 ? (settledPayments / totalPayments) * 100 : 0;
-    return {
-      chartData,
-      totalInterest,
-      totalPayable,
-      progressPercentage,
-      settledPayments,
-      totalPayments
-    };
-  }, [selectedIndex, paymentSchedule, debt.debts]);
+  const { chartData, chartConfig, totalInterest, totalPayable, progressPercentage, ...restData } =
+    useMemo(() => {
+      const totalPrincipal = debt.debts.amount || 0;
+      const totalInterest = paymentSchedule?.reduce((sum, p) => sum + p.interestForPeriod, 0) || 0;
+      const totalPayable = totalPrincipal + totalInterest;
+
+      const settledPayments = paymentSchedule?.filter((p) => p.status === 'settled').length || 0;
+      const totalPayments = paymentSchedule?.length || 0;
+      const progressPercentage = totalPayments > 0 ? (settledPayments / totalPayments) * 100 : 0;
+
+      const principalPaid =
+        paymentSchedule?.[selectedIndex]?.cumulativePrincipalPaid ??
+        (debt.debts.isPaid ? totalPrincipal : 0);
+      const interestPaid =
+        paymentSchedule?.[selectedIndex]?.cumulativeInterestPaid ??
+        (debt.debts.isPaid ? totalInterest : 0);
+      const remainingPrincipal =
+        paymentSchedule?.[selectedIndex]?.remainingPrincipal ??
+        (debt.debts.isPaid ? 0 : totalPrincipal);
+
+      const data = [
+        { name: 'Principal Paid', value: principalPaid, color: 'var(--color-chart-1)' },
+        { name: 'Interest Paid', value: interestPaid, color: 'var(--color-chart-4)' },
+        { name: 'Remaining', value: remainingPrincipal, color: 'var(--color-chart-7)' }
+      ].filter((item) => item.value > 0);
+
+      const config = data.reduce((acc, item) => {
+        const key = item.name.replace(/[^a-zA-Z0-9]/g, '_');
+        acc[key] = { label: item.name, color: item.color };
+        return acc;
+      }, {} as any);
+
+      return {
+        chartData: data,
+        chartConfig: config,
+        totalInterest,
+        totalPayable,
+        progressPercentage,
+        settledPayments,
+        totalPayments
+      };
+    }, [selectedIndex, paymentSchedule, debt.debts]);
 
   const selectedPayment = paymentSchedule?.[selectedIndex];
+  const data = { ...restData, totalInterest, totalPayable, progressPercentage };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -341,26 +332,34 @@ const DebtInsightModal: React.FC<DebtInsightModalProps> = ({ isOpen, onOpenChang
                       <div className='space-y-4 md:col-span-1'>
                         <h3 className='text-foreground font-semibold'>Payment Breakdown</h3>
                         <div className='relative'>
-                          <ResponsiveContainer width='100%' height={160}>
-                            <RechartsPieChart>
-                              <Tooltip cursor={false} content={<CustomTooltip />} />
-                              <Pie
-                                data={data.chartData}
-                                dataKey='value'
-                                nameKey='name'
-                                cx='50%'
-                                cy='50%'
-                                innerRadius={50}
-                                outerRadius={70}
-                                paddingAngle={3}
-                                stroke='none'
-                              >
-                                {data.chartData.map((entry) => (
-                                  <Cell key={entry.name} fill={entry.color} />
-                                ))}
-                              </Pie>
-                            </RechartsPieChart>
-                          </ResponsiveContainer>
+                          <ChartContainer
+                            config={chartConfig}
+                            className='mx-auto aspect-square h-[160px]'
+                          >
+                            <ResponsiveContainer width='100%' height='100%'>
+                              <RechartsPieChart>
+                                <Tooltip
+                                  cursor={false}
+                                  content={<ChartTooltipContent nameKey='name' />}
+                                />
+                                <Pie
+                                  data={chartData}
+                                  dataKey='value'
+                                  nameKey='name'
+                                  cx='50%'
+                                  cy='50%'
+                                  innerRadius={50}
+                                  outerRadius={70}
+                                  paddingAngle={3}
+                                  stroke='none'
+                                >
+                                  {chartData.map((entry) => (
+                                    <Cell key={entry.name} fill={entry.color} />
+                                  ))}
+                                </Pie>
+                              </RechartsPieChart>
+                            </ResponsiveContainer>
+                          </ChartContainer>
                           <div className='pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center'>
                             <span className='text-lg font-bold'>
                               {formatCurrency(selectedPayment?.installmentAmount)}

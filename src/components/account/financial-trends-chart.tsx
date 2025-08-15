@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
   Bar,
   BarChart,
@@ -8,22 +7,48 @@ import {
   LineChart as RechartsLineChart,
   ResponsiveContainer,
   XAxis,
-  YAxis
+  YAxis,
+  Tooltip
 } from 'recharts';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   ChartContainer,
   ChartConfig,
-  ChartTooltip,
-  ChartTooltipContent,
   ChartLegend,
   ChartLegendContent
 } from '@/components/ui/chart';
 import { Skeleton } from '../ui/skeleton';
 import NoData from '../ui/no-data';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Icon } from '../ui/icon';
+import { format, parseISO } from 'date-fns';
+
+// --- Custom Tooltip Component ---
+const CustomTooltip = ({ active, payload, label, currency }: any) => {
+  if (active && payload && payload.length) {
+    // Assuming the date is in the label, which is typical for time-series charts
+    const dateLabel = label ? format(new Date(label), 'MMM d, yyyy') : 'Details';
+
+    return (
+      <div className='custom-chart-tooltip min-w-[200px]'>
+        <p className='label mb-2 font-semibold'>{dateLabel}</p>
+        <div className='space-y-1'>
+          {payload.map((pld: any) => (
+            <div key={pld.dataKey} className='flex items-center justify-between'>
+              <div className='flex items-center gap-2'>
+                <span className='h-2.5 w-2.5 rounded-full' style={{ backgroundColor: pld.color }} />
+                <p className='text-muted-foreground text-xs capitalize'>{pld.dataKey}</p>
+              </div>
+              <p className='desc text-xs font-semibold'>{formatCurrency(pld.value, currency)}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
 
 interface FinancialTrendsChartProps {
   data: Array<{
@@ -67,25 +92,27 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
     }).format(value);
   };
 
+  const formatXaxis = (tickItem: string) => {
+    // Assuming tickItem is a date string like '2025-08-01'
+    return format(new Date(tickItem), 'MMM d');
+  };
+
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader className='pb-4'>
-          <Skeleton className='h-6 w-48 rounded-md' />
-          <Skeleton className='h-4 w-72 rounded-md opacity-70' />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className='h-[350px] rounded-md' />
-        </CardContent>
-      </Card>
+      <div className='flex h-full flex-col'>
+        <div className='mb-4 flex justify-end'>
+          <Skeleton className='h-9 w-[150px] rounded-lg' />
+        </div>
+        <Skeleton className='h-[350px] flex-1 rounded-md' />
+      </div>
     );
   }
 
   if (!data || data.length === 0) {
     return (
-      <Card className='flex h-[440px] items-center justify-center'>
+      <div className='flex h-[440px] items-center justify-center'>
         <NoData message='No trend data available.' icon='inbox' />
-      </Card>
+      </div>
     );
   }
 
@@ -93,70 +120,61 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
     fontSize: isMobile ? 10 : 12,
     fill: 'var(--muted-foreground)'
   };
-  const yAxisWidth = isMobile ? 35 : 45;
+  const yAxisWidth = isMobile ? 40 : 50;
   const barSize = isMobile ? 15 : 20;
   const lineDotRadius = isMobile ? 2 : 3;
   const lineActiveDotRadius = isMobile ? 4 : 5;
 
   return (
-    <Card className='overflow-hidden transition-all duration-200'>
-      <CardHeader className='flex-none gap-2 pb-2'>
-        <Tabs defaultValue='bar' className='w-full' onValueChange={(v) => setChartType(v)}>
-          <TabsList className='grid w-full grid-cols-2 max-sm:w-full'>
-            <TabsTrigger value='bar' className='flex items-center gap-1'>
-              <Icon name='barChart' className='h-3.5 w-3.5' />
-              <span>Bar</span>
-            </TabsTrigger>
-            <TabsTrigger value='line' className='flex items-center gap-1'>
-              <Icon name='lineChart' className='h-3.5 w-3.5' />
-              <span>Line</span>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </CardHeader>
+    <ChartContainer config={trendsChartConfig} className='flex h-full w-full flex-col'>
+      {/* CORRECTED: Replaced React.Fragment with a div */}
+      <div className='flex h-full w-full flex-col'>
+        <div className='mb-4 flex items-center justify-between'>
+          <ChartLegend content={<ChartLegendContent />} />
+          <Tabs defaultValue='bar' onValueChange={(v) => setChartType(v)}>
+            <TabsList className='h-8'>
+              <TabsTrigger value='bar' className='h-6 px-2 text-xs'>
+                <Icon name='barChart' className='mr-1.5 h-3.5 w-3.5' />
+                Bar
+              </TabsTrigger>
+              <TabsTrigger value='line' className='h-6 px-2 text-xs'>
+                <Icon name='lineChart' className='mr-1.5 h-3.5 w-3.5' />
+                Line
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
 
-      <CardContent className='px-2 pt-0 pb-0'>
-        <ChartContainer
-          config={trendsChartConfig}
-          className='h-[320px] w-full'
-          aria-label={`Chart showing income, expense, and balance trends as a ${chartType} chart.`}
-        >
+        <div className='flex-1'>
           {chartType === 'bar' ? (
             <ResponsiveContainer width='100%' height='100%'>
-              <BarChart data={data} margin={{ top: 10, right: 5, left: -10, bottom: 0 }}>
+              <BarChart data={data} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
                 <CartesianGrid
                   strokeDasharray='3 3'
                   vertical={false}
-                  horizontal={false}
                   stroke='var(--border)'
                   strokeOpacity={0.5}
                 />
                 <XAxis
                   dataKey='date'
                   tickLine={false}
-                  axisLine={{ stroke: 'var(--border)' }}
+                  axisLine={false}
                   tick={axisTickStyle}
+                  tickFormatter={formatXaxis}
                   interval='preserveStartEnd'
-                  minTickGap={isMobile ? 20 : 15}
+                  minTickGap={isMobile ? 30 : 20}
                 />
                 <YAxis
                   tickFormatter={formatYaxis}
-                  tickLine={true}
-                  dx={-5}
-                  axisLine={{ stroke: 'var(--border)' }}
+                  tickLine={false}
+                  axisLine={false}
                   tick={axisTickStyle}
                   width={yAxisWidth}
                 />
-                <ChartTooltip
-                  cursor={{ fill: 'var(--muted)' }}
-                  content={
-                    <ChartTooltipContent
-                      formatter={(value) => formatCurrency(value as number, currency)}
-                      labelKey='date'
-                    />
-                  }
+                <Tooltip
+                  cursor={{ fill: 'var(--muted)', opacity: 0.5 }}
+                  content={<CustomTooltip currency={currency} />}
                 />
-                <ChartLegend content={<ChartLegendContent />} verticalAlign='top' height={36} />
                 <Bar
                   dataKey='income'
                   fill='var(--color-income)'
@@ -179,40 +197,33 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
             </ResponsiveContainer>
           ) : (
             <ResponsiveContainer width='100%' height='100%'>
-              <RechartsLineChart data={data} margin={{ top: 10, right: 5, left: -10, bottom: 0 }}>
+              <RechartsLineChart data={data} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
                 <CartesianGrid
                   strokeDasharray='3 3'
                   vertical={false}
-                  horizontal={false}
                   stroke='var(--border)'
                   strokeOpacity={0.5}
                 />
                 <XAxis
                   dataKey='date'
                   tickLine={false}
-                  axisLine={{ stroke: 'var(--border)' }}
+                  axisLine={false}
                   tick={axisTickStyle}
+                  tickFormatter={formatXaxis}
                   interval='preserveStartEnd'
-                  minTickGap={isMobile ? 20 : 15}
+                  minTickGap={isMobile ? 30 : 20}
                 />
                 <YAxis
                   tickFormatter={formatYaxis}
-                  tickLine={true}
-                  dx={-5}
-                  axisLine={{ stroke: 'var(--border)' }}
+                  tickLine={false}
+                  axisLine={false}
                   tick={axisTickStyle}
                   width={yAxisWidth}
                 />
-                <ChartTooltip
-                  cursor={false}
-                  content={
-                    <ChartTooltipContent
-                      formatter={(value) => formatCurrency(value as number, currency)}
-                      labelKey='date'
-                    />
-                  }
+                <Tooltip
+                  cursor={{ stroke: 'var(--border)', strokeDasharray: '3 3' }}
+                  content={<CustomTooltip currency={currency} />}
                 />
-                <ChartLegend content={<ChartLegendContent />} verticalAlign='top' height={36} />
                 <Line
                   type='monotone'
                   dataKey='income'
@@ -243,8 +254,8 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
               </RechartsLineChart>
             </ResponsiveContainer>
           )}
-        </ChartContainer>
-      </CardContent>
-    </Card>
+        </div>
+      </div>
+    </ChartContainer>
   );
 };

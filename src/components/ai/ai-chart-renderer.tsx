@@ -25,6 +25,13 @@ import NoData from '../ui/no-data';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Icon } from '@/components/ui/icon';
 import { motion } from 'framer-motion';
+import {
+  ChartContainer,
+  ChartTooltipContent,
+  ChartLegendContent,
+  ChartConfig
+} from '@/components/ui/chart';
+import { IconName } from '../ui/icon-map';
 
 interface AiChartRendererProps {
   chart: {
@@ -32,52 +39,6 @@ interface AiChartRendererProps {
     data: any[];
   };
 }
-
-const COLORS = [
-  'var(--chart-1)',
-  'var(--chart-2)',
-  'var(--chart-3)',
-  'var(--chart-4)',
-  'var(--chart-5)',
-  'var(--chart-6)',
-  'var(--chart-7)'
-];
-
-const CustomTooltipContent = ({ active, payload, currency, chartType }: any) => {
-  if (active && payload && payload.length) {
-    const data = chartType === 'pie' ? payload[0].payload.payload : payload[0].payload;
-
-    if (!data) return null;
-
-    const name = data.name || data.date || data.category || data.text || data.description;
-    return (
-      <div className='bg-background/80 min-w-[200px] rounded-lg border p-3 shadow-lg backdrop-blur-sm'>
-        <p className='text-foreground mb-2 font-medium'>{`${name}`}</p>
-        {Object.entries(data).map(([key, value]) => {
-          if (
-            key.toLowerCase() !== 'name' &&
-            key.toLowerCase() !== 'date' &&
-            key.toLowerCase() !== 'category' &&
-            key.toLowerCase() !== 'text' &&
-            key.toLowerCase() !== 'description' &&
-            typeof value === 'number'
-          ) {
-            return (
-              <p key={key} className='text-muted-foreground text-sm'>
-                {`${key.charAt(0).toUpperCase() + key.slice(1)}: `}
-                <span className='text-foreground font-semibold'>
-                  {formatCurrency(value as number, currency)}
-                </span>
-              </p>
-            );
-          }
-          return null;
-        })}
-      </div>
-    );
-  }
-  return null;
-};
 
 const renderActiveShape = (props: any) => {
   const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, value } = props;
@@ -132,6 +93,30 @@ const renderActiveShape = (props: any) => {
   );
 };
 
+const generateMonochromeScale = (color: string, count: number): string[] => {
+  const [hue, saturation] = color.match(/\d+/g)!.map(Number);
+  const scale = [];
+  const startLightness = 80;
+  const endLightness = 30;
+  const step = (startLightness - endLightness) / (count > 1 ? count - 1 : 1);
+
+  for (let i = 0; i < count; i++) {
+    const lightness = startLightness - i * step;
+    scale.push(`hsl(${hue}, ${saturation}%, ${lightness}%)`);
+  }
+  return scale;
+};
+
+const StatCard = ({ icon, label, value }: { icon: IconName; label: string; value: string }) => (
+  <div className='bg-muted/50 flex items-center gap-3 rounded-lg p-3'>
+    <Icon name={icon} className='text-muted-foreground h-5 w-5' />
+    <div>
+      <p className='text-muted-foreground text-xs'>{label}</p>
+      <p className='text-sm font-semibold'>{value}</p>
+    </div>
+  </div>
+);
+
 const AiChartRenderer: React.FC<AiChartRendererProps> = ({ chart }) => {
   const isMobile = useIsMobile();
   const { session } = useAuth();
@@ -143,9 +128,14 @@ const AiChartRenderer: React.FC<AiChartRendererProps> = ({ chart }) => {
     setActiveIndex(index);
   }, []);
 
-  const { categoryKey, valueKeys } = useMemo(() => {
+  const { categoryKey, valueKeys, chartConfig, formattedData } = useMemo(() => {
     if (!chart.data || chart.data.length === 0) {
-      return { categoryKey: undefined, valueKeys: [] };
+      return {
+        categoryKey: undefined,
+        valueKeys: [],
+        chartConfig: {},
+        formattedData: []
+      };
     }
     const keys = Object.keys(chart.data[0]);
     const catKey = keys.find((k) =>
@@ -155,7 +145,26 @@ const AiChartRenderer: React.FC<AiChartRendererProps> = ({ chart }) => {
       (k) =>
         k !== catKey && typeof chart.data[0][k] === 'number' && k.toLowerCase() !== 'percentage'
     );
-    return { categoryKey: catKey, valueKeys: valKeys };
+
+    const config: ChartConfig = {};
+    const data = chart.data.map((item) => {
+      const newItem = { ...item };
+      valKeys.forEach((key, index) => {
+        const colorVar = `chart-${(index % 10) + 1}`;
+        config[key] = {
+          label: key.charAt(0).toUpperCase() + key.slice(1),
+          color: `var(--${colorVar})`
+        };
+      });
+      return newItem;
+    });
+
+    return {
+      categoryKey: catKey,
+      valueKeys: valKeys,
+      chartConfig: config,
+      formattedData: data
+    };
   }, [chart.data]);
 
   const determineDefaultChartType = useCallback(() => {
@@ -166,7 +175,20 @@ const AiChartRenderer: React.FC<AiChartRendererProps> = ({ chart }) => {
 
   const [chartType, setChartType] = useState<'bar' | 'line' | 'pie'>(determineDefaultChartType());
 
-  if (!chart || !chart.data || chart.data.length === 0) {
+  const isDenseData = formattedData.length > 30 && chartType === 'bar';
+
+  const summaryStats = useMemo(() => {
+    if (!isDenseData || valueKeys.length === 0) return null;
+    const valueKey = valueKeys[0];
+    const values = formattedData.map((item) => item[valueKey] || 0);
+    const total = values.reduce((sum, val) => sum + val, 0);
+    const avg = total / values.length;
+    const max = Math.max(...values);
+    const min = Math.min(...values);
+    return { total, avg, max, min };
+  }, [isDenseData, formattedData, valueKeys]);
+
+  if (!chart || !formattedData || formattedData.length === 0) {
     return (
       <Card className='mt-4'>
         <CardContent className='p-4'>
@@ -209,27 +231,34 @@ const AiChartRenderer: React.FC<AiChartRendererProps> = ({ chart }) => {
         if (valueKeys.length > 1) {
           return (
             <div className='text-muted-foreground flex h-full items-center justify-center p-4 text-center text-sm'>
-              Pie/Donut charts can only display a single data series. Please select Bar or Line
-              chart to compare multiple values.
+              Pie charts can only display a single data series. Please select Bar or Line.
             </div>
           );
         }
-        let dataForPie = chart.data
-          .map((item, index) => ({
+        const valueKey = valueKeys[0];
+        const sortedData = formattedData
+          .map((item) => ({
             name: item[categoryKey],
-            value: item[valueKeys[0]],
-            fill: COLORS[index % COLORS.length]
+            value: item[valueKey]
           }))
           .sort((a, b) => b.value - a.value);
 
-        if (dataForPie.length > 7) {
-          const topItems = dataForPie.slice(0, 6);
-          const otherValue = dataForPie.slice(6).reduce((acc, item) => acc + item.value, 0);
-          dataForPie = [
-            ...topItems,
-            { name: 'Others', value: otherValue, fill: 'var(--chart-other)' }
-          ];
-        }
+        const useMonochrome = sortedData.length > 7;
+        const monochromeColors = useMonochrome
+          ? generateMonochromeScale('260 100%', sortedData.length)
+          : [];
+        const legendPayload = useMonochrome
+          ? sortedData.slice(0, 5).map((d, i) => ({
+              value: d.name,
+              type: 'square' as const,
+              color: monochromeColors[i]
+            }))
+          : undefined;
+
+        const dataForPie = sortedData.map((item, index) => ({
+          ...item,
+          fill: useMonochrome ? monochromeColors[index] : `var(--color-chart-${(index % 10) + 1})`
+        }));
 
         return (
           <ResponsiveContainer width='100%' height={300}>
@@ -245,6 +274,7 @@ const AiChartRenderer: React.FC<AiChartRendererProps> = ({ chart }) => {
                 dataKey='value'
                 nameKey='name'
                 onMouseEnter={onPieEnter}
+                paddingAngle={2}
               >
                 {dataForPie.map((entry, index) => (
                   <Cell
@@ -255,8 +285,17 @@ const AiChartRenderer: React.FC<AiChartRendererProps> = ({ chart }) => {
                   />
                 ))}
               </Pie>
-              <Tooltip content={<CustomTooltipContent currency={currency} chartType='pie' />} />
+              <Tooltip
+                content={
+                  <ChartTooltipContent
+                    formatter={(value) => formatCurrency(value as number, currency)}
+                    nameKey='name'
+                  />
+                }
+              />
               <Legend
+                payload={legendPayload as any[]}
+                content={<ChartLegendContent nameKey='name' />}
                 verticalAlign='bottom'
                 iconSize={10}
                 formatter={labelFormatter}
@@ -273,7 +312,7 @@ const AiChartRenderer: React.FC<AiChartRendererProps> = ({ chart }) => {
       case 'line': {
         return (
           <ResponsiveContainer width='100%' height={300}>
-            <LineChart data={chart.data} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+            <LineChart data={formattedData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
               <CartesianGrid strokeDasharray='3 3' stroke='var(--border)' />
               <XAxis
                 dataKey={categoryKey}
@@ -291,17 +330,20 @@ const AiChartRenderer: React.FC<AiChartRendererProps> = ({ chart }) => {
                 tickFormatter={yAxisFormatter}
                 width={isMobile ? 40 : 50}
               />
-              <Tooltip content={<CustomTooltipContent currency={currency} chartType='line' />} />
-              <Legend
-                wrapperStyle={{ fontSize: isMobile ? '10px' : '12px' }}
-                formatter={labelFormatter}
+              <Tooltip
+                content={
+                  <ChartTooltipContent
+                    formatter={(value) => formatCurrency(value as number, currency)}
+                  />
+                }
               />
-              {valueKeys.map((key, index) => (
+              <Legend content={<ChartLegendContent />} />
+              {valueKeys.map((key) => (
                 <Line
                   key={key}
                   type='monotone'
                   dataKey={key}
-                  stroke={COLORS[index % COLORS.length]}
+                  stroke={`var(--color-${key})`}
                   strokeWidth={2}
                   dot={{ r: 3, strokeWidth: 1, fill: 'var(--background)' }}
                   activeDot={{ r: 6, strokeWidth: 2, stroke: 'var(--background)' }}
@@ -316,15 +358,19 @@ const AiChartRenderer: React.FC<AiChartRendererProps> = ({ chart }) => {
       default: {
         return (
           <ResponsiveContainer width='100%' height={300}>
-            <BarChart data={chart.data} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+            <BarChart
+              data={formattedData}
+              margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
+              barGap={isDenseData ? 1 : 4}
+            >
               <CartesianGrid strokeDasharray='3 3' stroke='var(--border)' />
               <XAxis
                 dataKey={categoryKey}
-                fontSize={12}
+                fontSize={isDenseData ? 10 : 12}
                 tickLine={false}
                 axisLine={false}
                 tickMargin={5}
-                interval={0}
+                interval={isDenseData ? Math.floor(formattedData.length / 5) : 0}
                 tickFormatter={labelFormatter}
               />
               <YAxis
@@ -335,22 +381,21 @@ const AiChartRenderer: React.FC<AiChartRendererProps> = ({ chart }) => {
                 width={isMobile ? 40 : 50}
               />
               <Tooltip
-                content={<CustomTooltipContent currency={currency} chartType='bar' />}
-                cursor={{ fill: 'transparent' }}
+                content={
+                  <ChartTooltipContent
+                    formatter={(value) => formatCurrency(value as number, currency)}
+                  />
+                }
+                cursor={{ fill: 'var(--muted)', opacity: 0.5 }}
               />
-              <Legend
-                wrapperStyle={{ fontSize: isMobile ? '10px' : '12px' }}
-                formatter={labelFormatter}
-              />
-              {valueKeys.map((key, index) => (
+              {!isDenseData && <Legend content={<ChartLegendContent />} />}
+              {valueKeys.map((key) => (
                 <Bar
                   key={key}
                   dataKey={key}
-                  fill={COLORS[index % COLORS.length]}
-                  radius={[4, 4, 0, 0]}
+                  fill={`var(--color-${key})`}
+                  radius={isDenseData ? [1, 1, 0, 0] : [4, 4, 0, 0]}
                   isAnimationActive
-                  fillOpacity={0.6}
-                  activeBar={{ fillOpacity: 1, stroke: 'var(--background)', strokeWidth: 2 }}
                 />
               ))}
             </BarChart>
@@ -401,7 +446,36 @@ const AiChartRenderer: React.FC<AiChartRendererProps> = ({ chart }) => {
               </ToggleGroupItem>
             </ToggleGroup>
           </div>
-          {renderChart()}
+          <ChartContainer config={chartConfig}>{renderChart()}</ChartContainer>
+          {summaryStats && (
+            <div className='mt-4 space-y-3'>
+              <p className='text-muted-foreground text-sm font-medium'>
+                Summary for {formattedData.length} data points:
+              </p>
+              <div className='grid grid-cols-2 gap-3 md:grid-cols-4'>
+                <StatCard
+                  icon='coins'
+                  label='Total Amount'
+                  value={formatCurrency(summaryStats.total, currency)}
+                />
+                <StatCard
+                  icon='calculator'
+                  label='Average'
+                  value={formatCurrency(summaryStats.avg, currency)}
+                />
+                <StatCard
+                  icon='arrowUp'
+                  label='Max Value'
+                  value={formatCurrency(summaryStats.max, currency)}
+                />
+                <StatCard
+                  icon='arrowDown'
+                  label='Min Value'
+                  value={formatCurrency(summaryStats.min, currency)}
+                />
+              </div>
+            </div>
+          )}
         </CardContent>
       </motion.div>
     </Card>

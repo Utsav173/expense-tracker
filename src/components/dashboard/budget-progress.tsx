@@ -247,8 +247,8 @@ export const BudgetProgress: React.FC<{ className?: string }> = ({ className }) 
 
       {/* Footer */}
       {!isLoading && !error && data && data.length > 0 && (
-        <div className='border-t p-3'>
-          <Button variant='link' size='sm' asChild className='text-muted-foreground w-full text-xs'>
+        <div className='bg-muted/30 border-t p-3 text-center'>
+          <Button variant='link' size='sm' asChild className='text-xs hover:underline'>
             <Link href='/budget'>Manage Budgets</Link>
           </Button>
         </div>

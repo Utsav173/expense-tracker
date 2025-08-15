@@ -43,48 +43,45 @@ export const useUrlState = <T extends BaseUrlStateParams>(initialState: T) => {
 
   const [state, setState] = useState<T>(() => parseParams(searchParams, initialState));
 
-  const isUpdatingUrl = useRef(false);
+  const prevStateRef = useRef<T>(state);
+  const prevSearchParamsStringRef = useRef(searchParams.toString());
 
   useEffect(() => {
-    const newSearchParams = new URLSearchParams(searchParams.toString());
-    let hasChanged = false;
+    const currentSearchParamsString = searchParams.toString();
 
-    Object.entries(state).forEach(([key, value]) => {
-      const valueStr = value !== undefined && value !== null ? String(value) : '';
-      const initialValueStr =
-        initialState[key as keyof T] !== undefined && initialState[key as keyof T] !== null
-          ? String(initialState[key as keyof T])
-          : '';
-      const isDefault = valueStr === initialValueStr;
-      const isDefaultPage = key === 'page' && value === 1;
+    if (currentSearchParamsString !== prevSearchParamsStringRef.current) {
+      const stateFromUrl = parseParams(searchParams, initialState);
 
-      if (!isDefault && !isDefaultPage) {
-        if (newSearchParams.get(key) !== valueStr) {
-          newSearchParams.set(key, valueStr);
-          hasChanged = true;
-        }
-      } else {
-        if (newSearchParams.has(key)) {
-          newSearchParams.delete(key);
-          hasChanged = true;
-        }
+      if (!dequal(state, stateFromUrl)) {
+        setState(stateFromUrl);
+        prevStateRef.current = stateFromUrl;
       }
-    });
+    } else {
+      if (!dequal(prevStateRef.current, state)) {
+        const newSearchParams = new URLSearchParams();
 
-    if (hasChanged) {
-      isUpdatingUrl.current = true;
-      router.push(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
-      setTimeout(() => (isUpdatingUrl.current = false), 50);
-    }
-  }, [state, initialState, pathname, router, searchParams]);
+        Object.entries(state).forEach(([key, value]) => {
+          const isDefault = dequal(value, initialState[key as keyof T]);
+          const isDefaultPage = key === 'page' && value === 1;
 
-  useEffect(() => {
-    if (isUpdatingUrl.current) return;
-    const stateFromUrl = parseParams(searchParams, initialState);
-    if (!dequal(state, stateFromUrl)) {
-      setState(stateFromUrl);
+          if (
+            value !== undefined &&
+            value !== null &&
+            value !== '' &&
+            !isDefault &&
+            !isDefaultPage
+          ) {
+            newSearchParams.set(key, String(value));
+          }
+        });
+
+        router.push(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
+        prevStateRef.current = state;
+      }
     }
-  }, [searchParams, initialState, state]);
+
+    prevSearchParamsStringRef.current = currentSearchParamsString;
+  }, [state, searchParams, initialState, pathname, router]);
 
   const updateState = useCallback((updates: Partial<T>) => {
     setState((prevState) => ({ ...prevState, ...updates }));

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { transactionGetCategoryChart } from '@/lib/endpoints/transactions';
 
 import NoData from '../ui/no-data';
@@ -14,12 +14,7 @@ import {
   Bar,
   XAxis,
   YAxis,
-  CartesianGrid,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar
+  CartesianGrid
 } from 'recharts';
 import { formatCurrency } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -31,13 +26,39 @@ import {
   ChartConfig,
   ChartTooltip,
   ChartLegend,
-  ChartLegendContent
+  ChartLegendContent,
+  ChartTooltipContent
 } from '@/components/ui/chart';
 import { useIsMobile } from '@/hooks/use-mobile';
 import Loader from '../ui/loader';
 
 const truncateLabel = (label: string, max: number) =>
   label.length > max ? label.slice(0, max - 1) + '…' : label;
+
+// New custom tooltip for Pie and Donut charts
+const CustomTooltipContent = ({ active, payload, totalExpense }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0];
+    const { name, value } = data;
+    const percentage = totalExpense > 0 ? (value / totalExpense) * 100 : 0;
+
+    return (
+      <div className='bg-background/90 min-w-[180px] rounded-lg border p-3 text-sm shadow-lg backdrop-blur-sm'>
+        <div className='flex items-center gap-2'>
+          <span
+            className='h-2.5 w-2.5 shrink-0 rounded-[2px]'
+            style={{ backgroundColor: data.payload.fill }}
+          />
+          <p className='text-foreground font-semibold'>{name}</p>
+        </div>
+        <p className='text-foreground mt-2 text-lg font-bold'>{formatCurrency(value)}</p>
+        <p className='text-muted-foreground text-xs'>{percentage.toFixed(1)}% of total</p>
+      </div>
+    );
+  }
+
+  return null;
+};
 
 interface SpendingBreakdownProps {
   className?: string;
@@ -48,160 +69,33 @@ interface SpendingBreakdownProps {
 }
 
 type DurationOption = string | 'thisMonth' | 'thisYear' | 'all';
-type ChartType = 'pie' | 'radar' | 'column' | 'donut';
+type ChartType = 'pie' | 'donut' | 'column';
 
-interface ActiveShapeProps {
-  cx: number;
-  cy: number;
-  midAngle: number;
-  innerRadius: number;
-  outerRadius: number;
-  startAngle: number;
-  endAngle: number;
-  fill: string;
-  payload: {
-    name: string;
-    value: number;
-  };
-  percent: number;
-  value: number;
-  chartType: ChartType;
-}
-
-// Enhanced custom tooltip component
-const CustomTooltip = ({ active, payload, label, totalExpense }: any) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    const percentage = totalExpense > 0 ? (data.value / totalExpense) * 100 : 0;
-
-    return (
-      <div className='bg-popover min-w-[200px] rounded-lg border p-3 shadow-md'>
-        <div className='mb-2 flex items-center gap-2'>
-          <div
-            className='h-3 w-3 flex-shrink-0 rounded-full'
-            style={{ backgroundColor: data.fill }}
-          />
-          <p className='text-foreground truncate text-sm font-medium'>{data.name}</p>
-        </div>
-        <div className='space-y-1'>
-          <div className='flex items-center justify-between'>
-            <span className='text-muted-foreground text-xs'>Amount:</span>
-            <span className='text-foreground text-sm font-semibold'>
-              {formatCurrency(data.value)}
-            </span>
-          </div>
-          <div className='flex items-center justify-between'>
-            <span className='text-muted-foreground text-xs'>Percentage:</span>
-            <span className='text-accent-foreground text-sm font-medium'>
-              {percentage.toFixed(1)}%
-            </span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  return null;
-};
-
-// Enhanced column chart tooltip
-const ColumnTooltip = ({ active, payload, totalExpense }: any) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    const percentage = totalExpense > 0 ? (data.value / totalExpense) * 100 : 0;
-
-    return (
-      <div className='bg-popover min-w-[180px] rounded-lg border p-3 shadow-md'>
-        <div className='mb-2 flex items-center gap-2'>
-          <div
-            className='h-3 w-3 flex-shrink-0 rounded-sm'
-            style={{ backgroundColor: data.fill }}
-          />
-          <p className='text-foreground text-sm font-medium'>{data.name}</p>
-        </div>
-        <div className='grid grid-cols-2 gap-2 text-xs'>
-          <div className='text-muted-foreground'>Amount</div>
-          <div className='text-foreground text-right font-semibold'>
-            {formatCurrency(data.value)}
-          </div>
-          <div className='text-muted-foreground'>Share</div>
-          <div className='text-accent-foreground text-right font-medium'>
-            {percentage.toFixed(1)}%
-          </div>
-        </div>
-      </div>
-    );
-  }
-  return null;
-};
-
-// Enhanced radar chart tooltip
-const RadarTooltip = ({ active, payload, totalExpense }: any) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    const percentage = totalExpense > 0 ? (data.value / totalExpense) * 100 : 0;
-
-    return (
-      <div className='bg-popover min-w-[180px] rounded-lg border p-3 shadow-md'>
-        <div className='mb-2 flex items-center gap-2'>
-          <div className='bg-primary h-3 w-3 flex-shrink-0 rounded-full' />
-          <p className='text-foreground text-sm font-medium'>{data.name}</p>
-        </div>
-        <div className='grid grid-cols-2 gap-2 text-xs'>
-          <div className='text-muted-foreground'>Amount</div>
-          <div className='text-foreground text-right font-semibold'>
-            {formatCurrency(data.value)}
-          </div>
-          <div className='text-muted-foreground'>Share</div>
-          <div className='text-accent-foreground text-right font-medium'>
-            {percentage.toFixed(1)}%
-          </div>
-        </div>
-      </div>
-    );
-  }
-  return null;
-};
-
-const renderActiveShape = (props: ActiveShapeProps) => {
-  const RADIAN = Math.PI / 180;
-  const {
-    cx,
-    cy,
-    midAngle,
-    innerRadius,
-    outerRadius,
-    startAngle,
-    endAngle,
-    fill,
-    payload,
-    percent,
-    value,
-    chartType
-  } = props;
-  const sin = Math.sin(-RADIAN * midAngle);
-  const cos = Math.cos(-RADIAN * midAngle);
-  const sx = cx + (outerRadius + 10) * cos;
-  const sy = cy + (outerRadius + 10) * sin;
-  const mx = cx + (outerRadius + 30) * cos;
-  const my = cy + (outerRadius + 30) * sin;
-  const ex = mx + (cos >= 0 ? 1 : -1) * 22;
-  const ey = my;
-  const textAnchor = cos >= 0 ? 'start' : 'end';
+const renderActiveShape = (props: any) => {
+  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, value } = props;
 
   return (
     <g>
-      {chartType === 'donut' && (
-        <text
-          x={cx}
-          y={cy}
-          dy={8}
-          textAnchor='middle'
-          fill='var(--foreground)'
-          className='text-base font-semibold'
-        >
-          {truncateLabel(payload.name, 15)}
-        </text>
-      )}
+      <text
+        x={cx}
+        y={cy - 8}
+        dy={8}
+        textAnchor='middle'
+        fill='var(--muted-foreground)'
+        className='text-xs'
+      >
+        {truncateLabel(payload.name, 12)}
+      </text>
+      <text
+        x={cx}
+        y={cy + 8}
+        dy={8}
+        textAnchor='middle'
+        fill='var(--foreground)'
+        className='text-lg font-bold'
+      >
+        {formatCurrency(value)}
+      </text>
       <Sector
         cx={cx}
         cy={cy}
@@ -210,46 +104,17 @@ const renderActiveShape = (props: ActiveShapeProps) => {
         startAngle={startAngle}
         endAngle={endAngle}
         fill={fill}
-        className='opacity-100 drop-shadow-sm'
-        onClick={(e) => e.stopPropagation()}
+        className='drop-shadow-sm'
       />
       <Sector
         cx={cx}
         cy={cy}
         startAngle={startAngle}
         endAngle={endAngle}
-        innerRadius={outerRadius + 6}
-        outerRadius={outerRadius + 10}
+        innerRadius={outerRadius + 4}
+        outerRadius={outerRadius + 8}
         fill={fill}
-        className='opacity-80'
-        onClick={(e) => e.stopPropagation()}
       />
-      <path
-        d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`}
-        stroke='var(--foreground)'
-        strokeWidth={1.5}
-        fill='none'
-      />
-      <circle cx={ex} cy={ey} r={3} fill='var(--foreground)' stroke='none' />
-      <text
-        x={ex + (cos >= 0 ? 1 : -1) * 12}
-        y={ey}
-        textAnchor={textAnchor}
-        fill='var(--foreground)'
-        className='text-sm font-semibold'
-      >
-        {formatCurrency(value)}
-      </text>
-      <text
-        x={ex + (cos >= 0 ? 1 : -1) * 12}
-        y={ey}
-        dy={18}
-        textAnchor={textAnchor}
-        fill='var(--muted-foreground)'
-        className='text-xs'
-      >
-        {`(${(percent * 100).toFixed(1)}%)`}
-      </text>
     </g>
   );
 };
@@ -259,7 +124,7 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
   accountId,
   defaultDuration = 'thisMonth',
   showDurationSelector = true,
-  chartTypes = ['pie', 'column', 'radar']
+  chartTypes = ['pie', 'column', 'donut']
 }) => {
   const [duration, setDuration] = useState<DurationOption>(defaultDuration);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -311,7 +176,8 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
     const config: ChartConfig = {};
     const formatted = finalData.map((item, index) => {
       const configKey = item.name.replace(/[^a-zA-Z0-9]/g, '_');
-      const colorVar = item.name === otherCategoryName ? 'chart-other' : `chart-${(index % 8) + 1}`;
+      const colorVar =
+        item.name === otherCategoryName ? 'chart-neutral' : `chart-${(index % 5) + 1}`;
 
       config[configKey] = {
         label: item.name,
@@ -344,7 +210,7 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
         <ChartContainer
           config={chartConfig}
           className='h-[400px] w-full'
-          aria-label={`Vertical bar chart showing spending breakdown by category for ${durationLabels[duration]}`}
+          aria-label={`Vertical bar chart showing spending breakdown for ${durationLabels[duration]}`}
         >
           <ResponsiveContainer width='100%' height='100%'>
             <BarChart
@@ -371,7 +237,12 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
               />
               <ChartTooltip
                 cursor={{ fill: 'var(--muted)', opacity: 0.1 }}
-                content={<ColumnTooltip totalExpense={totalExpense} />}
+                content={
+                  <ChartTooltipContent
+                    formatter={(value) => formatCurrency(value as number)}
+                    nameKey='name'
+                  />
+                }
               />
               <Bar dataKey='value' radius={[0, 6, 6, 0]} className='drop-shadow-sm'>
                 {formattedData.map((entry) => (
@@ -388,119 +259,38 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
       );
     }
 
-    if (chartType === 'radar') {
-      const maxValue = Math.max(...formattedData.map((item) => item.value));
-      const radarData = formattedData.map((item, index) => ({
-        ...item,
-        normalizedValue: (item.value / maxValue) * 100,
-        color: item.fill,
-        angle: (index * 360) / formattedData.length
-      }));
-
+    if (chartType === 'donut') {
       return (
         <ChartContainer
           config={chartConfig}
-          className='mx-auto aspect-square h-[450px] max-sm:h-[320px]'
-          aria-label={`Radar chart showing spending breakdown by category for ${durationLabels[duration]}`}
+          className='mx-auto aspect-square h-[400px] max-sm:h-[280px]'
+          aria-label={`Donut chart showing spending breakdown for ${durationLabels[duration]}`}
         >
-          <ResponsiveContainer width='100%' height='100%'>
-            <RadarChart
-              data={radarData}
-              margin={{ top: 40, right: 40, bottom: 40, left: 40 }}
-              className='drop-shadow-lg'
-            >
-              <defs>
-                <linearGradient id='radarGradient' x1='0' y1='0' x2='0' y2='1'>
-                  <stop offset='0%' stopColor='var(--primary)' stopOpacity={0.3} />
-                  <stop offset='100%' stopColor='var(--primary)' stopOpacity={0.05} />
-                </linearGradient>
-                <filter id='glow'>
-                  <feGaussianBlur stdDeviation='2' result='coloredBlur' />
-                  <feMerge>
-                    <feMergeNode in='coloredBlur' />
-                    <feMergeNode in='SourceGraphic' />
-                  </feMerge>
-                </filter>
-              </defs>
-
-              {/* Multi-layer grid for depth */}
-              <PolarGrid
-                stroke='var(--border)'
-                strokeOpacity={0.15}
-                strokeWidth={1}
-                className='drop-shadow-sm'
-              />
-              <PolarGrid
-                stroke='var(--primary)'
-                strokeOpacity={0.08}
-                strokeWidth={2}
-                strokeDasharray='4 4'
-              />
-
-              <PolarAngleAxis
-                dataKey='name'
-                tick={{
-                  fontSize: isMobile ? 11 : 13,
-                  fill: 'var(--foreground)',
-                  fontWeight: 500
-                }}
-                tickFormatter={(value) => truncateLabel(value, isMobile ? 8 : 12)}
-                className='text-foreground font-medium'
-              />
-
-              <PolarRadiusAxis
-                angle={90}
-                domain={[0, 'dataMax']}
-                tick={{
-                  fontSize: 9,
-                  fill: 'var(--muted-foreground)',
-                  fontWeight: 400
-                }}
-                tickFormatter={(value) => formatCurrency(value)}
-                className='text-muted-foreground'
-                axisLine={false}
-                tickLine={false}
-              />
-
-              <ChartTooltip
-                content={<RadarTooltip totalExpense={totalExpense} />}
-                cursor={{ stroke: 'var(--primary)', strokeWidth: 2, strokeOpacity: 0.5 }}
-              />
-
-              {/* Main radar area with gradient */}
-              <Radar
+          <ResponsiveContainer>
+            <PieChart>
+              <ChartTooltip content={<CustomTooltipContent totalExpense={totalExpense} />} />
+              <Pie
+                activeIndex={activeIndex}
+                activeShape={renderActiveShape}
+                data={formattedData}
                 dataKey='value'
-                stroke='var(--primary)'
-                fill='url(#radarGradient)'
-                strokeWidth={3}
-                className='drop-shadow-lg'
-                dot={{
-                  r: 6,
-                  fill: 'var(--primary)',
-                  strokeWidth: 3,
-                  stroke: 'var(--background)',
-                  filter: 'url(#glow)'
-                }}
-                activeDot={{
-                  r: 8,
-                  fill: 'var(--primary)',
-                  strokeWidth: 4,
-                  stroke: 'var(--background)',
-                  filter: 'url(#glow)'
-                }}
+                nameKey='name'
+                cx='50%'
+                cy='50%'
+                outerRadius={isMobile ? '90%' : '80%'}
+                innerRadius={isMobile ? '65%' : '60%'}
+                paddingAngle={2}
+                onMouseEnter={onPieEnter}
+              >
+                {formattedData.map((entry) => (
+                  <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+                ))}
+              </Pie>
+              <ChartLegend
+                content={<ChartLegendContent nameKey='name' />}
+                wrapperStyle={{ paddingTop: '20px' }}
               />
-
-              {/* Additional accent radar for visual interest */}
-              <Radar
-                dataKey='normalizedValue'
-                stroke='var(--chart-1)'
-                fill='transparent'
-                strokeWidth={1}
-                strokeOpacity={0.3}
-                strokeDasharray='3 3'
-                dot={false}
-              />
-            </RadarChart>
+            </PieChart>
           </ResponsiveContainer>
         </ChartContainer>
       );
@@ -510,34 +300,23 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
       <ChartContainer
         config={chartConfig}
         className='mx-auto aspect-square h-[400px] max-sm:h-[280px]'
-        aria-label={`${chartType} chart showing spending breakdown by category for ${durationLabels[duration]}`}
+        aria-label={`Pie chart showing spending breakdown for ${durationLabels[duration]}`}
       >
-        <ResponsiveContainer width='100%' height='100%'>
+        <ResponsiveContainer>
           <PieChart>
-            <ChartTooltip cursor={false} content={<CustomTooltip totalExpense={totalExpense} />} />
+            <ChartTooltip content={<CustomTooltipContent totalExpense={totalExpense} />} />
             <Pie
-              activeIndex={activeIndex}
-              activeShape={(props: any) =>
-                renderActiveShape({ ...props, chartType } as ActiveShapeProps)
-              }
               data={formattedData}
-              cx='50%'
-              cy='50%'
-              innerRadius='0%'
-              outerRadius={isMobile ? '70%' : '80%'}
-              paddingAngle={2}
               dataKey='value'
               nameKey='name'
-              onMouseEnter={onPieEnter}
-              className='drop-shadow-sm outline-none focus:outline-none'
+              cx='50%'
+              cy='50%'
+              outerRadius={'80%'}
+              innerRadius={'0%'}
+              paddingAngle={2}
             >
               {formattedData.map((entry) => (
-                <Cell
-                  key={`cell-${entry.name}`}
-                  fill={entry.fill}
-                  className='opacity-90 transition-all duration-200 outline-none hover:scale-105 hover:opacity-100 hover:outline-none focus:outline-none active:outline-none'
-                  style={{ outline: 'none', stroke: 'none' }}
-                />
+                <Cell key={`cell-${entry.name}`} fill={entry.fill} />
               ))}
             </Pie>
             <ChartLegend
@@ -554,6 +333,10 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
     <Card className={cn('flex h-full flex-col shadow-sm', className)}>
       <CardHeader className='flex flex-none gap-2 pb-2'>
         <div className='flex flex-col items-center justify-between gap-4 sm:flex-row'>
+          <div className='flex-1'>
+            <h3 className='text-lg font-semibold'>Spending Breakdown</h3>
+            <p className='text-muted-foreground text-sm'>Top expense categories</p>
+          </div>
           {showDurationSelector && (
             <Select value={duration} onValueChange={(v) => setDuration(v as DurationOption)}>
               <SelectTrigger className='border-input/50 hover:border-input h-8 w-[150px] text-xs transition-colors'>
@@ -566,6 +349,8 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
               </SelectContent>
             </Select>
           )}
+        </div>
+        <div className='pt-4'>
           <Tabs
             defaultValue={chartType}
             onValueChange={(v) => setChartType(v as ChartType)}

@@ -10,10 +10,10 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Icon } from '../ui/icon';
 
-// const FinancialOrb = dynamic(
-//   () => import('@/components/landing/3d/financial-orb').then((mod) => mod.FinancialOrb),
-//   { ssr: false }
-// );
+const FinancialOrb = dynamic(
+  () => import('@/components/landing/3d/financial-orb').then((mod) => mod.FinancialOrb),
+  { ssr: false }
+);
 
 const HeroSection = () => {
   const mainRef = useRef<HTMLDivElement>(null);
@@ -96,7 +96,9 @@ const HeroSection = () => {
           '[mask-image:linear-gradient(to_top,rgba(249,250,251,1)_20%,transparent)]'
         )}
       >
-        <Suspense fallback={null}>{/* <FinancialOrb /> */}</Suspense>
+        <Suspense fallback={null}>
+          <FinancialOrb />
+        </Suspense>
       </div>
     </section>
   );

@@ -145,7 +145,7 @@
   --muted-foreground: var(--gray-500);
   --accent: var(--gray-150);
   --accent-foreground: var(--primary);
-  --border: var(--gray-200);
+  --border: var(--gray-150);
   --input: var(--gray-50);
   --input-foreground: var(--foreground);
   --ring: oklch(from var(--primary-base) l c h / 0.3);
@@ -218,25 +218,32 @@
   --category-active: oklch(from var(--category) calc(l - 0.12) c h);
   --category-border-b: oklch(from var(--category) calc(l - 0.20) c h);
 
-  --chart-lightness: 60%;
-  --chart-chroma: 0.16;
-  --chart-1: oklch(var(--chart-lightness) var(--chart-chroma) var(--hue-primary));
-  --chart-2: oklch(var(--chart-lightness) var(--chart-chroma) var(--hue-success));
-  --chart-3: oklch(var(--chart-lightness) var(--chart-chroma) 280);
-  --chart-4: oklch(var(--chart-lightness) var(--chart-chroma) var(--hue-warning));
-  --chart-5: oklch(var(--chart-lightness) var(--chart-chroma) 20);
-  --chart-6: oklch(var(--chart-lightness) var(--chart-chroma) 320);
-  --chart-7: oklch(var(--chart-lightness) var(--chart-chroma) 140);
-  --chart-8: oklch(var(--chart-lightness) var(--chart-chroma) 220);
-  --chart-9: oklch(var(--chart-lightness) var(--chart-chroma) 50);
-  --chart-10: oklch(var(--chart-lightness) var(--chart-chroma) 340);
-  --chart-other: oklch(0.65 0.06 var(--hue-slate));
+  --chart-primary: oklch(0.60 0.16 var(--hue-primary));
+  --chart-secondary: oklch(0.58 0.16 var(--hue-success));
+  --chart-accent: oklch(0.65 0.16 var(--hue-warning));
+  --chart-neutral: oklch(0.55 0.018 var(--hue-slate));
+
+  --chart-1: var(--chart-primary);
+  --chart-2: var(--chart-secondary);
+  --chart-3: oklch(0.62 0.16 var(--hue-balance));
+  --chart-4: var(--chart-accent);
+  --chart-5: oklch(0.64 0.14 var(--hue-category));
+  --chart-6: oklch(0.56 0.18 var(--hue-destructive));
+  --chart-7: oklch(0.60 0.18 var(--hue-success));
+  --chart-8: oklch(0.58 0.20 var(--hue-destructive));
+  --chart-9: oklch(0.62 0.14 var(--hue-primary));
+  --chart-10: oklch(0.7 0.18 var(--hue-primary));
+
   --chart-income: var(--income);
   --chart-expense: var(--expense);
   --chart-balance: var(--balance);
-  --chart-savings: var(--success);
-  --chart-investment: var(--balance);
-  --chart-debt: var(--expense);
+  --chart-positive: var(--positive);
+  --chart-negative: var(--negative);
+
+  --sparkline-color-positive: oklch(0.60 0.18 150);
+  --sparkline-color-negative: oklch(0.58 0.20 0);
+  --sparkline-color-neutral: oklch(0.55 0.018 240);
+  --sparkline-gradient-opacity: 0.2;
 }
 
 .dark {
@@ -268,7 +275,7 @@
   --sidebar-accent: var(--gray-200);
   --card: var(--gray-150);
   --popover: var(--gray-200);
-  --border: var(--gray-400);
+  --border: oklch(from var(--gray-800) l c h / 0.05);
   --input: var(--gray-300);
   --secondary-foreground: var(--gray-800);
   --muted-foreground: var(--gray-600);
@@ -281,8 +288,22 @@
   --transaction: oklch(0.68 0.18 var(--hue-success));
   --planning: oklch(0.72 0.18 var(--hue-balance));
   --category: oklch(0.72 0.15 var(--hue-category));
-  --chart-lightness: 70%;
-  --chart-chroma: 0.2;
+
+  --chart-primary: oklch(0.7 0.18 var(--hue-primary));
+  --chart-secondary: oklch(0.68 0.18 var(--hue-success));
+  --chart-accent: oklch(0.75 0.18 var(--hue-warning));
+  --chart-neutral: oklch(0.60 0.025 var(--hue-slate));
+
+  --chart-income: oklch(0.7 0.2 var(--hue-success));
+  --chart-expense: oklch(0.7 0.22 var(--hue-destructive));
+  --chart-balance: oklch(0.72 0.18 var(--hue-balance));
+  --chart-positive: var(--positive);
+  --chart-negative: var(--negative);
+
+  --sparkline-color-positive: oklch(0.7 0.2 150);
+  --sparkline-color-negative: oklch(0.7 0.22 0);
+  --sparkline-color-neutral: oklch(0.72 0.02 240);
+  --sparkline-gradient-opacity: 0.1;
 }
 
 @theme inline {
@@ -385,7 +406,6 @@
   --color-chart-8: var(--chart-8);
   --color-chart-9: var(--chart-9);
   --color-chart-10: var(--chart-10);
-  --color-chart-other: var(--chart-other);
   --color-chart-income: var(--chart-income);
   --color-chart-expense: var(--chart-expense);
   --color-chart-balance: var(--chart-balance);
@@ -639,19 +659,24 @@
   }
 }
 
-.recharts-tooltip-wrapper:focus,
-.recharts-tooltip-wrapper:focus-visible,
-.recharts-wrapper:focus,
-.recharts-wrapper:focus-visible,
-.recharts-surface:focus,
-.recharts-surface:focus-visible,
-.recharts-pie-sector:focus,
-.recharts-pie-sector:focus-visible,
-.recharts-cell:focus,
-.recharts-cell:focus-visible,
-.recharts-active-shape:focus,
-.recharts-active-shape:focus-visible {
+.recharts-tooltip-wrapper {
   outline: none !important;
+}
+
+.custom-chart-tooltip {
+  @apply rounded-lg border bg-background/90 p-3 text-sm shadow-lg backdrop-blur-sm transition-all duration-200;
+}
+
+.custom-chart-tooltip .label {
+  @apply mb-2 font-bold;
+}
+
+.custom-chart-tooltip .intro {
+  @apply text-muted-foreground;
+}
+
+.custom-chart-tooltip .desc {
+  @apply text-foreground font-semibold;
 }
 
 .recharts-wrapper path {

@@ -35,24 +35,24 @@ const FinancialHealth: React.FC = () => {
     if (score > 80)
       return {
         badge: 'Excellent',
-        color: '#22C55E',
+        color: 'var(--chart-positive)',
         message: 'Your finances are in great shape!'
       };
     if (score > 60)
       return {
         badge: 'Good',
-        color: '#EAB308',
+        color: 'var(--chart-accent)',
         message: 'You have a solid financial foundation.'
       };
     if (score > 40)
       return {
         badge: 'Fair',
-        color: '#F97316',
+        color: 'var(--chart-balance)',
         message: 'Some areas could use improvement.'
       };
     return {
       badge: 'Needs Attention',
-      color: '#EF4444',
+      color: 'var(--chart-negative)',
       message: 'Focus on improving key financial habits.'
     };
   };
@@ -78,17 +78,12 @@ const FinancialHealth: React.FC = () => {
               <RadialBarChart
                 innerRadius='70%'
                 outerRadius='90%'
-                data={[
-                  {
-                    value: analysis.score,
-                    fill: healthScoreMeta.color.split(' ')[0].replace('bg-', '#')
-                  }
-                ]}
+                data={[{ value: analysis.score, fill: healthScoreMeta.color }]}
                 startAngle={90}
-                endAngle={960}
+                endAngle={450}
               >
                 <PolarAngleAxis type='number' domain={[0, 100]} angleAxisId={0} tick={false} />
-                <RadialBar minPointSize={5} dataKey='value' cornerRadius={10} />
+                <RadialBar background dataKey='value' cornerRadius={10} className='fill-muted' />
               </RadialBarChart>
             </ResponsiveContainer>
             <div className='absolute inset-0 flex flex-col items-center justify-center'>

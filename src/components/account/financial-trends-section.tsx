@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { FinancialTrendsChart } from './financial-trends-chart';
 import { SpendingBreakdown } from '@/components/dashboard/spending-breakdown';
-import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Card, CardContent, CardHeader } from '../ui/card';
 
 interface FinancialTrendsSectionProps {
   chartData: Array<{
@@ -27,27 +27,28 @@ export const FinancialTrendsSection: React.FC<FinancialTrendsSectionProps> = ({
   const [activeTab, setActiveTab] = useState('trends');
 
   return (
-    <div className='flex h-full flex-col'>
+    <Card className='h-full w-full overflow-hidden border-none'>
       <Tabs value={activeTab} onValueChange={setActiveTab} className='flex h-full flex-col'>
-        <div className='flex w-full flex-wrap items-center justify-between gap-2 border-b px-4 py-2 sm:justify-start'>
+        <CardHeader className='p-4'>
           <TabsList className='grid w-full grid-cols-2 sm:w-auto'>
             <TabsTrigger value='trends'>Financial Trends</TabsTrigger>
             <TabsTrigger value='analysis'>Spending Analysis</TabsTrigger>
           </TabsList>
-        </div>
-
-        <TabsContent value='trends' className='flex-1 p-2 sm:p-4'>
-          <FinancialTrendsChart data={chartData} isLoading={isChartLoading} currency={currency} />
-        </TabsContent>
-        <TabsContent value='analysis' className='flex-1 p-2 sm:p-4'>
-          <SpendingBreakdown
-            accountId={accountId}
-            showDurationSelector={false}
-            defaultDuration={duration}
-            chartTypes={['column', 'pie']}
-          />
-        </TabsContent>
+        </CardHeader>
+        <CardContent className='flex-1 p-2 !pt-0 sm:p-4'>
+          <TabsContent value='trends' className='h-full'>
+            <FinancialTrendsChart data={chartData} isLoading={isChartLoading} currency={currency} />
+          </TabsContent>
+          <TabsContent value='analysis' className='h-full'>
+            <SpendingBreakdown
+              accountId={accountId}
+              showDurationSelector={false}
+              defaultDuration={duration}
+              chartTypes={['column', 'pie', 'donut']}
+            />
+          </TabsContent>
+        </CardContent>
       </Tabs>
-    </div>
+    </Card>
   );
 };

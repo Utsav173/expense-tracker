@@ -18,7 +18,7 @@ import { cn, formatCurrency } from '@/lib/utils';
 import type { InvestmentAccountAPI } from '@/lib/api/api-types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
+import { ChartContainer, ChartTooltip, ChartConfig } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import NoData from '../ui/no-data';
@@ -119,48 +119,44 @@ const CustomTooltip = ({ active, payload, currency, data }: any) => {
     const isPositive = change === null || change >= 0;
 
     return (
-      <Card className='bg-popover min-w-[240px] border shadow-lg'>
-        <CardContent className='p-4'>
-          <p className='text-foreground mb-3 text-sm font-semibold'>
-            {format(parseISO(currentData.date), 'EEEE, MMM d, yyyy')}
-          </p>
-          <div className='space-y-3 text-sm'>
-            <div className='flex items-center justify-between gap-4'>
-              <span className='text-muted-foreground flex items-center gap-2'>
-                <Icon name='wallet' className='h-4 w-4' />
-                Portfolio Value
-              </span>
-              <span className='text-foreground font-semibold'>
-                {formatCurrency(value, currency)}
-              </span>
-            </div>
-            {change !== null && percentageChange !== null && (
-              <div className='border-t pt-3'>
-                <div className='flex items-center justify-between gap-4'>
-                  <span className='text-muted-foreground'>Daily Change</span>
-                  <div
-                    className={cn(
-                      'flex items-center gap-1.5 font-semibold',
-                      isPositive
-                        ? 'text-green-600 dark:text-green-400'
-                        : 'text-red-600 dark:text-red-400'
-                    )}
-                  >
-                    {isPositive ? (
-                      <Icon name='trendingUp' className='h-4 w-4' />
-                    ) : (
-                      <Icon name='trendingDown' className='h-4 w-4' />
-                    )}
-                    <span>
-                      {formatCurrency(change, currency)} ({percentageChange.toFixed(2)}%)
-                    </span>
-                  </div>
+      <div className='custom-chart-tooltip min-w-[240px]'>
+        <p className='label mb-3 text-sm'>
+          {format(parseISO(currentData.date), 'EEEE, MMM d, yyyy')}
+        </p>
+        <div className='space-y-3 text-sm'>
+          <div className='flex items-center justify-between gap-4'>
+            <span className='text-muted-foreground flex items-center gap-2'>
+              <Icon name='wallet' className='h-4 w-4' />
+              Portfolio Value
+            </span>
+            <span className='text-foreground font-semibold'>{formatCurrency(value, currency)}</span>
+          </div>
+          {change !== null && percentageChange !== null && (
+            <div className='border-t pt-3'>
+              <div className='flex items-center justify-between gap-4'>
+                <span className='text-muted-foreground'>Daily Change</span>
+                <div
+                  className={cn(
+                    'flex items-center gap-1.5 font-semibold',
+                    isPositive
+                      ? 'text-green-600 dark:text-green-400'
+                      : 'text-red-600 dark:text-red-400'
+                  )}
+                >
+                  {isPositive ? (
+                    <Icon name='trendingUp' className='h-4 w-4' />
+                  ) : (
+                    <Icon name='trendingDown' className='h-4 w-4' />
+                  )}
+                  <span>
+                    {formatCurrency(change, currency)} ({percentageChange.toFixed(2)}%)
+                  </span>
                 </div>
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+            </div>
+          )}
+        </div>
+      </div>
     );
   }
   return null;
@@ -203,7 +199,11 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
 
   const chartData = useMemo(() => {
     if (!performanceData?.data) return [];
-    return performanceData.data;
+    // FIX: Ensure unique keys by adding index
+    return performanceData.data.map((d: any, index: number) => ({
+      ...d,
+      uniqueKey: `${d.date}-${index}`
+    }));
   }, [performanceData]);
 
   const yAxisFormatter = (tick: number) =>

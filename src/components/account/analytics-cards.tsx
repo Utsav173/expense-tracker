@@ -15,11 +15,11 @@ const cardVariants = cva(
     variants: {
       variant: {
         primary:
-          'text-slate-800 bg-gradient-to-br from-purple-200 via-indigo-300 to-blue-300 dark:text-slate-100 dark:bg-gradient-to-br dark:from-indigo-700 dark:via-purple-700 dark:to-blue-800',
+          'bg-gradient-to-br from-purple-200 via-indigo-300 to-blue-300 dark:bg-gradient-to-br dark:from-indigo-700 dark:via-purple-700 dark:to-blue-800',
         success:
-          'text-slate-800 bg-gradient-to-br from-green-300/80 to-teal-300/50 dark:text-slate-100 dark:bg-gradient-to-br dark:from-green-900 dark:to-teal-600/90',
+          '!text-emerald-800 dark:!text-green-300 bg-gradient-to-br from-green-300/80 to-teal-300/50 dark:bg-gradient-to-br dark:from-green-950 dark:to-teal-800/90',
         destructive:
-          'text-slate-800 bg-gradient-to-br from-red-300 to-rose-300/50 dark:text-slate-100 dark:bg-gradient-to-br dark:from-red-500/80 dark:to-orange-900/60'
+          '!text-rose-800 dark:!text-red-200 bg-gradient-to-br from-red-300 to-rose-300/50 dark:bg-gradient-to-br dark:from-rose-900/80 dark:to-orange-700/60'
       }
     },
     defaultVariants: {
@@ -55,7 +55,7 @@ const TrendIndicator = ({ value }: { value: number }) => {
       <Tooltip>
         <TooltipTrigger asChild>
           <div className='flex items-center gap-3'>
-            <div className='bg-background/5 flex h-12 w-12 items-center justify-center rounded-full border backdrop-blur-sm'>
+            <div className='bg-background/5 flex h-12 w-12 items-center justify-center rounded-full backdrop-blur-xl'>
               <Icon name={iconName} className={cn('h-6 w-6', trendColorClasses)} />
             </div>
             <div className='text-base font-bold text-inherit'>
@@ -108,19 +108,19 @@ const AnalyticsCard = ({
         </div>
         <div className='mt-4'>
           {totalBalance !== undefined && (
-            <p className='text-muted-foreground text-sm'>
+            <p className='text-sm'>
               <span className='opacity-80'>Total in Account:</span>{' '}
               {formatCurrency(totalBalance, currency)}
             </p>
           )}
-          {footerText && <p className='text-muted-foreground mt-1 text-xs'>{footerText}</p>}
+          {footerText && <p className='mt-1 text-xs'>{footerText}</p>}
         </div>
       </div>
     ) : (
       <div className='relative flex h-full min-h-[140px] flex-col justify-between p-6'>
         <div>
-          <p className='text-muted-foreground font-medium'>{title}</p>
-          <p className='font-display text-foreground mt-1 text-3xl font-bold tracking-tight'>
+          <p className='font-medium'>{title}</p>
+          <p className='font-display mt-1 text-3xl font-bold tracking-tight'>
             {formatCurrency(value, currency)}
           </p>
         </div>

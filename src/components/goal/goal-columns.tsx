@@ -101,14 +101,14 @@ export const createGoalColumns = ({
               style={
                 {
                   '--progress-foreground': isCompleted
-                    ? 'hsl(var(--hue-success))'
+                    ? 'var(--hue-success)'
                     : progress >= 75
-                      ? 'hsl(var(--hue-primary))'
+                      ? 'var(--hue-primary)'
                       : progress >= 50
-                        ? 'hsl(var(--hue-warning))'
+                        ? 'var(--hue-warning)'
                         : progress >= 25
-                          ? 'hsl(var(--hue-destructive))'
-                          : 'hsl(var(--hue-destructive))'
+                          ? 'var(--hue-destructive)'
+                          : 'var(--hue-destructive)'
                 } as React.CSSProperties
               }
             />

@@ -112,7 +112,11 @@ const DashboardPage = () => {
             icon={DASHBOARD_CARD_CONFIG.default.financialSnapshot.icon}
           >
             {dashboardPageData ? (
-              <FinancialSnapshot data={dashboardPageData} isLoading={isLoading} />
+              <FinancialSnapshot
+                data={dashboardPageData}
+                isLoading={isLoading}
+                balanceChartData={dashboardPageData?.balanceChartData}
+              />
             ) : null}
           </DashboardCardContent>
         </BentoGridItem>

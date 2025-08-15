@@ -10,20 +10,30 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { useToast } from '@/lib/hooks/useToast';
 import { Icon } from '@/components/ui/icon';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const PromptSuggestion = ({ text, onClick }: { text: string; onClick: () => void }) => (
   <motion.button
-    whileHover={{ scale: 1.03 }}
-    whileTap={{ scale: 0.97 }}
+    whileHover={{ x: 2 }}
+    whileTap={{ scale: 0.98 }}
+    transition={{ type: 'spring', stiffness: 600, damping: 15 }}
     onClick={onClick}
-    className='bg-card hover:bg-muted text-card-foreground w-full rounded-lg border p-3 text-left text-sm transition-colors'
+    className='group bg-background hover:bg-muted flex w-full items-center gap-3 rounded-lg border p-3 text-left text-sm transition-all hover:shadow-sm'
   >
-    {text}
+    <Icon
+      name='sparkles'
+      className='text-muted-foreground group-hover:text-primary h-4 w-4 shrink-0 transition-colors'
+    />
+    <span className='flex-1 text-purple-800 dark:text-indigo-300'>{text}</span>
+    <Icon
+      name='arrowRight'
+      className='text-muted-foreground h-4 w-4 shrink-0 opacity-0 transition-all group-hover:translate-x-1 group-hover:opacity-100'
+    />
   </motion.button>
 );
 
 export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
-  const { messages, sendMessage, isLoading, isStreaming, error } = useAiChat();
+  const { messages, sendMessage, isLoading, isStreaming, error, clearChat } = useAiChat();
   const [input, setInput] = useState('');
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
@@ -143,10 +153,33 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
   return (
     <div
       className={cn(
-        'flex h-full max-h-full w-full flex-col overflow-hidden',
+        'relative flex h-full max-h-full w-full flex-col overflow-hidden',
         isFullPage ? 'bg-transparent' : 'bg-card/80 rounded-2xl border shadow-xl backdrop-blur-sm'
       )}
     >
+      {messages.length > 0 && (
+        <div className='absolute top-3 right-3 z-10'>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  onClick={clearChat}
+                  disabled={isInputDisabled}
+                  className='h-8 w-8'
+                >
+                  <Icon name='history' className='h-4 w-4' />
+                  <span className='sr-only'>Reset Chat</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Reset Chat & Start New Session</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      )}
       <div className='min-h-0 flex-1 [mask-image:linear-gradient(to_bottom,black_90%,transparent_100%)]'>
         <ScrollArea className='scrollbar h-full w-full'>
           <div className='mx-auto w-full max-w-5xl space-y-8 px-4 py-6'>
@@ -170,8 +203,15 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
                     or XLSX file.
                   </p>
                   <div className='w-full max-w-md space-y-2'>
-                    {suggestions.map((s) => (
-                      <PromptSuggestion key={s} text={s} onClick={() => handleSendMessage(s)} />
+                    {suggestions.map((s, i) => (
+                      <motion.div
+                        key={s}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: 0.2 + i * 0.1, ease: 'easeOut' }}
+                      >
+                        <PromptSuggestion text={s} onClick={() => handleSendMessage(s)} />
+                      </motion.div>
                     ))}
                   </div>
                 </motion.div>
@@ -245,11 +285,18 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
                 >
                   <div className='w-full max-w-[85%] space-y-2'>
                     {lastMessage.followUpPrompts?.map((prompt: string, index: number) => (
-                      <PromptSuggestion
+                      <motion.div
                         key={`follow-up-${index}`}
-                        text={prompt}
-                        onClick={() => handleSendMessage(prompt)}
-                      />
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{
+                          duration: 0.3,
+                          delay: 0.1 + index * 0.1,
+                          ease: 'easeOut'
+                        }}
+                      >
+                        <PromptSuggestion text={prompt} onClick={() => handleSendMessage(prompt)} />
+                      </motion.div>
                     ))}
                   </div>
                 </motion.div>
@@ -290,7 +337,7 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
         )}
         <div
           className={cn(
-            'bg-card relative flex w-full items-end rounded-xl border p-2 shadow-sm transition-colors',
+            'bg-background relative flex w-full items-end rounded-xl border p-2 shadow-sm transition-colors',
             attachedFile && 'border-primary'
           )}
         >

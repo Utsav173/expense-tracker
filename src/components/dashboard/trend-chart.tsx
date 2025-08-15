@@ -50,6 +50,49 @@ interface ProcessedDataPoint {
   balance: number | null;
 }
 
+const CustomTooltipContent = ({ active, payload, currency }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload as ProcessedDataPoint;
+    const netFlow = (data.income || 0) - (data.expense || 0);
+    const netFlowColor =
+      netFlow > 0 ? 'text-positive' : netFlow < 0 ? 'text-negative' : 'text-muted-foreground';
+
+    return (
+      <div className='bg-background/90 min-w-[180px] rounded-lg border p-3 text-sm shadow-lg backdrop-blur-sm transition-all'>
+        <div className='mb-2'>
+          <p className='text-foreground font-bold'>
+            {format(new Date(data.timestamp * 1000), 'EEEE, MMM d')}
+          </p>
+        </div>
+        <div className='space-y-1'>
+          {payload.map((item: any) => (
+            <div key={item.dataKey} className='flex items-center justify-between'>
+              <div className='flex items-center gap-2'>
+                <span
+                  className='h-2.5 w-2.5 shrink-0 rounded-[2px]'
+                  style={{ backgroundColor: item.color }}
+                />
+                <p className='text-muted-foreground'>{item.name}</p>
+              </div>
+              <p className='text-foreground font-semibold'>
+                {formatCurrency(item.value, currency)}
+              </p>
+            </div>
+          ))}
+        </div>
+        <div className='border-border/50 mt-3 border-t pt-2'>
+          <div className='flex items-center justify-between'>
+            <p className='text-muted-foreground font-semibold'>Net Flow</p>
+            <p className={`font-bold ${netFlowColor}`}>{formatCurrency(netFlow, currency)}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+};
+
 const trendsChartConfig = {
   income: {
     label: 'Income',
@@ -64,30 +107,6 @@ const trendsChartConfig = {
     color: 'var(--chart-balance)'
   }
 } satisfies ChartConfig;
-
-// Custom tooltip component for better styling
-const CustomTooltip = ({ active, payload, label, currency }: any) => {
-  if (!active || !payload || !payload.length) return null;
-
-  return (
-    <div className='bg-background/95 border-border/50 min-w-[200px] rounded-lg border p-3 shadow-lg backdrop-blur-sm'>
-      <p className='text-foreground mb-2 text-sm font-medium'>{label}</p>
-      <div className='space-y-1'>
-        {payload.map((entry: any, index: number) => (
-          <div key={index} className='flex items-center justify-between gap-3'>
-            <div className='flex items-center gap-2'>
-              <div className='h-2.5 w-2.5 rounded-full' style={{ backgroundColor: entry.color }} />
-              <span className='text-muted-foreground text-xs capitalize'>{entry.dataKey}</span>
-            </div>
-            <span className='text-foreground font-mono text-sm font-medium tabular-nums'>
-              {entry.value !== null ? formatCurrency(entry.value, currency) : 'N/A'}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
 
 export const TrendChart: React.FC<TrendChartProps> = ({
   incomeData = [],
@@ -123,51 +142,46 @@ export const TrendChart: React.FC<TrendChartProps> = ({
 
     const dataMap = new Map<number, ProcessedDataPoint>();
 
-    const ensureDataPoint = (timestamp: number) => {
-      if (!dataMap.has(timestamp)) {
-        dataMap.set(timestamp, {
-          date: format(new Date(timestamp * 1000), 'MMM dd'),
-          timestamp,
-          income: null,
-          expense: null,
-          balance: null
-        });
-      }
-      return dataMap.get(timestamp)!;
+    const processPoints = (points: ApiChartDataPoint[], key: 'income' | 'expense' | 'balance') => {
+      points.forEach((point) => {
+        if (point.y !== null) {
+          const entry = dataMap.get(point.x) || {
+            timestamp: point.x,
+            date: '', // Will be formatted later
+            income: null,
+            expense: null,
+            balance: null
+          };
+          entry[key] = point.y;
+          dataMap.set(point.x, entry);
+        }
+      });
     };
 
-    filteredIncome.forEach((point) => {
-      if (point.y !== null) {
-        ensureDataPoint(point.x).income = point.y;
-      }
-    });
+    processPoints(filteredIncome, 'income');
+    processPoints(filteredExpense, 'expense');
+    processPoints(filteredBalance, 'balance');
 
-    filteredExpense.forEach((point) => {
-      if (point.y !== null) {
-        ensureDataPoint(point.x).expense = point.y;
-      }
-    });
+    const sortedData = Array.from(dataMap.values()).sort((a, b) => a.timestamp - b.timestamp);
 
-    filteredBalance.forEach((point) => {
-      if (point.y !== null) {
-        ensureDataPoint(point.x).balance = point.y;
-      }
-    });
+    if (sortedData.length < 2) {
+      return sortedData.map((point) => ({
+        ...point,
+        date: format(new Date(point.timestamp * 1000), 'MMM dd')
+      }));
+    }
 
-    const sortedData = Array.from(dataMap.entries())
-      .sort((a, b) => a[0] - b[0])
-      .map(([_, value]) => value);
+    const firstTimestamp = sortedData[0].timestamp * 1000;
+    const lastTimestamp = sortedData[sortedData.length - 1].timestamp * 1000;
+    const dayDifference = (lastTimestamp - firstTimestamp) / (1000 * 60 * 60 * 24);
 
-    return sortedData;
+    const dateFormat = dayDifference > 365 ? "MMM 'yy" : 'MMM dd';
+
+    return sortedData.map((point) => ({
+      ...point,
+      date: format(new Date(point.timestamp * 1000), dateFormat)
+    }));
   }, [incomeData, expenseData, balanceData, timeRangeOption, customDateRange]);
-
-  const formatYaxis = (value: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      notation: 'compact',
-      compactDisplay: 'short',
-      maximumFractionDigits: 1
-    }).format(value);
-  };
 
   if (isLoading) {
     return (
@@ -187,25 +201,16 @@ export const TrendChart: React.FC<TrendChartProps> = ({
 
   const commonProps = {
     data: processedData,
-    margin: { top: 15, right: 15, left: 5, bottom: 5 }
+    margin: { top: 15, right: 15, left: -20, bottom: 5 }
   };
 
-  const axisProps = {
-    xAxis: {
-      dataKey: 'date',
-      tickLine: false,
-      axisLine: false,
-      tick: { fontSize: 11, fill: 'var(--muted-foreground)' },
-      interval: 'preserveStartEnd' as const,
-      minTickGap: 20
-    },
-    yAxis: {
-      tickFormatter: formatYaxis,
-      tickLine: false,
-      axisLine: false,
-      tick: { fontSize: 11, fill: 'var(--muted-foreground)' },
-      width: 50
-    }
+  const xAxisProps = {
+    dataKey: 'date',
+    tickLine: false,
+    axisLine: false,
+    tick: { fontSize: 11, fill: 'var(--muted-foreground)' },
+    interval: 'preserveStartEnd' as const,
+    minTickGap: 30
   };
 
   return (
@@ -220,30 +225,30 @@ export const TrendChart: React.FC<TrendChartProps> = ({
                 stroke='var(--border)'
                 strokeOpacity={0.3}
               />
-              <XAxis {...axisProps.xAxis} />
-              <YAxis {...axisProps.yAxis} />
+              <XAxis {...xAxisProps} />
+              <YAxis hide />
               <ChartTooltip
-                cursor={{ fill: '(var(--muted)', fillOpacity: 0.1 }}
-                content={<CustomTooltip currency={currency} />}
+                cursor={{ fill: 'var(--muted)', opacity: 0.1 }}
+                content={<CustomTooltipContent currency={currency} />}
               />
               <ChartLegend content={<ChartLegendContent />} />
               <Bar
                 dataKey='income'
-                fill='var(--chart-income)'
+                fill='var(--color-income)'
                 radius={[3, 3, 0, 0]}
                 animationDuration={600}
                 minPointSize={2}
               />
               <Bar
                 dataKey='expense'
-                fill='var(--chart-expense)'
+                fill='var(--color-expense)'
                 radius={[3, 3, 0, 0]}
                 animationDuration={600}
                 minPointSize={2}
               />
               <Bar
                 dataKey='balance'
-                fill='var(--chart-balance)'
+                fill='var(--color-balance)'
                 radius={[3, 3, 0, 0]}
                 animationDuration={600}
                 minPointSize={2}
@@ -253,16 +258,16 @@ export const TrendChart: React.FC<TrendChartProps> = ({
             <RechartsAreaChart {...commonProps}>
               <defs>
                 <linearGradient id='incomeGradient' x1='0' y1='0' x2='0' y2='1'>
-                  <stop offset='5%' stopColor='var(--chart-income)' stopOpacity={0.4} />
-                  <stop offset='95%' stopColor='var(--chart-income)' stopOpacity={0} />
+                  <stop offset='5%' stopColor='var(--color-income)' stopOpacity={0.4} />
+                  <stop offset='95%' stopColor='var(--color-income)' stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id='expenseGradient' x1='0' y1='0' x2='0' y2='1'>
-                  <stop offset='5%' stopColor='var(--chart-expense)' stopOpacity={0.4} />
-                  <stop offset='95%' stopColor='var(--chart-expense)' stopOpacity={0} />
+                  <stop offset='5%' stopColor='var(--color-expense)' stopOpacity={0.4} />
+                  <stop offset='95%' stopColor='var(--color-expense)' stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id='balanceGradient' x1='0' y1='0' x2='0' y2='1'>
-                  <stop offset='5%' stopColor='var(--chart-balance)' stopOpacity={0.4} />
-                  <stop offset='95%' stopColor='var(--chart-balance)' stopOpacity={0} />
+                  <stop offset='5%' stopColor='var(--color-balance)' stopOpacity={0.4} />
+                  <stop offset='95%' stopColor='var(--color-balance)' stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid
@@ -271,21 +276,21 @@ export const TrendChart: React.FC<TrendChartProps> = ({
                 stroke='var(--border)'
                 strokeOpacity={0.3}
               />
-              <XAxis {...axisProps.xAxis} />
-              <YAxis {...axisProps.yAxis} />
+              <XAxis {...xAxisProps} />
+              <YAxis hide />
               <ChartTooltip
                 cursor={{
                   stroke: 'var(--muted-foreground)',
                   strokeWidth: 1,
                   strokeDasharray: '3 3'
                 }}
-                content={<CustomTooltip currency={currency} />}
+                content={<CustomTooltipContent currency={currency} />}
               />
               <ChartLegend content={<ChartLegendContent />} />
               <Area
                 type='monotone'
                 dataKey='income'
-                stroke='var(--chart-income)'
+                stroke='var(--color-income)'
                 strokeWidth={2}
                 fill='url(#incomeGradient)'
                 activeDot={{ r: 5, strokeWidth: 2, stroke: 'var(--background)' }}
@@ -295,7 +300,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               <Area
                 type='monotone'
                 dataKey='expense'
-                stroke='var(--chart-expense)'
+                stroke='var(--color-expense)'
                 strokeWidth={2}
                 fill='url(#expenseGradient)'
                 activeDot={{ r: 5, strokeWidth: 2, stroke: 'var(--background)' }}
@@ -305,7 +310,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               <Area
                 type='monotone'
                 dataKey='balance'
-                stroke='var(--chart-balance)'
+                stroke='var(--color-balance)'
                 strokeWidth={2}
                 fill='url(#balanceGradient)'
                 activeDot={{ r: 5, strokeWidth: 2, stroke: 'var(--background)' }}
@@ -321,28 +326,23 @@ export const TrendChart: React.FC<TrendChartProps> = ({
                 stroke='var(--border)'
                 strokeOpacity={0.3}
               />
-              <XAxis {...axisProps.xAxis} />
-              <YAxis {...axisProps.yAxis} />
+              <XAxis {...xAxisProps} />
+              <YAxis hide />
               <ChartTooltip
                 cursor={{
                   stroke: 'var(--muted-foreground)',
                   strokeWidth: 1,
                   strokeDasharray: '3 3'
                 }}
-                content={<CustomTooltip currency={currency} />}
+                content={<CustomTooltipContent currency={currency} />}
               />
               <ChartLegend content={<ChartLegendContent />} />
               <Line
                 type='monotone'
                 dataKey='income'
-                stroke='var(--chart-income)'
+                stroke='var(--color-income)'
                 strokeWidth={2.5}
-                dot={{
-                  r: 3,
-                  fill: 'var(--chart-income)',
-                  strokeWidth: 2,
-                  stroke: 'var(--background)'
-                }}
+                dot={false}
                 activeDot={{ r: 6, strokeWidth: 2, stroke: 'var(--background)' }}
                 animationDuration={600}
                 connectNulls
@@ -350,14 +350,9 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               <Line
                 type='monotone'
                 dataKey='expense'
-                stroke='var(--chart-expense)'
+                stroke='var(--color-expense)'
                 strokeWidth={2.5}
-                dot={{
-                  r: 3,
-                  fill: 'var(--chart-expense)',
-                  strokeWidth: 2,
-                  stroke: 'var(--background)'
-                }}
+                dot={false}
                 activeDot={{ r: 6, strokeWidth: 2, stroke: 'var(--background)' }}
                 animationDuration={600}
                 connectNulls
@@ -365,14 +360,9 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               <Line
                 type='monotone'
                 dataKey='balance'
-                stroke='var(--chart-balance)'
+                stroke='var(--color-balance)'
                 strokeWidth={2.5}
-                dot={{
-                  r: 3,
-                  fill: 'var(--chart-balance)',
-                  strokeWidth: 2,
-                  stroke: 'var(--background)'
-                }}
+                dot={false}
                 activeDot={{ r: 6, strokeWidth: 2, stroke: 'var(--background)' }}
                 animationDuration={600}
                 connectNulls
