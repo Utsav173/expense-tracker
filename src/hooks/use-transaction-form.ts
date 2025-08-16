@@ -50,7 +50,7 @@ export const useTransactionForm = ({
     isLoading: isLoadingCategory,
     refetch: refetchCategories
   } = useQuery({
-    queryKey: ['categories'],
+    queryKey: ['transaction-categories'],
     queryFn: () => categoryGetAll({ page: 1, limit: 100, sortBy: 'name', sortOrder: 'asc' }),
     staleTime: 5 * 60 * 1000
   });

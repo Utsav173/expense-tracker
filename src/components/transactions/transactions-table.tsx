@@ -360,9 +360,6 @@ const TransactionTable = ({
         isOpen={isUpdateModalOpen}
         onOpenChange={setIsUpdateModalOpen}
         transaction={selectedTransaction}
-        onUpdate={async () => {
-          await refetchData();
-        }}
       />
     </>
   );

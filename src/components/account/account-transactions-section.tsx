@@ -1,501 +1,112 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import TransactionTable from '@/components/transactions/transactions-table';
-import DateRangePickerV2 from '@/components/date/date-range-picker-v2';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import type { CategoryAPI, TransactionAPI } from '@/lib/api/api-types';
-import { DateRange } from 'react-day-picker';
-import { useToast } from '@/lib/hooks/useToast';
 import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Label } from '../ui/label';
 import { Icon } from '../ui/icon';
-
-interface FilterDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  filters: AccountTransactionsSectionProps['filters'];
-  categories?: { categories: CategoryAPI.Category[]; pagination: any };
-  isOwner?: boolean;
-  handleCategoryChange: (categoryId: string) => void;
-  handleIncomeTypeChange: (type: string) => void;
-  handleDateRangeSelect: (range: any) => void;
-  handleClearDateRange: () => void;
-  handleAmountChange: (min?: number, max?: number) => void;
-  handleTypeChange: (type: 'all' | 'recurring' | 'normal') => void;
-  handleResetFilters: () => void;
-  transactionsData: AccountTransactionsSectionProps['transactionsData'];
-  activeFiltersCount: number;
-}
-
-// Enhanced Filter Dialog Component
-const FilterDialog: React.FC<FilterDialogProps> = ({
-  open,
-  onOpenChange,
-  filters,
-  categories,
-  isOwner,
-  handleCategoryChange,
-  handleIncomeTypeChange,
-  handleDateRangeSelect,
-  handleClearDateRange,
-  handleAmountChange,
-  handleTypeChange,
-  handleResetFilters,
-  transactionsData,
-  activeFiltersCount
-}) => {
-  const handleApplyAndClose = () => {
-    onOpenChange(false);
-  };
-
-  const handleReset = () => {
-    handleResetFilters();
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className='flex items-center gap-2'>
-            <Icon name='filter' className='h-5 w-5' />
-            Filter Transactions
-          </DialogTitle>
-          <DialogDescription>
-            Refine your transaction search with advanced filters
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className='space-y-6 py-4'>
-          {/* Transaction Filters Section */}
-          {isOwner && (
-            <div className='space-y-4'>
-              <h4 className='text-foreground text-sm font-semibold'>Transaction Filters</h4>
-
-              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-                {/* Category Filter */}
-                <div className='space-y-2'>
-                  <label className='text-muted-foreground text-sm font-medium'>Category</label>
-                  <Select onValueChange={handleCategoryChange} value={filters.categoryId || 'all'}>
-                    <SelectTrigger>
-                      <SelectValue placeholder='All Categories' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='all'>All Categories</SelectItem>
-                      {categories?.categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Income/Expense Type Filter */}
-                <div className='space-y-2'>
-                  <label className='text-muted-foreground text-sm font-medium'>
-                    Income/Expense Type
-                  </label>
-                  <Select
-                    onValueChange={handleIncomeTypeChange}
-                    value={filters.isIncome === undefined ? 'all' : String(filters.isIncome)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder='All Types' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='all'>All Types</SelectItem>
-                      <SelectItem value='true'>Income</SelectItem>
-                      <SelectItem value='false'>Expense</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Transaction Type Filter */}
-                <div className='space-y-2 md:col-span-2'>
-                  <label className='text-muted-foreground text-sm font-medium'>
-                    Transaction Type
-                  </label>
-                  <Select onValueChange={handleTypeChange} value={filters.type || 'all'}>
-                    <SelectTrigger className='md:w-1/2'>
-                      <SelectValue placeholder='All Transaction Types' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='all'>All</SelectItem>
-                      <SelectItem value='normal'>Normal</SelectItem>
-                      <SelectItem value='recurring'>Recurring</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <Separator />
-
-          {/* Date Range Section */}
-          <div className='space-y-4'>
-            <h4 className='text-foreground text-sm font-semibold'>Date Range</h4>
-            <div className='space-y-2'>
-              <label className='text-muted-foreground text-sm font-medium'>Select Date Range</label>
-              <DateRangePickerV2
-                onDateChange={handleDateRangeSelect}
-                onClear={handleClearDateRange}
-                date={filters.dateRange}
-                closeOnComplete
-                buttonClassName='w-full md:w-auto'
-                noLabel
-                minDate={
-                  transactionsData?.dateRange?.minDate
-                    ? new Date(transactionsData.dateRange.minDate)
-                    : undefined
-                }
-                maxDate={
-                  transactionsData?.dateRange?.maxDate
-                    ? new Date(transactionsData.dateRange.maxDate)
-                    : undefined
-                }
-              />
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Amount Range Section */}
-          <div className='space-y-4'>
-            <h4 className='text-foreground text-sm font-semibold'>Amount Range</h4>
-            <div className='grid grid-cols-2 gap-4'>
-              <div className='space-y-2'>
-                <label className='text-muted-foreground text-sm font-medium'>Minimum Amount</label>
-                <Input
-                  type='number'
-                  placeholder='0.00'
-                  value={filters.minAmount || ''}
-                  onChange={(e) =>
-                    handleAmountChange(Number(e.target.value) || undefined, filters.maxAmount)
-                  }
-                />
-              </div>
-              <div className='space-y-2'>
-                <label className='text-muted-foreground text-sm font-medium'>Maximum Amount</label>
-                <Input
-                  type='number'
-                  placeholder='∞'
-                  value={filters.maxAmount || ''}
-                  onChange={(e) =>
-                    handleAmountChange(filters.minAmount, Number(e.target.value) || undefined)
-                  }
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <DialogFooter className='flex-col gap-2 sm:flex-row'>
-          <Button
-            variant='outline'
-            onClick={handleReset}
-            className='w-full sm:w-auto'
-            disabled={activeFiltersCount === 0}
-          >
-            <Icon name='x' className='mr-2 h-4 w-4' />
-            Reset All Filters
-          </Button>
-          <Button onClick={handleApplyAndClose} className='w-full sm:w-auto'>
-            Apply Filters
-            {activeFiltersCount > 0 && (
-              <Badge variant='secondary' className='ml-2'>
-                {activeFiltersCount}
-              </Badge>
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-// Export Dialog Component
-interface ExportDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  exportFormat: 'xlsx' | 'csv';
-  setExportFormat: (format: 'xlsx' | 'csv') => void;
-  handleExport: () => void;
-  isExporting: boolean;
-  transactionsCount: number;
-}
-
-const ExportDialog: React.FC<ExportDialogProps> = ({
-  open,
-  onOpenChange,
-  exportFormat,
-  setExportFormat,
-  handleExport,
-  isExporting,
-  transactionsCount
-}) => {
-  const handleExportAndClose = () => {
-    handleExport();
-    onOpenChange(false);
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className='flex items-center gap-2'>
-            <Icon name='download' className='h-5 w-5' />
-            Export Transactions
-          </DialogTitle>
-          <DialogDescription>
-            Export {transactionsCount} transaction{transactionsCount !== 1 ? 's' : ''} in your
-            preferred format
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className='space-y-2 py-2'>
-          <div>
-            <Label className='text-muted-foreground mb-2 text-sm font-medium'>Export Format</Label>
-          </div>
-          <Select
-            value={exportFormat}
-            onValueChange={(value) => setExportFormat(value as 'xlsx' | 'csv')}
-            disabled={isExporting}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='xlsx'>
-                <div className='flex flex-col items-start'>
-                  <span>Excel (.xlsx)</span>
-                  <span className='text-muted-foreground text-xs'>Best for detailed analysis</span>
-                </div>
-              </SelectItem>
-              <SelectItem value='csv'>
-                <div className='flex flex-col items-start'>
-                  <span>CSV (.csv)</span>
-                  <span className='text-muted-foreground text-xs'>Universal compatibility</span>
-                </div>
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <DialogFooter>
-          <Button variant='outline' onClick={() => onOpenChange(false)} disabled={isExporting}>
-            Cancel
-          </Button>
-          <Button onClick={handleExportAndClose} disabled={isExporting || transactionsCount === 0}>
-            {isExporting ? (
-              <>
-                <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
-                Exporting...
-              </>
-            ) : (
-              <>
-                <Icon name='download' className='mr-2 h-4 w-4' />
-                Export Now
-              </>
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
+import {
+  FilterState,
+  TransactionFilterDialog
+} from '@/components/transactions/transaction-filter-dialog';
+import { useAccountDetails } from './context/account-details-context';
 
 interface AccountTransactionsSectionProps {
-  transactionsData?: TransactionAPI.GetTransactionsResponse;
-  isTransactionLoading?: boolean;
-  filters: {
-    searchQuery: string;
-    debouncedSearchQuery: string;
-    sortBy: string;
-    sortOrder: 'asc' | 'desc';
-    categoryId?: string;
-    isIncome?: boolean;
-    dateRange?: DateRange;
-    tempDateRange?: DateRange;
-    accountId?: string;
-    minAmount?: number;
-    maxAmount?: number;
-    type?: 'all' | 'recurring' | 'normal';
-  };
-  handleSort: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
-  page: number;
-  handlePageChange: (page: number) => void;
-  categories?: { categories: CategoryAPI.Category[]; pagination: any };
-  setSearchQuery: (query: string) => void;
-  handleCategoryChange: (categoryId: string) => void;
-  handleIncomeTypeChange: (type: string) => void;
-  handleDateRangeSelect: (range: any) => void;
-  handleClearDateRange: () => void;
-  handleResetFilters: () => void;
-  refetchData: () => Promise<void>;
   isOwner?: boolean;
-  handleAmountChange: (min?: number, max?: number) => void;
-  handleTypeChange: (type: 'all' | 'recurring' | 'normal') => void;
 }
 
-export const AccountTransactionsSection = ({
-  transactionsData,
-  isTransactionLoading,
-  filters,
-  handleSort,
-  page,
-  handlePageChange,
-  categories,
-  setSearchQuery,
-  handleCategoryChange,
-  handleIncomeTypeChange,
-  handleDateRangeSelect,
-  handleClearDateRange,
-  handleResetFilters,
-  refetchData,
-  isOwner = true,
-  handleAmountChange,
-  handleTypeChange
-}: AccountTransactionsSectionProps) => {
+export const AccountTransactionsSection = ({ isOwner = true }: AccountTransactionsSectionProps) => {
+  const {
+    transactionsData,
+    isTransactionLoading,
+    filters,
+    handleSort,
+    page,
+    handlePageChange,
+    categories,
+    setSearchQuery,
+    refetchData,
+    setState
+  } = useAccountDetails();
+
   const [showFilterDialog, setShowFilterDialog] = useState(false);
-  const [showExportDialog, setShowExportDialog] = useState(false);
-  const [exportFormat, setExportFormat] = useState<'xlsx' | 'csv'>('xlsx');
-  const [isExporting, setIsExporting] = useState(false);
-  const { showError, showSuccess, showInfo } = useToast();
 
-  // Calculate active filters count for better UX
-  const activeFiltersCount = [
-    filters.categoryId && filters.categoryId !== 'all',
-    filters.isIncome !== undefined,
-    filters.dateRange?.from || filters.dateRange?.to,
-    filters.minAmount,
-    filters.maxAmount,
-    filters.type && filters.type !== 'all'
-  ].filter(Boolean).length;
+  const handleApplyFilters = (newFilters: Partial<FilterState>) => {
+    setState({ page: 1, ...newFilters });
+  };
 
-  // Generate active filter badges
-  const getActiveFilterBadges = () => {
+  const activeFilters = useMemo(() => {
+    const active = [];
+    if (filters.categoryId) active.push('category');
+    if (filters.isIncome !== undefined) active.push('type');
+    if (filters.dateFrom || filters.dateTo) active.push('dateRange');
+    if (filters.minAmount || filters.maxAmount) active.push('amount');
+    if (filters.type && filters.type !== 'all') active.push('transactionType');
+    return active;
+  }, [filters]);
+
+  const activeFilterBadges = useMemo(() => {
     const badges = [];
-
-    if (filters.categoryId && filters.categoryId !== 'all') {
+    if (filters.categoryId) {
       const category = categories?.categories.find((c) => c.id === filters.categoryId);
       badges.push({
         key: 'category',
         label: category?.name || 'Category',
-        onRemove: () => handleCategoryChange('all')
+        onRemove: () => setState({ categoryId: undefined })
       });
     }
-
     if (filters.isIncome !== undefined) {
       badges.push({
-        key: 'income',
+        key: 'isIncome',
         label: filters.isIncome ? 'Income' : 'Expense',
-        onRemove: () => handleIncomeTypeChange('all')
+        onRemove: () => setState({ isIncome: undefined })
       });
     }
-
-    if (filters.dateRange?.from || filters.dateRange?.to) {
+    if (filters.dateFrom || filters.dateTo) {
       badges.push({
         key: 'date',
         label: 'Date Range',
-        onRemove: handleClearDateRange
+        onRemove: () => setState({ dateFrom: undefined, dateTo: undefined })
       });
     }
-
     if (filters.minAmount || filters.maxAmount) {
       badges.push({
         key: 'amount',
         label: 'Amount Range',
-        onRemove: () => handleAmountChange(undefined, undefined)
+        onRemove: () => setState({ minAmount: undefined, maxAmount: undefined })
       });
     }
-
     if (filters.type && filters.type !== 'all') {
       badges.push({
         key: 'type',
         label: filters.type === 'recurring' ? 'Recurring' : 'Normal',
-        onRemove: () => handleTypeChange('all')
+        onRemove: () => setState({ type: 'all' })
       });
     }
-
     return badges;
+  }, [filters, categories, setState]);
+
+  const handleResetFilters = () => {
+    setState({
+      categoryId: undefined,
+      isIncome: undefined,
+      dateFrom: undefined,
+      dateTo: undefined,
+      minAmount: undefined,
+      maxAmount: undefined,
+      type: 'all',
+      q: '',
+      page: 1
+    });
+    setSearchQuery('');
   };
-
-  const handleExport = useCallback(async () => {
-    if (!transactionsData?.transactions || transactionsData.transactions.length === 0) {
-      showError('No transactions available to export with the current filters.');
-      return;
-    }
-    setIsExporting(true);
-    showInfo('Preparing your export...');
-    try {
-      const transactions = transactionsData.transactions;
-      const exportData = transactions.map((tx) => ({
-        ...tx,
-        category:
-          typeof tx.category === 'object' && tx.category?.name ? tx.category.name : tx.category
-      }));
-      if (exportFormat === 'csv') {
-        const headers = Object.keys(exportData[0] || {});
-        const csvRows = [headers.join(',')];
-        for (const tx of exportData) {
-          csvRows.push(headers.map((h) => JSON.stringify((tx as any)[h] ?? '')).join(','));
-        }
-        const csvContent = csvRows.join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'transactions.csv';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-        showSuccess('CSV export started successfully!');
-      } else {
-        const XLSX = await import('xlsx');
-
-        const ws = XLSX.utils.json_to_sheet(exportData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
-        XLSX.writeFile(wb, 'transactions.xlsx');
-        showSuccess('Excel export started successfully!');
-      }
-    } catch (error: any) {
-      console.error('Export error:', error);
-      showError(error.message || 'Failed to export transactions.');
-    } finally {
-      setIsExporting(false);
-    }
-  }, [transactionsData?.transactions, exportFormat, showError, showSuccess, showInfo]);
-
-  const activeFilterBadges = getActiveFilterBadges();
 
   return (
     <div className='flex h-auto flex-col'>
-      {/* Header Section with Search and Actions */}
       <div className='mb-6 space-y-4'>
-        {/* Search and Action Bar */}
         <div className='flex items-center gap-3'>
           <div className='relative flex-1'>
             <Icon
@@ -509,36 +120,23 @@ export const AccountTransactionsSection = ({
               className='pl-9'
             />
           </div>
-
           <Button
             variant='outline'
             onClick={() => setShowFilterDialog(true)}
             className={cn(
               'relative gap-2',
-              activeFiltersCount > 0 && 'border-primary text-primary'
+              activeFilters.length > 0 && 'border-primary text-primary'
             )}
           >
             <Icon name='filter' className='h-4 w-4' />
             Filters
-            {activeFiltersCount > 0 && (
+            {activeFilters.length > 0 && (
               <Badge variant='secondary' className='ml-1 h-5 px-1.5 text-xs'>
-                {activeFiltersCount}
+                {activeFilters.length}
               </Badge>
             )}
           </Button>
-
-          <Button
-            variant='outline'
-            onClick={() => setShowExportDialog(true)}
-            disabled={!transactionsData?.transactions?.length || isTransactionLoading}
-            className='gap-2'
-          >
-            <Icon name='download' className='h-4 w-4' />
-            Export
-          </Button>
         </div>
-
-        {/* Active Filters Display */}
         {activeFilterBadges.length > 0 && (
           <div className='flex flex-wrap items-center gap-2'>
             <span className='text-muted-foreground text-sm'>Applied filters:</span>
@@ -569,7 +167,6 @@ export const AccountTransactionsSection = ({
         )}
       </div>
 
-      {/* Transactions Table or Empty State */}
       {transactionsData?.transactions.length === 0 ? (
         <Card className='border-dashed'>
           <CardContent className='flex flex-col items-center justify-center py-12 text-center'>
@@ -577,12 +174,12 @@ export const AccountTransactionsSection = ({
               <Icon name='search' className='mx-auto mb-4 h-12 w-12 opacity-50' />
               <h3 className='mb-2 text-lg font-semibold'>No transactions found</h3>
               <p className='text-sm'>
-                {activeFiltersCount > 0
+                {activeFilters.length > 0
                   ? 'Try adjusting your filters to see more results'
                   : 'No transactions available for this account'}
               </p>
             </div>
-            {activeFiltersCount > 0 && isOwner && (
+            {activeFilters.length > 0 && isOwner && (
               <Button variant='outline' onClick={handleResetFilters}>
                 <Icon name='x' className='mr-2 h-4 w-4' />
                 Clear all filters
@@ -606,33 +203,15 @@ export const AccountTransactionsSection = ({
         />
       )}
 
-      {/* Filter Dialog */}
-      <FilterDialog
-        open={showFilterDialog}
+      <TransactionFilterDialog
+        isOpen={showFilterDialog}
         onOpenChange={setShowFilterDialog}
-        filters={filters}
-        categories={categories}
-        isOwner={isOwner}
-        handleCategoryChange={handleCategoryChange}
-        handleIncomeTypeChange={handleIncomeTypeChange}
-        handleDateRangeSelect={handleDateRangeSelect}
-        handleClearDateRange={handleClearDateRange}
-        handleAmountChange={handleAmountChange}
-        handleTypeChange={handleTypeChange}
-        handleResetFilters={handleResetFilters}
+        activeFilters={filters}
+        onApplyFilters={handleApplyFilters}
+        accounts={undefined}
+        isLoadingAccounts={false}
         transactionsData={transactionsData}
-        activeFiltersCount={activeFiltersCount}
-      />
-
-      {/* Export Dialog */}
-      <ExportDialog
-        open={showExportDialog}
-        onOpenChange={setShowExportDialog}
-        exportFormat={exportFormat}
-        setExportFormat={setExportFormat}
-        handleExport={handleExport}
-        isExporting={isExporting}
-        transactionsCount={transactionsData?.transactions?.length || 0}
+        showAccountFilter={false}
       />
     </div>
   );

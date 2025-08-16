@@ -54,8 +54,10 @@ const AccountCard = ({ account }: { account: AccountAPI.Account }) => {
   );
 };
 
+const initialUrlState = { page: 1, q: '' };
+
 const SharedAccountsPage = () => {
-  const { state, setState, handlePageChange } = useUrlState({ page: 1, q: '' });
+  const { state, setState, handlePageChange } = useUrlState(initialUrlState);
   const [search, setSearch] = useState(state.q);
   const [debouncedSearch] = useDebounce(search, 600);
 

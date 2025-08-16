@@ -41,6 +41,13 @@ const containerVariants = {
   }
 };
 
+const initialUrlState = {
+  page: 1,
+  sortBy: 'name',
+  sortOrder: 'asc' as 'asc' | 'desc',
+  q: ''
+};
+
 const InvestmentPage = () => {
   const { showError } = useToast();
   const invalidate = useInvalidateQueries();
@@ -51,12 +58,7 @@ const InvestmentPage = () => {
   const [selectedAccount, setSelectedAccount] =
     useState<InvestmentAccountAPI.InvestmentAccount | null>(null);
 
-  const { state, handlePageChange } = useUrlState({
-    page: 1,
-    sortBy: 'name',
-    sortOrder: 'asc' as 'asc' | 'desc',
-    q: ''
-  });
+  const { state, handlePageChange } = useUrlState(initialUrlState);
 
   const {
     data: accounts,

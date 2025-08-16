@@ -1,4 +1,6 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+'use client';
+
+import { useCallback, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { dequal } from 'dequal';
 
@@ -40,63 +42,52 @@ export const useUrlState = <T extends BaseUrlStateParams>(initialState: T) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  const stateRef = useRef(parseParams(searchParams, initialState));
 
-  const [state, setState] = useState<T>(() => parseParams(searchParams, initialState));
-
-  const prevStateRef = useRef<T>(state);
-  const prevSearchParamsStringRef = useRef(searchParams.toString());
+  const state: T = parseParams(searchParams, initialState);
 
   useEffect(() => {
-    const currentSearchParamsString = searchParams.toString();
+    stateRef.current = state;
+  }, [state]);
 
-    if (currentSearchParamsString !== prevSearchParamsStringRef.current) {
-      const stateFromUrl = parseParams(searchParams, initialState);
+  const setState = useCallback(
+    (updates: Partial<T>) => {
+      const currentState = stateRef.current;
+      const newState = { ...currentState, ...updates };
 
-      if (!dequal(state, stateFromUrl)) {
-        setState(stateFromUrl);
-        prevStateRef.current = stateFromUrl;
+      if (dequal(currentState, newState)) {
+        return;
       }
-    } else {
-      if (!dequal(prevStateRef.current, state)) {
-        const newSearchParams = new URLSearchParams();
 
-        Object.entries(state).forEach(([key, value]) => {
-          const isDefault = dequal(value, initialState[key as keyof T]);
-          const isDefaultPage = key === 'page' && value === 1;
+      const newSearchParams = new URLSearchParams(searchParams.toString());
 
-          if (
-            value !== undefined &&
-            value !== null &&
-            value !== '' &&
-            !isDefault &&
-            !isDefaultPage
-          ) {
-            newSearchParams.set(key, String(value));
-          }
-        });
+      Object.entries(newState).forEach(([key, value]) => {
+        const isDefault = dequal(value, initialState[key as keyof T]);
+        const isDefaultPage = key === 'page' && value === 1;
 
-        router.push(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
-        prevStateRef.current = state;
-      }
-    }
+        if (value === undefined || value === null || value === '' || isDefault || isDefaultPage) {
+          newSearchParams.delete(key);
+        } else {
+          newSearchParams.set(key, String(value));
+        }
+      });
 
-    prevSearchParamsStringRef.current = currentSearchParamsString;
-  }, [state, searchParams, initialState, pathname, router]);
-
-  const updateState = useCallback((updates: Partial<T>) => {
-    setState((prevState) => ({ ...prevState, ...updates }));
-  }, []);
+      const newUrl = `${pathname}?${newSearchParams.toString()}`;
+      router.replace(newUrl, { scroll: false });
+    },
+    [searchParams, initialState, router, pathname]
+  );
 
   const handlePageChange = useCallback(
     (newPage: number) => {
-      updateState({ page: newPage } as Partial<T>);
+      setState({ page: newPage } as Partial<T>);
     },
-    [updateState]
+    [setState]
   );
 
   return {
     state,
-    setState: updateState,
+    setState,
     handlePageChange
   };
 };

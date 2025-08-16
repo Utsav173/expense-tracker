@@ -91,10 +91,6 @@ const AccountSharesPage = ({ params }: PageProps) => {
             <p className='text-muted-foreground'>
               This account hasn&apos;t been shared with anyone yet.
             </p>
-            <ShareAccountModal
-              accountId={id}
-              triggerButton={<Button className='mt-4'>Share Account</Button>}
-            />
           </div>
         </Card>
       </div>

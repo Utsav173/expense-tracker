@@ -8,6 +8,7 @@ import { formatCurrency, cn } from '@/lib/utils';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Icon } from '@/components/ui/icon';
+import { useAccountDetails } from '@/components/account/context/account-details-context';
 
 const cardVariants = cva(
   'relative group overflow-hidden rounded-2xl border-none shadow-lg transition-all duration-300 ease-out hover:scale-[1.01] hover:shadow-2xl hover:brightness-105',
@@ -169,10 +170,12 @@ export const AnalyticsCards = ({
   isLoading,
   account
 }: {
-  analytics?: AccountAPI.CustomAnalytics;
+  analytics?: AccountAPI.Account['analytics'];
   isLoading?: boolean;
   account?: AccountAPI.GetAccountByIdResponse;
 }) => {
+  const { customAnalytics } = useAccountDetails();
+
   const currency = account?.currency ?? 'INR';
   const lastUpdated = account?.updatedAt
     ? `Updated: ${new Date(account.updatedAt).toLocaleDateString()}`
@@ -197,7 +200,7 @@ export const AnalyticsCards = ({
       <AnalyticsCard
         variant='primary'
         title='Current Balance'
-        value={analytics.balance}
+        value={customAnalytics?.balance ?? 0}
         totalBalance={account.balance ?? 0}
         currency={currency}
         icon='wallet'
@@ -207,18 +210,18 @@ export const AnalyticsCards = ({
         <AnalyticsCard
           variant='success'
           title='Income'
-          value={analytics.income}
+          value={customAnalytics?.income ?? 0}
           currency={currency}
           icon='banknote'
-          trendValue={analytics.IncomePercentageChange}
+          trendValue={customAnalytics?.IncomePercentageChange}
         />
         <AnalyticsCard
           variant='destructive'
           title='Expenses'
-          value={analytics.expense}
+          value={customAnalytics?.expense ?? 0}
           currency={currency}
           icon='arrowLeftRight'
-          trendValue={analytics.ExpensePercentageChange}
+          trendValue={customAnalytics?.ExpensePercentageChange}
         />
       </div>
     </div>

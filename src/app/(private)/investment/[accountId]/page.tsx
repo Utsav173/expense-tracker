@@ -36,6 +36,13 @@ const InvestmentAccountOverview = dynamic(
   () => import('@/components/investment/investment-account-overview')
 );
 
+const initialUrlState = {
+  page: 1,
+  sortBy: 'purchaseDate',
+  sortOrder: 'desc' as 'asc' | 'desc',
+  q: ''
+};
+
 const InvestmentAccountDetailPage = ({ params }: { params: Promise<{ accountId: string }> }) => {
   const parsedParams = use(params);
   const router = useRouter();
@@ -52,12 +59,7 @@ const InvestmentAccountDetailPage = ({ params }: { params: Promise<{ accountId: 
     null
   );
 
-  const { state, setState, handlePageChange } = useUrlState({
-    page: 1,
-    sortBy: 'purchaseDate',
-    sortOrder: 'desc' as 'asc' | 'desc',
-    q: ''
-  });
+  const { state, setState, handlePageChange } = useUrlState(initialUrlState);
 
   const {
     data: account,

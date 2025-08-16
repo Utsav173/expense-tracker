@@ -13,7 +13,6 @@ import { useQuery } from '@tanstack/react-query';
 import { accountGetDropdown } from '@/lib/endpoints/accounts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import type { AccountAPI } from '@/lib/api/api-types';
-import { Card } from '../ui/card';
 import { NumericFormat } from 'react-number-format';
 import DateTimePicker from '../date/date-time-picker';
 import {
@@ -27,7 +26,9 @@ import {
 } from '../ui/form';
 import { cn } from '@/lib/utils';
 import { Icon } from '../ui/icon';
+import { Checkbox } from '../ui/checkbox'; // Using the styled checkbox
 import CategoryCombobox from '../ui/category-combobox';
+import AccountCombobox from '../ui/account-combobox'; // The new Account Combobox
 
 const transactionSchema = z.object({
   text: z.string().min(3, 'Description must be at least 3 characters').max(255),
@@ -65,12 +66,11 @@ const AddTransactionModal = ({
   const [accounts, setAccounts] = useState<AccountAPI.SimpleAccount[]>([]);
   const [createdAt, setCreatedAt] = useState<Date>(new Date());
   const [recurrenceEndDate, setRecurrenceEndDate] = useState<Date | null>(null);
-
   const { showError } = useToast();
 
-  const { data: accountData, isLoading: isLoadingAccount } = useQuery({
+  const { data: accountData } = useQuery({
     queryKey: ['accountDropdown'],
-    queryFn: accountGetDropdown
+    queryFn: () => accountGetDropdown()
   });
 
   const form = useForm<TransactionFormSchema>({
@@ -78,6 +78,7 @@ const AddTransactionModal = ({
     defaultValues: {
       isIncome: false,
       currency: '',
+      recurring: false,
       ...(accountId && { accountId })
     }
   });
@@ -92,66 +93,29 @@ const AddTransactionModal = ({
   } = form;
 
   const isIncome = watch('isIncome');
+  const selectedAccountId = watch('accountId');
 
   useEffect(() => {
     if (accountData) {
       setAccounts(accountData);
+      const selectedAccount = accountData.find((acc) => acc.id === selectedAccountId);
+      if (selectedAccount) {
+        setValue('currency', selectedAccount.currency);
+      }
     }
-  }, [accountData]);
-
-  useEffect(() => {
-    const selectedAccountId = accountId || watch('accountId');
-    const selectedAccount = accounts.find((acc) => acc.id === selectedAccountId);
-    if (selectedAccount) {
-      setValue('currency', selectedAccount.currency);
-    }
-  }, [accountId, accounts, setValue, watch]);
+  }, [accountData, selectedAccountId, setValue]);
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
-
     if (open) {
-      reset({
-        isIncome: false,
-        currency: '',
-        ...(accountId && { accountId })
-      });
+      reset({ isIncome: false, currency: '', recurring: false, ...(accountId && { accountId }) });
       setCreatedAt(new Date());
       setRecurrenceEndDate(null);
     }
   };
 
-  const handleCreatedAtChange = (date: Date) => {
-    setCreatedAt(date);
-  };
-
-  const handleRecurrenceEndDateChange = (date: Date) => {
-    setRecurrenceEndDate(date);
-    setValue('recurrenceEndDate', date.toISOString());
-  };
-
   const handleCreateTransaction = async (data: TransactionFormSchema) => {
     try {
-      const selectedAccount = accounts.find((acc) => acc.id === data.accountId);
-
-      if (!selectedAccount) {
-        showError('Account information not found. Please try again.');
-        return;
-      }
-
-      const currency = selectedAccount.currency || data.currency || '';
-      if (!currency) {
-        showError('Currency information is missing. Please select an account with currency.');
-        return;
-      }
-
-      if (data.recurring) {
-        if (!data.recurrenceType) {
-          showError('Please select a recurrence type for recurring transactions.');
-          return;
-        }
-      }
-
       const transactionData = {
         text: data.text,
         amount: Number(data.amount),
@@ -162,10 +126,9 @@ const AddTransactionModal = ({
         recurring: data.recurring || false,
         recurrenceType: data.recurring ? data.recurrenceType : null,
         recurrenceEndDate: data.recurring ? data.recurrenceEndDate : null,
-        currency: currency,
+        currency: accounts.find((acc) => acc.id === data.accountId)?.currency ?? '',
         createdAt: createdAt.toISOString()
       };
-
       await transactionCreate(transactionData);
       setIsOpen(false);
       reset();
@@ -175,212 +138,64 @@ const AddTransactionModal = ({
     }
   };
 
-  const handleAccountChange = (value: string) => {
-    setValue('accountId', value);
-    const selectedAccount = accounts.find((acc) => acc.id === value);
-    if (selectedAccount) {
-      setValue('currency', selectedAccount.currency);
-    }
-  };
-
-  const recurrenceEndDateDisabled = useCallback(
-    (date: Date) => {
-      if (!createdAt) return true;
-      const recurrenceType = watch('recurrenceType');
-      if (!recurrenceType) return true;
-      if (date < createdAt) return true;
-      switch (recurrenceType) {
-        case 'daily':
-          return date < createdAt;
-        case 'hourly': {
-          return date < createdAt;
-        }
-        case 'weekly': {
-          const diff = Math.floor((date.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
-          return diff < 0 || diff % 7 !== 0;
-        }
-        case 'monthly': {
-          const createdDay = createdAt.getDate();
-          return (
-            date < createdAt ||
-            date.getDate() !== createdDay ||
-            (date.getFullYear() === createdAt.getFullYear() &&
-              date.getMonth() === createdAt.getMonth())
-          );
-        }
-        case 'yearly': {
-          const createdDay = createdAt.getDate();
-          const createdMonth = createdAt.getMonth();
-          return (
-            date < createdAt ||
-            date.getDate() !== createdDay ||
-            date.getMonth() !== createdMonth ||
-            date.getFullYear() === createdAt.getFullYear()
-          );
-        }
-        default:
-          return true;
-      }
-    },
-    [createdAt, watch]
-  );
-
   return (
     <AddModal
       title={isIncome ? 'Add Income' : 'Add Expense'}
       description='Add a new transaction to your expense tracker.'
       icon={<Icon name={isIncome ? 'arrowUpCircle' : 'arrowDownCircle'} className='h-5 w-5' />}
-      iconClassName={isIncome ? 'bg-income-muted text-income' : 'bg-expense-muted text-expense'}
-      triggerButton={
-        triggerButton ?? (
-          <Button variant={'transaction'} disabled={isSubmitting}>
-            Add Transaction
-          </Button>
-        )
-      }
+      iconClassName={isIncome ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}
+      triggerButton={triggerButton}
       onOpenChange={handleOpenChange}
       isOpen={isOpen}
     >
       <Form {...form}>
         <form
           onSubmit={handleSubmit(handleCreateTransaction)}
-          className='space-y-4 overflow-hidden'
+          className='flex h-full flex-col space-y-4'
         >
-          <div className='grid grid-cols-2 gap-4'>
-            <Card
-              className={cn(
-                'cursor-pointer border-2 p-3 transition-all',
-                !isIncome
-                  ? 'border-destructive bg-destructive/10'
-                  : 'border-border hover:border-destructive hover:bg-destructive/10',
-                isSubmitting && 'pointer-events-none opacity-50'
-              )}
-              onClick={() => {
-                if (!isSubmitting) {
-                  setValue('isIncome', false);
-                }
-              }}
+          <div className='bg-muted grid grid-cols-2 gap-2 rounded-lg p-1'>
+            <Button
+              type='button'
+              variant={!isIncome ? 'destructive' : 'ghost'}
+              className='h-auto py-2 text-sm'
+              onClick={() => setValue('isIncome', false)}
+              disabled={isSubmitting}
             >
-              <div className='flex flex-col items-center justify-center gap-1.5'>
-                <Icon
-                  name={'arrowDownCircle'}
-                  className={cn(
-                    'h-6 w-6',
-                    !isIncome ? 'text-destructive' : 'text-muted-foreground'
-                  )}
-                />
-                <span
-                  className={cn(
-                    'text-sm font-medium',
-                    !isIncome ? 'text-destructive' : 'text-muted-foreground'
-                  )}
-                >
-                  Expense
-                </span>
-              </div>
-            </Card>
-
-            <Card
-              className={cn(
-                'cursor-pointer border-2 p-3 transition-all',
-                isIncome
-                  ? 'border-success bg-success/10'
-                  : 'border-border hover:border-success hover:bg-success/10',
-                isSubmitting && 'pointer-events-none opacity-50'
-              )}
-              onClick={() => {
-                if (!isSubmitting) {
-                  setValue('isIncome', true);
-                }
-              }}
+              <Icon name='arrowDownCircle' className='mr-2 h-4 w-4' />
+              Expense
+            </Button>
+            <Button
+              type='button'
+              variant={isIncome ? 'success' : 'ghost'}
+              className='h-auto py-2 text-sm'
+              onClick={() => setValue('isIncome', true)}
+              disabled={isSubmitting}
             >
-              <div className='flex flex-col items-center justify-center gap-1.5'>
-                <Icon
-                  name={'arrowUpCircle'}
-                  className={cn('h-6 w-6', isIncome ? 'text-success' : 'text-muted-foreground')}
-                />
-                <span
-                  className={cn(
-                    'text-sm font-medium',
-                    isIncome ? 'text-success' : 'text-muted-foreground'
-                  )}
-                >
-                  Income
-                </span>
-              </div>
-            </Card>
+              <Icon name='arrowUpCircle' className='mr-2 h-4 w-4' />
+              Income
+            </Button>
           </div>
 
-          <div className='scrollbar max-h-full overflow-y-auto px-1'>
-            <div className='space-y-4'>
-              {accountId ? (
-                <input type='hidden' {...form.register('accountId')} value={accountId} />
-              ) : (
-                <FormField
-                  control={control}
-                  name='accountId'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className='flex items-center gap-2'>
-                        <Icon name='creditCard' className='text-muted-foreground h-4 w-4' />
-                        Account
-                      </FormLabel>
-                      <Select
-                        onValueChange={handleAccountChange}
-                        value={field.value}
-                        disabled={isSubmitting}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue
-                              placeholder={
-                                isLoadingAccount ? 'Loading accounts...' : 'Select account'
-                              }
-                            />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {accounts && accounts.length > 0 ? (
-                            accounts.map((acc) => (
-                              <SelectItem key={acc.id} value={acc.id}>
-                                {acc.name}
-                              </SelectItem>
-                            ))
-                          ) : (
-                            <SelectItem value='no-account' disabled>
-                              No account added
-                            </SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+          <div className='scrollbar flex-1 space-y-4 overflow-y-auto px-1 pb-2'>
+            <FormField
+              control={control}
+              name='text'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder='e.g., Coffee with friends'
+                      {...field}
+                      disabled={isSubmitting}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
+            />
 
-              <FormField
-                control={control}
-                name='text'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder='Enter transaction description'
-                        {...field}
-                        disabled={isSubmitting}
-                        autoComplete='off'
-                        autoCorrect='on'
-                        autoCapitalize='off'
-                        spellCheck
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
               <FormField
                 control={control}
                 name='amount'
@@ -389,10 +204,11 @@ const AddTransactionModal = ({
                     <FormLabel>Amount</FormLabel>
                     <FormControl>
                       <div className='relative'>
-                        <span className='text-muted-foreground pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-sm'>
-                          {accounts.find((acc) => acc.id === (accountId || watch('accountId')))
-                            ?.currency || ''}
-                        </span>
+                        {selectedAccountId && (
+                          <span className='text-muted-foreground pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm'>
+                            {accounts.find((acc) => acc.id === selectedAccountId)?.currency}
+                          </span>
+                        )}
                         <NumericFormat
                           customInput={Input}
                           thousandSeparator=','
@@ -400,14 +216,8 @@ const AddTransactionModal = ({
                           allowNegative={false}
                           decimalScale={2}
                           placeholder='0.00'
-                          autoComplete='off'
-                          autoCorrect='on'
-                          autoCapitalize='off'
-                          spellCheck
-                          onValueChange={(values) => {
-                            field.onChange(values.value);
-                          }}
-                          className='w-full pr-10'
+                          onValueChange={(values) => field.onChange(values.value)}
+                          className={cn(selectedAccountId && 'pr-12')}
                           disabled={isSubmitting}
                           value={field.value}
                         />
@@ -417,23 +227,22 @@ const AddTransactionModal = ({
                   </FormItem>
                 )}
               />
-
-              {!isIncome && (
+              {accountId ? (
+                <input type='hidden' {...form.register('accountId')} value={accountId} />
+              ) : (
                 <FormField
                   control={control}
-                  name='transfer'
+                  name='accountId'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Transfer (Optional)</FormLabel>
+                      <FormLabel>Account</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder='Enter transfer details'
-                          {...field}
+                        <AccountCombobox
+                          id='account-selector'
+                          value={field.value}
+                          onChange={field.onChange}
                           disabled={isSubmitting}
-                          autoComplete='off'
-                          autoCorrect='on'
-                          autoCapitalize='off'
-                          spellCheck
+                          placeholder='Select account'
                         />
                       </FormControl>
                       <FormMessage />
@@ -441,20 +250,38 @@ const AddTransactionModal = ({
                   )}
                 />
               )}
+            </div>
 
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+              <FormField
+                control={control}
+                name='categoryId'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <FormControl>
+                      <CategoryCombobox
+                        value={field.value}
+                        onChange={field.onChange}
+                        creatable
+                        placeholder='Select or create'
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={control}
                 name='createdAt'
                 render={() => (
                   <FormItem>
-                    <FormLabel className='flex items-center gap-2'>
-                      <Icon name='calendar' className='text-muted-foreground h-4 w-4' />
-                      Date and Time
-                    </FormLabel>
+                    <FormLabel>Date and Time</FormLabel>
                     <FormControl>
                       <DateTimePicker
                         value={createdAt}
-                        onChange={handleCreatedAtChange}
+                        onChange={setCreatedAt}
                         disabled={isSubmitting ? true : { after: new Date() }}
                       />
                     </FormControl>
@@ -462,113 +289,110 @@ const AddTransactionModal = ({
                   </FormItem>
                 )}
               />
+            </div>
 
-              <div className='space-y-4'>
+            <div className='flex items-center pt-2'>
+              <div className='flex-1 border-t' />
+              <div className='text-muted-foreground mx-4 text-xs uppercase'>Optional Details</div>
+              <div className='flex-1 border-t' />
+            </div>
+
+            <FormField
+              control={control}
+              name='recurring'
+              render={({ field }) => (
+                <FormItem className='flex flex-row items-start space-y-0 space-x-3 rounded-md border p-4'>
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={isSubmitting}
+                    />
+                  </FormControl>
+                  <div className='space-y-1 leading-none'>
+                    <FormLabel>Recurring Transaction</FormLabel>
+                    <FormDescription>Set this transaction to repeat automatically.</FormDescription>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            {watch('recurring') && (
+              <div className='space-y-4 rounded-md border p-4'>
                 <FormField
                   control={control}
-                  name='recurring'
+                  name='recurrenceType'
                   render={({ field }) => (
-                    <FormItem className='flex flex-row items-start space-y-0 space-x-3 rounded-md border p-4'>
-                      <FormControl>
-                        <input
-                          type='checkbox'
-                          checked={field.value}
-                          onChange={field.onChange}
-                          disabled={isSubmitting}
-                          className='my-auto'
-                        />
-                      </FormControl>
-                      <div className='space-y-1 leading-none'>
-                        <FormLabel>Recurring Transaction</FormLabel>
-                        <FormDescription>
-                          Set up this transaction to repeat automatically.
-                        </FormDescription>
-                      </div>
+                    <FormItem>
+                      <FormLabel>Frequency</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value || ''}
+                        disabled={isSubmitting}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Select frequency' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value='hourly'>Hourly</SelectItem>
+                          <SelectItem value='daily'>Daily</SelectItem>
+                          <SelectItem value='weekly'>Weekly</SelectItem>
+                          <SelectItem value='monthly'>Monthly</SelectItem>
+                          <SelectItem value='yearly'>Yearly</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
-
-                {watch('recurring') && (
-                  <div className='space-y-4 pl-6'>
-                    <FormField
-                      control={control}
-                      name='recurrenceType'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Recurrence Type</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value || ''}
-                            disabled={isSubmitting}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder='Select recurrence type' />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value='hourly'>Hourly</SelectItem>
-                              <SelectItem value='daily'>Daily</SelectItem>
-                              <SelectItem value='weekly'>Weekly</SelectItem>
-                              <SelectItem value='monthly'>Monthly</SelectItem>
-                              <SelectItem value='yearly'>Yearly</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={control}
-                      name='recurrenceEndDate'
-                      render={() => (
-                        <FormItem>
-                          <FormLabel>End Date (Optional)</FormLabel>
-                          <FormControl>
-                            <DateTimePicker
-                              value={recurrenceEndDate || undefined}
-                              onChange={handleRecurrenceEndDateChange}
-                              disabled={isSubmitting ? true : recurrenceEndDateDisabled}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                )}
+                <FormField
+                  control={control}
+                  name='recurrenceEndDate'
+                  render={() => (
+                    <FormItem>
+                      <FormLabel>End Date (Optional)</FormLabel>
+                      <FormControl>
+                        <DateTimePicker
+                          value={recurrenceEndDate || undefined}
+                          onChange={setRecurrenceEndDate}
+                          disabled={isSubmitting}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
+            )}
+
+            {!isIncome && (
               <FormField
                 control={control}
-                name='categoryId'
+                name='transfer'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className='flex items-center gap-2'>
-                      <Icon name='tag' className='text-muted-foreground h-4 w-4' />
-                      Category
-                    </FormLabel>
+                    <FormLabel>Transfer Details</FormLabel>
                     <FormControl>
-                      <CategoryCombobox
-                        value={field.value}
-                        onChange={field.onChange}
-                        creatable
-                        allowClear
-                        placeholder='Select or create a category...'
+                      <Input
+                        placeholder='e.g., Sent to John Doe'
+                        {...field}
                         disabled={isSubmitting}
-                        className='w-full'
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
+            )}
           </div>
 
-          <Button type='submit' className='w-full' disabled={isSubmitting}>
-            {isSubmitting ? 'Adding...' : `Add ${isIncome ? 'Income' : 'Expense'}`}
-          </Button>
+          <div className='pt-2'>
+            <Button type='submit' className='w-full' disabled={isSubmitting}>
+              {isSubmitting ? 'Adding...' : `Add ${isIncome ? 'Income' : 'Expense'}`}
+            </Button>
+          </div>
         </form>
       </Form>
     </AddModal>

@@ -1,13 +1,7 @@
 'use client';
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import type { InvestmentAPI } from '@/lib/api/api-types';
 import { investmentGetPerformance } from '@/lib/endpoints/investment';
 import {

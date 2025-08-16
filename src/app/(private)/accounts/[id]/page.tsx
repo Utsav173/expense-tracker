@@ -2,13 +2,16 @@
 
 import React, { useMemo, Suspense, use } from 'react';
 import dynamic from 'next/dynamic';
-import { useAccountDetailsData } from '@/components/account/hooks/useAccountDetailsData';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/components/providers/auth-provider';
 import QueryErrorDisplay from '@/components/ui/query-error-display';
+import {
+  AccountDetailsProvider,
+  useAccountDetails
+} from '@/components/account/context/account-details-context';
 
 const AccountTransactionsSection = dynamic(
   () => import('@/components/account/account-transactions-section'),
@@ -63,39 +66,22 @@ interface PageProps {
   }>;
 }
 
-const AccountDetailsPageContent = ({ params, searchParams }: PageProps) => {
-  const { id } = use(params);
-  const parsedSearchParams = use(searchParams);
-  const isMobile = useIsMobile();
-  const { session } = useAuth();
-  const user = session?.user;
-
+const AccountDetailsPageContent = () => {
   const {
     account,
     isAccountLoading,
     accountError,
-    customAnalytics,
-    isAnalyticsLoading,
-    chartData,
-    isChartLoading,
     transactionsData,
-    isTransactionLoading,
-    refetchData,
-    filters,
-    setSearchQuery,
-    handleCategoryChange,
-    handleIncomeTypeChange,
-    handleDateRangeSelect,
-    handleClearDateRange,
-    handleSort,
-    page,
-    handlePageChange,
-    categories,
-    handleResetFilters,
+    isAnalyticsLoading,
+    isChartLoading,
+    chartData,
     duration,
-    handleAmountChange,
-    handleTypeChange
-  } = useAccountDetailsData(id, parsedSearchParams);
+    id
+  } = useAccountDetails();
+
+  const { session } = useAuth();
+  const user = session?.user;
+  const isMobile = useIsMobile();
 
   const transformedChartData = useMemo(() => {
     if (!chartData?.date) return [];
@@ -149,13 +135,7 @@ const AccountDetailsPageContent = ({ params, searchParams }: PageProps) => {
 
   return (
     <div className='mx-auto h-full w-full space-y-6 p-4 md:p-6'>
-      <AccountDetailsHeader
-        account={account!}
-        isLoading={isAccountLoading}
-        refetchData={refetchData}
-        isMobile={isMobile}
-        isOwner={isOwner}
-      />
+      <AccountDetailsHeader isMobile={isMobile} isOwner={isOwner} />
 
       {isOwner && (
         <div
@@ -165,9 +145,9 @@ const AccountDetailsPageContent = ({ params, searchParams }: PageProps) => {
           )}
         >
           <AnalyticsCards
-            analytics={customAnalytics ?? undefined}
-            isLoading={isAnalyticsLoading ?? false}
-            account={account ?? undefined}
+            analytics={account?.analytics}
+            isLoading={isAnalyticsLoading}
+            account={account}
           />
 
           {hasTransactions && (
@@ -184,33 +164,20 @@ const AccountDetailsPageContent = ({ params, searchParams }: PageProps) => {
         </div>
       )}
 
-      <AccountTransactionsSection
-        transactionsData={transactionsData}
-        isTransactionLoading={isTransactionLoading}
-        filters={filters}
-        handleSort={handleSort}
-        page={page}
-        handlePageChange={handlePageChange}
-        categories={categories}
-        setSearchQuery={setSearchQuery}
-        handleCategoryChange={handleCategoryChange}
-        handleIncomeTypeChange={handleIncomeTypeChange}
-        handleDateRangeSelect={handleDateRangeSelect}
-        handleClearDateRange={handleClearDateRange}
-        handleResetFilters={handleResetFilters}
-        refetchData={refetchData}
-        isOwner={isOwner}
-        handleAmountChange={handleAmountChange}
-        handleTypeChange={handleTypeChange}
-      />
+      <AccountTransactionsSection isOwner={isOwner} />
     </div>
   );
 };
 
 const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
+  const resolvedParams = use(params);
+  const resolvedSearchParams = use(searchParams);
+
   return (
     <Suspense fallback={<Skeleton className='h-screen w-full' />}>
-      <AccountDetailsPageContent params={params} searchParams={searchParams} />
+      <AccountDetailsProvider id={resolvedParams.id} searchParams={resolvedSearchParams}>
+        <AccountDetailsPageContent />
+      </AccountDetailsProvider>
     </Suspense>
   );
 };

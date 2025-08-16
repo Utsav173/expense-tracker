@@ -36,7 +36,6 @@ interface UpdateTransactionModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   transaction: TransactionAPI.Transaction | null;
-  onUpdate: () => void;
   queryKey?: any[];
 }
 
@@ -44,7 +43,6 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
   isOpen,
   onOpenChange,
   transaction,
-  onUpdate,
   queryKey
 }) => {
   const {
@@ -111,7 +109,6 @@ const UpdateTransactionModal: React.FC<UpdateTransactionModalProps> = ({
         ['incomeExpenseChart', transaction?.account],
         ...(queryKey ? [queryKey] : [])
       ]}
-      onSuccess={onUpdate}
       entityId={transaction.id}
     >
       {(form) => (

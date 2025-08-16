@@ -4,9 +4,9 @@ import React, { useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { categoryGetAll, categoryGetById, categoryCreate } from '@/lib/endpoints/category';
 import { Combobox, ComboboxOption } from '@/components/ui/combobox';
-import type { CategoryAPI } from '@/lib/api/api-types';
 import { Skeleton } from './skeleton';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/lib/hooks/useToast';
 
 interface CategoryComboboxProps {
   value: string | undefined | null;
@@ -30,6 +30,7 @@ const CategoryCombobox: React.FC<CategoryComboboxProps> = ({
   creatable = false
 }) => {
   const queryClient = useQueryClient();
+  const { showError } = useToast();
 
   const { data: initialCategoryData, isLoading: isLoadingInitial } = useQuery({
     queryKey: ['categoryById', value],
@@ -37,30 +38,32 @@ const CategoryCombobox: React.FC<CategoryComboboxProps> = ({
       if (!value || value === 'all' || !/^[0-9a-fA-F-]{36}$/.test(value)) {
         return null;
       }
-
       const result = await categoryGetById(value);
-      return result?.data ?? null;
+      return result?.data ?? null; // The query function should return the category object itself
     },
     enabled: !!value && value !== 'all',
-    staleTime: Infinity,
-    gcTime: Infinity
+    staleTime: 1000 * 60 * 60, // 1 hour
+    refetchOnWindowFocus: false,
+    refetchOnMount: false
   });
 
   const { mutate: createCategory, isPending: isCreating } = useMutation({
-    mutationFn: async (categoryName: string) => {
-      const result = await categoryCreate({ name: categoryName });
-      if (!result?.data) {
-        throw new Error('Failed to create category.');
-      }
-      return result.data;
-    },
-    onSuccess: (newCategory) => {
-      onChange(newCategory.id);
-      queryClient.invalidateQueries({ queryKey: ['categoryGetAll'] });
+    mutationFn: (categoryName: string) => categoryCreate({ name: categoryName }),
+    onSuccess: (newCategoryResponse) => {
+      const newCategory = newCategoryResponse.data;
+      if (!newCategory) return;
+
+      // **FIX #1: Pre-populate the cache after creating a new category**
+      // This ensures the useQuery for this new ID resolves instantly.
       queryClient.setQueryData(['categoryById', newCategory.id], newCategory);
+
+      queryClient.invalidateQueries({ queryKey: ['transaction-categories'] });
+      queryClient.invalidateQueries({ queryKey: ['allCategoriesForCombobox'] });
+
+      onChange(newCategory.id);
     },
-    onError: (err) => {
-      console.error('Failed to create category:', err);
+    onError: (err: any) => {
+      showError(err.message || 'Failed to create category.');
     }
   });
 
@@ -75,11 +78,18 @@ const CategoryCombobox: React.FC<CategoryComboboxProps> = ({
           page: 1
         });
 
-        let fetchedOptions: ComboboxOption[] =
-          data?.categories?.map((cat: CategoryAPI.Category) => ({
+        const fetchedOptions: ComboboxOption[] =
+          data?.categories?.map((cat) => ({
             value: cat.id,
             label: cat.name
           })) ?? [];
+
+        if (value && initialCategoryData && !fetchedOptions.some((opt) => opt.value === value)) {
+          fetchedOptions.unshift({
+            value: initialCategoryData.id,
+            label: initialCategoryData.name
+          });
+        }
 
         if (
           creatable &&
@@ -102,46 +112,52 @@ const CategoryCombobox: React.FC<CategoryComboboxProps> = ({
         return [];
       }
     },
-    [allowClear, clearLabel, creatable]
+    [allowClear, clearLabel, creatable, value, initialCategoryData]
   );
 
   const handleComboboxChange = useCallback(
     (selected: ComboboxOption | null) => {
       const newValue = selected?.value;
 
-      // 5. Handle the "Create" action
-      if (creatable && newValue?.startsWith('_create_')) {
-        const categoryNameToCreate = newValue.substring(8); // Remove '_create_' prefix
+      if (!newValue) {
+        onChange(undefined);
+        return;
+      }
+
+      if (creatable && newValue.startsWith('_create_')) {
+        const categoryNameToCreate = newValue.substring(8);
         createCategory(categoryNameToCreate);
         return;
       }
 
       if (allowClear && newValue === 'all') {
         onChange(undefined);
-      } else {
-        onChange(newValue);
+        return;
       }
+
+      if (selected) {
+        queryClient.setQueryData(['categoryById', selected.value], {
+          id: selected.value,
+          name: selected.label
+        });
+      }
+
+      onChange(newValue);
     },
-    [onChange, allowClear, creatable, createCategory]
+    [onChange, allowClear, creatable, createCategory, queryClient]
   );
 
   const comboboxValue = useMemo(() => {
-    if (isLoadingInitial && value && value !== 'all') {
-      return null;
-    }
-
-    if (allowClear && (value === 'all' || value === undefined || value === null)) {
+    if (allowClear && (value === 'all' || !value)) {
       return { value: 'all', label: clearLabel };
     }
-
-    if (initialCategoryData && initialCategoryData.id === value) {
+    if (initialCategoryData) {
       return { value: initialCategoryData.id, label: initialCategoryData.name };
     }
-
     return null;
-  }, [value, initialCategoryData, isLoadingInitial, allowClear, clearLabel]);
+  }, [value, initialCategoryData, allowClear, clearLabel]);
 
-  if (isLoadingInitial && value && value !== 'all') {
+  if (isLoadingInitial && !initialCategoryData) {
     return <Skeleton className={cn('h-10 w-full', className)} />;
   }
 
@@ -151,10 +167,10 @@ const CategoryCombobox: React.FC<CategoryComboboxProps> = ({
       onChange={handleComboboxChange}
       fetchOptions={fetchCategoryOptions}
       placeholder={placeholder}
-      noOptionsMessage='No matching categories found.'
+      noOptionsMessage='No categories found. Type to create.'
       loadingPlaceholder='Searching categories...'
       className={className}
-      disabled={disabled || isLoadingInitial || isCreating}
+      disabled={disabled || isCreating}
     />
   );
 };

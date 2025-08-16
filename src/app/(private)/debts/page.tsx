@@ -29,18 +29,20 @@ import { Icon } from '@/components/ui/icon';
 type InterestFormSchema = z.infer<typeof apiEndpoints.interest.calculate.body>;
 type DebtTypeFilter = 'given' | 'taken' | 'all' | undefined;
 
+const initialUrlState = {
+  page: 1,
+  sortBy: 'startDate',
+  sortOrder: 'desc' as 'asc' | 'desc',
+  q: '',
+  type: 'all' as DebtTypeFilter
+};
+
 const DebtsPage = () => {
   const { showError } = useToast();
   const { session } = useAuth();
   const user = session?.user;
 
-  const { state, setState, handlePageChange } = useUrlState({
-    page: 1,
-    sortBy: 'startDate',
-    sortOrder: 'desc' as 'asc' | 'desc',
-    q: '',
-    type: 'all' as DebtTypeFilter
-  });
+  const { state, setState, handlePageChange } = useUrlState(initialUrlState);
 
   const [search, setSearch] = useState(state.q);
   const [debouncedSearch] = useDebounce(search, 600);

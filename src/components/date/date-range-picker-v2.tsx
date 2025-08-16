@@ -15,7 +15,9 @@ import {
   subYears,
   startOfMonth as dateFnsStartOfMonth,
   endOfMonth as dateFnsEndOfMonth,
-  subDays
+  subDays,
+  startOfMonth,
+  endOfMonth
 } from 'date-fns';
 import { DateRange, CaptionLabelProps, MonthGridProps, DayPickerProps } from 'react-day-picker';
 import type { Dispatch, SetStateAction } from 'react';
@@ -29,6 +31,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Icon } from '../ui/icon';
+import { now } from 'lodash';
 
 interface DateRangePickerV2Props {
   date?: DateRange;
@@ -54,7 +57,7 @@ interface DateRangePickerV2Props {
 
 const defaultProps: Partial<DateRangePickerV2Props> = {
   label: 'Date range picker',
-  placeholder: 'thisMonth',
+  placeholder: `${format(startOfMonth(now()), 'LLL dd, y')} - ${format(endOfMonth(now()), 'LLL dd, y')}`,
   closeOnComplete: true,
   minDaysBetween: 1,
   dateFormat: 'LLL dd, y',
@@ -85,7 +88,6 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
     minDate: initialMinDate,
     maxDate: initialMaxDate,
     disabled,
-    disabledDates,
     placeholder,
     closeOnComplete,
     minDaysBetween,

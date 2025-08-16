@@ -4,7 +4,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import type { DebtAndInterestAPI, UserAPI } from '@/lib/api/api-types';
 import { format, formatDistanceToNow, isPast, differenceInDays } from 'date-fns';
 import { formatCurrency, cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
+import { Badge, BadgeVariants } from '@/components/ui/badge';
 import { DataTableColumnHeader } from '../ui/column-header';
 import { DebtActions } from './debt-actions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
@@ -191,7 +191,7 @@ export const createDebtColumns = ({
         differenceInDays(dueDate, new Date()) <= 7 &&
         differenceInDays(dueDate, new Date()) > 0;
 
-      let variant: 'default' | 'secondary' | 'destructive' | 'outline' = 'default';
+      let variant: BadgeVariants['variant'] = 'default';
       let icon = <Icon name='circle' className='h-3 w-3' />;
       let text = 'Active';
 
@@ -200,7 +200,7 @@ export const createDebtColumns = ({
         icon = <Icon name='checkCircle' className='text-success h-3 w-3' />;
         text = 'Paid';
       } else if (isOverdue) {
-        variant = 'destructive';
+        variant = 'destructive-muted';
         icon = <Icon name='alertTriangle' className='h-3 w-3' />;
         text = 'Overdue';
       } else if (isDueSoon) {

@@ -16,18 +16,20 @@ import QueryErrorDisplay from '@/components/ui/query-error-display';
 import { Icon } from '@/components/ui/icon';
 import { SortingState } from '@tanstack/react-table';
 
+const initialUrlState = {
+  page: 1,
+  sortBy: 'createdAt',
+  sortOrder: 'desc' as 'asc' | 'desc',
+  q: ''
+};
+
 const GoalPage = () => {
   const { session, isLoading: userIsLoading } = useAuth();
   const user = session?.user;
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const { state, setState, handlePageChange } = useUrlState({
-    page: 1,
-    sortBy: 'createdAt',
-    sortOrder: 'desc' as 'asc' | 'desc',
-    q: ''
-  });
+  const { state, setState, handlePageChange } = useUrlState(initialUrlState);
 
   const [search, setSearch] = useState(state.q);
   const [debouncedSearch] = useDebounce(search, 600);

@@ -18,17 +18,19 @@ import { useDebounce } from 'use-debounce';
 import QueryErrorDisplay from '@/components/ui/query-error-display';
 import { Icon } from '@/components/ui/icon';
 
+const initialUrlState = {
+  page: 1,
+  sortBy: 'year',
+  sortOrder: 'desc' as 'asc' | 'desc',
+  q: ''
+};
+
 const BudgetPage = () => {
   const { showError } = useToast();
   const invalidate = useInvalidateQueries();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const { state, setState, handlePageChange } = useUrlState({
-    page: 1,
-    sortBy: 'year',
-    sortOrder: 'desc' as 'asc' | 'desc',
-    q: ''
-  });
+  const { state, setState, handlePageChange } = useUrlState(initialUrlState);
 
   const [search, setSearch] = useState(state.q);
   const [debouncedSearch] = useDebounce(search, 600);

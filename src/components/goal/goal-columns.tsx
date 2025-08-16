@@ -175,7 +175,7 @@ export const createGoalColumns = ({
                 Completed
               </Badge>
             ) : isOverdue ? (
-              <Badge variant='destructive' className='text-xs'>
+              <Badge variant='destructive-muted' className='text-xs'>
                 {Math.abs(daysLeft)} days overdue
               </Badge>
             ) : isUrgent ? (

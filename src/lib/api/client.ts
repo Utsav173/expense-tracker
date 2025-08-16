@@ -2,8 +2,6 @@ import { z } from 'zod';
 import { AxiosRequestConfig } from 'axios';
 import apiFetch from '../api-client';
 
-// --- Helper Types for the Client ---
-
 interface Endpoint<TParams, TQuery, TBody> {
   method: 'GET' | 'POST' | 'PUT' | 'DELETE';
   path: string;
@@ -19,9 +17,8 @@ interface RequestOptions<TParams, TQuery, TBody> {
   axiosConfig?: AxiosRequestConfig;
   successMessage?: string;
   errorMessage?: string;
+  signal?: AbortSignal;
 }
-
-// --- The Generic API Client ---
 
 async function apiClient<TParams = unknown, TQuery = unknown, TBody = unknown, TResponse = unknown>(
   endpoint: Endpoint<TParams, TQuery, TBody>,
@@ -31,7 +28,6 @@ async function apiClient<TParams = unknown, TQuery = unknown, TBody = unknown, T
   let validatedQuery: TQuery | undefined;
   let validatedBody: TBody | undefined;
 
-  // 1. Validate request data against schemas
   try {
     if (endpoint.params && options?.params) {
       validatedParams = endpoint.params.parse(options.params);
@@ -50,7 +46,6 @@ async function apiClient<TParams = unknown, TQuery = unknown, TBody = unknown, T
     throw error;
   }
 
-  // 2. Construct the URL path
   let path = endpoint.path;
   if (validatedParams) {
     for (const [key, value] of Object.entries(validatedParams as object)) {
@@ -58,7 +53,6 @@ async function apiClient<TParams = unknown, TQuery = unknown, TBody = unknown, T
     }
   }
 
-  // 3. Construct the query string
   if (validatedQuery) {
     const searchParams = new URLSearchParams();
     for (const [key, value] of Object.entries(validatedQuery as object)) {
@@ -72,12 +66,13 @@ async function apiClient<TParams = unknown, TQuery = unknown, TBody = unknown, T
     }
   }
 
-  // 4. Make the API call using the low-level fetcher
+  const finalAxiosConfig = { ...options?.axiosConfig, signal: options?.signal };
+
   return apiFetch<TResponse>(
     path,
     endpoint.method,
     validatedBody,
-    options?.axiosConfig,
+    finalAxiosConfig,
     options?.successMessage,
     options?.errorMessage
   );

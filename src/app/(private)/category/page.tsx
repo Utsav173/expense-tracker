@@ -12,15 +12,17 @@ import { useUrlState } from '@/hooks/useUrlState';
 import { useDebounce } from 'use-debounce';
 import { Icon } from '@/components/ui/icon';
 
+const initialUrlState = {
+  page: 1,
+  q: '',
+  sortBy: 'createdAt',
+  sortOrder: 'asc' as 'asc' | 'desc'
+};
+
 const CategoryPage = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const { state, setState, handlePageChange } = useUrlState({
-    page: 1,
-    q: '',
-    sortBy: 'createdAt',
-    sortOrder: 'asc' as 'asc' | 'desc'
-  });
+  const { state, setState, handlePageChange } = useUrlState(initialUrlState);
 
   const [searchQuery, setSearchQuery] = useState(state.q);
   const [debouncedSearchQuery] = useDebounce(searchQuery, 600);

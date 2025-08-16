@@ -22,6 +22,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     '/auth/signup',
     '/auth/forgot-password',
     '/auth/reset-password',
+    '/auth/verify-otp',
+    '/auth/verify-invitation',
     '/legal/privacy-policy',
     '/legal/terms-of-service',
     '/support/contact',

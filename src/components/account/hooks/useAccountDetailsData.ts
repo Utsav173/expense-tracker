@@ -1,10 +1,10 @@
 'use client';
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { accountGetById, accountGetCustomAnalytics } from '@/lib/endpoints/accounts';
 import { transactionGetIncomeExpenseChart, transactionGetAll } from '@/lib/endpoints/transactions';
 import { categoryGetAll } from '@/lib/endpoints/category';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { useUrlState } from '@/hooks/useUrlState';
 import { useCallback, useMemo, useState, useEffect } from 'react';
 import { useDebounce } from 'use-debounce';
@@ -25,8 +25,6 @@ interface SearchParams {
 }
 
 export const useAccountDetailsData = (id: string, searchParams: SearchParams) => {
-  const queryClient = useQueryClient();
-
   const { state, setState, handlePageChange } = useUrlState({
     page: 1,
     q: searchParams.q || '',
@@ -121,7 +119,7 @@ export const useAccountDetailsData = (id: string, searchParams: SearchParams) =>
       state.maxAmount,
       state.type
     ],
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       transactionGetAll({
         accountId: id,
         duration,
@@ -130,7 +128,7 @@ export const useAccountDetailsData = (id: string, searchParams: SearchParams) =>
         q: state.q,
         sortBy: state.sortBy,
         sortOrder: state.sortOrder,
-        categoryId: state.categoryId === 'all' ? undefined : state.categoryId,
+        categoryId: state.categoryId,
         isIncome: state.isIncome?.toString(),
         minAmount: state.minAmount,
         maxAmount: state.maxAmount,
@@ -139,7 +137,7 @@ export const useAccountDetailsData = (id: string, searchParams: SearchParams) =>
   });
 
   const { data: categories } = useQuery({
-    queryKey: ['categories'],
+    queryKey: ['transaction-categories'],
     queryFn: () => categoryGetAll({ limit: 100, sortBy: 'name', sortOrder: 'asc', page: 1 })
   });
 
@@ -157,7 +155,7 @@ export const useAccountDetailsData = (id: string, searchParams: SearchParams) =>
   };
 
   const handleCategoryChange = (categoryId: string) => {
-    setState({ categoryId, page: 1 });
+    setState({ categoryId: categoryId === 'all' ? undefined : categoryId, page: 1 });
   };
 
   const handleIncomeTypeChange = (type: string) => {
@@ -229,6 +227,7 @@ export const useAccountDetailsData = (id: string, searchParams: SearchParams) =>
     handleAmountChange,
     handleTypeChange,
     categories,
-    duration
+    duration,
+    setState
   };
 };

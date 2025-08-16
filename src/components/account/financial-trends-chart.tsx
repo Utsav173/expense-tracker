@@ -7,7 +7,6 @@ import {
   LineChart as RechartsLineChart,
   ResponsiveContainer,
   XAxis,
-  YAxis,
   Tooltip
 } from 'recharts';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -19,15 +18,14 @@ import {
 } from '@/components/ui/chart';
 import { Skeleton } from '../ui/skeleton';
 import NoData from '../ui/no-data';
-import { formatCurrency, cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Icon } from '../ui/icon';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 
-// --- Custom Tooltip Component ---
+// --- CustomTooltip component is unchanged ---
 const CustomTooltip = ({ active, payload, label, currency }: any) => {
   if (active && payload && payload.length) {
-    // Assuming the date is in the label, which is typical for time-series charts
     const dateLabel = label ? format(new Date(label), 'MMM d, yyyy') : 'Details';
 
     return (
@@ -50,6 +48,7 @@ const CustomTooltip = ({ active, payload, label, currency }: any) => {
   return null;
 };
 
+// --- Interface and Config are unchanged ---
 interface FinancialTrendsChartProps {
   data: Array<{
     date: string;
@@ -84,23 +83,16 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
   const [chartType, setChartType] = useState('bar');
   const isMobile = useIsMobile();
 
-  const formatYaxis = (value: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      notation: 'compact',
-      compactDisplay: 'short',
-      maximumFractionDigits: 1
-    }).format(value);
-  };
-
   const formatXaxis = (tickItem: string) => {
-    // Assuming tickItem is a date string like '2025-08-01'
     return format(new Date(tickItem), 'MMM d');
   };
 
+  // --- Loading and NoData states are unchanged ---
   if (isLoading) {
     return (
       <div className='flex h-full flex-col'>
-        <div className='mb-4 flex justify-end'>
+        <div className='mb-4 flex items-center justify-between'>
+          <Skeleton className='h-6 w-48' />
           <Skeleton className='h-9 w-[150px] rounded-lg' />
         </div>
         <Skeleton className='h-[350px] flex-1 rounded-md' />
@@ -120,14 +112,10 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
     fontSize: isMobile ? 10 : 12,
     fill: 'var(--muted-foreground)'
   };
-  const yAxisWidth = isMobile ? 40 : 50;
   const barSize = isMobile ? 15 : 20;
-  const lineDotRadius = isMobile ? 2 : 3;
-  const lineActiveDotRadius = isMobile ? 4 : 5;
 
   return (
     <ChartContainer config={trendsChartConfig} className='flex h-full w-full flex-col'>
-      {/* CORRECTED: Replaced React.Fragment with a div */}
       <div className='flex h-full w-full flex-col'>
         <div className='mb-4 flex items-center justify-between'>
           <ChartLegend content={<ChartLegendContent />} />
@@ -148,12 +136,12 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
         <div className='flex-1'>
           {chartType === 'bar' ? (
             <ResponsiveContainer width='100%' height='100%'>
-              <BarChart data={data} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
+              <BarChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
                 <CartesianGrid
                   strokeDasharray='3 3'
-                  vertical={false}
                   stroke='var(--border)'
-                  strokeOpacity={0.5}
+                  strokeOpacity={1}
+                  strokeWidth={1}
                 />
                 <XAxis
                   dataKey='date'
@@ -163,13 +151,6 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
                   tickFormatter={formatXaxis}
                   interval='preserveStartEnd'
                   minTickGap={isMobile ? 30 : 20}
-                />
-                <YAxis
-                  tickFormatter={formatYaxis}
-                  tickLine={false}
-                  axisLine={false}
-                  tick={axisTickStyle}
-                  width={yAxisWidth}
                 />
                 <Tooltip
                   cursor={{ fill: 'var(--muted)', opacity: 0.5 }}
@@ -197,13 +178,8 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
             </ResponsiveContainer>
           ) : (
             <ResponsiveContainer width='100%' height='100%'>
-              <RechartsLineChart data={data} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
-                <CartesianGrid
-                  strokeDasharray='3 3'
-                  vertical={false}
-                  stroke='var(--border)'
-                  strokeOpacity={0.5}
-                />
+              <RechartsLineChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray='3 3' strokeOpacity={1} strokeWidth={1} />
                 <XAxis
                   dataKey='date'
                   tickLine={false}
@@ -212,13 +188,6 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
                   tickFormatter={formatXaxis}
                   interval='preserveStartEnd'
                   minTickGap={isMobile ? 30 : 20}
-                />
-                <YAxis
-                  tickFormatter={formatYaxis}
-                  tickLine={false}
-                  axisLine={false}
-                  tick={axisTickStyle}
-                  width={yAxisWidth}
                 />
                 <Tooltip
                   cursor={{ stroke: 'var(--border)', strokeDasharray: '3 3' }}
@@ -229,8 +198,8 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
                   dataKey='income'
                   stroke='var(--color-income)'
                   strokeWidth={2}
-                  dot={{ r: lineDotRadius, strokeWidth: 1, fill: 'var(--background)' }}
-                  activeDot={{ r: lineActiveDotRadius, strokeWidth: 1 }}
+                  dot={false}
+                  activeDot={{ r: 5 }}
                   connectNulls
                 />
                 <Line
@@ -238,8 +207,8 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
                   dataKey='expense'
                   stroke='var(--color-expense)'
                   strokeWidth={2}
-                  dot={{ r: lineDotRadius, strokeWidth: 1, fill: 'var(--background)' }}
-                  activeDot={{ r: lineActiveDotRadius, strokeWidth: 1 }}
+                  dot={false}
+                  activeDot={{ r: 5 }}
                   connectNulls
                 />
                 <Line
@@ -247,8 +216,8 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
                   dataKey='balance'
                   stroke='var(--color-balance)'
                   strokeWidth={2}
-                  dot={{ r: lineDotRadius, strokeWidth: 1, fill: 'var(--background)' }}
-                  activeDot={{ r: lineActiveDotRadius, strokeWidth: 1 }}
+                  dot={false}
+                  activeDot={{ r: 5 }}
                   connectNulls
                 />
               </RechartsLineChart>

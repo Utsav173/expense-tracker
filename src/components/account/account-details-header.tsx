@@ -1,6 +1,5 @@
 'use client';
 
-import type { AccountAPI } from '@/lib/api/api-types';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import AddTransactionModal from '@/components/modals/add-transaction-modal';
@@ -8,23 +7,17 @@ import ShareAccountModal from '@/components/modals/share-account-modal';
 import { SingleLineEllipsis } from '../ui/ellipsis-components';
 import Link from 'next/link';
 import { Icon } from '@/components/ui/icon';
+import { useAccountDetails } from '@/components/account/context/account-details-context';
 
 interface AccountDetailsHeaderProps {
-  account?: AccountAPI.GetAccountByIdResponse;
-  isLoading?: boolean;
-  refetchData: () => void;
   isMobile?: boolean;
   isOwner?: boolean;
 }
 
-export const AccountDetailsHeader = ({
-  account,
-  isLoading,
-  refetchData,
-  isMobile,
-  isOwner = true
-}: AccountDetailsHeaderProps) => {
-  if (isLoading) {
+export const AccountDetailsHeader = ({ isMobile, isOwner = true }: AccountDetailsHeaderProps) => {
+  const { account, isAccountLoading, refetchData } = useAccountDetails();
+
+  if (isAccountLoading) {
     return (
       <div className='space-y-4'>
         <div className='flex items-center justify-between'>

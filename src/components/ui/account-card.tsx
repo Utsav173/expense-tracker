@@ -103,11 +103,11 @@ const AccountCard = React.forwardRef<HTMLDivElement, AccountCardProps>(
             </div>
           </div>
 
-          <div className='flex flex-grow flex-col items-center justify-center px-4 py-6'>
+          <div className='flex min-w-0 flex-grow flex-col items-center justify-center px-4 py-6'>
             <p className='text-muted-foreground text-xs font-medium uppercase'>Balance</p>
             <SingleLineEllipsis
               className={cn(
-                'font-mono text-4xl font-bold tracking-tight tabular-nums',
+                'min-w-0 font-mono text-4xl font-bold tracking-tight tabular-nums',
                 balance >= 0 ? 'text-foreground' : 'text-destructive'
               )}
               tooltipContent={balance.toFixed(2)}

@@ -1,47 +1,35 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import TransactionTable from '@/components/transactions/transactions-table';
 import Loader from '@/components/ui/loader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
-} from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import AddTransactionModal from '@/components/modals/add-transaction-modal';
-import { accountGetDropdown } from '@/lib/endpoints/accounts';
-import { useQuery } from '@tanstack/react-query';
-import { useToast } from '@/lib/hooks/useToast';
-import { useTransactions } from '@/components/transactions/hooks/useTransactions';
-import DateRangePickerV2 from '@/components/date/date-range-picker-v2';
-import { API_BASE_URL } from '@/lib/api-client';
-import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem
 } from '@/components/ui/dropdown-menu';
-import CategoryCombobox from '@/components/ui/category-combobox';
-import { DateRange } from 'react-day-picker';
+import { Badge } from '@/components/ui/badge';
+import AddTransactionModal from '@/components/modals/add-transaction-modal';
+import { accountGetDropdown } from '@/lib/endpoints/accounts';
+import { transactionGetAll } from '@/lib/endpoints/transactions';
+import { useQuery } from '@tanstack/react-query';
+import { useToast } from '@/lib/hooks/useToast';
+import { API_BASE_URL } from '@/lib/api-client';
 import QueryErrorDisplay from '@/components/ui/query-error-display';
 import { useUrlState } from '@/hooks/useUrlState';
 import { useDebounce } from 'use-debounce';
 import { SortingState } from '@tanstack/react-table';
 import { Icon } from '@/components/ui/icon';
+import {
+  FilterState,
+  TransactionFilterDialog
+} from '@/components/transactions/transaction-filter-dialog';
+import { categoryGetAll } from '@/lib/endpoints/category';
+import { format } from 'date-fns';
 
 const TransactionsPage = () => {
   const { showError, showInfo } = useToast();
@@ -53,7 +41,7 @@ const TransactionsPage = () => {
     q: '',
     sortBy: 'createdAt',
     sortOrder: 'desc' as 'asc' | 'desc',
-    accountId: 'all',
+    accountId: undefined as string | undefined,
     categoryId: undefined as string | undefined,
     isIncome: undefined as boolean | undefined,
     dateFrom: undefined as string | undefined,
@@ -65,23 +53,17 @@ const TransactionsPage = () => {
 
   const [searchQuery, setSearchQuery] = useState(state.q);
   const [debouncedSearchQuery] = useDebounce(searchQuery, 600);
-  const [tempFilters, setTempFilters] = useState<{
-    accountId: string;
-    categoryId: string | undefined;
-    isIncome: boolean | undefined;
-    dateRange: DateRange | undefined;
-    minAmount: number | undefined;
-    maxAmount: number | undefined;
-    type: 'recurring' | 'normal' | 'all';
-  }>({
-    accountId: 'all',
-    categoryId: undefined,
-    isIncome: undefined,
-    dateRange: undefined,
-    minAmount: undefined,
-    maxAmount: undefined,
-    type: 'all'
-  });
+
+  const duration = useMemo(
+    () =>
+      state.dateFrom && state.dateTo
+        ? `${format(new Date(state.dateFrom), 'yyyy-MM-dd')},${format(
+            new Date(state.dateTo),
+            'yyyy-MM-dd'
+          )}`
+        : undefined,
+    [state.dateFrom, state.dateTo]
+  );
 
   useEffect(() => {
     setState({ q: debouncedSearchQuery, page: 1 });
@@ -93,41 +75,63 @@ const TransactionsPage = () => {
     isError,
     error,
     refetch
-  } = useTransactions({
-    page: state.page,
-    accountId: state.accountId,
-    debouncedSearchQuery: state.q,
-    categoryId: state.categoryId,
-    isIncome: state.isIncome,
-    dateRange:
-      state.dateFrom && state.dateTo
-        ? { from: new Date(state.dateFrom), to: new Date(state.dateTo) }
-        : undefined,
-    sortBy: state.sortBy,
-    sortOrder: state.sortOrder,
-    minAmount: state.minAmount,
-    maxAmount: state.maxAmount,
-    type: state.type
+  } = useQuery({
+    queryKey: [
+      'transactions',
+      state.page,
+      state.accountId,
+      debouncedSearchQuery,
+      state.categoryId,
+      state.isIncome,
+      duration,
+      state.sortBy,
+      state.sortOrder,
+      state.minAmount,
+      state.maxAmount,
+      state.type
+    ],
+    queryFn: ({ signal }) =>
+      transactionGetAll({
+        page: state.page,
+        limit: 10,
+        accountId: state.accountId,
+        duration,
+        q: debouncedSearchQuery,
+        sortBy: state.sortBy,
+        sortOrder: state.sortOrder,
+        categoryId: state.categoryId,
+        isIncome: state.isIncome?.toString(),
+        minAmount: state.minAmount,
+        maxAmount: state.maxAmount,
+        type: state.type === 'all' ? undefined : state.type
+      }),
+    staleTime: 5 * 60 * 1000,
+    retry: false
   });
 
   const { data: accountsData, isLoading: isLoadingAccounts } = useQuery({
     queryKey: ['accountsDropdown'],
-    queryFn: accountGetDropdown
+    queryFn: () => accountGetDropdown()
+  });
+
+  const { data: categoriesData } = useQuery({
+    queryKey: ['allCategoriesForCombobox'],
+    queryFn: () => categoryGetAll({ limit: 200, sortBy: 'name', sortOrder: 'asc', page: 1 })
   });
 
   const handleSort = (newSortingState: SortingState) => {
     if (newSortingState.length > 0) {
       const { id, desc } = newSortingState[0];
-      setState({ sortBy: id, sortOrder: desc ? 'desc' : 'asc', page: 1 });
+      setState({ sortBy: id, sortOrder: desc ? 'desc' : 'asc' });
     } else {
-      setState({ sortBy: 'createdAt', sortOrder: 'desc', page: 1 });
+      setState({ sortBy: 'createdAt', sortOrder: 'desc' });
     }
   };
 
   const activeFilters = useMemo(() => {
     const filters = [];
-    if (state.accountId && state.accountId !== 'all') filters.push('account');
-    if (state.categoryId && state.categoryId !== 'all') filters.push('category');
+    if (state.accountId) filters.push('account');
+    if (state.categoryId) filters.push('category');
     if (state.isIncome !== undefined) filters.push('type');
     if (state.dateFrom || state.dateTo) filters.push('dateRange');
     if (state.minAmount || state.maxAmount) filters.push('amount');
@@ -135,50 +139,79 @@ const TransactionsPage = () => {
     return filters;
   }, [state]);
 
-  const hasSearchQuery = (state.q || '').length > 0;
+  const activeFilterBadges = useMemo(() => {
+    const badges = [];
 
-  useEffect(() => {
-    if (isFilterDialogOpen) {
-      setTempFilters({
-        accountId: state.accountId || 'all',
-        categoryId: state.categoryId,
-        isIncome: state.isIncome,
-        dateRange:
-          state.dateFrom && state.dateTo
-            ? { from: new Date(state.dateFrom), to: new Date(state.dateTo) }
-            : undefined,
-        minAmount: state.minAmount,
-        maxAmount: state.maxAmount,
-        type: state.type || 'all'
+    if (state.accountId) {
+      const account = accountsData?.find((acc) => acc.id === state.accountId);
+      badges.push({
+        key: 'account',
+        label: account?.name || 'Account',
+        onRemove: () => setState({ accountId: undefined })
       });
     }
-  }, [isFilterDialogOpen, state]);
+    if (state.categoryId) {
+      const category = categoriesData?.categories.find((cat) => cat.id === state.categoryId);
+      badges.push({
+        key: 'category',
+        label: category?.name || 'Category',
+        onRemove: () => setState({ categoryId: undefined })
+      });
+    }
+    if (state.isIncome !== undefined) {
+      badges.push({
+        key: 'isIncome',
+        label: state.isIncome ? 'Income' : 'Expense',
+        onRemove: () => setState({ isIncome: undefined })
+      });
+    }
+    if (state.dateFrom && state.dateTo) {
+      const from = format(new Date(state.dateFrom), 'MMM d');
+      const to = format(new Date(state.dateTo), 'MMM d');
+      badges.push({
+        key: 'date',
+        label: `${from} - ${to}`,
+        onRemove: () => setState({ dateFrom: undefined, dateTo: undefined })
+      });
+    }
+    if (state.minAmount || state.maxAmount) {
+      badges.push({
+        key: 'amount',
+        label: 'Amount Range',
+        onRemove: () => setState({ minAmount: undefined, maxAmount: undefined })
+      });
+    }
+    if (state.type && state.type !== 'all') {
+      badges.push({
+        key: 'type',
+        label: state.type === 'recurring' ? 'Recurring' : 'Normal',
+        onRemove: () => setState({ type: 'all' })
+      });
+    }
 
-  const handleApplyFilters = () => {
-    setState({
-      page: 1,
-      accountId: tempFilters.accountId,
-      categoryId: tempFilters.categoryId,
-      isIncome: tempFilters.isIncome,
-      dateFrom: tempFilters.dateRange?.from?.toISOString(),
-      dateTo: tempFilters.dateRange?.to?.toISOString(),
-      minAmount: tempFilters.minAmount,
-      maxAmount: tempFilters.maxAmount,
-      type: tempFilters.type
-    });
-    setIsFilterDialogOpen(false);
+    return badges;
+  }, [state, accountsData, categoriesData, setState]);
+
+  const handleApplyFilters = (newFilters: Partial<FilterState>) => {
+    setState({ page: 1, ...newFilters });
   };
 
-  const handleClearFilters = () => {
-    setTempFilters({
-      accountId: 'all',
+  const handleResetFilters = () => {
+    setState({
+      q: '',
+      page: 1,
+      sortBy: 'createdAt',
+      sortOrder: 'desc',
+      accountId: undefined,
       categoryId: undefined,
       isIncome: undefined,
-      dateRange: undefined,
+      dateFrom: undefined,
+      dateTo: undefined,
       minAmount: undefined,
       maxAmount: undefined,
       type: 'all'
     });
+    setSearchQuery('');
   };
 
   const handleExport = useCallback(
@@ -192,10 +225,9 @@ const TransactionsPage = () => {
 
       try {
         const params = new URLSearchParams();
-        if (state.accountId && state.accountId !== 'all') params.set('accountId', state.accountId);
+        if (state.accountId) params.set('accountId', state.accountId);
         if (state.q) params.set('q', state.q);
-        if (state.categoryId && state.categoryId !== 'all')
-          params.set('categoryId', state.categoryId);
+        if (state.categoryId) params.set('categoryId', state.categoryId);
         if (state.isIncome !== undefined) params.set('isIncome', String(state.isIncome));
         if (state.dateFrom && state.dateTo)
           params.set('duration', `${state.dateFrom},${state.dateTo}`);
@@ -285,190 +317,28 @@ const TransactionsPage = () => {
           </div>
 
           <div className='flex gap-2'>
-            <Dialog open={isFilterDialogOpen} onOpenChange={setIsFilterDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant='outline' className='gap-2'>
-                  <Icon name='filter' className='h-4 w-4' />
-                  Filters
-                  {activeFilters.length > 0 && (
-                    <Badge
-                      variant='secondary'
-                      className='ml-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-medium'
-                    >
-                      {activeFilters.length}
-                    </Badge>
-                  )}
-                </Button>
-              </DialogTrigger>
-              <DialogContent className='sm:max-w-3xl'>
-                <DialogHeader>
-                  <DialogTitle className='flex items-center gap-2'>
-                    <Icon name='filter' className='h-5 w-5' />
-                    Filter Transactions
-                  </DialogTitle>
-                </DialogHeader>
-
-                <div className='grid grid-cols-1 gap-6 py-4 md:grid-cols-2 lg:grid-cols-3'>
-                  <div className='space-y-2'>
-                    <label className='flex items-center gap-2 text-sm font-medium'>
-                      <Icon name='building' className='h-4 w-4' />
-                      Account
-                    </label>
-                    <Select
-                      onValueChange={(value) =>
-                        setTempFilters((prev) => ({ ...prev, accountId: value }))
-                      }
-                      value={tempFilters.accountId || 'all'}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder='All Accounts' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value='all'>All Accounts</SelectItem>
-                        {isLoadingAccounts ? (
-                          <SelectItem value='loading' disabled>
-                            Loading...
-                          </SelectItem>
-                        ) : (
-                          accountsData?.map((account) => (
-                            <SelectItem key={account.id} value={account.id}>
-                              {account.name}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className='space-y-2'>
-                    <label className='flex items-center gap-2 text-sm font-medium'>
-                      <Icon name='tag' className='h-4 w-4' />
-                      Category
-                    </label>
-                    <CategoryCombobox
-                      value={tempFilters.categoryId}
-                      onChange={(value) =>
-                        setTempFilters((prev) => ({ ...prev, categoryId: value }))
-                      }
-                      allowClear={true}
-                      placeholder='All Categories'
-                    />
-                  </div>
-
-                  <div className='space-y-2'>
-                    <label className='flex items-center gap-2 text-sm font-medium'>
-                      <Icon name='type' className='h-4 w-4' />
-                      Type
-                    </label>
-                    <Select
-                      onValueChange={(value) =>
-                        setTempFilters((prev) => ({
-                          ...prev,
-                          isIncome: value === 'all' ? undefined : value === 'true'
-                        }))
-                      }
-                      value={
-                        tempFilters.isIncome === undefined ? 'all' : String(tempFilters.isIncome)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder='All Types' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value='all'>All Types</SelectItem>
-                        <SelectItem value='true'>Income</SelectItem>
-                        <SelectItem value='false'>Expense</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className='space-y-2'>
-                    <label className='flex items-center gap-2 text-sm font-medium'>
-                      <Icon name='calendar' className='h-4 w-4' />
-                      Date Range
-                    </label>
-                    <DateRangePickerV2
-                      date={tempFilters.dateRange}
-                      onDateChange={(dateRange) =>
-                        setTempFilters((prev) => ({ ...prev, dateRange }))
-                      }
-                      onClear={() => setTempFilters((prev) => ({ ...prev, dateRange: undefined }))}
-                      closeOnComplete={true}
-                      noLabel
-                      minDate={
-                        transactionsData?.dateRange?.minDate
-                          ? new Date(transactionsData.dateRange.minDate)
-                          : undefined
-                      }
-                      maxDate={
-                        transactionsData?.dateRange?.maxDate
-                          ? new Date(transactionsData.dateRange.maxDate)
-                          : undefined
-                      }
-                    />
-                  </div>
-
-                  <div className='space-y-2'>
-                    <label className='text-sm font-medium'>Min Amount</label>
-                    <Input
-                      type='number'
-                      placeholder='Minimum amount'
-                      value={tempFilters.minAmount || ''}
-                      onChange={(e) =>
-                        setTempFilters((prev) => ({
-                          ...prev,
-                          minAmount: Number(e.target.value) || undefined
-                        }))
-                      }
-                    />
-                  </div>
-
-                  <div className='space-y-2'>
-                    <label className='text-sm font-medium'>Max Amount</label>
-                    <Input
-                      type='number'
-                      placeholder='Maximum amount'
-                      value={tempFilters.maxAmount || ''}
-                      onChange={(e) =>
-                        setTempFilters((prev) => ({
-                          ...prev,
-                          maxAmount: Number(e.target.value) || undefined
-                        }))
-                      }
-                    />
-                  </div>
-
-                  <div className='space-y-2'>
-                    <label className='flex items-center gap-2 text-sm font-medium'>
-                      <Icon name='settings2' className='h-4 w-4' />
-                      Transaction Type
-                    </label>
-                    <Select
-                      onValueChange={(value) =>
-                        setTempFilters((prev) => ({ ...prev, type: value as any }))
-                      }
-                      value={tempFilters.type || 'all'}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder='All' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value='all'>All</SelectItem>
-                        <SelectItem value='normal'>Normal</SelectItem>
-                        <SelectItem value='recurring'>Recurring</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <DialogFooter className='flex gap-2'>
-                  <Button variant='outline' onClick={handleClearFilters}>
-                    Clear All
-                  </Button>
-                  <Button onClick={handleApplyFilters}>Apply Filters</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <Button variant='outline' className='gap-2' onClick={() => setIsFilterDialogOpen(true)}>
+              <Icon name='filter' className='h-4 w-4' />
+              Filters
+              {activeFilters.length > 0 && (
+                <Badge
+                  variant='secondary'
+                  className='ml-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-medium'
+                >
+                  {activeFilters.length}
+                </Badge>
+              )}
+            </Button>
+            <TransactionFilterDialog
+              isOpen={isFilterDialogOpen}
+              onOpenChange={setIsFilterDialogOpen}
+              activeFilters={state}
+              onApplyFilters={handleApplyFilters}
+              accounts={accountsData}
+              isLoadingAccounts={isLoadingAccounts}
+              transactionsData={transactionsData}
+              showAccountFilter={true}
+            />
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -500,9 +370,30 @@ const TransactionsPage = () => {
           </div>
         </div>
 
-        {(activeFilters.length > 0 || hasSearchQuery) && (
-          <div>
+        {activeFilterBadges.length > 0 && (
+          <div className='flex flex-wrap items-center gap-2'>
             <span className='text-muted-foreground text-sm'>Active filters:</span>
+            {activeFilterBadges.map((badge) => (
+              <Badge key={badge.key} variant='secondary' className='gap-1 pr-1'>
+                {badge.label}
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  className='h-auto p-0.5 hover:bg-transparent'
+                  onClick={badge.onRemove}
+                >
+                  <Icon name='x' className='h-3 w-3' />
+                </Button>
+              </Badge>
+            ))}
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={handleResetFilters}
+              className='text-muted-foreground hover:text-foreground h-6 text-xs'
+            >
+              Clear all
+            </Button>
           </div>
         )}
       </div>
