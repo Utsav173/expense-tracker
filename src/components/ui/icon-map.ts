@@ -27,6 +27,7 @@ export const iconMap = {
   checkCircle: 'material-symbols:check-circle-outline',
   checkCircle2: 'material-symbols:check-circle',
   chevronDown: 'material-symbols:expand-more',
+  chevronUp: 'material-symbols:expand-less',
   chevronLeft: 'material-symbols:chevron-left',
   chevronRight: 'material-symbols:chevron-right',
   chevronsLeft: 'material-symbols:first-page',
