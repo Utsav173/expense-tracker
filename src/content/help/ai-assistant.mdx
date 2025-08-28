@@ -1,29 +1,57 @@
 <a id="ai-assistant"></a>
-## <Icon name="ai" /> The AI Assistant
+## <Icon name="sparkles" /> The AI Assistant
 
-The AI Assistant (`/ai-chat`) is your conversational finance expert, designed to make managing your money as simple as sending a text.
+The AI Assistant is your conversational finance expert, designed to make managing your money as simple as sending a text.
+
+<FeatureLink href="/ai-chat" title="Go to the AI Assistant" icon="bot">
+  Ask questions, add transactions, and get insights using natural language.
+</FeatureLink>
 
 <a id="ai-assistant-setup"></a>
-### Setting Up Your API Key & Privacy
-For maximum user privacy, the AI Assistant is powered by **your own personal Google AI API key**.
-*   **Your Privacy is Paramount:** Your key is stored with strong encryption and is only ever used to process *your* requests on your behalf.
-*   **How to Get Your Key:**
-    1.  Go to **Profile** > **AI Assistant**.
-    2.  Click the link to visit the **Google AI Studio**.
-    3.  Create a free API key and copy it.
-    4.  Return to Expense Pro, paste the key, and click **Save**.
+### Setting Up Your API Key for Privacy
+
+For maximum user privacy, the AI Assistant is powered by **your own personal Google AI API key**. This means your financial data is never sent to a shared, third-party AI model. It's your data, processed with your key.
+
+<Step number={1} title="Get Your Google AI Key">
+  First, you'll need a free API key from Google AI Studio.
+  <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-primary font-medium underline underline-offset-4">Click here to visit the Google AI Studio</a>, sign in with your Google account, and create a new API key.
+</Step>
+
+<Step number={2} title="Save Your Key in Expense Pro">
+  Navigate to your profile, find the AI Assistant tab, paste your copied key into the field, and click **Save**.
+  <FeatureLink href="/profile" title="Go to Profile Settings" icon="user" />
+</Step>
+
+<Alert>
+  Your API key is stored securely with strong encryption and is only ever used by you to process your requests.
+</Alert>
 
 <a id="ai-assistant-usage"></a>
 ### How to Use the AI Assistant
-Open the AI Assistant from the sidebar or the floating chat bubble (<Icon name="bot" className="inline h-4 w-4" />).
 
-**Example Commands:**
-*   **Adding Transactions:** "Add an expense of 75 for a coffee at CCD"
-*   **Asking Questions:** "What was my total spending last month?"
-*   **Data Analysis:** "Show a pie chart of my spending this month."
+Open the AI Assistant from the sidebar or by clicking the floating chat bubble in the bottom-right corner of most pages.
+
+<Step number={1} title="Ask Questions in Plain English">
+  You can ask complex questions about your finances. For example:
+  - "What was my total spending last month?"
+  - "How much did I spend on groceries in June?"
+  - "Show me my highest expense this year."
+</Step>
+
+<Step number={2} title="Add Transactions with Your Voice (or Keyboard)">
+  Simply type what you did, and the AI will understand. For example:
+  - "Add an expense of 75 for a coffee at CCD"
+  - "I received my 5000 salary today"
+</Step>
+
+<Step number={3} title="Request Data Visualizations">
+  The AI can generate charts on the fly to help you understand your data. Try asking:
+  - "Show a pie chart of my spending this month."
+  - "Give me a bar chart of my income vs expenses for the last 6 months."
+</Step>
 
 <Alert variant="success" title="Power Feature: File Uploads">
-Drag and drop a file or click the paperclip icon (<Icon name="paperclip" className="inline h-4 w-4" />).
-- **Receipts (Images):** Upload a photo of a receipt, and the AI will extract the details.
-- **Bank Statements (PDF/XLSX):** Upload a statement. The AI will analyze it, extract all transactions, and present them for you to review and import in a single click.
+  Drag and drop a file or click the paperclip icon (<Icon name="paperclip" className="inline h-4 w-4" />) to have the AI analyze it.
+  - **Receipts (Images):** Upload a photo of a receipt, and the AI will extract the details and queue it up as a transaction.
+  - **Bank Statements (PDF/XLSX):** Upload a statement. The AI will analyze it, extract all transactions, and present them for you to review and import in a single click. This is a massive time-saver!
 </Alert>

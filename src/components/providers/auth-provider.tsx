@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
+import { useHasScrollbar } from '@/hooks/use-has-scrollbar';
 
 interface AuthContextType {
   session: any;
@@ -15,6 +16,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { data: session, isPending: isLoading } = authClient.useSession();
   const router = useRouter();
   const pathname = usePathname();
+  useHasScrollbar('vertical');
 
   const publicRoutes = [
     '/',

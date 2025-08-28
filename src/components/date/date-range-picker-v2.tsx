@@ -328,7 +328,7 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
         <div className='flex items-center justify-between'>
           <Popover open={open && !disabled} onOpenChange={handleOpenChange}>
             <PopoverTrigger asChild>
-              <div className='relative'>
+              <div className='relative w-full'>
                 <Input
                   id={id}
                   type='text'
@@ -348,7 +348,7 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
                 <Icon
                   name='calendar'
                   aria-hidden='true'
-                  className='absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2'
+                  className='absolute top-1/2 right-3 ml-2 h-4 w-4 -translate-y-1/2'
                 />
               </div>
             </PopoverTrigger>

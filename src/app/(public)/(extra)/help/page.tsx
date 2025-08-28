@@ -81,12 +81,12 @@ export default function HelpPage() {
     return subsections?.some((sub) => sub.id === activeId);
   };
 
-  const currentSection = helpSections.find(section => 
-    section.id === activeId || section.subsections?.some(sub => sub.id === activeId)
+  const currentSection = helpSections.find(
+    (section) => section.id === activeId || section.subsections?.some((sub) => sub.id === activeId)
   );
 
   const TableOfContents = () => (
-    <div className="space-y-1">
+    <div className='space-y-1'>
       <h3 className='text-muted-foreground mb-3 text-sm font-semibold tracking-wider uppercase'>
         TABLE OF CONTENTS
       </h3>
@@ -97,20 +97,23 @@ export default function HelpPage() {
               href={`#${item.id}`}
               onClick={(e) => handleLinkClick(e, item.id)}
               className={cn(
-                'flex items-center gap-2 rounded-lg p-3 text-sm font-medium transition-all duration-200',
+                'flex items-center gap-3 rounded-lg border border-transparent p-3 text-sm font-medium transition-all duration-200',
                 (activeId === item.id && !isSubActive(item.subsections)) ||
                   isSubActive(item.subsections)
-                  ? 'bg-primary/15 text-primary shadow-sm border border-primary/20'
+                  ? 'bg-primary/15 text-primary border-primary/20 border shadow-sm'
                   : 'text-muted-foreground hover:bg-muted/80 hover:text-foreground hover:shadow-sm'
               )}
             >
-              <div className={cn(
-                'w-1.5 h-1.5 rounded-full transition-colors',
-                (activeId === item.id && !isSubActive(item.subsections)) ||
-                  isSubActive(item.subsections)
-                  ? 'bg-primary'
-                  : 'bg-muted-foreground/30'
-              )} />
+              <Icon
+                name={item.icon}
+                className={cn(
+                  'h-5 w-5 transition-colors',
+                  (activeId === item.id && !isSubActive(item.subsections)) ||
+                    isSubActive(item.subsections)
+                    ? 'text-primary'
+                    : 'text-muted-foreground/60'
+                )}
+              />
               {item.title}
             </a>
             {item.subsections && (isSubActive(item.subsections) || !isMobile) && (
@@ -121,10 +124,10 @@ export default function HelpPage() {
                       href={`#${sub.id}`}
                       onClick={(e) => handleLinkClick(e, sub.id)}
                       className={cn(
-                        'block rounded-md p-2 pl-4 text-xs font-medium transition-all duration-200 border-l-2',
+                        'block rounded-md border-l-2 border-transparent p-2 pl-4 text-xs font-medium transition-all duration-200',
                         activeId === sub.id
-                          ? 'text-primary font-semibold border-primary bg-primary/5'
-                          : 'text-muted-foreground hover:text-foreground border-transparent hover:border-muted-foreground/30'
+                          ? 'text-primary border-primary bg-primary/5 font-semibold'
+                          : 'text-muted-foreground hover:text-foreground hover:border-muted-foreground/30 border-transparent'
                       )}
                     >
                       {sub.title}
@@ -142,16 +145,16 @@ export default function HelpPage() {
   return (
     <div className='bg-background min-h-screen'>
       {/* Header */}
-      <header className='relative py-12 md:py-16 px-4 text-center bg-gradient-to-br from-primary/5 via-background to-secondary/5'>
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/[0.02] to-secondary/[0.02]" />
-        <div className="relative">
-          <div className="inline-flex items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-full bg-primary/10 mb-6 shadow-lg">
+      <header className='from-primary/5 via-background to-secondary/5 relative bg-gradient-to-br px-4 py-12 text-center md:py-16'>
+        <div className='from-primary/[0.02] to-secondary/[0.02] absolute inset-0 bg-gradient-to-r' />
+        <div className='relative'>
+          <div className='bg-primary/10 mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full shadow-lg md:h-24 md:w-24'>
             <Icon name='lifeBuoy' className='text-primary h-10 w-10 md:h-12 md:w-12' />
           </div>
-          <h1 className='text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tighter mb-4'>
+          <h1 className='mb-4 text-3xl font-extrabold tracking-tighter md:text-4xl lg:text-5xl'>
             Help Center
           </h1>
-          <p className='text-muted-foreground mx-auto max-w-2xl text-base md:text-lg leading-relaxed'>
+          <p className='text-muted-foreground mx-auto max-w-2xl text-base leading-relaxed md:text-lg'>
             Everything you need to know to become an Expense Pro power user.
           </p>
         </div>
@@ -159,31 +162,31 @@ export default function HelpPage() {
 
       {/* Mobile Navigation Bar */}
       {isMobile && (
-        <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b shadow-sm">
-          <div className="px-4 py-3">
+        <div className='bg-background/95 sticky top-0 z-40 border-b shadow-sm backdrop-blur-md'>
+          <div className='px-4 py-3'>
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="flex items-center justify-between w-full p-3 rounded-lg bg-card border hover:bg-muted/50 transition-colors"
+              className='bg-card hover:bg-muted/50 flex w-full items-center justify-between rounded-lg border p-3 transition-colors'
             >
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-primary" />
-                <span className="font-medium text-sm truncate">
+              <div className='flex items-center gap-3'>
+                <div className='bg-primary h-2 w-2 rounded-full' />
+                <span className='truncate text-sm font-medium'>
                   {currentSection?.title || 'Navigation'}
                 </span>
               </div>
-              <Icon 
-                name={isMobileMenuOpen ? 'chevronUp' : 'chevronDown'} 
-                className="w-4 h-4 text-muted-foreground" 
+              <Icon
+                name={isMobileMenuOpen ? 'chevronUp' : 'chevronDown'}
+                className='text-muted-foreground h-4 w-4'
               />
             </button>
           </div>
-          
+
           {/* Mobile Menu Dropdown */}
           {isMobileMenuOpen && (
-            <div className="absolute top-full left-0 right-0 bg-background/98 backdrop-blur-md border-b shadow-lg max-h-[70vh] overflow-y-auto">
-              <div className="p-4">
-                <Card className="shadow-md">
-                  <CardContent className="p-4">
+            <div className='bg-background/98 absolute top-full right-0 left-0 max-h-[70vh] overflow-y-auto border-b shadow-lg backdrop-blur-md'>
+              <div className='p-4'>
+                <Card className='shadow-md'>
+                  <CardContent className='p-4'>
                     <TableOfContents />
                   </CardContent>
                 </Card>
@@ -196,19 +199,19 @@ export default function HelpPage() {
       <div className='container mx-auto max-w-7xl px-4 py-8'>
         <div className='grid grid-cols-1 gap-8 lg:grid-cols-4'>
           {/* Desktop Sidebar */}
-          <aside className='hidden lg:block lg:col-span-1'>
-            <div className="sticky top-24 space-y-4">
-              <Card className="shadow-md hover:shadow-lg transition-shadow duration-300">
+          <aside className='hidden lg:col-span-1 lg:block'>
+            <div className='sticky top-24 space-y-4'>
+              <Card className='shadow-md transition-shadow duration-300 hover:shadow-lg'>
                 <CardContent className='p-6'>
                   <TableOfContents />
                 </CardContent>
               </Card>
-              
+
               {/* Progress Indicator */}
-              <Card className="shadow-md">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              <Card className='shadow-md'>
+                <CardContent className='p-4'>
+                  <div className='text-muted-foreground flex items-center gap-2 text-xs'>
+                    <div className='bg-primary h-1.5 w-1.5 animate-pulse rounded-full' />
                     Reading: {currentSection?.title}
                   </div>
                 </CardContent>
@@ -218,14 +221,14 @@ export default function HelpPage() {
 
           {/* Main Content */}
           <main className='lg:col-span-3'>
-            <Card className='shadow-lg hover:shadow-xl transition-shadow duration-300'>
+            <Card className='shadow-lg transition-shadow duration-300 hover:shadow-xl'>
               <CardContent className='p-6 md:p-8 lg:p-10'>
                 <Suspense
                   fallback={
                     <div className='flex min-h-[50vh] items-center justify-center'>
-                      <div className="space-y-4 text-center">
+                      <div className='space-y-4 text-center'>
                         <Loader />
-                        <p className="text-sm text-muted-foreground">Loading content...</p>
+                        <p className='text-muted-foreground text-sm'>Loading content...</p>
                       </div>
                     </div>
                   }
@@ -234,12 +237,12 @@ export default function HelpPage() {
                     const MdxComponent = mdxComponents[section.id];
                     if (!MdxComponent) return null;
                     return (
-                      <section 
-                        key={section.id} 
-                        id={section.id} 
+                      <section
+                        key={section.id}
+                        id={section.id}
                         className={cn(
                           'scroll-mt-20 md:scroll-mt-24',
-                          index > 0 && 'mt-16 pt-8 border-t'
+                          index > 0 && 'mt-16 border-t pt-8'
                         )}
                       >
                         <MdxComponent />
@@ -257,9 +260,9 @@ export default function HelpPage() {
       {isMobile && !isMobileMenuOpen && (
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="fixed bottom-6 right-6 z-30 w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
+          className='bg-primary text-primary-foreground fixed right-6 bottom-6 z-30 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all duration-300 hover:shadow-xl'
         >
-          <Icon name="menu" className="w-6 h-6" />
+          <Icon name='menu' className='h-6 w-6' />
         </button>
       )}
     </div>

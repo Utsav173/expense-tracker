@@ -203,9 +203,34 @@ const ImportTransactionsPage = () => {
 
   const handleDownloadSample = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/accounts/sampleFile/import`);
-      if (!response.ok) throw new Error(`Server error: ${response.statusText}`);
-      const blob = await response.blob();
+      const XLSX = await import('xlsx');
+      const sampleData = [
+        {
+          Date: '2025-01-15',
+          Text: 'Monthly Salary',
+          Amount: 3000,
+          Type: 'income',
+          Transfer: '-',
+          Category: 'Salary'
+        },
+        {
+          Date: '2025-01-15',
+          Text: 'Groceries from SuperMart',
+          Amount: 150.75,
+          Type: 'expense',
+          Transfer: '-',
+          Category: 'Groceries'
+        }
+      ];
+
+      const ws = XLSX.utils.json_to_sheet(sampleData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
+      const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([excelBuffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

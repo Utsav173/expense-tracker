@@ -1,27 +1,58 @@
 <a id="data-management"></a>
 ## <Icon name="database" /> Data Import & Export
 
-Expense Pro gives you full control over your financial data.
+Expense Pro gives you full control over your financial data. Whether you're bringing in years of history from a bank statement or exporting your records for tax season, these tools make it simple.
 
 <a id="data-management-import"></a>
-### Import Transactions Page (`/transactions/import`)
-This is the fastest way to get your historical data into the app.
-1.  **Step 1: Upload:** Select the Destination Account, then provide your file.
-    *   **Excel (XLSX):** For best results, **download our template** and fill it out.
-    *   **PDF:** Upload a standard bank statement, and our AI will extract the transactions.
-2.  **Step 2: Review:** A table will show the extracted transactions. Review them for accuracy and uncheck any you wish to exclude.
-3.  **Step 3: Complete:** A final confirmation will appear. Click "Confirm Import" to add the transactions permanently to your account.
+### Importing Your Transactions
+
+This is the fastest way to get your historical data into the app. Our import wizard guides you through the process.
+
+<FeatureLink href="/transactions/import" title="Go to the Import Wizard" icon="uploadCloud">
+  Start here to upload files and bulk-add your transaction history from a previous bank or software.
+</FeatureLink>
+
+<Step number={1} title="Upload Your File">
+  First, select the account you want to import transactions into. Then, provide your file. We recommend using our template for the best results, but we can also process standard PDF bank statements using AI.
+</Step>
+
+<Alert variant="tip" title="Which format should I use?">
+  - **Excel (XLSX):** For the most reliable results, **download our sample template** from the import page. This ensures all your data is mapped correctly.
+  - **PDF:** If you have a standard bank statement, our AI can often read it automatically. This can be a huge time-saver!
+</Alert>
+
+<Step number={2} title="Review and Confirm">
+  After processing, we'll show you a preview of the transactions we found. You can review everything for accuracy and uncheck any transactions you don't want to import. 
+</Step>
+
+<Step number={3} title="Complete the Import">
+  Once you're happy with the selection, click the "Confirm Import" button. The transactions will be permanently added to your account.
+</Step>
+
 
 <a id="data-management-statements"></a>
-### Generate Statements (`/accounts/statement`)
-Create a formal, professional-looking statement for any of your accounts.
-1.  Select the **Account**.
-2.  Choose the **Export Format** (PDF or XLSX).
-3.  Filter by a **Date Range** or by the **Latest 'N' Transactions**.
-4.  Click **"Generate Statement"**.
+### Generating Account Statements
+
+Need a professional-looking statement for your records or to share? You can generate one for any account.
+
+<FeatureLink href="/accounts/statement" title="Generate a Statement" icon="fileText">
+  Create and download a PDF or Excel statement for a specific account and date range.
+</FeatureLink>
+
+<Alert variant="success" title="Professional PDFs">
+  The PDF statements are professionally formatted and suitable for official use, such as for accounting or loan applications.
+</Alert>
+
 
 <a id="data-management-export"></a>
 ### Exporting Your Data
-1.  Go to the main **Transactions** page.
-2.  Use the **Filters** to create the exact dataset you need.
-3.  Click the **Export** button and choose your format (XLSX or CSV).
+
+It's your data. Export it anytime.
+
+<Step number={1} title="Filter Your Data">
+  Go to the main **Transactions** page. Use the powerful filtering options at the top to narrow down the exact data you need—by date, account, category, and more.
+</Step>
+
+<Step number={2} title="Click Export">
+  Once your filters are applied, click the **Export** button in the top action bar. You can choose to download your data as an XLSX or CSV file, ready for any spreadsheet software.
+</Step>

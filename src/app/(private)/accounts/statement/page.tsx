@@ -9,6 +9,14 @@ import { Label } from '@/components/ui/label';
 import AccountCombobox from '@/components/ui/account-combobox';
 import DatePickerWithRange from '@/components/date/date-range-picker-v2';
 import { DateRange } from 'react-day-picker';
+import {
+  startOfMonth,
+  endOfMonth,
+  subMonths,
+  startOfYear,
+  endOfYear,
+  subYears
+} from 'date-fns';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Icon } from '@/components/ui/icon';
@@ -43,6 +51,28 @@ const StatementPage = () => {
       setIsGenerating(false);
     }
   };
+
+  const datePresets = [
+    {
+      label: 'This Month',
+      range: { from: startOfMonth(new Date()), to: endOfMonth(new Date()) }
+    },
+    {
+      label: 'Last Month',
+      range: {
+        from: startOfMonth(subMonths(new Date(), 1)),
+        to: endOfMonth(subMonths(new Date(), 1))
+      }
+    },
+    {
+      label: 'This Year',
+      range: { from: startOfYear(new Date()), to: endOfYear(new Date()) }
+    },
+    {
+      label: 'Last Year',
+      range: { from: startOfYear(subYears(new Date(), 1)), to: endOfYear(subYears(new Date(), 1)) }
+    }
+  ];
 
   return (
     <div className='mx-auto w-full max-w-2xl p-4 sm:p-8'>
@@ -89,13 +119,7 @@ const StatementPage = () => {
               </ToggleGroup>
             </div>
 
-            <div className='relative flex items-center'>
-              <div className='border-border flex-grow border-t'></div>
-              <span className='text-muted-foreground mx-4 flex-shrink-0 text-xs uppercase'>Or</span>
-              <div className='border-border flex-grow border-t'></div>
-            </div>
-
-            <div className='grid grid-cols-1 gap-6 sm:grid-cols-2'>
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
               <div className='w-full space-y-2'>
                 <Label htmlFor='dateRange'>By Date Range</Label>
                 <DatePickerWithRange
@@ -121,6 +145,24 @@ const StatementPage = () => {
                   }}
                   disabled={!!dateRange?.from}
                 />
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-sm text-muted-foreground">Or use a preset</Label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
+                {datePresets.map((preset) => (
+                  <Button
+                    key={preset.label}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setDateRange(preset.range)}
+                    disabled={!!numTransactions}
+                  >
+                    {preset.label}
+                  </Button>
+                ))}
               </div>
             </div>
 

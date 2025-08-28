@@ -1,13 +1,13 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { AiChat } from './ai-chat';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/components/providers/auth-provider';
-import { Icon } from '@/components/ui/icon';
+import { iconMap } from '../ui/icon-map';
 
 export const AiChatTrigger = () => {
   const isMobile = useIsMobile();
@@ -18,15 +18,13 @@ export const AiChatTrigger = () => {
     return null;
   }
 
-  // REMOVED 'fixed' positioning classes
-  const buttonClasses =
-    'relative z-10 h-12 w-12 rounded-full shadow-lg flex items-center justify-center from-primary to-accent bg-gradient-to-br text-primary-foreground';
+  const iconString = iconMap.ai;
+  const iconUrlPath = iconString.replace(':', '/');
+  const iconUrl = `https://api.iconify.design/${iconUrlPath}.svg`;
 
-  const iconVariants = {
-    initial: { opacity: 0, scale: 0.5, rotate: -90 },
-    animate: { opacity: 1, scale: 1, rotate: 0 },
-    exit: { opacity: 0, scale: 0.5, rotate: 90 }
-  };
+  // CHANGED: Button size reduced from h-14 w-14 to h-11 w-11
+  const buttonClasses =
+    'relative z-10 h-11 w-11 rounded-full border flex items-center justify-center bg-background/80 backdrop-blur-md shadow-lg transition-transform duration-300 hover:scale-110 animate-pulse-glow';
 
   return (
     <motion.div
@@ -45,19 +43,15 @@ export const AiChatTrigger = () => {
                   className={cn(buttonClasses)}
                   aria-label={'AI Assistant'}
                 >
-                  <span className='bg-primary absolute h-full w-full animate-ping rounded-full opacity-20' />
-
-                  <AnimatePresence mode='wait' initial={false}>
-                    <motion.div
-                      key='ai'
-                      variants={iconVariants}
-                      initial='initial'
-                      animate='animate'
-                      exit='exit'
-                    >
-                      <Icon name='ai' className='h-8 w-8' />
-                    </motion.div>
-                  </AnimatePresence>
+                  <span
+                    // CHANGED: Icon size reduced from h-8 w-8 to h-6 w-6 for better proportion
+                    className='icon-gradient h-6 w-6'
+                    style={
+                      {
+                        '--mask-url': `url(${iconUrl})`
+                      } as React.CSSProperties
+                    }
+                  />
                 </motion.button>
               </SheetTrigger>
             </TooltipTrigger>

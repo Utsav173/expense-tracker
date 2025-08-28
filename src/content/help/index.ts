@@ -1,22 +1,32 @@
-/**
- * Defines the structure and navigation for the main /help page sidebar.
- * The order here determines the order in the UI.
- */
-export const helpSections = [
+import { IconName } from '@/components/ui/icon-map';
+
+interface HelpSection {
+  title: string;
+  id: string;
+  icon: IconName;
+  subsections?: {
+    title: string;
+    id: string;
+  }[];
+}
+
+export const helpSections: HelpSection[] = [
   {
     title: 'Getting Started',
     id: 'getting-started',
+    icon: 'rocket',
     subsections: [
       { title: 'Signing Up', id: 'getting-started-signup' },
       { title: 'Creating Your First Account', id: 'getting-started-first-account' },
       { title: 'Understanding the Layout', id: 'getting-started-layout' }
     ]
   },
-  { title: 'Dashboard', id: 'dashboard' },
-  { title: 'Transactions', id: 'transactions' },
+  { title: 'Dashboard', id: 'dashboard', icon: 'layoutGrid' },
+  { title: 'Transactions', id: 'transactions', icon: 'arrowLeftRight' },
   {
     title: 'Accounts',
     id: 'accounts',
+    icon: 'landmark',
     subsections: [
       { title: 'Accounts List', id: 'accounts-list' },
       { title: 'Account Details', id: 'accounts-details' },
@@ -27,6 +37,7 @@ export const helpSections = [
   {
     title: 'Planning',
     id: 'planning',
+    icon: 'calendarCheck',
     subsections: [
       { title: 'Budgets', id: 'planning-budgets' },
       { title: 'Goals', id: 'planning-goals' },
@@ -34,9 +45,9 @@ export const helpSections = [
       { title: 'Debts', id: 'planning-debts' }
     ]
   },
-  { title: 'AI Assistant', id: 'ai-assistant' },
-  { title: 'Data Management', id: 'data-management' },
-  { title: 'Profile & Settings', id: 'profile-settings' }
+  { title: 'AI Assistant', id: 'ai-assistant', icon: 'sparkles' },
+  { title: 'Data Management', id: 'data-management', icon: 'database' },
+  { title: 'Profile & Settings', id: 'profile-settings', icon: 'user' }
 ];
 
 /**

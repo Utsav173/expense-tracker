@@ -1,34 +1,63 @@
 <a id="accounts"></a>
-## <Icon name="wallet" /> Accounts Pages
+## <Icon name="landmark" /> Managing Your Accounts
 
-This section covers everything related to managing the financial accounts you track in Expense Pro, from creation to secure collaboration.
+This section covers everything related to managing the financial accounts you track in Expense Pro, from creation to secure collaboration. An "account" can be a bank account, credit card, digital wallet, or even a stash of cash.
 
 <a id="accounts-list"></a>
-### Accounts List Page (`/accounts`)
-This is your main hub for viewing all your financial accounts.
-*   **Account Summary:** Each card shows the account's current **Balance**, total **Income**, and total **Expense**, giving you a quick performance check.
-*   **Actions:** Hover over an account card to reveal icons to **Edit** the account's name or **Delete** it.
+### The Main Accounts List
+
+This is your central hub for viewing all your financial accounts at a glance.
+
+<FeatureLink href="/accounts" title="Go to the Accounts Page" icon="landmark">
+  See a summary of all your accounts, their balances, and recent activity.
+</FeatureLink>
+
+<Step number={1} title="Review Account Summaries">
+  Each account is displayed on a card showing its current **Balance**, total **Income**, and total **Expense**. This gives you a quick check on the health and activity of each one.
+</Step>
+
+<Step number={2} title="Perform Quick Actions">
+  Hover over any account card to reveal quick action buttons. You can **Edit** the account's name or **Delete** it directly from this view.
+</Step>
 
 <Alert variant="destructive" title="Warning: Deleting an Account is Permanent">
-Deleting an account will also permanently erase **all of its associated transactions**. This action cannot be undone. Please be certain before you confirm.
+  Deleting an account will also permanently erase **all of its associated transactions**. This action cannot be undone. Please be absolutely certain before you confirm.
 </Alert>
 
 <a id="accounts-details"></a>
-### Account Details Page (`/accounts/[id]`)
+### The Account Details Page
+
 Clicking on any account card takes you to its dedicated detail page for an in-depth analysis.
-*   **Header Actions:** A set of tools specific to this account:
-    *   <Icon name="download" className="inline h-4 w-4" /> **Export:** Instantly download a PDF of the current view.
-    *   <Icon name="statement" className="inline h-4 w-4" /> **Statement:** Go to the dedicated page to generate a formal PDF or XLSX statement.
-    *   <Icon name="users" className="inline h-4 w-4" /> **View Shares:** See and manage who you have shared this account with.
-    *   <Icon name="share2" className="inline h-4 w-4" /> **Share:** Invite another user to view and contribute.
-*   **Focused Analytics:** All charts and stats on this page are filtered to show data *only* for the selected account.
+
+<Step number={1} title="Use the Header Actions">
+  At the top of the page, you'll find a set of powerful tools specific to this account:
+  - <Icon name="download" className="inline h-4 w-4" /> **Export:** Instantly download a PDF of the current view.
+  - <Icon name="fileText" className="inline h-4 w-4" /> **Statement:** Go to the dedicated page to generate a formal PDF or XLSX statement.
+  - <Icon name="users" className="inline h-4 w-4" /> **View Shares:** See and manage who you have shared this account with.
+  - <Icon name="share2" className="inline h-4 w-4" /> **Share:** Invite another user to view this account's data.
+</Step>
+
+<Step number={2} title="Analyze Focused Analytics">
+  All charts, stats, and transaction lists on this page are filtered to show data *only* for the selected account. This is perfect for deep-diving into the performance and history of a single account without the noise of others.
+</Step>
 
 <a id="accounts-sharing"></a>
-### Account Sharing Page (`/accounts/shares/[id]`)
-This is your control panel for collaboration.
-*   **View Collaborators:** See a list of all users you've shared this account with.
-*   **Revoke Access:** As the owner, you can remove a user's access at any time.
+### Account Sharing
 
-<a id="accounts-shared-with-me"></a>
-### Shared With Me Page (`/shared-accounts`)
-This page lists all accounts other users have shared with you, keeping them separate from your personal accounts for privacy and clarity.
+Securely share specific accounts with a partner, accountant, or family member without giving them access to your entire profile.
+
+<FeatureLink href="/shared-accounts" title="Manage Your Shared Accounts" icon="users">
+  Control who has access to your accounts and view accounts that have been shared with you.
+</FeatureLink>
+
+<Step number={1} title="Sharing an Account">
+  From the **Account Details** page, click the **Share** icon. You will be prompted to enter the email address of the user you wish to invite. They will receive an email notification.
+</Step>
+
+<Step number={2} title="Managing Access">
+  On the **Account Sharing** page, you can see a list of everyone who has access to your accounts. As the owner, you can **Revoke** their access at any time.
+</Step>
+
+<Step number={3} title="Viewing Shared-With-Me Accounts">
+  The "Shared With Me" tab on the sharing page lists all accounts other users have shared with you. This keeps them separate from your personal accounts for privacy and clarity.
+</Step>
