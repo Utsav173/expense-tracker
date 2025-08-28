@@ -14,6 +14,7 @@
   <p>
     <a href="#-features-showcase">Features</a> •
     <a href="#-why-choose-this-project">Why Us?</a> •
+    <a href="user-guide.md">User Guide</a> •
     <a href="#-tech-stack--architecture">Tech Stack</a> •
     <a href="#-local-development">Getting Started</a> •
     <a href="#-deployment">Deployment</a> •

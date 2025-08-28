@@ -128,7 +128,7 @@ This is perfect for managing a household budget with a partner.
 
 1.  From the **Account Details** page, click the **"Share"** button.
 2.  Enter the email address of the Expense Pro user you want to share with. You can also invite a new user by typing their full email.
-3.  The user will get an invitation. Once they accept, they can view and contribute to that specific account.
+3.  The user will get an invitation. Once they accept, the shared account will appear in their dashboard, distinctly separate from their own private accounts.
 4.  **Privacy Note:** They will _only_ see the account you shared, not your other personal accounts. You can manage who has access from the **Account Shares** page.
 
 #### Viewing Shared Accounts
