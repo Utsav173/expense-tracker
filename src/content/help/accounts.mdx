@@ -1,0 +1,34 @@
+<a id="accounts"></a>
+## <Icon name="wallet" /> Accounts Pages
+
+This section covers everything related to managing the financial accounts you track in Expense Pro, from creation to secure collaboration.
+
+<a id="accounts-list"></a>
+### Accounts List Page (`/accounts`)
+This is your main hub for viewing all your financial accounts.
+*   **Account Summary:** Each card shows the account's current **Balance**, total **Income**, and total **Expense**, giving you a quick performance check.
+*   **Actions:** Hover over an account card to reveal icons to **Edit** the account's name or **Delete** it.
+
+<Alert variant="destructive" title="Warning: Deleting an Account is Permanent">
+Deleting an account will also permanently erase **all of its associated transactions**. This action cannot be undone. Please be certain before you confirm.
+</Alert>
+
+<a id="accounts-details"></a>
+### Account Details Page (`/accounts/[id]`)
+Clicking on any account card takes you to its dedicated detail page for an in-depth analysis.
+*   **Header Actions:** A set of tools specific to this account:
+    *   <Icon name="download" className="inline h-4 w-4" /> **Export:** Instantly download a PDF of the current view.
+    *   <Icon name="statement" className="inline h-4 w-4" /> **Statement:** Go to the dedicated page to generate a formal PDF or XLSX statement.
+    *   <Icon name="users" className="inline h-4 w-4" /> **View Shares:** See and manage who you have shared this account with.
+    *   <Icon name="share2" className="inline h-4 w-4" /> **Share:** Invite another user to view and contribute.
+*   **Focused Analytics:** All charts and stats on this page are filtered to show data *only* for the selected account.
+
+<a id="accounts-sharing"></a>
+### Account Sharing Page (`/accounts/shares/[id]`)
+This is your control panel for collaboration.
+*   **View Collaborators:** See a list of all users you've shared this account with.
+*   **Revoke Access:** As the owner, you can remove a user's access at any time.
+
+<a id="accounts-shared-with-me"></a>
+### Shared With Me Page (`/shared-accounts`)
+This page lists all accounts other users have shared with you, keeping them separate from your personal accounts for privacy and clarity.

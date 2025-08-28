@@ -1,4 +1,5 @@
 'use client';
+
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -7,6 +8,8 @@ import { ModeToggle } from '../theme-toggle';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { Icon } from '../ui/icon';
+import { useAuth } from '@/components/providers/auth-provider';
+import { Skeleton } from '../ui/skeleton';
 
 const navLinks = [
   { name: 'Features', href: '#features' },
@@ -18,6 +21,7 @@ const navLinks = [
 const LandingPageHeader = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
+  const { session, isLoading } = useAuth();
 
   useEffect(() => {
     if (isMenuOpen) {
@@ -46,6 +50,105 @@ const LandingPageHeader = () => {
   const navItemVariants: Variants = {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } }
+  };
+
+  const AuthButtons = () => {
+    if (isLoading) {
+      return (
+        <div className='flex items-center gap-2'>
+          <Skeleton className='h-8 w-16' />
+          <Skeleton className='h-8 w-24' />
+        </div>
+      );
+    }
+
+    if (session) {
+      return (
+        <Link href='/accounts'>
+          <Button size='sm' className='text-sm'>
+            Go to Dashboard <Icon name='arrowRight' className='ml-2 h-4 w-4' />
+          </Button>
+        </Link>
+      );
+    }
+
+    return (
+      <>
+        <Link href='/auth/login'>
+          <Button
+            variant='ghost'
+            size='sm'
+            className='text-muted-foreground hover:bg-accent hover:text-accent-foreground text-sm transition-colors'
+          >
+            Login
+          </Button>
+        </Link>
+        <Link href='/auth/signup'>
+          <Button
+            size='sm'
+            className='text-sm text-white shadow-md transition-all hover:shadow-sky-500/40'
+          >
+            Sign Up Free
+          </Button>
+        </Link>
+      </>
+    );
+  };
+
+  const AuthButtonsMobile = () => {
+    if (isLoading) {
+      return (
+        <div className='flex flex-col gap-4'>
+          <Skeleton className='h-12 w-full' />
+        </div>
+      );
+    }
+
+    if (session) {
+      return (
+        <motion.div
+          variants={navItemVariants}
+          initial='initial'
+          animate='animate'
+          transition={{ delay: 0.6 }}
+        >
+          <Link href='/accounts'>
+            <Button size='lg' className='w-full'>
+              Go to Dashboard <Icon name='arrowRight' className='ml-2 h-4 w-4' />
+            </Button>
+          </Link>
+        </motion.div>
+      );
+    }
+
+    return (
+      <>
+        <motion.div
+          variants={navItemVariants}
+          initial='initial'
+          animate='animate'
+          transition={{ delay: 0.6 }}
+        >
+          <Link href='/auth/login'>
+            <Button variant='outline' size='lg' className='w-full'>
+              Login
+            </Button>
+          </Link>
+        </motion.div>
+        <motion.div
+          variants={navItemVariants}
+          initial='initial'
+          animate='animate'
+          transition={{ delay: 0.7 }}
+        >
+          <Link href='/auth/signup'>
+            <Button size='lg' className='w-full'>
+              Sign Up Free
+            </Button>
+          </Link>
+        </motion.div>
+      </>
+    );
   };
 
   return (
@@ -77,23 +180,7 @@ const LandingPageHeader = () => {
 
           <div className='hidden items-center gap-2 md:flex'>
             <ModeToggle />
-            <Link href='/auth/login'>
-              <Button
-                variant='ghost'
-                size='sm'
-                className='text-muted-foreground hover:bg-accent hover:text-accent-foreground text-sm transition-colors'
-              >
-                Login
-              </Button>
-            </Link>
-            <Link href='/auth/signup'>
-              <Button
-                size='sm'
-                className='text-sm text-white shadow-md transition-all hover:shadow-sky-500/40'
-              >
-                Sign Up Free
-              </Button>
-            </Link>
+            <AuthButtons />
           </div>
 
           <div className='flex items-center gap-2 md:hidden'>
@@ -158,30 +245,7 @@ const LandingPageHeader = () => {
               ))}
             </nav>
             <div className='mt-auto flex flex-col gap-4'>
-              <motion.div
-                variants={navItemVariants}
-                initial='initial'
-                animate='animate'
-                transition={{ delay: 0.6 }}
-              >
-                <Link href='/auth/login'>
-                  <Button variant='outline' size='lg' className='w-full'>
-                    Login
-                  </Button>
-                </Link>
-              </motion.div>
-              <motion.div
-                variants={navItemVariants}
-                initial='initial'
-                animate='animate'
-                transition={{ delay: 0.7 }}
-              >
-                <Link href='/auth/signup'>
-                  <Button size='lg' className='w-full'>
-                    Sign Up Free
-                  </Button>
-                </Link>
-              </motion.div>
+              <AuthButtonsMobile />
             </div>
           </motion.div>
         )}

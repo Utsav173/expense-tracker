@@ -141,7 +141,8 @@ export const iconMap = {
   ai: 'healthicons:artificial-intelligence',
   statement: 'material-symbols:description',
   groups: 'material-symbols:groups',
-  receipt: 'material-symbols:receipt'
+  receipt: 'material-symbols:receipt',
+  help: 'material-symbols:help-outline'
 } as const;
 
 export type IconName = keyof typeof iconMap;

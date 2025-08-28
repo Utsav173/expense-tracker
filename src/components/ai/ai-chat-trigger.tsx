@@ -18,8 +18,9 @@ export const AiChatTrigger = () => {
     return null;
   }
 
+  // REMOVED 'fixed' positioning classes
   const buttonClasses =
-    'fixed right-6 bottom-6 z-50 h-12 w-12 rounded-full shadow-lg flex items-center justify-center from-primary to-accent bg-gradient-to-br text-primary-foreground';
+    'relative z-10 h-12 w-12 rounded-full shadow-lg flex items-center justify-center from-primary to-accent bg-gradient-to-br text-primary-foreground';
 
   const iconVariants = {
     initial: { opacity: 0, scale: 0.5, rotate: -90 },
@@ -28,51 +29,54 @@ export const AiChatTrigger = () => {
   };
 
   return (
-    <Sheet>
-      <TooltipProvider delayDuration={100}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <SheetTrigger asChild>
-              <motion.button
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.5 }}
-                whileHover={{ scale: 1.1, transition: { type: 'spring', stiffness: 300 } }}
-                whileTap={{ scale: 0.95 }}
-                className={cn(buttonClasses)}
-                aria-label={'AI Assistant'}
-              >
-                <span className='bg-primary absolute h-full w-full animate-ping rounded-full opacity-20' />
+    <motion.div
+      initial={{ scale: 0, y: 50 }}
+      animate={{ scale: 1, y: 0 }}
+      transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+    >
+      <Sheet>
+        <TooltipProvider delayDuration={100}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <SheetTrigger asChild>
+                <motion.button
+                  whileHover={{ scale: 1.1, transition: { type: 'spring', stiffness: 300 } }}
+                  whileTap={{ scale: 0.95 }}
+                  className={cn(buttonClasses)}
+                  aria-label={'AI Assistant'}
+                >
+                  <span className='bg-primary absolute h-full w-full animate-ping rounded-full opacity-20' />
 
-                <AnimatePresence mode='wait' initial={false}>
-                  <motion.div
-                    key='ai'
-                    variants={iconVariants}
-                    initial='initial'
-                    animate='animate'
-                    exit='exit'
-                  >
-                    <Icon name='ai' className='h-8 w-8' />
-                  </motion.div>
-                </AnimatePresence>
-              </motion.button>
-            </SheetTrigger>
-          </TooltipTrigger>
-          <TooltipContent side='left' sideOffset={10}>
-            <p>AI Financial Assistant</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      <SheetContent
-        side={isMobile ? 'bottom' : 'right'}
-        className={cn(
-          'flex flex-col p-0 [&>button:first-of-type]:hidden',
-          isMobile ? 'h-[90dvh] w-full rounded-t-xl' : 'h-full max-w-2xl min-w-[30%]'
-        )}
-        aria-describedby={undefined}
-      >
-        <AiChat isFullPage />
-      </SheetContent>
-    </Sheet>
+                  <AnimatePresence mode='wait' initial={false}>
+                    <motion.div
+                      key='ai'
+                      variants={iconVariants}
+                      initial='initial'
+                      animate='animate'
+                      exit='exit'
+                    >
+                      <Icon name='ai' className='h-8 w-8' />
+                    </motion.div>
+                  </AnimatePresence>
+                </motion.button>
+              </SheetTrigger>
+            </TooltipTrigger>
+            <TooltipContent side='left' sideOffset={10}>
+              <p>AI Financial Assistant</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <SheetContent
+          side={isMobile ? 'bottom' : 'right'}
+          className={cn(
+            'flex flex-col p-0 [&>button:first-of-type]:hidden',
+            isMobile ? 'h-[90dvh] w-full rounded-t-xl' : 'h-full max-w-2xl min-w-[30%]'
+          )}
+          aria-describedby={undefined}
+        >
+          <AiChat isFullPage />
+        </SheetContent>
+      </Sheet>
+    </motion.div>
   );
 };

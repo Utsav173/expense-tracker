@@ -442,8 +442,9 @@ function SidebarMenuButton({
 } & VariantProps<typeof sidebarMenuButtonVariants>) {
   const Comp = asChild ? Slot : 'button';
   const { isMobile, state } = useSidebar();
+  const { disabled } = props;
 
-  const button = (
+  const buttonElement = (
     <Comp
       data-slot='sidebar-menu-button'
       data-sidebar='menu-button'
@@ -454,19 +455,27 @@ function SidebarMenuButton({
     />
   );
 
-  if (!tooltip) return button;
+  if (!tooltip || isMobile) {
+    return buttonElement;
+  }
 
   const tooltipContent = typeof tooltip === 'string' ? { children: tooltip } : tooltip;
+  const showTooltip = state === 'collapsed' || disabled;
+
+  if (!showTooltip) {
+    return buttonElement;
+  }
+
+  const triggerElement = disabled ? (
+    <span className='inline-flex w-full cursor-not-allowed'>{buttonElement}</span>
+  ) : (
+    buttonElement
+  );
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>{button}</TooltipTrigger>
-      <TooltipContent
-        side='right'
-        align='center'
-        hidden={state !== 'collapsed' || isMobile}
-        {...tooltipContent}
-      />
+      <TooltipTrigger asChild>{triggerElement}</TooltipTrigger>
+      <TooltipContent side='right' align='center' {...tooltipContent} />
     </Tooltip>
   );
 }

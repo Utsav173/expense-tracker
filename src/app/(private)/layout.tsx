@@ -1,8 +1,8 @@
 import React from 'react';
 import { Metadata } from 'next';
 import SidebarLayout from '@/components/layout/sidebar-layout';
-import { AiChatWrapper } from '@/components/ai/ai-chat-wrapper';
 import '../globals.css';
+import { FloatingActionButtons } from '@/components/layout/FloatingActionButtons';
 
 export const metadata: Metadata = {
   title: 'Expense Pro',
@@ -24,7 +24,7 @@ export default async function PrivateRoutesLayout({ children }: { children: Reac
   return (
     <>
       <SidebarLayout>{children}</SidebarLayout>
-      <AiChatWrapper />
+      <FloatingActionButtons />
     </>
   );
 }
