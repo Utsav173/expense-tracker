@@ -9,7 +9,8 @@ const LandingPageFooter = () => {
   const productLinks = [
     { name: 'Features', href: '#features' },
     { name: 'Pricing', href: '/pricing' },
-    { name: 'How It Works', href: '#how-it-works' }
+    { name: 'How It Works', href: '#how-it-works' },
+    { name: 'Help Docs', href: '/help' }
   ];
 
   const legalLinks = [
