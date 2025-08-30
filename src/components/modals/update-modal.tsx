@@ -64,15 +64,13 @@ export function UpdateModal<TFormValues extends z.ZodType<any, any>>({
 
   const mutation = useMutation({
     mutationFn: (data: z.infer<TFormValues>) => updateFn(entityId, data),
-    onSuccess: async () => {
-      for (const key of invalidateKeys) {
-        await invalidate(key);
-      }
+    onSuccess: () => {
+      onOpenChange(false);
       showSuccess('Successfully updated.');
       if (onSuccess) {
         onSuccess();
       }
-      onOpenChange(false);
+      Promise.all(invalidateKeys.map(key => invalidate(key)));
     },
     onError: (error: any) => {
       const message = error?.response?.data?.message || error.message || 'Failed to update.';

@@ -73,7 +73,14 @@ export const apiEndpoints = {
     },
     getUsersForDropdown: {
       method: 'GET',
-      path: '/accounts/dropdown/user',
+      path: '/accounts/user-dropdown',
+      query: z.object({
+        q: z.string().optional()
+      })
+    },
+    getAccountsDropdown: {
+      method: 'GET',
+      path: '/accounts/dropdown',
       query: z.object({
         q: z.string().optional()
       })
@@ -455,6 +462,13 @@ export const apiEndpoints = {
     }
   },
   goal: {
+    dropdown: {
+      method: 'GET',
+      path: '/goal/dropdown',
+      query: z.object({
+        q: z.string().optional()
+      })
+    },
     getAll: {
       method: 'GET',
       path: '/goal/all',

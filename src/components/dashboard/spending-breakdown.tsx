@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -35,7 +37,6 @@ import Loader from '../ui/loader';
 const truncateLabel = (label: string, max: number) =>
   label.length > max ? label.slice(0, max - 1) + '…' : label;
 
-// New custom tooltip for Pie and Donut charts
 const CustomTooltipContent = ({ active, payload, totalExpense }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0];
@@ -209,10 +210,10 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
       return (
         <ChartContainer
           config={chartConfig}
-          className='h-[400px] w-full'
+          className='mx-auto h-[380px] w-full max-sm:h-[340px]'
           aria-label={`Vertical bar chart showing spending breakdown for ${durationLabels[duration]}`}
         >
-          <ResponsiveContainer width='100%' height='100%'>
+          <ResponsiveContainer width='100%' height='100%' minHeight={isMobile ? 280 : 400}>
             <BarChart
               data={formattedData}
               layout='vertical'
@@ -263,10 +264,10 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
       return (
         <ChartContainer
           config={chartConfig}
-          className='mx-auto aspect-square h-[400px] max-sm:h-[280px]'
+          className='mx-auto aspect-square h-[380px] w-full max-sm:h-[320px]'
           aria-label={`Donut chart showing spending breakdown for ${durationLabels[duration]}`}
         >
-          <ResponsiveContainer>
+          <ResponsiveContainer width='100%' height='100%' minHeight={isMobile ? 280 : 400}>
             <PieChart>
               <ChartTooltip content={<CustomTooltipContent totalExpense={totalExpense} />} />
               <Pie
@@ -288,7 +289,17 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
               </Pie>
               <ChartLegend
                 content={<ChartLegendContent nameKey='name' />}
-                wrapperStyle={{ paddingTop: '20px' }}
+                wrapperStyle={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  maxHeight: isMobile ? '120px' : '200px',
+                  overflowY: 'auto',
+                  padding: '12px',
+                  marginTop: '8px',
+                  scrollBehavior: 'smooth'
+                }}
               />
             </PieChart>
           </ResponsiveContainer>
@@ -299,10 +310,10 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
     return (
       <ChartContainer
         config={chartConfig}
-        className='mx-auto aspect-square h-[400px] max-sm:h-[280px]'
+        className='mx-auto aspect-square h-[380px] w-full max-sm:h-[320px]'
         aria-label={`Pie chart showing spending breakdown for ${durationLabels[duration]}`}
       >
-        <ResponsiveContainer>
+        <ResponsiveContainer width='100%' height='100%' minHeight={isMobile ? 280 : 400}>
           <PieChart>
             <ChartTooltip content={<CustomTooltipContent totalExpense={totalExpense} />} />
             <Pie
@@ -311,8 +322,8 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
               nameKey='name'
               cx='50%'
               cy='50%'
-              outerRadius={'80%'}
-              innerRadius={'0%'}
+              outerRadius='80%'
+              innerRadius='0%'
               paddingAngle={2}
             >
               {formattedData.map((entry) => (
@@ -321,7 +332,16 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
             </Pie>
             <ChartLegend
               content={<ChartLegendContent nameKey='name' />}
-              wrapperStyle={{ paddingTop: '20px' }}
+              wrapperStyle={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                justifyContent: 'center',
+                gap: '8px',
+                maxHeight: isMobile ? '120px' : '200px',
+                overflowY: 'auto',
+                padding: '12px',
+                marginTop: '8px'
+              }}
             />
           </PieChart>
         </ResponsiveContainer>
@@ -330,13 +350,9 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
   };
 
   return (
-    <Card className={cn('flex h-full flex-col shadow-sm', className)}>
+    <Card className={cn('flex h-full flex-col overflow-y-scroll shadow-sm', className)}>
       <CardHeader className='flex flex-none gap-2 pb-2'>
         <div className='flex flex-col items-center justify-between gap-4 sm:flex-row'>
-          <div className='flex-1'>
-            <h3 className='text-lg font-semibold'>Spending Breakdown</h3>
-            <p className='text-muted-foreground text-sm'>Top expense categories</p>
-          </div>
           {showDurationSelector && (
             <Select value={duration} onValueChange={(v) => setDuration(v as DurationOption)}>
               <SelectTrigger className='border-input/50 hover:border-input h-8 w-[150px] text-xs transition-colors'>
@@ -370,7 +386,7 @@ export const SpendingBreakdown: React.FC<SpendingBreakdownProps> = ({
           </Tabs>
         </div>
       </CardHeader>
-      <CardContent className='min-h-[400px] flex-1 pt-4'>
+      <CardContent className='flex-1 pt-4'>
         {isLoading || isFetching ? (
           <Loader />
         ) : error ? (

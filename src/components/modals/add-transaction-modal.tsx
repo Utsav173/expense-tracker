@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,9 +9,9 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { transactionCreate } from '@/lib/endpoints/transactions';
 import AddModal from './add-modal';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { accountGetDropdown } from '@/lib/endpoints/accounts';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import GoalCombobox from '../ui/goal-combobox';
 import type { AccountAPI } from '@/lib/api/api-types';
 import { NumericFormat } from 'react-number-format';
 import DateTimePicker from '../date/date-time-picker';
@@ -26,9 +26,13 @@ import {
 } from '../ui/form';
 import { cn } from '@/lib/utils';
 import { Icon } from '../ui/icon';
-import { Checkbox } from '../ui/checkbox'; // Using the styled checkbox
+import { Checkbox } from '../ui/checkbox';
 import CategoryCombobox from '../ui/category-combobox';
-import AccountCombobox from '../ui/account-combobox'; // The new Account Combobox
+import AccountCombobox from '../ui/account-combobox';
+import { goalAddAmount } from '@/lib/endpoints/goal';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { ComboboxHandle } from '../ui/combobox';
+import { Collapsible, CollapsibleContent } from '../ui/collapsible';
 
 const transactionSchema = z.object({
   text: z.string().min(3, 'Description must be at least 3 characters').max(255),
@@ -46,7 +50,9 @@ const transactionSchema = z.object({
   recurrenceType: z.enum(['daily', 'weekly', 'monthly', 'yearly', 'hourly']).optional().nullable(),
   recurrenceEndDate: z.string().optional().nullable(),
   currency: z.string().optional().default(''),
-  createdAt: z.string().optional().nullable()
+  createdAt: z.string().optional().nullable(),
+  addToGoal: z.boolean().optional(),
+  goalId: z.string().optional().nullable()
 });
 
 type TransactionFormSchema = z.infer<typeof transactionSchema>;
@@ -66,7 +72,8 @@ const AddTransactionModal = ({
   const [accounts, setAccounts] = useState<AccountAPI.SimpleAccount[]>([]);
   const [createdAt, setCreatedAt] = useState<Date>(new Date());
   const [recurrenceEndDate, setRecurrenceEndDate] = useState<Date | null>(null);
-  const { showError } = useToast();
+  const { showError, showSuccess } = useToast();
+  const accountDropdownRef = React.useRef<ComboboxHandle>(null);
 
   const { data: accountData } = useQuery({
     queryKey: ['accountDropdown'],
@@ -79,6 +86,7 @@ const AddTransactionModal = ({
       isIncome: false,
       currency: '',
       recurring: false,
+      addToGoal: false,
       ...(accountId && { accountId })
     }
   });
@@ -94,6 +102,20 @@ const AddTransactionModal = ({
 
   const isIncome = watch('isIncome');
   const selectedAccountId = watch('accountId');
+  const addToGoal = watch('addToGoal');
+  const isRecurring = watch('recurring');
+
+  const addAmountToGoalMutation = useMutation({
+    mutationFn: (data: { id: string; data: { amount: number } }) =>
+      goalAddAmount(data.id, data.data),
+    onSuccess: () => {
+      showSuccess('Amount added to goal successfully');
+      onTransactionAdded();
+    },
+    onError: (error: any) => {
+      showError(error.message || 'Failed to add amount to goal');
+    }
+  });
 
   useEffect(() => {
     if (accountData) {
@@ -107,8 +129,15 @@ const AddTransactionModal = ({
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
+    accountDropdownRef?.current?.preloadOptions('');
     if (open) {
-      reset({ isIncome: false, currency: '', recurring: false, ...(accountId && { accountId }) });
+      reset({
+        isIncome: false,
+        currency: '',
+        recurring: false,
+        addToGoal: false,
+        ...(accountId && { accountId })
+      });
       setCreatedAt(new Date());
       setRecurrenceEndDate(null);
     }
@@ -130,9 +159,15 @@ const AddTransactionModal = ({
         createdAt: createdAt.toISOString()
       };
       await transactionCreate(transactionData);
+
+      if (data.addToGoal && data.goalId) {
+        addAmountToGoalMutation.mutate({ id: data.goalId, data: { amount: Number(data.amount) } });
+      } else {
+        onTransactionAdded();
+      }
+
       setIsOpen(false);
       reset();
-      onTransactionAdded();
     } catch (error: any) {
       showError(error.message || 'Failed to create transaction');
     }
@@ -184,11 +219,7 @@ const AddTransactionModal = ({
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder='e.g., Coffee with friends'
-                      {...field}
-                      disabled={isSubmitting}
-                    />
+                    <Input placeholder='e.g., Salary' {...field} disabled={isSubmitting} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -243,6 +274,7 @@ const AddTransactionModal = ({
                           onChange={field.onChange}
                           disabled={isSubmitting}
                           placeholder='Select account'
+                          ref={accountDropdownRef}
                         />
                       </FormControl>
                       <FormMessage />
@@ -291,81 +323,124 @@ const AddTransactionModal = ({
               />
             </div>
 
-            <div className='flex items-center pt-2'>
-              <div className='flex-1 border-t' />
-              <div className='text-muted-foreground mx-4 text-xs uppercase'>Optional Details</div>
-              <div className='flex-1 border-t' />
-            </div>
-
-            <FormField
-              control={control}
-              name='recurring'
-              render={({ field }) => (
-                <FormItem className='flex flex-row items-start space-y-0 space-x-3 rounded-md border p-4'>
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      disabled={isSubmitting}
-                    />
-                  </FormControl>
-                  <div className='space-y-1 leading-none'>
-                    <FormLabel>Recurring Transaction</FormLabel>
-                    <FormDescription>Set this transaction to repeat automatically.</FormDescription>
-                  </div>
-                </FormItem>
-              )}
-            />
-
-            {watch('recurring') && (
-              <div className='space-y-4 rounded-md border p-4'>
+            {isIncome && (
+              <div className='rounded-md border p-4'>
                 <FormField
                   control={control}
-                  name='recurrenceType'
+                  name='addToGoal'
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Frequency</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value || ''}
-                        disabled={isSubmitting}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder='Select frequency' />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value='hourly'>Hourly</SelectItem>
-                          <SelectItem value='daily'>Daily</SelectItem>
-                          <SelectItem value='weekly'>Weekly</SelectItem>
-                          <SelectItem value='monthly'>Monthly</SelectItem>
-                          <SelectItem value='yearly'>Yearly</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={control}
-                  name='recurrenceEndDate'
-                  render={() => (
-                    <FormItem>
-                      <FormLabel>End Date (Optional)</FormLabel>
+                    <FormItem className='flex flex-row items-center space-y-0 space-x-3'>
                       <FormControl>
-                        <DateTimePicker
-                          value={recurrenceEndDate || undefined}
-                          onChange={setRecurrenceEndDate}
-                          disabled={isSubmitting}
-                        />
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
-                      <FormMessage />
+                      <div className='space-y-1 leading-none'>
+                        <FormLabel>Add to a Goal</FormLabel>
+                        <FormDescription>
+                          Link this income to one of your saving goals.
+                        </FormDescription>
+                      </div>
                     </FormItem>
                   )}
                 />
+                <Collapsible open={addToGoal}>
+                  <CollapsibleContent className='data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up overflow-hidden pt-4'>
+                    <FormField
+                      control={control}
+                      name='goalId'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Goal</FormLabel>
+                          <FormControl>
+                            <GoalCombobox
+                              value={field.value}
+                              onChange={field.onChange}
+                              disabled={isSubmitting}
+                              placeholder='Select a goal'
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
             )}
+
+            <div className='rounded-md border p-4'>
+              <FormField
+                control={control}
+                name='recurring'
+                render={({ field }) => (
+                  <FormItem className='flex flex-row items-center space-y-0 space-x-3'>
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
+                    <div className='space-y-1 leading-none'>
+                      <FormLabel>Recurring Transaction</FormLabel>
+                      <FormDescription>
+                        Set this transaction to repeat automatically.
+                      </FormDescription>
+                    </div>
+                  </FormItem>
+                )}
+              />
+              <Collapsible open={isRecurring}>
+                <CollapsibleContent className='data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up overflow-hidden pt-4'>
+                  <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                    <FormField
+                      control={control}
+                      name='recurrenceType'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Frequency</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value || ''}
+                            disabled={isSubmitting}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder='Select frequency' />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value='hourly'>Hourly</SelectItem>
+                              <SelectItem value='daily'>Daily</SelectItem>
+                              <SelectItem value='weekly'>Weekly</SelectItem>
+                              <SelectItem value='monthly'>Monthly</SelectItem>
+                              <SelectItem value='yearly'>Yearly</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={control}
+                      name='recurrenceEndDate'
+                      render={() => (
+                        <FormItem>
+                          <FormLabel>End Date (Optional)</FormLabel>
+                          <FormControl>
+                            <DateTimePicker
+                              value={recurrenceEndDate || undefined}
+                              onChange={setRecurrenceEndDate}
+                              disabled={isSubmitting}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
 
             {!isIncome && (
               <FormField
@@ -373,7 +448,7 @@ const AddTransactionModal = ({
                 name='transfer'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Transfer Details</FormLabel>
+                    <FormLabel>Transfer Details (Optional)</FormLabel>
                     <FormControl>
                       <Input
                         placeholder='e.g., Sent to John Doe'

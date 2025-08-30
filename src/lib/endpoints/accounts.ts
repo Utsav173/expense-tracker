@@ -9,6 +9,7 @@ type ShareAccountBody = z.infer<typeof apiEndpoints.accounts.shareAccount.body>;
 type RevokeShareBody = z.infer<typeof apiEndpoints.accounts.revokeShare.body>;
 type GetStatementParams = z.infer<typeof apiEndpoints.accounts.getStatement.query>;
 type GetAllParams = z.infer<typeof apiEndpoints.accounts.getAll.query>;
+type AccountsDropdownParams = z.infer<typeof apiEndpoints.accounts.getAccountsDropdown.query>;
 type GetSharedParams = z.infer<typeof apiEndpoints.accounts.getSharedAccounts.query>;
 
 export const accountCreate = (body: CreateAccountBody) =>
@@ -19,6 +20,11 @@ export const accountCreate = (body: CreateAccountBody) =>
 
 export const accountGetAll = (params: GetAllParams): Promise<AccountAPI.GetAccountsResponse> =>
   apiClient(apiEndpoints.accounts.getAll, { query: params });
+
+export const getAccountsDropdown = (
+  params: AccountsDropdownParams
+): Promise<AccountAPI.AccountDropdown[]> =>
+  apiClient(apiEndpoints.accounts.getAccountsDropdown, { query: params });
 
 export const accountUpdate = (id: string, body: UpdateAccountBody) =>
   apiClient<{ id: string }, unknown, UpdateAccountBody, AccountAPI.UpdateAccountResponse>(

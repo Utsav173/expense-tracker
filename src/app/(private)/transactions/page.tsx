@@ -290,7 +290,15 @@ const TransactionsPage = () => {
           </p>
         </div>
         <div className='flex gap-2'>
-          <AddTransactionModal onTransactionAdded={refetch} />
+          <AddTransactionModal
+            onTransactionAdded={refetch}
+            triggerButton={
+              <Button variant='transaction' className='h-10 w-full px-4 py-2 font-semibold'>
+                <Icon name='plusCircle' className='mr-2 h-4 w-4' />
+                Add Transaction
+              </Button>
+            }
+          />
           <Link href='/transactions/import'>
             <Button variant='outline' className='gap-2'>
               <Icon name='import' className='h-4 w-4' />

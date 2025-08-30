@@ -29,7 +29,6 @@ import { apiEndpoints } from '@/lib/api/api-endpoints-request-types';
 import { Icon } from '../ui/icon';
 
 type DebtFormValues = z.infer<typeof apiEndpoints.interest.createDebt.body>;
-type InterestFormSchema = z.infer<typeof apiEndpoints.interest.calculate.body>;
 
 interface AddDebtModalProps {
   onDebtAdded: () => void;
@@ -194,6 +193,7 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
                   <FormLabel>Counterparty (Who is involved?)*</FormLabel>
                   <FormControl>
                     <InvitationCombobox
+                      value={field.value}
                       onChange={(option) => field.onChange(option?.value ?? '')}
                       disabled={createDebtMutation.isPending}
                       placeholder='Select or invite user by email...'

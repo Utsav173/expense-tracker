@@ -28,3 +28,6 @@ export const goalWithdrawAmount = (
   body: AmountBody
 ): Promise<GoalAPI.WithdrawAmountResponse> =>
   apiClient(apiEndpoints.goal.withdrawAmount, { params: { id }, body });
+
+export const goalGetDropdown = (q?: string): Promise<GoalAPI.GetGoalsDropdownResponse> =>
+  apiClient(apiEndpoints.goal.dropdown, { query: { q } });

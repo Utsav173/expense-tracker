@@ -221,9 +221,10 @@ export const TrendChart: React.FC<TrendChartProps> = ({
             <RechartsBarChart {...commonProps}>
               <CartesianGrid
                 strokeDasharray='3 3'
-                vertical={false}
-                stroke='var(--border)'
-                strokeOpacity={0.3}
+                vertical
+                horizontal
+                stroke='var(--muted-foreground)'
+                strokeOpacity={1}
               />
               <XAxis {...xAxisProps} />
               <YAxis hide />
@@ -272,9 +273,10 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               </defs>
               <CartesianGrid
                 strokeDasharray='3 3'
-                vertical={false}
-                stroke='var(--border)'
-                strokeOpacity={0.3}
+                vertical
+                horizontal
+                stroke='var(--muted-foreground)'
+                strokeOpacity={1}
               />
               <XAxis {...xAxisProps} />
               <YAxis hide />
@@ -322,9 +324,10 @@ export const TrendChart: React.FC<TrendChartProps> = ({
             <RechartsLineChart {...commonProps}>
               <CartesianGrid
                 strokeDasharray='3 3'
-                vertical={false}
-                stroke='var(--border)'
-                strokeOpacity={0.3}
+                vertical
+                horizontal
+                stroke='var(--muted-foreground)'
+                strokeOpacity={1}
               />
               <XAxis {...xAxisProps} />
               <YAxis hide />

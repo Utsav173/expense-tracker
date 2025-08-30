@@ -69,6 +69,7 @@
   --shadow-strength: 1%;
 
   --gray-0: oklch(1 0 0);
+  --gray-25: oklch(0.99 0.0005 var(--hue-slate));
   --gray-50: oklch(0.99 0.005 var(--hue-slate));
   --gray-100: oklch(0.97 0.008 var(--hue-slate));
   --gray-150: oklch(0.94 0.01 var(--hue-slate));
@@ -96,7 +97,7 @@
   --sidebar-border: var(--gray-150);
   --sidebar-accent: var(--gray-100);
   --sidebar-accent-foreground: var(--primary-base);
-  --card: var(--gray-0);
+  --card: var(--gray-25);
   --card-foreground: var(--foreground);
   --popover: var(--card);
   --popover-foreground: var(--foreground);
@@ -166,29 +167,29 @@
   --brand: var(--primary);
   --brand-foreground: var(--primary-foreground);
 
-  --account: oklch(0.6 0.16 var(--hue-primary));
-  --account-foreground: var(--primary-fg);
-  --account-hover: oklch(from var(--account) calc(l - 0.06) c h);
-  --account-active: oklch(from var(--account) calc(l - 0.12) c h);
-  --account-border-b: oklch(from var(--account) calc(l - 0.2) c h);
+  /* Account */
+  --account: oklch(0.82 0.16 250);
+  --account-foreground: oklch(0.45 0.1 250);
+  --account-border-b: oklch(0.72 0.16 250);
+  --account-hover: oklch(0.75 0.16 250);
 
-  --transaction: oklch(0.58 0.16 var(--hue-success));
-  --transaction-foreground: var(--success-fg);
-  --transaction-hover: oklch(from var(--transaction) calc(l - 0.06) c h);
-  --transaction-active: oklch(from var(--transaction) calc(l - 0.12) c h);
-  --transaction-border-b: oklch(from var(--transaction) calc(l - 0.2) c h);
+  /* Transaction */
+  --transaction: oklch(0.82 0.16 145);
+  --transaction-foreground: oklch(0.42 0.1 145);
+  --transaction-border-b: oklch(0.72 0.16 145);
+  --transaction-hover: oklch(0.75 0.16 145);
 
-  --planning: oklch(0.62 0.16 var(--hue-balance));
-  --planning-foreground: oklch(0.98 0.005 var(--hue-balance));
-  --planning-hover: oklch(from var(--planning) calc(l - 0.06) c h);
-  --planning-active: oklch(from var(--planning) calc(l - 0.12) c h);
-  --planning-border-b: oklch(from var(--planning) calc(l - 0.2) c h);
+  /* Planning */
+  --planning: oklch(0.83 0.16 210);
+  --planning-foreground: oklch(0.43 0.1 210);
+  --planning-border-b: oklch(0.73 0.16 210);
+  --planning-hover: oklch(0.76 0.16 210);
 
-  --category: oklch(0.64 0.14 var(--hue-category));
-  --category-foreground: oklch(0.98 0.005 var(--hue-category));
-  --category-hover: oklch(from var(--category) calc(l - 0.06) c h);
-  --category-active: oklch(from var(--category) calc(l - 0.12) c h);
-  --category-border-b: oklch(from var(--category) calc(l - 0.2) c h);
+  /* Category */
+  --category: oklch(0.84 0.16 90);
+  --category-foreground: oklch(0.44 0.1 90);
+  --category-border-b: oklch(0.74 0.16 90);
+  --category-hover: oklch(0.77 0.16 90);
 
   --chart-primary: oklch(0.6 0.16 var(--hue-primary));
   --chart-secondary: oklch(0.58 0.16 var(--hue-success));
@@ -229,7 +230,7 @@
 
 .dark {
   --shadow-color-hsl: 240 10% 3.9%;
-  --shadow-strength: 3%;
+  --shadow-strength: 6%;
   --gray-50: oklch(0.11 0.01 var(--hue-slate));
   --gray-100: oklch(0.15 0.012 var(--hue-slate));
   --gray-150: oklch(0.2 0.015 var(--hue-slate));
@@ -240,6 +241,8 @@
   --gray-600: oklch(0.78 0.015 var(--hue-slate));
   --gray-800: oklch(0.92 0.01 var(--hue-slate));
   --gray-900: oklch(0.98 0.008 var(--hue-slate));
+
+  --card-gray: oklch(0.15 0.009 var(--hue-slate));
   --primary-base: oklch(0.7 0.18 var(--hue-primary));
   --primary-fg: oklch(0.1 0.02 var(--hue-primary));
   --success-base: oklch(0.68 0.18 var(--hue-success));
@@ -254,8 +257,8 @@
   --foreground: var(--gray-900);
   --sidebar: var(--gray-100);
   --sidebar-accent: var(--gray-200);
-  --card: var(--gray-150);
-  --popover: var(--gray-200);
+  --card: var(--card-gray);
+  --popover: var(--card-gray);
   --border: oklch(from var(--gray-800) l c h / 0.05);
   --input: var(--gray-300);
   --secondary-foreground: var(--gray-800);
@@ -265,10 +268,29 @@
   --income: oklch(0.7 0.2 var(--hue-success));
   --expense: oklch(0.7 0.22 var(--hue-destructive));
   --balance: oklch(0.72 0.18 var(--hue-balance));
-  --account: oklch(0.7 0.18 var(--hue-primary));
-  --transaction: oklch(0.68 0.18 var(--hue-success));
-  --planning: oklch(0.72 0.18 var(--hue-balance));
-  --category: oklch(0.72 0.15 var(--hue-category));
+  /* Account */
+  --account: oklch(66.861% 0.10978 248.312);
+  --account-foreground: oklch(29.641% 0.10462 260.959);
+  --account-border-b: oklch(0.34 0.1 250);
+  --account-hover: oklch(0.54 0.1 250);
+
+  /* Transaction */
+  --transaction: oklch(0.46 0.1 145);
+  --transaction-foreground: oklch(84.204% 0.13333 144.312);
+  --transaction-border-b: oklch(0.34 0.1 145);
+  --transaction-hover: oklch(0.54 0.1 145);
+
+  /* Planning */
+  --planning: oklch(39.382% 0.06223 209.201);
+  --planning-foreground: oklch(84.779% 0.09635 212.444);
+  --planning-border-b: oklch(27.493% 0.04582 216.35);
+  --planning-hover: oklch(0.55 0.1 210);
+
+  /* Category */
+  --category: oklch(0.48 0.1 90);
+  --category-foreground: oklch(87.03% 0.08408 88.528);
+  --category-border-b: oklch(0.36 0.1 90);
+  --category-hover: oklch(0.56 0.1 90);
 
   --chart-primary: oklch(0.7 0.18 var(--hue-primary));
   --chart-secondary: oklch(0.68 0.18 var(--hue-success));
@@ -552,6 +574,10 @@
 }
 
 @layer utilities {
+  .bg-card {
+    background: var(--card);
+  }
+
   .cta-gradient {
     background: var(--primary);
   }

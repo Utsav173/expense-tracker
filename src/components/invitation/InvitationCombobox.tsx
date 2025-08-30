@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useMemo, useState } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { Combobox, ComboboxOption } from '@/components/ui/combobox';
 import { userSearch } from '@/lib/endpoints/users';
 import { useToast } from '@/lib/hooks/useToast';
@@ -10,61 +10,44 @@ import { useDebouncedCallback } from 'use-debounce';
 import type { SimpleUser } from '@/lib/api/api-types';
 
 interface InvitationComboboxProps {
-  value?: ComboboxOption | null;
-  onChange?: (value: ComboboxOption | null) => void;
+  value: string | ComboboxOption | null | undefined;
+  onChange: (value: ComboboxOption | null | undefined) => void;
   disabled?: boolean;
   placeholder?: string;
   className?: string;
 }
 
 export function InvitationCombobox({
-  value: controlledValue,
+  value,
   onChange,
   disabled,
   placeholder = 'Select user or invite...',
   className
 }: InvitationComboboxProps) {
   const { showSuccess, showError } = useToast();
-
-  // Internal state for uncontrolled mode
-  const [internalValue, setInternalValue] = useState<ComboboxOption | null>(null);
-
-  // Determine if we're controlled or uncontrolled
-  const isControlled = controlledValue !== undefined;
-  const value = isControlled ? controlledValue : internalValue;
-
-  const isEmail = value?.value ? /\S+@\S+\.\S+/.test(value.value) : false;
-
-  const { data: user, isLoading: isLoadingUser } = useQuery({
-    queryKey: ['userById', value?.value],
-    queryFn: async () => {
-      if (!value?.value || isEmail) return null;
-      const res = await userSearch(value.value);
-      return res?.find((u: SimpleUser) => u.id === value.value) ?? null;
-    },
-    enabled: !!value?.value && !isEmail
-  });
+  const [userCache, setUserCache] = useState<Record<string, string>>({});
 
   const debouncedFetch = useDebouncedCallback(
     async (query: string, callback: (options: ComboboxOption[]) => void) => {
       const isEmailQuery = /\S+@\S+\.\S+/.test(query);
       let options: ComboboxOption[] = [];
       try {
-        const res = await userSearch(query);
+        const users = await userSearch(query);
         options =
-          res?.map((user: SimpleUser) => ({
-            value: user.id,
-            label: user.email
-          })) || [];
+          users?.map((user: SimpleUser) => {
+            // cache for later ID → email lookup
+            setUserCache((prev) => ({ ...prev, [user.id]: user.email }));
+            return { value: user.id, label: user.email };
+          }) || [];
       } catch (error) {
         console.error('Error searching users:', error);
       }
       if (isEmailQuery && !options.some((opt) => opt.label === query)) {
-        options.unshift({ value: `invite:${query}`, label: query });
+        options.unshift({ value: `invite:${query}`, label: `Invite ${query}` });
       }
       callback(options);
     },
-    700
+    300
   );
 
   const fetchInvitationOptions = useCallback(
@@ -83,36 +66,27 @@ export function InvitationCombobox({
 
   const handleComboboxChange = useCallback(
     async (selected: ComboboxOption | null) => {
-      if (!selected) {
-        if (!isControlled) setInternalValue(null);
-        onChange?.(null);
-        return;
-      }
-
-      if (selected.value.startsWith('invite:')) {
-        const emailToInvite = selected.label;
+      if (selected?.value.startsWith('invite:')) {
+        const emailToInvite = selected.label.replace('Invite ', '');
         await inviteUser(emailToInvite);
-        if (!isControlled) setInternalValue(null);
-        onChange?.(null);
+        onChange(null);
       } else {
-        if (!isControlled) setInternalValue(selected);
-        onChange?.(selected);
+        onChange(selected ?? null);
       }
     },
-    [onChange, inviteUser, isControlled]
+    [onChange, inviteUser]
   );
 
   const comboboxValue = useMemo(() => {
     if (!value) return null;
-    if (isLoadingUser) return null;
-    if (isEmail) {
-      return { value: value.value, label: value.label };
+
+    if (typeof value === 'string') {
+      const label = userCache[value] ?? value;
+      return { value, label };
     }
-    if (user) {
-      return { value: user.id, label: user.email };
-    }
+
     return value;
-  }, [value, user, isEmail, isLoadingUser]);
+  }, [value, userCache]);
 
   return (
     <Combobox
@@ -120,10 +94,10 @@ export function InvitationCombobox({
       onChange={handleComboboxChange}
       fetchOptions={fetchInvitationOptions}
       placeholder={placeholder}
-      noOptionsMessage='No matching users found. Type a full email to invite a new user.'
+      noOptionsMessage='No users found. Type a full email to invite.'
       loadingPlaceholder='Searching users...'
       className={className}
-      disabled={disabled || isInviting || isLoadingUser}
+      disabled={disabled || isInviting}
     />
   );
 }

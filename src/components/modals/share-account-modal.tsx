@@ -51,7 +51,7 @@ const ShareAccountModal = ({
   const shareAccountMutation = useMutation({
     mutationFn: (data: { accountId: string; userId: string }) => accountShare(data),
     onSuccess: async () => {
-      await invalidate(['accounts', 'accountShares']);
+      await invalidate(['accounts', ['accountShares', accountId]]);
       setIsOpen(false);
       form.reset();
     },
@@ -61,11 +61,15 @@ const ShareAccountModal = ({
   });
 
   const handleShareAccount = async (data: ShareAccountFormSchema) => {
+    console.log(data, 'data');
+
     if (!data.userId) return;
     if (data.userId.startsWith('invite:')) {
       return;
     }
     const payload = { accountId: data.accountId, userId: data.userId };
+    console.log(payload);
+
     await shareAccountMutation.mutate(payload);
   };
 
@@ -112,7 +116,7 @@ const ShareAccountModal = ({
                 <FormLabel>Select User</FormLabel>
                 <FormControl>
                   <InvitationCombobox
-                    value={{ value: field.value, label: '' }}
+                    value={field.value}
                     onChange={(option) => field.onChange(option?.value ?? '')}
                     placeholder='Select a user to share with or invite by email'
                   />

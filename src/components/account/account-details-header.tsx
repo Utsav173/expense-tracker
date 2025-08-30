@@ -86,7 +86,7 @@ export const AccountDetailsHeader = ({ isMobile, isOwner = true }: AccountDetail
                 refetchData();
               }}
               triggerButton={
-                <Button variant='transaction' size='sm' className='gap-2'>
+                <Button variant='transaction' className='h-10 w-full px-4 py-2 font-semibold'>
                   <Icon name='plus' className='h-4 w-4' />
                   {!isMobile && 'Add Transaction'}
                 </Button>

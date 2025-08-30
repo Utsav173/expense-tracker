@@ -44,8 +44,7 @@ const AddAccountModal = () => {
   const createAccountMutation = useMutation({
     mutationFn: accountCreate,
     onSuccess: async () => {
-      await invalidate(['accounts']);
-      await invalidate(['dashboardData']);
+      Promise.all([invalidate(['accounts']), invalidate(['dashboardData'])]);
       setIsOpen(false);
       form.reset();
     },

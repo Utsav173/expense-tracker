@@ -139,9 +139,9 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
               <BarChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
                 <CartesianGrid
                   strokeDasharray='3 3'
-                  stroke='var(--border)'
+                  stroke='var(--foreground)'
                   strokeOpacity={1}
-                  strokeWidth={1}
+                  strokeWidth={2}
                 />
                 <XAxis
                   dataKey='date'
@@ -179,7 +179,12 @@ export const FinancialTrendsChart: React.FC<FinancialTrendsChartProps> = ({
           ) : (
             <ResponsiveContainer width='100%' height='100%'>
               <RechartsLineChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray='3 3' strokeOpacity={1} strokeWidth={1} />
+                <CartesianGrid
+                  strokeDasharray='3 3'
+                  stroke='var(--foreground)'
+                  strokeOpacity={1}
+                  strokeWidth={2}
+                />
                 <XAxis
                   dataKey='date'
                   tickLine={false}

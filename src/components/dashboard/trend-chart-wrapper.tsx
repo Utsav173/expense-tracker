@@ -99,7 +99,7 @@ const TrendChartWrapper = ({
   return (
     <div className={cn('flex h-full w-full flex-col overflow-hidden', className)}>
       {/* Responsive header with controls */}
-      <div className='bg-card flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4'>
+      <div className='bg-card flex items-center justify-between gap-4 border-b p-4 max-sm:flex-col max-sm:justify-center max-sm:gap-3'>
         <div className='flex-1'>
           <DateRangeFilter />
         </div>

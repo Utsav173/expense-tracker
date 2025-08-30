@@ -54,6 +54,12 @@ export namespace AccountAPI {
     isDefault: boolean;
   }
 
+  export interface AccountDropdown {
+    id: string;
+    name: string;
+    currency: string;
+  }
+
   export interface SimpleAccount {
     id: string;
     name: string;
@@ -297,6 +303,10 @@ export namespace GoalAPI {
   export type AddAmountResponse = SuccessMessage & { id: string; newSavedAmount: number | null };
   export type WithdrawAmountResponse = AddAmountResponse;
   export type DeleteGoalResponse = SuccessMessage;
+  export type GetGoalsDropdownResponse = {
+    id: string;
+    name: string;
+  }[];
 }
 
 export namespace DebtAndInterestAPI {
