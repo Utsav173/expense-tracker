@@ -68,6 +68,7 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
       <div
         className={cn(
           'relative w-auto max-w-[85%] space-y-1 rounded-2xl px-4 py-3 shadow-sm max-sm:px-2 max-sm:py-2 sm:max-w-[80%]',
+          'min-w-0',
           isUser ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-card rounded-bl-none'
         )}
       >

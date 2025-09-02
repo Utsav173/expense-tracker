@@ -12,7 +12,7 @@ import {
   investmentAccountGetById,
   investmentAccountGetSummary
 } from '@/lib/endpoints/investmentAccount';
-import { use, useState } from 'react';
+import { use, useState, useEffect } from 'react'; // <-- Import useEffect
 import Loader from '@/components/ui/loader';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/lib/hooks/useToast';
@@ -31,6 +31,7 @@ import { useDebounce } from 'use-debounce';
 import { Input } from '@/components/ui/input';
 import dynamic from 'next/dynamic';
 import { Icon } from '@/components/ui/icon';
+import { useAppStore } from '@/stores/app-store'; // <-- IMPORT ZUSTAND STORE
 
 const InvestmentAccountOverview = dynamic(
   () => import('@/components/investment/investment-account-overview')
@@ -49,6 +50,7 @@ const InvestmentAccountDetailPage = ({ params }: { params: Promise<{ accountId: 
   const accountId = parsedParams.accountId as string;
   const { showError } = useToast();
   const invalidate = useInvalidateQueries();
+  const { setCurrentInvestmentAccountName, clearCurrentInvestmentAccountName } = useAppStore();
 
   const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebounce(search, 600);
@@ -71,6 +73,15 @@ const InvestmentAccountDetailPage = ({ params }: { params: Promise<{ accountId: 
     enabled: !!accountId,
     retry: false
   });
+
+  useEffect(() => {
+    if (account?.name) {
+      setCurrentInvestmentAccountName(account.name);
+    }
+    return () => {
+      clearCurrentInvestmentAccountName();
+    };
+  }, [account, setCurrentInvestmentAccountName, clearCurrentInvestmentAccountName]);
 
   const { data: summary, isLoading: isLoadingSummary } =
     useQuery<InvestmentAccountAPI.GetSummaryResponse>({

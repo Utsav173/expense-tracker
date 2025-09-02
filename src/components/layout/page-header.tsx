@@ -3,66 +3,96 @@
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { ModeToggle } from '@/components/theme-toggle';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator
+} from '@/components/ui/breadcrumb';
 import { SidebarTrigger } from '../ui/sidebar';
-import { Separator } from '../ui/separator';
+import { ModeToggle } from '../theme-toggle';
+import { useAppStore } from '@/stores/app-store';
 import { Icon } from '../ui/icon';
 
-const getPageTitle = (pathname: string | null): string => {
-  if (!pathname) return 'Loading...';
-
-  if (pathname === '/accounts') return 'Accounts';
-  if (pathname.startsWith('/accounts/shares/')) return 'Account Shares';
-  if (pathname.startsWith('/accounts/')) return 'Account Details';
-  if (pathname.startsWith('/shared-accounts')) return 'Shared Accounts';
-  if (pathname.startsWith('/transactions/import')) return 'Import Transactions';
-  if (pathname.startsWith('/investment/')) return 'Investment Details';
-
-  const segments = pathname.split('/').filter(Boolean);
-  if (segments.length === 0) return 'Home';
-
-  const lastSegment = segments[segments.length - 1];
-
-  return lastSegment
-    .split('-')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-};
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 const PageHeader: React.FC = () => {
   const pathname = usePathname();
-  const pageTitle = getPageTitle(pathname);
-  const isHomePage = pathname === '/accounts';
-  const isDashboard = pathname === '/dashboard';
-  return isDashboard ? null : (
-    <header className='bg-sidebar/50 sticky top-0 z-35 flex h-16 shrink-0 items-center gap-2 backdrop-blur-sm transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12'>
+  const { currentAccountName, currentInvestmentAccountName } = useAppStore();
+
+  const breadcrumbs = React.useMemo(() => {
+    const pathSegments = pathname.split('/').filter(Boolean);
+    if (pathSegments.length === 0 || pathSegments[0] === 'dashboard') {
+      return null;
+    }
+
+    let href = '';
+    return pathSegments.map((segment, index) => {
+      href += `/${segment}`;
+      const isLast = index === pathSegments.length - 1;
+
+      let title = capitalize(segment.replace(/-/g, ' '));
+      const isUUID = /^[0-9a-fA-F-]{36}$/.test(segment);
+
+      if (isLast && isUUID) {
+        if (pathSegments[0] === 'accounts' && currentAccountName) {
+          title = currentAccountName;
+        } else if (pathSegments[0] === 'investment' && currentInvestmentAccountName) {
+          title = currentInvestmentAccountName;
+        }
+      } else if (segment === 'shares') {
+        title = 'Sharing';
+      }
+
+      return { href, title, isLast };
+    });
+  }, [pathname, currentAccountName, currentInvestmentAccountName]);
+
+  return (
+    <header className='bg-sidebar/50 sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b backdrop-blur-sm'>
       <div className='flex w-full items-center gap-2 px-4'>
         <SidebarTrigger className='-ml-1' />
-        <Separator orientation='vertical' className='mr-2 h-4' />
-        <div className='flex h-full w-full items-center gap-2'>
-          <Link href='/accounts' aria-label='Go to Home'>
-            <Button variant='ghost' size='icon' className='h-7 w-7'>
-              <Icon
-                name='home'
-                className={cn('h-4 w-4', isHomePage ? 'text-primary' : 'text-muted-foreground')}
-              />
-            </Button>
-          </Link>
 
-          <span
-            className={cn(
-              'ml-1 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap',
-              !isHomePage && 'text-foreground',
-              isHomePage && 'text-primary'
-            )}
-          >
-            {pageTitle}
-          </span>
-
-          <ModeToggle className='ml-auto' />
+        <div className='flex h-full flex-1 items-center gap-2 overflow-hidden'>
+          {breadcrumbs ? (
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link href='/dashboard' aria-label='Go to Dashboard'>
+                      <Icon name='home' className='h-4 w-4' />
+                    </Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                {breadcrumbs.map((crumb) => (
+                  <BreadcrumbItem key={crumb.href}>
+                    {crumb.isLast ? (
+                      <BreadcrumbPage className='truncate font-semibold'>
+                        {crumb.title}
+                      </BreadcrumbPage>
+                    ) : (
+                      <>
+                        <BreadcrumbLink asChild>
+                          <Link href={crumb.href} className='truncate'>
+                            {crumb.title}
+                          </Link>
+                        </BreadcrumbLink>
+                        <BreadcrumbSeparator />
+                      </>
+                    )}
+                  </BreadcrumbItem>
+                ))}
+              </BreadcrumbList>
+            </Breadcrumb>
+          ) : (
+            <div className='font-semibold'>Dashboard</div>
+          )}
         </div>
+
+        <ModeToggle />
       </div>
     </header>
   );

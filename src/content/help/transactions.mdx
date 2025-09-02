@@ -1,62 +1,15 @@
-<a id="transactions"></a>
-## <Icon name="arrowLeftRight" /> The Transactions Page
+import TransactionsManagement from './transactions-management.mdx';
+import TransactionsImport from './transactions-import.mdx';
 
-The Transactions page is the heart of your financial record-keeping. Think of it as your personal, supercharged bank ledger. It's a detailed, searchable log of every financial activity you've recorded across all your accounts.
+<a id='transactions'></a>
+## <Icon name='transaction' /> Transactions
+
+The Transactions page is the heart of your financial record-keeping. It's a detailed, searchable log of every financial activity you've recorded across all your accounts.
 
 <Alert>
-Keeping your transactions up-to-date is the key to unlocking the full power of Expense Pro's analysis and budgeting features.
+  Keeping your transactions up-to-date is the key to unlocking the full power of Expense Pro's
+  analysis and budgeting features.
 </Alert>
 
-<a id="transactions-add"></a>
-### Adding an Expense or Income
-
-This is the most common action you'll perform. We've made it fast and intuitive.
-
-<Step number={1} title="Open the Transaction Form">
-  Click the **"Add Transaction"** button, usually found at the top of the page. This will open a form ready for your input.
-</Step>
-
-<Step number={2} title="Choose the Type">
-  At the top of the form, select **Expense** (money out) or **Income** (money in). The form's accent color will change to red for expenses and green for income, giving you a clear visual cue.
-</Step>
-
-<Step number={3} title="Fill in the Details">
-  - **Description:** Be specific! "Coffee with Sarah at Blue Tokai" is far more useful than just "Coffee." This will make searching for it later a breeze.
-  - **Amount:** The exact monetary value.
-  - **Account:** Select which of your financial accounts this transaction affects.
-  - **Category:** Assign a spending category. This is crucial for accurate reports.
-  - **Date and Time:** Defaults to the current moment, but you can click to back-date transactions if you're catching up on your bookkeeping.
-</Step>
-
-<Alert variant="tip" title="Create Categories On-the-Fly">
-  If the perfect category doesn't exist, don't break your flow! Just start typing a new name (e.g., "Home Office Supplies") in the category field and select the **"Create..."** option that appears. It's the fastest way to build a category system that perfectly fits your life.
-</Alert>
-
-<Step number={4} title="Consider Optional Details (for Power Users)">
-  - **Recurring Transaction:** Is this a regular payment like a Netflix subscription, rent, or salary? Check this box. You can then set the **Frequency** (e.g., monthly) and an optional **End Date**. The app will automatically generate these transactions for you in the future, saving you manual entry time.
-  - **Transfer Details:** Add extra context here. For an expense, you could put "Paid via GPay." For an income, you could put "From John Doe."
-</Step>
-
-<a id="transactions-edit-delete"></a>
-### Editing and Deleting
-
-Your records are not set in stone. In the transaction list, find the transaction you want to change and use the actions column:
-- **To Edit:** Click the **pencil icon** (<Icon name="pencil" className="inline h-4 w-4" />). A modal will appear allowing you to modify any detail.
-- **To Delete:** Click the **trash can icon** (<Icon name="trash2" className="inline h-4 w-4" />). A confirmation will appear. This action is permanent.
-
-<a id="transactions-filter"></a>
-### Searching and Filtering
-
-This is how you turn your data into answers. The controls are at the top of the transaction list.
-
-- **Global Search:** Use the main search bar to instantly find transactions by their description or transfer details.
-- **Advanced Filters:** Click the **"Filters"** button to open a dialog where you can combine multiple criteria:
-  - Account
-  - Category
-  - Type (Income or Expense)
-  - Date Range
-  - Amount Range (Min/Max)
-
-<Alert variant="success" title="Combine Filters for Powerful Insights">
-  Want to see how much you spent on "Groceries" from your "Main Checking" account last month? Combining filters makes this possible in seconds.
-</Alert>
+<TransactionsManagement />
+<TransactionsImport />

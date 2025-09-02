@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, Suspense, use } from 'react';
+import React, { useMemo, Suspense, use, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Card } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import {
   AccountDetailsProvider,
   useAccountDetails
 } from '@/components/account/context/account-details-context';
+import { useAppStore } from '@/stores/app-store'; // <-- IMPORT ZUSTAND STORE
 
 const AccountTransactionsSection = dynamic(
   () => import('@/components/account/account-transactions-section'),
@@ -82,6 +83,18 @@ const AccountDetailsPageContent = () => {
   const { session } = useAuth();
   const user = session?.user;
   const isMobile = useIsMobile();
+
+  const { setCurrentAccountName, clearCurrentAccountName } = useAppStore();
+
+  useEffect(() => {
+    if (account?.name) {
+      setCurrentAccountName(account.name);
+    }
+
+    return () => {
+      clearCurrentAccountName();
+    };
+  }, [account, setCurrentAccountName, clearCurrentAccountName]);
 
   const transformedChartData = useMemo(() => {
     if (!chartData?.date) return [];

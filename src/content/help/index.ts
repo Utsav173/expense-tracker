@@ -21,17 +21,34 @@ export const helpSections: HelpSection[] = [
       { title: 'Understanding the Layout', id: 'getting-started-layout' }
     ]
   },
-  { title: 'Dashboard', id: 'dashboard', icon: 'layoutGrid' },
-  { title: 'Transactions', id: 'transactions', icon: 'arrowLeftRight' },
+  {
+    title: 'Dashboard',
+    id: 'dashboard',
+    icon: 'layoutGrid',
+    subsections: [
+      { title: 'Financial Snapshot', id: 'dashboard-financial-snapshot' },
+      { title: 'Financial Trends', id: 'dashboard-financial-trends' },
+      { title: 'Spending Breakdown', id: 'dashboard-spending-breakdown' }
+    ]
+  },
+  {
+    title: 'Transactions',
+    id: 'transactions',
+    icon: 'transaction',
+    subsections: [
+      { title: 'Managing Transactions', id: 'transactions-management' },
+      { title: 'Importing Data', id: 'transactions-import' }
+    ]
+  },
   {
     title: 'Accounts',
     id: 'accounts',
     icon: 'landmark',
     subsections: [
-      { title: 'Accounts List', id: 'accounts-list' },
+      { title: 'Accounts List', id: 'accounts-listing' },
       { title: 'Account Details', id: 'accounts-details' },
       { title: 'Account Sharing', id: 'accounts-sharing' },
-      { title: 'Shared With Me', id: 'accounts-shared-with-me' }
+      { title: 'Generating Statements', id: 'accounts-statement' }
     ]
   },
   {
@@ -45,8 +62,15 @@ export const helpSections: HelpSection[] = [
       { title: 'Debts', id: 'planning-debts' }
     ]
   },
-  { title: 'AI Assistant', id: 'ai-assistant', icon: 'sparkles' },
-  { title: 'Data Management', id: 'data-management', icon: 'database' },
+  {
+    title: 'AI Assistant',
+    id: 'ai-assistant',
+    icon: 'sparkles',
+    subsections: [
+      { title: 'API Key Setup', id: 'ai-assistant-setup' },
+      { title: 'Usage Guide', id: 'ai-assistant-usage' }
+    ]
+  },
   { title: 'Profile & Settings', id: 'profile-settings', icon: 'user' }
 ];
 
@@ -57,21 +81,22 @@ export const helpSections: HelpSection[] = [
  */
 export const pathMappings = [
   // More specific paths first
-  { path: /^\/transactions\/import$/, id: 'data-management', title: 'Importing Data' },
-  { path: /^\/accounts\/statement$/, id: 'data-management', title: 'Generating Statements' },
-  { path: /^\/accounts\/shares\/[a-f0-9-]+$/, id: 'accounts', title: 'Account Sharing' },
-  { path: /^\/accounts\/[a-f0-9-]+$/, id: 'accounts', title: 'Account Details' },
-  { path: /^\/investment\/[a-f0-9-]+$/, id: 'planning', title: 'Investment Details' },
+  { path: /^\/transactions\/import$/, id: 'transactions-import', title: 'Importing Transactions' },
+  { path: /^\/accounts\/statement$/, id: 'accounts-statement', title: 'Generating Statements' },
+  { path: /^\/accounts\/shares\/[a-f0-9-]+$/, id: 'accounts-sharing', title: 'Account Sharing' },
+  { path: /^\/accounts\/[a-f0-9-]+$/, id: 'accounts-details', title: 'Account Details' },
+  { path: /^\/investment\/[a-f0-9-]+$/, id: 'planning-investments', title: 'Investment Details' },
+
   // General paths
   { path: /^\/dashboard$/, id: 'dashboard', title: 'Dashboard Help' },
-  { path: /^\/transactions$/, id: 'transactions', title: 'Transactions Help' },
-  { path: /^\/accounts$/, id: 'accounts', title: 'Managing Accounts' },
-  { path: /^\/shared-accounts$/, id: 'accounts', title: 'Shared Accounts' },
-  { path: /^\/category$/, id: 'transactions', title: 'Managing Categories' },
-  { path: /^\/budget$/, id: 'planning', title: 'Budgeting Help' },
-  { path: /^\/goal$/, id: 'planning', title: 'Savings Goals Help' },
-  { path: /^\/investment$/, id: 'planning', title: 'Investments Help' },
-  { path: /^\/debts$/, id: 'planning', title: 'Debt Management' },
+  { path: /^\/transactions$/, id: 'transactions-management', title: 'Transactions Help' },
+  { path: /^\/accounts$/, id: 'accounts-listing', title: 'Managing Accounts' },
+  { path: /^\/shared-accounts$/, id: 'accounts-sharing', title: 'Shared Accounts' },
+  { path: /^\/category$/, id: 'transactions-management', title: 'Managing Categories' },
+  { path: /^\/budget$/, id: 'planning-budgets', title: 'Budgeting Help' },
+  { path: /^\/goal$/, id: 'planning-goals', title: 'Savings Goals Help' },
+  { path: /^\/investment$/, id: 'planning-investments', title: 'Investments Help' },
+  { path: /^\/debts$/, id: 'planning-debts', title: 'Debt Management' },
   { path: /^\/ai-chat$/, id: 'ai-assistant', title: 'AI Assistant Guide' },
   { path: /^\/profile$/, id: 'profile-settings', title: 'Profile & Settings' }
 ];

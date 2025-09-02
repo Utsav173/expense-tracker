@@ -46,7 +46,7 @@ export const ContextualHelpSidebar: React.FC<ContextualHelpSidebarProps> = ({
         side={isMobile ? 'bottom' : 'right'}
         className={cn(
           'flex flex-col p-0 [&>button:first-of-type]:hidden',
-          isMobile ? 'h-[90dvh] w-full rounded-t-xl' : 'h-full max-w-2xl min-w-[30%]'
+          isMobile ? 'h-[90dvh] w-full rounded-t-xl' : 'h-full max-w-[55%] min-w-[40%]'
         )}
         aria-describedby={undefined}
       >

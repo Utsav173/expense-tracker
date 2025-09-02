@@ -68,7 +68,8 @@
     "three": "^0.178.0",
     "use-debounce": "^10.0.5",
     "xlsx": "^0.18.5",
-    "zod": "^3.25.64"
+    "zod": "^3.25.64",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@iconify/json": "^2.2.373",
