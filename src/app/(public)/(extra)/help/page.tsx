@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState, useMemo, Suspense, lazy } from 'react';
 import { helpSections } from '@/content/help';
-import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Icon } from '@/components/ui/icon';
 import Loader from '@/components/ui/loader';
@@ -66,7 +65,7 @@ export default function HelpPage() {
     e.preventDefault();
     const element = document.getElementById(id);
     if (element) {
-      const yOffset = -100; // Account for fixed header + sticky nav
+      const yOffset = -100;
       const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
       window.scrollTo({ top: y, behavior: 'smooth' });
       history.pushState(null, '', `#${id}`);
@@ -83,16 +82,21 @@ export default function HelpPage() {
   }, [activeId]);
 
   const TableOfContents = () => (
-    <nav className='space-y-1'>
-      <h3 className='text-muted-foreground mb-3 text-sm font-semibold tracking-wider uppercase'>
+    <nav aria-label='Help sections navigation' className='space-y-1'>
+      <h2 className='text-muted-foreground mb-3 text-sm font-semibold tracking-wider uppercase'>
         Table of Contents
-      </h3>
-      <ul className='space-y-1'>
+      </h2>
+      <ul className='space-y-1' role='list'>
         {helpSections.map((item) => (
-          <li key={item.id}>
+          <li key={item.id} role='listitem'>
             <a
               href={`#${item.id}`}
               onClick={(e) => handleLinkClick(e, item.id)}
+              aria-current={
+                activeId === item.id || item.subsections?.some((sub) => sub.id === activeId)
+                  ? 'page'
+                  : undefined
+              }
               className={cn(
                 'flex items-center gap-3 rounded-lg p-3 text-sm font-medium transition-colors duration-200',
                 activeId === item.id || item.subsections?.some((sub) => sub.id === activeId)
@@ -100,7 +104,7 @@ export default function HelpPage() {
                   : 'text-muted-foreground hover:bg-muted/80 hover:text-foreground'
               )}
             >
-              <Icon name={item.icon} className='h-5 w-5' />
+              <Icon name={item.icon} className='h-5 w-5' aria-hidden='true' />
               {item.title}
             </a>
           </li>
@@ -112,34 +116,43 @@ export default function HelpPage() {
   return (
     <div className='bg-background min-h-screen'>
       <header className='from-primary/5 via-background to-secondary/5 relative bg-gradient-to-br px-4 py-12 text-center md:py-16'>
-        <div className='relative'>
-          <div className='bg-primary/10 text-primary mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full shadow-lg md:h-24 md:w-24'>
-            <Icon name='lifeBuoy' className='h-10 w-10 md:h-12 md:w-12' />
-          </div>
-          <h1 className='mb-4 text-3xl font-extrabold tracking-tighter md:text-4xl lg:text-5xl'>
-            Help Center
-          </h1>
-          <p className='text-muted-foreground mx-auto max-w-2xl text-base leading-relaxed md:text-lg'>
-            Everything you need to know to become an Expense Pro power user.
-          </p>
-        </div>
+        <Icon
+          name='lifeBuoy'
+          className='bg-primary/10 text-primary mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full shadow-lg md:h-12 md:h-24 md:w-12 md:w-24'
+          aria-hidden='true'
+        />
+        <h1 className='mb-4 text-3xl font-extrabold tracking-tighter md:text-4xl lg:text-5xl'>
+          Help Center
+        </h1>
+        <p className='text-muted-foreground mx-auto max-w-2xl text-base leading-relaxed md:text-lg'>
+          Everything you need to know to become an Expense Pro power user.
+        </p>
       </header>
 
       <div className='bg-background/95 sticky top-16 z-40 border-b shadow-sm backdrop-blur-md md:hidden'>
         <div className='px-4 py-3'>
           <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
             <SheetTrigger asChild>
-              <Button variant='outline' className='flex w-full items-center justify-between'>
+              <Button
+                variant='outline'
+                className='flex w-full items-center justify-between'
+                aria-expanded={isMobileSheetOpen}
+                aria-controls='mobile-navigation'
+              >
                 <div className='flex items-center gap-3'>
-                  <Icon name='menu' className='h-4 w-4' />
+                  <Icon name='menu' className='h-4 w-4' aria-hidden='true' />
                   <span className='truncate text-sm font-medium'>
                     {currentSection?.title || 'Navigation'}
                   </span>
                 </div>
-                <Icon name='chevronDown' className='text-muted-foreground h-4 w-4' />
+                <Icon
+                  name='chevronDown'
+                  className='text-muted-foreground h-4 w-4'
+                  aria-hidden='true'
+                />
               </Button>
             </SheetTrigger>
-            <SheetContent side='left' className='w-full max-w-xs p-4'>
+            <SheetContent side='left' className='w-full max-w-xs p-4' id='mobile-navigation'>
               <SheetHeader className='mb-4 text-left'>
                 <SheetTitle>Help Topics</SheetTitle>
               </SheetHeader>
@@ -151,42 +164,44 @@ export default function HelpPage() {
 
       <div className='container mx-auto max-w-7xl px-4 py-8'>
         <div className='grid grid-cols-1 gap-8 lg:grid-cols-4'>
-          <aside className='hidden lg:col-span-1 lg:block'>
-            <div className='sticky top-24 space-y-4'>
-              <Card className='shadow-sm'>
-                <CardContent className='p-6'>
-                  <TableOfContents />
-                </CardContent>
-              </Card>
+          <aside className='hidden lg:col-span-1 lg:block' aria-label='Desktop navigation'>
+            <div className='sticky top-24 space-y-4 rounded-lg border p-6 shadow-sm'>
+              <TableOfContents />
             </div>
           </aside>
 
-          <main className='lg:col-span-3'>
-            <Card className='shadow-lg'>
-              <CardContent className='p-6 md:p-8 lg:p-10'>
-                <Suspense
-                  fallback={
-                    <div className='flex min-h-[50vh] items-center justify-center'>
-                      <Loader />
-                    </div>
-                  }
-                >
-                  {helpSections.map((section, index) => {
-                    const MdxComponent = mdxComponents[section.id];
-                    if (!MdxComponent) return null;
-                    return (
-                      <section
-                        key={section.id}
-                        id={section.id}
-                        className={cn('scroll-mt-24', index > 0 && 'mt-16 border-t pt-12')}
-                      >
-                        <MdxComponent />
-                      </section>
-                    );
-                  })}
-                </Suspense>
-              </CardContent>
-            </Card>
+          <main className='lg:col-span-3' role='main' aria-label='Help content'>
+            <article className='prose prose-slate dark:prose-invert lg:prose-lg prose-headings:font-bold prose-headings:tracking-tight prose-headings:inline-flex prose-headings:items-center prose-headings:gap-2 prose-p:leading-relaxed prose-a:text-primary hover:prose-a:underline prose-li:my-2 prose-blockquote:border-l-primary prose-blockquote:bg-primary/5 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-md prose-code:bg-muted prose-code:text-foreground prose-code:rounded-md prose-code:px-1.5 prose-code:py-1 mx-auto max-w-full'>
+              <Suspense
+                fallback={
+                  <div
+                    className='flex min-h-[50vh] items-center justify-center'
+                    role='status'
+                    aria-label='Loading help content'
+                  >
+                    <Loader />
+                  </div>
+                }
+              >
+                {helpSections.map((section, index) => {
+                  const MdxComponent = mdxComponents[section.id];
+                  if (!MdxComponent) return null;
+                  return (
+                    <section
+                      key={section.id}
+                      id={section.id}
+                      aria-labelledby={`${section.id}-title`}
+                      className={cn(
+                        'scroll-mt-24 max-sm:scroll-mt-12',
+                        index > 0 && 'mt-16 border-t pt-12 max-sm:mt-8 max-sm:pt-6'
+                      )}
+                    >
+                      <MdxComponent />
+                    </section>
+                  );
+                })}
+              </Suspense>
+            </article>
           </main>
         </div>
       </div>
