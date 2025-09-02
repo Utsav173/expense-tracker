@@ -59,9 +59,26 @@
   --hue-destructive: 0;
   --hue-balance: 280;
   --hue-category: 210;
-  --spacing: clamp(0.125rem, 0.1rem + 0.15vw, 0.2rem);
-  --radius: clamp(0.25rem, 0.2rem + 0.3vw, 0.75rem);
-  --border-width: clamp(0.5px, 0.4px + 0.2vw, 1px);
+
+  /* Base spacing unit used for gaps, padding and margin throughout the UI.
+    Uses clamp() so spacing scales responsively between a comfortable
+    minimum (for small screens / accessibility) and a larger maximum on
+    wide viewports. Values are rem-based so they respect the root font-size. */
+  --spacing: clamp(0.375rem, 0.25rem + 0.5vw, 0.75rem);
+
+  /* Base border radius for components (buttons, inputs, cards, etc.).
+    clamp() keeps corners subtle on small screens and more rounded on
+    larger screens; derived radius tokens (e.g. --radius-sm / --radius-lg)
+    multiply from this base for consistent scaling. */
+  --radius: clamp(0.5rem, 0.3rem + 0.5vw, 1rem);
+
+  /* Base border width used for outlines and decorative borders. The clamp()
+    expression preserves thin hairline borders on small displays while
+    allowing slightly thicker strokes on larger viewports for better
+    visibility. Multiply by integers (calc(var(--border-width) * n)) for
+    consistent borders across components. */
+  --border-width: clamp(1px, 0.05rem + 0.1vw, 1.5px);
+
   --ring-width: clamp(1px, 0.8px + 0.25vw, 2px);
   --ring-offset: 2px;
   --transition-duration: 200ms;
@@ -483,20 +500,19 @@
   --animate-slide-in: slide-in 0.2s ease-out;
   --animate-slide-out: slide-out 0.2s ease-out;
 
-  /* Typography (fluid) */
-  --text-xs: clamp(0.7rem, 0.65rem + 0.1vw, 0.8rem);
-  --text-sm: clamp(0.75rem, 0.7rem + 0.12vw, 0.9rem);
-  --text-base: clamp(0.85rem, 0.8rem + 0.15vw, 1rem);
-  --text-lg: clamp(0.95rem, 0.9rem + 0.18vw, 1.125rem);
-  --text-xl: clamp(1.1rem, 1rem + 0.2vw, 1.25rem);
-  --text-2xl: clamp(1.3rem, 1.1rem + 0.25vw, 1.5rem);
-  --text-3xl: clamp(1.55rem, 1.25rem + 0.3vw, 1.875rem);
-  --text-4xl: clamp(1.85rem, 1.4rem + 0.35vw, 2.25rem);
-  --text-5xl: clamp(2.2rem, 1.6rem + 0.4vw, 2.75rem);
-  --text-6xl: clamp(2.5rem, 1.9rem + 0.45vw, 3.25rem);
-  --text-7xl: clamp(2.9rem, 2.2rem + 0.5vw, 3.75rem);
-  --text-8xl: clamp(3.4rem, 2.5rem + 0.6vw, 4.5rem);
-  --text-9xl: clamp(3.9rem, 3rem + 0.7vw, 5.5rem);
+  --text-xs: clamp(0.75rem, 0.7rem + 0.2vw, 0.8rem);
+  --text-sm: clamp(0.8125rem, 0.75rem + 0.25vw, 0.9rem);
+  --text-base: clamp(0.9rem, 0.8rem + 0.35vw, 1rem);
+  --text-lg: clamp(1rem, 0.9rem + 0.4vw, 1.125rem);
+  --text-xl: clamp(1.125rem, 1rem + 0.45vw, 1.25rem);
+  --text-2xl: clamp(1.25rem, 1.1rem + 0.5vw, 1.5rem);
+  --text-3xl: clamp(1.5rem, 1.25rem + 0.6vw, 1.875rem);
+  --text-4xl: clamp(1.875rem, 1.5rem + 0.7vw, 2.25rem);
+  --text-5xl: clamp(2.25rem, 1.75rem + 0.8vw, 2.75rem);
+  --text-6xl: clamp(2.75rem, 2rem + 1vw, 3.25rem);
+  --text-7xl: clamp(3.25rem, 2.5rem + 1.2vw, 3.75rem);
+  --text-8xl: clamp(3.75rem, 3rem + 1.5vw, 4.5rem);
+  --text-9xl: clamp(4.5rem, 3.5rem + 2vw, 5.5rem);
   --z-0: 0;
   --z-10: 10;
   --z-20: 20;
