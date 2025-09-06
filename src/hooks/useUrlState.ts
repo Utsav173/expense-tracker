@@ -89,6 +89,8 @@ export const useUrlState = <T extends BaseUrlStateParams>(initialState: T) => {
     if (state.q !== searchQuery) {
       setSearchQuery(state.q || '');
     }
+    // keep searchQuery out of the dependency array so it doesn't trigger an infinite loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.q]);
 
   const handlePageChange = useCallback(
