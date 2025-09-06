@@ -17,16 +17,11 @@ export const useAccountDetails = () => {
 
 interface AccountDetailsProviderProps {
   id: string;
-  searchParams: any;
   children: React.ReactNode;
 }
 
-export const AccountDetailsProvider: React.FC<AccountDetailsProviderProps> = ({
-  id,
-  searchParams,
-  children
-}) => {
-  const data = useAccountDetailsData(id, searchParams);
+export const AccountDetailsProvider: React.FC<AccountDetailsProviderProps> = ({ id, children }) => {
+  const data = useAccountDetailsData(id);
   return (
     <AccountDetailsContext.Provider value={{ ...data, id }}>
       {children}

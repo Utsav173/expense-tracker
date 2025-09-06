@@ -102,8 +102,6 @@ const DashboardPage = () => {
 
   return (
     <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 select-none md:space-y-6'>
-      <DashboardControls />
-
       <BentoGrid>
         <BentoGridItem className='col-span-12 row-span-2 md:col-span-6 lg:col-span-4'>
           <DashboardCardContent

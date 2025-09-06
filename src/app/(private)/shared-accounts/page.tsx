@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { accountGetSharedWithMe } from '@/lib/endpoints/accounts';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
@@ -12,7 +12,6 @@ import Link from 'next/link';
 import type { AccountAPI } from '@/lib/api/api-types';
 import QueryErrorDisplay from '@/components/ui/query-error-display';
 import { useUrlState } from '@/hooks/useUrlState';
-import { useDebounce } from 'use-debounce';
 import { Icon } from '@/components/ui/icon';
 
 const getInitials = (name?: string) => {
@@ -57,14 +56,7 @@ const AccountCard = ({ account }: { account: AccountAPI.Account }) => {
 const initialUrlState = { page: 1, q: '' };
 
 const SharedAccountsPage = () => {
-  const { state, setState, handlePageChange } = useUrlState(initialUrlState);
-  const [search, setSearch] = useState(state.q);
-  const [debouncedSearch] = useDebounce(search, 600);
-
-  useEffect(() => {
-    setState({ q: debouncedSearch, page: 1 });
-  }, [debouncedSearch, setState]);
-
+  const { state, handlePageChange, searchQuery, setSearchQuery } = useUrlState(initialUrlState);
   const limit = 10;
 
   const {
@@ -113,8 +105,8 @@ const SharedAccountsPage = () => {
             <Icon name='share2' className='text-muted-foreground h-16 w-16' />
             <h3 className='text-xl font-medium'>No Shared Accounts</h3>
             <p className='text-muted-foreground'>
-              {search
-                ? `No accounts matched your search for "${search}".`
+              {searchQuery
+                ? `No accounts matched your search for "${searchQuery}".`
                 : 'No one has shared an account with you yet.'}
             </p>
           </div>
@@ -149,10 +141,8 @@ const SharedAccountsPage = () => {
           <Input
             type='text'
             placeholder='Search accounts...'
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-            }}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className='pl-9'
           />
         </div>

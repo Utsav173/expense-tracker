@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { dequal } from 'dequal';
+import { useDebounce } from 'use-debounce';
 
 type SortOrder = 'asc' | 'desc';
 
@@ -42,45 +43,59 @@ export const useUrlState = <T extends BaseUrlStateParams>(initialState: T) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const stateRef = useRef(parseParams(searchParams, initialState));
 
-  const state: T = parseParams(searchParams, initialState);
+  const state: T = useMemo(
+    () => parseParams(searchParams, initialState),
+    [searchParams, initialState]
+  );
 
-  useEffect(() => {
-    stateRef.current = state;
-  }, [state]);
+  const [searchQuery, setSearchQuery] = useState(state.q || '');
+  const [debouncedSearchQuery] = useDebounce(searchQuery, 500);
 
   const setState = useCallback(
     (updates: Partial<T>) => {
-      const currentState = stateRef.current;
+      const currentState = parseParams(searchParams, initialState);
       const newState = { ...currentState, ...updates };
 
-      if (dequal(currentState, newState)) {
-        return;
-      }
+      if (dequal(currentState, newState)) return;
 
       const newSearchParams = new URLSearchParams(searchParams.toString());
-
       Object.entries(newState).forEach(([key, value]) => {
         const isDefault = dequal(value, initialState[key as keyof T]);
-        const isDefaultPage = key === 'page' && value === 1;
-
-        if (value === undefined || value === null || value === '' || isDefault || isDefaultPage) {
+        if (
+          value === undefined ||
+          value === null ||
+          value === '' ||
+          (key !== 'page' && isDefault)
+        ) {
           newSearchParams.delete(key);
         } else {
           newSearchParams.set(key, String(value));
         }
       });
-
       const newUrl = `${pathname}?${newSearchParams.toString()}`;
-      router.replace(newUrl, { scroll: false });
+      router.push(newUrl, { scroll: false });
     },
     [searchParams, initialState, router, pathname]
   );
 
+  useEffect(() => {
+    if (debouncedSearchQuery !== state.q) {
+      setState({ q: debouncedSearchQuery, page: 1 } as Partial<T>);
+    }
+  }, [debouncedSearchQuery, setState, state.q]);
+
+  useEffect(() => {
+    if (state.q !== searchQuery) {
+      setSearchQuery(state.q || '');
+    }
+  }, [state.q]);
+
   const handlePageChange = useCallback(
     (newPage: number) => {
-      setState({ page: newPage } as Partial<T>);
+      if (newPage > 0) {
+        setState({ page: newPage } as Partial<T>);
+      }
     },
     [setState]
   );
@@ -88,6 +103,8 @@ export const useUrlState = <T extends BaseUrlStateParams>(initialState: T) => {
   return {
     state,
     setState,
-    handlePageChange
+    handlePageChange,
+    searchQuery,
+    setSearchQuery
   };
 };

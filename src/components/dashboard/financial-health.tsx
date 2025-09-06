@@ -41,7 +41,7 @@ const FinancialHealth: React.FC = () => {
     if (score > 60)
       return {
         badge: 'Good',
-        color: 'var(--chart-accent)',
+        color: 'var(--ai-accent)',
         message: 'You have a solid financial foundation.'
       };
     if (score > 40)
@@ -101,7 +101,7 @@ const FinancialHealth: React.FC = () => {
                   View Full Analysis
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className='max-h-[90dvh] overflow-y-scroll'>
                 <DialogHeader>
                   <DialogTitle>AI-Powered Recommendations</DialogTitle>
                 </DialogHeader>

@@ -2,13 +2,10 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { apiFetchDebts } from '@/lib/endpoints/debt';
-import { useState, useEffect } from 'react';
-import Loader from '@/components/ui/loader';
+import { useState } from 'react';
 import CommonTable from '@/components/ui/CommonTable';
 import { useUrlState } from '@/hooks/useUrlState';
-import { useToast } from '@/lib/hooks/useToast';
 import { Input } from '@/components/ui/input';
-import { useDebounce } from 'use-debounce';
 import {
   Select,
   SelectContent,
@@ -38,27 +35,20 @@ const initialUrlState = {
 };
 
 const DebtsPage = () => {
-  const { showError } = useToast();
   const { session } = useAuth();
   const user = session?.user;
 
-  const { state, setState, handlePageChange } = useUrlState(initialUrlState);
+  const { state, setState, handlePageChange, searchQuery, setSearchQuery } =
+    useUrlState(initialUrlState);
 
-  const [search, setSearch] = useState(state.q);
-  const [debouncedSearch] = useDebounce(search, 600);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isCalcModalOpen, setIsCalcModalOpen] = useState(false);
   const [initialDebtData, setInitialDebtData] = useState<Partial<any> | undefined>();
-
-  useEffect(() => {
-    setState({ q: debouncedSearch, page: 1 });
-  }, [debouncedSearch, setState]);
 
   const {
     data: debts,
     isLoading,
     error,
-    isPending,
     refetch
   } = useQuery({
     queryKey: ['debts', state.page, state.q, state.type, state.sortBy, state.sortOrder],
@@ -76,9 +66,9 @@ const DebtsPage = () => {
 
   const handleSortChange = (sorting: any) => {
     if (sorting.length > 0) {
-      setState({ sortBy: sorting.id, sortOrder: sorting.desc ? 'desc' : 'asc' });
+      setState({ sortBy: sorting[0].id, sortOrder: sorting[0].desc ? 'desc' : 'asc', page: 1 });
     } else {
-      setState({ sortBy: 'startDate', sortOrder: 'desc' });
+      setState({ sortBy: 'startDate', sortOrder: 'desc', page: 1 });
     }
   };
 
@@ -95,10 +85,6 @@ const DebtsPage = () => {
     setIsCalcModalOpen(false);
     setIsAddModalOpen(true);
   };
-
-  if ((isLoading && !isPending) || !user) {
-    return <Loader />;
-  }
 
   if (error) {
     return <QueryErrorDisplay error={error} message="We couldn't load your debt data." />;
@@ -134,8 +120,8 @@ const DebtsPage = () => {
           <Input
             type='text'
             placeholder='Search description, amount, counterparty...'
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className='max-w-full grow pl-9'
           />
         </div>

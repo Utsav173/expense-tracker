@@ -12,7 +12,7 @@ import {
   investmentAccountGetById,
   investmentAccountGetSummary
 } from '@/lib/endpoints/investmentAccount';
-import { use, useState, useEffect } from 'react'; // <-- Import useEffect
+import { use, useState, useEffect } from 'react';
 import Loader from '@/components/ui/loader';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/lib/hooks/useToast';
@@ -27,11 +27,10 @@ import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { useUrlState } from '@/hooks/useUrlState';
 import { SortingState } from '@tanstack/react-table';
 import { SingleLineEllipsis } from '@/components/ui/ellipsis-components';
-import { useDebounce } from 'use-debounce';
 import { Input } from '@/components/ui/input';
 import dynamic from 'next/dynamic';
 import { Icon } from '@/components/ui/icon';
-import { useAppStore } from '@/stores/app-store'; // <-- IMPORT ZUSTAND STORE
+import { useAppStore } from '@/stores/app-store';
 
 const InvestmentAccountOverview = dynamic(
   () => import('@/components/investment/investment-account-overview')
@@ -52,8 +51,6 @@ const InvestmentAccountDetailPage = ({ params }: { params: Promise<{ accountId: 
   const invalidate = useInvalidateQueries();
   const { setCurrentInvestmentAccountName, clearCurrentInvestmentAccountName } = useAppStore();
 
-  const [search, setSearch] = useState('');
-  const [debouncedSearch] = useDebounce(search, 600);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [deleteInvestmentId, setDeleteInvestmentId] = useState<string | null>(null);
@@ -61,7 +58,8 @@ const InvestmentAccountDetailPage = ({ params }: { params: Promise<{ accountId: 
     null
   );
 
-  const { state, setState, handlePageChange } = useUrlState(initialUrlState);
+  const { state, setState, handlePageChange, searchQuery, setSearchQuery } =
+    useUrlState(initialUrlState);
 
   const {
     data: account,
@@ -71,8 +69,16 @@ const InvestmentAccountDetailPage = ({ params }: { params: Promise<{ accountId: 
     queryKey: ['investmentAccount', accountId],
     queryFn: () => investmentAccountGetById(accountId),
     enabled: !!accountId,
-    retry: false
+    staleTime: 5 * 60 * 1000
   });
+
+  useEffect(() => {
+    if (accountError) {
+      if (accountError instanceof Error) {
+        showError(accountError.message);
+      }
+    }
+  }, [accountError, showError]);
 
   useEffect(() => {
     if (account?.name) {
@@ -83,34 +89,19 @@ const InvestmentAccountDetailPage = ({ params }: { params: Promise<{ accountId: 
     };
   }, [account, setCurrentInvestmentAccountName, clearCurrentInvestmentAccountName]);
 
-  const { data: summary, isLoading: isLoadingSummary } =
-    useQuery<InvestmentAccountAPI.GetSummaryResponse>({
-      queryKey: ['investmentAccountSummary', accountId],
-      queryFn: () => investmentAccountGetSummary(accountId),
-      enabled: !!accountId,
-      retry: false
-    });
-
   const {
     data: investments,
     isLoading: isLoadingInvestments,
     refetch: refetchInvestments
   } = useQuery({
-    queryKey: [
-      'investments',
-      debouncedSearch,
-      accountId,
-      state.page,
-      state.sortBy,
-      state.sortOrder
-    ],
+    queryKey: ['investments', accountId, state.page, state.q, state.sortBy, state.sortOrder],
     queryFn: () =>
       investmentGetAll(accountId, {
         page: state.page,
         limit: 10,
         sortBy: state.sortBy,
         sortOrder: state.sortOrder,
-        q: debouncedSearch
+        q: state.q
       }),
     enabled: !!accountId,
     retry: false
@@ -192,11 +183,11 @@ const InvestmentAccountDetailPage = ({ params }: { params: Promise<{ accountId: 
           <Button
             variant='ghost'
             onClick={() => router.replace('/investment')}
-            className='shrink-0'
+            className='mr-2 shrink-0'
           >
-            <Icon name='arrowLeft' className='mr-2 h-4 w-4' />
+            <Icon name='arrowLeft' className='h-4 w-4' />
           </Button>
-          <SingleLineEllipsis className='min-w-0 text-xl font-semibold md:text-2xl'>
+          <SingleLineEllipsis className='min-w-0 truncate text-xl font-semibold md:text-2xl'>
             {account.name} ({account.platform || 'N/A'})
           </SingleLineEllipsis>
         </div>
@@ -212,8 +203,6 @@ const InvestmentAccountDetailPage = ({ params }: { params: Promise<{ accountId: 
         <InvestmentAccountOverview
           accountId={accountId}
           accountCurrency={account.currency}
-          summary={summary}
-          isLoadingSummary={isLoadingSummary}
           oldestInvestmentDate={
             account?.oldestInvestmentDate ? new Date(account.oldestInvestmentDate) : undefined
           }
@@ -234,8 +223,8 @@ const InvestmentAccountDetailPage = ({ params }: { params: Promise<{ accountId: 
             <Input
               type='text'
               placeholder='Search investments...'
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className='max-w-full grow pl-9'
             />
           </div>

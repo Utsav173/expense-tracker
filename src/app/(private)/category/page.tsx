@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { categoryGetAll } from '@/lib/endpoints/category';
 import CategoryList from '@/components/category/category-list';
@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import type { CategoryAPI } from '@/lib/api/api-types';
 import { Button } from '@/components/ui/button';
 import { useUrlState } from '@/hooks/useUrlState';
-import { useDebounce } from 'use-debounce';
 import { Icon } from '@/components/ui/icon';
 
 const initialUrlState = {
@@ -22,14 +21,8 @@ const initialUrlState = {
 const CategoryPage = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const { state, setState, handlePageChange } = useUrlState(initialUrlState);
-
-  const [searchQuery, setSearchQuery] = useState(state.q);
-  const [debouncedSearchQuery] = useDebounce(searchQuery, 600);
-
-  useEffect(() => {
-    setState({ q: debouncedSearchQuery, page: 1 });
-  }, [debouncedSearchQuery, setState]);
+  const { state, setState, handlePageChange, searchQuery, setSearchQuery } =
+    useUrlState(initialUrlState);
 
   const { data, isLoading, isError, error, refetch } = useQuery<CategoryAPI.GetCategoriesResponse>({
     queryKey: ['categories', state.page, state.q, state.sortBy, state.sortOrder],

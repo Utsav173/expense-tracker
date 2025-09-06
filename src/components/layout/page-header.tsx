@@ -53,16 +53,15 @@ const PageHeader: React.FC = () => {
   return (
     <header className='bg-sidebar/50 sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b backdrop-blur-sm'>
       <div className='flex w-full items-center gap-2 px-4'>
-        <SidebarTrigger className='-ml-1' />
-
-        <div className='flex h-full flex-1 items-center gap-2 overflow-hidden'>
+        <SidebarTrigger />
+        <div className='border-accent ml-1 flex h-full flex-1 items-center gap-2 overflow-x-auto border-l pl-2'>
           {breadcrumbs ? (
             <Breadcrumb>
-              <BreadcrumbList>
+              <BreadcrumbList className='whitespace-nowrap'>
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild>
                     <Link href='/dashboard' aria-label='Go to Dashboard'>
-                      <Icon name='home' className='h-4 w-4' />
+                      <Icon name='home' className='hover:text-accent-foreground h-4 w-4' />
                     </Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
@@ -70,13 +69,13 @@ const PageHeader: React.FC = () => {
                 {breadcrumbs.map((crumb) => (
                   <BreadcrumbItem key={crumb.href}>
                     {crumb.isLast ? (
-                      <BreadcrumbPage className='truncate font-semibold'>
+                      <BreadcrumbPage className='hover:text-accent-foreground truncate font-semibold'>
                         {crumb.title}
                       </BreadcrumbPage>
                     ) : (
                       <>
                         <BreadcrumbLink asChild>
-                          <Link href={crumb.href} className='truncate'>
+                          <Link href={crumb.href} className='hover:text-accent-foreground truncate'>
                             {crumb.title}
                           </Link>
                         </BreadcrumbLink>

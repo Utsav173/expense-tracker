@@ -2,8 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { goalGetAll } from '@/lib/endpoints/goal';
-import { useState, useEffect } from 'react';
-import Loader from '@/components/ui/loader';
+import { useState } from 'react';
 import CommonTable from '@/components/ui/CommonTable';
 import { createGoalColumns } from '@/components/goal/goal-columns';
 import { useUrlState } from '@/hooks/useUrlState';
@@ -11,7 +10,6 @@ import AddGoalModal from '@/components/modals/add-goal-modal';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/providers/auth-provider';
 import { Input } from '@/components/ui/input';
-import { useDebounce } from 'use-debounce';
 import QueryErrorDisplay from '@/components/ui/query-error-display';
 import { Icon } from '@/components/ui/icon';
 import { SortingState } from '@tanstack/react-table';
@@ -24,35 +22,28 @@ const initialUrlState = {
 };
 
 const GoalPage = () => {
-  const { session, isLoading: userIsLoading } = useAuth();
+  const { session } = useAuth();
   const user = session?.user;
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const { state, setState, handlePageChange } = useUrlState(initialUrlState);
-
-  const [search, setSearch] = useState(state.q);
-  const [debouncedSearch] = useDebounce(search, 600);
-
-  useEffect(() => {
-    setState({ q: debouncedSearch, page: 1 });
-  }, [debouncedSearch, setState]);
+  const { state, setState, handlePageChange, searchQuery, setSearchQuery } =
+    useUrlState(initialUrlState);
 
   const {
     data: goals,
     isLoading,
-    isPending,
     error,
     refetch
   } = useQuery({
-    queryKey: ['goals', state.page, state.sortBy, state.sortOrder, debouncedSearch],
+    queryKey: ['goals', state.page, state.sortBy, state.sortOrder, state.q],
     queryFn: () =>
       goalGetAll({
         page: state.page,
         limit: 10,
         sortBy: state.sortBy,
         sortOrder: state.sortOrder,
-        q: debouncedSearch
+        q: state.q
       }),
     retry: false,
     enabled: !!user
@@ -68,10 +59,6 @@ const GoalPage = () => {
   };
 
   const goalColumns = createGoalColumns({ user, refetchGoals: refetch });
-
-  if ((isLoading && !isPending) || userIsLoading || !user) {
-    return <Loader />;
-  }
 
   if (error) {
     return <QueryErrorDisplay error={error} message="We couldn't load your goal data." />;
@@ -98,8 +85,8 @@ const GoalPage = () => {
         <Input
           type='text'
           placeholder='Search Goals...'
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           className='max-w-full grow pl-9'
         />
       </div>

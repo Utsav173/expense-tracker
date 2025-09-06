@@ -291,7 +291,7 @@ const AiTransactionPreview: React.FC<{ transactions: AIAPI.ExtractedTransaction[
       </Card>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className='max-h-[90dvh] w-full max-w-2xl'>
+        <DialogContent className='max-h-[90dvh] w-full max-w-2xl overflow-y-scroll'>
           <DialogHeader>
             <DialogTitle>Review Extracted Transactions</DialogTitle>
             <DialogDescription>

@@ -11,16 +11,16 @@ import { Icon } from '@/components/ui/icon';
 import { useAccountDetails } from '@/components/account/context/account-details-context';
 
 const cardVariants = cva(
-  'relative group overflow-hidden rounded-2xl border-none shadow-lg transition-all duration-300 ease-out hover:scale-[1.01] hover:shadow-2xl hover:brightness-105',
+  'relative group overflow-hidden rounded-2xl border-none shadow-lg transition-all duration-300 ease-out hover:scale-[1.01] hover:shadow-2xl hover:brightness-105 bg-transparent',
   {
     variants: {
       variant: {
         primary:
-          'bg-gradient-to-br from-purple-200 via-indigo-300 to-blue-300 dark:bg-gradient-to-br dark:from-indigo-700 dark:via-purple-700 dark:to-blue-800',
+          'text-indigo-900 dark:text-white bg-gradient-to-br from-purple-200 via-indigo-300 to-blue-300 dark:bg-gradient-to-br dark:from-indigo-700 dark:via-purple-700 dark:to-blue-800',
         success:
-          '!text-emerald-800 dark:!text-green-300 bg-gradient-to-br from-green-300/80 to-teal-300/50 dark:bg-gradient-to-br dark:from-green-950 dark:to-teal-800/90',
+          'text-emerald-900 dark:text-green-200 bg-gradient-to-br from-green-300/80 to-teal-300/50 dark:bg-gradient-to-br dark:from-green-950 dark:to-teal-800/90',
         destructive:
-          '!text-rose-800 dark:!text-red-200 bg-gradient-to-br from-red-300 to-rose-300/50 dark:bg-gradient-to-br dark:from-rose-900/80 dark:to-orange-700/60'
+          'text-rose-900 dark:text-red-200 bg-gradient-to-br from-red-300 to-rose-300/50 dark:bg-gradient-to-br dark:from-rose-900/80 dark:to-orange-700/60'
       }
     },
     defaultVariants: {
@@ -46,9 +46,9 @@ const TrendIndicator = ({ value }: { value: number }) => {
 
   const trendColorClasses =
     direction === 'up'
-      ? 'text-green-600'
+      ? 'text-green-600 dark:text-green-500'
       : direction === 'down'
-        ? 'text-red-600'
+        ? 'text-red-600 dark:text-red-500'
         : 'text-muted-foreground';
 
   return (
@@ -102,12 +102,12 @@ const AnalyticsCard = ({
     {variant === 'primary' ? (
       <div className='relative flex h-full min-h-[180px] flex-col justify-between p-6'>
         <div>
-          <p className='text-muted-foreground font-medium'>{title}</p>
-          <p className='font-display text-foreground mt-2 text-4xl font-bold tracking-tighter'>
+          <p className='font-medium text-indigo-800/80 dark:text-indigo-300'>{title}</p>
+          <p className='font-display mt-2 text-4xl font-bold tracking-tighter text-indigo-900 dark:text-indigo-200'>
             {formatCurrency(value, currency)}
           </p>
         </div>
-        <div className='mt-4'>
+        <div className='mt-4 text-indigo-800 dark:text-indigo-200'>
           {totalBalance !== undefined && (
             <p className='text-sm'>
               <span className='opacity-80'>Total in Account:</span>{' '}

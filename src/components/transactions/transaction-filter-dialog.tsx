@@ -96,7 +96,7 @@ export const TransactionFilterDialog: React.FC<TransactionFilterDialogProps> = (
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-3xl'>
+      <DialogContent className='max-h-[90dvh] overflow-y-scroll sm:max-w-3xl'>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
             <Icon name='filter' className='h-5 w-5' />
@@ -200,6 +200,7 @@ export const TransactionFilterDialog: React.FC<TransactionFilterDialogProps> = (
                   ? new Date(transactionsData.dateRange.maxDate)
                   : undefined
               }
+              isOnModal
             />
           </div>
 

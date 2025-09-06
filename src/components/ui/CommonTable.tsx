@@ -42,7 +42,6 @@ interface CommonTableProps<T extends object> {
   tableClassName?: string;
   headerClassName?: string;
   cellClassName?: string;
-  mobilePrimaryColumns?: string[];
   tableId: string;
 }
 
@@ -65,8 +64,6 @@ const CommonTable = <T extends object>({
 }: CommonTableProps<T>) => {
   const isMobile = useIsMobile();
   const [internalSorting, setInternalSorting] = useState<SortingState>([]);
-  const [columnVisibility, setColumnVisibility] = useState({});
-
   const { columnSizing, setColumnSizing } = useTableColumnResize(tableId);
 
   useEffect(() => {
@@ -77,23 +74,14 @@ const CommonTable = <T extends object>({
   const handleSortingChange = (updater: any) => {
     const newSorting = typeof updater === 'function' ? updater(internalSorting) : updater;
     setInternalSorting(newSorting);
-    if (onSortChange) {
-      onSortChange(newSorting);
-    }
-  };
-
-  const handlePaginationChange = (updater: any) => {
-    const newPagination =
-      typeof updater === 'function' ? updater(table.getState().pagination) : updater;
-    onPageChange(newPagination.pageIndex + 1);
+    onSortChange?.(newSorting);
   };
 
   const table = useReactTable({
-    data,
+    data: data ?? [],
     columns,
     state: {
       sorting: internalSorting,
-      columnVisibility,
       columnSizing,
       pagination: {
         pageIndex: currentPage - 1,
@@ -101,54 +89,47 @@ const CommonTable = <T extends object>({
       }
     },
     onSortingChange: handleSortingChange,
-    onColumnVisibilityChange: setColumnVisibility,
     onColumnSizingChange: setColumnSizing,
-    onPaginationChange: handlePaginationChange,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     manualPagination: true,
     manualSorting: true,
-    pageCount: Math.ceil(totalRecords / pageSize),
+    pageCount: Math.ceil((totalRecords ?? 0) / pageSize),
     columnResizeMode: 'onChange'
   });
 
   if (loading && (!data || data.length === 0)) {
     return (
-      <div className='w-full'>
-        <div className='flex h-64 w-full items-center justify-center'>
-          <Loader />
-        </div>
+      <div className='flex h-80 w-full items-center justify-center rounded-lg border'>
+        <Loader />
       </div>
     );
   }
 
-  if (!data || data.length === 0) {
+  if (!loading && (!data || data.length === 0)) {
     return (
-      <div className='text-muted-foreground flex h-full min-h-[200px] w-full items-center justify-center'>
-        <NoData message='No results found.' />
-      </div>
+      <NoData
+        message='No results were found.'
+        description='Try adjusting your filters or search terms.'
+      />
     );
   }
 
   return (
-    <>
-      <div className={cn('w-full overflow-x-auto rounded-md border', tableClassName)}>
-        <Table className={cn('min-w-full')} style={{ width: table.getTotalSize() }}>
-          <TableHeader className={cn('[&_tr]:border-b', headerClassName)}>
+    <div className='flex flex-col gap-4'>
+      <div className={cn('overflow-auto rounded-lg border shadow-sm', tableClassName)}>
+        <Table className='min-w-full' style={{ width: table.getTotalSize() }}>
+          <TableHeader className='bg-muted/20 sticky top-0 z-10 backdrop-blur-sm'>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
                     colSpan={header.colSpan}
-                    className={cn(
-                      'text-muted-foreground h-10 px-2 text-left align-middle font-medium [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
-                      headerClassName
-                    )}
+                    className={cn('relative h-12 px-4', headerClassName)}
                     style={{
-                      width: header.getSize(),
-                      minWidth: isMobile ? 'auto' : header.getSize()
+                      width: header.getSize()
                     }}
                   >
                     {header.isPlaceholder
@@ -163,56 +144,43 @@ const CommonTable = <T extends object>({
             ))}
           </TableHeader>
           <TableBody>
-            {loading ? (
-              Array.from({ length: pageSize }).map((_, i) => (
-                <TableRow key={`loading-${i}`}>
-                  {columns.map((_col, j) => (
-                    <TableCell key={`skeleton-${i}-${j}`} className={cn('p-3')}>
-                      <Skeleton className='h-5 w-full' />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : table.getRowModel().rows.length > 0 ? (
-              table.getRowModel().rows.map((row, rowIndex) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
-                  {row.getVisibleCells().map((cell, cellIndex) => (
-                    <TableCell
-                      key={cell.id}
-                      className={cn(
-                        'p-2 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
-                        cellClassName
-                      )}
-                      style={{ width: cell.column.getSize() }}
-                    >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className='h-24 text-center'>
-                  No results found.
-                </TableCell>
-              </TableRow>
-            )}
+            {loading
+              ? Array.from({ length: pageSize }).map((_, i) => (
+                  <TableRow key={`loading-${i}`} className='hover:bg-transparent'>
+                    {columns.map((_col, j) => (
+                      <TableCell key={`skeleton-${i}-${j}`} className='p-2'>
+                        <Skeleton className='h-6 w-full' />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              : table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell
+                        key={cell.id}
+                        className={cn('p-2', cellClassName)}
+                        style={{ width: cell.column.getSize() }}
+                      >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
           </TableBody>
         </Table>
       </div>
 
       {enablePagination && totalRecords > pageSize && (
-        <div className='mt-4'>
-          <EnhancedPagination
-            totalRecords={totalRecords}
-            pageSize={pageSize}
-            currentPage={currentPage}
-            onPageChange={onPageChange}
-            isMobile={isMobile}
-          />
-        </div>
+        <EnhancedPagination
+          totalRecords={totalRecords}
+          pageSize={pageSize}
+          currentPage={currentPage}
+          onPageChange={onPageChange}
+          isMobile={isMobile}
+        />
       )}
-    </>
+    </div>
   );
 };
 

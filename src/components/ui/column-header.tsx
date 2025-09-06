@@ -2,7 +2,7 @@
 
 import { Column } from '@tanstack/react-table';
 import { cn } from '@/lib/utils';
-import { Icon } from './icon';
+import { Icon } from './icon'; // Make sure you have an Icon component
 
 interface DataTableColumnHeaderProps<TData, TValue> extends React.HTMLAttributes<HTMLDivElement> {
   column: Column<TData, TValue>;
@@ -22,7 +22,7 @@ export function DataTableColumnHeader<TData, TValue>({
 
   return (
     <div
-      className={cn('flex cursor-pointer items-center space-x-2 select-none', className)}
+      className={cn('group flex cursor-pointer items-center space-x-2 select-none', className)}
       onClick={() => column.toggleSorting()}
       role='button'
       tabIndex={0}
@@ -33,13 +33,23 @@ export function DataTableColumnHeader<TData, TValue>({
       }}
       aria-label={`Sort by ${title}`}
     >
-      <span>{title}</span>
+      <span
+        className={cn(
+          'font-semibold',
+          sortDirection ? 'text-primary' : 'group-hover:text-foreground'
+        )}
+      >
+        {title}
+      </span>
       {sortDirection === 'desc' ? (
-        <Icon name='arrowDown' className='ml-2 h-4 w-4' />
+        <Icon name='arrowDown' className='text-primary h-4 w-4' />
       ) : sortDirection === 'asc' ? (
-        <Icon name='arrowUp' className='ml-2 h-4 w-4' />
+        <Icon name='arrowUp' className='text-primary h-4 w-4' />
       ) : (
-        <Icon name='chevronsUpDown' className='ml-2 h-4 w-4' />
+        <Icon
+          name='chevronsUpDown'
+          className='text-muted-foreground/70 group-hover:text-foreground h-4 w-4'
+        />
       )}
     </div>
   );

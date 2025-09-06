@@ -53,6 +53,8 @@ interface DateRangePickerV2Props {
   noLabel?: boolean;
   buttonClassName?: string;
   hideCloseButton?: boolean;
+  isOnModal?: boolean;
+  showAllOption?: boolean;
 }
 
 const defaultProps: Partial<DateRangePickerV2Props> = {
@@ -66,7 +68,8 @@ const defaultProps: Partial<DateRangePickerV2Props> = {
   startYearOffset: 50,
   endYearOffset: 10,
   noLabel: false,
-  buttonClassName: ''
+  buttonClassName: '',
+  showAllOption: true
 };
 
 function getStartOfMonth(date: Date): Date {
@@ -97,7 +100,9 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
     endYearOffset,
     noLabel,
     buttonClassName,
-    hideCloseButton = false
+    hideCloseButton = false,
+    isOnModal = false,
+    showAllOption = true
   } = mergedProps;
 
   const id = useId();
@@ -109,7 +114,7 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
   const [isYearView, setIsYearView] = useState(false);
   const [month, setMonth] = useState<Date>(initialDefaultMonth || date?.from || new Date());
 
-  const { minDate, maxDate, years } = useMemo(() => {
+  const { minDate, maxDate, years, allRange } = useMemo(() => {
     const today = new Date();
     const effectiveMinDate = initialMinDate || subYears(today, startYearOffset!);
     const effectiveMaxDate = initialMaxDate || addYears(today, endYearOffset!);
@@ -126,10 +131,23 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
       end: endOfYear(finalMaxDate)
     });
 
+    // Calculate "All" range
+    let allRangeValue: DateRange;
+    if (initialMinDate && initialMaxDate) {
+      allRangeValue = { from: initialMinDate, to: initialMaxDate };
+    } else {
+      // Default to 1970-01-01 to today if no min/max dates provided
+      allRangeValue = {
+        from: new Date(1970, 0, 1),
+        to: today
+      };
+    }
+
     return {
       minDate: finalMinDate,
       maxDate: finalMaxDate,
-      years: calculatedYears
+      years: calculatedYears,
+      allRange: allRangeValue
     };
   }, [initialMinDate, initialMaxDate, startYearOffset, endYearOffset]);
 
@@ -204,6 +222,22 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
       };
     }
     return { valid: true };
+  };
+
+  const handleSelectAllRange = () => {
+    const validation = validateDateRange(allRange);
+    if (validation.valid) {
+      setTempDate(allRange);
+      setError(null);
+      onDateChange?.(allRange);
+      setMonth(allRange.from && allRange.to ? allRange.from : new Date());
+      if (closeOnComplete) {
+        setOpen(false);
+        setIsYearView(false);
+      }
+    } else {
+      setError(validation.message || null);
+    }
   };
 
   const handleSelect = (newDateRange: DateRange | undefined) => {
@@ -326,7 +360,7 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
         )}
 
         <div className='flex items-center justify-between'>
-          <Popover open={open && !disabled} onOpenChange={handleOpenChange}>
+          <Popover open={open && !disabled} onOpenChange={handleOpenChange} modal={isOnModal}>
             <PopoverTrigger asChild>
               <div className='relative w-full'>
                 <Input
@@ -353,6 +387,38 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
               </div>
             </PopoverTrigger>
             <PopoverContent className='w-auto p-0' align='start'>
+              {/* Quick actions bar */}
+              {showAllOption && (
+                <div className='border-b p-2'>
+                  <div className='flex gap-2'>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      onClick={handleSelectAllRange}
+                      className='h-7 flex-1 text-xs'
+                    >
+                      <Icon name='maximize2' className='mr-1 h-3 w-3' />
+                      All Range
+                    </Button>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      onClick={() => {
+                        const today = new Date();
+                        const startOfMonthDate = startOfMonth(today);
+                        const endOfMonthDate = endOfMonth(today);
+                        handleSelect({ from: startOfMonthDate, to: endOfMonthDate });
+                      }}
+                      className='h-7 flex-1 text-xs'
+                    >
+                      This Month
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <Calendar
                 mode='range'
                 selected={tempDate}

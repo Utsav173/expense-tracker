@@ -45,14 +45,14 @@ export function NavMain({ groups }: { groups: NavGroup[] }) {
                   >
                     {item.disabled ? (
                       <span className='flex w-full items-center gap-2'>
-                        <Icon name={item.icon} className='h-5 w-5 shrink-0' />
+                        <Icon name={item.icon} />
                         <span className='truncate group-data-[collapsible=icon]:hidden'>
                           {item.title}
                         </span>
                       </span>
                     ) : (
                       <Link href={item.url} className='flex w-full items-center gap-2'>
-                        <Icon name={item.icon} className='h-5 w-5 shrink-0' />
+                        <Icon name={item.icon} />
                         <span className='truncate group-data-[collapsible=icon]:hidden'>
                           {item.title}
                         </span>

@@ -1,20 +1,17 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { budgetGetAll } from '@/lib/endpoints/budget';
 import CommonTable from '@/components/ui/CommonTable';
 import { budgetColumns } from '@/components/budget/budget-columns';
 import AddBudgetModal from '@/components/modals/add-budget-modal';
-import Loader from '@/components/ui/loader';
-import { useToast } from '@/lib/hooks/useToast';
 import { Button } from '@/components/ui/button';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import type { BudgetAPI } from '@/lib/api/api-types';
 import { useUrlState } from '@/hooks/useUrlState';
 import { SortingState } from '@tanstack/react-table';
 import { Input } from '@/components/ui/input';
-import { useDebounce } from 'use-debounce';
 import QueryErrorDisplay from '@/components/ui/query-error-display';
 import { Icon } from '@/components/ui/icon';
 
@@ -26,28 +23,21 @@ const initialUrlState = {
 };
 
 const BudgetPage = () => {
-  const { showError } = useToast();
   const invalidate = useInvalidateQueries();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const { state, setState, handlePageChange } = useUrlState(initialUrlState);
+  const { state, setState, handlePageChange, searchQuery, setSearchQuery } =
+    useUrlState(initialUrlState);
 
-  const [search, setSearch] = useState(state.q);
-  const [debouncedSearch] = useDebounce(search, 600);
-
-  useEffect(() => {
-    setState({ q: debouncedSearch, page: 1 });
-  }, [debouncedSearch, setState]);
-
-  const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['budgets', debouncedSearch, state.page, state.sortBy, state.sortOrder],
+  const { data, isError, error, refetch, isPending } = useQuery({
+    queryKey: ['budgets', state.q, state.page, state.sortBy, state.sortOrder],
     queryFn: () =>
       budgetGetAll({
         page: state.page,
         limit: 10,
         sortBy: state.sortBy,
         sortOrder: state.sortOrder,
-        q: debouncedSearch
+        q: state.q
       }),
     retry: false
   });
@@ -65,10 +55,6 @@ const BudgetPage = () => {
       setState({ sortBy: 'year', sortOrder: 'desc', page: 1 });
     }
   };
-
-  if (isLoading) {
-    return <Loader />;
-  }
 
   if (isError) {
     return <QueryErrorDisplay error={error} message="We couldn't load your budget data." />;
@@ -95,8 +81,8 @@ const BudgetPage = () => {
         <Input
           type='text'
           placeholder='Search Budgets...'
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           className='max-w-full grow pl-9'
         />
       </div>
@@ -105,7 +91,7 @@ const BudgetPage = () => {
         tableId='budgets-table'
         data={data?.data || []}
         columns={budgetColumns}
-        loading={isLoading}
+        loading={isPending}
         totalRecords={data?.pagination.total || 0}
         pageSize={10}
         currentPage={state.page}

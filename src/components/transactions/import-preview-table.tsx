@@ -37,23 +37,27 @@ export function ImportPreviewTable<TData>({
       {
         id: 'select',
         header: ({ table }) => (
-          <Checkbox
-            checked={
-              table.getIsAllPageRowsSelected() ||
-              (table.getIsSomePageRowsSelected() && 'indeterminate')
-            }
-            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-            aria-label='Select all'
-            className='translate-y-[2px]'
-          />
+          <div className='flex items-center justify-center'>
+            <Checkbox
+              checked={
+                table.getIsAllPageRowsSelected() ||
+                (table.getIsSomePageRowsSelected() && 'indeterminate')
+              }
+              onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+              aria-label='Select all'
+              className='translate-y-[2px]'
+            />
+          </div>
         ),
         cell: ({ row }) => (
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
-            aria-label='Select row'
-            className='translate-y-[2px]'
-          />
+          <div className='flex items-center justify-center'>
+            <Checkbox
+              checked={row.getIsSelected()}
+              onCheckedChange={(value) => row.toggleSelected(!!value)}
+              aria-label='Select row'
+              className='translate-y-[2px]'
+            />
+          </div>
         ),
         enableSorting: false,
         enableHiding: false
@@ -76,9 +80,9 @@ export function ImportPreviewTable<TData>({
   });
 
   return (
-    <div className='max-h-[65dvh] overflow-scroll rounded-md border'>
+    <div className='max-h-[65dvh] overflow-auto rounded-lg border shadow-md'>
       <Table>
-        <TableHeader className='bg-muted sticky top-0'>
+        <TableHeader className='bg-muted/80 sticky top-0 z-10 backdrop-blur-sm'>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
@@ -96,7 +100,7 @@ export function ImportPreviewTable<TData>({
             table.getRowModel().rows.map((row) => (
               <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className='p-2 text-xs'>
+                  <TableCell key={cell.id} className='p-3 text-sm'>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
@@ -104,8 +108,15 @@ export function ImportPreviewTable<TData>({
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={memoizedColumns.length} className='h-24 text-center'>
-                No data to display.
+              <TableCell colSpan={memoizedColumns.length} className='h-48 text-center'>
+                <div className='flex flex-col items-center justify-center space-y-4'>
+                  <div className='text-muted-foreground text-lg font-medium'>
+                    No data to display.
+                  </div>
+                  <div className='text-muted-foreground/80 text-sm'>
+                    Upload a file to get started.
+                  </div>
+                </div>
               </TableCell>
             </TableRow>
           )}

@@ -1,8 +1,6 @@
 'use client';
 
-import { useQuery, useMutation } from '@tanstack/react-query';
 import { accountGetAll, accountDelete } from '@/lib/endpoints/accounts';
-import Loader from '@/components/ui/loader';
 import AddAccountModal from '@/components/modals/add-account-modal';
 import { AccountCard } from '@/components/ui/account-card';
 import { useState } from 'react';
@@ -16,7 +14,6 @@ import { UpdateAccountModal } from '@/components/modals/update-account-modal';
 import NoData from '@/components/ui/no-data';
 import { motion, Variants } from 'framer-motion';
 import { useUrlState } from '@/hooks/useUrlState';
-import { useDebounce } from 'use-debounce';
 import {
   Pagination,
   PaginationContent,
@@ -27,31 +24,29 @@ import {
 } from '@/components/ui/pagination';
 import QueryErrorDisplay from '@/components/ui/query-error-display';
 import { Icon } from '@/components/ui/icon';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import Loader from '@/components/ui/loader';
 
 const AccountListPage = () => {
   const { showError } = useToast();
-
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [deleteAccountId, setDeleteAccountId] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<AccountAPI.Account | undefined>();
 
-  const { state, setState, handlePageChange } = useUrlState({
+  const { state, setState, handlePageChange, searchQuery, setSearchQuery } = useUrlState({
     page: 1,
     sortBy: 'createdAt',
     sortOrder: 'desc' as 'asc' | 'desc',
     q: ''
   });
 
-  const [search, setSearch] = useState(state.q);
-  const [debouncedSearch] = useDebounce(search, 600);
-
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['accounts', state.page, debouncedSearch, state.sortBy, state.sortOrder],
+    queryKey: ['accounts', state.page, state.q, state.sortBy, state.sortOrder],
     queryFn: () =>
       accountGetAll({
         page: state.page,
         limit: 10,
-        search: debouncedSearch,
+        search: state.q,
         sortBy: state.sortBy,
         sortOrder: state.sortOrder
       }),
@@ -123,11 +118,8 @@ const AccountListPage = () => {
         <Input
           type='text'
           placeholder='Search accounts...'
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setState({ q: e.target.value, page: 1 });
-          }}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           className='pl-9'
         />
       </div>

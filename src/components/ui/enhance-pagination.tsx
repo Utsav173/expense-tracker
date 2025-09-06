@@ -12,10 +12,6 @@ interface EnhancedPaginationProps {
   currentPage: number;
   onPageChange: (page: number) => void;
   className?: string;
-  variant?: 'default' | 'minimalist' | 'pill';
-  showFirstLast?: boolean;
-  showTotal?: boolean;
-  maxDisplayedPages?: number;
   isMobile?: boolean;
 }
 
@@ -25,142 +21,88 @@ const EnhancedPagination: React.FC<EnhancedPaginationProps> = ({
   currentPage,
   onPageChange,
   className = '',
-  variant = 'default',
-  showFirstLast = true,
-  showTotal = true,
-  maxDisplayedPages = 5,
   isMobile
 }) => {
   const totalPages = useMemo(() => Math.ceil(totalRecords / pageSize), [totalRecords, pageSize]);
   const [inputPage, setInputPage] = useState(currentPage.toString());
-  const [isInputFocused, setIsInputFocused] = useState(false);
 
   useEffect(() => {
-    setInputPage(currentPage.toString());
-  }, [currentPage]);
-
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (/^\d*$/.test(value)) {
-      setInputPage(value);
+    if (currentPage.toString() !== inputPage) {
+      setInputPage(currentPage.toString());
     }
-  }, []);
+  }, [currentPage, inputPage]);
 
   const handlePageNavigation = useCallback(
-    (pageNum: number) => {
-      if (pageNum >= 1 && pageNum <= totalPages && pageNum !== currentPage) {
+    (page: number | string) => {
+      const pageNum = Number(page);
+      if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= totalPages && pageNum !== currentPage) {
         onPageChange(pageNum);
       }
     },
-    [currentPage, onPageChange, totalPages]
+    [currentPage, totalPages, onPageChange]
   );
 
-  const handleInputKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') {
-        const pageNum = parseInt(inputPage);
-        if (!isNaN(pageNum)) {
-          handlePageNavigation(pageNum);
-        } else {
-          setInputPage(currentPage.toString());
-        }
-      }
-    },
-    [inputPage, currentPage, handlePageNavigation]
-  );
-
-  const handleInputBlur = useCallback(() => {
-    setIsInputFocused(false);
-    const pageNum = parseInt(inputPage);
+  const commitPageInput = useCallback(() => {
+    const pageNum = parseInt(inputPage, 10);
     if (!isNaN(pageNum)) {
       handlePageNavigation(pageNum);
-    } else {
-      setInputPage(currentPage.toString());
     }
+    setInputPage(currentPage.toString());
   }, [inputPage, currentPage, handlePageNavigation]);
 
-  const pagesToShow = useMemo(() => {
-    const mobileMaxPages = 3;
-    const actualMaxPages = isMobile ? mobileMaxPages : maxDisplayedPages;
-    let pages: (number | 'ellipsis')[] = [];
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.currentTarget.blur();
+    }
+  };
 
-    if (totalPages <= actualMaxPages + 2) {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (/^\d*$/.test(e.target.value)) {
+      setInputPage(e.target.value);
+    }
+  };
+
+  const pagesToShow = useMemo(() => {
+    const maxDisplayedPages = 5;
+    if (totalPages <= maxDisplayedPages + 2) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
     }
-
-    pages.push(1);
-
-    let startPage = Math.max(2, currentPage - Math.floor((actualMaxPages - 2) / 2));
-    let endPage = Math.min(totalPages - 1, startPage + actualMaxPages - 3);
+    const pages: (number | 'ellipsis')[] = [1];
+    let startPage = Math.max(2, currentPage - Math.floor((maxDisplayedPages - 2) / 2));
+    let endPage = Math.min(totalPages - 1, startPage + maxDisplayedPages - 3);
 
     if (endPage === totalPages - 1) {
-      startPage = Math.max(2, endPage - (actualMaxPages - 3));
+      startPage = Math.max(2, endPage - (maxDisplayedPages - 3));
     }
-
-    if (startPage > 2) {
-      pages.push('ellipsis');
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
-
-    if (endPage < totalPages - 1) {
-      pages.push('ellipsis');
-    }
-
+    if (startPage > 2) pages.push('ellipsis');
+    for (let i = startPage; i <= endPage; i++) pages.push(i);
+    if (endPage < totalPages - 1) pages.push('ellipsis');
     pages.push(totalPages);
-
     return pages;
-  }, [totalPages, maxDisplayedPages, isMobile, currentPage]);
+  }, [totalPages, currentPage]);
 
   if (totalPages <= 1) return null;
 
   const isFirstPage = currentPage === 1;
   const isLastPage = currentPage === totalPages;
-  const currentStart = Math.min((currentPage - 1) * pageSize + 1, totalRecords);
-  const currentEnd = Math.min(currentPage * pageSize, totalRecords);
 
   return (
-    <div
-      className={cn(
-        'flex w-full flex-col items-center justify-between gap-4 sm:flex-row',
-        className
-      )}
-    >
-      {showTotal && (
-        <div className='text-muted-foreground order-2 text-sm sm:order-1'>
-          {isMobile ? (
-            <span>
-              Page {currentPage} of {totalPages}
-            </span>
-          ) : (
-            <span>
-              Showing {currentStart} to {currentEnd} of {totalRecords} records
-            </span>
-          )}
-        </div>
-      )}
+    <div className={cn('flex w-full items-center justify-between gap-4', className)}>
+      <div className='text-muted-foreground hidden text-sm sm:block'>
+        Showing {Math.min((currentPage - 1) * pageSize + 1, totalRecords)} to{' '}
+        {Math.min(currentPage * pageSize, totalRecords)} of {totalRecords} records
+      </div>
 
-      <div
-        className={cn(
-          'order-1 flex items-center gap-1 sm:order-2 sm:gap-2',
-          !showTotal && 'mx-auto',
-          showTotal && 'w-full justify-center sm:w-auto sm:justify-end'
-        )}
-      >
-        {showFirstLast && (
-          <Button
-            onClick={() => handlePageNavigation(1)}
-            disabled={isFirstPage}
-            size='icon'
-            variant='outline'
-            aria-label='First page'
-          >
-            <Icon name='chevronsLeft' className='h-4 w-4' />
-          </Button>
-        )}
-
+      <div className={cn('flex w-full items-center justify-center gap-1 sm:w-auto sm:justify-end')}>
+        <Button
+          onClick={() => handlePageNavigation(1)}
+          disabled={isFirstPage}
+          size='icon'
+          variant='outline'
+          aria-label='First page'
+        >
+          <Icon name='chevronsLeft' className='h-4 w-4' />
+        </Button>
         <Button
           onClick={() => handlePageNavigation(currentPage - 1)}
           disabled={isFirstPage}
@@ -171,45 +113,37 @@ const EnhancedPagination: React.FC<EnhancedPaginationProps> = ({
           <Icon name='chevronLeft' className='h-4 w-4' />
         </Button>
 
-        {!isMobile || totalPages <= 5 ? (
-          <div className='flex items-center'>
-            {pagesToShow.map((page, index) =>
-              page === 'ellipsis' ? (
-                <div key={`ellipsis-${index}`} className='flex items-center justify-center px-2'>
-                  <Icon name='moreHorizontal' className='text-muted-foreground h-4 w-4' />
-                </div>
-              ) : (
-                <Button
-                  key={page}
-                  onClick={() => handlePageNavigation(page)}
-                  variant={page === currentPage ? 'default' : 'outline'}
-                  className={cn(
-                    'mx-1 h-9 min-w-9',
-                    variant === 'pill' && 'rounded-full',
-                    variant === 'minimalist' &&
-                      page === currentPage &&
-                      'border-primary text-primary rounded-none border-b-2 bg-transparent hover:bg-transparent'
-                  )}
-                >
-                  {page}
-                </Button>
-              )
-            )}
-          </div>
-        ) : (
-          <div className='relative flex items-center'>
+        {isMobile ? (
+          <div className='flex items-center px-2'>
             <Input
               type='text'
               value={inputPage}
               onChange={handleInputChange}
               onKeyDown={handleInputKeyDown}
-              onFocus={() => setIsInputFocused(true)}
-              onBlur={handleInputBlur}
-              className='h-7 w-8 min-w-4 border-none bg-transparent p-0 text-center focus-visible:ring-0 focus-visible:ring-offset-0'
+              onBlur={commitPageInput}
+              className='border-muted h-9 w-10 bg-transparent text-center focus-visible:ring-1 focus-visible:ring-offset-0'
               aria-label='Page number'
-              placeholder='Go to'
             />
-            <span className='text-muted-foreground mx-2 text-sm'>of {totalPages}</span>
+            <span className='text-muted-foreground ml-2'>/ {totalPages}</span>
+          </div>
+        ) : (
+          <div className='hidden items-center sm:flex'>
+            {pagesToShow.map((page, index) =>
+              page === 'ellipsis' ? (
+                <span key={`ellipsis-${index}`} className='px-2'>
+                  ...
+                </span>
+              ) : (
+                <Button
+                  key={page}
+                  onClick={() => handlePageNavigation(page)}
+                  variant={page === currentPage ? 'default' : 'ghost'}
+                  size='icon'
+                >
+                  {page}
+                </Button>
+              )
+            )}
           </div>
         )}
 
@@ -222,18 +156,15 @@ const EnhancedPagination: React.FC<EnhancedPaginationProps> = ({
         >
           <Icon name='chevronRight' className='h-4 w-4' />
         </Button>
-
-        {showFirstLast && (
-          <Button
-            onClick={() => handlePageNavigation(totalPages)}
-            disabled={isLastPage}
-            size='icon'
-            variant='outline'
-            aria-label='Last page'
-          >
-            <Icon name='chevronsRight' className='h-4 w-4' />
-          </Button>
-        )}
+        <Button
+          onClick={() => handlePageNavigation(totalPages)}
+          disabled={isLastPage}
+          size='icon'
+          variant='outline'
+          aria-label='Last page'
+        >
+          <Icon name='chevronsRight' className='h-4 w-4' />
+        </Button>
       </div>
     </div>
   );

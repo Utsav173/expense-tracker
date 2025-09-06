@@ -52,19 +52,6 @@ const FinancialTrendsSection = dynamic(
 
 interface PageProps {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{
-    q?: string;
-    page?: string;
-    sortBy?: string;
-    sortOrder?: string;
-    categoryId?: string;
-    isIncome?: string;
-    dateFrom?: string;
-    dateTo?: string;
-    minAmount?: string;
-    maxAmount?: string;
-    type?: string;
-  }>;
 }
 
 const AccountDetailsPageContent = () => {
@@ -182,13 +169,12 @@ const AccountDetailsPageContent = () => {
   );
 };
 
-const AccountDetailsPage = ({ params, searchParams }: PageProps) => {
+const AccountDetailsPage = ({ params }: PageProps) => {
   const resolvedParams = use(params);
-  const resolvedSearchParams = use(searchParams);
 
   return (
     <Suspense fallback={<Skeleton className='h-screen w-full' />}>
-      <AccountDetailsProvider id={resolvedParams.id} searchParams={resolvedSearchParams}>
+      <AccountDetailsProvider id={resolvedParams.id}>
         <AccountDetailsPageContent />
       </AccountDetailsProvider>
     </Suspense>

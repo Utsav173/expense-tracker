@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
 import TransactionTable from '@/components/transactions/transactions-table';
 import Loader from '@/components/ui/loader';
@@ -21,7 +21,6 @@ import { useToast } from '@/lib/hooks/useToast';
 import { API_BASE_URL } from '@/lib/api-client';
 import QueryErrorDisplay from '@/components/ui/query-error-display';
 import { useUrlState } from '@/hooks/useUrlState';
-import { useDebounce } from 'use-debounce';
 import { SortingState } from '@tanstack/react-table';
 import { Icon } from '@/components/ui/icon';
 import {
@@ -36,7 +35,7 @@ const TransactionsPage = () => {
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
-  const { state, setState, handlePageChange } = useUrlState({
+  const { state, setState, handlePageChange, searchQuery, setSearchQuery } = useUrlState({
     page: 1,
     q: '',
     sortBy: 'createdAt',
@@ -51,9 +50,6 @@ const TransactionsPage = () => {
     type: 'all' as 'recurring' | 'normal' | 'all'
   });
 
-  const [searchQuery, setSearchQuery] = useState(state.q);
-  const [debouncedSearchQuery] = useDebounce(searchQuery, 600);
-
   const duration = useMemo(
     () =>
       state.dateFrom && state.dateTo
@@ -64,10 +60,6 @@ const TransactionsPage = () => {
         : undefined,
     [state.dateFrom, state.dateTo]
   );
-
-  useEffect(() => {
-    setState({ q: debouncedSearchQuery, page: 1 });
-  }, [debouncedSearchQuery, setState]);
 
   const {
     data: transactionsData,
@@ -80,7 +72,7 @@ const TransactionsPage = () => {
       'transactions',
       state.page,
       state.accountId,
-      debouncedSearchQuery,
+      state.q,
       state.categoryId,
       state.isIncome,
       duration,
@@ -90,13 +82,13 @@ const TransactionsPage = () => {
       state.maxAmount,
       state.type
     ],
-    queryFn: ({ signal }) =>
+    queryFn: () =>
       transactionGetAll({
         page: state.page,
         limit: 10,
         accountId: state.accountId,
         duration,
-        q: debouncedSearchQuery,
+        q: state.q,
         sortBy: state.sortBy,
         sortOrder: state.sortOrder,
         categoryId: state.categoryId,
@@ -166,8 +158,17 @@ const TransactionsPage = () => {
       });
     }
     if (state.dateFrom && state.dateTo) {
-      const from = format(new Date(state.dateFrom), 'MMM d');
-      const to = format(new Date(state.dateTo), 'MMM d');
+      const fromDate = new Date(state.dateFrom);
+      const toDate = new Date(state.dateTo);
+
+      const sameYear = fromDate.getFullYear() === toDate.getFullYear();
+
+      const fromFormat = sameYear ? 'MMM d' : 'MMM d, yyyy';
+      const toFormat = 'MMM d, yyyy';
+
+      const from = format(fromDate, fromFormat);
+      const to = format(toDate, toFormat);
+
       badges.push({
         key: 'date',
         label: `${from} - ${to}`,

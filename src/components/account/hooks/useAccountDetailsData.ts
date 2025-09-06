@@ -6,50 +6,23 @@ import { transactionGetIncomeExpenseChart, transactionGetAll } from '@/lib/endpo
 import { categoryGetAll } from '@/lib/endpoints/category';
 import { format } from 'date-fns';
 import { useUrlState } from '@/hooks/useUrlState';
-import { useCallback, useMemo, useState, useEffect } from 'react';
-import { useDebounce } from 'use-debounce';
+import { useCallback, useMemo } from 'react';
 import { DateRange } from 'react-day-picker';
 
-interface SearchParams {
-  q?: string;
-  page?: string;
-  sortBy?: string;
-  sortOrder?: string;
-  categoryId?: string;
-  isIncome?: string;
-  dateFrom?: string;
-  dateTo?: string;
-  minAmount?: string;
-  maxAmount?: string;
-  type?: string;
-}
-
-export const useAccountDetailsData = (id: string, searchParams: SearchParams) => {
-  const { state, setState, handlePageChange } = useUrlState({
+export const useAccountDetailsData = (id: string) => {
+  const { state, setState, handlePageChange, searchQuery, setSearchQuery } = useUrlState({
     page: 1,
-    q: searchParams.q || '',
-    sortBy: searchParams.sortBy || 'createdAt',
-    sortOrder: (searchParams.sortOrder as 'asc' | 'desc') || 'desc',
-    categoryId: searchParams.categoryId,
-    isIncome:
-      searchParams.isIncome === 'true'
-        ? true
-        : searchParams.isIncome === 'false'
-          ? false
-          : undefined,
-    dateFrom: searchParams.dateFrom,
-    dateTo: searchParams.dateTo,
-    minAmount: searchParams.minAmount ? Number(searchParams.minAmount) : undefined,
-    maxAmount: searchParams.maxAmount ? Number(searchParams.maxAmount) : undefined,
-    type: (searchParams.type as 'all' | 'recurring' | 'normal') || 'all'
+    q: '',
+    sortBy: 'createdAt',
+    sortOrder: 'desc' as 'asc' | 'desc',
+    categoryId: undefined as string | undefined,
+    isIncome: undefined as boolean | undefined,
+    dateFrom: undefined as string | undefined,
+    dateTo: undefined as string | undefined,
+    minAmount: undefined as number | undefined,
+    maxAmount: undefined as number | undefined,
+    type: 'all' as 'recurring' | 'normal' | 'all'
   });
-
-  const [searchQuery, setSearchQuery] = useState(state.q);
-  const [debouncedSearchQuery] = useDebounce(searchQuery, 600);
-
-  useEffect(() => {
-    setState({ q: debouncedSearchQuery, page: 1 });
-  }, [debouncedSearchQuery, setState]);
 
   const dateRange = useMemo(
     () =>
@@ -104,6 +77,9 @@ export const useAccountDetailsData = (id: string, searchParams: SearchParams) =>
     error: transactionError,
     refetch: refetchTransactions
   } = useQuery({
+    // ====================== START OF THE FIX ======================
+    // The queryKey now uses the `duration` variable, perfectly matching the
+    // parameter used in the queryFn. This makes it consistent and correct.
     queryKey: [
       'accountTransactions',
       id,
@@ -113,16 +89,16 @@ export const useAccountDetailsData = (id: string, searchParams: SearchParams) =>
       state.sortOrder,
       state.categoryId,
       state.isIncome,
-      state.dateFrom,
-      state.dateTo,
+      duration, // <-- FIXED: Use the derived duration string here
       state.minAmount,
       state.maxAmount,
       state.type
     ],
-    queryFn: ({ signal }) =>
+    // ======================= END OF THE FIX =======================
+    queryFn: () =>
       transactionGetAll({
         accountId: id,
-        duration,
+        duration, // This was already correct, the key was the problem.
         page: state.page,
         limit: 10,
         q: state.q,
@@ -200,7 +176,7 @@ export const useAccountDetailsData = (id: string, searchParams: SearchParams) =>
       maxAmount: undefined,
       type: 'all'
     });
-  }, [setState]);
+  }, [setState, setSearchQuery]);
 
   return {
     account,
@@ -214,7 +190,7 @@ export const useAccountDetailsData = (id: string, searchParams: SearchParams) =>
     isTransactionLoading,
     transactionError,
     refetchData,
-    filters: { ...state, searchQuery, debouncedSearchQuery: state.q, dateRange },
+    filters: { ...state, searchQuery, dateRange },
     page: state.page,
     handlePageChange,
     setSearchQuery,

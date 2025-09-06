@@ -61,15 +61,11 @@ const ShareAccountModal = ({
   });
 
   const handleShareAccount = async (data: ShareAccountFormSchema) => {
-    console.log(data, 'data');
-
     if (!data.userId) return;
     if (data.userId.startsWith('invite:')) {
       return;
     }
     const payload = { accountId: data.accountId, userId: data.userId };
-    console.log(payload);
-
     await shareAccountMutation.mutate(payload);
   };
 
