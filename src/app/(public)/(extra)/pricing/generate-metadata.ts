@@ -2,38 +2,38 @@ import { Metadata } from 'next';
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: 'Pricing Plans - Expense Tracker',
+    title: 'Pricing - Expense Tracker | Unlock Pro Features',
     description:
-      'Choose the perfect plan for your financial needs. Start for free and unlock advanced features with our Pro plan.',
+      'Choose the perfect plan for your financial journey. Start for free with essential expense tracking tools or upgrade to Pro for a lifetime of advanced AI-powered features.',
     keywords: [
       'expense tracker pricing',
       'finance app cost',
-      'budgeting tool plans',
-      'free expense tracker'
+      'budgeting app price',
+      'pro plan',
+      'lifetime access',
+      'financial management tools'
     ],
     openGraph: {
-      title: 'Pricing Plans - Expense Tracker',
-      description: 'Affordable and transparent pricing for managing your finances effectively.',
-      url: 'https://expense-pro.vercel.app/pricing',
+      title: 'Pricing - Expense Tracker | Unlock Pro Features',
+      description:
+        'Explore our simple pricing and unlock a lifetime of financial clarity with a single purchase.',
+      url: 'https://expense-pro.khatriutsav.com/pricing',
       type: 'website',
       images: [
         {
-          url: 'https://expense-pro.vercel.app/og-image-pricing.png',
+          url: 'https://expense-pro.khatriutsav.com/og-image-pricing.png',
           width: 1200,
           height: 630,
-          alt: 'Expense Tracker Pricing Plans'
+          alt: 'Expense Tracker Pricing Page'
         }
       ]
     },
     twitter: {
       card: 'summary_large_image',
-      title: 'Pricing Plans - Expense Tracker',
+      title: 'Pricing - Expense Tracker | Unlock Pro Features',
       description:
-        'Choose the perfect plan for your financial needs. Start for free and unlock advanced features with our Pro plan.',
-      images: ['https://expense-pro.vercel.app/og-image-pricing.png']
-    },
-    verification: {
-      google: '4b4H3hr3KG4V1J6eRzWhNZDf84yIPAcR1x32o0EpF8U'
+        'Explore our simple pricing and unlock a lifetime of financial clarity with a single purchase.',
+      images: ['https://expense-pro.khatriutsav.com/og-image-pricing.png']
     }
   };
 }

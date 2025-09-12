@@ -18,6 +18,8 @@ import {
 import { useToast } from '@/lib/hooks/useToast';
 import { authClient } from '@/lib/auth-client';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { WebPage, WithContext } from 'schema-dts';
+import Script from 'next/script';
 
 const resetPasswordSchema = z
   .object({
@@ -30,6 +32,14 @@ const resetPasswordSchema = z
   });
 
 type ResetPasswordSchemaType = z.infer<typeof resetPasswordSchema>;
+
+const jsonLd: WithContext<WebPage> = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: 'Reset Password',
+  url: 'https://expense-pro.khatriutsav.com/auth/reset-password',
+  description: 'Page to reset the password for an Expense Tracker account.'
+};
 
 const ResetPasswordPage = () => {
   const [loading, setLoading] = useState(false);
@@ -79,49 +89,56 @@ const ResetPasswordPage = () => {
   };
 
   return (
-    <Card variant='auth'>
-      <CardContent className='space-y-6 p-0 pt-4'>
-        <div className='space-y-2 text-center select-none'>
-          <h2 className='text-foreground text-2xl font-semibold'>Reset Password</h2>
-          <p className='text-muted-foreground text-sm'>Enter your new password below.</p>
-        </div>
+    <>
+      <Script
+        id='json-ld'
+        type='application/ld+json'
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <Card variant='auth'>
+        <CardContent className='space-y-6 p-0 pt-4'>
+          <div className='space-y-2 text-center select-none'>
+            <h2 className='text-foreground text-2xl font-semibold'>Reset Password</h2>
+            <p className='text-muted-foreground text-sm'>Enter your new password below.</p>
+          </div>
 
-        <Form {...form}>
-          <form className='space-y-4' onSubmit={form.handleSubmit(handleResetPassword)}>
-            <FormField
-              control={form.control}
-              name='password'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>New Password</FormLabel>
-                  <FormControl>
-                    <PasswordInput placeholder='••••••••' disabled={loading} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name='confirmPassword'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Confirm New Password</FormLabel>
-                  <FormControl>
-                    <PasswordInput placeholder='••••••••' disabled={loading} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <Form {...form}>
+            <form className='space-y-4' onSubmit={form.handleSubmit(handleResetPassword)}>
+              <FormField
+                control={form.control}
+                name='password'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>New Password</FormLabel>
+                    <FormControl>
+                      <PasswordInput placeholder='••••••••' disabled={loading} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='confirmPassword'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm New Password</FormLabel>
+                    <FormControl>
+                      <PasswordInput placeholder='••••••••' disabled={loading} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <Button type='submit' disabled={loading} className='w-full'>
-              {loading ? 'Resetting...' : 'Reset Password'}
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+              <Button type='submit' disabled={loading} className='w-full'>
+                {loading ? 'Resetting...' : 'Reset Password'}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </>
   );
 };
 

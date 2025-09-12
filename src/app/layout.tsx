@@ -35,17 +35,17 @@ export const metadata: Metadata = {
     title: 'Expense Tracker - Master Your Money. Effortlessly.',
     description:
       'Expense Pro: Your intelligent partner for mastering personal finance. Automate tracking, gain deep understanding, and achieve your financial goals with unprecedented ease.',
-    url: 'https://expense-pro.vercel.app/',
+    url: 'https://expense-pro.khatriutsav.com/',
     siteName: 'Expense Tracker',
     images: [
       {
-        url: 'https://expense-pro.vercel.app/og-image-home.png',
+        url: 'https://expense-pro.khatriutsav.com/og-image-home.png',
         width: 1200,
         height: 630,
         alt: 'Expense Tracker Dashboard Mockup'
       },
       {
-        url: 'https://expense-pro.vercel.app/og-image-dashboard-desktop-light.webp',
+        url: 'https://expense-pro.khatriutsav.com/og-image-dashboard-desktop-light.webp',
         width: 1200,
         height: 630,
         alt: 'Expense Tracker Dashboard'
@@ -58,12 +58,12 @@ export const metadata: Metadata = {
     description:
       'Expense Pro: Your intelligent partner for mastering personal finance. Automate tracking, gain deep understanding, and achieve your financial goals with unprecedented ease.',
     images: [
-      'https://expense-pro.vercel.app/og-image-home.png',
-      'https://expense-pro.vercel.app/og-image-dashboard-desktop-light.webp'
+      'https://expense-pro.khatriutsav.com/og-image-home.png',
+      'https://expense-pro.khatriutsav.com/og-image-dashboard-desktop-light.webp'
     ]
   },
   verification: {
-    google: '4b4H3hr3KG4V1J6eRzWhNZDf84yIPAcR1x32o0EpF8U'
+    google: 'tNXFFpZE1VOHdcWpBlnAsX7avQThqRD6wjolUQaG4rU'
   },
   icons: [
     { rel: 'icon', type: 'image/png', sizes: '96x96', url: '/favicon-96x96.png' },

@@ -6,6 +6,16 @@ import { useToast } from '@/lib/hooks/useToast';
 import { verifyInvitation } from '@/lib/endpoints/invitation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
+import { WebPage, WithContext } from 'schema-dts';
+import Script from 'next/script';
+
+const jsonLd: WithContext<WebPage> = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: 'Verify Invitation',
+  url: 'https://expense-pro.khatriutsav.com/auth/verify-invitation',
+  description: 'Page to verify an invitation token for Expense Tracker.'
+};
 
 const VerifyInvitationPage = () => {
   const [loading, setLoading] = useState(true);
@@ -40,19 +50,26 @@ const VerifyInvitationPage = () => {
   }, [searchParams, push, showError]);
 
   return (
-    <Card variant='auth'>
-      <CardContent className='space-y-6 p-0 pt-4'>
-        <div className='space-y-2 text-center select-none'>
-          <h2 className='text-foreground text-2xl font-semibold'>Invitation</h2>
-          <p className='text-muted-foreground text-sm'>{message}</p>
-        </div>
-        {loading && (
-          <div className='flex justify-center'>
-            <Icon name='loader2' className='text-primary h-8 w-8 animate-spin' />
+    <>
+      <Script
+        id='json-ld'
+        type='application/ld+json'
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <Card variant='auth'>
+        <CardContent className='space-y-6 p-0 pt-4'>
+          <div className='space-y-2 text-center select-none'>
+            <h2 className='text-foreground text-2xl font-semibold'>Verify Your Invitation</h2>
+            <p className='text-muted-foreground text-sm'>{message}</p>
           </div>
-        )}
-      </CardContent>
-    </Card>
+          {loading && (
+            <div className='flex justify-center'>
+              <Icon name='loader2' className='text-primary h-8 w-8 animate-spin' />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </>
   );
 };
 

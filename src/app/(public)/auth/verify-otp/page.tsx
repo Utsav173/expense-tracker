@@ -19,6 +19,8 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { useToast } from '@/lib/hooks/useToast';
 import { authClient } from '@/lib/auth-client';
 import { Icon } from '@/components/ui/icon';
+import { WebPage, WithContext } from 'schema-dts';
+import Script from 'next/script';
 
 const otpSchema = z.object({
   otp: z.string().min(6, 'OTP must be 6 digits.')
@@ -27,6 +29,14 @@ const otpSchema = z.object({
 type OtpSchemaType = z.infer<typeof otpSchema>;
 
 const RESEND_COOLDOWN_SECONDS = 60;
+
+const jsonLd: WithContext<WebPage> = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: 'Verify OTP',
+  url: 'https://expense-pro.khatriutsav.com/auth/verify-otp',
+  description: 'Page to verify One-Time Password for email verification or password reset.'
+};
 
 const VerifyOtpPage = () => {
   const [loading, setLoading] = useState(false);

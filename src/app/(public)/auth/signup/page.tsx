@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
 import Script from 'next/script';
-import { WithContext, WebPage } from 'schema-dts';
+import { WithContext, WebPage, WebSite, Action } from 'schema-dts';
 import { useToast } from '@/lib/hooks/useToast';
 import { authClient } from '@/lib/auth-client';
 import { Input } from '@/components/ui/input';
@@ -36,12 +36,17 @@ const signUpSchema = z.object({
 
 type SignUpSchemaType = z.infer<typeof signUpSchema>;
 
-const jsonLd: WithContext<WebPage> = {
+const jsonLd: WithContext<WebSite> = {
   '@context': 'https://schema.org',
-  '@type': 'WebPage',
-  name: 'Sign Up Page - Expense Tracker',
-  description: 'Sign up page for Expense Tracker application.',
-  url: 'https://expense-pro.vercel.app/auth/signup'
+  '@type': 'WebSite',
+  url: 'https://expense-pro.khatriutsav.com/auth/signup',
+  potentialAction: {
+    '@type': 'RegisterAction',
+    target: {
+      '@type': 'EntryPoint',
+      urlTemplate: 'https://expense-pro.khatriutsav.com/auth/signup'
+    }
+  } as Action
 };
 
 const SignupPage = () => {
@@ -289,6 +294,26 @@ const SignupPage = () => {
               </Button>
             </form>
           </Form>
+
+          <div className='relative my-6'>
+            <div className='absolute inset-0 flex items-center'>
+              <span className='w-full border-t' />
+            </div>
+            <div className='relative flex justify-center text-xs uppercase'>
+              <span className='bg-background text-muted-foreground px-2'>Or continue with</span>
+            </div>
+          </div>
+
+          <Button
+            variant='outline'
+            className='w-full'
+            onClick={async () => {
+              await authClient.signIn.social({ provider: 'github' });
+            }}
+          >
+            <Icon name='github' className='mr-2 h-4 w-4' />
+            Github
+          </Button>
         </CardContent>
 
         <CardFooter className='flex flex-col items-center justify-between gap-2 pt-4 sm:flex-row'>

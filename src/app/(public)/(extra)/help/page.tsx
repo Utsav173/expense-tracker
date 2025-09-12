@@ -8,6 +8,8 @@ import Loader from '@/components/ui/loader';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
+import { FAQPage, WithContext } from 'schema-dts';
+import Script from 'next/script';
 
 const GettingStarted = lazy(() => import('@/content/help/getting-started.mdx'));
 const Dashboard = lazy(() => import('@/content/help/dashboard.mdx'));
@@ -34,6 +36,33 @@ interface TocItem {
   title: string;
   subsections?: TocItem[];
 }
+
+const jsonLd: WithContext<FAQPage> = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: helpSections.flatMap((section) =>
+    section.subsections
+      ? section.subsections.map((subsection) => ({
+          '@type': 'Question',
+          name: subsection.title,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: `Find the answer to "${subsection.title}" in the ${section.title} section.`
+          }
+        }))
+      :
+        [
+          {
+            '@type': 'Question',
+            name: section.title,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: `Find the answer in the ${section.title} section.`
+            }
+          }
+        ]
+  )
+};
 
 export default function HelpPage() {
   const [activeId, setActiveId] = useState('getting-started');
@@ -114,97 +143,104 @@ export default function HelpPage() {
   );
 
   return (
-    <div className='bg-background min-h-screen'>
-      <header className='from-primary/5 via-background to-secondary/5 relative bg-gradient-to-br px-4 py-12 text-center md:py-16'>
-        <Icon
-          name='lifeBuoy'
-          className='bg-primary/10 text-primary mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full shadow-lg md:h-12 md:h-24 md:w-12 md:w-24'
-          aria-hidden='true'
-        />
-        <h1 className='mb-4 text-3xl font-extrabold tracking-tighter md:text-4xl lg:text-5xl'>
-          Help Center
-        </h1>
-        <p className='text-muted-foreground mx-auto max-w-2xl text-base leading-relaxed md:text-lg'>
-          Everything you need to know to become an Expense Pro power user.
-        </p>
-      </header>
+    <>
+      <Script
+        id='json-ld'
+        type='application/ld+json'
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <div className='bg-background min-h-screen'>
+        <header className='from-primary/5 via-background to-secondary/5 relative bg-gradient-to-br px-4 py-12 text-center md:py-16'>
+          <Icon
+            name='lifeBuoy'
+            className='bg-primary/10 text-primary mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full shadow-lg md:h-12 md:h-24 md:w-12 md:w-24'
+            aria-hidden='true'
+          />
+          <h1 className='mb-4 text-3xl font-extrabold tracking-tighter md:text-4xl lg:text-5xl'>
+            Help Center
+          </h1>
+          <p className='text-muted-foreground mx-auto max-w-2xl text-base leading-relaxed md:text-lg'>
+            Everything you need to know to become an Expense Pro power user.
+          </p>
+        </header>
 
-      <div className='bg-background/95 sticky top-16 z-40 border-b shadow-sm backdrop-blur-md md:hidden'>
-        <div className='px-4 py-3'>
-          <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
-            <SheetTrigger asChild>
-              <Button
-                variant='outline'
-                className='flex w-full items-center justify-between'
-                aria-expanded={isMobileSheetOpen}
-                aria-controls='mobile-navigation'
-              >
-                <div className='flex items-center gap-3'>
-                  <Icon name='menu' className='h-4 w-4' aria-hidden='true' />
-                  <span className='truncate text-sm font-medium'>
-                    {currentSection?.title || 'Navigation'}
-                  </span>
-                </div>
-                <Icon
-                  name='chevronDown'
-                  className='text-muted-foreground h-4 w-4'
-                  aria-hidden='true'
-                />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side='left' className='w-full max-w-xs p-4' id='mobile-navigation'>
-              <SheetHeader className='mb-4 text-left'>
-                <SheetTitle>Help Topics</SheetTitle>
-              </SheetHeader>
-              <TableOfContents />
-            </SheetContent>
-          </Sheet>
-        </div>
-      </div>
-
-      <div className='container mx-auto max-w-7xl px-4 py-8'>
-        <div className='grid grid-cols-1 gap-8 lg:grid-cols-4'>
-          <aside className='hidden lg:col-span-1 lg:block' aria-label='Desktop navigation'>
-            <div className='sticky top-24 space-y-4 rounded-lg border p-6 shadow-sm'>
-              <TableOfContents />
-            </div>
-          </aside>
-
-          <main className='lg:col-span-3' role='main' aria-label='Help content'>
-            <article className='prose prose-sm dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-headings:inline-flex prose-headings:items-baseline prose-headings:gap-2 prose-p:leading-relaxed prose-a:text-primary hover:prose-a:underline prose-li:my-2 prose-blockquote:border-l-primary prose-blockquote:bg-primary/5 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-md prose-code:bg-muted prose-code:text-foreground prose-code:rounded-md prose-code:px-1.5 prose-code:py-1 mx-auto max-w-full'>
-              <Suspense
-                fallback={
-                  <div
-                    className='flex min-h-[50vh] items-center justify-center'
-                    role='status'
-                    aria-label='Loading help content'
-                  >
-                    <Loader />
+        <div className='bg-background/95 sticky top-16 z-40 border-b shadow-sm backdrop-blur-md md:hidden'>
+          <div className='px-4 py-3'>
+            <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  variant='outline'
+                  className='flex w-full items-center justify-between'
+                  aria-expanded={isMobileSheetOpen}
+                  aria-controls='mobile-navigation'
+                >
+                  <div className='flex items-center gap-3'>
+                    <Icon name='menu' className='h-4 w-4' aria-hidden='true' />
+                    <span className='truncate text-sm font-medium'>
+                      {currentSection?.title || 'Navigation'}
+                    </span>
                   </div>
-                }
-              >
-                {helpSections.map((section, index) => {
-                  const MdxComponent = mdxComponents[section.id];
-                  if (!MdxComponent) return null;
-                  return (
-                    <section
-                      key={section.id}
-                      id={section.id}
-                      aria-labelledby={`${section.id}-title`}
-                      className={cn(
-                        'scroll-mt-24 max-sm:scroll-mt-12',
-                        index > 0 && 'mt-16 border-t pt-12 max-sm:mt-8 max-sm:pt-6'
-                      )}
+                  <Icon
+                    name='chevronDown'
+                    className='text-muted-foreground h-4 w-4'
+                    aria-hidden='true'
+                  />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side='left' className='w-full max-w-xs p-4' id='mobile-navigation'>
+                <SheetHeader className='mb-4 text-left'>
+                  <SheetTitle>Help Topics</SheetTitle>
+                </SheetHeader>
+                <TableOfContents />
+              </SheetContent>
+            </Sheet>
+          </div>
+        </div>
+
+        <div className='container mx-auto max-w-7xl px-4 py-8'>
+          <div className='grid grid-cols-1 gap-8 lg:grid-cols-4'>
+            <aside className='hidden lg:col-span-1 lg:block' aria-label='Desktop navigation'>
+              <div className='sticky top-24 space-y-4 rounded-lg border p-6 shadow-sm'>
+                <TableOfContents />
+              </div>
+            </aside>
+
+            <main className='lg:col-span-3' role='main' aria-label='Help content'>
+              <article className='prose prose-sm dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-headings:inline-flex prose-headings:items-baseline prose-headings:gap-2 prose-p:leading-relaxed prose-a:text-primary hover:prose-a:underline prose-li:my-2 prose-blockquote:border-l-primary prose-blockquote:bg-primary/5 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-md prose-code:bg-muted prose-code:text-foreground prose-code:rounded-md prose-code:px-1.5 prose-code:py-1 mx-auto max-w-full'>
+                <Suspense
+                  fallback={
+                    <div
+                      className='flex min-h-[50vh] items-center justify-center'
+                      role='status'
+                      aria-label='Loading help content'
                     >
-                      <MdxComponent />
-                    </section>
-                  );
-                })}
-              </Suspense>
-            </article>
-          </main>
+                      <Loader />
+                    </div>
+                  }
+                >
+                  {helpSections.map((section, index) => {
+                    const MdxComponent = mdxComponents[section.id];
+                    if (!MdxComponent) return null;
+                    return (
+                      <section
+                        key={section.id}
+                        id={section.id}
+                        aria-labelledby={`${section.id}-title`}
+                        className={cn(
+                          'scroll-mt-24 max-sm:scroll-mt-12',
+                          index > 0 && 'mt-16 border-t pt-12 max-sm:mt-8 max-sm:pt-6'
+                        )}
+                      >
+                        <MdxComponent />
+                      </section>
+                    );
+                  })}
+                </Suspense>
+              </article>
+            </main>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

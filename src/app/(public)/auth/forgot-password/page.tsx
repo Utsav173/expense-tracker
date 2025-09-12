@@ -18,12 +18,22 @@ import {
 import { useToast } from '@/lib/hooks/useToast';
 import { useRouter } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
+import { WebPage, WithContext } from 'schema-dts';
+import Script from 'next/script';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email format.')
 });
 
 type ForgotPasswordSchemaType = z.infer<typeof forgotPasswordSchema>;
+
+const jsonLd: WithContext<WebPage> = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: 'Forgot Password',
+  url: 'https://expense-pro.khatriutsav.com/auth/forgot-password',
+  description: 'Page to request a password reset for an Expense Tracker account.'
+};
 
 const ForgotPasswordPage = () => {
   const [loading, setLoading] = useState(false);
@@ -56,44 +66,51 @@ const ForgotPasswordPage = () => {
   };
 
   return (
-    <Card variant='auth'>
-      <CardContent className='space-y-6 p-0 pt-4'>
-        <div className='space-y-2 text-center select-none'>
-          <h2 className='text-foreground text-2xl font-semibold'>Forgot Password</h2>
-          <p className='text-muted-foreground text-sm'>
-            Enter your email to receive a password reset link.
-          </p>
-        </div>
+    <>
+      <Script
+        id='json-ld'
+        type='application/ld+json'
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <Card variant='auth'>
+        <CardContent className='space-y-6 p-0 pt-4'>
+          <div className='space-y-2 text-center select-none'>
+            <h2 className='text-foreground text-2xl font-semibold'>Forgot Password</h2>
+            <p className='text-muted-foreground text-sm'>
+              Enter your email to receive a password reset link.
+            </p>
+          </div>
 
-        <Form {...form}>
-          <form className='space-y-4' onSubmit={form.handleSubmit(handleForgotPassword)}>
-            <FormField
-              control={form.control}
-              name='email'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email Address</FormLabel>
-                  <FormControl>
-                    <Input
-                      type='email'
-                      placeholder='you@example.com'
-                      disabled={loading}
-                      autoComplete='email'
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <Form {...form}>
+            <form className='space-y-4' onSubmit={form.handleSubmit(handleForgotPassword)}>
+              <FormField
+                control={form.control}
+                name='email'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email Address</FormLabel>
+                    <FormControl>
+                      <Input
+                        type='email'
+                        placeholder='you@example.com'
+                        disabled={loading}
+                        autoComplete='email'
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <Button type='submit' disabled={loading} className='w-full'>
-              {loading ? 'Sending...' : 'Send Reset Link'}
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+              <Button type='submit' disabled={loading} className='w-full'>
+                {loading ? 'Sending...' : 'Send Reset Link'}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </>
   );
 };
 

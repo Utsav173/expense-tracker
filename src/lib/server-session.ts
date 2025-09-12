@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { Session } from './auth-client';
 
-const SERVER_URL = 'https://ai-expense-tracker-hmzp.onrender.com/api/auth/get-session';
+const SERVER_URL = 'https://expense-pro-backend.khatriutsav.com/api/auth/get-session';
 const LOCAL_SERVER_URL = 'http://localhost:1337/api/auth/get-session';
 
 const getServerSession = async (): Promise<typeof Session | null> => {

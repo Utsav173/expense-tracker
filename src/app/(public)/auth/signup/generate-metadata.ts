@@ -2,39 +2,35 @@ import { Metadata } from 'next';
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: 'Sign Up - Expense Tracker',
+    title: 'Sign Up - Create Your Expense Tracker Account',
     description:
-      'Create an account with Expense Tracker to start managing your finances, tracking expenses, and achieving your financial goals.',
+      'Sign up for a free Expense Tracker account and start managing your finances like a pro. Track expenses, create budgets, and get AI-powered insights.',
     keywords: [
       'sign up',
-      'register',
       'create account',
-      'expense tracker sign up',
-      'financial management registration'
+      'expense tracker account',
+      'free expense tracker',
+      'personal finance software'
     ],
     openGraph: {
-      title: 'Sign Up - Expense Tracker',
-      description: 'Join Expense Tracker today and take control of your finances.',
-      url: 'https://expense-pro.vercel.app/auth/signup',
+      title: 'Sign Up - Create Your Expense Tracker Account',
+      description: 'Join Expense Tracker today and take the first step towards financial clarity.',
+      url: 'https://expense-pro.khatriutsav.com/auth/signup',
       type: 'website',
       images: [
         {
-          url: 'https://expense-pro.vercel.app/og-image-signup.png',
+          url: 'https://expense-pro.khatriutsav.com/og-image-signup.png',
           width: 1200,
           height: 630,
-          alt: 'Expense Tracker Sign Up'
+          alt: 'Expense Tracker Sign Up Page'
         }
       ]
     },
     twitter: {
       card: 'summary_large_image',
-      title: 'Sign Up - Expense Tracker',
-      description:
-        'Start your financial journey with Expense Tracker. Create your free account now.',
-      images: ['https://expense-pro.vercel.app/og-image-signup.png']
-    },
-    verification: {
-      google: '4b4H3hr3KG4V1J6eRzWhNZDf84yIPAcR1x32o0EpF8U'
+      title: 'Sign Up - Create Your Expense Tracker Account',
+      description: 'Join Expense Tracker today and take the first step towards financial clarity.',
+      images: ['https://expense-pro.khatriutsav.com/og-image-signup.png']
     }
   };
 }

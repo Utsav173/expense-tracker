@@ -12,7 +12,7 @@ import {
   AccountDetailsProvider,
   useAccountDetails
 } from '@/components/account/context/account-details-context';
-import { useAppStore } from '@/stores/app-store'; // <-- IMPORT ZUSTAND STORE
+import { useAppStore } from '@/stores/app-store';
 
 const AccountTransactionsSection = dynamic(
   () => import('@/components/account/account-transactions-section'),

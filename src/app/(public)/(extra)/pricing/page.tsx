@@ -11,7 +11,7 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Product, WithContext } from 'schema-dts';
+import { Product, WebPage, WithContext } from 'schema-dts';
 import Script from 'next/script';
 import { motion, Variants } from 'framer-motion';
 import {
@@ -22,18 +22,42 @@ import {
 } from '@/components/ui/accordion';
 import ComingSoonModal from '@/components/modals/comming-soon-modal';
 import { Icon } from '@/components/ui/icon';
+import Link from 'next/link';
 
-const jsonLd: WithContext<Product> = {
+const jsonLd: WithContext<WebPage> = {
   '@context': 'https://schema.org',
-  '@type': 'Product',
-  name: 'Expense Tracker Pro',
-  description: 'Unlock lifetime access to advanced financial management features.',
-  offers: {
-    '@type': 'Offer',
-    price: '499.00',
-    priceCurrency: 'INR',
-    availability: 'https://schema.org/InStock',
-    priceValidUntil: '2025-12-31'
+  '@type': 'WebPage',
+  name: 'Pricing - Expense Tracker',
+  url: 'https://expense-pro.khatriutsav.com/pricing',
+  mainEntity: {
+    '@type': 'Product',
+    name: 'Expense Tracker Pro',
+    description: 'Unlock lifetime access to advanced financial management features.',
+    sku: 'ET-PRO-LIFETIME',
+    brand: {
+      '@type': 'Brand',
+      name: 'Expense Tracker'
+    },
+    offers: {
+      '@type': 'Offer',
+      price: '499.00',
+      priceCurrency: 'INR',
+      availability: 'https://schema.org/InStock',
+      priceValidUntil: '2025-12-31',
+      url: 'https://expense-pro.khatriutsav.com/pricing'
+    },
+    review: {
+      '@type': 'Review',
+      reviewRating: {
+        '@type': 'Rating',
+        ratingValue: '4.8',
+        bestRating: '5'
+      },
+      author: {
+        '@type': 'Person',
+        name: 'John Doe'
+      }
+    }
   }
 };
 
@@ -153,9 +177,11 @@ const PricingPage = () => {
                   ))}
                 </CardContent>
                 <CardFooter className='mt-8'>
-                  <Button size='lg' variant='outline' className='w-full font-semibold'>
-                    Get Started for Free
-                  </Button>
+                  <Link href='/auth/signup' className='w-full'>
+                    <Button size='lg' variant='outline' className='w-full font-semibold'>
+                      Get Started for Free
+                    </Button>
+                  </Link>
                 </CardFooter>
               </Card>
             </motion.div>

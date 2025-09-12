@@ -9,9 +9,10 @@ import { submitContactForm } from '@/lib/endpoints/contact';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { ContactPage, WithContext } from 'schema-dts';
+import { WebPage, WithContext } from 'schema-dts';
 import Script from 'next/script';
 import { Icon } from '@/components/ui/icon';
+import Link from 'next/link';
 
 const contactFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }).max(100),
@@ -22,13 +23,42 @@ const contactFormSchema = z.object({
 
 type ContactFormValues = z.infer<typeof contactFormSchema>;
 
-const jsonLd: WithContext<ContactPage> = {
+const jsonLd: WithContext<WebPage> = {
   '@context': 'https://schema.org',
   '@type': 'ContactPage',
   name: 'Expense Tracker Support',
-  description: 'Contact page for Expense Tracker application.',
-  url: 'https://expense-pro.vercel.app/support/contact'
-};
+  description:
+    'Contact page for the Expense Tracker application. Get in touch with us for support, feedback, or any other inquiries.',
+  url: 'https://expense-pro.vercel.app/support/contact',
+  areaServed: {
+    '@type': 'Country',
+    name: 'India'
+  },
+  contactType: 'Customer Service',
+  breadcrumb: {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://expense-pro.vercel.app'
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Support',
+        item: 'https://expense-pro.vercel.app/support'
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: 'Contact',
+        item: 'https://expense-pro.vercel.app/support/contact'
+      }
+    ]
+  }
+} as any;
 
 const ContactSupportPage = () => {
   const { showSuccess, showError } = useToast();
@@ -115,7 +145,6 @@ const ContactSupportPage = () => {
                     <Input
                       id='email'
                       type='email'
-                      {...register('email')}
                       placeholder='you@example.com'
                       className='pl-10'
                       disabled={isSubmitting}
@@ -208,9 +237,11 @@ const ContactSupportPage = () => {
                   You might find what you&apos;re looking for in our FAQ section. We&apos;re
                   building it out with answers to common questions.
                 </p>
-                <Button variant='outline' className='mt-4' disabled>
-                  Browse FAQs (Coming Soon)
-                </Button>
+                <Link href='/help'>
+                  <Button variant='outline' className='mt-4'>
+                    Browse FAQs
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>

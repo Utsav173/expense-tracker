@@ -11,7 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { PasswordInput } from '@/components/ui/password-input';
-import { WebPage, WithContext } from 'schema-dts';
+import { WebPage, WebSite, Action, WithContext } from 'schema-dts';
 import Script from 'next/script';
 import { authClient } from '@/lib/auth-client';
 import { Icon } from '@/components/ui/icon';
@@ -23,12 +23,17 @@ const loginSchema = z.object({
 
 type loginSchemaType = z.infer<typeof loginSchema>;
 
-const jsonLd: WithContext<WebPage> = {
+const jsonLd: WithContext<WebSite> = {
   '@context': 'https://schema.org',
-  '@type': 'WebPage',
-  name: 'Login Page - Expense Tracker',
-  description: 'Login page for Expense Tracker application.',
-  url: 'https://expense-pro.vercel.app/auth/login'
+  '@type': 'WebSite',
+  url: 'https://expense-pro.vercel.app/auth/login',
+  potentialAction: {
+    '@type': 'SignInAction',
+    target: {
+      '@type': 'EntryPoint',
+      urlTemplate: 'https://expense-pro.vercel.app/auth/login'
+    }
+  } as unknown as Action
 };
 
 const LoginPage = () => {
@@ -85,7 +90,7 @@ const LoginPage = () => {
       <Card variant='auth'>
         <CardContent className='space-y-6 p-0 pt-4'>
           <div className='space-y-2 text-center select-none'>
-            <h2 className='text-foreground text-2xl font-semibold'>Welcome Back</h2>
+            <h2 className='text-foreground text-2xl font-semibold'>Sign In to Your Account</h2>
             <p className='text-muted-foreground text-sm'>
               Sign in to continue tracking your expenses
             </p>
@@ -143,6 +148,34 @@ const LoginPage = () => {
               <span className='bg-background text-muted-foreground px-2'>Or continue with</span>
             </div>
           </div>
+
+          <Button
+            variant='outline'
+            className='w-full bg-black px-4 py-2 text-white hover:bg-gray-800 hover:text-white dark:bg-white dark:text-black dark:hover:bg-gray-200 dark:hover:text-black'
+            onClick={async () => {
+              setLoading(true);
+              await authClient.signIn
+                .social({
+                  provider: 'github'
+                })
+                .finally(() => {
+                  setLoading(false);
+                });
+            }}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
+                Signing In ..
+              </>
+            ) : (
+              <>
+                <Icon name='github' className='mr-2 h-4 w-4' />
+                Github
+              </>
+            )}
+          </Button>
         </CardContent>
 
         <CardFooter className='flex items-center justify-between gap-2 pt-4 max-sm:mt-2 max-sm:flex-col max-sm:justify-center'>

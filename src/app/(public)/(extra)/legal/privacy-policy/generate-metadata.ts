@@ -14,11 +14,11 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: 'Privacy Policy - Expense Tracker',
       description: 'Understand our commitment to your data privacy and security.',
-      url: 'https://expense-pro.vercel.app/legal/privacy-policy',
+      url: 'https://expense-pro.khatriutsav.com/legal/privacy-policy',
       type: 'website',
       images: [
         {
-          url: 'https://expense-pro.vercel.app/og-image-privacy.png',
+          url: 'https://expense-pro.khatriutsav.com/og-image-privacy.png',
           width: 1200,
           height: 630,
           alt: 'Expense Tracker Privacy Policy'
@@ -29,10 +29,10 @@ export async function generateMetadata(): Promise<Metadata> {
       card: 'summary_large_image',
       title: 'Privacy Policy - Expense Tracker',
       description: 'Your privacy is our priority. Learn about our data handling practices.',
-      images: ['https://expense-pro.vercel.app/og-image-privacy.png']
+      images: ['https://expense-pro.khatriutsav.com/og-image-privacy.png']
     },
     verification: {
-      google: '4b4H3hr3KG4V1J6eRzWhNZDf84yIPAcR1x32o0EpF8U'
+      google: 'tNXFFpZE1VOHdcWpBlnAsX7avQThqRD6wjolUQaG4rU'
     }
   };
 }

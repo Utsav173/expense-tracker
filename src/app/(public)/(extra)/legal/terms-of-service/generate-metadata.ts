@@ -15,11 +15,11 @@ export async function generateMetadata(): Promise<Metadata> {
       title: 'Terms of Service - Expense Tracker',
       description:
         'Our Terms of Service outline the rules and guidelines for using Expense Tracker.',
-      url: 'https://expense-pro.vercel.app/legal/terms-of-service',
+      url: 'https://expense-pro.khatriutsav.com/legal/terms-of-service',
       type: 'website',
       images: [
         {
-          url: 'https://expense-pro.vercel.app/og-image-terms.png',
+          url: 'https://expense-pro.khatriutsav.com/og-image-terms.png',
           width: 1200,
           height: 630,
           alt: 'Expense Tracker Terms of Service'
@@ -30,10 +30,10 @@ export async function generateMetadata(): Promise<Metadata> {
       card: 'summary_large_image',
       title: 'Terms of Service - Expense Tracker',
       description: 'Understand the terms and conditions for using Expense Tracker.',
-      images: ['https://expense-pro.vercel.app/og-image-terms.png']
+      images: ['https://expense-pro.khatriutsav.com/og-image-terms.png']
     },
     verification: {
-      google: '4b4H3hr3KG4V1J6eRzWhNZDf84yIPAcR1x32o0EpF8U'
+      google: 'tNXFFpZE1VOHdcWpBlnAsX7avQThqRD6wjolUQaG4rU'
     }
   };
 }
