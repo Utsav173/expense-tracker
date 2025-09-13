@@ -225,7 +225,7 @@ const LandingPageHeader = () => {
             initial='initial'
             animate='animate'
             exit='exit'
-            className='bg-background fixed inset-0 z-[41] flex h-screen flex-col p-4 pt-24'
+            className='bg-background fixed inset-0 z-[41] flex h-dvh flex-col p-4 pt-24'
           >
             <nav className='flex flex-col items-center gap-8'>
               {navLinks.map((link, index) => (

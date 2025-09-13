@@ -18,11 +18,11 @@ import Script from 'next/script';
 const feedbackFormSchema = z.object({
   experience: z.string().min(1, { message: 'Please select your experience.' }),
   suggestion: z.string().min(10, { message: 'Feedback must be at least 10 characters.' }).max(2000),
-  email:
-    z.string()
-      .email({ message: 'Please enter a valid email address.' })
-      .optional()
-      .or(z.literal(''))
+  email: z
+    .string()
+    .email({ message: 'Please enter a valid email address.' })
+    .optional()
+    .or(z.literal(''))
 });
 
 type FeedbackFormValues = z.infer<typeof feedbackFormSchema>;

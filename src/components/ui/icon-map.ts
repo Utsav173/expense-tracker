@@ -152,7 +152,8 @@ export const iconMap = {
   google: 'logos:google-icon',
   importSidebar: 'ix:import',
   goal: 'octicon:goal-24',
-  debt: 'solar:hand-money-linear'
+  debt: 'solar:hand-money-linear',
+  messageCircleQuestion: 'material-symbols:chat-bubble-question-outline'
 } as const;
 
 export type IconName = keyof typeof iconMap;

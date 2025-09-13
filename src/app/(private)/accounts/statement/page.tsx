@@ -9,14 +9,7 @@ import { Label } from '@/components/ui/label';
 import AccountCombobox from '@/components/ui/account-combobox';
 import DatePickerWithRange from '@/components/date/date-range-picker-v2';
 import { DateRange } from 'react-day-picker';
-import {
-  startOfMonth,
-  endOfMonth,
-  subMonths,
-  startOfYear,
-  endOfYear,
-  subYears
-} from 'date-fns';
+import { startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, subYears } from 'date-fns';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Icon } from '@/components/ui/icon';
@@ -149,14 +142,14 @@ const StatementPage = () => {
             </div>
 
             <div>
-              <Label className="text-sm text-muted-foreground">Or use a preset</Label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
+              <Label className='text-muted-foreground text-sm'>Or use a preset</Label>
+              <div className='grid grid-cols-2 gap-2 pt-2 sm:grid-cols-4'>
                 {datePresets.map((preset) => (
                   <Button
                     key={preset.label}
-                    type="button"
-                    variant="outline"
-                    size="sm"
+                    type='button'
+                    variant='outline'
+                    size='sm'
                     onClick={() => setDateRange(preset.range)}
                     disabled={!!numTransactions}
                   >

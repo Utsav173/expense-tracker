@@ -98,13 +98,18 @@ const Step = ({
   children: React.ReactNode;
 }) => (
   <section className='my-6' aria-labelledby={`step-${number}-title`}>
-    <h3 id={`step-${number}-title`} className='flex items-center gap-3 text-lg font-semibold'>
-      <span className='bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-full font-bold'>
+    <div
+      id={`step-${number}-title`}
+      className='flex items-center justify-start gap-2.5 text-lg font-semibold'
+    >
+      <span className='bg-primary/20 text-primary flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold'>
         {number}
       </span>
       {title}
-    </h3>
-    <div className='text-muted-foreground mt-3 ml-11 leading-relaxed'>{children}</div>
+    </div>
+    <div className='text-muted-foreground mt-2 mb-2 ml-3 border-l-2 border-dashed pl-6'>
+      {children}
+    </div>
   </section>
 );
 

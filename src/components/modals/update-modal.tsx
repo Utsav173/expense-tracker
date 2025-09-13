@@ -70,7 +70,7 @@ export function UpdateModal<TFormValues extends z.ZodType<any, any>>({
       if (onSuccess) {
         onSuccess();
       }
-      Promise.all(invalidateKeys.map(key => invalidate(key)));
+      Promise.all(invalidateKeys.map((key) => invalidate(key)));
     },
     onError: (error: any) => {
       const message = error?.response?.data?.message || error.message || 'Failed to update.';

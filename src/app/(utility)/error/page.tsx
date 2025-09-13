@@ -12,30 +12,21 @@ export default function ErrorPage() {
   const title = searchParams.get('title') || 'Oops! Something Went Wrong';
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted p-4">
-      <Card className="w-full max-w-lg text-center">
+    <div className='bg-muted flex min-h-screen items-center justify-center p-4'>
+      <Card className='w-full max-w-lg text-center'>
         <CardHeader>
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
-            <Icon name="alertTriangle" className="h-6 w-6 text-destructive" />
+          <div className='bg-destructive/10 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full'>
+            <Icon name='alertTriangle' className='text-destructive h-6 w-6' />
           </div>
           <CardTitle>{title}</CardTitle>
-          <CardDescription>
-            {message}
-          </CardDescription>
+          <CardDescription>{message}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex justify-center gap-4">
-            <Button
-              onClick={() => router.back()}
-              variant="outline"
-            >
+          <div className='flex justify-center gap-4'>
+            <Button onClick={() => router.back()} variant='outline'>
               Go Back
             </Button>
-            <Button
-              onClick={() => router.push('/dashboard')}
-            >
-              Go to Dashboard
-            </Button>
+            <Button onClick={() => router.push('/dashboard')}>Go to Dashboard</Button>
           </div>
         </CardContent>
       </Card>

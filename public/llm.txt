@@ -112,3 +112,23 @@
 - **Primary Support Channel:** Users who have questions or need assistance should visit the Contact Support page.
 - **Feedback:** We welcome feedback and suggestions for new features, which can be submitted through our Feedback page.
 - **Help Center:** A comprehensive, built-in user guide is available for detailed feature explanations.
+
+---
+## 8. LLM Interaction Guidelines: Accessing External Knowledge & Tool Use
+---
+
+This section outlines how an AI model (like ChatGPT, Claude, or similar) can effectively interact with and gain context about the Expense Pro application, leveraging capabilities beyond its initial training data.
+
+### 8.1. Accessing External Information
+AI models can enhance their understanding and provide more accurate assistance by accessing up-to-date or specialized information. This typically involves:
+- **Web Search:** For general knowledge, current events, or broad concepts related to personal finance, budgeting, or software development. This allows the AI to retrieve information not present in its training data.
+- **Specific APIs/Databases:** For real-time data (e.g., current stock prices, currency exchange rates, financial news) or detailed documentation (e.g., library documentation, API specifications).
+
+### 8.2. Tool Use & System Interaction
+AI models can interact with the Expense Pro application's environment and its underlying systems by utilizing provided tools. This enables the AI to:
+- **Perform File Operations:** Read, write, or modify files within the project directory (e.g., reading code, updating configuration files, writing documentation).
+- **Execute Shell Commands:** Run commands in the operating system's shell (e.g., installing dependencies, running tests, building the application, interacting with version control systems like Git).
+- **Interact with Application APIs:** Directly call functions or endpoints exposed by the Expense Pro application's backend (e.g., adding a transaction, fetching account details, managing users). This allows the AI to perform actions within the application's logic.
+- **Utilize Specialized Tools:** Access custom tools designed for specific tasks, such as fetching content from URLs (web_fetch), performing structured searches (search_file_content, glob), or interacting with external services (google_web_search, create_or_update_file on GitHub).
+
+By understanding and utilizing these capabilities, an AI model can act as a more effective and autonomous agent in assisting users with the Expense Pro application, from debugging and feature development to providing comprehensive support.

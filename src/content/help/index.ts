@@ -78,9 +78,19 @@ export const helpSections: HelpSection[] = [
       { title: 'Usage Guide', id: 'ai-assistant-usage' }
     ]
   },
-  { 
-    title: 'Profile & Settings', 
-    id: 'profile-settings', 
+  {
+    title: 'Data Management',
+    id: 'data-management',
+    icon: 'database',
+    subsections: [
+      { title: 'Importing Transactions', id: 'transactions-import' },
+      { title: 'Generating Statements', id: 'accounts-statement' },
+      { title: 'Exporting Data', id: 'data-export' }
+    ]
+  },
+  {
+    title: 'Profile & Settings',
+    id: 'profile-settings',
     icon: 'user',
     subsections: [
       { title: 'Profile Info', id: 'profile-settings-profile' },
