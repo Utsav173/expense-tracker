@@ -19,6 +19,7 @@ interface AccountComboboxProps {
   clearLabel?: string;
   setDateRange?: Dispatch<SetStateAction<DateRange | undefined>>;
   isOnModal?: boolean;
+  id?: string;
 }
 
 const AccountCombobox = React.forwardRef<ComboboxHandle, AccountComboboxProps>(
@@ -32,7 +33,8 @@ const AccountCombobox = React.forwardRef<ComboboxHandle, AccountComboboxProps>(
       allowClear = false,
       clearLabel = 'All Accounts',
       setDateRange,
-      isOnModal
+      isOnModal,
+      id
     },
     ref
   ) => {
@@ -141,6 +143,7 @@ const AccountCombobox = React.forwardRef<ComboboxHandle, AccountComboboxProps>(
 
     return (
       <Combobox
+        id={id}
         ref={ref}
         value={comboboxValue}
         onChange={handleComboboxChange}
