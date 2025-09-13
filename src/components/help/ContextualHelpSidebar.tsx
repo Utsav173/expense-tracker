@@ -55,7 +55,9 @@ export const ContextualHelpSidebar: React.FC<ContextualHelpSidebarProps> = ({
         </SheetHeader>
         <div className='flex-1 overflow-y-auto p-6'>
           <article className='prose prose-sm dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-headings:inline-flex prose-headings:items-baseline prose-headings:gap-2 prose-p:leading-relaxed prose-a:text-primary hover:prose-a:underline prose-li:my-2 prose-blockquote:border-l-primary prose-blockquote:bg-primary/5 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-md prose-code:bg-muted prose-code:text-foreground prose-code:rounded-md prose-code:px-1.5 prose-code:py-1 mx-auto max-w-full'>
-            <Suspense fallback={<Loader />}>
+            <Suspense
+              fallback={<Loader className='absolute inset-0 flex items-center justify-center' />}
+            >
               <MdxComponent />
             </Suspense>
           </article>

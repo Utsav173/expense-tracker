@@ -11,10 +11,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { PasswordInput } from '@/components/ui/password-input';
-import { WebPage, WebSite, Action, WithContext } from 'schema-dts';
+import { WebSite, Action, WithContext } from 'schema-dts';
 import Script from 'next/script';
 import { authClient } from '@/lib/auth-client';
 import { Icon } from '@/components/ui/icon';
+import { cn } from '@/lib/utils';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -40,6 +41,7 @@ const LoginPage = () => {
   const { showSuccess, showError, showInfo } = useToast();
   const router = useRouter();
   const [loading, setLoading] = React.useState(false);
+  const [githubLoading, setIsGithubLoading] = React.useState(false);
 
   const {
     register,
@@ -80,6 +82,34 @@ const LoginPage = () => {
     );
   };
 
+  const handleGithubLogin = async () => {
+    try {
+      setIsGithubLoading(true);
+
+      await authClient.signIn.social(
+        {
+          provider: 'github'
+          // callbackURL: 'https://expense-pro.khatriutsav.com/accounts'
+        },
+        {
+          onError: ({ error }) => {
+            console.error('GitHub login error:', error);
+            showError('GitHub login failed');
+            setIsGithubLoading(false);
+          },
+          onSuccess: async () => {
+            await authClient.getSession({ fetchOptions: { credentials: 'include' } });
+
+            showSuccess('Successfully logged in');
+            router.replace('/accounts');
+          }
+        }
+      );
+    } finally {
+      setIsGithubLoading(false);
+    }
+  };
+
   return (
     <>
       <Script
@@ -96,7 +126,13 @@ const LoginPage = () => {
             </p>
           </div>
 
-          <form className='space-y-4' onSubmit={handleSubmit(handleLogin)}>
+          <form
+            className={cn('space-y-4', {
+              'cursor-not-allowed': loading || githubLoading,
+              'pointer-events-none': loading || githubLoading
+            })}
+            onSubmit={handleSubmit(handleLogin)}
+          >
             <div className='space-y-2'>
               <label className='text-foreground text-sm font-medium' htmlFor='email'>
                 Email
@@ -128,7 +164,7 @@ const LoginPage = () => {
               )}
             </div>
 
-            <Button type='submit' disabled={loading} className='w-full'>
+            <Button type='submit' disabled={loading || githubLoading} className='w-full'>
               {loading ? (
                 <>
                   <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
@@ -152,19 +188,10 @@ const LoginPage = () => {
           <Button
             variant='outline'
             className='w-full bg-black px-4 py-2 text-white hover:bg-gray-800 hover:text-white dark:bg-white dark:text-black dark:hover:bg-gray-200 dark:hover:text-black'
-            onClick={async () => {
-              setLoading(true);
-              await authClient.signIn
-                .social({
-                  provider: 'github'
-                })
-                .finally(() => {
-                  setLoading(false);
-                });
-            }}
-            disabled={loading}
+            onClick={handleGithubLogin}
+            disabled={githubLoading}
           >
-            {loading ? (
+            {githubLoading ? (
               <>
                 <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
                 Signing In ..
