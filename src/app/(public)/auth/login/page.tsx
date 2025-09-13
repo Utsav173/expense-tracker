@@ -94,8 +94,8 @@ const LoginPage = () => {
 
       await authClient.signIn.social(
         {
-          provider: 'github',
-          callbackURL: 'https://expense-pro.khatriutsav.com/accounts'
+          provider: 'github'
+          // callbackURL: 'https://expense-pro.khatriutsav.com/accounts'
         },
         {
           onError: ({ error }) => {
@@ -140,10 +140,6 @@ const LoginPage = () => {
             console.error('Google login error:', ctx.error);
             showError('Google login failed. Please try again.');
             setGoogleLoading(false);
-          },
-          onSuccess: () => {
-            showSuccess('Successfully logged in with Google');
-            router.replace('/accounts');
           },
           onSettled: () => {
             setGoogleLoading(false);

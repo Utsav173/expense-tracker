@@ -7,7 +7,6 @@ const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
   headers: {
-    credentials: 'include',
     'Content-Type': 'application/json'
   }
 });
@@ -50,8 +49,12 @@ const handleApiError = (error: any, errorMessage?: string): never => {
 
   if (axios.isAxiosError(error)) {
     if (!error.response) {
-      toast.error('Network error. Please check your connection. Redirecting to login.');
-      window.location.href = '/auth/login';
+      const corsMessage =
+        'Could not connect to the server. This might be a network issue or a CORS problem. Please try again later.';
+      toast.error('Network Error', {
+        description: corsMessage
+      });
+      window.location.href = `/error?title=Network Error&message=${encodeURIComponent(corsMessage)}`;
       throw new Error('Network error');
     }
 

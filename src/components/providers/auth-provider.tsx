@@ -29,7 +29,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     '/legal/privacy-policy',
     '/legal/terms-of-service',
     '/support/contact',
-    '/support/feedback'
+    '/support/feedback',
+    '/error'
   ];
 
   const isPublicPath = publicRoutes.some((route) => pathname.startsWith(route));
