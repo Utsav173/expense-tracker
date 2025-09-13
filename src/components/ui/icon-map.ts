@@ -148,7 +148,8 @@ export const iconMap = {
   groups: 'material-symbols:groups',
   receipt: 'material-symbols:receipt',
   help: 'material-symbols:help-outline',
-  github: 'lucide:github',
+  github: 'simple-icons:github',
+  google: 'logos:google-icon'
 } as const;
 
 export type IconName = keyof typeof iconMap;

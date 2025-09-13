@@ -41,7 +41,8 @@ const LoginPage = () => {
   const { showSuccess, showError, showInfo } = useToast();
   const router = useRouter();
   const [loading, setLoading] = React.useState(false);
-  const [githubLoading, setIsGithubLoading] = React.useState(false);
+  const [githubLoading, setGithubLoading] = React.useState(false);
+  const [googleLoading, setGoogleLoading] = React.useState(false);
 
   const {
     register,
@@ -51,6 +52,9 @@ const LoginPage = () => {
     resolver: zodResolver(loginSchema),
     mode: 'onSubmit'
   });
+
+  // Check if any loading state is active
+  const isAnyLoading = loading || githubLoading || googleLoading;
 
   const handleLogin = async (data: loginSchemaType) => {
     await authClient.signIn.email(
@@ -83,30 +87,73 @@ const LoginPage = () => {
   };
 
   const handleGithubLogin = async () => {
+    if (isAnyLoading) return;
+
     try {
-      setIsGithubLoading(true);
+      setGithubLoading(true);
 
       await authClient.signIn.social(
         {
-          provider: 'github'
-          // callbackURL: 'https://expense-pro.khatriutsav.com/accounts'
+          provider: 'github',
+          callbackURL: 'https://expense-pro.khatriutsav.com/accounts'
         },
         {
           onError: ({ error }) => {
             console.error('GitHub login error:', error);
-            showError('GitHub login failed');
-            setIsGithubLoading(false);
+            showError('GitHub login failed. Please try again.');
+            setGithubLoading(false);
           },
           onSuccess: async () => {
-            await authClient.getSession({ fetchOptions: { credentials: 'include' } });
-
-            showSuccess('Successfully logged in');
-            router.replace('/accounts');
+            try {
+              await authClient.getSession({ fetchOptions: { credentials: 'include' } });
+              showSuccess('Successfully logged in with GitHub');
+              router.replace('/accounts');
+            } catch (sessionError) {
+              console.error('Session error:', sessionError);
+              showError('Login successful but session failed. Please try again.');
+            } finally {
+              setGithubLoading(false);
+            }
           }
         }
       );
-    } finally {
-      setIsGithubLoading(false);
+    } catch (error) {
+      console.error('Unexpected GitHub login error:', error);
+      showError('An unexpected error occurred. Please try again.');
+      setGithubLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    if (isAnyLoading) return;
+
+    try {
+      setGoogleLoading(true);
+
+      await authClient.signIn.social(
+        {
+          provider: 'google',
+          callbackURL: 'https://expense-pro.khatriutsav.com/accounts'
+        },
+        {
+          onError: (ctx) => {
+            console.error('Google login error:', ctx.error);
+            showError('Google login failed. Please try again.');
+            setGoogleLoading(false);
+          },
+          onSuccess: () => {
+            showSuccess('Successfully logged in with Google');
+            router.replace('/accounts');
+          },
+          onSettled: () => {
+            setGoogleLoading(false);
+          }
+        }
+      );
+    } catch (error) {
+      console.error('Unexpected Google login error:', error);
+      showError('An unexpected error occurred. Please try again.');
+      setGoogleLoading(false);
     }
   };
 
@@ -128,8 +175,8 @@ const LoginPage = () => {
 
           <form
             className={cn('space-y-4', {
-              'cursor-not-allowed': loading || githubLoading,
-              'pointer-events-none': loading || githubLoading
+              'cursor-not-allowed opacity-50': isAnyLoading,
+              'pointer-events-none': isAnyLoading
             })}
             onSubmit={handleSubmit(handleLogin)}
           >
@@ -142,7 +189,7 @@ const LoginPage = () => {
                 type='email'
                 placeholder='you@example.com'
                 {...register('email')}
-                disabled={loading}
+                disabled={isAnyLoading}
               />
               {errors.email && (
                 <p className='text-destructive py-1 text-xs'> {errors.email.message}</p>
@@ -157,18 +204,18 @@ const LoginPage = () => {
                 id='password'
                 placeholder='••••••••'
                 {...register('password')}
-                disabled={loading}
+                disabled={isAnyLoading}
               />
               {errors.password && (
                 <p className='text-destructive py-1 text-xs'> {errors.password.message}</p>
               )}
             </div>
 
-            <Button type='submit' disabled={loading || githubLoading} className='w-full'>
+            <Button type='submit' disabled={isAnyLoading} className='w-full'>
               {loading ? (
                 <>
                   <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
-                  Signing In ..
+                  Signing In...
                 </>
               ) : (
                 'Sign In'
@@ -185,36 +232,85 @@ const LoginPage = () => {
             </div>
           </div>
 
-          <Button
-            variant='outline'
-            className='w-full bg-black px-4 py-2 text-white hover:bg-gray-800 hover:text-white dark:bg-white dark:text-black dark:hover:bg-gray-200 dark:hover:text-black'
-            onClick={handleGithubLogin}
-            disabled={githubLoading}
-          >
-            {githubLoading ? (
-              <>
-                <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' />
-                Signing In ..
-              </>
-            ) : (
-              <>
-                <Icon name='github' className='mr-2 h-4 w-4' />
-                Github
-              </>
-            )}
-          </Button>
+          <div className='space-y-3'>
+            {/* GitHub Button */}
+            <button
+              type='button'
+              className={cn(
+                'relative h-11 w-full transition-all duration-200',
+                'rounded-md border border-[#24292e] bg-[#24292e] text-white',
+                'hover:border-[#1b1f23] hover:bg-[#1b1f23]',
+                'dark:border-[#30363d] dark:bg-[#21262d] dark:text-white',
+                'dark:hover:border-[#30363d] dark:hover:bg-[#30363d]',
+                'focus-visible:ring-2 focus-visible:ring-[#24292e] focus-visible:ring-offset-2',
+                'disabled:cursor-not-allowed disabled:opacity-50',
+                'flex items-center justify-center text-sm font-medium'
+              )}
+              onClick={handleGithubLogin}
+              disabled={isAnyLoading}
+            >
+              {githubLoading ? (
+                <>
+                  <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' aria-hidden='true' />
+                  Connecting to GitHub...
+                </>
+              ) : (
+                <>
+                  <Icon name='github' className='mr-2 h-4 w-4' aria-hidden='true' />
+                  Continue with GitHub
+                </>
+              )}
+            </button>
+
+            {/* Google Button - Following Official Guidelines */}
+            <button
+              type='button'
+              className={cn(
+                'relative h-11 w-full transition-all duration-200',
+                // Light theme: Fill: #FFFFFF, Stroke: #747775, Font: #1F1F1F
+                'rounded-md border border-[#747775] bg-white text-[#1F1F1F]',
+                'hover:border-[#5f6368] hover:bg-gray-50',
+                // Dark theme: Fill: #131314, Stroke: #8E918F, Font: #E3E3E3
+                'dark:border-[#8e918f] dark:bg-[#131314] dark:text-[#e3e3e3]',
+                'dark:hover:border-[#9aa0a6] dark:hover:bg-[#1e1e1f]',
+                'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2',
+                'disabled:cursor-not-allowed disabled:opacity-50',
+                'flex items-center justify-center text-sm font-medium'
+              )}
+              onClick={handleGoogleLogin}
+              disabled={isAnyLoading}
+            >
+              {googleLoading ? (
+                <>
+                  <Icon name='loader2' className='mr-2 h-4 w-4 animate-spin' aria-hidden='true' />
+                  Connecting to Google...
+                </>
+              ) : (
+                <>
+                  <Icon name='google' className='mr-2 h-4 w-4' aria-hidden='true' />
+                  Continue with Google
+                </>
+              )}
+            </button>
+          </div>
         </CardContent>
 
         <CardFooter className='flex items-center justify-between gap-2 pt-4 max-sm:mt-2 max-sm:flex-col max-sm:justify-center'>
           <Link
             href='/auth/signup'
-            className='text-primary hover:text-primary/80 text-sm font-medium transition-colors duration-200'
+            className={cn(
+              'text-primary hover:text-primary/80 text-sm font-medium transition-colors duration-200',
+              isAnyLoading && 'pointer-events-none opacity-50'
+            )}
           >
             Create account
           </Link>
           <Link
             href='/auth/forgot-password'
-            className='text-primary hover:text-primary/80 text-sm font-medium transition-colors duration-200'
+            className={cn(
+              'text-primary hover:text-primary/80 text-sm font-medium transition-colors duration-200',
+              isAnyLoading && 'pointer-events-none opacity-50'
+            )}
           >
             Forgot Password?
           </Link>
