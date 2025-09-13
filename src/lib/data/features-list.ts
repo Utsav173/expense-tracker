@@ -187,29 +187,21 @@ Together, Budgeting and Goals provide a powerful one-two punch for financial suc
     title: 'Debt Management',
     description: 'Track loans with details on interest, duration, and status.',
     longDescription: `
-## Conquer Your Debt with Confidence and Clarity
+## Master Your Debt, Regain Control
 
-Managing debt can be one ofthe most stressful aspects of personal finance. Multiple loans, varying interest rates, and different due dates can create a confusing and overwhelming picture. Expense Pro's comprehensive Debt Management feature is designed to cut through that complexity, providing you with a clear, strategic, and empowering tool to track, manage, and ultimately eliminate your debts.
+Debt can be complex and stressful. Our Debt Management tool simplifies it all, transforming confusion into clarity. It gives you a single, powerful dashboard to track, manage, and conquer your debts, whether you've borrowed money or lent it out. Stop feeling overwhelmed and start building a clear path to being debt-free.
 
-This feature allows you to create a centralized inventory of all your liabilities, whether it's money you've borrowed (taken) or money you've lent to others (given). It's a complete solution for understanding the true impact of debt on your financial health.
+### Your Complete Debt Toolkit
 
-### A Detailed View of Every Debt:
+Our feature provides everything you need to get a firm handle on your liabilities.
 
-For each debt record, you can capture all the crucial details:
-*   **Principal Amount:** The original amount of the loan.
-*   **Counterparty:** Who the debt is with, whether it's a bank, a family member, or a friend.
-*   **Interest Rate & Type:** Enter the annual interest rate and specify whether it's **Simple** (calculated only on the principal) or **Compound** (calculated on the principal plus accumulated interest). This is vital for understanding the true cost of borrowing.
-*   **Loan Term:** Define the total duration of the loan in days, weeks, months, or years.
-*   **Start Date & Payment Frequency:** Set the loan's start date and how often payments are expected (e.g., monthly, weekly), which helps in projecting your payment schedule.
+*   **Centralized Tracking:** Log every debt in one place. Track money you've **Taken** (like loans or credit cards) and money you've **Given** (lent to others) with equal clarity.
+*   **Capture Every Detail:** For each debt, record the essential details: principal, counterparty, interest rate (simple or compound), and loan term. This detailed view is crucial for accurate planning.
+*   **Visualize Your Payoff:** The system automatically calculates the final due date, giving you a clear timeline to work towards. Mark debts as "Paid" and watch your net worth grow.
+*   **Plan with the Interest Calculator:** Before you borrow or lend, use our built-in calculator to model different scenarios. Understand the true cost of a loan by seeing the total interest payable, empowering you to make smarter financial decisions.
+*   **Strategic Insights (Coming Soon):** Full amortization schedules are on the way. You'll be able to see exactly how each payment breaks down into principal and interest over the life of the loan.
 
-### Powerful Insights and Tools:
-
-*   **Amortization Schedule (Coming Soon):** The system can generate a full payment schedule, showing you how each payment is split between principal and interest over the entire life of the loan. This provides incredible clarity on your payment journey.
-*   **Final Due Date Calculation:** Based on the start date and term, the system automatically calculates the final due date, so you always know your payoff timeline.
-*   **Status Tracking:** Mark debts as "Paid" to move them from your active liabilities to your financial history, giving you a powerful sense of accomplishment.
-*   **Integrated Interest Calculator:** Unsure about the terms of a potential loan? Use our built-in interest calculator to model different scenarios before you even create a debt record. You can see the total interest and total amount payable for any combination of principal, rate, and term.
-
-By consolidating all your debt information into one place and providing powerful analytical tools, the Debt Management feature transforms debt from a source of anxiety into a manageable financial challenge. It gives you the clarity and confidence you need to create an effective payoff strategy and accelerate your journey to becoming debt-free.
+By consolidating your debt information and providing powerful analytical tools, Expense Pro turns anxiety into action. It’s the clarity you need to create an effective payoff strategy and accelerate your financial goals.
     `
   },
   {

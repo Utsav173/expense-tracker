@@ -33,7 +33,13 @@ const Alert = ({
   };
 
   return (
-    <UiAlert className={cn('rounded-lg', variantClasses[variant])} role='alert' aria-live='polite'>
+    <UiAlert
+      className={cn('rounded-lg pb-0', variantClasses[variant], {
+        'py-0': !title
+      })}
+      role='alert'
+      aria-live='polite'
+    >
       {title && (
         <AlertTitle className='flex items-center gap-2 font-semibold'>
           <Icon name={iconMap[variant]} className='h-4 w-4' aria-hidden='true' /> {title}
@@ -53,41 +59,6 @@ const Keybind = ({ children }: { children: React.ReactNode }) => (
   </kbd>
 );
 
-const FeatureLink = ({
-  href,
-  title,
-  icon,
-  children
-}: {
-  href: string;
-  title: string;
-  icon: IconName;
-  children: React.ReactNode;
-}) => (
-  <Link
-    href={href}
-    className='not-prose group bg-card focus:ring-ring my-4 block rounded-xl border p-6 shadow-sm transition-all hover:shadow-md focus:ring-2 focus:ring-offset-2 focus:outline-none'
-  >
-    <div className='space-y-3'>
-      <Icon
-        name={icon}
-        className='text-primary bg-primary/10 group-hover:bg-primary/15 inline-flex size-10 items-center justify-center rounded-full transition-colors max-md:size-6'
-        aria-hidden='true'
-      />
-      <h3 className='group-hover:text-primary text-lg font-semibold transition-colors'>{title}</h3>
-      <p className='text-muted-foreground leading-relaxed'>{children}</p>
-    </div>
-
-    <div className='mt-4 flex justify-end'>
-      <Icon
-        name='arrowRight'
-        className='text-muted-foreground group-hover:text-primary h-5 w-5 transition-colors'
-        aria-hidden='true'
-      />
-    </div>
-  </Link>
-);
-
 const Step = ({
   number,
   title,
@@ -97,7 +68,7 @@ const Step = ({
   title: string;
   children: React.ReactNode;
 }) => (
-  <section className='my-6' aria-labelledby={`step-${number}-title`}>
+  <section className='my-8' aria-labelledby={`step-${number}-title`}>
     <div
       id={`step-${number}-title`}
       className='flex items-center justify-start gap-2.5 text-lg font-semibold'
@@ -107,9 +78,7 @@ const Step = ({
       </span>
       {title}
     </div>
-    <div className='text-muted-foreground mt-2 mb-2 ml-3 border-l-2 border-dashed pl-6'>
-      {children}
-    </div>
+    <div className='text-muted-foreground mt-2 mb-2 ml-3 border-l-2 pl-6'>{children}</div>
   </section>
 );
 
@@ -118,7 +87,6 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     Icon: (props: { name: IconName; className?: string }) => <Icon {...props} />,
     Alert,
     Keybind,
-    FeatureLink,
     Step,
     ...components
   };

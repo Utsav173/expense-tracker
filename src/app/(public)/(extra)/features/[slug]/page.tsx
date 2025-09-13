@@ -3,13 +3,11 @@ import { notFound } from 'next/navigation';
 import { featuresList } from '@/lib/data/features-list';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { IconName } from '@/components/ui/icon-map';
 import { Metadata } from 'next';
-import { WebPage, TechArticle, WithContext, Graph } from 'schema-dts';
+import { Graph } from 'schema-dts';
 import Script from 'next/script';
 
 export async function generateMetadata({
@@ -140,24 +138,6 @@ const FeatureDetailPage = async ({ params }: { params: Promise<{ slug: string }>
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{feature.longDescription}</ReactMarkdown>
             </article>
           </Card>
-
-          <div className='mt-16 border-t pt-12 text-center md:mt-24 md:pt-16'>
-            <h3 className='text-3xl font-bold'>Ready to Get Started?</h3>
-            <p className='text-muted-foreground mx-auto mt-4 max-w-lg'>
-              Take control of your finances today with Expense Pro. It’s free to sign up.
-            </p>
-            <div className='mt-8'>
-              <Button asChild size='lg' className='group'>
-                <Link href='/auth/signup'>
-                  Sign Up Now
-                  <Icon
-                    name='arrowRight'
-                    className='ml-2 h-4 w-4 transition-transform group-hover:translate-x-1'
-                  />
-                </Link>
-              </Button>
-            </div>
-          </div>
         </div>
       </div>
     </>

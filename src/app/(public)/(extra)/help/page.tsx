@@ -299,7 +299,7 @@ export default function HelpPage() {
                           id={section.id}
                           className={cn(
                             'scroll-mt-20',
-                            index > 0 && 'border-border/30 mt-16 border-t pt-12'
+                            index > 0 && 'border-border/30 mt-8 border-t pt-8'
                           )}
                         >
                           <MdxComponent />
