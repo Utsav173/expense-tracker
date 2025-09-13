@@ -13,6 +13,7 @@ import {
   useAccountDetails
 } from '@/components/account/context/account-details-context';
 import { useAppStore } from '@/stores/app-store';
+import Loader from '@/components/ui/loader';
 
 const AccountTransactionsSection = dynamic(
   () => import('@/components/account/account-transactions-section'),
@@ -173,7 +174,7 @@ const AccountDetailsPage = ({ params }: PageProps) => {
   const resolvedParams = use(params);
 
   return (
-    <Suspense fallback={<Skeleton className='h-screen w-full' />}>
+    <Suspense fallback={<Loader className='absolute inset-0 flex items-center justify-center' />}>
       <AccountDetailsProvider id={resolvedParams.id}>
         <AccountDetailsPageContent />
       </AccountDetailsProvider>

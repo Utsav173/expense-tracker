@@ -50,8 +50,7 @@ const jsonLd: WithContext<FAQPage> = {
             text: `Find the answer to "${subsection.title}" in the ${section.title} section.`
           }
         }))
-      :
-        [
+      : [
           {
             '@type': 'Question',
             name: section.title,
@@ -209,13 +208,7 @@ export default function HelpPage() {
               <article className='prose prose-sm dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-headings:inline-flex prose-headings:items-baseline prose-headings:gap-2 prose-p:leading-relaxed prose-a:text-primary hover:prose-a:underline prose-li:my-2 prose-blockquote:border-l-primary prose-blockquote:bg-primary/5 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-md prose-code:bg-muted prose-code:text-foreground prose-code:rounded-md prose-code:px-1.5 prose-code:py-1 mx-auto max-w-full'>
                 <Suspense
                   fallback={
-                    <div
-                      className='flex min-h-[50vh] items-center justify-center'
-                      role='status'
-                      aria-label='Loading help content'
-                    >
-                      <Loader />
-                    </div>
+                    <Loader className='absolute inset-0 flex items-center justify-center' />
                   }
                 >
                   {helpSections.map((section, index) => {
