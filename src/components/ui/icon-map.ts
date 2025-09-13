@@ -142,14 +142,17 @@ export const iconMap = {
   transaction: 'material-symbols:receipt-long-outline',
   category: 'material-symbols:category-outline',
   investment: 'material-symbols:monitoring',
-  budget: 'material-symbols:request-quote-outline',
+  budget: 'healthicons:money-bag-outline',
   ai: 'healthicons:artificial-intelligence',
   statement: 'material-symbols:description',
   groups: 'material-symbols:groups',
   receipt: 'material-symbols:receipt',
   help: 'material-symbols:help-outline',
   github: 'simple-icons:github',
-  google: 'logos:google-icon'
+  google: 'logos:google-icon',
+  importSidebar: 'ix:import',
+  goal: 'octicon:goal-24',
+  debt: 'solar:hand-money-linear'
 } as const;
 
 export type IconName = keyof typeof iconMap;

@@ -21,6 +21,7 @@ const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const PageHeader: React.FC = () => {
   const pathname = usePathname();
   const { currentAccountName, currentInvestmentAccountName } = useAppStore();
+  const [isSidebarHovered, setIsSidebarHovered] = React.useState(false);
 
   const breadcrumbs = React.useMemo(() => {
     const pathSegments = pathname.split('/').filter(Boolean);
@@ -52,20 +53,32 @@ const PageHeader: React.FC = () => {
 
   return (
     <header className='bg-sidebar/50 sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b backdrop-blur-sm'>
-      <div className='flex w-full items-center gap-2 px-4'>
+      <div
+        className='flex w-full items-center gap-2 px-4'
+        onMouseEnter={() => setIsSidebarHovered(true)}
+        onMouseLeave={() => setIsSidebarHovered(false)}
+      >
         <SidebarTrigger />
         <div className='border-accent ml-1 flex h-full flex-1 items-center gap-2 overflow-x-auto border-l pl-2'>
           {breadcrumbs ? (
             <Breadcrumb>
               <BreadcrumbList className='whitespace-nowrap'>
-                <BreadcrumbItem>
+                <BreadcrumbItem
+                  className={`transition-all duration-300 ease-in-out ${
+                    isSidebarHovered ? 'visible w-auto' : 'hidden w-0 overflow-hidden'
+                  }`}
+                >
                   <BreadcrumbLink asChild>
                     <Link href='/dashboard' aria-label='Go to Dashboard'>
                       <Icon name='home' className='hover:text-accent-foreground h-4 w-4' />
                     </Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
-                <BreadcrumbSeparator />
+                <BreadcrumbSeparator
+                  className={`transition-all duration-300 ease-in-out ${
+                    isSidebarHovered ? 'w-auto opacity-100' : 'w-0 overflow-hidden opacity-0'
+                  }`}
+                />
                 {breadcrumbs.map((crumb) => (
                   <BreadcrumbItem key={crumb.href}>
                     {crumb.isLast ? (

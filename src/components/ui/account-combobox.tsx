@@ -18,7 +18,7 @@ interface AccountComboboxProps {
   allowClear?: boolean;
   clearLabel?: string;
   setDateRange?: Dispatch<SetStateAction<DateRange | undefined>>;
-  id: HTMLDivElement['id'];
+  isOnModal?: boolean;
 }
 
 const AccountCombobox = React.forwardRef<ComboboxHandle, AccountComboboxProps>(
@@ -32,7 +32,7 @@ const AccountCombobox = React.forwardRef<ComboboxHandle, AccountComboboxProps>(
       allowClear = false,
       clearLabel = 'All Accounts',
       setDateRange,
-      id
+      isOnModal
     },
     ref
   ) => {
@@ -150,7 +150,7 @@ const AccountCombobox = React.forwardRef<ComboboxHandle, AccountComboboxProps>(
         loadingPlaceholder='Searching accounts...'
         className={className}
         disabled={disabled || (isLoadingInitial && shouldFetchDetails)}
-        id={id}
+        isOnModal={isOnModal}
       />
     );
   }

@@ -171,6 +171,7 @@ const CategoryCombobox: React.FC<CategoryComboboxProps> = ({
       loadingPlaceholder='Searching categories...'
       className={className}
       disabled={disabled || isCreating}
+      isOnModal
     />
   );
 };

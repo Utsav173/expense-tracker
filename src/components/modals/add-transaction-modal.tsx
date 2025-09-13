@@ -269,7 +269,7 @@ const AddTransactionModal = ({
                       <FormLabel>Account</FormLabel>
                       <FormControl>
                         <AccountCombobox
-                          id='account-selector'
+                          isOnModal
                           value={field.value}
                           onChange={field.onChange}
                           disabled={isSubmitting}
@@ -391,7 +391,7 @@ const AddTransactionModal = ({
               />
               <Collapsible open={isRecurring}>
                 <CollapsibleContent className='data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up overflow-hidden pt-4'>
-                  <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                  <div className='grid grid-cols-1 gap-4 px-2 md:grid-cols-2'>
                     <FormField
                       control={control}
                       name='recurrenceType'

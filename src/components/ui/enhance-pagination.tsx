@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,12 +25,15 @@ const EnhancedPagination: React.FC<EnhancedPaginationProps> = ({
 }) => {
   const totalPages = useMemo(() => Math.ceil(totalRecords / pageSize), [totalRecords, pageSize]);
   const [inputPage, setInputPage] = useState(currentPage.toString());
+  const [isInputFocused, setIsInputFocused] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (currentPage.toString() !== inputPage) {
+    // Only update input when not focused to prevent interference while typing
+    if (!isInputFocused && currentPage.toString() !== inputPage) {
       setInputPage(currentPage.toString());
     }
-  }, [currentPage, inputPage]);
+  }, [currentPage, inputPage, isInputFocused]);
 
   const handlePageNavigation = useCallback(
     (page: number | string) => {
@@ -44,22 +47,44 @@ const EnhancedPagination: React.FC<EnhancedPaginationProps> = ({
 
   const commitPageInput = useCallback(() => {
     const pageNum = parseInt(inputPage, 10);
-    if (!isNaN(pageNum)) {
-      handlePageNavigation(pageNum);
+    if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= totalPages) {
+      if (pageNum !== currentPage) {
+        handlePageNavigation(pageNum);
+      }
+    } else {
+      // Reset to current page if invalid input
+      setInputPage(currentPage.toString());
     }
-    setInputPage(currentPage.toString());
-  }, [inputPage, currentPage, handlePageNavigation]);
+  }, [inputPage, currentPage, totalPages, handlePageNavigation]);
 
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
+      commitPageInput();
+      e.currentTarget.blur();
+    } else if (e.key === 'Escape') {
+      setInputPage(currentPage.toString());
       e.currentTarget.blur();
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (/^\d*$/.test(e.target.value)) {
-      setInputPage(e.target.value);
+    const value = e.target.value;
+    // Allow empty string or valid numbers
+    if (value === '' || /^\d+$/.test(value)) {
+      setInputPage(value);
     }
+  };
+
+  const handleInputFocus = () => {
+    setIsInputFocused(true);
+  };
+
+  const handleInputBlur = () => {
+    setIsInputFocused(false);
+    // Small delay to prevent race conditions
+    setTimeout(() => {
+      commitPageInput();
+    }, 10);
   };
 
   const pagesToShow = useMemo(() => {
@@ -116,11 +141,13 @@ const EnhancedPagination: React.FC<EnhancedPaginationProps> = ({
         {isMobile ? (
           <div className='flex items-center px-2'>
             <Input
+              ref={inputRef}
               type='text'
               value={inputPage}
               onChange={handleInputChange}
               onKeyDown={handleInputKeyDown}
-              onBlur={commitPageInput}
+              onFocus={handleInputFocus}
+              onBlur={handleInputBlur}
               className='border-muted h-9 w-10 bg-transparent text-center focus-visible:ring-1 focus-visible:ring-offset-0'
               aria-label='Page number'
             />

@@ -29,7 +29,7 @@ interface ComboboxProps {
   loadingPlaceholder?: string;
   className?: string;
   disabled?: boolean;
-  id?: HTMLDivElement['id'];
+  isOnModal?: boolean;
 }
 
 export interface ComboboxHandle {
@@ -47,7 +47,7 @@ export const Combobox = React.forwardRef<ComboboxHandle | null, ComboboxProps>(
       loadingPlaceholder = 'Loading...',
       className,
       disabled,
-      id
+      isOnModal
     },
     ref // optional
   ) => {
@@ -96,7 +96,7 @@ export const Combobox = React.forwardRef<ComboboxHandle | null, ComboboxProps>(
     };
 
     return (
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={setOpen} modal={isOnModal}>
         <PopoverTrigger asChild>
           <div className={cn('relative', className, disabled && 'cursor-not-allowed')}>
             <Input

@@ -27,8 +27,15 @@ export const helpSections: HelpSection[] = [
     icon: 'layoutGrid',
     subsections: [
       { title: 'Financial Snapshot', id: 'dashboard-financial-snapshot' },
+      { title: 'Quick Stats', id: 'dashboard-quick-stats' },
+      { title: 'Financial Health', id: 'dashboard-financial-health' },
       { title: 'Financial Trends', id: 'dashboard-financial-trends' },
-      { title: 'Spending Breakdown', id: 'dashboard-spending-breakdown' }
+      { title: 'Spending Breakdown', id: 'dashboard-spending-breakdown' },
+      { title: 'Budget Progress', id: 'dashboard-budget-progress' },
+      { title: 'Goal Highlights', id: 'dashboard-goal-highlights' },
+      { title: 'Debt Summary', id: 'dashboard-debt-summary' },
+      { title: 'Investment Summary', id: 'dashboard-investment-summary' },
+      { title: 'Accounts Summary', id: 'dashboard-accounts-summary' }
     ]
   },
   {
@@ -47,7 +54,7 @@ export const helpSections: HelpSection[] = [
     subsections: [
       { title: 'Accounts List', id: 'accounts-listing' },
       { title: 'Account Details', id: 'accounts-details' },
-      { title: 'Account Sharing', id: 'accounts-sharing' },
+      { title: 'Sharing & Collaboration', id: 'accounts-sharing' },
       { title: 'Generating Statements', id: 'accounts-statement' }
     ]
   },
@@ -71,7 +78,17 @@ export const helpSections: HelpSection[] = [
       { title: 'Usage Guide', id: 'ai-assistant-usage' }
     ]
   },
-  { title: 'Profile & Settings', id: 'profile-settings', icon: 'user' }
+  { 
+    title: 'Profile & Settings', 
+    id: 'profile-settings', 
+    icon: 'user',
+    subsections: [
+      { title: 'Profile Info', id: 'profile-settings-profile' },
+      { title: 'Security', id: 'profile-settings-security' },
+      { title: 'Notifications', id: 'profile-settings-notifications' },
+      { title: 'AI Assistant', id: 'profile-settings-ai' }
+    ]
+  }
 ];
 
 /**

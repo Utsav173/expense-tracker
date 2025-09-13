@@ -1,7 +1,7 @@
 <a id='ai-assistant-setup'></a>
 ### <Icon name='keyRound' /> Setting Up Your API Key for Privacy
 
-For maximum user privacy, the AI Assistant is powered by **your own personal Google AI API key**. This means your financial data is never sent to a shared, third-party AI model. It's your data, processed with your key.
+For maximum user privacy and to prevent abuse, the AI Assistant is powered by **your own personal Google AI API key**. This means your financial data is never sent to a shared, third-party AI model that we control. It's your data, processed with your key, under your Google account.
 
 <Step number={1} title='Get Your Google AI Key'>
   First, you'll need a free API key from Google AI Studio.
@@ -18,14 +18,9 @@ For maximum user privacy, the AI Assistant is powered by **your own personal Goo
 </Step>
 
 <Step number={2} title='Save Your Key in Expense Pro'>
-  Navigate to your profile, find the **AI Assistant** tab, paste your copied key into the field, and
-  click **Save Key**. The AI Assistant will be enabled immediately.
-  <FeatureLink href='/profile' title='Go to Profile Settings' icon='settings'>
-    Access your profile to add or manage your API key.
-  </FeatureLink>
+  Navigate to your **Profile** page (by clicking your avatar in the sidebar), then go to the **AI Assistant** tab. Paste your copied key into the field and click **Save Key**. The AI Assistant will be enabled immediately across the app.
 </Step>
 
 <Alert>
-  Your API key is stored securely with strong encryption and is only ever used by you to process
-  your requests on your behalf. We never see or log your raw key.
+  Your API key is stored securely in our database using strong AES-GCM encryption. It is only ever decrypted on the server when needed to process your AI requests on your behalf. We never see or log your raw key.
 </Alert>

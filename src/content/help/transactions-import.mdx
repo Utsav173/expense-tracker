@@ -1,25 +1,25 @@
 <a id="transactions-import"></a>
 ### <Icon name="uploadCloud" /> Importing Data
 
-This is the fastest way to get your historical data into the app. Our import wizard guides you through the process.
+This is the fastest way to get your historical data into the app. The import wizard is a step-by-step process to upload a file and bulk-add your transaction history from a bank or another software.
 
-<FeatureLink href="/transactions/import" title="Go to the Import Wizard" icon="uploadCloud">
-  Start here to upload files and bulk-add your transaction history from a previous bank or software.
-</FeatureLink>
-
-<Step number={1} title="Upload Your File">
-  First, select the **Destination Account**. Then, provide your file. We recommend using our template for the best results, but we can also process standard PDF bank statements using AI.
+<Step number={1} title="Step 1: Upload">
+  - **Select Account:** First, choose the destination account for the imported transactions from the dropdown menu.
+  - **Provide File:** Drag and drop your file onto the upload area, or click to browse. The system can process Excel files and, with AI, can often read PDF bank statements.
 </Step>
 
 <Alert variant="tip" title="Which format should I use?">
-  - **Excel (XLSX):** For the most reliable results, **download our Excel template** from the import page. This ensures all your data is mapped correctly.
-  - **PDF:** If you have a standard bank statement, our AI can often read it automatically. This can be a huge time-saver!
+  - **Excel (XLSX):** For the most reliable results, **download the Excel template** from the import page. This ensures all your data columns are mapped correctly.
+  - **PDF:** If you have a standard bank statement, the AI can often read it automatically. If the PDF is password-protected, you will be prompted to enter the password. This is a massive time-saver!
 </Alert>
 
-<Step number={2} title="Review and Confirm">
-  After processing, we'll show you a preview of the transactions we found. You can review everything for accuracy and uncheck any transactions you don't want to import. 
+<Step number={2} title="Step 2: Review & Select">
+  After processing, a preview dialog will appear showing all the transactions extracted from your file. 
+  - **Review:** Check the data for accuracy.
+  - **Select:** Use the checkboxes to select only the transactions you wish to import. By default, all are selected. Uncheck any duplicates or unwanted entries.
+  - **Confirm:** Click **"Confirm and Stage"** to move to the final step.
 </Step>
 
-<Step number={3} title="Complete the Import">
-  Once you're happy with the selection, click the **"Confirm Import"** button. The transactions will be permanently added to your account.
+<Step number={3} title="Step 3: Final Confirmation">
+  A final confirmation dialog will appear summarizing the number of transactions you are about to import. Click **"Import Transactions"** to permanently add them to your selected account. You will see a success message upon completion.
 </Step>

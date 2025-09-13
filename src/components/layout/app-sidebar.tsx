@@ -51,16 +51,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           { title: 'Accounts', url: '/accounts', icon: 'wallet' },
           { title: 'Shared Accounts', url: '/shared-accounts', icon: 'users2' },
           { title: 'Categories', url: '/category', icon: 'category' },
-          { title: 'Import', url: '/transactions/import', icon: 'uploadCloud' }
+          { title: 'Import', url: '/transactions/import', icon: 'importSidebar' }
         ]
       },
       {
         label: 'Plan',
         items: [
           { title: 'Budgets', url: '/budget', icon: 'budget' },
-          { title: 'Goals', url: '/goal', icon: 'piggyBank' },
+          { title: 'Goals', url: '/goal', icon: 'goal' },
           { title: 'Investments', url: '/investment', icon: 'investment' },
-          { title: 'Debts', url: '/debts', icon: 'coins' },
+          { title: 'Debts', url: '/debts', icon: 'debt' },
           { title: 'Statement', url: '/accounts/statement', icon: 'fileDown' }
         ]
       },

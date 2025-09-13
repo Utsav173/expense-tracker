@@ -94,8 +94,8 @@ const LoginPage = () => {
 
       await authClient.signIn.social(
         {
-          provider: 'github'
-          // callbackURL: 'https://expense-pro.khatriutsav.com/accounts'
+          provider: 'github',
+          callbackURL: 'https://expense-pro.khatriutsav.com/accounts'
         },
         {
           onError: ({ error }) => {
@@ -103,17 +103,8 @@ const LoginPage = () => {
             showError('GitHub login failed. Please try again.');
             setGithubLoading(false);
           },
-          onSuccess: async () => {
-            try {
-              await authClient.getSession({ fetchOptions: { credentials: 'include' } });
-              showSuccess('Successfully logged in with GitHub');
-              router.replace('/accounts');
-            } catch (sessionError) {
-              console.error('Session error:', sessionError);
-              showError('Login successful but session failed. Please try again.');
-            } finally {
-              setGithubLoading(false);
-            }
+          onSettled: () => {
+            setGithubLoading(false);
           }
         }
       );
