@@ -331,13 +331,19 @@ const AddTransactionModal = ({
                   render={({ field }) => (
                     <FormItem className='flex flex-row items-center space-y-0 space-x-3'>
                       <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className='size-4'
+                        />
                       </FormControl>
                       <div className='space-y-1 leading-none'>
                         <FormLabel>Add to a Goal</FormLabel>
-                        <FormDescription>
-                          Link this income to one of your saving goals.
-                        </FormDescription>
+                        {addToGoal && (
+                          <FormDescription>
+                            Link this income to one of your saving goals.
+                          </FormDescription>
+                        )}
                       </div>
                     </FormItem>
                   )}
@@ -382,9 +388,11 @@ const AddTransactionModal = ({
                     </FormControl>
                     <div className='space-y-1 leading-none'>
                       <FormLabel>Recurring Transaction</FormLabel>
-                      <FormDescription>
-                        Set this transaction to repeat automatically.
-                      </FormDescription>
+                      {isRecurring && (
+                        <FormDescription>
+                          Set this transaction to repeat automatically.
+                        </FormDescription>
+                      )}
                     </div>
                   </FormItem>
                 )}

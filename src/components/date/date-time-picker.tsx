@@ -5,11 +5,18 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { format } from 'date-fns';
+import { format, setMonth as setMonthFns, setYear as setYearFns } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { DayPickerProps } from 'react-day-picker';
+import { DayPickerProps, CaptionLabelProps } from 'react-day-picker';
 import { Icon } from '../ui/icon';
 import { Input } from '../ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 
 interface DateTimePickerProps {
   value?: Date;
@@ -42,6 +49,21 @@ interface DateTimePickerProps {
 
 type TimeType = 'hour' | 'minute' | 'second' | 'ampm';
 
+const MONTH_NAMES = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December'
+];
+
 const DateTimePicker: React.FC<DateTimePickerProps> = ({
   value,
   onChange,
@@ -70,6 +92,34 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 }) => {
   const [openPopover, setOpenPopover] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<Date>(() => value || new Date());
+  const [viewMonth, setViewMonth] = useState<Date>(
+    () => new Date((value || new Date()).getFullYear(), (value || new Date()).getMonth(), 1)
+  );
+
+  // Normalize min/max bounds
+  const [minBound, maxBound] = useMemo(() => {
+    if (minDate && maxDate && minDate > maxDate) return [maxDate, minDate];
+    return [minDate, maxDate];
+  }, [minDate, maxDate]);
+
+  // Month/year dropdown data
+  const validYears = useMemo(() => {
+    const baseYear = viewMonth.getFullYear();
+    const fromYear = minBound ? minBound.getFullYear() : baseYear - 50;
+    const toYear = maxBound ? maxBound.getFullYear() : baseYear + 10;
+    const years: number[] = [];
+    for (let y = fromYear; y <= toYear; y++) years.push(y);
+    return years;
+  }, [minBound, maxBound, viewMonth]);
+
+  const validMonths = useMemo(() => {
+    const y = viewMonth.getFullYear();
+    let startIdx = 0;
+    let endIdx = 11;
+    if (minBound && y === minBound.getFullYear()) startIdx = minBound.getMonth();
+    if (maxBound && y === maxBound.getFullYear()) endIdx = maxBound.getMonth();
+    return Array.from({ length: 12 }, (_, i) => i).filter((i) => i >= startIdx && i <= endIdx);
+  }, [viewMonth, minBound, maxBound]);
 
   // Memoized computed values
   const displayFormat = useMemo(() => {
@@ -94,10 +144,8 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
       ? Array.from({ length: 24 }, (_, i) => i)
       : Array.from({ length: 12 }, (_, i) => i + 1);
 
-    const minutes = Array.from({ length: 60 / minuteStep }, (_, i) => i * minuteStep);
-
+    const minutes = Array.from({ length: Math.floor(60 / minuteStep) }, (_, i) => i * minuteStep);
     const seconds = showSeconds ? Array.from({ length: 60 }, (_, i) => i) : [];
-
     return { hours, minutes, seconds };
   }, [use24Hour, minuteStep, showSeconds]);
 
@@ -105,6 +153,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   useEffect(() => {
     if (value && value.getTime() !== selectedDate.getTime()) {
       setSelectedDate(value);
+      setViewMonth(new Date(value.getFullYear(), value.getMonth(), 1));
     }
   }, [value, selectedDate]);
 
@@ -196,6 +245,31 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
     }
   }, []);
 
+  // Month/Year dropdown handlers
+  const handleMonthDropdownChange = useCallback(
+    (monthIndex: string) => {
+      setViewMonth(setMonthFns(viewMonth, parseInt(monthIndex, 10)));
+    },
+    [viewMonth]
+  );
+
+  const handleYearDropdownChange = useCallback(
+    (year: string) => {
+      const y = parseInt(year, 10);
+      let next = setYearFns(viewMonth, y);
+
+      // Clamp to valid month range if needed
+      const startIdx = minBound && y === minBound.getFullYear() ? minBound.getMonth() : 0;
+      const endIdx = maxBound && y === maxBound.getFullYear() ? maxBound.getMonth() : 11;
+      const m = next.getMonth();
+      if (m < startIdx) next = setMonthFns(next, startIdx);
+      if (m > endIdx) next = setMonthFns(next, endIdx);
+
+      setViewMonth(next);
+    },
+    [viewMonth, minBound, maxBound]
+  );
+
   // Render time scroll area component
   const TimeScrollArea = ({
     values,
@@ -221,11 +295,11 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 
         return (
           <Button
-            key={val}
+            key={val as React.Key}
             size='icon'
             variant={isSelected ? 'default' : 'ghost'}
             className='aspect-square shrink-0 text-xs sm:w-full'
-            onClick={() => handleTimeChange(type, val.toString())}
+            onClick={() => handleTimeChange(type, String(val))}
             aria-pressed={isSelected}
             aria-label={`${label} ${displayValue}`}
           >
@@ -271,7 +345,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
         )}
         onKeyDown={handleKeyDown}
       >
-        <div className='relative sm:flex'>
+        <div className='relative sm:flex sm:items-center'>
           <Calendar
             mode='single'
             selected={selectedDate}
@@ -279,14 +353,33 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
             disabled={disabled}
             captionLayout={captionLayout}
             autoFocus={autoFocus}
-            fromDate={minDate}
-            toDate={maxDate}
+            fromDate={minBound}
+            toDate={maxBound}
+            month={viewMonth}
+            onMonthChange={setViewMonth}
+            // Remove arrow navigation and use dropdowns
             className={cn('p-2', calendarClassName)}
+            classNames={{
+              nav: 'hidden',
+              month_caption: 'flex justify-start px-1 mx-auto'
+            }}
+            components={{
+              CaptionLabel: (props: CaptionLabelProps) => (
+                <CustomCaptionLabel
+                  {...props}
+                  displayMonth={viewMonth}
+                  validYears={validYears}
+                  validMonths={validMonths}
+                  onMonthChange={handleMonthDropdownChange}
+                  onYearChange={handleYearDropdownChange}
+                />
+              )
+            }}
           />
 
           <div
             className={cn(
-              'flex w-full flex-col divide-y border-l sm:my-auto sm:h-[300px] sm:flex-row sm:divide-x sm:divide-y-0',
+              'flex w-full flex-col divide-y border-l sm:my-auto sm:max-h-[280px] sm:flex-row sm:divide-x sm:divide-y-0',
               timeClassName
             )}
           >
@@ -347,3 +440,48 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 };
 
 export default DateTimePicker;
+
+// Custom caption with Month/Year dropdowns
+function CustomCaptionLabel({
+  displayMonth,
+  validYears,
+  validMonths,
+  onMonthChange,
+  onYearChange
+}: {
+  displayMonth: Date;
+  validYears: number[];
+  validMonths: number[];
+  onMonthChange: (monthIndex: string) => void;
+  onYearChange: (year: string) => void;
+} & CaptionLabelProps) {
+  return (
+    <div className='flex items-center gap-2'>
+      <Select value={displayMonth.getMonth().toString()} onValueChange={onMonthChange}>
+        <SelectTrigger className='h-8 w-[120px] bg-transparent text-sm font-medium'>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {MONTH_NAMES.map((name, idx) => (
+            <SelectItem key={idx} value={idx.toString()} disabled={!validMonths.includes(idx)}>
+              {name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select value={displayMonth.getFullYear().toString()} onValueChange={onYearChange}>
+        <SelectTrigger className='h-8 w-[90px] bg-transparent text-sm font-medium'>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className='max-h-[200px]'>
+          {validYears.map((year) => (
+            <SelectItem key={year} value={year.toString()}>
+              {year}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}

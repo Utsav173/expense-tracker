@@ -17,9 +17,7 @@ import {
   endOfMonth as dateFnsEndOfMonth,
   subDays,
   startOfMonth,
-  endOfMonth,
-  setMonth as setMonthFns,
-  setYear as setYearFns
+  endOfMonth
 } from 'date-fns';
 import { DateRange, CaptionLabelProps, MonthGridProps, DayPickerProps } from 'react-day-picker';
 import type { Dispatch, SetStateAction } from 'react';
@@ -32,13 +30,6 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
 import { Icon } from '../ui/icon';
 import { now } from 'lodash';
 
@@ -123,7 +114,7 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
   const [isYearView, setIsYearView] = useState(false);
   const [month, setMonth] = useState<Date>(initialDefaultMonth || date?.from || new Date());
 
-  const { minDate, maxDate, years, allRange, validMonths } = useMemo(() => {
+  const { minDate, maxDate, years, allRange } = useMemo(() => {
     const today = new Date();
     const effectiveMinDate = initialMinDate || subYears(today, startYearOffset!);
     const effectiveMaxDate = initialMaxDate || addYears(today, endYearOffset!);
@@ -152,33 +143,13 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
       };
     }
 
-    // Calculate valid months for current year
-    const currentYear = month.getFullYear();
-    const validMonthsForYear: number[] = [];
-
-    for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
-      const testDate = new Date(currentYear, monthIndex, 1);
-      const monthStart = getStartOfMonth(testDate);
-      const monthEnd = getEndOfMonth(testDate);
-
-      // Check if any part of this month falls within the valid range
-      if (monthEnd >= finalMinDate && monthStart <= finalMaxDate) {
-        validMonthsForYear.push(monthIndex);
-      }
-    }
-
     return {
       minDate: finalMinDate,
       maxDate: finalMaxDate,
       years: calculatedYears,
-      allRange: allRangeValue,
-      validMonths: validMonthsForYear
+      allRange: allRangeValue
     };
-  }, [initialMinDate, initialMaxDate, startYearOffset, endYearOffset, month]);
-
-  const validYears = useMemo(() => {
-    return years.map((year) => year.getFullYear());
-  }, [years]);
+  }, [initialMinDate, initialMaxDate, startYearOffset, endYearOffset]);
 
   useEffect(() => {
     if (!isSameRange(date, tempDate)) {
@@ -379,16 +350,6 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
     }`;
   };
 
-  const handleMonthChange = (monthIndex: string) => {
-    const newMonth = setMonthFns(month, parseInt(monthIndex));
-    setMonth(newMonth);
-  };
-
-  const handleYearChange = (year: string) => {
-    const newMonth = setYearFns(month, parseInt(year));
-    setMonth(newMonth);
-  };
-
   return (
     <div className={cn('w-full', className)}>
       <div className='space-y-2'>
@@ -480,10 +441,6 @@ export default function DateRangePickerV2(props: DateRangePickerV2Props) {
                       displayMonth={month}
                       isYearView={isYearView}
                       setIsYearView={setIsYearView}
-                      validYears={validYears}
-                      validMonths={validMonths}
-                      onMonthChange={handleMonthChange}
-                      onYearChange={handleYearChange}
                       {...captionProps}
                     />
                   ),
@@ -547,71 +504,25 @@ interface CustomCaptionLabelProps extends CaptionLabelProps {
   displayMonth: Date;
   isYearView: boolean;
   setIsYearView: Dispatch<SetStateAction<boolean>>;
-  validYears: number[];
-  validMonths: number[];
-  onMonthChange: (monthIndex: string) => void;
-  onYearChange: (year: string) => void;
 }
 
-function CustomCaptionLabel({
-  displayMonth,
-  isYearView,
-  setIsYearView,
-  validYears,
-  validMonths,
-  onMonthChange,
-  onYearChange
-}: CustomCaptionLabelProps) {
-  const monthNames = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December'
-  ];
-
+function CustomCaptionLabel({ displayMonth, isYearView, setIsYearView }: CustomCaptionLabelProps) {
   return (
-    <div className='-ms-1 flex items-center gap-1'>
-      {/* Month Dropdown */}
-      <Select value={displayMonth.getMonth().toString()} onValueChange={onMonthChange}>
-        <SelectTrigger className='hover:bg-muted/50 h-8 w-auto min-w-[100px] border-0 bg-transparent px-2 text-sm font-medium'>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {monthNames.map((monthName, index) => (
-            <SelectItem
-              key={index}
-              value={index.toString()}
-              disabled={!validMonths.includes(index)}
-              className='text-sm'
-            >
-              {monthName}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      {/* Year Dropdown */}
-      <Select value={displayMonth.getFullYear().toString()} onValueChange={onYearChange}>
-        <SelectTrigger className='hover:bg-muted/50 h-8 w-auto min-w-[70px] border-0 bg-transparent px-2 text-sm font-medium'>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent className='max-h-[200px]'>
-          {validYears.map((year) => (
-            <SelectItem key={year} value={year.toString()} className='text-sm'>
-              {year}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
+    <Button
+      className='data-[state=open]:text-muted-foreground/80 -ms-1 flex items-center gap-2 text-sm font-medium hover:bg-transparent [&[data-state=open]>svg]:rotate-180'
+      variant='ghost'
+      size='sm'
+      onClick={() => setIsYearView((prev) => !prev)}
+      data-state={isYearView ? 'open' : 'closed'}
+      type='button'
+    >
+      {format(displayMonth, 'MMMM yyyy')}
+      <Icon
+        name='chevronDown'
+        className='text-muted-foreground/80 h-4 w-4 shrink-0 transition-transform duration-200'
+        aria-hidden='true'
+      />
+    </Button>
   );
 }
 

@@ -66,8 +66,8 @@
   --ring-width: 0.125rem;
   --ring-offset: 1.5px;
   --transition-duration: 200ms;
-  --transition-timing-function-open: cubic-bezier(0.22, 1, 0.36, 1);
-  --transition-timing-function-close: cubic-bezier(0.4, 0, 1, 1);
+  --transition-timing-function-open: ease-in-out;
+  --transition-timing-function-close: ease-out;
 
   --shadow-color-hsl: 220 25% 7%;
   --shadow-strength: 2.5%;
@@ -524,13 +524,12 @@
     hsl(var(--shadow-color-hsl) / calc(var(--shadow-strength) + 1.5%));
 
   --animate-accordion-down: accordion-down var(--transition-duration)
-    var(--transition-timing-function-open);
-  --animate-accordion-up: accordion-up var(--transition-duration)
-    var(--transition-timing-function-close);
+    var(--transition-timing-function);
+  --animate-accordion-up: accordion-up var(--transition-duration) var(--transition-timing-function);
   --animate-collapsible-down: collapsible-down var(--transition-duration)
-    var(--transition-timing-function-open);
+    var(--transition-timing-function);
   --animate-collapsible-up: collapsible-up var(--transition-duration)
-    var(--transition-timing-function-close);
+    var(--transition-timing-function);
   --animate-spin: spin 1s linear infinite;
   --animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   --animate-bounce: bounce 1s infinite;

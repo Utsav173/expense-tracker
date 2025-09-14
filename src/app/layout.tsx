@@ -74,6 +74,10 @@ export const metadata: Metadata = {
   manifest: '/site.webmanifest',
   appleWebApp: {
     title: 'Expense Pro'
+  },
+  robots: {
+    index: true,
+    follow: true
   }
 };
 
