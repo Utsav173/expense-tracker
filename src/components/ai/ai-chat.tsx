@@ -153,12 +153,12 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
   return (
     <div
       className={cn(
-        'relative flex h-full max-h-full w-full flex-col overflow-hidden',
+        'relative flex h-full max-h-full w-full flex-col overflow-hidden pt-4',
         isFullPage ? 'bg-transparent' : 'bg-card/80 rounded-2xl border shadow-xl backdrop-blur-sm'
       )}
     >
       {messages.length > 0 && (
-        <div className='absolute top-3 right-3 z-10'>
+        <div className='absolute top-1 right-3 z-10'>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
