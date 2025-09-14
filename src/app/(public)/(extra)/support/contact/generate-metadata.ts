@@ -32,6 +32,9 @@ export async function generateMetadata(): Promise<Metadata> {
       title: 'Contact Support - Expense Tracker',
       description: 'Need help? Contact the Expense Tracker support team for assistance.',
       images: ['https://expense-pro.khatriutsav.com/og-image-contact.png']
-    }
+    },
+    alternates: {
+      canonical: 'https://expense-pro.khatriutsav.com/support/contact',
+    },
   };
 }

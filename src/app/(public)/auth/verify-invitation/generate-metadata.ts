@@ -30,6 +30,9 @@ export async function generateMetadata(): Promise<Metadata> {
       title: 'Verify Invitation - Expense Tracker',
       description: 'Confirm your invitation to Expense Tracker.',
       images: ['https://expense-pro.khatriutsav.com/og-image.png']
-    }
+    },
+    alternates: {
+      canonical: 'https://expense-pro.khatriutsav.com/auth/verify-invitation',
+    },
   };
 }

@@ -32,6 +32,9 @@ export async function generateMetadata(): Promise<Metadata> {
       title: 'Help Center - Expense Tracker',
       description: 'Your guide to mastering Expense Tracker. Find answers and tutorials here.',
       images: ['https://expense-pro.khatriutsav.com/og-image-help.png']
-    }
+    },
+    alternates: {
+      canonical: 'https://expense-pro.khatriutsav.com/help',
+    },
   };
 }

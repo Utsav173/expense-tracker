@@ -34,6 +34,9 @@ export async function generateMetadata(): Promise<Metadata> {
       description:
         'Explore our simple pricing and unlock a lifetime of financial clarity with a single purchase.',
       images: ['https://expense-pro.khatriutsav.com/og-image-pricing.png']
-    }
+    },
+    alternates: {
+      canonical: 'https://expense-pro.khatriutsav.com/pricing',
+    },
   };
 }

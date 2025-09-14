@@ -31,6 +31,9 @@ export async function generateMetadata(): Promise<Metadata> {
       title: 'Sign Up - Create Your Expense Tracker Account',
       description: 'Join Expense Tracker today and take the first step towards financial clarity.',
       images: ['https://expense-pro.khatriutsav.com/og-image-signup.png']
-    }
+    },
+    alternates: {
+      canonical: 'https://expense-pro.khatriutsav.com/auth/signup',
+    },
   };
 }

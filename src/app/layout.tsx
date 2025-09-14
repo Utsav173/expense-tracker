@@ -15,6 +15,7 @@ const openSans = Open_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://expense-pro.khatriutsav.com'),
   title: 'Expense Tracker - Master Your Money. Effortlessly.',
   description:
     'Expense Pro is your intelligent partner for mastering personal finance. Automate tracking, gain deep understanding, and achieve your financial goals with unprecedented ease.',
@@ -78,6 +79,9 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true
+  },
+  alternates: {
+    canonical: 'https://expense-pro.khatriutsav.com/'
   }
 };
 

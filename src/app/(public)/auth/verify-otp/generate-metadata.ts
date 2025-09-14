@@ -31,6 +31,9 @@ export async function generateMetadata(): Promise<Metadata> {
       title: 'Verify OTP - Expense Tracker',
       description: 'Enter your OTP to securely verify your identity.',
       images: ['https://expense-pro.khatriutsav.com/og-image-password-sent.png']
-    }
+    },
+    alternates: {
+      canonical: 'https://expense-pro.khatriutsav.com/auth/verify-otp',
+    },
   };
 }

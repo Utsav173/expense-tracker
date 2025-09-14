@@ -31,6 +31,9 @@ export async function generateMetadata(): Promise<Metadata> {
       title: 'Share Your Feedback - Expense Tracker',
       description: 'Help us improve Expense Tracker by sharing your valuable feedback.',
       images: ['https://expense-pro.khatriutsav.com/og-image.png']
-    }
+    },
+    alternates: {
+      canonical: 'https://expense-pro.khatriutsav.com/support/feedback',
+    },
   };
 }

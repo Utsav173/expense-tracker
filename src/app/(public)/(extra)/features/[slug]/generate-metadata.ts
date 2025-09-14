@@ -21,6 +21,9 @@ export async function generateMetadata({
       title: `${feature.title} - Expense Pro`,
       description: feature.description,
       type: 'article'
-    }
+    },
+    alternates: {
+      canonical: `https://expense-pro.khatriutsav.com/features/${feature.slug}`,
+    },
   };
 }

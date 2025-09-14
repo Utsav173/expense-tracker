@@ -34,6 +34,9 @@ export async function generateMetadata(): Promise<Metadata> {
       description:
         'Understand the legal terms and policies governing the use of Expense Tracker, including Privacy Policy and Terms of Service.',
       images: ['https://expense-pro.khatriutsav.com/og-image.png'] // Placeholder
-    }
+    },
+    alternates: {
+      canonical: 'https://expense-pro.khatriutsav.com/legal',
+    },
   };
 }

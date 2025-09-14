@@ -30,6 +30,9 @@ export async function generateMetadata(): Promise<Metadata> {
       title: 'Reset Password - Expense Tracker',
       description: 'Create a new password for your Expense Tracker account.',
       images: ['https://expense-pro.khatriutsav.com/og-image-reset-password.png']
-    }
+    },
+    alternates: {
+      canonical: 'https://expense-pro.khatriutsav.com/auth/reset-password',
+    },
   };
 }
