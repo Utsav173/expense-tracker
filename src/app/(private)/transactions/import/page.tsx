@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { RowSelectionState } from '@tanstack/react-table';
+
 import { useToast } from '@/lib/hooks/useToast';
 import { accountGetDropdown } from '@/lib/endpoints/accounts';
 import { importTransactions, confirmImport } from '@/lib/endpoints/import';
 import { aiProcessTransactionPdf } from '@/lib/endpoints/ai';
-import { RowSelectionState } from '@tanstack/react-table';
-import { API_BASE_URL } from '@/lib/api-client';
 
 import { ImportHeader } from '@/components/transactions/import/import-header';
 import { ImportStepper } from '@/components/transactions/import/import-stepper';
@@ -17,17 +17,113 @@ import { PreviewDialog } from '@/components/transactions/import/preview-dialog';
 import { ConfirmationDialog } from '@/components/transactions/import/confirmation-dialog';
 import { PasswordDialog } from '@/components/transactions/import/password-dialog';
 
-import 'react-pdf/dist/Page/AnnotationLayer.css';
-import 'react-pdf/dist/Page/TextLayer.css';
+type TransactionType = 'income' | 'expense';
+type ParsedTransaction = {
+  Date: string; // ISO or display date string
+  Text: string; // description
+  Amount: number; // positive value
+  Type: TransactionType;
+  Transfer: string;
+  Category: string;
+};
+
+const REQUIRED_HEADERS = ['Date', 'Text', 'Amount', 'Type', 'Transfer', 'Category'] as const;
+
+let pdfjsLibPromise: Promise<any> | null = null;
+async function getPdfjs() {
+  if (!pdfjsLibPromise) {
+    pdfjsLibPromise = import('pdfjs-dist').then((pdfjs) => {
+      pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+        'pdfjs-dist/build/pdf.worker.min.mjs',
+        import.meta.url
+      ).toString();
+      return pdfjs;
+    });
+  }
+
+  return pdfjsLibPromise;
+}
+
+function isPdf(file: File) {
+  return file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+}
+
+function normalizeAmount(value: unknown): number {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const cleaned = value.replace(/[^0-9.-]/g, '');
+    const num = Number(cleaned);
+    return Number.isFinite(num) ? num : NaN;
+  }
+  return NaN;
+}
+
+function normalizeType(raw: unknown): TransactionType {
+  const val = String(raw ?? '').toLowerCase();
+  return val === 'income' ? 'income' : 'expense';
+}
+
+function sanitizeTransactions(rows: any[]): ParsedTransaction[] {
+  return rows
+    .map((r) => {
+      const amount = normalizeAmount(r.Amount);
+      const t: ParsedTransaction = {
+        Date: String(r.Date ?? '').trim(),
+        Text: String(r.Text ?? '').trim(),
+        Amount: amount,
+        Type: normalizeType(r.Type),
+        Transfer: String(r.Transfer ?? '-').trim() || '-',
+        Category: String(r.Category ?? 'Uncategorized').trim() || 'Uncategorized'
+      };
+      return t;
+    })
+    .filter((t) => t.Date && t.Text && Number.isFinite(t.Amount));
+}
+
+async function extractTextFromPdf(file: File, password?: string) {
+  const pdfjs = await getPdfjs();
+  const arrayBuffer = await file.arrayBuffer();
+
+  const loadingTask = pdfjs.getDocument({ data: arrayBuffer, password });
+  const pdf = await loadingTask.promise;
+
+  let fullText = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const textContent = await page.getTextContent();
+    const pageText = textContent.items.map((item: any) => item.str).join(' ');
+    fullText += pageText + '\n';
+  }
+  return fullText.trim();
+}
+
+async function parseXlsx(file: File) {
+  const XLSX: any = await import('xlsx');
+  const data = await file.arrayBuffer();
+  const workbook = XLSX.read(data, { type: 'array' });
+  const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+  if (!worksheet) throw new Error('No sheet found in the workbook');
+
+  const rows: any[] = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+  if (rows.length === 0) throw new Error('No data found in the sheet');
+
+  const headers = Object.keys(rows[0] as object);
+  const missing = REQUIRED_HEADERS.filter((h) => !headers.includes(h));
+  if (missing.length > 0) throw new Error(`Missing headers: ${missing.join(', ')}`);
+
+  return sanitizeTransactions(rows);
+}
 
 const ImportTransactionsPage = () => {
   const [loading, setLoading] = useState(false);
   const [accountId, setAccountId] = useState<string | undefined>(undefined);
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [successId, setSuccessId] = useState<string | null>(null);
+  const [transactions, setTransactions] = useState<ParsedTransaction[]>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [currentStep, setCurrentStep] = useState(1);
+
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [successId, setSuccessId] = useState<string | null>(null);
+  const [stagedCount, setStagedCount] = useState<number>(0);
 
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -41,40 +137,41 @@ const ImportTransactionsPage = () => {
     queryFn: accountGetDropdown
   });
 
-  useEffect(() => {
-    import('react-pdf').then(({ pdfjs }) => {
-      pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-        'pdfjs-dist/build/pdf.worker.min.mjs',
-        import.meta.url
-      ).toString();
-    });
-  }, []);
-
   const processFile = useCallback(
     async (file: File, filePassword?: string) => {
+      if (loading) return; // prevent double-processing
       setLoading(true);
       setPasswordError(null);
+
       if (!filePassword) {
         showInfo(`Processing ${file.name}... This may take a moment.`);
       }
 
       try {
-        let parsedData;
-        if (file.type === 'application/pdf') {
-          const { pdfjs } = await import('react-pdf');
-          const arrayBuffer = await file.arrayBuffer();
-          const pdf = await pdfjs.getDocument({ data: arrayBuffer, password: filePassword })
-            .promise;
+        let parsed: ParsedTransaction[] = [];
 
+        if (isPdf(file)) {
+          // Try to extract text
           let fullText = '';
-          for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const textContent = await page.getTextContent();
-            const pageText = textContent.items.map((item: any) => item.str).join(' ');
-            fullText += pageText + '\n';
+          try {
+            fullText = await extractTextFromPdf(file, filePassword);
+          } catch (error: any) {
+            // Handle password-protected PDFs gracefully
+            if (error?.name === 'PasswordException') {
+              setPendingFile(file);
+              const message = String(error?.message || '').toLowerCase();
+              setPasswordError(
+                message.includes('incorrect') || message.includes('invalid')
+                  ? 'The provided password was incorrect.'
+                  : null
+              );
+              setIsPasswordDialogOpen(true);
+              return; // bail out (keep loading false in finally)
+            }
+            throw error;
           }
 
-          if (!fullText || fullText.trim().length < 50) {
+          if (!fullText || fullText.length < 50) {
             throw new Error('Could not extract sufficient text from the PDF.');
           }
 
@@ -84,69 +181,57 @@ const ImportTransactionsPage = () => {
             throw new Error('AI processing failed to return valid transaction data.');
           }
 
+          parsed = sanitizeTransactions(
+            aiResponse.transactions.map((tx: any) => ({
+              Date: tx.date,
+              Text: tx.description ?? '',
+              Amount: tx.debit != null ? tx.debit : tx.credit,
+              Type: tx.debit != null ? 'expense' : 'income',
+              Transfer: tx.transfer ?? '-',
+              Category: tx.category ?? 'Uncategorized'
+            }))
+          );
+
+          // Close password dialog if it was open and parsing succeeded
           setIsPasswordDialogOpen(false);
           setPendingFile(null);
-
-          parsedData = aiResponse.transactions.map((tx) => ({
-            Date: tx.date,
-            Text: tx.description,
-            Amount: tx.debit !== undefined ? tx.debit : tx.credit,
-            Type: tx.debit !== undefined ? 'expense' : 'income',
-            Transfer: tx.transfer || '-',
-            Category: tx.category || 'Uncategorized'
-          }));
+          setPassword('');
+          setPasswordError(null);
         } else {
-          const XLSX = await import('xlsx');
-          const data = await file.arrayBuffer();
-          const workbook = XLSX.read(data, { type: 'buffer' });
-          const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-          if (!worksheet) throw new Error('No sheet found in the workbook');
-          parsedData = XLSX.utils.sheet_to_json(worksheet);
-          if (parsedData.length === 0) throw new Error('No data found in the sheet');
-          const headers = Object.keys(parsedData[0] as object);
-          const requiredHeaders = ['Date', 'Text', 'Amount', 'Type', 'Transfer', 'Category'];
-          const missing = requiredHeaders.filter((h) => !headers.includes(h));
-          if (missing.length > 0) throw new Error(`Missing headers: ${missing.join(', ')}`);
+          // XLSX/CSV route
+          parsed = await parseXlsx(file);
         }
 
-        if (parsedData.length === 0) {
+        if (parsed.length === 0) {
           showError('No transactions could be extracted from the file.');
           return;
         }
 
-        setTransactions(parsedData);
+        setTransactions(parsed);
         setRowSelection({});
         setCurrentStep(2);
         setIsConfirmOpen(true);
       } catch (error: any) {
-        if (error.name === 'PasswordException') {
-          setPendingFile(file);
-          setPasswordError(
-            error.message.includes('Invalid') ? 'The provided password was incorrect.' : null
-          );
-          setIsPasswordDialogOpen(true);
-        } else {
-          showError(`Error parsing file: ${error.message}`);
-        }
+        showError(`Error parsing file: ${error?.message || 'Unknown error'}`);
       } finally {
         setLoading(false);
       }
     },
-    [showError, showInfo]
+    [loading, showError, showInfo]
   );
 
   const onFileDrop = useCallback(
     (file: File) => {
-      if (!file) return;
+      if (!file || loading) return;
       setPendingFile(null);
       setPasswordError(null);
       processFile(file);
     },
-    [processFile]
+    [loading, processFile]
   );
 
   const handlePasswordSubmit = async () => {
-    if (!pendingFile || !password) return;
+    if (!pendingFile || !password || loading) return;
     await processFile(pendingFile, password);
   };
 
@@ -155,14 +240,20 @@ const ImportTransactionsPage = () => {
       showError('Please select an account.');
       return;
     }
-    const selectedRows = Object.keys(rowSelection).map((index) => transactions[parseInt(index)]);
+    const selectedIndices = Object.keys(rowSelection)
+      .map((k) => Number(k))
+      .filter((n) => Number.isInteger(n))
+      .sort((a, b) => a - b);
+
+    const selectedRows = selectedIndices.map((idx) => transactions[idx]);
     if (selectedRows.length === 0) {
       showError('Please select at least one transaction to import.');
       return;
     }
+
     setLoading(true);
     try {
-      const XLSX = await import('xlsx');
+      const XLSX: any = await import('xlsx');
       const ws = XLSX.utils.json_to_sheet(selectedRows);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
@@ -170,15 +261,19 @@ const ImportTransactionsPage = () => {
       const blob = new Blob([excelBuffer], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       });
+
       const formData = new FormData();
       formData.append('accountId', accountId);
-      formData.append('document', new File([blob], 'transactions.xlsx'));
+      // Append Blob with filename instead of creating a new File
+      formData.append('document', blob, 'transactions.xlsx');
+
       const result = await importTransactions(formData);
       setSuccessId(result.successId);
+      setStagedCount(selectedRows.length);
       setCurrentStep(3);
       setIsConfirmOpen(false);
     } catch (error: any) {
-      showError(error.message);
+      showError(error?.message || 'Failed to stage import.');
     } finally {
       setLoading(false);
     }
@@ -193,9 +288,10 @@ const ImportTransactionsPage = () => {
       setSuccessId(null);
       setTransactions([]);
       setRowSelection({});
+      setStagedCount(0);
       setCurrentStep(1);
     } catch (error: any) {
-      showError(error.message);
+      showError(error?.message || 'Failed to finalize import.');
     } finally {
       setLoading(false);
     }
@@ -203,8 +299,8 @@ const ImportTransactionsPage = () => {
 
   const handleDownloadSample = async () => {
     try {
-      const XLSX = await import('xlsx');
-      const sampleData = [
+      const XLSX: any = await import('xlsx');
+      const sampleData: ParsedTransaction[] = [
         {
           Date: '2025-01-15',
           Text: 'Monthly Salary',
@@ -240,7 +336,7 @@ const ImportTransactionsPage = () => {
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (error: any) {
-      showError(`Download failed: ${error.message}`);
+      showError(`Download failed: ${error?.message || 'Unknown error'}`);
     }
   };
 
@@ -280,7 +376,7 @@ const ImportTransactionsPage = () => {
           onOpenChange={() => setSuccessId(null)}
           onConfirm={handleFinalImport}
           loading={loading}
-          stagedCount={Object.keys(rowSelection).length}
+          stagedCount={stagedCount}
         />
 
         <PasswordDialog
