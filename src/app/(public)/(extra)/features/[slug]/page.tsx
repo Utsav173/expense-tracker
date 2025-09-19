@@ -29,11 +29,11 @@ export async function generateMetadata({
     openGraph: {
       title: `${feature.title} - Expense Tracker Feature`,
       description: feature.description,
-      url: `https://expense-pro.vercel.app/features/${feature.slug}`,
+      url: `https://expense-pro.khatriutsav.com/features/${feature.slug}`,
       type: 'article',
       images: [
         {
-          url: 'https://expense-pro.vercel.app/og-image.png',
+          url: 'https://expense-pro.khatriutsav.com/og-image.png',
           width: 1200,
           height: 630,
           alt: `${feature.title} Feature`
@@ -44,7 +44,7 @@ export async function generateMetadata({
       card: 'summary_large_image',
       title: `${feature.title} - Expense Tracker Feature`,
       description: feature.description,
-      images: ['https://expense-pro.vercel.app/og-image.png']
+      images: ['https://expense-pro.khatriutsav.com/og-image.png']
     }
   };
 }
@@ -63,7 +63,7 @@ const FeatureDetailPage = async ({ params }: { params: Promise<{ slug: string }>
       {
         '@type': 'WebPage',
         name: `${feature.title} Feature - Expense Tracker`,
-        url: `https://expense-pro.vercel.app/features/${feature.slug}`,
+        url: `https://expense-pro.khatriutsav.com/features/${feature.slug}`,
         description: feature.description,
         breadcrumb: {
           '@type': 'BreadcrumbList',
@@ -72,19 +72,19 @@ const FeatureDetailPage = async ({ params }: { params: Promise<{ slug: string }>
               '@type': 'ListItem',
               position: 1,
               name: 'Home',
-              item: 'https://expense-pro.vercel.app'
+              item: 'https://expense-pro.khatriutsav.com'
             },
             {
               '@type': 'ListItem',
               position: 2,
               name: 'Features',
-              item: 'https://expense-pro.vercel.app/features'
+              item: 'https://expense-pro.khatriutsav.com/features'
             },
             {
               '@type': 'ListItem',
               position: 3,
               name: feature.title,
-              item: `https://expense-pro.vercel.app/features/${feature.slug}`
+              item: `https://expense-pro.khatriutsav.com/features/${feature.slug}`
             }
           ]
         }
@@ -93,7 +93,7 @@ const FeatureDetailPage = async ({ params }: { params: Promise<{ slug: string }>
         '@type': 'TechArticle',
         headline: feature.title,
         description: feature.description,
-        image: 'https://expense-pro.vercel.app/og-image.png',
+        image: 'https://expense-pro.khatriutsav.com/og-image.png',
         datePublished: '2023-01-01', // Placeholder, ideally from feature data
         author: {
           '@type': 'Organization',
@@ -104,7 +104,7 @@ const FeatureDetailPage = async ({ params }: { params: Promise<{ slug: string }>
           name: 'Expense Tracker',
           logo: {
             '@type': 'ImageObject',
-            url: 'https://expense-pro.vercel.app/favicon-96x96.png'
+            url: 'https://expense-pro.khatriutsav.com/favicon-96x96.png'
           }
         },
         articleBody: feature.longDescription

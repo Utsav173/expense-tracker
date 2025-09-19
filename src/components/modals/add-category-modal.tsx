@@ -54,6 +54,12 @@ const AddCategoryModal: React.FC<CreateCategoryModalProps> = ({
     mode: 'onChange'
   });
 
+  React.useEffect(() => {
+    if (isOpen) {
+      form.reset({ name: initialValues?.name || '' });
+    }
+  }, [isOpen, initialValues, form]);
+
   const { mutateAsync, isPending } = useMutation({
     mutationFn: async (data: CategorySchemaType) => {
       try {

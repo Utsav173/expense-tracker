@@ -29,7 +29,7 @@ const jsonLd: WithContext<WebPage> = {
   name: 'Expense Tracker Support',
   description:
     'Contact page for the Expense Tracker application. Get in touch with us for support, feedback, or any other inquiries.',
-  url: 'https://expense-pro.vercel.app/support/contact',
+  url: 'https://expense-pro.khatriutsav.com/support/contact',
   areaServed: {
     '@type': 'Country',
     name: 'India'
@@ -42,19 +42,19 @@ const jsonLd: WithContext<WebPage> = {
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: 'https://expense-pro.vercel.app'
+        item: 'https://expense-pro.khatriutsav.com'
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: 'Support',
-        item: 'https://expense-pro.vercel.app/support'
+        item: 'https://expense-pro.khatriutsav.com/support'
       },
       {
         '@type': 'ListItem',
         position: 3,
         name: 'Contact',
-        item: 'https://expense-pro.vercel.app/support/contact'
+        item: 'https://expense-pro.khatriutsav.com/support/contact'
       }
     ]
   }

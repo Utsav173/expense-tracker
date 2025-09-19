@@ -195,7 +195,7 @@ export const createGoalColumns = ({
   },
   {
     id: 'actions',
-    header: 'Actions',
+    header: () => <div className='text-right'>Actions</div>,
     cell: ({ row }) => <GoalActions goal={row.original} user={user} refetchGoals={refetchGoals} />
   }
 ];

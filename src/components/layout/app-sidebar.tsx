@@ -61,7 +61,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           { title: 'Goals', url: '/goal', icon: 'goal' },
           { title: 'Investments', url: '/investment', icon: 'investment' },
           { title: 'Debts', url: '/debts', icon: 'debt' },
-          { title: 'Statement', url: '/accounts/statement', icon: 'fileDown' }
+          { title: 'Statement', url: '/accounts/statement', icon: 'statement' }
         ]
       },
       {

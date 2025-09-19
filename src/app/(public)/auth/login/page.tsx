@@ -27,12 +27,12 @@ type loginSchemaType = z.infer<typeof loginSchema>;
 const jsonLd: WithContext<WebSite> = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
-  url: 'https://expense-pro.vercel.app/auth/login',
+  url: 'https://expense-pro.khatriutsav.com/auth/login',
   potentialAction: {
     '@type': 'SignInAction',
     target: {
       '@type': 'EntryPoint',
-      urlTemplate: 'https://expense-pro.vercel.app/auth/login'
+      urlTemplate: 'https://expense-pro.khatriutsav.com/auth/login'
     }
   } as unknown as Action
 };

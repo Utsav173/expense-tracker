@@ -154,6 +154,7 @@ export const iconMap = {
   goal: 'octicon:goal-24',
   debt: 'solar:hand-money-linear',
   messageCircleQuestion: 'material-symbols:chat-bubble-question-outline'
+  // statement: "streamline-ultimate:cashless-payment-online-statement-monitor"
 } as const;
 
 export type IconName = keyof typeof iconMap;

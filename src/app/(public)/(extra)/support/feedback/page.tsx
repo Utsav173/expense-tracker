@@ -31,7 +31,7 @@ const jsonLd: WithContext<WebPage> = {
   '@context': 'https://schema.org',
   '@type': 'WebPage',
   name: 'Feedback Page',
-  url: 'https://expense-pro.vercel.app/support/feedback',
+  url: 'https://expense-pro.khatriutsav.com/support/feedback',
   description: 'Page to submit feedback and suggestions for Expense Tracker.'
 };
 

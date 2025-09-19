@@ -277,7 +277,7 @@ export const createDebtColumns = ({
   },
   {
     id: 'actions',
-    header: 'Actions',
+    header: () => <div className='text-right'>Actions</div>,
     cell: ({ row }) => <DebtActions debt={row.original} refetchDebts={refetchDebts} />
   }
 ];

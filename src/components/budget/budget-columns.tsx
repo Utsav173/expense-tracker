@@ -51,7 +51,7 @@ export const budgetColumns: ColumnDef<BudgetAPI.Budget>[] = [
   },
   {
     id: 'actions',
-    header: 'Actions',
+    header: () => <div className='text-right'>Actions</div>,
     cell: ({ row }) => <BudgetActions budget={row.original} />
   }
 ];

@@ -22,7 +22,7 @@ export function DataTableColumnHeader<TData, TValue>({
 
   return (
     <div
-      className={cn('group flex cursor-pointer items-center space-x-2 select-none', className)}
+      className={cn('group flex cursor-pointer items-center space-x-2 select-none mr-4', className)}
       onClick={() => column.toggleSorting()}
       role='button'
       tabIndex={0}

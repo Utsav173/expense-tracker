@@ -78,7 +78,7 @@ const CategoryList = React.memo(
         },
         {
           id: 'actions',
-          header: 'Actions',
+          header: () => <div className='text-right'>Actions</div>,
           cell: ({ row }) => (
             <CategoryActions
               category={row.original}
