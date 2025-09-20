@@ -1,3 +1,5 @@
+// src/components/layout/page-header.tsx
+
 'use client';
 
 import React from 'react';
@@ -58,31 +60,30 @@ const PageHeader: React.FC = () => {
           {breadcrumbs ? (
             <Breadcrumb>
               <BreadcrumbList className='whitespace-nowrap'>
-                <BreadcrumbItem className={`w-auto`}>
+                <BreadcrumbItem>
                   <BreadcrumbLink asChild>
                     <Link href='/dashboard' aria-label='Go to Dashboard'>
                       <Icon name='home' className='hover:text-accent-foreground h-4 w-4' />
                     </Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
-                <BreadcrumbSeparator />
                 {breadcrumbs.map((crumb) => (
-                  <BreadcrumbItem key={crumb.href}>
-                    {crumb.isLast ? (
-                      <BreadcrumbPage className='hover:text-accent-foreground truncate font-semibold'>
-                        {crumb.title}
-                      </BreadcrumbPage>
-                    ) : (
-                      <>
+                  <React.Fragment key={crumb.href}>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem>
+                      {crumb.isLast ? (
+                        <BreadcrumbPage className='hover:text-accent-foreground truncate font-semibold'>
+                          {crumb.title}
+                        </BreadcrumbPage>
+                      ) : (
                         <BreadcrumbLink asChild>
                           <Link href={crumb.href} className='hover:text-accent-foreground truncate'>
                             {crumb.title}
                           </Link>
                         </BreadcrumbLink>
-                        <BreadcrumbSeparator />
-                      </>
-                    )}
-                  </BreadcrumbItem>
+                      )}
+                    </BreadcrumbItem>
+                  </React.Fragment>
                 ))}
               </BreadcrumbList>
             </Breadcrumb>

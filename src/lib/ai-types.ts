@@ -1,15 +1,39 @@
-import { UIMessage } from 'ai';
+// src/types/ai.ts
+
+import { UIMessage } from '@ai-sdk/react';
+import type { MyToolTypes } from '@/lib/ai-tool-types';
 import type { AIAPI } from '@/lib/api/api-types';
 
-// Define the specific shapes of your custom data parts that the backend streams.
-export type MyCustomDataParts = {
+// This is the main fix. The keys of this object ('chart', 'records', etc.)
+// will be used by the SDK to create the part types ('data-chart', 'data-records', etc.).
+export type MyCustomData = {
   chart: {
     type: 'auto' | 'bar' | 'line' | 'pie';
     data: any[];
   };
-  records: any[];
-  metrics: Record<string, any>;
+  records: {
+    records: any[];
+    count: number;
+  };
+  metrics: {
+    metrics: Record<string, any>;
+  };
   imageAnalysisData: AIAPI.ExtractedTransaction[];
+  'financial-health-analysis': {
+    analysis: {
+      score: number;
+      highlights: Array<{ emoji: string; statement: string }>;
+      improvements: Array<{ emoji: string; statement: string }>;
+      recommendations: Array<{ title: string; description: string }>;
+    };
+  };
 };
 
-export type MyUIMessage = UIMessage<never, MyCustomDataParts>;
+// Define metadata for the session and user
+type MyMeta = {
+  sessionId: string;
+  userId: string;
+};
+
+// Export the final, correctly typed UIMessage
+export type MyUIMessage = UIMessage<MyMeta, MyCustomData, MyToolTypes>;

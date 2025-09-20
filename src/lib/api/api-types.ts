@@ -489,14 +489,7 @@ export namespace AIAPI {
     response: string; // This is a JSON string to be parsed on the frontend
     sessionId: string;
   }
-  export interface ParsedAIResponse {
-    message: string;
-    chart?: any;
-    records?: any[];
-    metrics?: Record<string, any>;
-    imageAnalysisData?: any[];
-    followUpPrompts?: string[];
-  }
+
   export interface ExtractedTransaction {
     date: string;
     description: string;
@@ -511,7 +504,6 @@ export namespace AIAPI {
     improvements: { emoji: string; statement: string }[];
     recommendations: { title: string; description: string }[];
   }
-  export type ProcessPromptResponse = AIResponse;
   export type ProcessPdfResponse = { transactions: ExtractedTransaction[] };
   export type GetFinancialHealthResponse = FinancialHealthAnalysis;
 }

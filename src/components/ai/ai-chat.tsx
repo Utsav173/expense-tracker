@@ -1,5 +1,3 @@
-// src/components/ai/ai-chat.tsx
-
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
@@ -16,6 +14,7 @@ import { Icon } from '@/components/ui/icon';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { DefaultChatTransport, FileUIPart } from 'ai';
 import type { MyUIMessage } from '@/lib/ai-types';
+import { Suggestion } from '@/components/ai-elements/suggestion';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = [
@@ -254,9 +253,7 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
     try {
       stop?.();
       showSuccess('Generation stopped.');
-    } catch {
-      // noop
-    }
+    } catch {}
   }, [stop, showSuccess]);
 
   const regenerateLast = useCallback(() => {
@@ -316,6 +313,23 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
       handleStop();
     }
   };
+
+  const lastMessage = messages[messages.length - 1];
+  let followUpSuggestions: string[] = [];
+
+  if (lastMessage?.role === 'assistant' && status === 'ready') {
+    const lastText = lastMessage.parts
+      .filter((p) => p.type === 'text')
+      .map((p) => p.text)
+      .join('');
+    if (lastText.includes('Next actions:')) {
+      followUpSuggestions = lastText
+        .split('Next actions:')[1]
+        .split('\n')
+        .map((s) => s.trim().replace(/^- /, ''))
+        .filter(Boolean);
+    }
+  }
 
   return (
     <div
@@ -541,6 +555,14 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
       )}
 
       <div className='mx-auto w-full max-w-4xl p-4'>
+        {followUpSuggestions.length > 0 && (
+          <div className='mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3'>
+            {followUpSuggestions.map((s, i) => (
+              <Suggestion key={i} suggestion={s} onClick={() => handleSendMessage(s)} />
+            ))}
+          </div>
+        )}
+
         {attachments.length > 0 && (
           <div className='mb-2 grid grid-cols-2 gap-2 sm:grid-cols-4'>
             {attachments.map((a) => (
