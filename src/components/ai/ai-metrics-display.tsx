@@ -20,14 +20,14 @@ const AiMetricsDisplay: React.FC<AiMetricsDisplayProps> = ({ metrics }) => {
   }
 
   return (
-    <Card className='bg-muted/50 mt-2'>
+    <Card className='bg-muted/50'>
       <CardHeader className='p-3 pb-2'>
         <CardTitle className='text-sm font-semibold'>Key Metrics</CardTitle>
       </CardHeader>
       <CardContent className='p-3 pt-0'>
         <div className='space-y-2'>
           {Object.entries(metrics).map(([key, value]) => (
-            <div key={key} className='flex justify-between border-t pt-2 text-sm'>
+            <div key={key} className='flex justify-between gap-2 border-t pt-2 text-sm'>
               <span className='text-muted-foreground'>{startCase(key)}</span>
               <span className='font-semibold'>
                 {typeof value === 'number' ? formatCurrency(value, currency) : String(value)}

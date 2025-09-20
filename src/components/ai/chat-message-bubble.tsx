@@ -5,7 +5,7 @@
 import React, { useState, memo } from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/lib/hooks/useToast';
 import { Button } from '../ui/button';
 import { Icon } from '@/components/ui/icon';
@@ -22,6 +22,7 @@ import { Source, Sources, SourcesContent, SourcesTrigger } from '@/components/ai
 interface ChatMessageBubbleProps {
   message: MyUIMessage;
   isStreaming?: boolean;
+  user: any;
 }
 
 const getFileIcon = (mediaType: string) => {
@@ -33,7 +34,8 @@ const getFileIcon = (mediaType: string) => {
 
 const ChatMessageBubbleImpl: React.FC<ChatMessageBubbleProps> = ({
   message,
-  isStreaming = false
+  isStreaming = false,
+  user
 }) => {
   const isUser = message.role === 'user';
   const { showSuccess, showError } = useToast();
@@ -82,6 +84,8 @@ const ChatMessageBubbleImpl: React.FC<ChatMessageBubbleProps> = ({
           isUser ? 'border-primary/20' : 'border-slate-200 dark:border-slate-700'
         )}
       >
+        <AvatarImage src={user?.image!} alt={user.name} />
+
         <AvatarFallback
           className={cn(
             isUser ? 'bg-primary text-primary-foreground' : 'bg-slate-100 dark:bg-slate-800'

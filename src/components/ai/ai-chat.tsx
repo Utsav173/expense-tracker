@@ -15,6 +15,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { DefaultChatTransport, FileUIPart } from 'ai';
 import type { MyUIMessage } from '@/lib/ai-types';
 import { Suggestion } from '@/components/ai-elements/suggestion';
+import { authClient } from '@/lib/auth-client';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = [
@@ -64,6 +65,8 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
   const prefersReducedMotion = useReducedMotion();
   const [sessionId, setSessionId] = useState(() => crypto.randomUUID());
   const { showError, showSuccess } = useToast();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
 
   const api = useMemo(() => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
@@ -447,6 +450,7 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
                   <ChatMessageBubble
                     message={message}
                     isStreaming={isBusyStreaming && index === messages.length - 1}
+                    user={user}
                   />
                 </motion.div>
               ))}
@@ -495,6 +499,7 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
                         }
                       ]
                     }}
+                    user={user}
                   />
                   <div className='mt-2 flex gap-2 pl-11'>
                     <Button

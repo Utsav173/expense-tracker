@@ -41,12 +41,12 @@ export const AiToolDisplay: React.FC<AiToolDisplayProps> = ({ tool }) => {
   };
 
   return (
-    <Tool defaultOpen={tool.state !== 'input-available'}>
+    <Tool defaultOpen={tool.state !== 'input-available'} className='rounded-md'>
       <ToolHeader type={tool.type} state={tool.state} />
-      {/* <ToolContent>
+      <ToolContent>
         <ToolInput input={tool.input} />
         <ToolOutput output={renderOutput(tool.output)} errorText={tool.errorText} />
-      </ToolContent> */}
+      </ToolContent>
     </Tool>
   );
 };
