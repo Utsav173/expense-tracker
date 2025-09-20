@@ -153,7 +153,14 @@ export const iconMap = {
   importSidebar: 'ix:import',
   goal: 'octicon:goal-24',
   debt: 'solar:hand-money-linear',
-  messageCircleQuestion: 'material-symbols:chat-bubble-question-outline'
+  messageCircleQuestion: 'material-symbols:chat-bubble-question-outline',
+  refresh: 'material-symbols:refresh',
+  refreshCw: 'material-symbols:refresh-cw',
+  mic: 'material-symbols:microphone',
+  square: 'material-symbols:square',
+  image: 'material-symbols:image-outline',
+  file: 'teenyicons:pdf-outline',
+  fileSpreadsheet: 'healthicons:spreadsheets-outline'
   // statement: "streamline-ultimate:cashless-payment-online-statement-monitor"
 } as const;
 

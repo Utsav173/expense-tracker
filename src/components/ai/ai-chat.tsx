@@ -1,16 +1,45 @@
+// src/components/ai/ai-chat.tsx
+
 'use client';
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
-import { useAiChat } from '@/components/ai/hooks/useAiChat';
+import { useChat } from '@ai-sdk/react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatMessageBubble } from './chat-message-bubble';
 import { cn } from '@/lib/utils';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { useToast } from '@/lib/hooks/useToast';
 import { Icon } from '@/components/ui/icon';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { DefaultChatTransport, FileUIPart } from 'ai';
+import type { MyUIMessage } from '@/lib/ai-types';
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+];
+
+type Attachment = {
+  id: string;
+  file: File;
+  previewUrl?: string | null;
+};
+
+const convertFileToDataURL = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
 
 const PromptSuggestion = ({ text, onClick }: { text: string; onClick: () => void }) => (
   <motion.button
@@ -33,107 +62,240 @@ const PromptSuggestion = ({ text, onClick }: { text: string; onClick: () => void
 );
 
 export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
-  const { messages, sendMessage, isLoading, isStreaming, error, clearChat } = useAiChat();
+  const prefersReducedMotion = useReducedMotion();
+  const [sessionId, setSessionId] = useState(() => crypto.randomUUID());
+  const { showError, showSuccess } = useToast();
+
+  const api = useMemo(() => {
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+    return base ? `${base}/ai/process` : '/api/ai/process';
+  }, []);
+  const transport = useMemo(() => new DefaultChatTransport({ api, credentials: 'include' }), [api]);
+
+  const { messages, setMessages, sendMessage, status, error, stop } = useChat<MyUIMessage>({
+    id: sessionId,
+    transport,
+    onFinish: () => {
+      setTimeout(() => textAreaRef.current?.focus(), 0);
+    },
+    onError: (err) => {
+      showError(err?.message || 'Something went wrong.');
+    }
+  });
+
   const [input, setInput] = useState('');
-  const [attachedFile, setAttachedFile] = useState<File | null>(null);
-  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isOffline, setIsOffline] = useState(
+    typeof navigator !== 'undefined' ? !navigator.onLine : false
+  );
+  const [atBottom, setAtBottom] = useState(true);
+  const [unread, setUnread] = useState(0);
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { showError } = useToast();
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  };
-
-  useEffect(scrollToBottom, [messages, isStreaming, isLoading]);
+  const isBusySubmitted = status === 'submitted';
+  const isBusyStreaming = status === 'streaming';
+  const isBusy = isBusySubmitted || isBusyStreaming;
+  const sendDisabled =
+    isOffline || isBusySubmitted || (!isBusyStreaming && !input.trim() && attachments.length === 0);
+  const canClear = !isBusy;
 
   useEffect(() => {
-    if (textAreaRef.current) {
-      textAreaRef.current.style.height = 'auto';
-      const scrollHeight = textAreaRef.current.scrollHeight;
-      textAreaRef.current.style.height = `${scrollHeight}px`;
-    }
+    const handle = () => setIsOffline(!navigator.onLine);
+    window.addEventListener('online', handle);
+    window.addEventListener('offline', handle);
+    return () => {
+      window.removeEventListener('online', handle);
+      window.removeEventListener('offline', handle);
+    };
+  }, []);
+
+  useEffect(() => {
+    const el = textAreaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
   }, [input]);
 
-  const resetFileInput = useCallback(() => {
-    setAttachedFile(null);
-    if (filePreview) {
-      URL.revokeObjectURL(filePreview);
-      setFilePreview(null);
+  useEffect(() => {
+    const root =
+      (scrollAreaRef.current?.querySelector(
+        '[data-radix-scroll-area-viewport]'
+      ) as HTMLElement | null) || undefined;
+    const target = messagesEndRef.current;
+    if (!root || !target) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        const visible = entry.isIntersecting;
+        setAtBottom(visible);
+        if (visible) setUnread(0);
+      },
+      { root, threshold: 1.0 }
+    );
+    obs.observe(target);
+    return () => obs.disconnect();
+  }, [scrollAreaRef, messagesEndRef]);
+
+  useEffect(() => {
+    if (!atBottom) {
+      const last = messages[messages.length - 1];
+      if (last?.role === 'assistant') setUnread((u) => u + 1);
+      return;
     }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    messagesEndRef.current?.scrollIntoView({
+      behavior: isBusyStreaming ? 'auto' : 'smooth',
+      block: 'end'
+    });
+  }, [messages, status, atBottom, isBusyStreaming]);
+
+  useEffect(() => {
+    return () => {
+      attachments.forEach((a) => {
+        if (a.previewUrl) URL.revokeObjectURL(a.previewUrl);
+      });
+    };
+  }, [attachments]);
+
+  const resetAttachments = useCallback(() => {
+    setAttachments((prev) => {
+      prev.forEach((a) => a.previewUrl && URL.revokeObjectURL(a.previewUrl));
+      return [];
+    });
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }, []);
+
+  const removeAttachment = useCallback((id: string) => {
+    setAttachments((prev) => {
+      const toRemove = prev.find((a) => a.id === id);
+      if (toRemove?.previewUrl) URL.revokeObjectURL(toRemove.previewUrl);
+      return prev.filter((a) => a.id !== id);
+    });
+  }, []);
+
+  const attachFiles = useCallback(
+    (files: FileList | File[] | null) => {
+      if (!files) return;
+      const arr = Array.from(files);
+      const next: Attachment[] = [];
+      for (const f of arr) {
+        if (f.size > MAX_FILE_SIZE) {
+          showError(`"${f.name}" is too large. Max 5MB.`);
+          continue;
+        }
+        if (!ALLOWED_TYPES.includes(f.type)) {
+          showError(`Unsupported type: ${f.type || 'unknown'}`);
+          continue;
+        }
+        const preview = f.type.startsWith('image/') ? URL.createObjectURL(f) : null;
+        next.push({ id: crypto.randomUUID(), file: f, previewUrl: preview });
+      }
+      if (next.length) setAttachments((prev) => [...prev, ...next]);
+    },
+    [showError]
+  );
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    attachFiles(e.target.files);
+  };
+
+  const handlePaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const file = event.clipboardData?.files?.[0];
+    if (file) {
+      event.preventDefault();
+      attachFiles([file]);
     }
-  }, [filePreview]);
+  };
+
+  const onDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    attachFiles(event.dataTransfer?.files || null);
+  };
 
   const handleSendMessage = useCallback(
     async (promptText?: string) => {
-      const messageToSend = promptText || input;
-      if ((!messageToSend.trim() && !attachedFile) || isLoading || isStreaming) return;
+      const messageToSend = (promptText ?? input).trim();
+      const isEmpty = !messageToSend && attachments.length === 0;
+      const notReady = status !== 'ready' || isOffline;
+      if (isEmpty || notReady) return;
 
       setInput('');
       if (textAreaRef.current) textAreaRef.current.style.height = 'auto';
 
-      if (attachedFile) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64String = (reader.result as string).split(',')[1];
-          const fileType = attachedFile.type;
-          const payload: Parameters<typeof sendMessage>[0] = {
-            prompt: messageToSend || `Analyze this file and extract financial data.`,
-            documentName: attachedFile.name
-          };
+      try {
+        const fileParts: FileUIPart[] | undefined =
+          attachments.length > 0
+            ? await Promise.all(
+                attachments.map(async (a) => ({
+                  type: 'file' as const,
+                  mediaType: a.file.type,
+                  url: await convertFileToDataURL(a.file),
+                  filename: a.file.name
+                }))
+              )
+            : undefined;
 
-          if (fileType.startsWith('image/')) {
-            payload.base64Image = base64String;
-          } else if (fileType === 'application/pdf') {
-            payload.documentContent = base64String;
-            payload.documentType = 'pdf';
-          } else if (
-            fileType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-          ) {
-            payload.documentContent = base64String;
-            payload.documentType = 'xlsx';
-          }
-          sendMessage(payload);
-          resetFileInput();
-        };
-        reader.onerror = () => {
-          showError('Failed to read the file.');
-          resetFileInput();
-        };
-        reader.readAsDataURL(attachedFile);
-      } else {
-        await sendMessage({ prompt: messageToSend });
+        await sendMessage({
+          text: messageToSend || '(no message)',
+          files: fileParts
+        });
+      } finally {
+        resetAttachments();
       }
     },
-    [input, attachedFile, isLoading, isStreaming, sendMessage, resetFileInput, showError]
+    [attachments, input, status, isOffline, sendMessage, resetAttachments]
   );
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 5 * 1024 * 1024) {
-      showError('File is too large. Please select a file smaller than 5MB.');
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      return;
+  const handleStop = useCallback(() => {
+    try {
+      stop?.();
+      showSuccess('Generation stopped.');
+    } catch {
+      // noop
     }
+  }, [stop, showSuccess]);
 
-    setAttachedFile(file);
-    if (file.type.startsWith('image/')) {
-      const previewUrl = URL.createObjectURL(file);
-      setFilePreview(previewUrl);
-    }
-  };
+  const regenerateLast = useCallback(() => {
+    if (isBusy) return;
+    const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+    if (!lastUser) return;
+    const text = lastUser.parts
+      .filter((p) => p.type === 'text')
+      .map((p) => p.text)
+      .join('');
+    const files = lastUser.parts
+      .filter((p) => p.type === 'file')
+      .map((p: any) => ({
+        type: 'file' as const,
+        mediaType: p.mediaType,
+        url: p.url,
+        filename: p.filename
+      }));
+    sendMessage({ text, files: files.length ? files : undefined });
+  }, [isBusy, messages, sendMessage]);
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      handleSendMessage();
+  const clearChat = () => {
+    const hasStuff = messages.length > 0 || input.trim() || attachments.length > 0;
+    const isReallyBusy = status === 'submitted' || status === 'streaming';
+    if (isReallyBusy || hasStuff) {
+      const sure = window.confirm(
+        isReallyBusy
+          ? 'A response is still generating. Stop and clear chat?'
+          : 'Clear the chat and start a new session?'
+      );
+      if (!sure) return;
+      if (isReallyBusy) stop?.();
     }
+    resetAttachments();
+    setInput('');
+    setMessages([]);
+    setSessionId(crypto.randomUUID());
+    showSuccess('Chat session cleared.');
+    setTimeout(() => textAreaRef.current?.focus(), 0);
   };
 
   const suggestions = [
@@ -142,13 +304,18 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
     "Show me all transactions in my 'Travel' budget"
   ];
 
-  const isInputDisabled = isLoading || isStreaming;
-  const lastMessage = messages[messages.length - 1];
-  const showFollowUps =
-    lastMessage?.role === 'assistant' &&
-    !isStreaming &&
-    lastMessage.followUpPrompts &&
-    lastMessage.followUpPrompts.length > 0;
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      if (status === 'streaming') {
+        handleStop();
+      } else {
+        handleSendMessage();
+      }
+    } else if (event.key === 'Escape' && status === 'streaming') {
+      handleStop();
+    }
+  };
 
   return (
     <div
@@ -158,7 +325,29 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
       )}
     >
       {messages.length > 0 && (
-        <div className='absolute top-1 right-3 z-10'>
+        <div className='absolute top-1 right-3 z-10 flex items-center gap-1'>
+          {isBusy && (
+            <span className='text-muted-foreground text-xs select-none'>Generating...</span>
+          )}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  onClick={regenerateLast}
+                  disabled={isBusy || messages.length === 0}
+                  className='h-8 w-8'
+                >
+                  <Icon name='refreshCw' className='h-4 w-4' />
+                  <span className='sr-only'>Regenerate</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Regenerate last answer</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -166,7 +355,7 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
                   variant='ghost'
                   size='icon'
                   onClick={clearChat}
-                  disabled={isInputDisabled}
+                  disabled={!canClear}
                   className='h-8 w-8'
                 >
                   <Icon name='history' className='h-4 w-4' />
@@ -180,16 +369,27 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
           </TooltipProvider>
         </div>
       )}
-      <div className='min-h-0 flex-1 [mask-image:linear-gradient(to_bottom,black_90%,transparent_100%)]'>
-        <ScrollArea className='scrollbar h-full w-full'>
+
+      <div
+        className='min-h-0 flex-1'
+        onDragOver={(e) => {
+          e.preventDefault();
+          if (!isBusy && !isOffline) setIsDragging(true);
+        }}
+        onDragEnter={() => !isBusy && !isOffline && setIsDragging(true)}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={onDrop}
+        aria-live='polite'
+      >
+        <ScrollArea ref={scrollAreaRef} className='scrollbar h-full w-full'>
           <div className='mx-auto w-full max-w-5xl space-y-8 px-4 py-6'>
             <AnimatePresence initial={false}>
-              {messages.length === 0 && !isInputDisabled && !error && (
+              {messages.length === 0 && !isBusy && !error && !isOffline && (
                 <motion.div
                   key='welcome'
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, ease: 'easeOut' }}
+                  initial={prefersReducedMotion ? undefined : { opacity: 0, y: 20 }}
+                  animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+                  transition={{ duration: prefersReducedMotion ? 0 : 0.5, ease: 'easeOut' }}
                   className='text-muted-foreground flex h-full flex-col items-center justify-center p-8 text-center'
                 >
                   <div className='bg-primary/10 mb-4 rounded-full p-3'>
@@ -206,9 +406,13 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
                     {suggestions.map((s, i) => (
                       <motion.div
                         key={s}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: 0.2 + i * 0.1, ease: 'easeOut' }}
+                        initial={prefersReducedMotion ? undefined : { opacity: 0, y: 10 }}
+                        animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+                        transition={{
+                          duration: prefersReducedMotion ? 0 : 0.3,
+                          delay: prefersReducedMotion ? 0 : 0.2 + i * 0.1,
+                          ease: 'easeOut'
+                        }}
                       >
                         <PromptSuggestion text={s} onClick={() => handleSendMessage(s)} />
                       </motion.div>
@@ -220,26 +424,28 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
               {messages.map((message, index) => (
                 <motion.div
                   key={message.id}
-                  layout
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  layout={!prefersReducedMotion}
+                  initial={prefersReducedMotion ? undefined : { opacity: 0, y: 10 }}
+                  animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
                   exit={{ opacity: 0, transition: { duration: 0.15 } }}
                   transition={{ duration: 0.3, delay: 0.05 }}
                 >
                   <ChatMessageBubble
                     message={message}
-                    isStreaming={isStreaming && index === messages.length - 1}
+                    isStreaming={isBusyStreaming && index === messages.length - 1}
                   />
                 </motion.div>
               ))}
 
-              {isLoading && !isStreaming && (
+              {status === 'submitted' && (
                 <motion.div
                   key='thinking-indicator'
-                  layout
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  layout={!prefersReducedMotion}
+                  initial={prefersReducedMotion ? undefined : { opacity: 0, y: 10 }}
+                  animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
+                  role='status'
+                  aria-live='polite'
                 >
                   <div className='flex items-end justify-start space-x-3'>
                     <Avatar className='h-8 w-8 shrink-0 border'>
@@ -256,48 +462,46 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
                 </motion.div>
               )}
 
-              {error && !isLoading && (
+              {error && (
                 <motion.div
                   key='error-message'
-                  layout
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  layout={!prefersReducedMotion}
+                  initial={prefersReducedMotion ? undefined : { opacity: 0, y: 10 }}
+                  animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
                 >
                   <ChatMessageBubble
                     message={{
                       id: 'error',
                       role: 'assistant',
-                      content: `**Assistant Error:**\n\n${error.message}\n\n*Please try rephrasing your request or check your API key settings.*`,
-                      message: `**Assistant Error:**\n\n${error.message}\n\n*Please try rephrasing your request or check your API key settings.*`
+                      parts: [
+                        {
+                          type: 'text',
+                          text: `Assistant Error:\n\n${error.message}`
+                        }
+                      ]
                     }}
                   />
-                </motion.div>
-              )}
-
-              {showFollowUps && (
-                <motion.div
-                  key='follow-ups'
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                  className='flex flex-col items-end'
-                >
-                  <div className='w-full max-w-[85%] space-y-2'>
-                    {lastMessage.followUpPrompts?.map((prompt: string, index: number) => (
-                      <motion.div
-                        key={`follow-up-${index}`}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{
-                          duration: 0.3,
-                          delay: 0.1 + index * 0.1,
-                          ease: 'easeOut'
-                        }}
-                      >
-                        <PromptSuggestion text={prompt} onClick={() => handleSendMessage(prompt)} />
-                      </motion.div>
-                    ))}
+                  <div className='mt-2 flex gap-2 pl-11'>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(
+                            `${error.message}${error.stack ? `\n\n${error.stack}` : ''}`
+                          );
+                          showSuccess('Error copied to clipboard');
+                        } catch {
+                          showError('Failed to copy');
+                        }
+                      }}
+                    >
+                      Copy error
+                    </Button>
+                    <Button variant='secondary' size='sm' onClick={regenerateLast}>
+                      Retry
+                    </Button>
                   </div>
                 </motion.div>
               )}
@@ -306,39 +510,70 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
             </AnimatePresence>
           </div>
         </ScrollArea>
-      </div>
 
-      <div className='mx-auto w-full max-w-4xl p-4'>
-        {attachedFile && (
-          <div className='bg-muted/50 relative mb-2 rounded-lg border p-2 pr-8'>
-            <Button
-              variant='ghost'
-              size='icon'
-              className='absolute top-1 right-1 h-6 w-6 rounded-full'
-              onClick={resetFileInput}
-            >
-              <Icon name='x' className='h-4 w-4' />
-            </Button>
-            {filePreview ? (
-              <Image
-                src={filePreview}
-                alt='File preview'
-                width={80}
-                height={80}
-                className='h-16 w-16 rounded-md object-cover'
-              />
-            ) : (
-              <div className='flex items-center gap-3'>
-                <Icon name='fileText' className='text-muted-foreground h-8 w-8 shrink-0' />
-                <p className='truncate text-sm font-medium'>{attachedFile.name}</p>
-              </div>
-            )}
+        {isDragging && !isOffline && !isBusy && (
+          <div className='border-primary/40 bg-background/70 pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-2xl border-2 border-dashed backdrop-blur'>
+            <div className='bg-primary/10 text-primary flex items-center gap-2 rounded-full px-4 py-2 text-sm'>
+              <Icon name='paperclip' className='h-4 w-4' />
+              Drop files to attach
+            </div>
           </div>
         )}
+      </div>
+
+      {!atBottom && (
+        <Button
+          onClick={() =>
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+          }
+          className='absolute right-4 bottom-28 z-20 rounded-full px-3 py-1 text-xs shadow-lg'
+          variant='secondary'
+        >
+          <Icon name='chevronDown' className='mr-1 h-4 w-4' />
+          {unread > 0 ? `${unread} new` : 'Scroll to latest'}
+        </Button>
+      )}
+
+      {isOffline && (
+        <div className='mx-4 mb-1 rounded-md border border-amber-200 bg-amber-50 px-3 py-1 text-center text-xs text-amber-800'>
+          You’re offline. Messages can’t be sent until connection is restored.
+        </div>
+      )}
+
+      <div className='mx-auto w-full max-w-4xl p-4'>
+        {attachments.length > 0 && (
+          <div className='mb-2 grid grid-cols-2 gap-2 sm:grid-cols-4'>
+            {attachments.map((a) => (
+              <div key={a.id} className='relative rounded-lg border p-2'>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  className='absolute top-1 right-1 h-6 w-6 rounded-full'
+                  onClick={() => removeAttachment(a.id)}
+                  aria-label='Remove attachment'
+                >
+                  <Icon name='x' className='h-4 w-4' />
+                </Button>
+                {a.previewUrl ? (
+                  <div className='relative aspect-video w-full overflow-hidden rounded-md'>
+                    <Image src={a.previewUrl} alt={a.file.name} fill className='object-cover' />
+                  </div>
+                ) : (
+                  <div className='flex items-center gap-3'>
+                    <Icon name='fileText' className='text-muted-foreground h-8 w-8 shrink-0' />
+                    <p className='truncate text-sm font-medium'>{a.file.name}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
         <div
           className={cn(
             'bg-background relative flex w-full items-end rounded-xl border p-2 shadow-sm transition-colors',
-            attachedFile && 'border-primary'
+            attachments.length > 0 && 'border-primary',
+            isDragging && 'ring-primary/40 ring-2'
           )}
         >
           <Button
@@ -346,9 +581,10 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
             variant='ghost'
             size='icon'
             className='h-8 w-8 shrink-0 rounded-full'
-            aria-label='Upload file'
+            aria-label='Upload files'
             onClick={() => fileInputRef.current?.click()}
-            disabled={isInputDisabled}
+            disabled={isBusy || isOffline}
+            title={isOffline ? 'Offline' : undefined}
           >
             <Icon name='paperclip' className='h-4 w-4' />
           </Button>
@@ -356,39 +592,57 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
             type='file'
             ref={fileInputRef}
             onChange={handleFileChange}
-            accept='image/jpeg,image/png,image/webp,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            multiple
+            accept={ALLOWED_TYPES.join(',')}
             className='hidden'
           />
           <textarea
             ref={textAreaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onPaste={handlePaste}
             placeholder={
-              attachedFile
+              attachments.length > 0
                 ? 'Add a comment... (optional)'
-                : 'Ask about finances or upload a file...'
+                : isOffline
+                  ? 'You are offline...'
+                  : 'Ask about finances or upload files...'
             }
             className='placeholder:text-muted-foreground no-scrollbar flex-1 resize-none overflow-y-auto bg-transparent px-2 py-1.5 text-sm focus:outline-none'
             rows={1}
             onKeyDown={handleKeyDown}
-            disabled={isInputDisabled}
+            disabled={isBusySubmitted || isOffline}
             aria-label='Chat input'
+            aria-disabled={isBusySubmitted || isOffline}
             style={{ maxHeight: '150px' }}
           />
           <Button
             type='button'
             size='icon'
-            disabled={isInputDisabled || (!input.trim() && !attachedFile)}
+            disabled={sendDisabled}
             className='h-8 w-8 shrink-0 rounded-full'
-            aria-label='Send message'
-            onClick={() => handleSendMessage()}
+            aria-label={
+              isBusyStreaming
+                ? 'Stop generating'
+                : isBusySubmitted
+                  ? 'Submitting...'
+                  : 'Send message'
+            }
+            onClick={isBusyStreaming ? handleStop : () => handleSendMessage()}
+            title={isOffline ? 'Offline' : undefined}
           >
-            {isLoading || isStreaming ? (
+            {isBusyStreaming ? (
+              <Icon name='x' className='h-4 w-4' />
+            ) : isBusySubmitted ? (
               <Icon name='loader2' className='h-4 w-4 animate-spin' />
             ) : (
               <Icon name='send' className='h-4 w-4' />
             )}
           </Button>
+        </div>
+
+        <div className='text-muted-foreground mt-1 text-[11px]'>
+          Press Enter to send • Shift+Enter for newline
         </div>
       </div>
     </div>
