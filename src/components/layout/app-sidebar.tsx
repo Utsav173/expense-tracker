@@ -33,7 +33,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { session, isLoading: userIsLoading } = useAuth();
   const user = session?.user;
 
-  // RESTRUCTURED: Navigation data is now grouped logically
   const navGroups: NavGroup[] = React.useMemo(() => {
     const hasApiKey = !!user?.hasAiApiKey;
 
@@ -73,7 +72,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             icon: hasApiKey ? 'brainCircuit' : 'lock',
             disabled: !hasApiKey,
             tooltip: !hasApiKey
-              ? 'Add your AI API Key in Profile to enable.'
+              ? 'Configure your AI Provider in Profile to enable.'
               : 'AI Financial Assistant'
           }
         ]

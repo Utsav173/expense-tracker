@@ -111,11 +111,9 @@ const PrivacyPolicyPage = () => {
               essential for the functionality of the application.
             </p>
             <p>
-              <strong>c. AI API Keys:</strong> If you choose to use the AI Assistant feature, you
-              may provide your own API key (e.g., for Google AI). We store this key securely
-              encrypted using AES-GCM encryption and only decrypt it on the server when needed to
-              process your AI requests. We do not have access to the raw key after it&apos;s
-              encrypted.
+              <strong>c. AI Provider Information:</strong> If you choose to use the AI Assistant
+              feature, you provide your own API key and select your preferred AI provider and model.
+              We store your API key securely encrypted using AES-GCM encryption.
             </p>
             <p>
               <strong>d. Usage Data:</strong> We may collect information on how the Service is
@@ -143,22 +141,38 @@ const PrivacyPolicyPage = () => {
                 To process your financial data as per the application&apos;s functionality (e.g.,
                 calculating balances, generating reports).
               </li>
+            </ul>
+
+            <h2>3. AI Assistant and Third-Party Providers</h2>
+            <p>Our AI Assistant operates on a "Bring Your Own Key" (BYOK) model. This means:</p>
+            <ul>
               <li>
-                If you provide an AI API Key, to use that key to interact with the respective AI
-                provider on your behalf for the AI Assistant feature.
+                You provide your own API key from a third-party AI provider (e.g., Google, OpenAI).
+              </li>
+              <li>
+                When you use the AI Assistant, your prompts and relevant financial context from your
+                account are sent to the AI provider you selected, using your API key.
+              </li>
+              <li>
+                Expense Pro acts as a conduit. The processing of your data by the third-party AI
+                provider is governed by their respective privacy policies. We are not responsible
+                for the data handling practices of these external services.
+              </li>
+              <li>
+                We strongly recommend you review the privacy policy of your chosen AI provider.
               </li>
             </ul>
 
-            <h2>3. Data Security</h2>
+            <h2>4. Data Security</h2>
             <p>
               The security of your data is important to us. We use industry-standard practices to
               protect your information, including password hashing (bcrypt) for authentication
-              credentials and AES-GCM encryption for sensitive data like AI API keys. JWTs are used
-              for session management. However, remember that no method of transmission over the
+              credentials and AES-GCM encryption for sensitive data like your AI API key. JWTs are
+              used for session management. However, remember that no method of transmission over the
               Internet or method of electronic storage is 100% secure.
             </p>
 
-            <h2>4. Data Sharing and Disclosure</h2>
+            <h2>5. Data Sharing and Disclosure</h2>
             <p>
               Expense Pro will not rent or sell potentially personally-identifying and
               personally-identifying information to anyone. We may disclose your Personal
@@ -180,36 +194,30 @@ const PrivacyPolicyPage = () => {
                 <strong>For Legal Requirements:</strong> If required to do so by law or in response
                 to valid requests by public authorities.
               </li>
-              <li>
-                <strong>AI Providers:</strong> If you use the AI Assistant, your prompts and
-                relevant (anonymized where possible) context data will be sent to the AI provider
-                (e.g., Google AI) using your provided API key. Their use of this data is governed by
-                their respective privacy policies.
-              </li>
             </ul>
 
-            <h2>5. User Rights</h2>
+            <h2>6. User Rights</h2>
             <p>
               You have the right to access, update, or delete your personal information. You can
               manage your account information through your profile settings. For deletion of your
               entire account and associated data, please contact us.
             </p>
 
-            <h2>6. Cookies</h2>
+            <h2>7. Cookies</h2>
             <p>
               We use cookies for session management and to ensure the proper functioning of our
               application. Our primary use of cookies is for authentication (e.g., storing your JWT
               in an HttpOnly cookie).
             </p>
 
-            <h2>7. Changes to This Privacy Policy</h2>
+            <h2>8. Changes to This Privacy Policy</h2>
             <p>
               We may update our Privacy Policy from time to time. We will notify you of any changes
               by posting the new Privacy Policy on this page. You are advised to review this Privacy
               Policy periodically for any changes.
             </p>
 
-            <h2>8. Contact Us</h2>
+            <h2>9. Contact Us</h2>
             <p>
               If you have any questions about this Privacy Policy, please contact us through our{' '}
               <Link

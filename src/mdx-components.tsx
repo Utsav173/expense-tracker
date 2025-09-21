@@ -78,7 +78,7 @@ const Step = ({
       </span>
       {title}
     </div>
-    <div className='text-muted-foreground mt-2 mb-2 ml-3 border-l-2 pl-6'>{children}</div>
+    <div className='text-muted-foreground mt-2 mb-2 ml-2.5 border-l-2 pl-6'>{children}</div>
   </section>
 );
 

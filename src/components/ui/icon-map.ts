@@ -160,7 +160,11 @@ export const iconMap = {
   square: 'material-symbols:square',
   image: 'material-symbols:image-outline',
   file: 'teenyicons:pdf-outline',
-  fileSpreadsheet: 'healthicons:spreadsheets-outline'
+  fileSpreadsheet: 'healthicons:spreadsheets-outline',
+  openai: 'streamline-logos:openai-logo',
+  anthropic: 'logos:claude-icon',
+  grok: 'mingcute:grok-fill',
+  deepseek: 'hugeicons:deepseek'
   // statement: "streamline-ultimate:cashless-payment-online-statement-monitor"
 } as const;
 

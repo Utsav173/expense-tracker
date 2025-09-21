@@ -42,7 +42,8 @@ const AiChatPage = () => {
           <Icon name='keyRound' className='mx-auto h-5 w-5' />
           <AlertTitle className='mt-2 text-lg font-semibold'>AI Assistant Disabled</AlertTitle>
           <AlertDescription className='mt-2'>
-            To use the AI Assistant, please add your Google AI API key in your profile settings.
+            To use the AI Assistant, please select a provider and add your API key in your profile
+            settings.
             <br />
             <Button asChild variant='link' className='mt-3'>
               <Link href='/profile'>Go to Profile Settings</Link>

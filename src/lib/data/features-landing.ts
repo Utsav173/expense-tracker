@@ -3,12 +3,12 @@ export const featuresData = [
     id: 'ai-assistant',
     headline: 'Talk to Your Money',
     description:
-      'Stop wrestling with forms. Just tell our AI Assistant what you need in plain English. Add transactions, get spending summaries, or ask complex questions.',
+      'Stop wrestling with forms. Connect your preferred AI provider and use your own key to command your finances with plain English. Add transactions, get summaries, or ask complex questions with unparalleled privacy and control.',
     bullets: [
+      'Bring Your Own Key (BYOK): Connect OpenAI, Google, Anthropic & more.',
       'Add expenses and income with natural language.',
       "Ask for summaries: 'How much did I spend on food last month?'",
-      'Get smart, context-aware suggestions.',
-      'Securely uses your own AI provider API key.'
+      'Your prompts, your key. We never see your API key.'
     ]
   },
   {

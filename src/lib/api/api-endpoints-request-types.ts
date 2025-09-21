@@ -371,11 +371,14 @@ export const apiEndpoints = {
         })
         .partial()
     },
-    updateAiKey: {
+    updateAiSettings: {
       method: 'PUT',
-      path: '/settings/ai-key',
+      path: '/settings/ai',
       body: z.object({
-        apiKey: z.string().nullable()
+        providerId: z.enum(['google', 'openai', 'anthropic', 'groq', 'deepseek']).nullable(),
+        apiKey: z.string().nullable(),
+        modelId: z.string().nullable(),
+        providerOptions: z.record(z.string(), z.any()).optional()
       })
     }
   },
@@ -715,6 +718,10 @@ export const apiEndpoints = {
     }
   },
   ai: {
+    getProviders: {
+      method: 'GET',
+      path: '/ai/providers'
+    },
     process: {
       method: 'POST',
       path: '/ai/process',

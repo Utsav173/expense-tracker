@@ -44,7 +44,7 @@ const UpdateDebtModal: React.FC<UpdateDebtModalProps> = ({
       }}
       validationSchema={apiEndpoints.interest.updateDebt.body}
       updateFn={(id, data) => apiUpdateDebt(id, data)}
-      invalidateKeys={[['debts']]}
+      invalidateKeys={[['debts'], ['financialHealthAnalysis']]}
       onSuccess={onDebtUpdated}
       entityId={debt.id}
     >

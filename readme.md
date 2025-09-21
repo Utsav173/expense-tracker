@@ -63,10 +63,11 @@ This application is packed with features designed for comprehensive financial ma
 
 ### 🤖 AI Assistant
 
+- ✅ **Bring Your Own Key (BYOK):** Connect your preferred AI provider (OpenAI, Google, Anthropic, etc.) using your own API key for maximum privacy and control.
 - ✅ **Natural Language Commands:** Interact with your finances using plain English. Ask the AI to add transactions, list expenses, or provide financial summaries.
 - ✅ **Secure Tool Integration:** The AI securely interacts with the backend API to perform actions on your behalf.
 - ✅ **Context-Aware Suggestions:** Receive smart, actionable suggestions based on your conversation.
-- ✅ **Personal API Key:** Full user control over their AI provider API key.
+- ✅ **Dynamic Model Selection:** Choose from a list of available models from your selected provider.
 
 ---
 
@@ -74,7 +75,7 @@ This application is packed with features designed for comprehensive financial ma
 
 - **Modern Tech Stack:** Built with the latest and greatest web technologies like Next.js 15, React 19, and Tailwind CSS 4 for a fast, reliable, and scalable application.
 - **Exceptional User Experience:** A huge emphasis has been placed on creating a clean, intuitive, and responsive UI/UX, powered by the elegant Shadcn UI component library.
-- **AI-Powered:** Goes beyond simple tracking by integrating a powerful AI assistant to make financial management faster and more accessible.
+- **AI-Powered & User-Controlled:** Goes beyond simple tracking by integrating a powerful AI assistant that operates using **your** API key, ensuring your data's privacy and giving you full control over AI costs and provider choice.
 - **Extensible & Open Source:** The codebase is clean, well-structured, and ready for new features. Contributions are welcome!
 - **Data-Driven Insights:** Powerful analytics and visualizations help you understand your financial health at a glance.
 

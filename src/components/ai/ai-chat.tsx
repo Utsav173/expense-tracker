@@ -64,7 +64,7 @@ const PromptSuggestion = ({ text, onClick }: { text: string; onClick: () => void
 export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
   const prefersReducedMotion = useReducedMotion();
   const [sessionId, setSessionId] = useState(() => crypto.randomUUID());
-  const { showError, showSuccess } = useToast();
+  const { showError, showSuccess, showInfo } = useToast();
   const { data: session } = authClient.useSession();
   const user = session?.user;
 
@@ -81,7 +81,12 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
       setTimeout(() => textAreaRef.current?.focus(), 0);
     },
     onError: (err) => {
-      showError(err?.message || 'Something went wrong.');
+      const errorMessage = err?.message || 'Something went wrong.';
+      if (errorMessage.includes('AI provider not configured')) {
+        showInfo('Please set your AI provider in your profile settings to use the chat.');
+      } else {
+        showError(errorMessage);
+      }
     }
   });
 

@@ -203,6 +203,8 @@ export namespace TransactionAPI {
   export type GetIncomeExpenseChartDataResponse = IncomeExpenseChartData;
 }
 
+export type providersIds = 'google' | 'openai' | 'anthropic' | 'groq' | 'deepseek' | 'qwen' | null;
+
 export namespace UserAPI {
   export interface UserProfile {
     id: string;
@@ -222,6 +224,20 @@ export namespace UserAPI {
 
   export interface UserSettings {
     theme: 'light' | 'dark' | 'system';
+    ai: {
+      providerId: providersIds;
+      modelId: string | null;
+      providerOptions?: {
+        temperature?: number;
+        google?: {
+          safetySettings?: Array<{
+            category: string;
+            threshold: string;
+          }>;
+        };
+        openai?: {};
+      };
+    };
     notifications: {
       enableAll: boolean;
       budgetAlerts: boolean;
@@ -486,7 +502,7 @@ export namespace InvitationAPI {
 
 export namespace AIAPI {
   export interface AIResponse {
-    response: string; // This is a JSON string to be parsed on the frontend
+    response: string;
     sessionId: string;
   }
 
@@ -504,8 +520,24 @@ export namespace AIAPI {
     improvements: { emoji: string; statement: string }[];
     recommendations: { title: string; description: string }[];
   }
+
+  export interface AIModel {
+    id: string;
+    name: string;
+    provider: string;
+    description?: string;
+  }
+
+  export interface AIProvider {
+    id: 'google' | 'openai' | 'anthropic' | 'groq' | 'deepseek';
+    name: string;
+    docsUrl: string;
+    models: AIModel[];
+  }
+
   export type ProcessPdfResponse = { transactions: ExtractedTransaction[] };
   export type GetFinancialHealthResponse = FinancialHealthAnalysis;
+  export type GetProvidersResponse = AIProvider[];
 }
 
 export namespace AdminAPI {

@@ -33,6 +33,7 @@ import { goalAddAmount } from '@/lib/endpoints/goal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { ComboboxHandle } from '../ui/combobox';
 import { Collapsible, CollapsibleContent } from '../ui/collapsible';
+import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 
 const transactionSchema = z.object({
   text: z.string().min(3, 'Description must be at least 3 characters').max(255),
@@ -73,6 +74,7 @@ const AddTransactionModal = ({
   const [createdAt, setCreatedAt] = useState<Date>(new Date());
   const [recurrenceEndDate, setRecurrenceEndDate] = useState<Date | null>(null);
   const { showError, showSuccess } = useToast();
+  const invalidate = useInvalidateQueries();
   const accountDropdownRef = React.useRef<ComboboxHandle>(null);
 
   const { data: accountData } = useQuery({
@@ -159,6 +161,7 @@ const AddTransactionModal = ({
         createdAt: createdAt.toISOString()
       };
       await transactionCreate(transactionData);
+      await invalidate(['dashboardData', 'financialHealthAnalysis']);
 
       if (data.addToGoal && data.goalId) {
         addAmountToGoalMutation.mutate({ id: data.goalId, data: { amount: Number(data.amount) } });

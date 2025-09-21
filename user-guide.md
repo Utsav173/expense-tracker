@@ -28,8 +28,8 @@ Welcome to Expense Pro! This guide is designed to help you get the most out of t
       - [Tracking Investments](#tracking-investments)
       - [Managing Debts](#managing-debts)
     - [7. 🤖 The AI Assistant](#7--the-ai-assistant)
-      - [How it Works \& Your Privacy](#how-it-works--your-privacy)
-      - [Setting Up Your API Key](#setting-up-your-api-key)
+      - [How it Works: Bring Your Own Key (BYOK)](#how-it-works-bring-your-own-key-byok)
+      - [Setting Up Your AI Provider](#setting-up-your-ai-provider)
       - [Example Commands](#example-commands)
     - [8. 💾 Data Import \& Export](#8--data-import--export)
       - [Importing from Excel or PDF](#importing-from-excel-or-pdf)
@@ -175,20 +175,23 @@ These tools help you be proactive with your money.
 
 The AI Assistant (`/ai-chat`) lets you manage your finances using simple, natural language.
 
-#### How it Works & Your Privacy
+#### How it Works: Bring Your Own Key (BYOK)
 
-The AI is powered by Google's AI models. For maximum privacy, it uses **your own personal Google AI API key**.
+For maximum privacy, control, and cost-effectiveness, Expense Pro uses a "Bring Your Own Key" model. This means the AI is powered by **your own personal API key** from a provider of your choice (like Google, OpenAI, etc.).
 
-- Your key is stored securely encrypted in our database.
-- Your financial data and conversations are processed through your key, not ours.
-- This means you are in full control, and your private data is not used for training external models.
+- **Your Privacy:** Your prompts and financial data are sent directly from our server to your chosen AI provider, using your key. We do not process or log your conversations on a central key.
+- **Your Control:** You choose the provider and model that best suits your needs and budget.
+- **Your Key:** We store your API key securely encrypted in our database and only use it to process your requests on your behalf.
 
-#### Setting Up Your API Key
+#### Setting Up Your AI Provider
 
 1.  Go to your **Profile** (click your user icon in the bottom-left).
 2.  Navigate to the **AI Assistant** tab.
-3.  Get your free API key from the [Google AI Studio website](https://aistudio.google.com/app/apikey).
-4.  Paste the key into the input field and click **Save**. The AI Assistant will now be enabled.
+3.  Select an **AI Provider** from the dropdown menu (e.g., Google, OpenAI).
+4.  Select a **Model** from the list of available models for that provider.
+5.  Paste your personal **API key** from your provider's website into the input field.
+6.  Optionally, adjust advanced settings like **Temperature** or provider-specific options like Google's **Safety Settings**.
+7.  Click **Save Settings**. The AI Assistant will now be enabled throughout the app.
 
 #### Example Commands
 
@@ -221,11 +224,10 @@ From the main **Transactions** page, you can use the filters to narrow down your
 
 Click on your user icon in the bottom-left of the sidebar to access your profile. Here you can:
 
-- Update your name and profile picture.
-- Change your preferred currency.
-- Manage your password.
-- Add or update your AI API key.
-- Control your email notification preferences.
+- **Profile:** Update your name and profile picture. Change your preferred currency.
+- **Security:** Manage your password and delete your account.
+- **Notifications:** Control your email notification preferences.
+- **AI Assistant:** Configure your AI provider, model, and API key.
 
 ### 10. ❓ Frequently Asked Questions (FAQ)
 

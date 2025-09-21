@@ -124,9 +124,11 @@ const TermsOfServicePage = () => {
               </li>
             </ul>
             <p>
-              If using the AI Assistant feature, you are responsible for the API key you provide and
-              its usage limits with the third-party AI provider (e.g., Google AI). Expense Pro is
-              not responsible for any charges incurred from your AI provider.
+              <strong>AI Assistant Usage:</strong> If you choose to use the AI Assistant feature,
+              you agree to provide your own API key from a third-party provider. You are solely
+              responsible for this API key, any costs associated with its use, and your compliance
+              with the terms of service of your chosen AI provider. Expense Pro is not liable for
+              any charges or issues arising from your use of a third-party AI service.
             </p>
 
             <h2>5. Intellectual Property</h2>

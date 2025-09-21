@@ -27,8 +27,9 @@ const FinancialHealth: React.FC = () => {
   } = useQuery({
     queryKey: ['financialHealthAnalysis'],
     queryFn: getFinancialHealthAnalysis,
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false
+    staleTime: 5 * 60 * 1000, // Cache data as fresh for 5 minutes
+    refetchOnWindowFocus: false, // Prevent refetching on window focus
+    retry: 1 // Only retry once on failure
   });
 
   const getHealthScoreMeta = (score: number) => {

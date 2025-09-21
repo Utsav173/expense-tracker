@@ -1,29 +1,33 @@
 <a id='ai-assistant-setup'></a>
-### <Icon name='keyRound' /> Setting Up Your API Key for Privacy
+### <Icon name='keyRound' /> Setting Up Your AI Provider for Privacy
 
-For maximum user privacy and to prevent abuse, the AI Assistant is powered by **your own personal Google AI API key**. This means your financial data is never sent to a shared, third-party AI model that we control. It's your data, processed with your key, under your Google account.
+For maximum user privacy and control, the AI Assistant is powered by **your own personal API key** from a provider of your choice. This "Bring Your Own Key" (BYOK) model means your financial data is sent from our secure server directly to the AI provider you trust, using your key. We never see or log your raw API key.
 
-<Step number={1} title='Get Your Google AI Key'>
-  First, you'll need a free API key from Google AI Studio. sign in with your Google account, and
-  create a new API key. It's a quick and straightforward process.
-  <a
-    href='https://aistudio.google.com/app/apikey'
-    target='_blank'
-    rel='noopener noreferrer'
-    className='text-primary font-medium underline underline-offset-4'
-  >
-    Click here to visit the Google AI Studio
-  </a>
+<Step number={1} title='Navigate to AI Settings'>
+  Go to your **Profile** by clicking your user icon in the bottom-left of the sidebar. From there,
+  select the **AI Assistant** tab to begin the setup.
 </Step>
 
-<Step number={2} title='Save Your Key in Expense Pro'>
-  Navigate to your **Profile** page (by clicking your avatar in the sidebar), then go to the **AI
-  Assistant** tab. Paste your copied key into the field and click **Save Key**. The AI Assistant
-  will be enabled immediately across the app.
+<Step number={2} title='Choose Your Provider and Model'>
+
+- **Select an AI Provider:** Use the dropdown to choose your preferred service (e.g., Google, OpenAI, Anthropic).
+- **Select a Model:** Based on your provider, a list of available models will appear. Choose the one you'd like to use.
+
+</Step>
+
+<Step number={3} title='Enter Your API Key'>
+  Each provider has a section on their website for generating API keys. Click the link on the
+  settings page to go directly to your chosen provider's key management page, create a key, and
+  paste it into the "API Key" input field.
+</Step>
+
+<Step number={4} title='Configure Options (Optional) & Save'>
+  You can fine-tune the AI's behavior by adjusting the **Temperature** or provider-specific settings
+  like **Google Safety Settings**. Once you're done, click **Save Settings**. The AI Assistant will
+  be enabled immediately across the app.
 </Step>
 
 <Alert>
   Your API key is stored securely in our database using strong AES-GCM encryption. It is only ever
-  decrypted on the server when needed to process your AI requests on your behalf. We never see or
-  log your raw key.
+  decrypted on the server when needed to process your AI requests on your behalf.
 </Alert>

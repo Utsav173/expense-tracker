@@ -28,7 +28,7 @@ interface UpdateModalProps<TFormValues extends z.ZodType<any, any>> {
   initialValues: z.infer<TFormValues>;
   validationSchema: TFormValues;
   updateFn: (id: string, data: z.infer<TFormValues>) => Promise<any>;
-  invalidateKeys: string[][];
+  invalidateKeys: string[][]; // Corrected type for array of query keys
   onSuccess?: () => void;
   children: (form: any) => React.ReactNode;
   entityId: string;
@@ -64,13 +64,16 @@ export function UpdateModal<TFormValues extends z.ZodType<any, any>>({
 
   const mutation = useMutation({
     mutationFn: (data: z.infer<TFormValues>) => updateFn(entityId, data),
-    onSuccess: () => {
+    onSuccess: async () => {
       onOpenChange(false);
       showSuccess('Successfully updated.');
+
+      // Invalidate all specified query keys
+      await Promise.all(invalidateKeys.map((key) => invalidate(key)));
+
       if (onSuccess) {
         onSuccess();
       }
-      Promise.all(invalidateKeys.map((key) => invalidate(key)));
     },
     onError: (error: any) => {
       const message = error?.response?.data?.message || error.message || 'Failed to update.';
