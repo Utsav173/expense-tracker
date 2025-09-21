@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import type { AIAPI } from '@/lib/api/api-types';
 import { transactionBulkCreate } from '@/lib/endpoints/transactions';
 import { useToast } from '@/lib/hooks/useToast';
@@ -26,6 +26,7 @@ import { accountGetDropdown } from '@/lib/endpoints/accounts';
 import { Label } from '../ui/label';
 import { NumericInput } from '../ui/numeric-input';
 import { Icon } from '../ui/icon';
+import { Checkbox } from '@/components/ui/checkbox';
 
 type EditableTransaction = AIAPI.ExtractedTransaction & { id: string };
 
@@ -34,28 +35,34 @@ interface TransactionItemProps {
   onFieldChange: (id: string, field: keyof AIAPI.ExtractedTransaction, value: any) => void;
   onRemove: (id: string) => void;
   currency: string;
+  isSelected: boolean;
+  onSelectToggle: (id: string) => void;
 }
 
 const TransactionItem: React.FC<TransactionItemProps> = ({
   transaction,
   onFieldChange,
   onRemove,
-  currency
+  currency,
+  isSelected,
+  onSelectToggle
 }) => {
   const isIncome = transaction.credit !== undefined;
 
   return (
-    <div className='bg-background relative rounded-lg border p-3 transition-shadow hover:shadow-md'>
-      <Button
-        variant='ghost'
-        size='icon'
-        className='absolute top-1 right-1 h-6 w-6 rounded-full'
-        onClick={() => onRemove(transaction.id)}
-        aria-label='Remove transaction'
-      >
-        <Icon name='x' className='h-3 w-3' />
-      </Button>
+    <div
+      className={cn(
+        'relative rounded-lg border bg-background p-3 transition-shadow hover:shadow-md',
+        !isSelected && 'opacity-60'
+      )}
+    >
       <div className='flex items-start gap-3'>
+        <Checkbox
+          checked={isSelected}
+          onCheckedChange={() => onSelectToggle(transaction.id)}
+          className='mt-1.5 shrink-0'
+          aria-label='Select transaction'
+        />
         <div
           className={cn(
             'mt-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full',
@@ -69,20 +76,20 @@ const TransactionItem: React.FC<TransactionItemProps> = ({
             value={transaction.description}
             onChange={(e) => onFieldChange(transaction.id, 'description', e.target.value)}
             placeholder='Description'
-            className='focus:border-input h-auto border-0 border-b border-transparent p-0 text-base font-medium focus:ring-0'
+            className='h-auto border-0 border-b border-transparent p-0 text-base font-medium focus:border-input focus:ring-0'
           />
           <div className='flex items-center justify-between'>
             <Input
               value={transaction.category}
               onChange={(e) => onFieldChange(transaction.id, 'category', e.target.value)}
               placeholder='Category'
-              className='text-muted-foreground focus:border-input h-auto border-0 border-b border-transparent p-0 text-xs focus:ring-0'
+              className='h-auto border-0 border-b border-transparent p-0 text-xs text-muted-foreground focus:border-input focus:ring-0'
             />
             <Input
               value={transaction.date}
               onChange={(e) => onFieldChange(transaction.id, 'date', e.target.value)}
               placeholder='YYYY-MM-DD'
-              className='text-muted-foreground focus:border-input h-auto w-[90px] border-0 border-b border-transparent p-0 text-right text-xs focus:ring-0'
+              className='h-auto w-[90px] border-0 border-b border-transparent p-0 text-right text-xs text-muted-foreground focus:border-input focus:ring-0'
             />
           </div>
           <div className='flex items-center justify-end gap-2'>
@@ -96,7 +103,7 @@ const TransactionItem: React.FC<TransactionItemProps> = ({
                   onFieldChange(transaction.id, 'debit', amount);
                 }
               }}
-              className='focus:border-input h-auto border-0 border-b border-transparent p-0 text-right text-lg font-bold focus:ring-0'
+              className='h-auto border-0 border-b border-transparent p-0 text-right text-lg font-bold focus:border-input focus:ring-0'
               prefix={`${currency} `}
             />
             <Select
@@ -133,6 +140,9 @@ const AiTransactionPreview: React.FC<{ transactions: AIAPI.ExtractedTransaction[
   const [editableTransactions, setEditableTransactions] = useState<EditableTransaction[]>(() =>
     transactions.map((tx) => ({ ...tx, id: crypto.randomUUID() }))
   );
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(
+    () => new Set(editableTransactions.map((tx) => tx.id))
+  );
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -160,27 +170,48 @@ const AiTransactionPreview: React.FC<{ transactions: AIAPI.ExtractedTransaction[
 
   const handleRemove = useCallback((id: string) => {
     setEditableTransactions((prev) => prev.filter((tx) => tx.id !== id));
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
   }, []);
+
+  const handleSelectToggle = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const selectedTransactions = useMemo(() => {
+    return editableTransactions.filter((tx) => selectedIds.has(tx.id));
+  }, [editableTransactions, selectedIds]);
 
   const handleSaveAll = async () => {
     if (!selectedAccountId) {
       showError('Please select an account to save transactions to.');
       return;
     }
-    if (editableTransactions.length === 0) {
-      showError('There are no transactions to save.');
+    if (selectedTransactions.length === 0) {
+      showError('Please select at least one transaction to save.');
       return;
     }
     setIsLoading(true);
     try {
       const payload = {
-        transactions: editableTransactions.map((tx) => {
+        transactions: selectedTransactions.map((tx) => {
           const date = new Date(tx.date);
           const createdAt = isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
 
           return {
             text: tx.description,
-            amount: tx.debit !== undefined ? tx.debit : (tx.credit ?? 0),
+            amount: tx.debit !== undefined ? tx.debit : tx.credit ?? 0,
             isIncome: tx.debit === undefined,
             categoryName: tx.category,
             transfer: tx.transfer,
@@ -205,7 +236,8 @@ const AiTransactionPreview: React.FC<{ transactions: AIAPI.ExtractedTransaction[
   };
 
   const summary = useMemo(() => {
-    return editableTransactions.reduce(
+    const txsToSummarize = isModalOpen ? selectedTransactions : editableTransactions;
+    return txsToSummarize.reduce(
       (acc, tx) => {
         if (tx.credit !== undefined) acc.income += tx.credit;
         if (tx.debit !== undefined) acc.expense += tx.debit;
@@ -213,13 +245,13 @@ const AiTransactionPreview: React.FC<{ transactions: AIAPI.ExtractedTransaction[
       },
       { income: 0, expense: 0 }
     );
-  }, [editableTransactions]);
+  }, [selectedTransactions, editableTransactions, isModalOpen]);
 
   const netImpact = summary.income - summary.expense;
 
   const editButtonContent = isImported ? (
     <>
-      <Icon name='checkCircle' className='text-success mr-2 h-4 w-4' />
+      <Icon name='checkCircle' className='mr-2 h-4 w-4 text-success' />
       Imported Successfully
     </>
   ) : (
@@ -231,7 +263,7 @@ const AiTransactionPreview: React.FC<{ transactions: AIAPI.ExtractedTransaction[
 
   return (
     <>
-      <Card className='bg-muted/50 mt-2 w-full max-w-full overflow-hidden border'>
+      <Card className='mt-2 w-full max-w-full overflow-hidden border bg-muted/50'>
         <CardContent className='p-3'>
           <p className='mb-2 text-sm font-medium'>
             Found {editableTransactions.length} transaction(s)
@@ -239,19 +271,19 @@ const AiTransactionPreview: React.FC<{ transactions: AIAPI.ExtractedTransaction[
           <Card className='bg-background'>
             <CardContent className='grid grid-cols-3 gap-2 p-3 text-center'>
               <div className='space-y-1'>
-                <p className='text-muted-foreground text-xs'>Income</p>
-                <p className='text-success font-semibold'>
+                <p className='text-xs text-muted-foreground'>Income</p>
+                <p className='font-semibold text-success'>
                   {formatCurrency(summary.income, 'INR')}
                 </p>
               </div>
               <div className='space-y-1'>
-                <p className='text-muted-foreground text-xs'>Expenses</p>
-                <p className='text-destructive font-semibold'>
+                <p className='text-xs text-muted-foreground'>Expenses</p>
+                <p className='font-semibold text-destructive'>
                   {formatCurrency(summary.expense, 'INR')}
                 </p>
               </div>
               <div className='space-y-1'>
-                <p className='text-muted-foreground text-xs'>Net Impact</p>
+                <p className='text-xs text-muted-foreground'>Net Impact</p>
                 <p
                   className={cn(
                     'font-semibold',
@@ -291,19 +323,19 @@ const AiTransactionPreview: React.FC<{ transactions: AIAPI.ExtractedTransaction[
       </Card>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className='max-h-[90dvh] w-full max-w-2xl overflow-y-scroll'>
+        <DialogContent className='flex max-h-[90dvh] w-full max-w-2xl flex-col'>
           <DialogHeader>
             <DialogTitle>Review Extracted Transactions</DialogTitle>
             <DialogDescription>
-              Edit details below before saving them to your account.
+              Select and edit details below before saving them to your account.
             </DialogDescription>
           </DialogHeader>
 
-          <div className='grid gap-4 py-4'>
-            <div className='space-y-2'>
+          <div className='flex-1 space-y-4 overflow-y-hidden py-4'>
+            <div className='px-1'>
               <Label htmlFor='account-select-modal'>Save to Account *</Label>
               <Select onValueChange={setSelectedAccountId} disabled={isLoading}>
-                <SelectTrigger id='account-select-modal' className='w-full'>
+                <SelectTrigger id='account-select-modal' className='mt-2 w-full'>
                   <SelectValue
                     placeholder={isLoadingAccounts ? 'Loading...' : 'Select an account'}
                   />
@@ -317,7 +349,30 @@ const AiTransactionPreview: React.FC<{ transactions: AIAPI.ExtractedTransaction[
                 </SelectContent>
               </Select>
             </div>
-            <ScrollArea className='-mr-4 max-h-[45vh] pr-4'>
+
+            <div className='flex items-center justify-between rounded-lg border bg-muted/50 p-2'>
+              <div className='flex items-center gap-2'>
+                <Checkbox
+                  id='select-all-checkbox'
+                  checked={selectedIds.size === editableTransactions.length}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedIds(new Set(editableTransactions.map((tx) => tx.id)));
+                    } else {
+                      setSelectedIds(new Set());
+                    }
+                  }}
+                />
+                <Label htmlFor='select-all-checkbox' className='text-sm font-medium'>
+                  Select All
+                </Label>
+              </div>
+              <span className='text-sm text-muted-foreground'>
+                {selectedIds.size} of {editableTransactions.length} selected
+              </span>
+            </div>
+
+            <ScrollArea className='-mr-6 max-h-[40vh] pr-6'>
               <div className='space-y-2'>
                 {editableTransactions.map((tx) => (
                   <TransactionItem
@@ -326,6 +381,8 @@ const AiTransactionPreview: React.FC<{ transactions: AIAPI.ExtractedTransaction[
                     onFieldChange={handleFieldChange}
                     onRemove={handleRemove}
                     currency={selectedAccountCurrency}
+                    isSelected={selectedIds.has(tx.id)}
+                    onSelectToggle={handleSelectToggle}
                   />
                 ))}
               </div>
@@ -340,9 +397,7 @@ const AiTransactionPreview: React.FC<{ transactions: AIAPI.ExtractedTransaction[
             </DialogClose>
             <Button
               onClick={handleSaveAll}
-              disabled={
-                isLoading || !selectedAccountId || editableTransactions.length === 0 || isImported
-              }
+              disabled={isLoading || !selectedAccountId || selectedIds.size === 0 || isImported}
               className='min-w-[120px]'
             >
               {isLoading ? (
@@ -350,7 +405,7 @@ const AiTransactionPreview: React.FC<{ transactions: AIAPI.ExtractedTransaction[
               ) : (
                 <Icon name='save' className='mr-2 h-4 w-4' />
               )}
-              Save {editableTransactions.length} Transactions
+              Save {selectedIds.size} Transaction(s)
             </Button>
           </DialogFooter>
         </DialogContent>

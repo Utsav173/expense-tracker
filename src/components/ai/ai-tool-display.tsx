@@ -1,5 +1,3 @@
-// src/components/ai/ai-tool-display.tsx
-
 'use client';
 
 import React from 'react';
@@ -11,7 +9,6 @@ import {
   ToolInput,
   ToolOutput
 } from '@/components/ai-elements/tool';
-import { Response } from '@/components/ai-elements/response';
 import type { MyToolTypes } from '@/lib/ai-tool-types';
 
 interface AiToolDisplayProps {
@@ -19,33 +16,37 @@ interface AiToolDisplayProps {
 }
 
 export const AiToolDisplay: React.FC<AiToolDisplayProps> = ({ tool }) => {
-  const renderOutput = (content: any) => {
+  const processOutput = (content: any) => {
     if (content === undefined || content === null) {
       return null;
     }
+
     if (typeof content === 'object' && content.success === false && content.error) {
-      return <Response>{`Tool Error: ${content.error}`}</Response>;
+      return `Tool Error: ${content.error}`;
     }
+
     if (typeof content === 'string') {
       try {
         const parsed = JSON.parse(content);
-        return <Response>{`\`\`\`json\n${JSON.stringify(parsed, null, 2)}\n\`\`\``}</Response>;
+        return parsed; // Return the parsed object, let ToolOutput handle the formatting
       } catch {
-        return <Response>{content}</Response>;
+        return content; // Return as string if not valid JSON
       }
     }
+
     if (typeof content === 'object') {
-      return <Response>{`\`\`\`json\n${JSON.stringify(content, null, 2)}\n\`\`\``}</Response>;
+      return content; // Return the object directly, let ToolOutput handle the formatting
     }
-    return <Response>{String(content)}</Response>;
+
+    return String(content);
   };
 
   return (
-    <Tool defaultOpen={tool.state !== 'input-available'} className='rounded-md'>
+    <Tool defaultOpen={tool.state !== 'input-available'} className='w-fit rounded-md'>
       <ToolHeader type={tool.type} state={tool.state} />
       <ToolContent>
         <ToolInput input={tool.input} />
-        <ToolOutput output={renderOutput(tool.output)} errorText={tool.errorText} />
+        <ToolOutput output={processOutput(tool.output)} errorText={tool.errorText} />
       </ToolContent>
     </Tool>
   );

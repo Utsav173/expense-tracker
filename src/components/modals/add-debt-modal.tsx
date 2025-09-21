@@ -152,7 +152,7 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
                       placeholder='1000.00'
                       className='w-full'
                       disabled={createDebtMutation.isPending}
-                      value={String(field.value)}
+                      value={field.value ?? ''}
                       onValueChange={({ value }: { value: string }) =>
                         field.onChange(parseFloat(value))
                       }
@@ -254,7 +254,7 @@ const AddDebtModal: React.FC<AddDebtModalProps> = ({
                       placeholder='5.5'
                       className='w-full'
                       disabled={createDebtMutation.isPending}
-                      value={String(field.value)}
+                      value={field.value ?? ''}
                       onValueChange={({ value }: { value: string }) =>
                         field.onChange(parseFloat(value))
                       }

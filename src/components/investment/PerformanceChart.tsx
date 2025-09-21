@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import {
   Area,
   AreaChart as RechartsAreaChart,
+  Brush,
   CartesianGrid,
   ReferenceLine,
   ResponsiveContainer,
@@ -167,7 +168,7 @@ export const PerformanceChart: React.FC<PerformanceChartProps> = ({
                   key={range.value}
                   value={range.value}
                   className={cn(
-                    'h-9 rounded-md border-0 px-3 text-sm font-medium transition-all duration-200',
+                    'h-9 rounded-md border-0 px-2 text-sm font-medium transition-all duration-200',
                     'hover:bg-accent hover:text-accent-foreground hover:shadow-sm',
                     'data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-primary/20 data-[state=on]:shadow-md'
                   )}
@@ -299,11 +300,25 @@ export const PerformanceChart: React.FC<PerformanceChartProps> = ({
                     dataKey='value'
                     stroke='url(#strokeGradient)'
                     fill='url(#chartFill)'
-                    strokeWidth={3}
+                    strokeWidth={2}
                     dot={false}
+                    activeDot={{
+                      r: 5,
+                      stroke: 'var(--background)',
+                      strokeWidth: 2,
+                      fill: 'var(--primary)'
+                    }}
                     isAnimationActive={true}
                     animationDuration={1500}
                     animationEasing='ease-in-out'
+                  />
+                  <Brush
+                    dataKey='date'
+                    height={30}
+                    tickFormatter={(tick) => format(parseISO(tick), 'd MMM')}
+                    className='text-primary text-xs'
+                    fill='var(--background)'
+                    stroke='var(--primary)'
                   />
                 </RechartsAreaChart>
               </ResponsiveContainer>

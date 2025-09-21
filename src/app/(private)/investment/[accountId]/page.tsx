@@ -160,6 +160,7 @@ const InvestmentAccountDetailPage = ({ params }: { params: Promise<{ accountId: 
   const columns = investmentHoldingsColumns({
     handleEdit,
     handleDeleteClick,
+    isDeleting: deleteInvestmentMutation.isPending,
     accountCurrency: account?.currency || 'INR'
   });
 

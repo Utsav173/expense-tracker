@@ -1,5 +1,3 @@
-// src/components/ai-elements/tool.tsx
-
 'use client';
 
 import { Badge } from '@/components/ui/badge';
@@ -20,7 +18,7 @@ import { CodeBlock } from './code-block';
 export type ToolProps = ComponentProps<typeof Collapsible>;
 
 export const Tool = ({ className, ...props }: ToolProps) => (
-  <Collapsible className={cn('not-prose mb-4 w-full rounded-md border', className)} {...props} />
+  <Collapsible className={cn('prose mb-4 w-full rounded-md border', className)} {...props} />
 );
 
 export type ToolHeaderProps = {
@@ -94,13 +92,21 @@ export const ToolInput = ({ className, input, ...props }: ToolInputProps) => (
 );
 
 export type ToolOutputProps = ComponentProps<'div'> & {
-  output: ReactNode;
+  output: ToolUIPart['output'];
   errorText: ToolUIPart['errorText'];
 };
 
 export const ToolOutput = ({ className, output, errorText, ...props }: ToolOutputProps) => {
   if (!(output || errorText)) {
     return null;
+  }
+
+  let Output = <div>{output as ReactNode}</div>;
+
+  if (typeof output === 'object') {
+    Output = <CodeBlock code={JSON.stringify(output, null, 2)} language='json' />;
+  } else if (typeof output === 'string') {
+    Output = <CodeBlock code={output} language='json' />;
   }
 
   return (
@@ -110,11 +116,12 @@ export const ToolOutput = ({ className, output, errorText, ...props }: ToolOutpu
       </h4>
       <div
         className={cn(
-          'overflow-x-auto rounded-md p-2 text-xs [&_table]:w-full',
+          'overflow-x-auto rounded-md text-xs [&_table]:w-full',
           errorText ? 'bg-destructive/10 text-destructive' : 'bg-muted/50 text-foreground'
         )}
       >
-        {errorText ? <div>{errorText}</div> : output}
+        {errorText && <div>{errorText}</div>}
+        {Output}
       </div>
     </div>
   );

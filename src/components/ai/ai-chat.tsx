@@ -355,13 +355,13 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant='ghost'
+                  variant='outline'
                   size='icon'
                   onClick={regenerateLast}
                   disabled={isBusy || messages.length === 0}
                   className='h-8 w-8'
                 >
-                  <Icon name='refreshCw' className='h-4 w-4' />
+                  <Icon name='reRun' className='h-4 w-4' />
                   <span className='sr-only'>Regenerate</span>
                 </Button>
               </TooltipTrigger>
@@ -380,7 +380,7 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
                   disabled={!canClear}
                   className='h-8 w-8'
                 >
-                  <Icon name='history' className='h-4 w-4' />
+                  <Icon name='restart' className='h-4 w-4' />
                   <span className='sr-only'>Reset Chat</span>
                 </Button>
               </TooltipTrigger>
@@ -451,6 +451,7 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
                   animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
                   exit={{ opacity: 0, transition: { duration: 0.15 } }}
                   transition={{ duration: 0.3, delay: 0.05 }}
+                  className='relative w-full'
                 >
                   <ChatMessageBubble
                     message={message}

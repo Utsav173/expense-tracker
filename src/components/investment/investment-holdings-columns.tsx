@@ -9,26 +9,35 @@ import { InvestmentHoldingActions } from './investment-holding-actions';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { Icon } from '../ui/icon';
+import { Badge } from '../ui/badge';
+import Loader from '../ui/loader';
 
 interface InvestmentHoldingsColumnsProps {
   handleEdit: (investment: InvestmentAPI.Investment) => void;
   handleDeleteClick: (id: string) => void;
   accountCurrency: string;
+  isDeleting?: boolean;
 }
 
 export const investmentHoldingsColumns = ({
   handleEdit,
   handleDeleteClick,
-  accountCurrency
+  accountCurrency,
+  isDeleting
 }: InvestmentHoldingsColumnsProps): ColumnDef<InvestmentAPI.Investment>[] => [
   {
     accessorKey: 'symbol',
     header: ({ column }) => <DataTableColumnHeader column={column} title='Symbol' />,
     meta: { header: 'Symbol' },
     cell: ({ row }) => (
-      <div>
-        <span className='text-foreground text-sm font-semibold'>{row.original.symbol}</span>
-        <div className='text-muted-foreground/75 text-xs'>{row.original.shares} shares</div>
+      <div className='flex flex-col gap-1'>
+        <Badge
+          variant='outline'
+          className='border-primary/50 bg-primary/10 w-fit font-mono font-bold tracking-wider'
+        >
+          {row.original.symbol}
+        </Badge>
+        <div className='text-muted-foreground/80 text-xs'>{row.original.shares} shares</div>
       </div>
     )
   },
@@ -137,27 +146,27 @@ export const investmentHoldingsColumns = ({
       const isPositive = returnPercentage > 0;
       const isNegative = returnPercentage < 0;
 
-      const performanceColor = cn({
-        'text-positive': isPositive,
-        'text-negative': isNegative,
-        'text-muted-foreground': !isPositive && !isNegative
-      });
-
-      const performanceColorSubtext = cn({
-        'text-positive/75': isPositive,
-        'text-negative/75': isNegative,
-        'text-muted-foreground/75': !isPositive && !isNegative
-      });
-
       return (
         <div className='flex flex-col items-center gap-1'>
-          <div className={cn('flex items-center gap-1 text-sm font-semibold', performanceColor)}>
-            {isPositive && <Icon name='trendingUp' className='h-3 w-3 brightness-70' />}
+          <Badge
+            variant={isPositive ? 'success' : isNegative ? 'destructive' : 'secondary'}
+            className='flex w-fit items-center gap-1 text-sm font-semibold'
+          >
+            {isPositive && <Icon name='trendingUp' className='h-3 w-3' />}
             {isNegative && <Icon name='trendingDown' className='h-3 w-3' />}
             {returnPercentage > 0 ? '+' : ''}
             {returnPercentage.toFixed(2)}%
-          </div>
-          <div className={cn('text-xs', performanceColorSubtext)}>
+          </Badge>
+          <div
+            className={cn(
+              'text-xs',
+              isPositive
+                ? 'text-positive/80'
+                : isNegative
+                  ? 'text-negative/80'
+                  : 'text-muted-foreground/80'
+            )}
+          >
             {formatCurrency(totalReturn, accountCurrency)}
           </div>
         </div>
@@ -169,13 +178,17 @@ export const investmentHoldingsColumns = ({
     header: () => <div className='text-center'>Actions</div>,
     cell: ({ row }) => (
       <div className='flex justify-center'>
-        <InvestmentHoldingActions
-          investment={row.original}
-          handleEdit={handleEdit}
-          handleDeleteClick={handleDeleteClick}
-          accountCurrency={accountCurrency}
-          key={row.original.id}
-        />
+        {!isDeleting ? (
+          <InvestmentHoldingActions
+            investment={row.original}
+            handleEdit={handleEdit}
+            handleDeleteClick={handleDeleteClick}
+            accountCurrency={accountCurrency}
+            key={row.original.id}
+          />
+        ) : (
+          <Loader />
+        )}
       </div>
     )
   }

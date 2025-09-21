@@ -164,7 +164,9 @@ export const iconMap = {
   openai: 'streamline-logos:openai-logo',
   anthropic: 'logos:claude-icon',
   grok: 'mingcute:grok-fill',
-  deepseek: 'hugeicons:deepseek'
+  deepseek: 'hugeicons:deepseek',
+  restart: 'codicon:debug-restart-frame',
+  reRun: 'mynaui:repeat-solid'
   // statement: "streamline-ultimate:cashless-payment-online-statement-monitor"
 } as const;
 

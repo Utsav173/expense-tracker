@@ -22,7 +22,7 @@ export function DataTableColumnHeader<TData, TValue>({
 
   return (
     <div
-      className={cn('group flex cursor-pointer items-center space-x-2 select-none mr-4', className)}
+      className={cn('group mr-4 flex cursor-pointer items-center space-x-2 select-none', className)}
       onClick={() => column.toggleSorting()}
       role='button'
       tabIndex={0}
@@ -35,7 +35,7 @@ export function DataTableColumnHeader<TData, TValue>({
     >
       <span
         className={cn(
-          'font-semibold',
+          'font-semibold text-nowrap',
           sortDirection ? 'text-primary' : 'group-hover:text-foreground'
         )}
       >

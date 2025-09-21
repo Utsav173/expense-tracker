@@ -19,6 +19,21 @@ export interface KpiCardProps {
   description?: string;
 }
 
+const DotPattern = () => (
+  <div
+    className='bg-[radial-gradient(theme(colors.primary/10)_1px,transparent_1px)] absolute inset-0 [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)] [background-size:16px_16px] opacity-40 transition-transform duration-500 ease-out group-hover:scale-105'
+    aria-hidden='true'
+  />
+);
+
+const GhostIcon = ({ name }: { name: IconName }) => (
+  <Icon
+    name={name}
+    className='text-primary/5 absolute -right-4 -bottom-4 h-24 w-24 opacity-80 transition-transform duration-500 ease-out group-hover:scale-110 group-hover:opacity-60'
+    aria-hidden='true'
+  />
+);
+
 export const KpiCard: React.FC<KpiCardProps> = ({
   title,
   value,
@@ -36,15 +51,18 @@ export const KpiCard: React.FC<KpiCardProps> = ({
   };
 
   return (
-    <Card className='group border-border bg-card/50 hover:shadow-primary/5 hover:border-primary/20 relative overflow-hidden border backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg'>
-      <div className='from-primary/5 absolute inset-0 bg-gradient-to-br via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100' />
-      <CardHeader className='relative space-y-0 pb-3'>
+    <Card className='group hover:shadow-primary/10 relative overflow-hidden rounded-2xl border-none shadow-lg transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-2xl'>
+      <div className='absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-white/20 opacity-100 transition-all duration-300 dark:via-black/5 dark:to-black/20' />
+      <DotPattern />
+      <GhostIcon name={icon} />
+
+      <CardHeader className='relative z-10 space-y-0 pb-3'>
         <div className='flex items-start justify-between'>
           <div className='space-y-1.5'>
-            <CardTitle className='text-muted-foreground group-hover:text-foreground flex items-center gap-2 text-sm font-medium transition-colors duration-200'>
+            <CardTitle className='text-muted-foreground flex items-center gap-2 text-sm font-medium'>
               <div
                 className={cn(
-                  'bg-background/50 group-hover:bg-primary/10 rounded-lg p-1.5 transition-all duration-300 group-hover:scale-110',
+                  'bg-background/70 shadow-inner-sm group-hover:bg-primary/10 rounded-lg p-1.5 transition-all duration-300 group-hover:scale-110',
                   colorClass
                 )}
               >
@@ -53,7 +71,7 @@ export const KpiCard: React.FC<KpiCardProps> = ({
               {title}
             </CardTitle>
             {description && (
-              <CardDescription className='text-muted-foreground/80 group-hover:text-muted-foreground text-xs transition-colors duration-200'>
+              <CardDescription className='text-muted-foreground/80 text-xs'>
                 {description}
               </CardDescription>
             )}
@@ -61,12 +79,12 @@ export const KpiCard: React.FC<KpiCardProps> = ({
           {changePercent !== undefined && (
             <Badge
               variant={getBadgeVariant(changePercent)}
-              className='shrink-0 shadow-sm transition-all duration-300 group-hover:shadow-md'
+              className='shrink-0 shadow-sm transition-all duration-300 group-hover:shadow-md group-hover:brightness-110'
             >
               {changePercent >= 0 ? (
-                <Icon name='trendingUp' className='mr-1 h-3 w-3 animate-pulse' />
+                <Icon name='trendingUp' className='mr-1 h-3 w-3' />
               ) : (
-                <Icon name='trendingDown' className='mr-1 h-3 w-3 animate-pulse' />
+                <Icon name='trendingDown' className='mr-1 h-3 w-3' />
               )}
               {changePercent.toFixed(1)}%
             </Badge>
@@ -74,15 +92,15 @@ export const KpiCard: React.FC<KpiCardProps> = ({
         </div>
       </CardHeader>
 
-      <CardContent className='relative pt-0'>
+      <CardContent className='relative z-10 pt-0'>
         {isLoading ? (
           <div className='space-y-2'>
-            <Skeleton className='bg-muted/50 h-8 w-3/4 animate-pulse' />
+            <Skeleton className='h-8 w-3/4 animate-pulse' />
           </div>
         ) : (
           <SingleLineEllipsis
             className={cn(
-              'origin-left text-2xl font-bold tracking-tight transition-all duration-300 group-hover:scale-105 sm:text-3xl',
+              'origin-left text-3xl font-bold tracking-tight transition-all duration-300 group-hover:scale-105 sm:text-4xl',
               colorClass
             )}
           >

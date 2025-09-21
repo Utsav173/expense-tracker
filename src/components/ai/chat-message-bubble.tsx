@@ -84,7 +84,7 @@ const ChatMessageBubbleImpl: React.FC<ChatMessageBubbleProps> = ({
           isUser ? 'border-primary/20' : 'border-slate-200 dark:border-slate-700'
         )}
       >
-        <AvatarImage src={user?.image!} alt={user.name} />
+        {isUser ? <AvatarImage src={user?.image!} alt={user.name} /> : null}
 
         <AvatarFallback
           className={cn(
