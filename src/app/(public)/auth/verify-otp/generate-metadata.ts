@@ -19,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
       type: 'website',
       images: [
         {
-          url: 'https://expense-pro.khatriutsav.com/og-image-password-sent.png',
+          url: 'https://expense-pro.khatriutsav.com/og-image-verify-otp.png',
           width: 1200,
           height: 630,
           alt: 'Expense Tracker Verify OTP Page'
@@ -30,10 +30,10 @@ export async function generateMetadata(): Promise<Metadata> {
       card: 'summary_large_image',
       title: 'Verify OTP - Expense Tracker',
       description: 'Enter your OTP to securely verify your identity.',
-      images: ['https://expense-pro.khatriutsav.com/og-image-password-sent.png']
+      images: ['https://expense-pro.khatriutsav.com/og-image-verify-otp.png']
     },
     alternates: {
-      canonical: 'https://expense-pro.khatriutsav.com/auth/verify-otp',
-    },
+      canonical: 'https://expense-pro.khatriutsav.com/auth/verify-otp'
+    }
   };
 }

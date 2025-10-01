@@ -8,48 +8,8 @@ import remarkGfm from 'remark-gfm';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { IconName } from '@/components/ui/icon-map';
-import { Metadata } from 'next';
 import { Graph } from 'schema-dts';
 import Script from 'next/script';
-
-export async function generateMetadata({
-  params
-}: {
-  params: Promise<{ slug: string }>;
-}): Promise<Metadata> {
-  const slug = (await params).slug;
-  const feature = featuresList.find((f) => f.slug === slug);
-
-  if (!feature) {
-    return {};
-  }
-
-  return {
-    title: `${feature.title} - Expense Tracker Feature`,
-    description: feature.description,
-    keywords: [`${feature.title.toLowerCase()}`, 'expense tracker feature', 'financial tool'],
-    openGraph: {
-      title: `${feature.title} - Expense Tracker Feature`,
-      description: feature.description,
-      url: `https://expense-pro.khatriutsav.com/features/${feature.slug}`,
-      type: 'article',
-      images: [
-        {
-          url: 'https://expense-pro.khatriutsav.com/og-image.png',
-          width: 1200,
-          height: 630,
-          alt: `${feature.title} Feature`
-        }
-      ]
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: `${feature.title} - Expense Tracker Feature`,
-      description: feature.description,
-      images: ['https://expense-pro.khatriutsav.com/og-image.png']
-    }
-  };
-}
 
 const FeatureDetailPage = async ({ params }: { params: Promise<{ slug: string }> }) => {
   const slug = (await params).slug;

@@ -36,7 +36,7 @@ export async function generateMetadata(): Promise<Metadata> {
       google: 'tNXFFpZE1VOHdcWpBlnAsX7avQThqRD6wjolUQaG4rU'
     },
     alternates: {
-      canonical: 'https://expense-pro.khatriutsav.com/legal/terms-of-service',
-    },
+      canonical: 'https://expense-pro.khatriutsav.com/legal/terms-of-service'
+    }
   };
 }

@@ -14,16 +14,44 @@ export async function generateMetadata({
     };
   }
 
+  const pageTitle = `${feature.title} - Expense Pro Feature`;
+  const canonicalUrl = `https://expense-pro.khatriutsav.com/features/${feature.slug}`;
+
+  // Construct the URL to our new OG image API route
+  const imageUrl = new URL('https://expense-pro.khatriutsav.com/api/og');
+  imageUrl.searchParams.set('slug', feature.slug);
+
   return {
-    title: `${feature.title} - Expense Pro`,
+    title: pageTitle,
     description: feature.description,
+    keywords: [feature.title.toLowerCase(), 'expense tracker feature', 'financial tool'],
+
     openGraph: {
-      title: `${feature.title} - Expense Pro`,
+      title: pageTitle,
       description: feature.description,
-      type: 'article'
+      url: canonicalUrl,
+      type: 'article',
+      // Explicitly provide the generated image URL
+      images: [
+        {
+          url: imageUrl.toString(),
+          width: 1200,
+          height: 630,
+          alt: pageTitle
+        }
+      ]
     },
+
+    twitter: {
+      card: 'summary_large_image',
+      title: pageTitle,
+      description: feature.description,
+      // Explicitly provide the generated image URL for Twitter
+      images: [imageUrl.toString()]
+    },
+
     alternates: {
-      canonical: `https://expense-pro.khatriutsav.com/features/${feature.slug}`,
-    },
+      canonical: canonicalUrl
+    }
   };
 }

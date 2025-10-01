@@ -32,7 +32,7 @@ export async function generateMetadata(): Promise<Metadata> {
       images: ['https://expense-pro.khatriutsav.com/og-image-forgot-password.png']
     },
     alternates: {
-      canonical: 'https://expense-pro.khatriutsav.com/auth/forgot-password',
-    },
+      canonical: 'https://expense-pro.khatriutsav.com/auth/forgot-password'
+    }
   };
 }

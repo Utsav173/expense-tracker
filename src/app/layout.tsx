@@ -43,7 +43,7 @@ export const metadata: Metadata = {
         url: 'https://expense-pro.khatriutsav.com/og-image-home.png',
         width: 1200,
         height: 630,
-        alt: 'Expense Tracker Dashboard Mockup'
+        alt: 'Expense Tracker'
       },
       {
         url: 'https://expense-pro.khatriutsav.com/og-image-dashboard-desktop-light.webp',
@@ -101,7 +101,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang='en' suppressHydrationWarning>
       <head>
-        {/* Google Analytics */}
         <Script
           src='https://www.googletagmanager.com/gtag/js?id=GTM-NRXZ2WPR'
           strategy='afterInteractive'
