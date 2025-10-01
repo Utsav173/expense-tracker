@@ -5,13 +5,6 @@ import { IconName } from '@/components/ui/icon-map';
 
 export const runtime = 'edge';
 
-export const alt = 'Expense Pro Feature';
-export const size = {
-  width: 1200,
-  height: 630
-};
-export const contentType = 'image/png';
-
 // Icon components that return JSX directly (Satori compatible)
 function getIconComponent(iconName: IconName) {
   const iconProps = {
