@@ -222,10 +222,10 @@ const ContactSupportPage = () => {
                   For urgent matters, you can reach us directly at:
                 </p>
                 <a
-                  href='mailto:support@expensepro.app'
+                  href='mailto:khatriutsav63@gmail.com'
                   className='mt-3 inline-block font-medium text-sky-600 hover:underline dark:text-sky-400'
                 >
-                  support@expensepro.app
+                  khatriutsav63@gmail.com
                 </a>
               </div>
               <div className='border-border bg-card rounded-lg border p-6 shadow-lg'>

@@ -3,9 +3,7 @@ import createMDX from '@next/mdx';
 
 const nextConfig: NextConfig = {
   experimental: {
-    serverActions: {
-      bodySizeLimit: '5mb'
-    }
+    useCache: true
   },
   images: {
     remotePatterns: [

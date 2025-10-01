@@ -47,7 +47,7 @@
     "cmdk": "1.0.0",
     "date-fns": "^4.1.0",
     "eslint-plugin-mdx": "^3.6.2",
-    "framer-motion": "^12.18.1",
+    "framer-motion": "^12.23.22",
     "gsap": "^3.13.0",
     "input-otp": "^1.4.2",
     "lodash": "^4.17.21",

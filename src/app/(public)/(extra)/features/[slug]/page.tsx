@@ -1,3 +1,5 @@
+'use cache';
+
 import React from 'react';
 import { notFound } from 'next/navigation';
 import { featuresList } from '@/lib/data/features-list';
