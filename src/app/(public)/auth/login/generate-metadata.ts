@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: 'Sign In to Your Expense Tracker | Access Your Financial Dashboard',
+    title: 'Sign In | Expense Tracker',
     description:
       'Sign in to your Expense Tracker account to effortlessly manage your finances, track every expense, and stay on top of your financial goals.',
     keywords: [

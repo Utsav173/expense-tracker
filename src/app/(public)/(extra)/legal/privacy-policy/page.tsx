@@ -1,46 +1,8 @@
-import { Metadata } from 'next';
 import React from 'react';
 import Link from 'next/link';
 import { WebPage, WithContext } from 'schema-dts';
 import Script from 'next/script';
 import { Icon } from '@/components/ui/icon';
-
-export const metadata: Metadata = {
-  title: 'Privacy Policy - Expense Tracker',
-  description:
-    'Read the privacy policy for Expense Tracker. Learn how we collect, use, and protect your personal and financial information to ensure your data privacy and security.',
-  keywords: [
-    'privacy policy',
-    'data privacy',
-    'expense tracker privacy',
-    'financial data security',
-    'information protection',
-    'user data'
-  ],
-  openGraph: {
-    title: 'Privacy Policy - Expense Tracker',
-    description: 'Understand our commitment to your data privacy and security.',
-    url: 'https://expense-pro.khatriutsav.com/legal/privacy-policy',
-    type: 'website',
-    images: [
-      {
-        url: 'https://expense-pro.khatriutsav.com/og-image-privacy.png',
-        width: 1200,
-        height: 630,
-        alt: 'Expense Tracker Privacy Policy'
-      }
-    ]
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Privacy Policy - Expense Tracker',
-    description: 'Your privacy is our priority. Learn about our data handling practices.',
-    images: ['https://expense-pro.khatriutsav.com/og-image-privacy.png']
-  },
-  verification: {
-    google: 'tNXFFpZE1VOHdcWpBlnAsX7avQThqRD6wjolUQaG4rU'
-  }
-};
 
 const jsonLd: WithContext<WebPage> = {
   '@context': 'https://schema.org',

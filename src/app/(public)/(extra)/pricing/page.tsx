@@ -11,7 +11,7 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Product, WebPage, WithContext } from 'schema-dts';
+import { Graph } from 'schema-dts';
 import Script from 'next/script';
 import { motion, Variants } from 'framer-motion';
 import {
@@ -24,41 +24,89 @@ import ComingSoonModal from '@/components/modals/comming-soon-modal';
 import { Icon } from '@/components/ui/icon';
 import Link from 'next/link';
 
-const jsonLd: WithContext<WebPage> = {
-  '@context': 'https://schema.org',
-  '@type': 'WebPage',
-  name: 'Pricing - Expense Tracker',
-  url: 'https://expense-pro.khatriutsav.com/pricing',
-  mainEntity: {
-    '@type': 'Product',
-    name: 'Expense Tracker Pro',
-    description: 'Unlock lifetime access to advanced financial management features.',
-    sku: 'ET-PRO-LIFETIME',
-    brand: {
-      '@type': 'Brand',
-      name: 'Expense Tracker'
-    },
-    offers: {
-      '@type': 'Offer',
-      price: '499.00',
-      priceCurrency: 'INR',
-      availability: 'https://schema.org/InStock',
-      priceValidUntil: '2025-12-31',
-      url: 'https://expense-pro.khatriutsav.com/pricing'
-    },
-    review: {
-      '@type': 'Review',
-      reviewRating: {
-        '@type': 'Rating',
-        ratingValue: '4.8',
-        bestRating: '5'
-      },
-      author: {
-        '@type': 'Person',
-        name: 'John Doe'
-      }
-    }
+const faqs = [
+  {
+    question: 'Is the Pro plan really a one-time purchase?',
+    answer:
+      'Yes! You pay once and get lifetime access to all current and future Pro features. No subscriptions, no hidden fees.'
+  },
+  {
+    question: 'What happens after I purchase?',
+    answer:
+      'Your account will be instantly upgraded to Pro status, unlocking all advanced features immediately. You will also receive a confirmation email.'
+  },
+  {
+    question: 'Can I use the Free plan forever?',
+    answer:
+      'Absolutely. The Free plan is fully functional for essential expense tracking and is not a limited-time trial.'
+  },
+  {
+    question: 'Do you offer refunds?',
+    answer:
+      'Due to the nature of the one-time purchase model providing lifetime access, we do not offer refunds. We encourage you to use the comprehensive Free plan to ensure Expense Pro is the right fit for you before upgrading.'
   }
+];
+
+const jsonLd: Graph = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebPage',
+      name: 'Pricing - Expense Tracker',
+      url: 'https://expense-pro.khatriutsav.com/pricing',
+      description:
+        'Choose the perfect plan for your financial journey. Start for free or upgrade to Pro for a lifetime of advanced AI-powered features.'
+    },
+    {
+      '@type': 'Product',
+      name: 'Expense Tracker Pro',
+      description: 'Unlock lifetime access to advanced financial management features.',
+      sku: 'ET-PRO-LIFETIME',
+      brand: {
+        '@type': 'Brand',
+        name: 'Expense Tracker'
+      },
+      offers: {
+        '@type': 'Offer',
+        price: '499.00',
+        priceCurrency: 'INR',
+        availability: 'https://schema.org/InStock',
+        priceValidUntil: '2025-12-31',
+        url: 'https://expense-pro.khatriutsav.com/pricing'
+      },
+      review: {
+        '@type': 'Review',
+        reviewRating: {
+          '@type': 'Rating',
+          ratingValue: '4.8',
+          bestRating: '5'
+        },
+        author: {
+          '@type': 'Person',
+          name: 'Alex Doe'
+        },
+        positiveNotes: {
+          '@type': 'ItemList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'One-time purchase model' },
+            { '@type': 'ListItem', position: 2, name: 'Powerful AI features' },
+            { '@type': 'ListItem', position: 3, name: 'Comprehensive free plan' }
+          ]
+        }
+      }
+    },
+    {
+      '@type': 'FAQPage',
+      mainEntity: faqs.map((faq, index) => ({
+        '@type': 'Question',
+        name: faq.question,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: faq.answer
+        }
+      }))
+    }
+  ]
 };
 
 const PricingPage = () => {
@@ -99,29 +147,6 @@ const PricingPage = () => {
       }
     })
   };
-
-  const faqs = [
-    {
-      question: 'Is the Pro plan really a one-time purchase?',
-      answer:
-        'Yes! You pay once and get lifetime access to all current and future Pro features. No subscriptions, no hidden fees.'
-    },
-    {
-      question: 'What happens after I purchase?',
-      answer:
-        'Your account will be instantly upgraded to Pro status, unlocking all advanced features immediately. You will also receive a confirmation email.'
-    },
-    {
-      question: 'Can I use the Free plan forever?',
-      answer:
-        'Absolutely. The Free plan is fully functional for essential expense tracking and is not a limited-time trial.'
-    },
-    {
-      question: 'Do you offer refunds?',
-      answer:
-        'Due to the nature of the one-time purchase model providing lifetime access, we do not offer refunds. We encourage you to use the comprehensive Free plan to ensure Expense Pro is the right fit for you before upgrading.'
-    }
-  ];
 
   return (
     <>

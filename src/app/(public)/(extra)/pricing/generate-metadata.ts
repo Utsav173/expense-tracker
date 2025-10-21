@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: 'Pricing - Expense Tracker | Unlock Pro Features',
+    title: 'Pricing & Plans - Expense Tracker',
     description:
       'Choose the perfect plan for your financial journey. Start for free with essential expense tracking tools or upgrade to Pro for a lifetime of advanced AI-powered features.',
     keywords: [
@@ -11,10 +11,11 @@ export async function generateMetadata(): Promise<Metadata> {
       'budgeting app price',
       'pro plan',
       'lifetime access',
-      'financial management tools'
+      'financial management tools',
+      'free vs pro'
     ],
     openGraph: {
-      title: 'Pricing - Expense Tracker | Unlock Pro Features',
+      title: 'Pricing & Plans - Expense Tracker | Unlock Pro Features',
       description:
         'Explore our simple pricing and unlock a lifetime of financial clarity with a single purchase.',
       url: 'https://expense-pro.khatriutsav.com/pricing',
@@ -30,7 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: {
       card: 'summary_large_image',
-      title: 'Pricing - Expense Tracker | Unlock Pro Features',
+      title: 'Pricing & Plans - Expense Tracker | Unlock Pro Features',
       description:
         'Explore our simple pricing and unlock a lifetime of financial clarity with a single purchase.',
       images: ['https://expense-pro.khatriutsav.com/og-image-pricing.png']

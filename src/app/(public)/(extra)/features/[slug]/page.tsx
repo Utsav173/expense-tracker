@@ -69,7 +69,8 @@ const FeatureDetailPage = async ({ params }: { params: Promise<{ slug: string }>
             url: 'https://expense-pro.khatriutsav.com/favicon-96x96.png'
           }
         },
-        articleBody: feature.longDescription
+        articleBody: feature.longDescription,
+        keywords: [feature.title.toLowerCase(), 'expense tracker', 'personal finance']
       }
     ]
   } as any;

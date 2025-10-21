@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: 'Expense Tracker | Master Your Money with AI-Powered Insights',
+    title: 'Expense Tracker: AI-Powered Finance & Budgeting App',
     description:
       'Take control of your finances with an AI-powered expense tracker. Get predictive insights, automated budgeting, and actionable advice to achieve your financial goals.',
     keywords: [
@@ -11,7 +11,10 @@ export async function generateMetadata(): Promise<Metadata> {
       'personal finance',
       'budgeting app',
       'money management',
-      'financial planning'
+      'financial planning',
+      'spending tracker',
+      'investment portfolio',
+      'debt management'
     ],
     openGraph: {
       title: 'Expense Tracker | Master Your Money with AI-Powered Insights',
@@ -39,7 +42,7 @@ export async function generateMetadata(): Promise<Metadata> {
       google: 'tNXFFpZE1VOHdcWpBlnAsX7avQThqRD6wjolUQaG4rU'
     },
     alternates: {
-      canonical: 'https://expense-pro.khatriutsav.com',
-    },
+      canonical: 'https://expense-pro.khatriutsav.com'
+    }
   };
 }
