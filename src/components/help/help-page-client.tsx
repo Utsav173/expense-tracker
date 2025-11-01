@@ -1,13 +1,11 @@
-'use client';
 
-import React, { useEffect, useState, useMemo, Suspense, lazy } from 'react';
+import React, { Suspense, lazy } from 'react';
 import { helpSections } from '@/content/help';
 import { cn } from '@/lib/utils';
 import { Icon } from '@/components/ui/icon';
 import Loader from '@/components/ui/loader';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
+import HelpNavigation from './HelpNavigation';
 
 const GettingStarted = lazy(() => import('@/content/help/getting-started.mdx'));
 const Dashboard = lazy(() => import('@/content/help/dashboard.mdx'));
@@ -29,106 +27,7 @@ const mdxComponents: { [key: string]: React.ComponentType } = {
   'profile-settings': ProfileSettings
 };
 
-interface TocItem {
-  id: string;
-  title: string;
-  subsections?: TocItem[];
-}
-
 export default function HelpPageClient() {
-  const [activeId, setActiveId] = useState('getting-started');
-  const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const isMobile = useIsMobile();
-
-  useEffect(() => {
-    const allIds = helpSections.flatMap((s) => [
-      s.id,
-      ...(s.subsections?.map((sub) => sub.id) || [])
-    ]);
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setActiveId(entry.target.id);
-            return;
-          }
-        }
-      },
-      { rootMargin: '-80px 0px -60% 0px', threshold: 0.1 }
-    );
-    const elements = allIds.map((id) => document.getElementById(id)).filter(Boolean);
-    elements.forEach((el) => observer.observe(el!));
-    return () => elements.forEach((el) => observer.unobserve(el!));
-  }, []);
-
-  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
-    e.preventDefault();
-    const element = document.getElementById(id);
-    if (element) {
-      const yOffset = -80;
-      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-      window.scrollTo({ top: y, behavior: 'smooth' });
-      history.pushState(null, '', `#${id}`);
-      setActiveId(id);
-      setIsMobileSheetOpen(false);
-    }
-  };
-
-  const currentSection = useMemo(() => {
-    return helpSections.find(
-      (section) =>
-        section.id === activeId || section.subsections?.some((sub) => sub.id === activeId)
-    );
-  }, [activeId]);
-
-  const filteredSections = useMemo(() => {
-    if (!searchQuery) return helpSections;
-    const lowercasedQuery = searchQuery.toLowerCase();
-    return helpSections.filter(
-      (section) =>
-        section.title.toLowerCase().includes(lowercasedQuery) ||
-        section.subsections?.some((sub) => sub.title.toLowerCase().includes(lowercasedQuery))
-    );
-  }, [searchQuery]);
-
-  const TableOfContents = () => (
-    <div className='space-y-0.5'>
-      {filteredSections.map((item) => (
-        <div key={item.id}>
-          <a
-            href={`#${item.id}`}
-            onClick={(e) => handleLinkClick(e, item.id)}
-            aria-current={
-              activeId === item.id || item.subsections?.some((sub) => sub.id === activeId)
-                ? 'page'
-                : undefined
-            }
-            className={cn(
-              'group relative flex items-center gap-3 overflow-hidden rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ease-out',
-              activeId === item.id || item.subsections?.some((sub) => sub.id === activeId)
-                ? 'from-primary/8 via-primary/2 to-primary/0 text-primary bg-gradient-to-r shadow-sm'
-                : 'text-muted-foreground hover:from-muted/60 hover:to-muted/40 hover:text-foreground hover:bg-gradient-to-r'
-            )}
-          >
-            <div
-              className={cn(
-                'flex h-8 w-8 items-center justify-center rounded-md transition-colors duration-200'
-              )}
-            >
-              <Icon name={item.icon} className='h-4 w-4' aria-hidden='true' />
-            </div>
-            <span className='truncate font-medium'>{item.title}</span>
-
-            {(activeId === item.id || item.subsections?.some((sub) => sub.id === activeId)) && (
-              <div className='bg-primary ml-auto h-2 w-2 animate-pulse rounded-full' />
-            )}
-          </a>
-        </div>
-      ))}
-    </div>
-  );
-
   return (
     <div className='from-background via-background to-muted/20 min-h-screen bg-gradient-to-br'>
       {/* Hero Section */}
@@ -169,78 +68,11 @@ export default function HelpPageClient() {
         </div>
       </header>
 
-      {/* Mobile Navigation */}
-      <div className='border-border/50 bg-background/80 sticky top-16 z-40 border-b backdrop-blur-md md:hidden'>
-        <div className='px-4 py-3'>
-          <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
-            <SheetTrigger asChild>
-              <Button
-                variant='outline'
-                size='sm'
-                className='bg-background/50 hover:bg-background/80 w-full justify-between'
-              >
-                <div className='flex items-center gap-2.5'>
-                  <Icon name='menu' className='h-4 w-4' />
-                  <span className='truncate text-sm font-medium'>
-                    {currentSection?.title || 'Help Topics'}
-                  </span>
-                </div>
-                <Icon name='chevronDown' className='text-muted-foreground h-4 w-4' />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side='left' className='w-full max-w-sm p-6'>
-              <SheetHeader className='mb-6'>
-                <SheetTitle className='text-left text-lg font-semibold'>Help Topics</SheetTitle>
-              </SheetHeader>
-              <TableOfContents />
-            </SheetContent>
-          </Sheet>
-        </div>
-      </div>
-
       {/* Main Content */}
       <div className='relative'>
         <div className='mx-auto max-w-7xl px-6 py-8 lg:py-12'>
           <div className='grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-12'>
-            {/* Sidebar */}
-            <aside className='hidden lg:col-span-3 lg:block'>
-              <div className='sticky top-20'>
-                <div className='border-border/50 bg-card/30 rounded-2xl border p-6 shadow-lg backdrop-blur-sm'>
-                  <div className='mb-4 flex items-center gap-2'>
-                    <Icon name='bookOpen' className='text-primary h-5 w-5' />
-                    <h2 className='text-foreground font-semibold'>Navigation</h2>
-                  </div>
-                  <TableOfContents />
-                </div>
-
-                {/* Progress Indicator */}
-                <div className='border-border/50 bg-card/20 mt-6 rounded-xl border p-4'>
-                  <div className='mb-2 flex items-center justify-between text-sm'>
-                    <span className='text-muted-foreground'>Reading Progress</span>
-                    <span className='text-primary font-medium'>
-                      {Math.round(
-                        ((helpSections.findIndex(
-                          (s) =>
-                            s.id === activeId || s.subsections?.some((sub) => sub.id === activeId)
-                        ) +
-                          1) /
-                          helpSections.length) *
-                          100
-                      )}
-                      %
-                    </span>
-                  </div>
-                  <div className='bg-muted/30 h-1.5 w-full rounded-full'>
-                    <div
-                      className='from-primary to-secondary h-1.5 rounded-full bg-gradient-to-r transition-all duration-300'
-                      style={{
-                        width: `${((helpSections.findIndex((s) => s.id === activeId || s.subsections?.some((sub) => sub.id === activeId)) + 1) / helpSections.length) * 100}%`
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </aside>
+            <HelpNavigation />
 
             {/* Content */}
             <main className='lg:col-span-9'>
@@ -300,3 +132,4 @@ export default function HelpPageClient() {
     </div>
   );
 }
+

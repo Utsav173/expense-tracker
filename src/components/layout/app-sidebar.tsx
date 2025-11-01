@@ -67,13 +67,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         label: 'Intelligence',
         items: [
           {
-            title: 'AI Assistant',
+            title: 'Expense AI',
             url: '/ai-chat',
-            icon: hasApiKey ? 'brainCircuit' : 'lock',
+            icon: hasApiKey ? 'ai' : 'lock',
             disabled: !hasApiKey,
             tooltip: !hasApiKey
               ? 'Configure your AI Provider in Profile to enable.'
-              : 'AI Financial Assistant'
+              : 'Expense PRO AI Assistant'
           }
         ]
       }

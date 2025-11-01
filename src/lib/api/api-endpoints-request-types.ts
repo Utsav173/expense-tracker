@@ -735,6 +735,10 @@ export const apiEndpoints = {
     getFinancialHealth: {
       method: 'GET',
       path: '/ai/financial-health/analysis'
+    },
+    getSuggestions: {
+      method: 'GET',
+      path: '/ai/suggestions'
     }
   },
   invitation: {

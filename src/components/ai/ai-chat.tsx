@@ -16,6 +16,7 @@ import { DefaultChatTransport, FileUIPart } from 'ai';
 import type { MyUIMessage } from '@/lib/ai-types';
 import { Suggestion } from '@/components/ai-elements/suggestion';
 import { authClient } from '@/lib/auth-client';
+import { aiGetSuggestions } from '@/lib/endpoints/ai';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = [
@@ -53,7 +54,9 @@ const PromptSuggestion = ({ text, onClick }: { text: string; onClick: () => void
       name='sparkles'
       className='text-muted-foreground group-hover:text-primary h-4 w-4 shrink-0 transition-colors'
     />
-    <span className='flex-1 text-purple-800 dark:text-indigo-300'>{text}</span>
+    <span className='flex-1 text-purple-800 dark:text-indigo-300' title={text}>
+      {text}
+    </span>
     <Icon
       name='arrowRight'
       className='text-muted-foreground h-4 w-4 shrink-0 opacity-0 transition-all group-hover:translate-x-1 group-hover:opacity-100'
@@ -223,6 +226,23 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
     attachFiles(event.dataTransfer?.files || null);
   };
 
+  const [dynamicSuggestions, setDynamicSuggestions] = useState<string[]>([]);
+
+  const fetchSuggestions = useCallback(async () => {
+    try {
+      const res = await aiGetSuggestions();
+      if (res) {
+        setDynamicSuggestions(res);
+      }
+    } catch (error) {
+      console.error('Failed to fetch suggestions:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSuggestions();
+  }, [fetchSuggestions]);
+
   const handleSendMessage = useCallback(
     async (promptText?: string) => {
       const messageToSend = (promptText ?? input).trim();
@@ -250,11 +270,12 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
           text: messageToSend || '(no message)',
           files: fileParts
         });
+        fetchSuggestions(); // Refetch suggestions after sending a message
       } finally {
         resetAttachments();
       }
     },
-    [attachments, input, status, isOffline, sendMessage, resetAttachments]
+    [attachments, input, status, isOffline, sendMessage, resetAttachments, fetchSuggestions]
   );
 
   const handleStop = useCallback(() => {
@@ -263,6 +284,19 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
       showSuccess('Generation stopped.');
     } catch {}
   }, [stop, showSuccess]);
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      if (status === 'streaming') {
+        handleStop();
+      } else {
+        handleSendMessage();
+      }
+    } else if (event.key === 'Escape' && status === 'streaming') {
+      handleStop();
+    }
+  };
 
   const regenerateLast = useCallback(() => {
     if (isBusy) return;
@@ -303,41 +337,10 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
     setTimeout(() => textAreaRef.current?.focus(), 0);
   };
 
-  const suggestions = [
-    'Add an expense of 500 for groceries',
-    'What was my total spending last month?',
-    "Show me all transactions in my 'Travel' budget"
-  ];
-
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      if (status === 'streaming') {
-        handleStop();
-      } else {
-        handleSendMessage();
-      }
-    } else if (event.key === 'Escape' && status === 'streaming') {
-      handleStop();
-    }
-  };
-
   const lastMessage = messages[messages.length - 1];
-  let followUpSuggestions: string[] = [];
-
-  if (lastMessage?.role === 'assistant' && status === 'ready') {
-    const lastText = lastMessage.parts
-      .filter((p) => p.type === 'text')
-      .map((p) => p.text)
-      .join('');
-    if (lastText.includes('Next actions:')) {
-      followUpSuggestions = lastText
-        .split('Next actions:')[1]
-        .split('\n')
-        .map((s) => s.trim().replace(/^- /, ''))
-        .filter(Boolean);
-    }
-  }
+  const showSuggestions =
+    (messages.length === 0 || (lastMessage?.role === 'assistant' && status === 'ready')) &&
+    dynamicSuggestions.length > 0;
 
   return (
     <div
@@ -425,7 +428,7 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
                     or XLSX file.
                   </p>
                   <div className='w-full max-w-md space-y-2'>
-                    {suggestions.map((s, i) => (
+                    {dynamicSuggestions.map((s, i) => (
                       <motion.div
                         key={s}
                         initial={prefersReducedMotion ? undefined : { opacity: 0, y: 10 }}
@@ -566,9 +569,9 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
       )}
 
       <div className='mx-auto w-full max-w-4xl p-4'>
-        {followUpSuggestions.length > 0 && (
+        {showSuggestions && (
           <div className='mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3'>
-            {followUpSuggestions.map((s, i) => (
+            {dynamicSuggestions.map((s, i) => (
               <Suggestion key={i} suggestion={s} onClick={() => handleSendMessage(s)} />
             ))}
           </div>

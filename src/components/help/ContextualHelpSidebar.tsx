@@ -1,8 +1,7 @@
 'use client';
 
 import React, { Suspense, useMemo, lazy } from 'react';
-import { usePathname } from 'next/navigation';
-import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet';
 import { pathMappings } from '@/content/help';
 import { Button } from '@/components/ui/button';
@@ -25,6 +24,7 @@ export const ContextualHelpSidebar: React.FC<ContextualHelpSidebarProps> = ({
   onOpenChange
 }) => {
   const pathname = usePathname();
+  const router = useRouter();
   const isMobile = useIsMobile();
 
   const { MdxComponent, title } = useMemo(() => {
@@ -39,6 +39,10 @@ export const ContextualHelpSidebar: React.FC<ContextualHelpSidebarProps> = ({
 
     return { MdxComponent: getMdxComponent(sectionId), title: sectionTitle };
   }, [pathname]);
+
+  if (pathname === '/help') {
+    return null;
+  }
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -63,11 +67,15 @@ export const ContextualHelpSidebar: React.FC<ContextualHelpSidebarProps> = ({
           </article>
         </div>
         <SheetFooter className='mt-auto border-t p-6 max-sm:p-3'>
-          <Button asChild className='w-full'>
-            <Link href='/help'>
-              Go to Full Help Center
-              <Icon name='arrowRight' className='ml-2 h-4 w-4' />
-            </Link>
+          <Button
+            className='w-full'
+            onClick={() => {
+              onOpenChange(false);
+              router.push('/help');
+            }}
+          >
+            Go to Full Help Center
+            <Icon name='arrowRight' className='ml-2 h-4 w-4' />
           </Button>
         </SheetFooter>
       </SheetContent>

@@ -8,6 +8,8 @@ type PdfProcessBody = z.infer<typeof apiEndpoints.ai.processPdf.body>;
 export const aiProcessTransactionPdf = (body: PdfProcessBody): Promise<AIAPI.ProcessPdfResponse> =>
   apiClient(apiEndpoints.ai.processPdf, { body });
 
+export const aiGetSuggestions = (): Promise<string[]> => apiClient(apiEndpoints.ai.getSuggestions);
+
 export interface AIModel {
   id: string;
   name: string;
