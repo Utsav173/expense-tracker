@@ -10,9 +10,14 @@ import { Icon } from '@/components/ui/icon';
 import { IconName } from '@/components/ui/icon-map';
 import { Graph } from 'schema-dts';
 import Script from 'next/script';
+import { cacheLife, cacheTag } from 'next/cache';
 
 const FeatureDetailPage = async ({ params }: { params: Promise<{ slug: string }> }) => {
   const slug = (await params).slug;
+
+  cacheTag(`feature-${slug}`);
+  cacheLife('max');
+
   const feature = featuresList.find((f) => f.slug === slug);
 
   if (!feature) {

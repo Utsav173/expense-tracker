@@ -5,6 +5,7 @@ import { helpSections } from '@/content/help';
 import { FAQPage, WithContext } from 'schema-dts';
 import Script from 'next/script';
 import dynamic from 'next/dynamic';
+import { cacheLife } from 'next/cache';
 
 const HelpPageClient = dynamic(() => import('@/components/help/help-page-client'));
 
@@ -35,6 +36,8 @@ const jsonLd: WithContext<FAQPage> = {
 };
 
 export default async function HelpPage() {
+  cacheLife('max');
+
   return (
     <>
       <Script

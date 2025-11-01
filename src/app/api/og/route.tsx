@@ -3,8 +3,6 @@ import { NextRequest } from 'next/server';
 import { featuresList } from '@/lib/data/features-list';
 import { IconName } from '@/components/ui/icon-map';
 
-export const runtime = 'edge';
-
 // Icon components that return JSX directly (Satori compatible)
 function getIconComponent(iconName: IconName) {
   const iconProps = {

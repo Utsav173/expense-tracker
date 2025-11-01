@@ -9,15 +9,14 @@ interface ComingSoonProps {
   message?: string;
   className?: string;
   featureName?: string;
-  progress?: number;
 }
 
 const ComingSoon: React.FC<ComingSoonProps> = ({
   message = "We're working hard to bring you something amazing. This feature is currently under development.",
   className = '',
-  featureName = 'Coming Soon',
-  progress = 88
+  featureName = 'Coming Soon'
 }) => {
+  const progress = Math.floor(Math.random() * 30) + 60;
   return (
     <div
       className={cn(

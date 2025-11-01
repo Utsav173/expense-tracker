@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import ComingSoon from '@/components/ui/coming-soon';
 import { Button } from '../ui/button';
+import Loader from '../ui/loader';
 
 interface ComingSoonModalProps {
   isOpen: boolean;
@@ -30,9 +31,9 @@ const ComingSoonModal: React.FC<ComingSoonModalProps> = ({
         <DialogHeader className='mb-4'>
           <DialogTitle className='text-center text-lg font-medium'>{featureName}</DialogTitle>
         </DialogHeader>
-        {children || (
-          <ComingSoon featureName={featureName} progress={Math.floor(Math.random() * 30) + 60} />
-        )}
+        <Suspense fallback={<Loader />}>
+          {children || <ComingSoon featureName={featureName} />}
+        </Suspense>
         <DialogClose asChild>
           <Button type='button' variant='outline' className='mt-4 w-full'>
             Close

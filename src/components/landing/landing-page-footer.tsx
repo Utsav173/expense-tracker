@@ -1,5 +1,5 @@
-'use client';
-import React from 'react';
+import { CurrentYear } from './current-year';
+import { Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -108,9 +108,11 @@ const LandingPageFooter = () => {
 
         {/* Bottom Bar */}
         <div className='border-border mt-8 border-t pt-6 lg:mt-12'>
-          <p className='text-muted-foreground text-center text-xs sm:text-sm'>
-            © {new Date().getFullYear()} Expense Pro. All Rights Reserved.
-          </p>
+          <Suspense fallback={null}>
+            <p className='text-muted-foreground text-center text-xs sm:text-sm'>
+              © <CurrentYear /> Expense Pro. All Rights Reserved.
+            </p>
+          </Suspense>
         </div>
       </div>
     </footer>

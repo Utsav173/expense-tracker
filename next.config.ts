@@ -2,9 +2,7 @@ import type { NextConfig } from 'next';
 import createMDX from '@next/mdx';
 
 const nextConfig: NextConfig = {
-  experimental: {
-    useCache: true
-  },
+  cacheComponents: true,
   images: {
     remotePatterns: [
       {
@@ -13,7 +11,10 @@ const nextConfig: NextConfig = {
     ]
   },
   // Add MDX extensions to the list of page extensions
-  pageExtensions: ['js', 'jsx', 'md', 'mdx', 'ts', 'tsx']
+  pageExtensions: ['js', 'jsx', 'md', 'mdx', 'ts', 'tsx'],
+  experimental: {
+    mdxRs: true,
+  },
 };
 
 const withMDX = createMDX({
