@@ -1,22 +1,10 @@
 'use client';
 
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
-import {
-  investmentGetAll,
-  investmentDelete,
-  investmentStockSearch,
-  investmentStockPrice
-} from '@/lib/endpoints/investment';
-import {
-  investmentAccountGetById,
-  investmentAccountGetSummary
-} from '@/lib/endpoints/investmentAccount';
-import { use, useState, useEffect } from 'react';
+import { use, Suspense, useState, useEffect } from 'react';
 import Loader from '@/components/ui/loader';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/lib/hooks/useToast';
-import type { InvestmentAPI, InvestmentAccountAPI } from '@/lib/api/api-types';
+import type { InvestmentAPI } from '@/lib/api/api-types';
 import AddInvestmentHoldingModal from '@/components/modals/add-investment-holding-modal';
 import UpdateInvestmentHoldingModal from '@/components/modals/update-investment-holding-modal';
 import DeleteConfirmationModal from '@/components/modals/delete-confirmation-modal';
@@ -24,32 +12,49 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import CommonTable from '@/components/ui/CommonTable';
 import { investmentHoldingsColumns } from '@/components/investment/investment-holdings-columns';
 import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
-import { useUrlState } from '@/hooks/useUrlState';
 import { SortingState } from '@tanstack/react-table';
 import { SingleLineEllipsis } from '@/components/ui/ellipsis-components';
 import { Input } from '@/components/ui/input';
 import dynamic from 'next/dynamic';
 import { Icon } from '@/components/ui/icon';
 import { useAppStore } from '@/stores/app-store';
+import {
+  InvestmentAccountDetailsProvider,
+  useInvestmentAccountDetails
+} from '@/components/investment/context/investment-account-details-context';
+import { useRouter } from 'next/navigation';
+import { useMutation } from '@tanstack/react-query';
+import {
+  investmentDelete,
+  investmentStockSearch,
+  investmentStockPrice
+} from '@/lib/endpoints/investment';
+import QueryErrorDisplay from '@/components/ui/query-error-display';
 
 const InvestmentAccountOverview = dynamic(
   () => import('@/components/investment/investment-account-overview')
 );
 
-const initialUrlState = {
-  page: 1,
-  sortBy: 'purchaseDate',
-  sortOrder: 'desc' as 'asc' | 'desc',
-  q: ''
-};
-
-const InvestmentAccountDetailPage = ({ params }: { params: Promise<{ accountId: string }> }) => {
-  const parsedParams = use(params);
+const InvestmentAccountDetailPageContent = () => {
   const router = useRouter();
-  const accountId = parsedParams.accountId as string;
   const { showError } = useToast();
   const invalidate = useInvalidateQueries();
   const { setCurrentInvestmentAccountName, clearCurrentInvestmentAccountName } = useAppStore();
+
+  const {
+    accountId,
+    account,
+    isAccountLoading,
+    accountError,
+    investments,
+    isInvestmentsLoading,
+    refetchInvestments,
+    state,
+    setState,
+    handlePageChange,
+    searchQuery,
+    setSearchQuery
+  } = useInvestmentAccountDetails();
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -58,25 +63,9 @@ const InvestmentAccountDetailPage = ({ params }: { params: Promise<{ accountId: 
     null
   );
 
-  const { state, setState, handlePageChange, searchQuery, setSearchQuery } =
-    useUrlState(initialUrlState);
-
-  const {
-    data: account,
-    isLoading: isLoadingAccount,
-    error: accountError
-  } = useQuery({
-    queryKey: ['investmentAccount', accountId],
-    queryFn: () => investmentAccountGetById(accountId),
-    enabled: !!accountId,
-    staleTime: 5 * 60 * 1000
-  });
-
   useEffect(() => {
     if (accountError) {
-      if (accountError instanceof Error) {
-        showError(accountError.message);
-      }
+      showError(accountError.message);
     }
   }, [accountError, showError]);
 
@@ -89,28 +78,10 @@ const InvestmentAccountDetailPage = ({ params }: { params: Promise<{ accountId: 
     };
   }, [account, setCurrentInvestmentAccountName, clearCurrentInvestmentAccountName]);
 
-  const {
-    data: investments,
-    isLoading: isLoadingInvestments,
-    refetch: refetchInvestments
-  } = useQuery({
-    queryKey: ['investments', accountId, state.page, state.q, state.sortBy, state.sortOrder],
-    queryFn: () =>
-      investmentGetAll(accountId, {
-        page: state.page,
-        limit: 10,
-        sortBy: state.sortBy,
-        sortOrder: state.sortOrder,
-        q: state.q
-      }),
-    enabled: !!accountId,
-    retry: false
-  });
-
   const deleteInvestmentMutation = useMutation({
     mutationFn: (id: string) => investmentDelete(id),
     onSuccess: async () => {
-      await invalidate(['investments', accountId, state.page, state.sortBy, state.sortOrder]);
+      await invalidate(['investments', accountId]);
       await invalidate(['investmentAccountSummary', accountId]);
       await invalidate(['investmentPortfolioSummaryDashboard']);
       setDeleteInvestmentId(null);
@@ -136,17 +107,8 @@ const InvestmentAccountDetailPage = ({ params }: { params: Promise<{ accountId: 
     }
   };
 
-  const handleStockSearch = async (
-    query: string
-  ): Promise<InvestmentAPI.SearchStocksResponse | null> => {
-    return investmentStockSearch({ q: query });
-  };
-
-  const handleStockPrice = async (
-    symbol: string
-  ): Promise<InvestmentAPI.StockPriceResult | null> => {
-    return investmentStockPrice(symbol);
-  };
+  const handleStockSearch = async (query: string) => investmentStockSearch({ q: query });
+  const handleStockPrice = async (symbol: string) => investmentStockPrice(symbol);
 
   const handleSort = (newSortingState: SortingState) => {
     if (newSortingState.length > 0) {
@@ -164,13 +126,12 @@ const InvestmentAccountDetailPage = ({ params }: { params: Promise<{ accountId: 
     accountCurrency: account?.currency || 'INR'
   });
 
-  if (isLoadingAccount) {
+  if (isAccountLoading) {
     return <Loader />;
   }
 
   if (accountError) {
-    showError(`Failed to load account details: ${(accountError as Error).message}`);
-    return <p>Error loading account details.</p>;
+    return <QueryErrorDisplay error={accountError} message='Failed to load account details.' />;
   }
 
   if (!account) {
@@ -200,15 +161,13 @@ const InvestmentAccountDetailPage = ({ params }: { params: Promise<{ accountId: 
           <Icon name='barChart4' className='mr-2 h-4 w-4' /> Add Investment
         </Button>
       </div>
-      {investments?.data.length !== 0 && (
-        <InvestmentAccountOverview
-          accountId={accountId}
-          accountCurrency={account.currency}
-          oldestInvestmentDate={
-            account?.oldestInvestmentDate ? new Date(account.oldestInvestmentDate) : undefined
-          }
-        />
-      )}
+
+      <InvestmentAccountOverview
+        accountCurrency={account.currency}
+        oldestInvestmentDate={
+          account.oldestInvestmentDate ? new Date(account.oldestInvestmentDate) : undefined
+        }
+      />
 
       <Card>
         <CardHeader>
@@ -233,7 +192,7 @@ const InvestmentAccountDetailPage = ({ params }: { params: Promise<{ accountId: 
             tableId={`investment-holdings-${accountId}`}
             data={investments?.data || []}
             columns={columns}
-            loading={isLoadingInvestments}
+            loading={isInvestmentsLoading}
             totalRecords={investments?.pagination?.total || 0}
             pageSize={10}
             currentPage={state.page}
@@ -252,7 +211,7 @@ const InvestmentAccountDetailPage = ({ params }: { params: Promise<{ accountId: 
         accountId={accountId}
         accountCurrency={account.currency}
         onInvestmentAdded={() => {
-          invalidate(['investments', accountId, state.page, state.sortBy, state.sortOrder]);
+          invalidate(['investments', accountId]);
           invalidate(['investmentAccountSummary', accountId]);
           invalidate(['investmentPortfolioSummaryDashboard']);
           refetchInvestments();
@@ -281,6 +240,18 @@ const InvestmentAccountDetailPage = ({ params }: { params: Promise<{ accountId: 
         onOpenChange={(open) => !open && setDeleteInvestmentId(null)}
       />
     </div>
+  );
+};
+
+const InvestmentAccountDetailPage = ({ params }: { params: Promise<{ accountId: string }> }) => {
+  const parsedParams = use(params);
+
+  return (
+    <Suspense fallback={<Loader className='absolute inset-0 flex items-center justify-center' />}>
+      <InvestmentAccountDetailsProvider accountId={parsedParams.accountId}>
+        <InvestmentAccountDetailPageContent />
+      </InvestmentAccountDetailsProvider>
+    </Suspense>
   );
 };
 

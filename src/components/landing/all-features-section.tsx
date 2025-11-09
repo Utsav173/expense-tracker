@@ -2,9 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Card, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { featuresList } from '@/lib/data/features-list';
 import { Icon } from '../ui/icon';
+import { BentoGrid, BentoGridItem } from '../ui/bento-grid';
 
 export const AllFeaturesSection = () => {
   return (
@@ -17,29 +17,38 @@ export const AllFeaturesSection = () => {
           </p>
         </div>
 
-        <div className='mt-16 grid grid-cols-3 gap-6 max-sm:grid-cols-1'>
-          {featuresList.map((feature) => {
+        <BentoGrid className='mt-16'>
+          {featuresList.map((feature, i) => {
+            const isLarge = i === 0 || i === featuresList.length - 1;
+            const isMedium = i === 3 || i === 4;
+
             return (
-              <Link
+              <BentoGridItem
                 key={feature.slug}
-                href={`/features/${feature.slug}`}
-                className='group block h-full transform-gpu transition-all duration-300 hover:-translate-y-[1px]'
+                className={
+                  isLarge
+                    ? 'col-span-12 md:col-span-6'
+                    : isMedium
+                      ? 'col-span-12 md:col-span-4'
+                      : 'col-span-12 md:col-span-4'
+                }
               >
-                <Card className='group-hover:border-primary/50 flex h-full flex-col p-6 shadow-lg group-hover:shadow-2xl'>
-                  <CardHeader className='p-0'>
+                <Link
+                  href={`/features/${feature.slug}`}
+                  className='flex h-full flex-col justify-between p-6'
+                >
+                  <div>
                     <div className='bg-primary/10 text-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg'>
                       <Icon name={feature.icon} className='h-6 w-6' />
                     </div>
-                    <CardTitle>{feature.title}</CardTitle>
-                  </CardHeader>
-                  <CardDescription className='mt-2 flex-grow'>
-                    {feature.description}
-                  </CardDescription>
-                </Card>
-              </Link>
+                    <h3 className='text-xl font-semibold'>{feature.title}</h3>
+                    <p className='text-muted-foreground mt-2 text-sm'>{feature.description}</p>
+                  </div>
+                </Link>
+              </BentoGridItem>
             );
           })}
-        </div>
+        </BentoGrid>
       </div>
     </section>
   );

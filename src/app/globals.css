@@ -9,7 +9,6 @@
   from {
     height: 0px;
   }
-
   to {
     height: var(--radix-accordion-content-height);
   }
@@ -19,7 +18,6 @@
   from {
     height: var(--radix-accordion-content-height);
   }
-
   to {
     height: 0px;
   }
@@ -29,7 +27,6 @@
   from {
     height: 0px;
   }
-
   to {
     height: var(--radix-collapsible-content-height);
   }
@@ -39,7 +36,6 @@
   from {
     height: var(--radix-collapsible-content-height);
   }
-
   to {
     height: 0px;
   }
@@ -68,6 +64,7 @@
   --transition-duration: 200ms;
   --transition-timing-function-open: ease-in-out;
   --transition-timing-function-close: ease-out;
+  --transition-timing-function: var(--transition-timing-function-open);
 
   --shadow-color-hsl: 220 25% 7%;
   --shadow-strength: 2.5%;
@@ -179,21 +176,25 @@
   --account-foreground: oklch(0.42 0.15 252);
   --account-border-b: oklch(0.72 0.09 252 / 0.55);
   --account-hover: oklch(0.86 0.09 252);
+  --account-active: oklch(from var(--account) calc(l * 0.97) calc(c * 1.05) h);
 
   --transaction: oklch(0.88 0.07 144);
   --transaction-foreground: oklch(0.4 0.15 144);
   --transaction-border-b: oklch(0.7 0.09 144 / 0.55);
   --transaction-hover: oklch(0.85 0.09 144);
+  --transaction-active: oklch(from var(--transaction) calc(l * 0.97) calc(c * 1.05) h);
 
   --planning: oklch(0.9 0.07 208);
   --planning-foreground: oklch(0.44 0.15 208);
   --planning-border-b: oklch(0.73 0.09 208 / 0.55);
   --planning-hover: oklch(0.87 0.09 208);
+  --planning-active: oklch(from var(--planning) calc(l * 0.97) calc(c * 1.05) h);
 
   --category: oklch(0.91 0.07 88);
   --category-foreground: oklch(0.46 0.15 88);
   --category-border-b: oklch(0.74 0.09 88 / 0.55);
   --category-hover: oklch(0.88 0.09 88);
+  --category-active: oklch(from var(--category) calc(l * 0.97) calc(c * 1.05) h);
 
   --chart-1: var(--primary-base);
   --chart-2: var(--success-base);
@@ -201,6 +202,10 @@
   --chart-4: oklch(0.7 0.15 var(--hue-warning));
   --chart-5: oklch(0.52 0.17 var(--hue-financial));
   --chart-6: oklch(0.5 0.15 12);
+  --chart-7: oklch(0.58 0.15 312);
+  --chart-8: oklch(0.56 0.15 24);
+  --chart-9: oklch(0.54 0.15 186);
+  --chart-10: oklch(0.56 0.15 42);
 
   --chart-income: var(--income);
   --chart-expense: var(--expense);
@@ -208,6 +213,9 @@
   --chart-positive: var(--positive);
   --chart-negative: var(--negative);
   --chart-neutral: var(--neutral);
+  --chart-savings: var(--balance);
+  --chart-investment: oklch(0.56 0.15 var(--hue-accent));
+  --chart-debt: var(--destructive);
 
   --sparkline-color-positive: var(--income);
   --sparkline-color-negative: var(--expense);
@@ -229,6 +237,14 @@
 
   --help-ring: oklch(0.54 0.19 var(--hue-primary) / 0.1);
   --help-bg: oklch(0.54 0.19 var(--hue-primary) / 0.05);
+
+  --danger: var(--danger-base);
+  --danger-foreground: var(--danger-fg);
+
+  --error: var(--destructive);
+  --error-foreground: var(--destructive-foreground);
+
+  --mask-url: none;
 }
 
 .dark {
@@ -254,7 +270,7 @@
   --success-fg: oklch(0.13 0.018 var(--hue-success));
 
   --danger-base: oklch(0.64 0.17 var(--hue-danger));
-  --danger-fg: oklch(0.97 0.008 var(--hue-danger));
+  --danger-fg: oklch(0.15 0.018 var(--hue-danger));
 
   --warning-base: oklch(0.77 0.13 var(--hue-warning));
   --warning-fg: oklch(0.15 0.028 var(--hue-warning));
@@ -316,7 +332,7 @@
   --destructive-border-b: oklch(0.76 0.15 var(--hue-danger) / 0.18);
 
   --info: oklch(0.68 0.15 var(--hue-primary));
-  --info-foreground: var(--gray-950);
+  --info-foreground: oklch(0.15 0.018 var(--hue-primary));
   --info-hover: oklch(0.72 0.17 var(--hue-primary));
   --info-active: oklch(0.76 0.15 var(--hue-primary));
   --info-border-b: oklch(0.8 0.13 var(--hue-primary) / 0.18);
@@ -324,7 +340,7 @@
   --income: oklch(0.67 0.15 var(--hue-financial));
   --income-foreground: oklch(0.13 0.018 var(--hue-financial));
   --expense: oklch(0.62 0.13 12);
-  --expense-foreground: oklch(0.95 0.008 12);
+  --expense-foreground: oklch(0.15 0.018 12);
   --balance: oklch(0.68 0.13 var(--hue-accent));
   --balance-foreground: oklch(0.15 0.018 var(--hue-accent));
 
@@ -342,21 +358,25 @@
   --account-foreground: oklch(0.84 0.05 252);
   --account-border-b: oklch(0.34 0.07 252 / 0.58);
   --account-hover: oklch(0.48 0.11 252);
+  --account-active: oklch(from var(--account) calc(l * 1.06) calc(c * 1.05) h);
 
   --transaction: oklch(0.43 0.09 144);
   --transaction-foreground: oklch(0.83 0.05 144);
   --transaction-border-b: oklch(0.33 0.07 144 / 0.58);
   --transaction-hover: oklch(0.47 0.11 144);
+  --transaction-active: oklch(from var(--transaction) calc(l * 1.06) calc(c * 1.05) h);
 
   --planning: oklch(0.45 0.09 208);
   --planning-foreground: oklch(0.85 0.05 208);
   --planning-border-b: oklch(0.35 0.07 208 / 0.58);
   --planning-hover: oklch(0.49 0.11 208);
+  --planning-active: oklch(from var(--planning) calc(l * 1.06) calc(c * 1.05) h);
 
   --category: oklch(0.46 0.09 88);
   --category-foreground: oklch(0.86 0.05 88);
   --category-border-b: oklch(0.36 0.07 88 / 0.58);
   --category-hover: oklch(0.5 0.11 88);
+  --category-active: oklch(from var(--category) calc(l * 1.06) calc(c * 1.05) h);
 
   --chart-1: var(--primary-base);
   --chart-2: var(--success-base);
@@ -364,6 +384,10 @@
   --chart-4: oklch(0.77 0.13 var(--hue-warning));
   --chart-5: oklch(0.67 0.15 var(--hue-financial));
   --chart-6: oklch(0.62 0.13 12);
+  --chart-7: oklch(0.7 0.13 312);
+  --chart-8: oklch(0.68 0.15 24);
+  --chart-9: oklch(0.66 0.15 186);
+  --chart-10: oklch(0.68 0.13 42);
 
   --sparkline-color-positive: var(--income);
   --sparkline-color-negative: var(--expense);
@@ -385,6 +409,12 @@
 
   --help-ring: oklch(0.7 0.17 var(--hue-primary) / 0.08);
   --help-bg: oklch(0.7 0.17 var(--hue-primary) / 0.04);
+
+  --danger: var(--danger-base);
+  --danger-foreground: var(--danger-fg);
+
+  --error: var(--destructive);
+  --error-foreground: var(--destructive-foreground);
 }
 
 @theme inline {
@@ -766,4 +796,12 @@
 ::view-transition-new(root) {
   animation: none;
   mix-blend-mode: normal;
+}
+
+[data-state='open'] {
+  --transition-timing-function: var(--transition-timing-function-open);
+}
+
+[data-state='closed'] {
+  --transition-timing-function: var(--transition-timing-function-close);
 }

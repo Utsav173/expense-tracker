@@ -10,7 +10,7 @@ const LegalPage = () => {
         <header className='mb-12 text-center'>
           <Icon
             name='scale'
-            className='mx-auto mb-4 h-16 w-16 text-primary dark:text-primary-foreground'
+            className='text-primary dark:text-primary-foreground mx-auto mb-4 h-16 w-16'
           />
           <h1 className='text-foreground text-4xl font-bold md:text-5xl'>Legal Information</h1>
           <p className='text-muted-foreground mx-auto mt-4 max-w-2xl text-xl'>
@@ -23,7 +23,7 @@ const LegalPage = () => {
             <Card className='group-hover:border-primary/50 flex h-full flex-col items-center justify-center p-6 text-center shadow-lg transition-all duration-300 hover:-translate-y-[1px] hover:shadow-xl'>
               <Icon
                 name='shieldAlert'
-                className='text-primary mb-4 h-12 w-12 transition-colors group-hover:text-primary-foreground'
+                className='text-primary group-hover:text-primary-foreground mb-4 h-12 w-12 transition-colors'
               />
               <CardHeader className='p-0'>
                 <CardTitle className='text-lg font-semibold'>Privacy Policy</CardTitle>
@@ -38,7 +38,7 @@ const LegalPage = () => {
             <Card className='group-hover:border-primary/50 flex h-full flex-col items-center justify-center p-6 text-center shadow-lg transition-all duration-300 hover:-translate-y-[1px] hover:shadow-xl'>
               <Icon
                 name='fileText'
-                className='text-primary mb-4 h-12 w-12 transition-colors group-hover:text-primary-foreground'
+                className='text-primary group-hover:text-primary-foreground mb-4 h-12 w-12 transition-colors'
               />
               <CardHeader className='p-0'>
                 <CardTitle className='text-lg font-semibold'>Terms of Service</CardTitle>

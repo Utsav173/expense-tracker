@@ -30,21 +30,21 @@ export const investmentHoldingsColumns = ({
     header: ({ column }) => <DataTableColumnHeader column={column} title='Symbol' />,
     meta: { header: 'Symbol' },
     cell: ({ row }) => (
-      <div className='flex flex-col gap-1'>
+      <div className='flex flex-col gap-1 pl-2'>
         <Badge
           variant='outline'
           className='border-primary/50 bg-primary/10 w-fit font-mono font-bold tracking-wider'
         >
           {row.original.symbol}
         </Badge>
-        <div className='text-muted-foreground/80 text-xs'>{row.original.shares} shares</div>
+        <div className='text-muted-foreground/80 pl-2.5 text-xs'>{row.original.shares} shares</div>
       </div>
     )
   },
   {
     accessorKey: 'purchasePrice',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Purchase Price' className='justify-end' />
+      <DataTableColumnHeader column={column} title='Purchase Price' className='text-right' />
     ),
     meta: { header: 'Purchase Price' },
     cell: ({ row }) => (

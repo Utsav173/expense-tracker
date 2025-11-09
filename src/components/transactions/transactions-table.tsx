@@ -264,9 +264,9 @@ const TransactionTable = ({
         ? [
             {
               id: 'actions' as const,
-              header: () => <div className="text-right">Actions</div>,
+              header: () => <div className='text-right'>Actions</div>,
               cell: ({ row }: { row: any }) => (
-                <div className='flex justify-end gap-2 w-full'>
+                <div className='flex w-full justify-end gap-2'>
                   {row.original.recurring && (
                     <Button
                       size='icon'

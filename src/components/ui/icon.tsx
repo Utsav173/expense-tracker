@@ -1,6 +1,7 @@
 import React from 'react';
 import { Icon as Iconify } from '@iconify/react';
 import { iconMap, IconName } from './icon-map';
+import { cn } from '@/lib/utils';
 
 /**
  * Defines the props for the custom Icon component.
@@ -10,13 +11,26 @@ import { iconMap, IconName } from './icon-map';
  */
 interface IconProps extends React.HTMLAttributes<SVGSVGElement> {
   name: IconName;
+  filled?: boolean;
+  className?: string;
 }
 
 export const Icon = React.forwardRef<SVGSVGElement, IconProps>(
-  ({ name, onLoad, ...props }, ref) => {
+  ({ name, onLoad, filled, className, ...props }, ref) => {
     const iconString = iconMap[name];
-
-    return <Iconify ref={ref} icon={iconString} {...props} />;
+    return (
+      <Iconify
+        ref={ref as any}
+        icon={iconString}
+        color='currentColor'
+        className={cn(
+          '[&>svg]:h-6 [&>svg]:w-6 [&>svg]:stroke-current',
+          filled ? '[&>svg]:fill-current' : '[&>svg]:fill-transparent',
+          className
+        )}
+        {...props}
+      />
+    );
   }
 );
 

@@ -9,6 +9,7 @@ import { NotificationSettingsForm } from '@/components/profile/notification-sett
 import { AiSettingsForm } from '@/components/profile/ai-settings-form';
 import { PasswordSettingsForm } from '@/components/profile/password-settings-form';
 import { Icon } from '@/components/ui/icon';
+import { cn } from '@/lib/utils';
 
 type SettingsTab = 'profile' | 'security' | 'notifications' | 'ai';
 
@@ -20,7 +21,7 @@ const ProfilePage = () => {
     { id: 'profile', label: 'Profile Settings', icon: 'user' as const },
     { id: 'security', label: 'Password', icon: 'lock' as const },
     { id: 'notifications', label: 'Notifications', icon: 'bell' as const },
-    { id: 'ai', label: 'AI Assistant', icon: 'brainCircuit' as const }
+    { id: 'ai', label: 'AI Assistant', icon: 'ai' as const }
   ];
 
   if (userIsLoading) {
@@ -72,7 +73,12 @@ const ProfilePage = () => {
                 className='shrink-0 justify-start'
                 onClick={() => setActiveTab(item.id as SettingsTab)}
               >
-                <Icon name={item.icon} className='mr-2 h-4 w-4' />
+                <Icon
+                  name={item.icon}
+                  filled={activeTab === item.id}
+                  className={cn('mr-2 h-6 w-6')}
+                />
+
                 <span className='truncate'>{item.label}</span>
               </Button>
             ))}

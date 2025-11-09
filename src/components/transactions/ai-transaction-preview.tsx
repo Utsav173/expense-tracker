@@ -52,7 +52,7 @@ const TransactionItem: React.FC<TransactionItemProps> = ({
   return (
     <div
       className={cn(
-        'relative rounded-lg border bg-background p-3 transition-shadow hover:shadow-md',
+        'bg-background relative rounded-lg border p-3 transition-shadow hover:shadow-md',
         !isSelected && 'opacity-60'
       )}
     >
@@ -76,20 +76,20 @@ const TransactionItem: React.FC<TransactionItemProps> = ({
             value={transaction.description}
             onChange={(e) => onFieldChange(transaction.id, 'description', e.target.value)}
             placeholder='Description'
-            className='h-auto border-0 border-b border-transparent p-0 text-base font-medium focus:border-input focus:ring-0'
+            className='focus:border-input h-auto border-0 border-b border-transparent p-0 text-base font-medium focus:ring-0'
           />
           <div className='flex items-center justify-between'>
             <Input
               value={transaction.category}
               onChange={(e) => onFieldChange(transaction.id, 'category', e.target.value)}
               placeholder='Category'
-              className='h-auto border-0 border-b border-transparent p-0 text-xs text-muted-foreground focus:border-input focus:ring-0'
+              className='text-muted-foreground focus:border-input h-auto border-0 border-b border-transparent p-0 text-xs focus:ring-0'
             />
             <Input
               value={transaction.date}
               onChange={(e) => onFieldChange(transaction.id, 'date', e.target.value)}
               placeholder='YYYY-MM-DD'
-              className='h-auto w-[90px] border-0 border-b border-transparent p-0 text-right text-xs text-muted-foreground focus:border-input focus:ring-0'
+              className='text-muted-foreground focus:border-input h-auto w-[90px] border-0 border-b border-transparent p-0 text-right text-xs focus:ring-0'
             />
           </div>
           <div className='flex items-center justify-end gap-2'>
@@ -103,7 +103,7 @@ const TransactionItem: React.FC<TransactionItemProps> = ({
                   onFieldChange(transaction.id, 'debit', amount);
                 }
               }}
-              className='h-auto border-0 border-b border-transparent p-0 text-right text-lg font-bold focus:border-input focus:ring-0'
+              className='focus:border-input h-auto border-0 border-b border-transparent p-0 text-right text-lg font-bold focus:ring-0'
               prefix={`${currency} `}
             />
             <Select
@@ -211,7 +211,7 @@ const AiTransactionPreview: React.FC<{ transactions: AIAPI.ExtractedTransaction[
 
           return {
             text: tx.description,
-            amount: tx.debit !== undefined ? tx.debit : tx.credit ?? 0,
+            amount: tx.debit !== undefined ? tx.debit : (tx.credit ?? 0),
             isIncome: tx.debit === undefined,
             categoryName: tx.category,
             transfer: tx.transfer,
@@ -251,7 +251,7 @@ const AiTransactionPreview: React.FC<{ transactions: AIAPI.ExtractedTransaction[
 
   const editButtonContent = isImported ? (
     <>
-      <Icon name='checkCircle' className='mr-2 h-4 w-4 text-success' />
+      <Icon name='checkCircle' className='text-success mr-2 h-4 w-4' />
       Imported Successfully
     </>
   ) : (
@@ -263,7 +263,7 @@ const AiTransactionPreview: React.FC<{ transactions: AIAPI.ExtractedTransaction[
 
   return (
     <>
-      <Card className='mt-2 w-full max-w-full overflow-hidden border bg-muted/50'>
+      <Card className='bg-muted/50 mt-2 w-full max-w-full overflow-hidden border'>
         <CardContent className='p-3'>
           <p className='mb-2 text-sm font-medium'>
             Found {editableTransactions.length} transaction(s)
@@ -271,19 +271,19 @@ const AiTransactionPreview: React.FC<{ transactions: AIAPI.ExtractedTransaction[
           <Card className='bg-background'>
             <CardContent className='grid grid-cols-3 gap-2 p-3 text-center'>
               <div className='space-y-1'>
-                <p className='text-xs text-muted-foreground'>Income</p>
-                <p className='font-semibold text-success'>
+                <p className='text-muted-foreground text-xs'>Income</p>
+                <p className='text-success font-semibold'>
                   {formatCurrency(summary.income, 'INR')}
                 </p>
               </div>
               <div className='space-y-1'>
-                <p className='text-xs text-muted-foreground'>Expenses</p>
-                <p className='font-semibold text-destructive'>
+                <p className='text-muted-foreground text-xs'>Expenses</p>
+                <p className='text-destructive font-semibold'>
                   {formatCurrency(summary.expense, 'INR')}
                 </p>
               </div>
               <div className='space-y-1'>
-                <p className='text-xs text-muted-foreground'>Net Impact</p>
+                <p className='text-muted-foreground text-xs'>Net Impact</p>
                 <p
                   className={cn(
                     'font-semibold',
@@ -350,7 +350,7 @@ const AiTransactionPreview: React.FC<{ transactions: AIAPI.ExtractedTransaction[
               </Select>
             </div>
 
-            <div className='flex items-center justify-between rounded-lg border bg-muted/50 p-2'>
+            <div className='bg-muted/50 flex items-center justify-between rounded-lg border p-2'>
               <div className='flex items-center gap-2'>
                 <Checkbox
                   id='select-all-checkbox'
@@ -367,7 +367,7 @@ const AiTransactionPreview: React.FC<{ transactions: AIAPI.ExtractedTransaction[
                   Select All
                 </Label>
               </div>
-              <span className='text-sm text-muted-foreground'>
+              <span className='text-muted-foreground text-sm'>
                 {selectedIds.size} of {editableTransactions.length} selected
               </span>
             </div>

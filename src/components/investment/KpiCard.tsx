@@ -21,7 +21,7 @@ export interface KpiCardProps {
 
 const DotPattern = () => (
   <div
-    className='bg-[radial-gradient(theme(colors.primary/10)_1px,transparent_1px)] absolute inset-0 [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)] [background-size:16px_16px] opacity-40 transition-transform duration-500 ease-out group-hover:scale-105'
+    className='bg-[radial-gradient(var(--color-primary)_1px,transparent_1px)]/[10] absolute inset-0 mask-[radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)] bg-size-[16px_16px] opacity-40 transition-transform duration-500 ease-out group-hover:scale-105'
     aria-hidden='true'
   />
 );
@@ -29,7 +29,7 @@ const DotPattern = () => (
 const GhostIcon = ({ name }: { name: IconName }) => (
   <Icon
     name={name}
-    className='text-primary/5 absolute -right-4 -bottom-4 h-24 w-24 opacity-80 transition-transform duration-500 ease-out group-hover:scale-110 group-hover:opacity-60'
+    className='text-primary/5 absolute -right-4 -bottom-4 h-24 w-24 opacity-20 group-hover:opacity-30'
     aria-hidden='true'
   />
 );
@@ -52,7 +52,7 @@ export const KpiCard: React.FC<KpiCardProps> = ({
 
   return (
     <Card className='group hover:shadow-primary/10 relative overflow-hidden rounded-2xl border-none shadow-lg transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-2xl'>
-      <div className='absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-white/20 opacity-100 transition-all duration-300 dark:via-black/5 dark:to-black/20' />
+      <div className='absolute inset-0 bg-linear-to-br from-transparent via-white/5 to-white/20 opacity-100 transition-all duration-300 dark:via-black/5 dark:to-black/20' />
       <DotPattern />
       <GhostIcon name={icon} />
 

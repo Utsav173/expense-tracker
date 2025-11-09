@@ -36,7 +36,7 @@ export async function generateMetadata(): Promise<Metadata> {
       images: ['https://expense-pro.khatriutsav.com/og-image.png'] // Placeholder
     },
     alternates: {
-      canonical: 'https://expense-pro.khatriutsav.com/legal',
-    },
+      canonical: 'https://expense-pro.khatriutsav.com/legal'
+    }
   };
 }

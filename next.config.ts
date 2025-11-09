@@ -13,8 +13,8 @@ const nextConfig: NextConfig = {
   // Add MDX extensions to the list of page extensions
   pageExtensions: ['js', 'jsx', 'md', 'mdx', 'ts', 'tsx'],
   experimental: {
-    mdxRs: true,
-  },
+    mdxRs: true
+  }
 };
 
 const withMDX = createMDX({

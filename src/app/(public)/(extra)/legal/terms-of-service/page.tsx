@@ -5,8 +5,6 @@ import { WebPage, WithContext } from 'schema-dts';
 import Script from 'next/script';
 import { Icon } from '@/components/ui/icon';
 
-
-
 const jsonLd: WithContext<WebPage> = {
   '@context': 'https://schema.org',
   '@type': 'WebPage',

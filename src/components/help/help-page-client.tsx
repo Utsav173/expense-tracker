@@ -1,4 +1,3 @@
-
 import React, { Suspense, lazy } from 'react';
 import { helpSections } from '@/content/help';
 import { cn } from '@/lib/utils';
@@ -132,4 +131,3 @@ export default function HelpPageClient() {
     </div>
   );
 }
-

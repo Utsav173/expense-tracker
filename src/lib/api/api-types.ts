@@ -393,7 +393,7 @@ export namespace InvestmentAccountAPI {
     accountname: string;
     currency: string;
     platform: string | null;
-    totalinvestment: number;
+    totalInvestment: number;
     totaldividend: number;
     totalvalue: number;
   }

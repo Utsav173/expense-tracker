@@ -61,7 +61,7 @@ const HeroSection = () => {
         >
           Master Your Money.
           <br />
-          <span className='from-primary bg-gradient-to-r to-emerald-500 bg-clip-text text-transparent'>
+          <span className='from-primary bg-linear-to-r to-emerald-500 bg-clip-text text-transparent'>
             Effortlessly.
           </span>
         </h1>
