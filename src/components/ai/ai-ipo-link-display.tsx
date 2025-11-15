@@ -5,14 +5,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Icon } from '../ui/icon';
 import { motion } from 'framer-motion';
 import { Button } from '../ui/button';
+import NoData from '../ui/no-data';
 
 interface AiIpoLinkDisplayProps {
   url: string;
 }
 
-const AiIpoLinkDisplay: React.FC<AiIpoLinkDisplayProps> = ({ url }) => {
+const AiIpoLinkDisplay: React.FC<AiIpoLinkDisplayProps> = React.memo(({ url }) => {
   if (!url) {
-    return null;
+    return (
+      <Card>
+        <CardContent className='p-4'>
+          <NoData message='No IPO link available.' icon='externalLink' />
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -20,7 +27,7 @@ const AiIpoLinkDisplay: React.FC<AiIpoLinkDisplayProps> = ({ url }) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className='mt-4 w-full space-y-4'
+      className='w-full space-y-4'
     >
       <Card>
         <CardHeader>
@@ -34,7 +41,12 @@ const AiIpoLinkDisplay: React.FC<AiIpoLinkDisplayProps> = ({ url }) => {
             You can find the list of upcoming IPOs at the following link:
           </p>
           <Button asChild>
-            <a href={url} target='_blank' rel='noopener noreferrer' className='flex items-center gap-2'>
+            <a
+              href={url}
+              target='_blank'
+              rel='noopener noreferrer'
+              className='flex items-center gap-2'
+            >
               View Upcoming IPOs
               <Icon name='arrowRight' className='h-4 w-4' />
             </a>
@@ -43,6 +55,6 @@ const AiIpoLinkDisplay: React.FC<AiIpoLinkDisplayProps> = ({ url }) => {
       </Card>
     </motion.div>
   );
-};
+});
 
 export default AiIpoLinkDisplay;

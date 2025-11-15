@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   Table,
   TableBody,
@@ -71,7 +71,7 @@ const AiRecordsTable: React.FC<AiRecordsTableProps> = ({ records }) => {
   const currency = user?.preferredCurrency || 'INR';
 
   const headers = useMemo(() => {
-    if (!records || records.length === 0) return [];
+    if (!records || records.length === 0 || !records[0]) return [];
 
     const excludedKeys = new Set([
       'id',
@@ -99,44 +99,47 @@ const AiRecordsTable: React.FC<AiRecordsTableProps> = ({ records }) => {
     });
   }, [records]);
 
-  const formatCellValue = (value: any, key: string, row: any): string => {
-    if (value === null || value === undefined) return 'N/A';
+  const formatCellValue = useCallback(
+    (value: any, key: string, row: any): string => {
+      if (value === null || value === undefined) return 'N/A';
 
-    if (typeof value === 'object' && value !== null) {
-      return value.name || '[Object]';
-    }
-
-    if (typeof value === 'boolean') {
-      if (key.toLowerCase() === 'isincome') {
-        return value ? 'Income' : 'Expense';
+      if (typeof value === 'object' && value !== null) {
+        return value.name || '[Object]';
       }
-      return value ? 'Yes' : 'No';
-    }
 
-    if (typeof value === 'number') {
-      const lowerCaseKey = key.toLowerCase();
-      if (
-        lowerCaseKey.includes('id') ||
-        lowerCaseKey.includes('year') ||
-        (value > 1900 && value < 2100 && Number.isInteger(value))
-      ) {
-        return String(value);
+      if (typeof value === 'boolean') {
+        if (key.toLowerCase() === 'isincome') {
+          return value ? 'Income' : 'Expense';
+        }
+        return value ? 'Yes' : 'No';
       }
-      const rowCurrency = row.currency || currency;
-      return formatCurrency(value, rowCurrency);
-    }
 
-    if (typeof value === 'string') {
-      if (value.match(/^\d{4}-\d{2}-\d{2}/)) {
-        const date = parseISO(value);
-        if (isValid(date)) {
-          return format(date, 'MMM d, yyyy');
+      if (typeof value === 'number') {
+        const lowerCaseKey = key.toLowerCase();
+        if (
+          lowerCaseKey.includes('id') ||
+          lowerCaseKey.includes('year') ||
+          (value > 1900 && value < 2100 && Number.isInteger(value))
+        ) {
+          return String(value);
+        }
+        const rowCurrency = row.currency || currency;
+        return formatCurrency(value, rowCurrency);
+      }
+
+      if (typeof value === 'string') {
+        if (value.match(/^\d{4}-\d{2}-\d{2}/)) {
+          const date = parseISO(value);
+          if (isValid(date)) {
+            return format(date, 'MMM d, yyyy');
+          }
         }
       }
-    }
 
-    return String(value);
-  };
+      return String(value);
+    },
+    [currency]
+  );
 
   if (!records || records.length === 0 || headers.length === 0) {
     return null;

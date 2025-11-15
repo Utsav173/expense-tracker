@@ -20,12 +20,11 @@ import AiClarificationOptionsDisplay from './ai-clarification-options-display';
 import AiStockSearchResultsDisplay from './ai-stock-search-results-display';
 import AiIpoLinkDisplay from './ai-ipo-link-display';
 import AiCreatedEntitySummaryDisplay from './ai-created-entity-summary-display';
+import AiGenericDataDisplay from './ai-generic-data-display'; // Changed import
 import { IconName } from '../ui/icon-map';
-import { MyToolTypes } from '@/lib/ai-tool-types';
+import { MyToolTypes, tools as allToolsSchemas } from '@/lib/ai-tool-types';
 
 type FilePart = Extract<UIMessagePart<MyCustomData, MyToolTypes>, { type: 'file' }>;
-type DataPartType = keyof MyCustomData;
-type DataPart = UIMessagePart<MyCustomData, MyToolTypes> & { type: `data-${DataPartType}` };
 
 interface ChatMessageBubbleProps {
   message: MyUIMessage;
@@ -144,34 +143,37 @@ const FilePartBubble: React.FC<{ part: FilePart }> = memo(({ part }) => {
 });
 FilePartBubble.displayName = 'FilePartBubble';
 
-const CustomDataDisplay: React.FC<{ part: DataPart }> = memo(({ part }) => {
-  switch (part.type) {
-    case 'data-chart':
-      return <AiChartRenderer chart={part.data} />;
-    case 'data-records':
-      return <AiRecordsTable records={part.data.records} />;
-    case 'data-metrics':
-      return <AiMetricsDisplay metrics={part.data.metrics} />;
-    case 'data-imageAnalysisData':
-      return <AiTransactionPreview transactions={part.data} />;
-    case 'data-financialHealthAnalysis':
-      return <AiFinancialHealthDisplay analysis={part.data} />;
-    case 'data-subscriptionAnalysis':
-      return <AiSubscriptionDisplay subscriptions={part.data.subscriptions} />;
-    case 'data-clarificationOptions':
-      return (
-        <AiClarificationOptionsDisplay options={part.data} message='Please select an option:' />
-      );
-    case 'data-stockSearchResults':
-      return <AiStockSearchResultsDisplay results={part.data} />;
-    case 'data-ipoLink':
-      return <AiIpoLinkDisplay url={part.data} />;
-    case 'data-createdEntitySummary':
-      return <AiCreatedEntitySummaryDisplay entity={part.data} />;
-    default:
-      return null;
+const dataComponentMap: Record<string, { Component: React.ComponentType<any>; propName: string }> =
+  {
+    'data-chart': { Component: AiChartRenderer, propName: 'chart' },
+    'data-records': { Component: AiRecordsTable, propName: 'records' },
+    'data-metrics': { Component: AiMetricsDisplay, propName: 'metrics' },
+    'data-imageAnalysisData': { Component: AiTransactionPreview, propName: 'transactions' },
+    'data-financialHealthAnalysis': { Component: AiFinancialHealthDisplay, propName: 'analysis' },
+    'data-subscriptionAnalysis': { Component: AiSubscriptionDisplay, propName: 'subscriptions' },
+    'data-clarificationOptions': { Component: AiClarificationOptionsDisplay, propName: 'options' },
+    'data-stockSearchResults': { Component: AiStockSearchResultsDisplay, propName: 'results' },
+    'data-ipoLink': { Component: AiIpoLinkDisplay, propName: 'url' },
+    'data-createdEntitySummary': { Component: AiCreatedEntitySummaryDisplay, propName: 'entity' },
+    json: { Component: AiGenericDataDisplay, propName: 'data' }
+  };
+
+const CustomDataDisplay: React.FC<{ part: { type: string; content: any; id: string } }> = memo(
+  ({ part }) => {
+    const config = dataComponentMap[part.type];
+
+    if (!config) return null;
+
+    const { Component, propName } = config;
+
+    if (part.type === 'data-clarificationOptions') {
+      return <Component options={part.content} message='Please select an option:' />;
+    }
+
+    const props = { [propName]: part.content };
+    return <Component {...props} />;
   }
-});
+);
 CustomDataDisplay.displayName = 'CustomDataDisplay';
 
 const ThinkingIndicator = () => (
@@ -184,42 +186,119 @@ const ThinkingIndicator = () => (
   </div>
 );
 
-const extractDataFromToolOutput = (output: any): { type: string; content: any } | null => {
+const toolOutputHandlers: Record<string, (data: any) => { type: string; content: any } | null> = {
+  getHelpArticle: (data) => {
+    if ('article' in data) return { type: 'text', content: data.article };
+    return null;
+  },
+  analyzeFinancialImage: (data) => {
+    if ('data' in data) return { type: 'data-imageAnalysisData', content: data.data };
+    return null;
+  },
+  analyzeFinancialHealth: (data) => {
+    if ('data' in data) return { type: 'data-financialHealthAnalysis', content: data.data };
+    return null;
+  },
+  findRecurringTransactions: (data) => {
+    if ('data' in data) return { type: 'data-subscriptionAnalysis', content: data.data };
+    return null;
+  },
+  getExpenseBreakdown: (data) => {
+    if ('data' in data)
+      return { type: 'data-records', content: { records: data.data, count: data.data.length } };
+    return null;
+  },
+
+  'data-clarificationOptions': (data) => {
+    if ('data' in data) return { type: 'data-clarificationOptions', content: data.data };
+    return null;
+  },
+  'data-createdEntitySummary': (data) => {
+    if ('data' in data) return { type: 'data-createdEntitySummary', content: data.data };
+    return null;
+  },
+  'data-stockSearchResults': (data) => {
+    if ('data' in data) return { type: 'data-stockSearchResults', content: data.data };
+    return null;
+  },
+  'data-ipoLink': (data) => {
+    if ('data' in data) return { type: 'data-ipoLink', content: data.data };
+    return null;
+  },
+  'data-chart': (data) => {
+    if ('data' in data) return { type: 'data-chart', content: data.data };
+    return null;
+  },
+  'data-records': (data) => {
+    if ('data' in data) return { type: 'data-records', content: { records: data.data } };
+    return null;
+  },
+  'data-metrics': (data) => {
+    if ('data' in data) return { type: 'data-metrics', content: data.data };
+    return null;
+  }
+};
+
+const extractDataFromToolOutput = (
+  toolName: string,
+  output: any
+): { type: string; content: any } | null => {
   if (!output || typeof output !== 'object') return null;
 
-  const data = output.data || output;
+  const toolSchema = allToolsSchemas[toolName as keyof typeof allToolsSchemas]?.outputSchema;
 
-  if (Array.isArray(data) && data.length > 0) {
-    const firstItem = data[0];
-
-    if (firstItem.category && firstItem.amount) {
-      return { type: 'data-chart', content: data };
-    }
-    if (firstItem.symbol) {
-      return { type: 'data-stockSearchResults', content: data };
-    }
-    if (firstItem.date || firstItem.amount) {
-      return { type: 'data-imageAnalysisData', content: data };
-    }
-    if (firstItem.name && firstItem.value !== undefined) {
-      return { type: 'data-chart', content: data };
-    }
+  if (!toolSchema) {
+    console.warn(`No output schema found for tool: ${toolName}`);
+    return null;
   }
 
-  if (data.subscriptions) {
-    return { type: 'data-subscriptionAnalysis', content: data };
+  const parsed = toolSchema.safeParse(output);
+
+  if (!parsed.success) {
+    console.error(`Failed to parse output for tool ${toolName}:`, parsed.error);
+    return null;
   }
-  if (data.metrics) {
-    return { type: 'data-metrics', content: data };
+
+  const data = parsed.data;
+
+  if (typeof data === 'object' && data !== null && 'success' in data) {
+    if (data.success === false) {
+      return {
+        type: 'text',
+        content: (data as any).error || (data as any).message || `Error executing ${toolName}.`
+      };
+    }
+
+    if (data.success === true && 'message' in data && !('type' in data) && !('data' in data)) {
+      return { type: 'text', content: (data as any).message };
+    }
   }
-  if (data.records) {
-    return { type: 'data-records', content: data };
+
+  const handler = toolOutputHandlers[toolName];
+  if (handler) {
+    const handled = handler(data);
+    if (handled) return handled;
   }
-  if (data.chart) {
-    return { type: 'data-chart', content: data.chart };
+
+  if (
+    typeof data === 'object' &&
+    data !== null &&
+    'type' in data &&
+    (data as any).type.startsWith('data-')
+  ) {
+    const dataHandler = toolOutputHandlers[(data as any).type];
+    if (dataHandler) {
+      const handled = dataHandler(data);
+      if (handled) return handled;
+    }
   }
-  if (data.analysis || data.healthScore !== undefined) {
-    return { type: 'data-financialHealthAnalysis', content: data };
+
+  if ('data' in data && typeof (data as any).data === 'object' && (data as any).data !== null) {
+    return { type: 'json', content: (data as any).data };
+  }
+
+  if (typeof data === 'object' && data !== null) {
+    return { type: 'json', content: data };
   }
 
   return null;
@@ -254,10 +333,9 @@ const ChatMessageBubbleImpl: React.FC<ChatMessageBubbleProps> = ({
           textBuffer += part.text || '';
         } else if (part.type.startsWith('data-')) {
           flushText();
-          const dataPart = part as DataPart;
           result.push({
             type: part.type,
-            content: dataPart.data,
+            content: part.data,
             id: `${part.type}-${partCounter++}`
           });
         } else if (part.type === 'file') {
@@ -272,7 +350,8 @@ const ChatMessageBubbleImpl: React.FC<ChatMessageBubbleProps> = ({
 
           if (toolPart.state === 'output-available' && toolPart.output) {
             flushText();
-            const extracted = extractDataFromToolOutput(toolPart.output);
+            const toolName = toolPart.type.replace('tool-', '');
+            const extracted = extractDataFromToolOutput(toolName, toolPart.output);
             if (extracted) {
               result.push({
                 type: extracted.type,
@@ -340,11 +419,11 @@ const ChatMessageBubbleImpl: React.FC<ChatMessageBubbleProps> = ({
             case 'file':
               return <FilePartBubble key={key} part={part.content} />;
             default:
-              if (part.type.startsWith('data-')) {
+              if (part.type.startsWith('data-') || part.type === 'json') {
                 return (
                   <div key={key} className='w-full max-w-4xl'>
                     <CustomDataDisplay
-                      part={{ type: part.type as DataPart['type'], data: part.content }}
+                      part={{ type: part.type, content: part.content, id: part.id }}
                     />
                   </div>
                 );

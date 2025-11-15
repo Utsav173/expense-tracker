@@ -54,16 +54,7 @@ const LandingPageHeader = () => {
   };
 
   const AuthButtons = () => {
-    if (isLoading) {
-      return (
-        <div className='flex items-center gap-2'>
-          <Skeleton className='h-8 w-16' />
-          <Skeleton className='h-8 w-24' />
-        </div>
-      );
-    }
-
-    if (session) {
+    if (session && !isLoading) {
       return (
         <Link href='/accounts'>
           <Button size='sm' className='text-sm'>
@@ -97,15 +88,7 @@ const LandingPageHeader = () => {
   };
 
   const AuthButtonsMobile = () => {
-    if (isLoading) {
-      return (
-        <div className='flex flex-col gap-4'>
-          <Skeleton className='h-12 w-full' />
-        </div>
-      );
-    }
-
-    if (session) {
+    if (session && !isLoading) {
       return (
         <motion.div
           variants={navItemVariants}

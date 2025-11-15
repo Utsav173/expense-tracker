@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { formatCurrency } from '@/lib/utils';
 import { useAuth } from '@/components/providers/auth-provider';
 import startCase from 'lodash/startCase';
+import NoData from '../ui/no-data';
 
 interface AiMetricsDisplayProps {
   metrics: Record<string, any>;
@@ -16,7 +17,13 @@ const AiMetricsDisplay: React.FC<AiMetricsDisplayProps> = ({ metrics }) => {
   const currency = user?.preferredCurrency || 'INR';
 
   if (!metrics || Object.keys(metrics).length === 0) {
-    return null;
+    return (
+      <Card className='bg-muted/50'>
+        <CardContent className='p-4'>
+          <NoData message='No metrics available for this query.' icon='barChart3' />
+        </CardContent>
+      </Card>
+    );
   }
 
   return (

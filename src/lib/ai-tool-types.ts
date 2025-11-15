@@ -1,273 +1,829 @@
 import { z } from 'zod';
-import { InferUITools } from 'ai';
 
-
-const tools = {
+export const tools = {
+  // Account Tools
   createAccount: {
-    inputSchema: z.object({
-      accountName: z.string().min(1).describe("The desired name for the new account (e.g., 'ICICI Salary', 'Paytm Wallet'). Example: \"My Savings Account\""),
-      initialBalance: z.number().optional().default(0).describe('The starting balance (defaults to 0). Must be non-negative. Example: 1000.50'),
-      currency: z.string().length(3).optional().default('INR').describe('The 3-letter currency code (e.g., INR, USD). Defaults to user\'s preferred currency or INR. Example: "INR"'),
-    }),
-  },
-  addTransaction: {
-    inputSchema: z.object({
-      text: z.string().describe('A description of the transaction.'),
-      amount: z.number().describe('The amount of the transaction.'),
-      isIncome: z.boolean().describe('True if the transaction is income, false if it is an expense.'),
-      category: z.string().optional().describe('The category of the transaction.'),
-      account: z.string().describe('The ID or name of the account the transaction belongs to.'),
-      currency: z.string().optional().describe('The currency of the transaction.'),
-    }),
-  },
-  searchStockSymbols: {
-    inputSchema: z.object({
-      query: z.string().min(1).describe('The stock symbol or company name to search for.'),
-    }),
-  },
-  convertCurrency: {
-    inputSchema: z.object({
-      amount: z.number().describe('The amount to convert.'),
-      fromCurrency: z.string().length(3).describe('The 3-letter code of the source currency (e.g., "USD").'),
-      toCurrency: z.string().length(3).describe('The 3-letter code of the target currency (e.g., "INR").'),
-    }),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      type: z.literal('data-createdEntitySummary'),
+      data: z.object({
+        type: z.literal('Account'),
+        name: z.string(),
+        id: z.string(),
+        details: z.string()
+      })
+    })
   },
   identifyAccountForAction: {
-    inputSchema: z.object({
-      accountIdentifier: z.string().min(1).describe('The name or ID of the account. Example: "Savings Account" or "acc_abc456"'),
-    }),
+    outputSchema: z.union([
+      z.object({
+        success: z.literal(false),
+        error: z.string()
+      }),
+      z.object({
+        success: z.literal(true),
+        type: z.literal('data-clarificationOptions'),
+        message: z.string(),
+        data: z.array(
+          z.object({
+            id: z.string(),
+            name: z.string().optional(),
+            description: z.string().optional(),
+            currency: z.string().optional(),
+            details: z.string().optional(),
+            balance: z.number().optional()
+          })
+        )
+      }),
+      z.object({
+        success: z.literal(true),
+        confirmationNeeded: z.literal(true),
+        id: z.string(),
+        details: z.string(),
+        message: z.string()
+      })
+    ])
   },
   executeConfirmedDeleteAccount: {
-    inputSchema: z.object({
-      accountId: z.string().describe('The exact unique ID of the account to delete (obtained from the identification step). Example: "acc_xyz789"'),
-    }),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string()
+    })
   },
   executeConfirmedUpdateAccountName: {
-    inputSchema: z.object({
-      accountId: z.string().describe('The unique ID of the account to rename (obtained from the identification step). Example: "acc_xyz789"'),
-      newAccountName: z.string().min(1).describe('The desired new name for the account. Example: "My New Bank Account"'),
-    }),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      type: z.literal('data-createdEntitySummary'),
+      data: z.object({
+        type: z.literal('Account'),
+        name: z.string(),
+        id: z.string(),
+        details: z.string()
+      })
+    })
   },
+
+  // Budget Tools
   createBudget: {
-    inputSchema: z.object({
-      categoryIdentifier: z.string().min(1).describe('The name or ID of the expense category to set the budget for. Example: "Groceries" or "cat_abc123"'),
-      amount: z.number().positive('Budget amount. Example: 500'),
-      month: z.number().int().min(1).max(12).optional().describe('The month number (1-12). Defaults to the current month if omitted. Example: 7 for July'),
-      year: z.number().int().min(1900).max(2100).optional().describe('The full year (e.g., 2024). Defaults to the current year if omitted. Example: 2024'),
-    }),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      type: z.literal('data-createdEntitySummary'),
+      data: z.object({
+        type: z.literal('Budget'),
+        name: z.string(),
+        id: z.string(),
+        details: z.string()
+      })
+    })
   },
   identifyBudgetForAction: {
-    inputSchema: z.object({
-      categoryIdentifier: z.string().min(1).describe('The name or ID of the budget\'s category. Example: "Rent" or "cat_ghi789"'),
-      month: z.number().int().min(1).max(12).describe('The month of the budget (1-12). Example: 1 for January'),
-      year: z.number().int().min(1900).max(2100).describe('The year of the budget (e.g., 2024). Example: 2023'),
-    }),
+    outputSchema: z.union([
+      z.object({
+        success: z.literal(false),
+        error: z.string()
+      }),
+      z.object({
+        success: z.literal(true),
+        clarificationNeeded: z.literal(true),
+        message: z.string(),
+        options: z.array(
+          z.object({
+            id: z.string(),
+            name: z.string().optional(),
+            description: z.string().optional(),
+            currency: z.string().optional(),
+            details: z.string().optional(),
+            balance: z.number().optional()
+          })
+        )
+      }),
+      z.object({
+        success: z.literal(true),
+        confirmationNeeded: z.literal(true),
+        id: z.string(),
+        details: z.string(),
+        message: z.string()
+      })
+    ])
   },
   executeConfirmedUpdateBudget: {
-    inputSchema: z.object({
-      budgetId: z.string().describe('The exact unique ID of the budget to update, obtained from user confirmation.'),
-      newAmount: z.number().positive('The new positive numerical amount for the budget. Example: 750.00'),
-    }),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      type: z.literal('data-createdEntitySummary'),
+      data: z.object({
+        type: z.literal('Budget'),
+        name: z.string(),
+        id: z.string(),
+        details: z.string()
+      })
+    })
   },
   executeConfirmedDeleteBudget: {
-    inputSchema: z.object({
-      budgetId: z.string().describe('The exact unique ID of the budget to delete, obtained from user confirmation.'),
-    }),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string()
+    })
   },
+
+  // Category Tools
   createCategory: {
-    inputSchema: z.object({
-      categoryName: z.string().min(1).describe("The name for the new category (e.g., 'Freelance Income', 'Office Lunch')."),
-    }),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      type: z.literal('data-createdEntitySummary'),
+      data: z.object({
+        type: z.literal('Category'),
+        name: z.string(),
+        id: z.string()
+      })
+    })
   },
   identifyCategoryForAction: {
-    inputSchema: z.object({
-      categoryIdentifier: z.string().min(1).describe('The name or ID of the custom category. Example: "Groceries" or "cat_abc123"'),
-    }),
+    outputSchema: z.union([
+      z.object({
+        success: z.literal(false),
+        error: z.string()
+      }),
+      z.object({
+        success: z.literal(true),
+        type: z.literal('data-clarificationOptions'),
+        message: z.string(),
+        data: z.array(
+          z.object({
+            id: z.string(),
+            name: z.string().optional(),
+            description: z.string().optional(),
+            currency: z.string().optional(),
+            details: z.string().optional(),
+            balance: z.number().optional()
+          })
+        )
+      }),
+      z.object({
+        success: z.literal(true),
+        confirmationNeeded: z.literal(true),
+        id: z.string(),
+        details: z.string(),
+        message: z.string()
+      })
+    ])
   },
   executeConfirmedDeleteCategory: {
-    inputSchema: z.object({
-      categoryId: z.string().describe('The exact unique ID of the category to delete (obtained from identification step). Example: "cat_xyz789"'),
-    }),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string()
+    })
   },
   executeConfirmedUpdateCategoryName: {
-    inputSchema: z.object({
-      categoryId: z.string().describe('The unique ID of the custom category to rename (obtained from identification step). Example: "cat_xyz789"'),
-      newCategoryName: z.string().min(1).describe('The desired new name. Example: "New Category Name"'),
-    }),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      type: z.literal('data-createdEntitySummary'),
+      data: z.object({
+        type: z.literal('Category'),
+        name: z.string(),
+        id: z.string(),
+        details: z.string()
+      })
+    })
   },
+
+  // Debt Tools
   addDebt: {
-    inputSchema: z.object({
-      amount: z.number().positive('Principal loan amount. Example: 5000'),
-      type: z.enum(['given', 'taken']).describe("'given' (lent) or 'taken' (borrowed)."),
-      involvedUserIdentifier: z.string().min(1).describe('Name or email of the other person involved.'),
-      description: z.string().optional().describe('Brief description of the loan.'),
-      interestRate: z.number().nonnegative().optional().default(0).describe('Annual interest rate % (e.g., 5.5).'),
-      interestType: z.enum(['simple', 'compound']).default('simple').describe('Interest calculation type.'),
-      accountIdentifier: z.string().min(1).describe('Name or ID of the associated bank account.'),
-      termLength: z.number().int().positive("The number of units for the loan's term (e.g., 12 for 12 months)."),
-      termUnit: z.enum(['days', 'weeks', 'months', 'years']).describe("The unit for the loan's term."),
-      paymentFrequency: z.enum(['daily', 'weekly', 'monthly', 'yearly']).describe('How often payments are due.'),
-      startDateDescription: z.string().optional().describe("When the loan starts (e.g., 'today', 'last Monday'). Defaults to today."),
-    }),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      type: z.literal('data-createdEntitySummary'),
+      data: z.object({
+        type: z.literal('Debt'),
+        name: z.string(),
+        id: z.string(),
+        details: z.string()
+      })
+    })
   },
   markDebtAsPaid: {
-    inputSchema: z.object({
-      debtIdentifier: z.string().min(1).describe('Information to identify the debt (e.g., \'loan from john\'). Example: "loan to Sarah" or "debt_abc123"'),
-    }),
+    outputSchema: z.union([
+      z.object({
+        success: z.literal(false),
+        error: z.string()
+      }),
+      z.object({
+        success: z.literal(true),
+        type: z.literal('data-clarificationOptions'),
+        message: z.string(),
+        data: z.array(
+          z.object({
+            id: z.string(),
+            name: z.string().optional(),
+            description: z.string().optional(),
+            currency: z.string().optional(),
+            details: z.string().optional(),
+            balance: z.number().optional()
+          })
+        )
+      }),
+      z.object({
+        success: z.literal(true),
+        confirmationNeeded: z.literal(true),
+        id: z.string(),
+        details: z.string(),
+        message: z.string()
+      })
+    ])
   },
   executeConfirmedMarkDebtPaid: {
-    inputSchema: z.object({
-      debtId: z.string().describe('The exact unique ID of the debt to mark paid. Example: "debt_abc123"'),
-    }),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string()
+    })
   },
   identifyDebtForAction: {
-    inputSchema: z.object({
-      debtIdentifier: z.string().min(1).describe('Information to identify the debt (e.g., \'loan from john\'). Example: "loan from Jane" or "debt_def456"'),
-    }),
+    outputSchema: z.union([
+      z.object({
+        success: z.literal(false),
+        error: z.string()
+      }),
+      z.object({
+        success: z.literal(true),
+        type: z.literal('data-clarificationOptions'),
+        message: z.string(),
+        data: z.array(
+          z.object({
+            id: z.string(),
+            name: z.string().optional(),
+            description: z.string().optional(),
+            currency: z.string().optional(),
+            details: z.string().optional(),
+            balance: z.number().optional()
+          })
+        )
+      }),
+      z.object({
+        success: z.literal(true),
+        confirmationNeeded: z.literal(true),
+        id: z.string(),
+        details: z.string(),
+        message: z.string()
+      })
+    ])
   },
   executeConfirmedUpdateDebt: {
-    inputSchema: z.object({
-      debtId: z.string().describe('Exact unique ID of the debt.'),
-      newDescription: z.string().optional().describe('New description for the loan.'),
-      newTermLength: z.number().int().positive().optional().describe('New term length (e.g., 24 for 24 months).'),
-      newTermUnit: z.enum(['days', 'weeks', 'months', 'years']).optional().describe('New unit for the term.'),
-      newInterestRate: z.number().nonnegative().optional().describe('New annual interest rate (e.g., 7.5).'),
-    }),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      type: z.literal('data-createdEntitySummary'),
+      data: z.object({
+        type: z.literal('Debt'),
+        name: z.string(),
+        id: z.string(),
+        details: z.string()
+      })
+    })
   },
   executeConfirmedDeleteDebt: {
-    inputSchema: z.object({
-      debtId: z.string().describe('Exact unique ID of the debt to delete. Example: "debt_ghi789"'),
-    }),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string()
+    })
   },
+
+  // External Tools
   parseNaturalLanguageDateRange: {
-    inputSchema: z.object({
-      dateDescription: z.string().min(1).describe("A description of the date range to parse (e.g., 'next week', 'January 2022', 'last Tuesday')."),
-    }),
+    outputSchema: z.union([
+      z.object({
+        success: z.literal(false),
+        error: z.string()
+      }),
+      z.object({
+        success: z.literal(true),
+        message: z.string(),
+        data: z.object({
+          startDate: z.string(),
+          endDate: z.string()
+        })
+      })
+    ])
+  },
+  searchStockSymbols: {
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      type: z.literal('data-stockSearchResults'),
+      data: z.array(
+        z.object({
+          symbol: z.string(),
+          name: z.string(),
+          exchange: z.string(),
+          type: z.string()
+        })
+      )
+    })
+  },
+  getCurrentStockPrice: {
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      data: z.object({
+        symbol: z.string(),
+        price: z.number(),
+        change: z.number().nullable(),
+        changePercent: z.number().nullable(),
+        exchange: z.string(),
+        currency: z.string(),
+        companyName: z.string(),
+        marketState: z.string(),
+        regularMarketTime: z.string().nullable()
+      })
+    })
   },
   getHistoricalStockPriceOnDate: {
-    inputSchema: z.object({
-      symbol: z.string().min(1).describe('The Indian stock symbol (e.g., "RELIANCE.NS", "ITC.BO").'),
-      dateDescription: z.string().min(1).describe('The specific date or natural language description for the historical price (e.g., "2023-10-26", "yesterday").'),
-    }),
+    outputSchema: z.union([
+      z.object({
+        success: z.literal(false),
+        error: z.string(),
+        data: z.array(z.any()).optional()
+      }),
+      z.object({
+        success: z.literal(true),
+        message: z.string(),
+        data: z.object({
+          symbol: z.string(),
+          date: z.string(),
+          price: z.number().nullable(),
+          currency: z.string(),
+          exchange: z.string(),
+          companyName: z.string()
+        })
+      })
+    ])
   },
   getHistoricalStockPriceRange: {
-    inputSchema: z.object({
-      symbol: z.string().min(1).describe('The Indian stock symbol (e.g., "SBIN.NS", "ITC.BO").'),
-      startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Start date must be in YYYY-MM-DD format').describe('The start date of the range in YYYY-MM-DD format (inclusive).'),
-      endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'End date must be in YYYY-MM-DD format').describe('The end date of the range in YYYY-MM-DD format (inclusive).'),
-    }),
+    outputSchema: z.union([
+      z.object({
+        success: z.literal(false),
+        error: z.string()
+      }),
+      z.object({
+        success: z.literal(true),
+        message: z.string(),
+        data: z.array(
+          z.object({
+            date: z.string(),
+            price: z.number().nullable()
+          })
+        )
+      })
+    ])
   },
   getCompanyQuoteSummary: {
-    inputSchema: z.object({
-      symbol: z.string().min(1).describe("The exact Indian stock symbol (e.g., 'RELIANCE.NS', 'TCS.NS')."),
-      modules: z.array(
-        z.enum([
-          'balanceSheetHistory',
-          'balanceSheetHistoryQuarterly',
-          'calendarEvents',
-          'cashflowStatementHistory',
-          'cashflowStatementHistoryQuarterly',
-          'defaultKeyStatistics',
-          'details',
-          'earnings',
-          'esgScores',
-          'incomeStatementHistory',
-          'incomeStatementHistoryQuarterly',
-          'summaryProfile',
-        ]),
-      ).min(1).describe('An array of data modules to retrieve (e.g., ["defaultKeyStatistics", "summaryProfile"]).'),
-    }),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      data: z.any().nullable()
+    })
   },
   getUpcomingIpos: {
-    inputSchema: z.object({}), // No input
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      type: z.literal('data-ipoLink'),
+      data: z.string()
+    })
   },
+  convertCurrency: {
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      data: z.object({
+        convertedAmount: z.number(),
+        fromCurrency: z.string(),
+        toCurrency: z.string(),
+        rate: z.number()
+      })
+    })
+  },
+
+  // Financial Health Tools
   analyzeFinancialHealth: {
-    inputSchema: z.object({}), // No input needed from the user
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      data: z.object({
+        score: z.number(),
+        highlights: z.array(z.object({ emoji: z.string(), statement: z.string() })),
+        improvements: z.array(z.object({ emoji: z.string(), statement: z.string() })),
+        recommendations: z.array(z.object({ title: z.string(), description: z.string() }))
+      })
+    })
   },
+
+  // Help Tools
+  getHelpArticle: {
+    outputSchema: z.object({
+      article: z.string()
+    })
+  },
+
+  // Image Tools
+  analyzeFinancialImage: {
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      data: z.array(
+        z.object({
+          date: z.string(),
+          description: z.string(),
+          category: z.string(),
+          debit: z.number().optional(),
+          credit: z.number().optional()
+        })
+      )
+    })
+  },
+
+  // Goal Tools
   createSavingGoal: {
-    inputSchema: z.object({
-      goalName: z.string().min(1).describe('Name of the goal (e.g., \'Vacation Fund\'). Example: "New Car Fund"'),
-      targetAmount: z.number().positive('Target amount to save. Example: 15000'),
-      targetDateDescription: z.string().optional().describe('Optional target date (e.g., \'end of year\', \'2025-12-31\'). Example: "next year" or "2026-06-30"'),
-    }),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      type: z.literal('data-createdEntitySummary'),
+      data: z.object({
+        type: z.literal('Goal'),
+        name: z.string(),
+        id: z.string(),
+        details: z.string()
+      })
+    })
   },
   findSavingGoal: {
-    inputSchema: z.object({
-      goalIdentifier: z.string().min(1).describe('Name or part of the name of the goal. Example: "Vacation" or "goal_abc123"'),
-    }),
+    outputSchema: z.union([
+      z.object({
+        success: z.literal(false),
+        error: z.string()
+      }),
+      z.object({
+        success: z.literal(true),
+        type: z.literal('data-clarificationOptions'),
+        message: z.string(),
+        data: z.array(
+          z.object({
+            id: z.string(),
+            name: z.string().optional(),
+            description: z.string().optional(),
+            currency: z.string().optional(),
+            details: z.string().optional(),
+            balance: z.number().optional()
+          })
+        )
+      }),
+      z.object({
+        success: z.literal(true),
+        confirmationNeeded: z.literal(true),
+        id: z.string(),
+        details: z.string(),
+        message: z.string()
+      })
+    ])
   },
   executeConfirmedUpdateGoal: {
-    inputSchema: z.object({
-      goalId: z.string().describe('Exact unique ID of the goal. Example: "goal_def456"'),
-      newTargetAmount: z.number().positive().optional().describe('New target amount (optional). Example: 20000'),
-      newTargetDateDescription: z.string().optional().describe("New target date (e.g., '2026-01-01', 'end of next year') (optional). Use 'null' or empty string to remove date. Example: \"2027-12-31\" or \"null\""),
-    }),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      type: z.literal('data-createdEntitySummary'),
+      data: z.object({
+        type: z.literal('Goal'),
+        name: z.string(),
+        id: z.string(),
+        details: z.string()
+      })
+    })
   },
   executeAddAmountToGoalById: {
-    inputSchema: z.object({
-      goalId: z.string().describe('The exact unique ID of the saving goal. Example: "goal_ghi789"'),
-      amountToAdd: z.number().positive('The amount to add. Example: 500'),
-    }),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      type: z.literal('data-createdEntitySummary'),
+      data: z.object({
+        type: z.literal('Goal'),
+        name: z.string(),
+        id: z.string(),
+        details: z.string()
+      })
+    })
   },
   executeWithdrawAmountFromGoalById: {
-    inputSchema: z.object({
-      goalId: z.string().describe('The exact unique ID of the saving goal. Example: "goal_jkl012"'),
-      amountToWithdraw: z.number().positive('The amount to withdraw. Example: 100'),
-    }),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      type: z.literal('data-createdEntitySummary'),
+      data: z.object({
+        type: z.literal('Goal'),
+        name: z.string(),
+        id: z.string(),
+        details: z.string()
+      })
+    })
   },
   executeConfirmedDeleteGoal: {
-    inputSchema: z.object({
-      goalId: z.string().describe('The exact unique ID of the goal to delete. Example: "goal_mno345"'),
-    }),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string()
+    })
   },
+
+  // Investment Account Tools
   createInvestmentAccount: {
-    inputSchema: z.object({
-      accountName: z
-        .string()
-        .min(1)
-        .describe(
-          "A descriptive name for the account (e.g., 'Zerodha Stocks', 'Groww Mutual Funds').",
-        ),
-      platform: z
-        .string()
-        .optional()
-        .describe("The name of the broker or platform (e.g., 'Zerodha', 'Vanguard')."),
-      currency: z
-        .string()
-        .length(3)
-        .describe('The 3-letter currency code for this account (e.g., INR, USD).'),
-    }),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      type: z.literal('data-createdEntitySummary'),
+      data: z.object({
+        type: z.literal('Investment Account'),
+        name: z.string(),
+        id: z.string(),
+        details: z.string()
+      })
+    })
   },
   identifyInvestmentAccountForAction: {
-    inputSchema: z.object({
-      accountIdentifier: z
-        .string()
-        .min(1)
-        .describe(
-          'Name or ID of the investment account. Example: "My Brokerage" or "inv_acc_123"',
-        ),
-    }),
+    outputSchema: z.union([
+      z.object({
+        success: z.literal(false),
+        error: z.string()
+      }),
+      z.object({
+        success: z.literal(true),
+        type: z.literal('data-clarificationOptions'),
+        message: z.string(),
+        data: z.array(
+          z.object({
+            id: z.string(),
+            name: z.string().optional(),
+            description: z.string().optional(),
+            currency: z.string().optional(),
+            details: z.string().optional(),
+            balance: z.number().optional()
+          })
+        )
+      }),
+      z.object({
+        success: z.literal(true),
+        confirmationNeeded: z.literal(true),
+        id: z.string(),
+        details: z.string(),
+        message: z.string()
+      })
+    ])
   },
   executeConfirmedUpdateInvestmentAccount: {
-    inputSchema: z.object({
-      accountId: z
-        .string()
-        .describe('The exact unique ID of the investment account, from user confirmation.'),
-      newName: z.string().min(1).optional().describe('Optional: The new name for the account.'),
-      newPlatform: z
-        .string()
-        .min(1)
-        .optional()
-        .describe('Optional: The new platform/broker name.'),
-    }),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      type: z.literal('data-createdEntitySummary'),
+      data: z.object({
+        type: z.literal('Investment Account'),
+        name: z.string(),
+        id: z.string(),
+        details: z.string()
+      })
+    })
   },
   executeConfirmedDeleteInvestmentAccount: {
-    inputSchema: z.object({
-      accountId: z
-        .string()
-        .describe('Exact unique ID of the investment account to delete. Example: "inv_acc_789"'),
-    }),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string()
+    })
   },
+
+  // Investment Tools
+  addInvestmentWithInferredPrice: {
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      type: z.literal('data-createdEntitySummary'),
+      data: z.object({
+        type: z.literal('Investment'),
+        name: z.string(),
+        id: z.string(),
+        details: z.string()
+      })
+    })
+  },
+  addInvestment: {
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      type: z.literal('data-createdEntitySummary'),
+      data: z.object({
+        type: z.literal('Investment'),
+        name: z.string(),
+        id: z.string(),
+        details: z.string()
+      })
+    })
+  },
+  identifyInvestmentForAction: {
+    outputSchema: z.union([
+      z.object({
+        success: z.literal(false),
+        error: z.string()
+      }),
+      z.object({
+        success: z.literal(true),
+        type: z.literal('data-clarificationOptions'),
+        message: z.string(),
+        data: z.array(
+          z.object({
+            id: z.string(),
+            name: z.string().optional(),
+            description: z.string().optional(),
+            currency: z.string().optional(),
+            details: z.string().optional(),
+            balance: z.number().optional()
+          })
+        )
+      }),
+      z.object({
+        success: z.literal(true),
+        confirmationNeeded: z.literal(true),
+        id: z.string(),
+        details: z.string(),
+        message: z.string()
+      })
+    ])
+  },
+  executeConfirmedUpdateInvestment: {
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      type: z.literal('data-createdEntitySummary'),
+      data: z.object({
+        type: z.literal('Investment'),
+        name: z.string(),
+        id: z.string(),
+        details: z.string()
+      })
+    })
+  },
+  executeConfirmedUpdateDividend: {
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      type: z.literal('data-createdEntitySummary'),
+      data: z.object({
+        type: z.literal('Investment'),
+        name: z.string(),
+        id: z.string(),
+        details: z.string()
+      })
+    })
+  },
+  executeConfirmedDeleteInvestment: {
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string()
+    })
+  },
+
+  // Subscription Tools
+  findRecurringTransactions: {
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      data: z.object({
+        subscriptions: z.array(
+          z.object({
+            merchant: z.string(),
+            frequency: z.union([z.literal('monthly'), z.literal('yearly'), z.literal('unknown')]),
+            averageAmount: z.number(),
+            transactionCount: z.number(),
+            lastPaymentDate: z.any() // Date object, but can be string in JSON
+          })
+        )
+      })
+    })
+  },
+
+  // Transaction Tools
+  addTransaction: {
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      type: z.literal('data-createdEntitySummary'),
+      data: z.object({
+        type: z.literal('Transaction'),
+        name: z.string(),
+        id: z.string(),
+        details: z.string()
+      })
+    })
+  },
+  identifyTransactionForAction: {
+    outputSchema: z.union([
+      z.object({
+        success: z.literal(false),
+        error: z.string()
+      }),
+      z.object({
+        success: z.literal(true),
+        type: z.literal('data-clarificationOptions'),
+        message: z.string(),
+        data: z.array(
+          z.object({
+            id: z.string(),
+            name: z.string().optional(),
+            description: z.string().optional(),
+            currency: z.string().optional(),
+            details: z.string().optional(),
+            balance: z.number().optional()
+          })
+        )
+      }),
+      z.object({
+        success: z.literal(true),
+        confirmationNeeded: z.literal(true),
+        id: z.string(),
+        details: z.string(),
+        message: z.string()
+      })
+    ])
+  },
+  executeConfirmedUpdateTransaction: {
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      type: z.literal('data-createdEntitySummary'),
+      data: z.object({
+        type: z.literal('Transaction'),
+        name: z.string(),
+        id: z.string(),
+        details: z.string()
+      })
+    })
+  },
+  executeConfirmedDeleteTransaction: {
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string()
+    })
+  },
+  getExpenseBreakdown: {
+    outputSchema: z.union([
+      z.object({
+        success: z.literal(false),
+        error: z.string()
+      }),
+      z.object({
+        success: z.literal(true),
+        message: z.string(),
+        data: z.array(
+          z.object({
+            category: z.string(),
+            amount: z.number(),
+            percentage: z.number()
+          })
+        )
+      })
+    ])
+  },
+
+  // Visualization Tools
+  generateChartData: {
+    outputSchema: z.object({
+      success: z.boolean(),
+      data: z.object({
+        type: z.union([z.literal('auto'), z.literal('bar'), z.literal('line'), z.literal('pie')]),
+        data: z.array(z.record(z.string(), z.any())) // Array of objects with arbitrary keys/values
+      })
+    })
+  },
+  fetchDataRecords: {
+    outputSchema: z.object({
+      success: z.boolean(),
+      data: z.object({
+        records: z.array(z.record(z.string(), z.any())), // Array of objects with arbitrary keys/values
+        count: z.number()
+      })
+    })
+  },
+  calculateMetrics: {
+    outputSchema: z.object({
+      success: z.boolean(),
+      data: z.object({
+        metrics: z.record(z.string(), z.any()) // Object with arbitrary keys/values
+      })
+    })
+  }
 };
 
-export type MyToolTypes = InferUITools<typeof tools>;
+export type MyToolTypes = {
+  [K in keyof typeof tools]: {
+    input: unknown; // Frontend doesn't care about input, so use unknown
+    output: z.infer<(typeof tools)[K]['outputSchema']>;
+  };
+};

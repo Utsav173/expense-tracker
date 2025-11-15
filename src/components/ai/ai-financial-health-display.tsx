@@ -6,6 +6,7 @@ import { Icon } from '../ui/icon';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import NoData from '../ui/no-data';
 
 type FinancialHealthAnalysis = {
   score: number;
@@ -18,7 +19,7 @@ interface AiFinancialHealthDisplayProps {
   analysis: FinancialHealthAnalysis;
 }
 
-const ScoreCircle = ({ score }: { score: number }) => {
+const ScoreCircle = React.memo(({ score }: { score: number }) => {
   const circumference = 2 * Math.PI * 45; // 2 * pi * radius
   const strokeDashoffset = circumference - (score / 100) * circumference;
 
@@ -62,50 +63,58 @@ const ScoreCircle = ({ score }: { score: number }) => {
       </div>
     </div>
   );
-};
+});
 
-const InfoCard = ({
-  title,
-  icon,
-  items,
-  iconClass
-}: {
-  title: string;
-  icon: React.ComponentProps<typeof Icon>['name'];
-  items: { emoji: string; statement: string }[];
-  iconClass: string;
-}) => (
-  <Card className='flex-1'>
-    <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-      <CardTitle className='text-sm font-medium'>{title}</CardTitle>
-      <Icon name={icon} className={cn('h-4 w-4', iconClass)} />
-    </CardHeader>
-    <CardContent>
-      <ul className='space-y-2'>
-        {items.map((item, index) => (
-          <li key={index} className='flex items-start gap-3 text-sm'>
-            <span className='mt-1 text-lg'>{item.emoji}</span>
-            <span>{item.statement}</span>
-          </li>
-        ))}
-      </ul>
-    </CardContent>
-  </Card>
+const InfoCard = React.memo(
+  ({
+    title,
+    icon,
+    items,
+    iconClass
+  }: {
+    title: string;
+    icon: React.ComponentProps<typeof Icon>['name'];
+    items: { emoji: string; statement: string }[];
+    iconClass: string;
+  }) => (
+    <Card className='flex-1'>
+      <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+        <CardTitle className='text-sm font-medium'>{title}</CardTitle>
+        <Icon name={icon} className={cn('h-4 w-4', iconClass)} />
+      </CardHeader>
+      <CardContent>
+        <ul className='space-y-2'>
+          {items.map((item, index) => (
+            <li key={index} className='flex items-start gap-3 text-sm'>
+              <span className='mt-1 text-lg'>{item.emoji}</span>
+              <span>{item.statement}</span>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  )
 );
 
-const RecommendationCard = ({
-  recommendation
-}: {
-  recommendation: { title: string; description: string };
-}) => (
-  <div className='bg-card rounded-lg border p-4'>
-    <p className='font-semibold'>{recommendation.title}</p>
-    <p className='text-muted-foreground mt-1 text-sm'>{recommendation.description}</p>
-  </div>
+const RecommendationCard = React.memo(
+  ({ recommendation }: { recommendation: { title: string; description: string } }) => (
+    <div className='bg-card rounded-lg border p-4'>
+      <p className='font-semibold'>{recommendation.title}</p>
+      <p className='text-muted-foreground mt-1 text-sm'>{recommendation.description}</p>
+    </div>
+  )
 );
 
 const AiFinancialHealthDisplay: React.FC<AiFinancialHealthDisplayProps> = ({ analysis }) => {
-  if (!analysis) return null;
+  if (!analysis) {
+    return (
+      <Card>
+        <CardContent className='p-4'>
+          <NoData message='No financial health analysis available.' icon='activity' />
+        </CardContent>
+      </Card>
+    );
+  }
 
   const { score, highlights, improvements, recommendations } = analysis;
 
@@ -114,7 +123,7 @@ const AiFinancialHealthDisplay: React.FC<AiFinancialHealthDisplayProps> = ({ ana
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className='mt-4 w-full space-y-4'
+      className='w-full space-y-4'
     >
       <Card>
         <CardHeader>

@@ -358,7 +358,7 @@ export const AiChat = ({
 
   const lastMessage = messages[messages.length - 1];
   const showSuggestions =
-    (messages.length === 0 || (lastMessage?.role === 'assistant' && status === 'ready')) &&
+    (messages.length > 0 && lastMessage?.role === 'assistant' && status === 'ready') &&
     dynamicSuggestions.length > 0;
 
   return (

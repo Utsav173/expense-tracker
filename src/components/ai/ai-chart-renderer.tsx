@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Bar,
   BarChart,
@@ -94,7 +94,12 @@ const renderActiveShape = (props: any) => {
 };
 
 const generateMonochromeScale = (color: string, count: number): string[] => {
-  const [hue, saturation] = color.match(/\d+/g)!.map(Number);
+  const matches = color.match(/\d+/g);
+  if (!matches || matches.length < 2) {
+    console.warn('Invalid color format for generateMonochromeScale:', color);
+    return Array(count).fill('#CCCCCC'); // Return a default grey scale
+  }
+  const [hue, saturation] = matches.map(Number);
   const scale = [];
   const startLightness = 80;
   const endLightness = 30;
@@ -181,7 +186,17 @@ const AiChartRenderer: React.FC<AiChartRendererProps> = ({ chart }) => {
     return 'bar';
   }, [categoryKey, valueKeys.length]);
 
-  const [chartType, setChartType] = useState<'bar' | 'line' | 'pie'>(determineDefaultChartType());
+  const [chartType, setChartType] = useState<'bar' | 'line' | 'pie'>(
+    chart.type !== 'auto' ? chart.type : determineDefaultChartType()
+  );
+
+  useEffect(() => {
+    if (chart.type !== 'auto') {
+      setChartType(chart.type);
+    } else {
+      setChartType(determineDefaultChartType());
+    }
+  }, [chart.type, determineDefaultChartType]);
 
   const isDenseData = formattedData.length > 30 && chartType === 'bar';
 
@@ -222,22 +237,28 @@ const AiChartRenderer: React.FC<AiChartRendererProps> = ({ chart }) => {
     );
   }
 
-  const yAxisFormatter = (tick: number) =>
-    new Intl.NumberFormat('en-IN', {
-      notation: 'compact',
-      compactDisplay: 'short'
-    }).format(tick);
+  const yAxisFormatter = useCallback(
+    (tick: number) =>
+      new Intl.NumberFormat('en-IN', {
+        notation: 'compact',
+        compactDisplay: 'short'
+      }).format(tick),
+    []
+  );
 
-  const labelFormatter = (label: string) => {
-    if (typeof label !== 'string') {
+  const labelFormatter = useCallback(
+    (label: string) => {
+      if (typeof label !== 'string') {
+        return label;
+      }
+      const maxLength = isMobile ? 10 : 15;
+      if (label.length > maxLength) {
+        return `${label.substring(0, maxLength)}...`;
+      }
       return label;
-    }
-    const maxLength = isMobile ? 10 : 15;
-    if (label.length > maxLength) {
-      return `${label.substring(0, maxLength)}...`;
-    }
-    return label;
-  };
+    },
+    [isMobile]
+  );
 
   const renderChart = () => {
     switch (chartType) {
@@ -420,7 +441,7 @@ const AiChartRenderer: React.FC<AiChartRendererProps> = ({ chart }) => {
   };
 
   return (
-    <Card className='mt-4 w-full overflow-hidden transition-all duration-300'>
+    <Card className='w-full overflow-hidden transition-all duration-300'>
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -462,7 +483,7 @@ const AiChartRenderer: React.FC<AiChartRendererProps> = ({ chart }) => {
           </div>
           <ChartContainer config={chartConfig}>{renderChart()}</ChartContainer>
           {summaryStats && (
-            <div className='mt-4 space-y-3'>
+            <div className='space-y-3'>
               <p className='text-muted-foreground text-sm font-medium'>
                 Summary for {formattedData.length} data points:
               </p>
