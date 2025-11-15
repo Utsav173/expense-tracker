@@ -8,14 +8,16 @@ import { cn } from '@/lib/utils';
 
 interface AiCreatedEntitySummaryDisplayProps {
   entity: {
-    type: string; // e.g., 'Account', 'Budget', 'Goal'
+    type: string;
     name: string;
     id: string;
-    details?: string; // A summary string
+    details?: string;
   };
 }
 
-const AiCreatedEntitySummaryDisplay: React.FC<AiCreatedEntitySummaryDisplayProps> = ({ entity }) => {
+const AiCreatedEntitySummaryDisplay: React.FC<AiCreatedEntitySummaryDisplayProps> = ({
+  entity
+}) => {
   if (!entity) {
     return null;
   }

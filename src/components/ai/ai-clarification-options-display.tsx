@@ -17,7 +17,7 @@ interface AiClarificationOptionsDisplayProps {
     details?: string;
     balance?: number;
   }>;
-  message: string; // The message from the AI asking for clarification
+  message: string;
 }
 
 const AiClarificationOptionsDisplay: React.FC<AiClarificationOptionsDisplayProps> = ({

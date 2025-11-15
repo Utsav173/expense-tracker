@@ -8,11 +8,9 @@ import { useToast } from '@/lib/hooks/useToast';
 import { Button } from '../ui/button';
 import { Icon } from '@/components/ui/icon';
 import type { MyUIMessage, MyCustomData } from '@/lib/ai-types';
-import type { UIMessagePart, ToolUIPart } from 'ai';
+import type { UIMessagePart } from 'ai';
 import { Response } from '@/components/ai-elements/response';
-import { Reasoning, ReasoningContent, ReasoningTrigger } from '@/components/ai-elements/reasoning';
-import { AiToolDisplay, getToolName } from './ai-tool-display';
-import AiChartRenderer from './ai-chart-renderer';
+import AiChartRenderer from '@/components/ai/ai-chart-renderer';
 import AiTransactionPreview from '@/components/transactions/ai-transaction-preview';
 import AiRecordsTable from './ai-records-table';
 import AiMetricsDisplay from './ai-metrics-display';
@@ -22,39 +20,18 @@ import AiClarificationOptionsDisplay from './ai-clarification-options-display';
 import AiStockSearchResultsDisplay from './ai-stock-search-results-display';
 import AiIpoLinkDisplay from './ai-ipo-link-display';
 import AiCreatedEntitySummaryDisplay from './ai-created-entity-summary-display';
-import { Source, Sources, SourcesContent, SourcesTrigger } from '@/components/ai-elements/sources';
 import { IconName } from '../ui/icon-map';
 import { MyToolTypes } from '@/lib/ai-tool-types';
 
-export interface ChatMessageConfig {
-  showToolExecution?: boolean;
-  showToolExecutionOnErrorOnly?: boolean;
-  showEmptyState?: boolean;
-}
-
-const DEFAULT_CONFIG: Required<ChatMessageConfig> = {
-  showToolExecution: true,
-  showToolExecutionOnErrorOnly: false,
-  showEmptyState: true
-};
-
 type FilePart = Extract<UIMessagePart<MyCustomData, MyToolTypes>, { type: 'file' }>;
-type ToolPart = ToolUIPart<MyToolTypes>;
-type DataPart = (Extract<
-  UIMessagePart<MyCustomData, MyToolTypes>,
-  | { type: 'data-chart' }
-  | { type: 'data-records' }
-  | { type: 'data-metrics' }
-  | { type: 'data-imageAnalysisData' }
-  | { type: 'data-financialHealthAnalysis' }
-  | { type: 'data-subscriptionAnalysis' }
-  | { type: 'data-clarificationOptions' }
-  | { type: 'data-stockSearchResults' }
-  | { type: 'data-ipoLink' }
-  | { type: 'data-createdEntitySummary' }
->) & { toolName?: string };
-type SourceUrlPart = Extract<UIMessagePart<MyCustomData, MyToolTypes>, { type: 'source-url' }>;
-type ReasoningPart = Extract<UIMessagePart<MyCustomData, MyToolTypes>, { type: 'reasoning' }>;
+type DataPartType = keyof MyCustomData;
+type DataPart = UIMessagePart<MyCustomData, MyToolTypes> & { type: `data-${DataPartType}` };
+
+interface ChatMessageBubbleProps {
+  message: MyUIMessage;
+  isStreaming?: boolean;
+  user: any;
+}
 
 const getFileIcon = (mediaType: string): IconName => {
   if (mediaType?.startsWith('image/')) return 'image';
@@ -63,131 +40,17 @@ const getFileIcon = (mediaType: string): IconName => {
   return 'file';
 };
 
-const isToolPart = (part: UIMessagePart<MyCustomData, MyToolTypes>): part is ToolPart => {
-  return part.type.startsWith('tool-') || part.type === 'dynamic-tool';
-};
-
-const isDataPart = (part: UIMessagePart<MyCustomData, MyToolTypes>): part is DataPart => {
-  return part.type.startsWith('data-');
-};
-
-const isSourceUrlPart = (part: UIMessagePart<MyCustomData, MyToolTypes>): part is SourceUrlPart => {
-  return part.type === 'source-url';
-};
-
-type RenderableDataType = 'data-records' | 'data-chart' | 'data-metrics' | 'data-imageAnalysisData' | 'data-financialHealthAnalysis' | 'data-subscriptionAnalysis' | 'data-clarificationOptions' | 'data-stockSearchResults' | 'data-ipoLink' | 'data-createdEntitySummary';
-
-const getRenderableDataType = (part: UIMessagePart<MyCustomData, MyToolTypes>): RenderableDataType | null => {
-  if (isToolPart(part) && part.state === 'output-available' && part.output?.success) {
-    if (typeof part.output === 'object' && part.output !== null && 'data' in part.output && part.output.data !== undefined) {
-      const data = part.output.data;
-      if (data && typeof data === 'object') {
-        if ('records' in data && Array.isArray(data.records)) return 'data-records';
-        if ('chart' in data && typeof data.chart === 'object') return 'data-chart';
-        if ('metrics' in data && typeof data.metrics === 'object') return 'data-metrics';
-        if ('transactions' in data && Array.isArray(data.transactions)) return 'data-imageAnalysisData';
-        if ('analysis' in data && typeof data.analysis === 'object') return 'data-financialHealthAnalysis';
-        if ('subscriptions' in data && Array.isArray(data.subscriptions)) return 'data-subscriptionAnalysis';
-        if ('options' in data && Array.isArray(data.options)) return 'data-clarificationOptions';
-        if ('results' in data && Array.isArray(data.results)) return 'data-stockSearchResults';
-        if ('url' in data && typeof data.url === 'string' && data.url.startsWith('http')) return 'data-ipoLink';
-        if ('entity' in data && typeof data.entity === 'object') return 'data-createdEntitySummary';
-      }
-    }
-  }
-  return null;
-};
-
-const hasVisibleContent = (parts: MyUIMessage['parts']): boolean => {
-
-  return parts.some(
-
-    (part) =>
-
-      part.type === 'text' ||
-
-      part.type === 'file' ||
-
-      part.type === 'reasoning' ||
-
-      isDataPart(part) ||
-
-      getRenderableDataType(part) !== null ||
-
-      (isToolPart(part) && part.state === 'output-available' && part.output?.success === false)
-
-  );
-
-};
-
-const groupParts = (parts: MyUIMessage['parts']) => {
-  if (!parts.length) return [];
-
-  const grouped: Array<{
-    type: string;
-    content?: string[];
-    part?: UIMessagePart<MyCustomData, MyToolTypes>;
-    originalIndex: number;
-  }> = [];
-
-  let textBuffer: string[] = [];
-  let textStartIndex = -1;
-
-  const flushTextBuffer = () => {
-    if (textBuffer.length > 0) {
-      grouped.push({
-        type: 'text',
-        content: [...textBuffer],
-        originalIndex: textStartIndex
-      });
-      textBuffer = [];
-      textStartIndex = -1;
-    }
-  };
-
-  parts.forEach((part, index) => {
-    if (part.type === 'text') {
-      if (textBuffer.length === 0) {
-        textStartIndex = index;
-      }
-      textBuffer.push((part as { type: 'text'; text: string }).text);
-    } else {
-      flushTextBuffer();
-      const renderableType = getRenderableDataType(part);
-      if (renderableType) {
-        // Re-narrow 'part' here to safely access output.data
-        const toolOutputPart = part as ToolUIPart<MyToolTypes> & { state: 'output-available'; output: { success: true; data: MyCustomData } };
-
-        const syntheticDataPart: DataPart = {
-          type: renderableType,
-          data: toolOutputPart.output.data,
-          toolName: getToolName(toolOutputPart)
-        };
-        grouped.push({ type: renderableType, part: syntheticDataPart, originalIndex: index });
-      } else {
-        grouped.push({ type: part.type, part, originalIndex: index });
-      }
-    }
-  });
-
-  flushTextBuffer();
-  return grouped;
-};
-
 const TextPartBubble: React.FC<{
-  content: string[];
+  content: string;
   isUser: boolean;
   isStreaming: boolean;
 }> = memo(({ content, isUser, isStreaming }) => {
   const { showSuccess, showError } = useToast();
   const [copied, setCopied] = useState(false);
-  const fullText = content.join('');
-
-  if (!fullText.trim()) return null;
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(fullText);
+      await navigator.clipboard.writeText(content);
       setCopied(true);
       showSuccess('Copied to clipboard!');
       setTimeout(() => setCopied(false), 2000);
@@ -223,7 +86,7 @@ const TextPartBubble: React.FC<{
           )}
         </Button>
       )}
-      <Response>{`${fullText}${isStreaming ? '▍' : ''}`}</Response>
+      <Response>{`${content}${isStreaming ? '▍' : ''}`}</Response>
     </div>
   );
 });
@@ -279,7 +142,7 @@ const FilePartBubble: React.FC<{ part: FilePart }> = memo(({ part }) => {
 });
 FilePartBubble.displayName = 'FilePartBubble';
 
-const CustomToolResult: React.FC<{ part: DataPart }> = memo(({ part }) => {
+const CustomDataDisplay: React.FC<{ part: DataPart }> = memo(({ part }) => {
   switch (part.type) {
     case 'data-chart':
       return <AiChartRenderer chart={part.data} />;
@@ -295,7 +158,7 @@ const CustomToolResult: React.FC<{ part: DataPart }> = memo(({ part }) => {
       return <AiSubscriptionDisplay subscriptions={part.data.subscriptions} />;
     case 'data-clarificationOptions':
       return (
-        <AiClarificationOptionsDisplay options={part.data} message={'Please select an option:'} />
+        <AiClarificationOptionsDisplay options={part.data} message='Please select an option:' />
       );
     case 'data-stockSearchResults':
       return <AiStockSearchResultsDisplay results={part.data} />;
@@ -304,91 +167,58 @@ const CustomToolResult: React.FC<{ part: DataPart }> = memo(({ part }) => {
     case 'data-createdEntitySummary':
       return <AiCreatedEntitySummaryDisplay entity={part.data} />;
     default:
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('Unknown data part type:', part);
-      }
       return null;
   }
 });
-CustomToolResult.displayName = 'CustomToolResult';
+CustomDataDisplay.displayName = 'CustomDataDisplay';
 
-interface ChatMessageBubbleProps {
-  message: MyUIMessage;
-  isStreaming?: boolean;
-  user: any;
-  config?: ChatMessageConfig;
-}
+const ThinkingIndicator = () => (
+  <div className='flex items-end justify-start space-x-3'>
+    <div className='bg-muted flex items-center space-x-1.5 rounded-2xl rounded-bl-none px-4 py-3 shadow-sm'>
+      <div className='bg-muted-foreground h-2 w-2 animate-pulse rounded-full [animation-delay:-0.3s]'></div>
+      <div className='bg-muted-foreground h-2 w-2 animate-pulse rounded-full [animation-delay:-0.15s]'></div>
+      <div className='bg-muted-foreground h-2 w-2 animate-pulse rounded-full'></div>
+    </div>
+  </div>
+);
 
 const ChatMessageBubbleImpl: React.FC<ChatMessageBubbleProps> = ({
   message,
   isStreaming = false,
-  user,
-  config
+  user
 }) => {
   const isUser = message.role === 'user';
-  const mergedConfig = { ...DEFAULT_CONFIG, ...config };
 
-  const toolsWithCustomResults = useMemo(() => {
-    const map = new Map<string, DataPart>();
+  const renderableParts = useMemo(() => {
+    const result: Array<{ type: string; content: any }> = [];
+    let textBuffer = '';
+
+    const flushText = () => {
+      if (textBuffer) {
+        result.push({ type: 'text', content: textBuffer });
+        textBuffer = '';
+      }
+    };
+
     message.parts.forEach((part) => {
-      if (isDataPart(part)) {
-        const toolName =
-          (part as { type: string; data: unknown; toolName?: string }).toolName ||
-          part.type.replace('data-', '');
-        map.set(toolName, part);
+      if (part.type === 'text') {
+        textBuffer += part.text;
+      } else if (part.type.startsWith('data-')) {
+        flushText();
+        result.push({ type: part.type, content: (part as DataPart).data });
+      } else if (part.type === 'file') {
+        flushText();
+        result.push({ type: 'file', content: part });
       }
     });
-    return map;
+
+    flushText();
+    return result;
   }, [message.parts]);
 
-  const genericToolDisplays = useMemo(() => {
-    if (!mergedConfig.showToolExecution) {
-      return [];
-    }
-
-    const toolParts = message.parts.filter(isToolPart);
-
-    return toolParts.filter((toolPart) => {
-      const toolName = getToolName(toolPart);
-      const hasCustomDataPart = toolsWithCustomResults.has(toolName);
-      const renderableType = getRenderableDataType(toolPart);
-
-      if (mergedConfig.showToolExecutionOnErrorOnly) {
-        return toolPart.state === 'output-error';
-      }
-
-      if (toolPart.state === 'input-streaming') {
-        return true;
-      }
-
-      if (toolPart.state === 'output-error') {
-        return true;
-      }
-
-      if (toolPart.state === 'output-available') {
-        // If the tool output is available and successful, we don't show generic display.
-        // If it's available but NOT successful (i.e., an error), we DO show generic display.
-        if (toolPart.output?.success) {
-          return false;
-        } else {
-          return true;
-        }
-      }
-
-      return true;
-    });
-  }, [message.parts, toolsWithCustomResults, mergedConfig]);
-
-  const sources = useMemo(() => message.parts.filter(isSourceUrlPart), [message.parts]);
-  const groupedParts = useMemo(() => groupParts(message.parts), [message.parts]);
-  const hasContent = useMemo(() => hasVisibleContent(message.parts), [message.parts]);
-
-  const shouldShowEmptyState =
-    !isUser &&
-    !hasContent &&
-    genericToolDisplays.length === 0 &&
-    !isStreaming &&
-    mergedConfig.showEmptyState;
+  if (!isUser && renderableParts.length === 0 && !isStreaming) {
+    return null;
+  }
 
   return (
     <div
@@ -403,7 +233,7 @@ const ChatMessageBubbleImpl: React.FC<ChatMessageBubbleProps> = ({
           isUser ? 'border-primary/20' : 'border-slate-200 dark:border-slate-700'
         )}
       >
-        {isUser && user?.image && <AvatarImage src={user.image} alt={user.name || 'User'} />}
+        {isUser && user?.image ? <AvatarImage src={user.image} alt={user.name || 'User'} /> : null}
         <AvatarFallback
           className={cn(
             isUser ? 'bg-primary text-primary-foreground' : 'bg-slate-100 dark:bg-slate-800'
@@ -419,122 +249,59 @@ const ChatMessageBubbleImpl: React.FC<ChatMessageBubbleProps> = ({
           isUser ? 'flex flex-col items-end' : 'flex flex-col items-start'
         )}
       >
-        {groupedParts.map((group, groupIndex) => {
-          const key = `${message.id}-${group.type}-${group.originalIndex}`;
-          const isLastGroup = groupIndex === groupedParts.length - 1;
+        {renderableParts.map((part, index) => {
+          const key = `${message.id}-part-${index}`;
+          const isLastPart = index === renderableParts.length - 1;
 
-          switch (group.type) {
+          switch (part.type) {
             case 'text':
               return (
                 <TextPartBubble
                   key={key}
-                  content={group.content!}
+                  content={part.content}
                   isUser={isUser}
-                  isStreaming={isStreaming && isLastGroup}
+                  isStreaming={isStreaming && isLastPart}
                 />
               );
-
             case 'file':
-              return <FilePartBubble key={key} part={group.part as FilePart} />;
-
-            case 'reasoning':
-              return (
-                <Reasoning
-                  key={key}
-                  isStreaming={isStreaming && isLastGroup}
-                  className='w-full max-w-2xl'
-                >
-                  <ReasoningTrigger />
-                  <ReasoningContent>{(group.part as ReasoningPart).text}</ReasoningContent>
-                </Reasoning>
-              );
-
-            case 'step-start':
-              return groupIndex > 0 ? (
-                <div key={key} className='w-full max-w-2xl'>
-                  <hr className='border-border/50 my-3' />
-                </div>
-              ) : null;
-
+              return <FilePartBubble key={key} part={part.content} />;
             case 'data-chart':
             case 'data-records':
             case 'data-metrics':
             case 'data-imageAnalysisData':
             case 'data-financialHealthAnalysis':
             case 'data-subscriptionAnalysis':
+            case 'data-clarificationOptions':
+            case 'data-stockSearchResults':
+            case 'data-ipoLink':
+            case 'data-createdEntitySummary':
               return (
                 <div key={key} className='w-full max-w-4xl'>
-                  <CustomToolResult part={group.part as DataPart} />
+                  <CustomDataDisplay
+                    part={{ type: part.type as DataPart['type'], data: part.content }}
+                  />
                 </div>
               );
-
             default:
-              if (group.part && (isToolPart(group.part) || isSourceUrlPart(group.part))) {
-                return null;
-              }
               return null;
           }
         })}
 
-        {genericToolDisplays.length > 0 && (
-          <div className='w-full max-w-2xl space-y-2'>
-            {genericToolDisplays.map((toolPart, idx) => (
-              <AiToolDisplay
-                key={`${message.id}-tool-${getToolName(toolPart)}-${idx}`}
-                tool={toolPart}
-              />
-            ))}
-          </div>
-        )}
-
-        {shouldShowEmptyState && (
-          <div
-            className={cn(
-              'w-fit max-w-[85%] rounded-2xl rounded-tl-sm border px-4 py-3 text-sm',
-              'border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-700 dark:bg-slate-900/50'
-            )}
-          >
-            <div className='flex items-center gap-2'>
-              <Icon name='loader2' className='h-3.5 w-3.5 animate-spin' />
-              <span>Processing...</span>
-            </div>
-          </div>
-        )}
-
-        {sources.length > 0 && !isUser && (
-          <div className='w-full max-w-2xl'>
-            <Sources>
-              <SourcesTrigger count={sources.length} />
-              <SourcesContent>
-                {sources.map((source, i) => (
-                  <Source
-                    key={`${message.id}-source-${i}`}
-                    href={source.url}
-                    title={source.title || source.url}
-                  />
-                ))}
-              </SourcesContent>
-            </Sources>
-          </div>
-        )}
+        {isStreaming && renderableParts.length === 0 && <ThinkingIndicator />}
       </div>
     </div>
   );
 };
 
 export const ChatMessageBubble = memo(ChatMessageBubbleImpl, (prev, next) => {
-  if (prev.message.id !== next.message.id) return false;
-  if (prev.isStreaming !== next.isStreaming) return false;
-  if (prev.message.parts.length !== next.message.parts.length) return false;
-
-  if (JSON.stringify(prev.config) !== JSON.stringify(next.config)) return false;
-
+  if (prev.message.id !== next.message.id || prev.isStreaming !== next.isStreaming) {
+    return false;
+  }
   if (next.isStreaming) {
     const prevLast = prev.message.parts[prev.message.parts.length - 1];
     const nextLast = next.message.parts[next.message.parts.length - 1];
     return JSON.stringify(prevLast) === JSON.stringify(nextLast);
   }
-
   return JSON.stringify(prev.message.parts) === JSON.stringify(next.message.parts);
 });
 

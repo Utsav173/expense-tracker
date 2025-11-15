@@ -77,9 +77,6 @@ export const useAccountDetailsData = (id: string) => {
     error: transactionError,
     refetch: refetchTransactions
   } = useQuery({
-    // ====================== START OF THE FIX ======================
-    // The queryKey now uses the `duration` variable, perfectly matching the
-    // parameter used in the queryFn. This makes it consistent and correct.
     queryKey: [
       'accountTransactions',
       id,
@@ -89,16 +86,15 @@ export const useAccountDetailsData = (id: string) => {
       state.sortOrder,
       state.categoryId,
       state.isIncome,
-      duration, // <-- FIXED: Use the derived duration string here
+      duration,
       state.minAmount,
       state.maxAmount,
       state.type
     ],
-    // ======================= END OF THE FIX =======================
     queryFn: () =>
       transactionGetAll({
         accountId: id,
-        duration, // This was already correct, the key was the problem.
+        duration,
         page: state.page,
         limit: 10,
         q: state.q,
