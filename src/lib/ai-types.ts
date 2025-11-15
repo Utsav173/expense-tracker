@@ -19,13 +19,20 @@ export type MyCustomData = {
     metrics: Record<string, any>;
   };
   imageAnalysisData: AIAPI.ExtractedTransaction[];
-  'financial-health-analysis': {
-    analysis: {
-      score: number;
-      highlights: Array<{ emoji: string; statement: string }>;
-      improvements: Array<{ emoji: string; statement: string }>;
-      recommendations: Array<{ title: string; description: string }>;
-    };
+  financialHealthAnalysis: {
+    score: number;
+    highlights: Array<{ emoji: string; statement: string }>;
+    improvements: Array<{ emoji: string; statement: string }>;
+    recommendations: Array<{ title: string; description: string }>;
+  };
+  subscriptionAnalysis: {
+    subscriptions: Array<{
+      merchant: string;
+      frequency: string;
+      averageAmount: number;
+      transactionCount: number;
+      lastPaymentDate: string;
+    }>;
   };
 };
 

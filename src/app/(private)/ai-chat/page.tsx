@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import { usePathname } from 'next/navigation';
 import { AiChat } from '@/components/ai/ai-chat';
 import { useAuth } from '@/components/providers/auth-provider';
 import Loader from '@/components/ui/loader';
@@ -12,6 +12,7 @@ import { Icon } from '@/components/ui/icon';
 const AiChatPage = () => {
   const { session, isLoading } = useAuth();
   const user = session?.user;
+  const pathname = usePathname();
 
   if (isLoading) {
     return (
@@ -56,7 +57,7 @@ const AiChatPage = () => {
 
   return (
     <div className='h-[calc(100vh_-_8rem)] w-full'>
-      <AiChat isFullPage={true} />
+      <AiChat isFullPage={true} pathname={pathname} />
     </div>
   );
 };

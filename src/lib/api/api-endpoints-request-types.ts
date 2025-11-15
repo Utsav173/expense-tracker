@@ -89,7 +89,7 @@ export const apiEndpoints = {
       method: 'POST',
       path: '/accounts/share',
       body: z.object({
-        accountId: z.string().uuid(),
+        accountId: z.uuid(),
         userId: z.string()
       })
     },
@@ -97,7 +97,7 @@ export const apiEndpoints = {
       method: 'POST',
       path: '/accounts/import/transaction',
       body: z.object({
-        accountId: z.string().uuid(),
+        accountId: z.uuid(),
         document: z.any().refine((file) => file && file.size > 0, 'Document file is required.')
       })
     },
@@ -159,7 +159,7 @@ export const apiEndpoints = {
       method: 'POST',
       path: '/accounts/revoke-share',
       body: z.object({
-        accountId: z.string().uuid(),
+        accountId: z.uuid(),
         userId: z.string()
       })
     },
@@ -199,11 +199,11 @@ export const apiEndpoints = {
       method: 'GET',
       path: '/transactions/export',
       query: z.object({
-        accountId: z.string().uuid().optional(),
+        accountId: z.uuid().optional(),
         duration: z.string().optional(),
         q: z.string().optional(),
         isIncome: z.string().optional(),
-        categoryId: z.string().uuid().optional(),
+        categoryId: z.uuid().optional(),
         format: z.enum(['xlsx', 'csv']).default('xlsx'),
         minAmount: z.coerce.number().optional(),
         maxAmount: z.coerce.number().optional()
@@ -221,7 +221,7 @@ export const apiEndpoints = {
             categoryName: z.string().optional(),
             transfer: z.string().optional(),
             createdAt: z.string().datetime(),
-            accountId: z.string().uuid()
+            accountId: z.uuid()
           })
         )
       })
@@ -230,11 +230,11 @@ export const apiEndpoints = {
       method: 'GET',
       path: '/transactions',
       query: paginationQuerySchema.extend({
-        accountId: z.string().uuid().optional(),
+        accountId: z.uuid().optional(),
         duration: z.string().optional(),
         q: z.string().optional(),
         isIncome: z.string().optional(),
-        categoryId: z.string().uuid().optional(),
+        categoryId: z.uuid().optional(),
         minAmount: z.coerce.number().optional(),
         maxAmount: z.coerce.number().optional(),
         type: z.string().optional()
@@ -253,8 +253,8 @@ export const apiEndpoints = {
         amount: z.coerce.number(),
         isIncome: z.boolean(),
         transfer: z.string().optional(),
-        category: z.string().uuid().optional().nullable(),
-        account: z.string().uuid(),
+        category: z.uuid().optional().nullable(),
+        account: z.uuid(),
         recurring: z.boolean().optional(),
         recurrenceType: z
           .enum(['daily', 'weekly', 'monthly', 'yearly', 'hourly'])
@@ -275,8 +275,8 @@ export const apiEndpoints = {
           amount: z.coerce.number().optional(),
           isIncome: z.boolean().optional(),
           transfer: z.string().optional(),
-          category: z.string().uuid().optional().nullable(),
-          account: z.string().uuid().optional(),
+          category: z.uuid().optional().nullable(),
+          account: z.uuid().optional(),
           recurring: z.boolean().optional(),
           recurrenceType: z
             .enum(['daily', 'weekly', 'monthly', 'yearly', 'hourly'])
@@ -298,7 +298,7 @@ export const apiEndpoints = {
       path: '/transactions/by/category/chart',
       query: z.object({
         duration: z.string().optional(),
-        accountId: z.string().uuid().optional()
+        accountId: z.uuid().optional()
       })
     },
     getIncomeExpenseTotals: {
@@ -306,7 +306,7 @@ export const apiEndpoints = {
       path: '/transactions/by/income/expense',
       query: z.object({
         duration: z.string().optional(),
-        accountId: z.string().uuid().optional()
+        accountId: z.uuid().optional()
       })
     },
     getIncomeExpenseChart: {
@@ -314,7 +314,7 @@ export const apiEndpoints = {
       path: '/transactions/by/income/expense/chart',
       query: z.object({
         duration: z.string().optional(),
-        accountId: z.string().uuid().optional()
+        accountId: z.uuid().optional()
       })
     },
     getFakeData: {
@@ -428,7 +428,7 @@ export const apiEndpoints = {
       method: 'POST',
       path: '/budget',
       body: z.object({
-        category: z.string().uuid(),
+        category: z.uuid(),
         month: z.coerce.number().int().min(1).max(12),
         year: z.coerce.number().int(),
         amount: z.coerce.number().positive()
@@ -709,7 +709,7 @@ export const apiEndpoints = {
       method: 'POST',
       path: '/investment',
       body: z.object({
-        account: z.string().uuid(),
+        account: z.uuid(),
         symbol: z.string().min(1),
         shares: z.coerce.number().positive(),
         purchasePrice: z.coerce.number().nonnegative(),

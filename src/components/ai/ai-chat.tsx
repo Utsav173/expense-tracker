@@ -14,7 +14,8 @@ import { Icon } from '@/components/ui/icon';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { DefaultChatTransport, FileUIPart } from 'ai';
 import type { MyUIMessage } from '@/lib/ai-types';
-import { Suggestion } from '@/components/ai-elements/suggestion';
+import { SuggestionGroup } from './suggestion-group';
+import { PromptSuggestion } from './prompt-suggestion';
 import { authClient } from '@/lib/auth-client';
 import { aiGetSuggestions } from '@/lib/endpoints/ai';
 
@@ -42,29 +43,13 @@ const convertFileToDataURL = (file: File): Promise<string> => {
   });
 };
 
-const PromptSuggestion = ({ text, onClick }: { text: string; onClick: () => void }) => (
-  <motion.button
-    whileHover={{ x: 2 }}
-    whileTap={{ scale: 0.98 }}
-    transition={{ type: 'spring', stiffness: 600, damping: 15 }}
-    onClick={onClick}
-    className='group bg-background hover:bg-muted flex w-full items-center gap-3 rounded-lg border p-3 text-left text-sm transition-all hover:shadow-sm'
-  >
-    <Icon
-      name='sparkles'
-      className='text-muted-foreground group-hover:text-primary h-4 w-4 shrink-0 transition-colors'
-    />
-    <span className='flex-1 text-purple-800 dark:text-indigo-300' title={text}>
-      {text}
-    </span>
-    <Icon
-      name='arrowRight'
-      className='text-muted-foreground h-4 w-4 shrink-0 opacity-0 transition-all group-hover:translate-x-1 group-hover:opacity-100'
-    />
-  </motion.button>
-);
-
-export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
+export const AiChat = ({
+  isFullPage = false,
+  pathname
+}: {
+  isFullPage?: boolean;
+  pathname: string;
+}) => {
   const prefersReducedMotion = useReducedMotion();
   const [sessionId, setSessionId] = useState(() => crypto.randomUUID());
   const { showError, showSuccess, showInfo } = useToast();
@@ -242,6 +227,40 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
   useEffect(() => {
     fetchSuggestions();
   }, [fetchSuggestions]);
+
+  const getContextualSuggestions = (pathname: string): string[] => {
+    if (pathname.includes('/budget')) {
+      return [
+        "What's my budget for this month?",
+        'How am I doing on my budget?',
+        'Show me my biggest expenses this month.'
+      ];
+    }
+    if (pathname.includes('/transactions')) {
+      return [
+        'Show me my recent transactions.',
+        'What was my biggest expense last week?',
+        'How much did I spend on food this month?'
+      ];
+    }
+    if (pathname.includes('/dashboard')) {
+      return [
+        'Give me a summary of my finances.',
+        'What are my top spending categories?',
+        'How much have I saved this year?'
+      ];
+    }
+    return [];
+  };
+
+  const { contextualSuggestions, generalSuggestions } = useMemo(() => {
+    const contextual = getContextualSuggestions(pathname);
+    const general = dynamicSuggestions.filter((s) => !contextual.includes(s));
+    return {
+      contextualSuggestions: contextual.slice(0, 3),
+      generalSuggestions: general.slice(0, 3)
+    };
+  }, [pathname, dynamicSuggestions]);
 
   const handleSendMessage = useCallback(
     async (promptText?: string) => {
@@ -427,21 +446,19 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
                     You can ask me to add transactions, check your budget, or upload a receipt, PDF,
                     or XLSX file.
                   </p>
-                  <div className='w-full max-w-md space-y-2'>
-                    {dynamicSuggestions.map((s, i) => (
-                      <motion.div
-                        key={s}
-                        initial={prefersReducedMotion ? undefined : { opacity: 0, y: 10 }}
-                        animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-                        transition={{
-                          duration: prefersReducedMotion ? 0 : 0.3,
-                          delay: prefersReducedMotion ? 0 : 0.2 + i * 0.1,
-                          ease: 'easeOut'
-                        }}
-                      >
-                        <PromptSuggestion text={s} onClick={() => handleSendMessage(s)} />
-                      </motion.div>
-                    ))}
+                  <div className='w-full max-w-md space-y-4'>
+                    <SuggestionGroup
+                      title='Contextual Suggestions'
+                      icon='lightbulb'
+                      suggestions={contextualSuggestions}
+                      onSuggestionClick={handleSendMessage}
+                    />
+                    <SuggestionGroup
+                      title='General Suggestions'
+                      icon='sparkles'
+                      suggestions={generalSuggestions}
+                      onSuggestionClick={handleSendMessage}
+                    />
                   </div>
                 </motion.div>
               )}
@@ -569,14 +586,6 @@ export const AiChat = ({ isFullPage = false }: { isFullPage?: boolean }) => {
       )}
 
       <div className='mx-auto w-full max-w-4xl p-4'>
-        {showSuggestions && (
-          <div className='mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3'>
-            {dynamicSuggestions.map((s, i) => (
-              <Suggestion key={i} suggestion={s} onClick={() => handleSendMessage(s)} />
-            ))}
-          </div>
-        )}
-
         {attachments.length > 0 && (
           <div className='mb-2 grid grid-cols-2 gap-2 sm:grid-cols-4'>
             {attachments.map((a) => (

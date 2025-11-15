@@ -41,13 +41,10 @@ import { Icon } from '../ui/icon';
 
 const investmentHoldingSchema = z.object({
   symbol: z
-    .object(
-      {
-        value: z.string().min(1, 'Symbol is required.'),
-        label: z.string()
-      },
-      { required_error: 'Symbol is required.' }
-    )
+    .object({
+      value: z.string().min(1, 'Symbol is required.'),
+      label: z.string()
+    })
     .nullable()
     .refine((data) => data !== null && data.value !== '', { message: 'Symbol is required.' }),
   shares: z
@@ -62,7 +59,7 @@ const investmentHoldingSchema = z.object({
     .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, {
       message: 'Purchase price must be a non-negative number.'
     }),
-  purchaseDate: z.date({ required_error: 'Purchase date is required.' })
+  purchaseDate: z.date()
 });
 
 type InvestmentHoldingFormSchema = z.infer<typeof investmentHoldingSchema>;

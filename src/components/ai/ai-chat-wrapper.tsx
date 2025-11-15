@@ -26,5 +26,5 @@ export const AiChatWrapper = () => {
 
   const showAiChatBubble = !userIsLoading && isPathAllowed && !!user?.hasAiApiKey;
 
-  return showAiChatBubble ? <AiChatTrigger /> : null;
+  return showAiChatBubble ? <AiChatTrigger pathname={pathname} /> : null;
 };

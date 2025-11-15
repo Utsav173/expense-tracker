@@ -32,10 +32,16 @@ export const apiUpdateDebt = (
 export const apiDeleteDebt = (id: string): Promise<DebtAndInterestAPI.DeleteDebtResponse> =>
   apiClient(apiEndpoints.interest.deleteDebt, { params: { id } });
 
-export const getOutstandingDebts = (): Promise<DebtAndInterestAPI.GetDebtsResponse> =>
-  apiClient(apiEndpoints.interest.getDebts, {
-    query: { type: 'taken', isPaid: 'false', limit: 100 }
+export const getOutstandingDebts = (): Promise<DebtAndInterestAPI.GetDebtsResponse> => {
+  const defaultQuery = apiEndpoints.interest.getDebts.query.parse({
+    type: 'taken',
+    isPaid: 'false',
+    limit: 100
   });
+  return apiClient(apiEndpoints.interest.getDebts, {
+    query: defaultQuery
+  });
+};
 
 export const interestCalculate = (
   data: CalculateInterestBody

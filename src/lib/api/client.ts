@@ -40,8 +40,10 @@ async function apiClient<TParams = unknown, TQuery = unknown, TBody = unknown, T
     }
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error('API Client Validation Error:', error.errors);
-      throw new Error(`Invalid request data: ${error.errors.map((e) => e.message).join(', ')}`);
+      console.error('API Client Validation Error:', error.issues);
+      throw new Error(
+        `Invalid request data: ${error.issues.map((e: z.ZodIssue) => e.message).join(', ')}`
+      );
     }
     throw error;
   }

@@ -22,7 +22,7 @@ const updateTransactionSchema = z.object({
     }),
   isIncome: z.boolean(),
   categoryId: z.string().uuid('Invalid category format.').optional().nullable(),
-  createdAt: z.date({ required_error: 'Transaction date is required.' }),
+  createdAt: z.date(),
   transfer: z.string().max(64, 'Transfer info too long.').optional().nullable()
 });
 

@@ -35,7 +35,7 @@ const goalSchema = z.object({
       message: 'Target amount must be a positive number.'
     })
     .transform((val) => parseFloat(val)),
-  targetDate: z.date({ required_error: 'Target date is required.' })
+  targetDate: z.date()
 });
 
 type GoalFormSchema = z.infer<typeof goalSchema>;

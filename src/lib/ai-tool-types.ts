@@ -43,17 +43,28 @@ const currencyConversionResultSchema = z.object({
 });
 const financialSummarySchema = z.any(); // Define more strictly if needed
 
+const financialHealthAnalysisSchema = z.object({
+  score: z.number(),
+  highlights: z.array(z.object({ emoji: z.string(), statement: z.string() })),
+  improvements: z.array(z.object({ emoji: z.string(), statement: z.string() })),
+  recommendations: z.array(z.object({ title: z.string(), description: z.string() }))
+});
+
+const subscriptionAnalysisSchema = z.object({
+  subscriptions: z.array(
+    z.object({
+      merchant: z.string(),
+      frequency: z.string(),
+      averageAmount: z.number(),
+      transactionCount: z.number(),
+      lastPaymentDate: z.string()
+    })
+  )
+});
+
 const tools = {
   // Account Tools
   createAccount: {
-    inputSchema: z.any(),
-    outputSchema: toolOutputSchema.extend({ data: accountSchema.optional() })
-  },
-  listAccounts: {
-    inputSchema: z.any(),
-    outputSchema: toolOutputSchema.extend({ data: z.array(accountSchema).optional() })
-  },
-  getAccountBalance: {
     inputSchema: z.any(),
     outputSchema: toolOutputSchema.extend({ data: accountSchema.optional() })
   },
@@ -66,10 +77,6 @@ const tools = {
     inputSchema: z.any(),
     outputSchema: toolOutputSchema.extend({ data: categorySchema.optional() })
   },
-  listCategories: {
-    inputSchema: z.any(),
-    outputSchema: toolOutputSchema.extend({ data: z.array(categorySchema).optional() })
-  },
   identifyCategoryForAction: { inputSchema: z.any(), outputSchema: toolOutputSchema },
   executeConfirmedDeleteCategory: { inputSchema: z.any(), outputSchema: toolOutputSchema },
   executeConfirmedUpdateCategoryName: { inputSchema: z.any(), outputSchema: toolOutputSchema },
@@ -79,37 +86,14 @@ const tools = {
     inputSchema: z.any(),
     outputSchema: toolOutputSchema.extend({ data: transactionSchema.optional() })
   },
-  listTransactions: {
-    inputSchema: z.any(),
-    outputSchema: toolOutputSchema.extend({ data: z.array(transactionSchema).optional() })
-  },
   identifyTransactionForAction: { inputSchema: z.any(), outputSchema: toolOutputSchema },
   executeConfirmedUpdateTransaction: { inputSchema: z.any(), outputSchema: toolOutputSchema },
   executeConfirmedDeleteTransaction: { inputSchema: z.any(), outputSchema: toolOutputSchema },
-  getExtremeTransaction: {
-    inputSchema: z.any(),
-    outputSchema: toolOutputSchema.extend({ data: transactionSchema.nullable().optional() })
-  },
 
   // Budget Tools
   createBudget: {
     inputSchema: z.any(),
     outputSchema: toolOutputSchema.extend({ data: budgetSchema.optional() })
-  },
-  listBudgets: {
-    inputSchema: z.any(),
-    outputSchema: toolOutputSchema.extend({ data: z.array(budgetSchema).optional() })
-  },
-  getBudgetProgress: {
-    inputSchema: z.any(),
-    outputSchema: toolOutputSchema.extend({ data: z.any().optional() })
-  },
-  getBudgetSummary: {
-    inputSchema: z.any(),
-    outputSchema: toolOutputSchema.extend({
-      data: z.array(z.any()).optional(),
-      chart: z.any().optional()
-    })
   },
   identifyBudgetForAction: { inputSchema: z.any(), outputSchema: toolOutputSchema },
   executeConfirmedUpdateBudget: { inputSchema: z.any(), outputSchema: toolOutputSchema },
@@ -119,10 +103,6 @@ const tools = {
   createSavingGoal: {
     inputSchema: z.any(),
     outputSchema: toolOutputSchema.extend({ data: goalSchema.optional() })
-  },
-  listSavingGoals: {
-    inputSchema: z.any(),
-    outputSchema: toolOutputSchema.extend({ data: z.array(goalSchema).optional() })
   },
   findSavingGoal: { inputSchema: z.any(), outputSchema: toolOutputSchema },
   executeConfirmedUpdateGoal: { inputSchema: z.any(), outputSchema: toolOutputSchema },
@@ -134,10 +114,6 @@ const tools = {
   createInvestmentAccount: {
     inputSchema: z.any(),
     outputSchema: toolOutputSchema.extend({ data: investmentAccountSchema.optional() })
-  },
-  listInvestmentAccounts: {
-    inputSchema: z.any(),
-    outputSchema: toolOutputSchema.extend({ data: z.array(investmentAccountSchema).optional() })
   },
   identifyInvestmentAccountForAction: { inputSchema: z.any(), outputSchema: toolOutputSchema },
   executeConfirmedUpdateInvestmentAccount: { inputSchema: z.any(), outputSchema: toolOutputSchema },
@@ -152,10 +128,6 @@ const tools = {
     inputSchema: z.any(),
     outputSchema: toolOutputSchema.extend({ data: investmentSchema.optional() })
   },
-  listInvestments: {
-    inputSchema: z.any(),
-    outputSchema: toolOutputSchema.extend({ data: z.array(investmentSchema).optional() })
-  },
   identifyInvestmentForAction: { inputSchema: z.any(), outputSchema: toolOutputSchema },
   executeConfirmedUpdateInvestment: { inputSchema: z.any(), outputSchema: toolOutputSchema },
   executeConfirmedUpdateDividend: { inputSchema: z.any(), outputSchema: toolOutputSchema },
@@ -165,10 +137,6 @@ const tools = {
   addDebt: {
     inputSchema: z.any(),
     outputSchema: toolOutputSchema.extend({ data: debtSchema.optional() })
-  },
-  listDebts: {
-    inputSchema: z.any(),
-    outputSchema: toolOutputSchema.extend({ data: z.array(debtSchema).optional() })
   },
   markDebtAsPaid: { inputSchema: z.any(), outputSchema: toolOutputSchema },
   executeConfirmedMarkDebtPaid: { inputSchema: z.any(), outputSchema: toolOutputSchema },
@@ -204,16 +172,24 @@ const tools = {
     outputSchema: toolOutputSchema.extend({
       data: z
         .object({
-          metrics: z.record(z.any())
+          metrics: z.record(z.string(), z.any())
         })
         .optional()
     })
   },
 
-  // Summary Tool
-  generateFinancialSummary: {
+  // Advanced Analysis Tool
+  analyzeFinancialHealth: {
     inputSchema: z.any(),
-    outputSchema: toolOutputSchema.extend({ data: financialSummarySchema.optional() })
+    outputSchema: toolOutputSchema.extend({
+      data: financialHealthAnalysisSchema.optional()
+    })
+  },
+  findRecurringTransactions: {
+    inputSchema: z.any(),
+    outputSchema: toolOutputSchema.extend({
+      data: subscriptionAnalysisSchema.optional()
+    })
   },
 
   // Image Tool

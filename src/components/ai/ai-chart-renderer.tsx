@@ -107,12 +107,20 @@ const generateMonochromeScale = (color: string, count: number): string[] => {
   return scale;
 };
 
-const StatCard = ({ icon, label, value }: { icon: IconName; label: string; value: string }) => (
+const StatCard = ({
+  icon,
+  label,
+  value
+}: {
+  icon: IconName;
+  label: string;
+  value: string | null;
+}) => (
   <div className='bg-muted/50 flex items-center gap-3 rounded-lg p-3'>
     <Icon name={icon} className='text-muted-foreground h-5 w-5' />
     <div>
       <p className='text-muted-foreground text-xs'>{label}</p>
-      <p className='text-sm font-semibold'>{value}</p>
+      <p className='text-sm font-semibold'>{value ?? 'N/A'}</p>
     </div>
   </div>
 );
@@ -185,7 +193,13 @@ const AiChartRenderer: React.FC<AiChartRendererProps> = ({ chart }) => {
     const avg = total / values.length;
     const max = Math.max(...values);
     const min = Math.min(...values);
-    return { total, avg, max, min };
+
+    return {
+      total: isFinite(total) ? total : null,
+      avg: isFinite(avg) ? avg : null,
+      max: isFinite(max) ? max : null,
+      min: isFinite(min) ? min : null
+    };
   }, [isDenseData, formattedData, valueKeys]);
 
   if (!chart || !formattedData || formattedData.length === 0) {
@@ -456,22 +470,32 @@ const AiChartRenderer: React.FC<AiChartRendererProps> = ({ chart }) => {
                 <StatCard
                   icon='coins'
                   label='Total Amount'
-                  value={formatCurrency(summaryStats.total, currency)}
+                  value={
+                    summaryStats.total !== null
+                      ? formatCurrency(summaryStats.total, currency)
+                      : null
+                  }
                 />
                 <StatCard
                   icon='calculator'
                   label='Average'
-                  value={formatCurrency(summaryStats.avg, currency)}
+                  value={
+                    summaryStats.avg !== null ? formatCurrency(summaryStats.avg, currency) : null
+                  }
                 />
                 <StatCard
                   icon='arrowUp'
                   label='Max Value'
-                  value={formatCurrency(summaryStats.max, currency)}
+                  value={
+                    summaryStats.max !== null ? formatCurrency(summaryStats.max, currency) : null
+                  }
                 />
                 <StatCard
                   icon='arrowDown'
                   label='Min Value'
-                  value={formatCurrency(summaryStats.min, currency)}
+                  value={
+                    summaryStats.min !== null ? formatCurrency(summaryStats.min, currency) : null
+                  }
                 />
               </div>
             </div>

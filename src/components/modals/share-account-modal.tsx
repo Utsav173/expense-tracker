@@ -22,7 +22,7 @@ import { useInvalidateQueries } from '@/hooks/useInvalidateQueries';
 import { InvitationCombobox } from '../invitation/InvitationCombobox';
 
 const shareAccountSchema = z.object({
-  accountId: z.string().uuid(),
+  accountId: z.uuid(),
   userId: z.string()
 });
 

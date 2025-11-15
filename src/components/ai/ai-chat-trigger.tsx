@@ -9,7 +9,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/components/providers/auth-provider';
 import { iconMap } from '../ui/icon-map';
 
-export const AiChatTrigger = () => {
+export const AiChatTrigger = ({ pathname }: { pathname: string }) => {
   const isMobile = useIsMobile();
   const { session } = useAuth();
   const user = session?.user;
@@ -171,7 +171,7 @@ export const AiChatTrigger = () => {
             )}
             aria-describedby={undefined}
           >
-            <AiChat isFullPage />
+            <AiChat isFullPage pathname={pathname} />
           </SheetContent>
         </Sheet>
       </motion.div>

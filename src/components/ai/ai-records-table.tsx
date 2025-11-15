@@ -53,7 +53,7 @@ const RecordsTableContent = ({
     </TableHeader>
     <TableBody>
       {records.map((row, rowIndex) => (
-        <TableRow key={rowIndex}>
+        <TableRow key={rowIndex} data-state={rowIndex % 2 === 0 ? 'even' : 'odd'}>
           {headers.map((header) => (
             <TableCell key={`${rowIndex}-${header}`} className='py-2 text-xs whitespace-nowrap'>
               {formatCellValue(row[header], header, row)}
@@ -103,7 +103,7 @@ const AiRecordsTable: React.FC<AiRecordsTableProps> = ({ records }) => {
     if (value === null || value === undefined) return 'N/A';
 
     if (typeof value === 'object' && value !== null) {
-      return value.name || JSON.stringify(value);
+      return value.name || '[Object]';
     }
 
     if (typeof value === 'boolean') {

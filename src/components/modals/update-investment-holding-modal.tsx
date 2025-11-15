@@ -47,7 +47,7 @@ const investmentHoldingUpdateSchema = z.object({
     .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, {
       message: 'Purchase price must be a non-negative number.'
     }),
-  purchaseDate: z.date({ required_error: 'Purchase date is required.' })
+  purchaseDate: z.date()
 });
 
 const dividendUpdateSchema = z.object({
