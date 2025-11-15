@@ -34,6 +34,27 @@ export type MyCustomData = {
       lastPaymentDate: string;
     }>;
   };
+  clarificationOptions: Array<{
+    id: string;
+    name?: string;
+    description?: string;
+    currency?: string;
+    details?: string;
+    balance?: number;
+  }>;
+  stockSearchResults: Array<{
+    symbol: string;
+    name: string;
+    exchange: string;
+    type: string;
+  }>;
+  ipoLink: string;
+  createdEntitySummary: {
+    type: string; // e.g., 'Account', 'Budget', 'Goal'
+    name: string;
+    id: string;
+    details?: string; // A summary string
+  };
 };
 
 // Define metadata for the session and user

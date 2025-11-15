@@ -103,11 +103,22 @@ const StatementPage = () => {
                 onValueChange={(value: 'pdf' | 'xlsx') => value && setExportType(value)}
                 className='w-full'
               >
-                <ToggleGroupItem value='pdf' className='w-full'>
+                <ToggleGroupItem
+                  value='pdf'
+                  className='group w-full data-[state=on]:bg-red-50 data-[state=on]:text-red-900 dark:data-[state=on]:bg-red-700 dark:data-[state=on]:text-red-50'
+                >
                   PDF
+                  <Icon
+                    name='pdfExport'
+                    className='ml-2 h-6 w-6 dark:group-data-[state=on]:[&_path]:fill-red-50'
+                  />
                 </ToggleGroupItem>
-                <ToggleGroupItem value='xlsx' className='w-full'>
+                <ToggleGroupItem
+                  value='xlsx'
+                  className='w-full data-[state=on]:bg-green-100 data-[state=on]:fill-green-900 data-[state=on]:text-green-900 dark:data-[state=on]:bg-green-300 dark:data-[state=on]:fill-green-100 dark:data-[state=on]:text-green-800'
+                >
                   XLSX
+                  <Icon name='xlsxExport' className='ml-2 h-6 w-6' />
                 </ToggleGroupItem>
               </ToggleGroup>
             </div>

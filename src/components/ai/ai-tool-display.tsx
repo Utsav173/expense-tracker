@@ -2,13 +2,7 @@
 
 import React from 'react';
 import type { ToolUIPart } from 'ai';
-import {
-  Tool,
-  ToolContent,
-  ToolHeader,
-  ToolInput,
-  ToolOutput
-} from '@/components/ai-elements/tool';
+import { ToolOutput } from '@/components/ai-elements/tool';
 import type { MyToolTypes } from '@/lib/ai-tool-types';
 
 interface AiToolDisplayProps {
@@ -16,6 +10,12 @@ interface AiToolDisplayProps {
   forceOpen?: boolean;
   hidden?: boolean;
 }
+
+const isToolCallPart = (
+  part: ToolUIPart<MyToolTypes>
+): part is ToolUIPart<MyToolTypes> & { type: 'tool-call' } => {
+  return 'args' in part && (part.type as string) === 'tool-call';
+};
 
 export const TOOL_TO_DATA_TYPE_MAP: Record<string, string> = {
   generateChartData: 'data-chart',
@@ -122,18 +122,25 @@ export const AiToolDisplay: React.FC<AiToolDisplayProps> = ({
   const isOpen = forceOpen !== undefined ? forceOpen : shouldBeOpenByDefault(tool);
   const processedOutput = processOutput(tool.output);
 
-  return (
-    <Tool defaultOpen={isOpen} className='w-fit max-w-full overflow-x-auto rounded-md'>
-      <ToolHeader type={tool.type} state={tool.state} />
-      <ToolContent>
-        {tool.input && typeof tool.input === 'object' && Object.keys(tool.input).length > 0 && (
-          <ToolInput input={tool.input} />
-        )}
+  const displayTitle = React.useMemo(() => {
+    const formattedName = formatToolName(toolName);
+    if (tool.state === 'input-streaming' || isToolCallPart(tool)) {
+      return `Running ${formattedName}...`;
+    }
+    if (tool.state === 'output-error' || !!tool.errorText) {
+      return `Error in ${formattedName}`;
+    }
+    return formattedName;
+  }, [tool.state, tool.errorText, toolName, tool.type]);
 
-        <ToolOutput output={processedOutput} errorText={tool.errorText} />
-      </ToolContent>
-    </Tool>
-  );
+  // <Tool defaultOpen={isOpen} className='w-fit max-w-full overflow-x-auto rounded-md'>
+  //   <ToolHeader title={displayTitle} state={tool.state} />
+  //   <ToolContent>
+  //     {/* Removed ToolInput to avoid exposing internal parameters */}
+  //     <ToolOutput output={processedOutput} errorText={tool.errorText} />
+  //   </ToolContent>
+  // </Tool>
+  return <ToolOutput output={processedOutput} errorText={tool.errorText} />;
 };
 
 export { getToolName, processOutput };

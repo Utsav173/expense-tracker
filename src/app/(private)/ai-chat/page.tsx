@@ -56,7 +56,7 @@ const AiChatPage = () => {
   }
 
   return (
-    <div className='h-[calc(100vh_-_8rem)] w-full'>
+    <div className='h-[calc(100vh-4.5rem)] w-full'>
       <AiChat isFullPage={true} pathname={pathname} />
     </div>
   );

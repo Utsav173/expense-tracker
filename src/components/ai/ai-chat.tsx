@@ -448,13 +448,6 @@ export const AiChat = ({
                   </p>
                   <div className='w-full max-w-md space-y-4'>
                     <SuggestionGroup
-                      title='Contextual Suggestions'
-                      icon='lightbulb'
-                      suggestions={contextualSuggestions}
-                      onSuggestionClick={handleSendMessage}
-                    />
-                    <SuggestionGroup
-                      title='General Suggestions'
                       icon='sparkles'
                       suggestions={generalSuggestions}
                       onSuggestionClick={handleSendMessage}
@@ -586,6 +579,16 @@ export const AiChat = ({
       )}
 
       <div className='mx-auto w-full max-w-4xl p-4'>
+        {showSuggestions && (
+          <div className='mb-4 space-y-4'>
+            <SuggestionGroup
+              title='Contextual Suggestions'
+              icon='lightbulb'
+              suggestions={contextualSuggestions}
+              onSuggestionClick={handleSendMessage}
+            />
+          </div>
+        )}
         {attachments.length > 0 && (
           <div className='mb-2 grid grid-cols-2 gap-2 sm:grid-cols-4'>
             {attachments.map((a) => (

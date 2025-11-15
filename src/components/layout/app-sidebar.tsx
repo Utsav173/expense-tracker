@@ -41,26 +41,26 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         label: 'Overview',
         items: [
           { title: 'Dashboard', url: '/dashboard', icon: 'layoutGrid' },
-          { title: 'Transactions', url: '/transactions', icon: 'transaction' }
+          { title: 'Transactions', url: '/transactions', icon: 'transactionsSidebar' }
         ]
       },
       {
         label: 'Manage',
         items: [
-          { title: 'Accounts', url: '/accounts', icon: 'wallet' },
-          { title: 'Shared Accounts', url: '/shared-accounts', icon: 'users2' },
-          { title: 'Categories', url: '/category', icon: 'category' },
+          { title: 'Accounts', url: '/accounts', icon: 'accountSidebar' },
+          { title: 'Shared Accounts', url: '/shared-accounts', icon: 'sharedAccountsSidebar' },
+          { title: 'Categories', url: '/category', icon: 'categorySidebar' },
           { title: 'Import', url: '/transactions/import', icon: 'importSidebar' }
         ]
       },
       {
         label: 'Plan',
         items: [
-          { title: 'Budgets', url: '/budget', icon: 'budget' },
+          { title: 'Budgets', url: '/budget', icon: 'budgetSidebar' },
           { title: 'Goals', url: '/goal', icon: 'goal' },
           { title: 'Investments', url: '/investment', icon: 'investment' },
           { title: 'Debts', url: '/debts', icon: 'debt' },
-          { title: 'Statement', url: '/accounts/statement', icon: 'statement' }
+          { title: 'Statement', url: '/accounts/statement', icon: 'statementSidebar' }
         ]
       },
       {

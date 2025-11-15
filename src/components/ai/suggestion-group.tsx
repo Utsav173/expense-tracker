@@ -6,7 +6,7 @@ import { Icon } from '@/components/ui/icon';
 import { PromptSuggestion } from './prompt-suggestion';
 
 interface SuggestionGroupProps {
-  title: string;
+  title?: string;
   icon: React.ComponentProps<typeof Icon>['name'];
   suggestions: string[];
   onSuggestionClick: (suggestion: string) => void;
@@ -26,10 +26,12 @@ export const SuggestionGroup: React.FC<SuggestionGroupProps> = ({
 
   return (
     <div className='w-full'>
-      <h4 className='text-muted-foreground mb-2 flex items-center gap-2 text-sm font-semibold'>
-        <Icon name={icon} className='h-4 w-4' />
-        {title}
-      </h4>
+      {!!title ? (
+        <h4 className='text-muted-foreground mb-2 flex items-center gap-2 text-sm font-semibold'>
+          <Icon name={icon} className='h-4 w-4' />
+          {title}
+        </h4>
+      ) : null}
       <div className='space-y-2'>
         {suggestions.map((s, i) => (
           <motion.div

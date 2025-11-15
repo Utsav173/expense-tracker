@@ -11,13 +11,17 @@ import type { MyUIMessage, MyCustomData } from '@/lib/ai-types';
 import type { UIMessagePart, ToolUIPart } from 'ai';
 import { Response } from '@/components/ai-elements/response';
 import { Reasoning, ReasoningContent, ReasoningTrigger } from '@/components/ai-elements/reasoning';
-import { AiToolDisplay } from './ai-tool-display';
+import { AiToolDisplay, getToolName } from './ai-tool-display';
 import AiChartRenderer from './ai-chart-renderer';
 import AiTransactionPreview from '@/components/transactions/ai-transaction-preview';
 import AiRecordsTable from './ai-records-table';
 import AiMetricsDisplay from './ai-metrics-display';
 import AiFinancialHealthDisplay from './ai-financial-health-display';
 import AiSubscriptionDisplay from './ai-subscription-display';
+import AiClarificationOptionsDisplay from './ai-clarification-options-display';
+import AiStockSearchResultsDisplay from './ai-stock-search-results-display';
+import AiIpoLinkDisplay from './ai-ipo-link-display';
+import AiCreatedEntitySummaryDisplay from './ai-created-entity-summary-display';
 import { Source, Sources, SourcesContent, SourcesTrigger } from '@/components/ai-elements/sources';
 import { IconName } from '../ui/icon-map';
 import { MyToolTypes } from '@/lib/ai-tool-types';
@@ -36,7 +40,7 @@ const DEFAULT_CONFIG: Required<ChatMessageConfig> = {
 
 type FilePart = Extract<UIMessagePart<MyCustomData, MyToolTypes>, { type: 'file' }>;
 type ToolPart = ToolUIPart<MyToolTypes>;
-type DataPart = Extract<
+type DataPart = (Extract<
   UIMessagePart<MyCustomData, MyToolTypes>,
   | { type: 'data-chart' }
   | { type: 'data-records' }
@@ -44,7 +48,11 @@ type DataPart = Extract<
   | { type: 'data-imageAnalysisData' }
   | { type: 'data-financialHealthAnalysis' }
   | { type: 'data-subscriptionAnalysis' }
->;
+  | { type: 'data-clarificationOptions' }
+  | { type: 'data-stockSearchResults' }
+  | { type: 'data-ipoLink' }
+  | { type: 'data-createdEntitySummary' }
+>) & { toolName?: string };
 type SourceUrlPart = Extract<UIMessagePart<MyCustomData, MyToolTypes>, { type: 'source-url' }>;
 type ReasoningPart = Extract<UIMessagePart<MyCustomData, MyToolTypes>, { type: 'reasoning' }>;
 
@@ -67,11 +75,49 @@ const isSourceUrlPart = (part: UIMessagePart<MyCustomData, MyToolTypes>): part i
   return part.type === 'source-url';
 };
 
+type RenderableDataType = 'data-records' | 'data-chart' | 'data-metrics' | 'data-imageAnalysisData' | 'data-financialHealthAnalysis' | 'data-subscriptionAnalysis' | 'data-clarificationOptions' | 'data-stockSearchResults' | 'data-ipoLink' | 'data-createdEntitySummary';
+
+const getRenderableDataType = (part: UIMessagePart<MyCustomData, MyToolTypes>): RenderableDataType | null => {
+  if (isToolPart(part) && part.state === 'output-available' && part.output?.success) {
+    if (typeof part.output === 'object' && part.output !== null && 'data' in part.output && part.output.data !== undefined) {
+      const data = part.output.data;
+      if (data && typeof data === 'object') {
+        if ('records' in data && Array.isArray(data.records)) return 'data-records';
+        if ('chart' in data && typeof data.chart === 'object') return 'data-chart';
+        if ('metrics' in data && typeof data.metrics === 'object') return 'data-metrics';
+        if ('transactions' in data && Array.isArray(data.transactions)) return 'data-imageAnalysisData';
+        if ('analysis' in data && typeof data.analysis === 'object') return 'data-financialHealthAnalysis';
+        if ('subscriptions' in data && Array.isArray(data.subscriptions)) return 'data-subscriptionAnalysis';
+        if ('options' in data && Array.isArray(data.options)) return 'data-clarificationOptions';
+        if ('results' in data && Array.isArray(data.results)) return 'data-stockSearchResults';
+        if ('url' in data && typeof data.url === 'string' && data.url.startsWith('http')) return 'data-ipoLink';
+        if ('entity' in data && typeof data.entity === 'object') return 'data-createdEntitySummary';
+      }
+    }
+  }
+  return null;
+};
+
 const hasVisibleContent = (parts: MyUIMessage['parts']): boolean => {
+
   return parts.some(
+
     (part) =>
-      part.type === 'text' || part.type === 'file' || part.type === 'reasoning' || isDataPart(part)
+
+      part.type === 'text' ||
+
+      part.type === 'file' ||
+
+      part.type === 'reasoning' ||
+
+      isDataPart(part) ||
+
+      getRenderableDataType(part) !== null ||
+
+      (isToolPart(part) && part.state === 'output-available' && part.output?.success === false)
+
   );
+
 };
 
 const groupParts = (parts: MyUIMessage['parts']) => {
@@ -107,20 +153,25 @@ const groupParts = (parts: MyUIMessage['parts']) => {
       textBuffer.push((part as { type: 'text'; text: string }).text);
     } else {
       flushTextBuffer();
-      grouped.push({ type: part.type, part, originalIndex: index });
+      const renderableType = getRenderableDataType(part);
+      if (renderableType) {
+        // Re-narrow 'part' here to safely access output.data
+        const toolOutputPart = part as ToolUIPart<MyToolTypes> & { state: 'output-available'; output: { success: true; data: MyCustomData } };
+
+        const syntheticDataPart: DataPart = {
+          type: renderableType,
+          data: toolOutputPart.output.data,
+          toolName: getToolName(toolOutputPart)
+        };
+        grouped.push({ type: renderableType, part: syntheticDataPart, originalIndex: index });
+      } else {
+        grouped.push({ type: part.type, part, originalIndex: index });
+      }
     }
   });
 
   flushTextBuffer();
   return grouped;
-};
-
-const getToolName = (part: ToolPart): string => {
-  if ('toolName' in part && typeof part.toolName === 'string') {
-    return part.toolName;
-  }
-  const match = part.type.match(/^(?:tool-|dynamic-tool-)(.+)$/);
-  return match ? match[1] : part.type;
 };
 
 const TextPartBubble: React.FC<{
@@ -242,6 +293,16 @@ const CustomToolResult: React.FC<{ part: DataPart }> = memo(({ part }) => {
       return <AiFinancialHealthDisplay analysis={part.data} />;
     case 'data-subscriptionAnalysis':
       return <AiSubscriptionDisplay subscriptions={part.data.subscriptions} />;
+    case 'data-clarificationOptions':
+      return (
+        <AiClarificationOptionsDisplay options={part.data} message={'Please select an option:'} />
+      );
+    case 'data-stockSearchResults':
+      return <AiStockSearchResultsDisplay results={part.data} />;
+    case 'data-ipoLink':
+      return <AiIpoLinkDisplay url={part.data} />;
+    case 'data-createdEntitySummary':
+      return <AiCreatedEntitySummaryDisplay entity={part.data} />;
     default:
       if (process.env.NODE_ENV === 'development') {
         console.warn('Unknown data part type:', part);
@@ -290,6 +351,7 @@ const ChatMessageBubbleImpl: React.FC<ChatMessageBubbleProps> = ({
     return toolParts.filter((toolPart) => {
       const toolName = getToolName(toolPart);
       const hasCustomDataPart = toolsWithCustomResults.has(toolName);
+      const renderableType = getRenderableDataType(toolPart);
 
       if (mergedConfig.showToolExecutionOnErrorOnly) {
         return toolPart.state === 'output-error';
@@ -304,10 +366,13 @@ const ChatMessageBubbleImpl: React.FC<ChatMessageBubbleProps> = ({
       }
 
       if (toolPart.state === 'output-available') {
-        if (hasCustomDataPart) {
+        // If the tool output is available and successful, we don't show generic display.
+        // If it's available but NOT successful (i.e., an error), we DO show generic display.
+        if (toolPart.output?.success) {
           return false;
+        } else {
+          return true;
         }
-        return true;
       }
 
       return true;

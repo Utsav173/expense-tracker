@@ -119,7 +119,7 @@ export const iconMap = {
   userIcon: 'material-symbols:person-outline',
   userPlus: 'material-symbols:person-add-outline',
   users: 'material-symbols:group-outline',
-  users2: 'material-symbols:groups-outline',
+  sharedAccountsSidebar: 'ic:baseline-diversity-3',
   wallet: 'material-symbols:account-balance-wallet-outline',
   wallet2: 'material-symbols:account-balance-wallet',
   wand: 'material-symbols:auto-awesome-outline',
@@ -150,7 +150,7 @@ export const iconMap = {
   help: 'material-symbols:help-outline',
   github: 'simple-icons:github',
   google: 'logos:google-icon',
-  importSidebar: 'ix:import',
+  importSidebar: 'ic:round-move-down',
   goal: 'octicon:goal-24',
   debt: 'solar:hand-money-linear',
   messageCircleQuestion: 'material-symbols:chat-bubble-question-outline',
@@ -166,7 +166,16 @@ export const iconMap = {
   grok: 'mingcute:grok-fill',
   deepseek: 'hugeicons:deepseek',
   restart: 'codicon:debug-restart-frame',
-  reRun: 'mynaui:repeat-solid'
+  reRun: 'mynaui:repeat-solid',
+  helpCircle: 'material-symbols:help-center-outline',
+  handshake: 'material-symbols:handshake-outline',
+  categorySidebar: 'ic:round-widgets',
+  accountSidebar: 'ic:baseline-credit-score',
+  transactionsSidebar: 'material-symbols:currency-exchange-rounded',
+  statementSidebar: 'material-symbols:summarize-outline-rounded',
+  budgetSidebar: 'mdi:cash-check',
+  pdfExport: 'material-icon-theme:pdf',
+  xlsxExport: 'vscode-icons:file-type-excel'
   // statement: "streamline-ultimate:cashless-payment-online-statement-monitor"
 } as const;
 
