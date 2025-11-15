@@ -204,7 +204,7 @@ const AiChartRenderer: React.FC<AiChartRendererProps> = ({ chart }) => {
 
   if (!chart || !formattedData || formattedData.length === 0) {
     return (
-      <Card className='mt-4'>
+      <Card>
         <CardContent className='p-4'>
           <NoData message='No chart data available for this query.' icon='barChart3' />
         </CardContent>
@@ -214,7 +214,7 @@ const AiChartRenderer: React.FC<AiChartRendererProps> = ({ chart }) => {
 
   if (!categoryKey || valueKeys.length === 0) {
     return (
-      <Card className='mt-4'>
+      <Card>
         <CardContent className='p-4'>
           <NoData message='Could not determine how to display the data.' icon='alertCircle' />
         </CardContent>

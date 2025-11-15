@@ -36,7 +36,7 @@ const AiSubscriptionDisplay: React.FC<AiSubscriptionDisplayProps> = ({ subscript
 
   if (!subscriptions || subscriptions.length === 0) {
     return (
-      <Card className='mt-4'>
+      <Card className='mt-0'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
             <Icon name='search' className='h-5 w-5' />
@@ -59,7 +59,7 @@ const AiSubscriptionDisplay: React.FC<AiSubscriptionDisplayProps> = ({ subscript
       transition={{ duration: 0.5 }}
       className='mt-4 w-full space-y-4'
     >
-      <Card>
+      <Card className='mt-0'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
             <Icon name='search' className='h-5 w-5' />

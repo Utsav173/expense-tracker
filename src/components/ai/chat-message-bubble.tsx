@@ -59,6 +59,8 @@ const TextPartBubble: React.FC<{
     }
   };
 
+  if (!content && !isStreaming) return null;
+
   return (
     <div
       className={cn(
@@ -68,7 +70,7 @@ const TextPartBubble: React.FC<{
           : 'rounded-tl-sm border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900'
       )}
     >
-      {!isUser && !isStreaming && (
+      {!isUser && !isStreaming && content && (
         <Button
           variant='ghost'
           size='icon'
@@ -182,6 +184,47 @@ const ThinkingIndicator = () => (
   </div>
 );
 
+const extractDataFromToolOutput = (output: any): { type: string; content: any } | null => {
+  if (!output || typeof output !== 'object') return null;
+
+  const data = output.data || output;
+
+  if (Array.isArray(data) && data.length > 0) {
+    const firstItem = data[0];
+
+    if (firstItem.category && firstItem.amount) {
+      return { type: 'data-chart', content: data };
+    }
+    if (firstItem.symbol) {
+      return { type: 'data-stockSearchResults', content: data };
+    }
+    if (firstItem.date || firstItem.amount) {
+      return { type: 'data-imageAnalysisData', content: data };
+    }
+    if (firstItem.name && firstItem.value !== undefined) {
+      return { type: 'data-chart', content: data };
+    }
+  }
+
+  if (data.subscriptions) {
+    return { type: 'data-subscriptionAnalysis', content: data };
+  }
+  if (data.metrics) {
+    return { type: 'data-metrics', content: data };
+  }
+  if (data.records) {
+    return { type: 'data-records', content: data };
+  }
+  if (data.chart) {
+    return { type: 'data-chart', content: data.chart };
+  }
+  if (data.analysis || data.healthScore !== undefined) {
+    return { type: 'data-financialHealthAnalysis', content: data };
+  }
+
+  return null;
+};
+
 const ChatMessageBubbleImpl: React.FC<ChatMessageBubbleProps> = ({
   message,
   isStreaming = false,
@@ -190,27 +233,58 @@ const ChatMessageBubbleImpl: React.FC<ChatMessageBubbleProps> = ({
   const isUser = message.role === 'user';
 
   const renderableParts = useMemo(() => {
-    const result: Array<{ type: string; content: any }> = [];
+    const result: Array<{ type: string; content: any; id: string }> = [];
     let textBuffer = '';
+    let partCounter = 0;
 
     const flushText = () => {
-      if (textBuffer) {
-        result.push({ type: 'text', content: textBuffer });
+      if (textBuffer.trim()) {
+        result.push({
+          type: 'text',
+          content: textBuffer,
+          id: `text-${partCounter++}`
+        });
         textBuffer = '';
       }
     };
 
-    message.parts.forEach((part) => {
-      if (part.type === 'text') {
-        textBuffer += part.text;
-      } else if (part.type.startsWith('data-')) {
-        flushText();
-        result.push({ type: part.type, content: (part as DataPart).data });
-      } else if (part.type === 'file') {
-        flushText();
-        result.push({ type: 'file', content: part });
-      }
-    });
+    if (message.parts && Array.isArray(message.parts)) {
+      message.parts.forEach((part: any) => {
+        if (part.type === 'text') {
+          textBuffer += part.text || '';
+        } else if (part.type.startsWith('data-')) {
+          flushText();
+          const dataPart = part as DataPart;
+          result.push({
+            type: part.type,
+            content: dataPart.data,
+            id: `${part.type}-${partCounter++}`
+          });
+        } else if (part.type === 'file') {
+          flushText();
+          result.push({
+            type: 'file',
+            content: part,
+            id: `file-${partCounter++}`
+          });
+        } else if (part.type.startsWith('tool-')) {
+          const toolPart = part as any;
+
+          if (toolPart.state === 'output-available' && toolPart.output) {
+            flushText();
+            const extracted = extractDataFromToolOutput(toolPart.output);
+            if (extracted) {
+              result.push({
+                type: extracted.type,
+                content: extracted.content,
+                id: `tool-${partCounter++}`
+              });
+            }
+          }
+        } else if (part.type === 'step-start') {
+        }
+      });
+    }
 
     flushText();
     return result;
@@ -250,7 +324,7 @@ const ChatMessageBubbleImpl: React.FC<ChatMessageBubbleProps> = ({
         )}
       >
         {renderableParts.map((part, index) => {
-          const key = `${message.id}-part-${index}`;
+          const key = `${message.id}-${part.id}-${index}`;
           const isLastPart = index === renderableParts.length - 1;
 
           switch (part.type) {
@@ -265,24 +339,16 @@ const ChatMessageBubbleImpl: React.FC<ChatMessageBubbleProps> = ({
               );
             case 'file':
               return <FilePartBubble key={key} part={part.content} />;
-            case 'data-chart':
-            case 'data-records':
-            case 'data-metrics':
-            case 'data-imageAnalysisData':
-            case 'data-financialHealthAnalysis':
-            case 'data-subscriptionAnalysis':
-            case 'data-clarificationOptions':
-            case 'data-stockSearchResults':
-            case 'data-ipoLink':
-            case 'data-createdEntitySummary':
-              return (
-                <div key={key} className='w-full max-w-4xl'>
-                  <CustomDataDisplay
-                    part={{ type: part.type as DataPart['type'], data: part.content }}
-                  />
-                </div>
-              );
             default:
+              if (part.type.startsWith('data-')) {
+                return (
+                  <div key={key} className='w-full max-w-4xl'>
+                    <CustomDataDisplay
+                      part={{ type: part.type as DataPart['type'], data: part.content }}
+                    />
+                  </div>
+                );
+              }
               return null;
           }
         })}
@@ -294,14 +360,28 @@ const ChatMessageBubbleImpl: React.FC<ChatMessageBubbleProps> = ({
 };
 
 export const ChatMessageBubble = memo(ChatMessageBubbleImpl, (prev, next) => {
-  if (prev.message.id !== next.message.id || prev.isStreaming !== next.isStreaming) {
+  if (prev.message.id !== next.message.id) {
     return false;
   }
+
+  if (prev.isStreaming !== next.isStreaming) {
+    return false;
+  }
+
   if (next.isStreaming) {
-    const prevLast = prev.message.parts[prev.message.parts.length - 1];
-    const nextLast = next.message.parts[next.message.parts.length - 1];
+    const prevParts = prev.message.parts || [];
+    const nextParts = next.message.parts || [];
+
+    if (prevParts.length !== nextParts.length) {
+      return false;
+    }
+
+    const prevLast = prevParts[prevParts.length - 1];
+    const nextLast = nextParts[nextParts.length - 1];
+
     return JSON.stringify(prevLast) === JSON.stringify(nextLast);
   }
+
   return JSON.stringify(prev.message.parts) === JSON.stringify(next.message.parts);
 });
 

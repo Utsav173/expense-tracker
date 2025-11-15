@@ -171,7 +171,7 @@ const AiRecordsTable: React.FC<AiRecordsTableProps> = ({ records }) => {
                   Showing all {records.length} records returned by the AI.
                 </DialogDescription>
               </DialogHeader>
-              <div className='mt-4'>
+              <div>
                 <ScrollArea className='h-[60vh] w-full rounded-md border'>
                   <RecordsTableContent
                     records={records}
