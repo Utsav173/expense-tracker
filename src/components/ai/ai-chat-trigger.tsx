@@ -41,7 +41,6 @@ export const AiChatTrigger = ({ pathname }: { pathname: string }) => {
         delay: 0.15
       }}
     >
-      {/* Subtle glow effect */}
       <motion.div
         className='bg-primary/10 absolute inset-0 -z-10 rounded-full blur-md'
         animate={{
@@ -56,7 +55,6 @@ export const AiChatTrigger = ({ pathname }: { pathname: string }) => {
         }}
       />
 
-      {/* Floating animation wrapper */}
       <motion.div
         animate={{
           y: [0, -4, 0]
@@ -68,7 +66,6 @@ export const AiChatTrigger = ({ pathname }: { pathname: string }) => {
           repeatType: 'loop'
         }}
       >
-        {/* Subtle pulse ring */}
         <motion.div
           className='border-primary/20 absolute inset-0 rounded-full border'
           animate={{
@@ -105,7 +102,6 @@ export const AiChatTrigger = ({ pathname }: { pathname: string }) => {
                     className={cn(buttonClasses)}
                     aria-label={'AI Assistant'}
                   >
-                    {/* Icon with subtle animation */}
                     <motion.div
                       animate={{
                         scale: [1, 1.05, 1]
@@ -118,7 +114,6 @@ export const AiChatTrigger = ({ pathname }: { pathname: string }) => {
                       }}
                       className='relative z-10 h-7 w-7'
                     >
-                      {/* Try icon-gradient first, fallback to img */}
                       <span
                         className='icon-gradient text-primary block h-full w-full'
                         style={
@@ -137,7 +132,6 @@ export const AiChatTrigger = ({ pathname }: { pathname: string }) => {
                           } as React.CSSProperties
                         }
                       />
-                      {/* Fallback img if mask doesn't work */}
                       <img
                         src={iconUrl}
                         alt='AI'

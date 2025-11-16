@@ -88,15 +88,14 @@ export const tools = {
       z.object({
         success: z.literal(true),
         clarificationNeeded: z.literal(true),
+        type: z.literal('data-clarificationOptions'),
         message: z.string(),
         options: z.array(
           z.object({
             id: z.string(),
             name: z.string().optional(),
             description: z.string().optional(),
-            currency: z.string().optional(),
-            details: z.string().optional(),
-            balance: z.number().optional()
+            details: z.string().optional()
           })
         )
       }),
@@ -157,9 +156,7 @@ export const tools = {
             id: z.string(),
             name: z.string().optional(),
             description: z.string().optional(),
-            currency: z.string().optional(),
-            details: z.string().optional(),
-            balance: z.number().optional()
+            details: z.string().optional()
           })
         )
       }),
@@ -221,9 +218,7 @@ export const tools = {
             id: z.string(),
             name: z.string().optional(),
             description: z.string().optional(),
-            currency: z.string().optional(),
-            details: z.string().optional(),
-            balance: z.number().optional()
+            details: z.string().optional()
           })
         )
       }),
@@ -257,9 +252,7 @@ export const tools = {
             id: z.string(),
             name: z.string().optional(),
             description: z.string().optional(),
-            currency: z.string().optional(),
-            details: z.string().optional(),
-            balance: z.number().optional()
+            details: z.string().optional()
           })
         )
       }),
@@ -475,9 +468,7 @@ export const tools = {
             id: z.string(),
             name: z.string().optional(),
             description: z.string().optional(),
-            currency: z.string().optional(),
-            details: z.string().optional(),
-            balance: z.number().optional()
+            details: z.string().optional()
           })
         )
       }),
@@ -549,8 +540,8 @@ export const tools = {
         details: z.string()
       })
     })
-  },
-  identifyInvestmentAccountForAction: {
+  }
+  ,identifyInvestmentAccountForAction: {
     outputSchema: z.union([
       z.object({
         success: z.literal(false),
@@ -565,9 +556,7 @@ export const tools = {
             id: z.string(),
             name: z.string().optional(),
             description: z.string().optional(),
-            currency: z.string().optional(),
-            details: z.string().optional(),
-            balance: z.number().optional()
+            details: z.string().optional()
           })
         )
       }),
@@ -642,9 +631,7 @@ export const tools = {
             id: z.string(),
             name: z.string().optional(),
             description: z.string().optional(),
-            currency: z.string().optional(),
-            details: z.string().optional(),
-            balance: z.number().optional()
+            details: z.string().optional()
           })
         )
       }),
@@ -738,9 +725,7 @@ export const tools = {
             id: z.string(),
             name: z.string().optional(),
             description: z.string().optional(),
-            currency: z.string().optional(),
-            details: z.string().optional(),
-            balance: z.number().optional()
+            details: z.string().optional()
           })
         )
       }),
@@ -798,15 +783,16 @@ export const tools = {
       success: z.boolean(),
       data: z.object({
         type: z.union([z.literal('auto'), z.literal('bar'), z.literal('line'), z.literal('pie')]),
-        data: z.array(z.record(z.string(), z.any())) // Array of objects with arbitrary keys/values
+        data: z.array(z.record(z.string(), z.any()))
       })
     })
   },
   fetchDataRecords: {
     outputSchema: z.object({
       success: z.boolean(),
+      type: z.literal('data-records').optional(),
       data: z.object({
-        records: z.array(z.record(z.string(), z.any())), // Array of objects with arbitrary keys/values
+        records: z.array(z.record(z.string(), z.any())),
         count: z.number()
       })
     })
@@ -814,8 +800,9 @@ export const tools = {
   calculateMetrics: {
     outputSchema: z.object({
       success: z.boolean(),
+      type: z.literal('data-metrics'),
       data: z.object({
-        metrics: z.record(z.string(), z.any()) // Object with arbitrary keys/values
+        metrics: z.record(z.string(), z.any())
       })
     })
   }

@@ -1,60 +1,108 @@
-import { UIMessage } from '@ai-sdk/react';
-import type { MyToolTypes } from '@/lib/ai-tool-types';
-import type { AIAPI } from '@/lib/api/api-types';
+import type { UIMessage, UIMessagePart } from 'ai';
+import type { MyToolTypes } from './ai-tool-types';
 
-export type MyCustomData = {
-  chart: {
+export type MyCustomData = Record<string, unknown>;
+
+export type MyUIMessage = UIMessage<MyCustomData, MyToolTypes>;
+
+export type MyUIMessagePart = UIMessagePart<MyCustomData, MyToolTypes>;
+
+// Extract tool output types
+export type ToolOutputTypes = {
+  [K in keyof MyToolTypes]: MyToolTypes[K]['output'];
+};
+
+// Helper to get tool output type
+export type ToolOutput<T extends keyof MyToolTypes> = MyToolTypes[T]['output'];
+
+// Generic data part types
+export interface DataPartBase {
+  id: string;
+  type: string;
+  content: unknown;
+}
+
+export interface TextDataPart extends DataPartBase {
+  type: 'text';
+  content: string;
+}
+
+export interface JsonDataPart extends DataPartBase {
+  type: 'json';
+  content: Record<string, unknown>;
+}
+
+export interface ChartDataPart extends DataPartBase {
+  type: 'data-chart';
+  content: {
     type: 'auto' | 'bar' | 'line' | 'pie';
-    data: any[];
-    followUpSuggestions?: string[];
+    data: Array<Record<string, unknown>>;
   };
-  records: {
-    records: any[];
+}
+
+export interface RecordsDataPart extends DataPartBase {
+  type: 'data-records';
+  content: {
+    records: Array<Record<string, unknown>>;
     count: number;
-    followUpSuggestions?: string[];
   };
-  metrics: {
-    metrics: Record<string, any>;
-    followUpSuggestions?: string[];
-  };
-  imageAnalysisData: AIAPI.ExtractedTransaction[];
-  financialHealthAnalysis: AIAPI.FinancialHealthAnalysis & { followUpSuggestions?: string[] };
-  subscriptionAnalysis: {
-    subscriptions: Array<{
-      merchant: string;
-      frequency: string;
-      averageAmount: number;
-      transactionCount: number;
-      lastPaymentDate: string;
+}
+
+export interface MetricsDataPart extends DataPartBase {
+  type: 'data-metrics';
+  content: Record<string, unknown>;
+}
+
+export interface ClarificationDataPart extends DataPartBase {
+  type: 'data-clarificationOptions';
+  content: {
+    message: string;
+    options: Array<{
+      id: string;
+      name?: string;
+      description?: string;
+      details?: string;
+      [key: string]: unknown;
     }>;
-    followUpSuggestions?: string[];
   };
-  clarificationOptions: Array<{
+}
+
+export interface ConfirmationDataPart extends DataPartBase {
+  type: 'data-confirmation';
+  content: {
     id: string;
-    name?: string;
-    description?: string;
-    currency?: string;
-    details?: string;
-    balance?: number;
-  }>;
-  stockSearchResults: Array<{
-    symbol: string;
-    name: string;
-    exchange: string;
-    type: string;
-  }>;
-  ipoLink: string;
-  createdEntitySummary: {
+    details: string;
+    message: string;
+  };
+}
+
+export interface CreatedEntityDataPart extends DataPartBase {
+  type: 'data-createdEntitySummary';
+  content: {
     type: string;
     name: string;
     id: string;
     details?: string;
   };
-};
+}
 
-type MyMeta = {
-  sessionId: string;
-  userId: string;
-};
+export interface FileDataPart extends DataPartBase {
+  type: 'file';
+  content: {
+    mediaType: string;
+    url: string;
+    filename?: string;
+  };
+}
 
-export type MyUIMessage = UIMessage<MyMeta, MyCustomData, MyToolTypes>;
+export type RenderableDataPart =
+  | TextDataPart
+  | FileDataPart
+  | JsonDataPart
+  | ChartDataPart
+  | RecordsDataPart
+  | MetricsDataPart
+  | ClarificationDataPart
+  | ConfirmationDataPart
+  | CreatedEntityDataPart
+  | (DataPartBase & { type: string; content: unknown });

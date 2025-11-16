@@ -12,10 +12,9 @@ import { Avatar, AvatarFallback } from '../ui/avatar';
 import { useToast } from '@/lib/hooks/useToast';
 import { Icon } from '@/components/ui/icon';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { DefaultChatTransport, FileUIPart } from 'ai';
+import { DefaultChatTransport } from 'ai';
 import type { MyUIMessage } from '@/lib/ai-types';
 import { SuggestionGroup } from './suggestion-group';
-import { PromptSuggestion } from './prompt-suggestion';
 import { authClient } from '@/lib/auth-client';
 import { aiGetSuggestions } from '@/lib/endpoints/ai';
 
@@ -26,13 +25,20 @@ const ALLOWED_TYPES = [
   'image/webp',
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-];
+] as const;
 
-type Attachment = {
+interface Attachment {
   id: string;
   file: File;
   previewUrl?: string | null;
-};
+}
+
+interface FileUIPart {
+  type: 'file';
+  mediaType: string;
+  url: string;
+  filename?: string;
+}
 
 const convertFileToDataURL = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -43,23 +49,23 @@ const convertFileToDataURL = (file: File): Promise<string> => {
   });
 };
 
-export const AiChat = ({
-  isFullPage = false,
-  pathname
-}: {
+interface AiChatProps {
   isFullPage?: boolean;
   pathname: string;
-}) => {
+}
+
+export const AiChat = ({ isFullPage = false, pathname }: AiChatProps) => {
   const prefersReducedMotion = useReducedMotion();
   const [sessionId, setSessionId] = useState(() => crypto.randomUUID());
   const { showError, showSuccess, showInfo } = useToast();
   const { data: session } = authClient.useSession();
-  const user = session?.user;
+  const user = session?.user ?? null;
 
   const api = useMemo(() => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
     return base ? `${base}/ai/process` : '/api/ai/process';
   }, []);
+
   const transport = useMemo(() => new DefaultChatTransport({ api, credentials: 'include' }), [api]);
 
   const { messages, setMessages, sendMessage, status, error, stop } = useChat<MyUIMessage>({
@@ -86,6 +92,7 @@ export const AiChat = ({
   );
   const [atBottom, setAtBottom] = useState(true);
   const [unread, setUnread] = useState(0);
+  const [dynamicSuggestions, setDynamicSuggestions] = useState<string[]>([]);
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -94,11 +101,22 @@ export const AiChat = ({
 
   const isBusySubmitted = status === 'submitted';
   const isBusyStreaming = status === 'streaming';
-  const isBusy = isBusySubmitted || isBusyStreaming;
-  const sendDisabled =
-    isOffline || isBusySubmitted || (!isBusyStreaming && !input.trim() && attachments.length === 0);
+  const isBusy = useMemo(
+    () => isBusySubmitted || isBusyStreaming,
+    [isBusySubmitted, isBusyStreaming]
+  );
+
+  const sendDisabled = useMemo(
+    () =>
+      isOffline ||
+      isBusySubmitted ||
+      (!isBusyStreaming && !input.trim() && attachments.length === 0),
+    [isOffline, isBusySubmitted, isBusyStreaming, input, attachments]
+  );
+
   const canClear = !isBusy;
 
+  // Online/offline detection
   useEffect(() => {
     const handle = () => setIsOffline(!navigator.onLine);
     window.addEventListener('online', handle);
@@ -109,6 +127,7 @@ export const AiChat = ({
     };
   }, []);
 
+  // Auto-resize textarea
   useEffect(() => {
     const el = textAreaRef.current;
     if (!el) return;
@@ -116,6 +135,7 @@ export const AiChat = ({
     el.style.height = `${el.scrollHeight}px`;
   }, [input]);
 
+  // Scroll tracking
   useEffect(() => {
     const root =
       (scrollAreaRef.current?.querySelector(
@@ -135,6 +155,7 @@ export const AiChat = ({
     return () => obs.disconnect();
   }, [scrollAreaRef, messagesEndRef]);
 
+  // Auto scroll on new messages
   useEffect(() => {
     if (!atBottom) {
       const last = messages[messages.length - 1];
@@ -145,8 +166,25 @@ export const AiChat = ({
       behavior: isBusyStreaming ? 'auto' : 'smooth',
       block: 'end'
     });
-  }, [messages, status, atBottom, isBusyStreaming]);
+  }, [messages, atBottom, isBusyStreaming]);
 
+  // Streaming timeout
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role === 'assistant' && status === 'streaming') {
+      timer = setTimeout(() => {
+        if (status === 'streaming') {
+          stop();
+        }
+      }, 30000); // 30 seconds timeout
+    }
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [messages, status, stop]);
+
+  // Cleanup attachment URLs
   useEffect(() => {
     return () => {
       attachments.forEach((a) => {
@@ -181,7 +219,7 @@ export const AiChat = ({
           showError(`"${f.name}" is too large. Max 5MB.`);
           continue;
         }
-        if (!ALLOWED_TYPES.includes(f.type)) {
+        if (!ALLOWED_TYPES.includes(f.type as (typeof ALLOWED_TYPES)[number])) {
           showError(`Unsupported type: ${f.type || 'unknown'}`);
           continue;
         }
@@ -211,8 +249,6 @@ export const AiChat = ({
     attachFiles(event.dataTransfer?.files || null);
   };
 
-  const [dynamicSuggestions, setDynamicSuggestions] = useState<string[]>([]);
-
   const fetchSuggestions = useCallback(async () => {
     try {
       const res = await aiGetSuggestions();
@@ -228,7 +264,7 @@ export const AiChat = ({
     fetchSuggestions();
   }, [fetchSuggestions]);
 
-  const getContextualSuggestions = (pathname: string): string[] => {
+  const getContextualSuggestions = useCallback((pathname: string): string[] => {
     if (pathname.includes('/budget')) {
       return [
         "What's my budget for this month?",
@@ -251,7 +287,7 @@ export const AiChat = ({
       ];
     }
     return [];
-  };
+  }, []);
 
   const { contextualSuggestions, generalSuggestions } = useMemo(() => {
     const contextual = getContextualSuggestions(pathname);
@@ -260,7 +296,7 @@ export const AiChat = ({
       contextualSuggestions: contextual.slice(0, 3),
       generalSuggestions: general.slice(0, 3)
     };
-  }, [pathname, dynamicSuggestions]);
+  }, [pathname, dynamicSuggestions, getContextualSuggestions]);
 
   const handleSendMessage = useCallback(
     async (promptText?: string) => {
@@ -289,7 +325,7 @@ export const AiChat = ({
           text: messageToSend || '(no message)',
           files: fileParts
         });
-        fetchSuggestions(); // Refetch suggestions after sending a message
+        fetchSuggestions();
       } finally {
         resetAttachments();
       }
@@ -301,7 +337,9 @@ export const AiChat = ({
     try {
       stop?.();
       showSuccess('Generation stopped.');
-    } catch {}
+    } catch (err) {
+      console.error('Stop error:', err);
+    }
   }, [stop, showSuccess]);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -319,34 +357,44 @@ export const AiChat = ({
 
   const regenerateLast = useCallback(() => {
     if (isBusy) return;
-    const lastUser = [...messages].reverse().find((m) => m.role === 'user');
-    if (!lastUser) return;
-    const text = lastUser.parts
-      .filter((p) => p.type === 'text')
-      .map((p) => p.text)
-      .join('');
-    const files = lastUser.parts
-      .filter((p) => p.type === 'file')
-      .map((p: any) => ({
-        type: 'file' as const,
-        mediaType: p.mediaType,
-        url: p.url,
-        filename: p.filename
-      }));
-    sendMessage({ text, files: files.length ? files : undefined });
+    const lastUserMessage = messages
+      .slice()
+      .reverse()
+      .find((m) => m.role === 'user');
+    if (!lastUserMessage) return;
+
+    let textContent = '';
+    const fileParts: FileUIPart[] = [];
+
+    lastUserMessage.parts.forEach((part) => {
+      if (part.type === 'text') {
+        textContent += part.text;
+      } else if (part.type === 'file') {
+        fileParts.push({
+          type: 'file',
+          mediaType: part.mediaType || '',
+          url: part.url,
+          filename: part.filename
+        });
+      }
+    });
+
+    sendMessage({
+      text: textContent,
+      files: fileParts.length > 0 ? fileParts : undefined
+    });
   }, [isBusy, messages, sendMessage]);
 
-  const clearChat = () => {
-    const hasStuff = messages.length > 0 || input.trim() || attachments.length > 0;
-    const isReallyBusy = status === 'submitted' || status === 'streaming';
-    if (isReallyBusy || hasStuff) {
-      const sure = window.confirm(
-        isReallyBusy
-          ? 'A response is still generating. Stop and clear chat?'
-          : 'Clear the chat and start a new session?'
-      );
-      if (!sure) return;
-      if (isReallyBusy) stop?.();
+  const clearChat = useCallback(() => {
+    const hasContent = messages.length > 0 || input.trim() || attachments.length > 0;
+    if (isBusy || hasContent) {
+      const confirmationMessage = isBusy
+        ? 'A response is still generating. Stop and clear chat?'
+        : 'Clear the chat and start a new session?';
+      if (!window.confirm(confirmationMessage)) {
+        return;
+      }
+      if (isBusy) stop?.();
     }
     resetAttachments();
     setInput('');
@@ -354,11 +402,40 @@ export const AiChat = ({
     setSessionId(crypto.randomUUID());
     showSuccess('Chat session cleared.');
     setTimeout(() => textAreaRef.current?.focus(), 0);
-  };
+  }, [
+    isBusy,
+    messages.length,
+    input,
+    attachments.length,
+    stop,
+    resetAttachments,
+    setMessages,
+    showSuccess
+  ]);
+
+  // Handle confirmation callbacks
+  const handleConfirm = useCallback(
+    (id: string) => {
+      // Send confirmation back to AI
+      sendMessage({ text: `CONFIRM:${id}` });
+    },
+    [sendMessage]
+  );
+
+  // Handle clarification selection
+  const handleClarificationSelect = useCallback(
+    (id: string) => {
+      // Send selected option back to AI
+      sendMessage({ text: `SELECT:${id}` });
+    },
+    [sendMessage]
+  );
 
   const lastMessage = messages[messages.length - 1];
   const showSuggestions =
-    (messages.length > 0 && lastMessage?.role === 'assistant' && status === 'ready') &&
+    messages.length > 0 &&
+    lastMessage?.role === 'assistant' &&
+    status === 'ready' &&
     dynamicSuggestions.length > 0;
 
   return (
@@ -470,6 +547,8 @@ export const AiChat = ({
                     message={message}
                     isStreaming={isBusyStreaming && index === messages.length - 1}
                     user={user}
+                    onConfirm={handleConfirm}
+                    onClarificationSelect={handleClarificationSelect}
                   />
                 </motion.div>
               ))}
@@ -521,22 +600,6 @@ export const AiChat = ({
                     user={user}
                   />
                   <div className='mt-2 flex gap-2 pl-11'>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={async () => {
-                        try {
-                          await navigator.clipboard.writeText(
-                            `${error.message}${error.stack ? `\n\n${error.stack}` : ''}`
-                          );
-                          showSuccess('Error copied to clipboard');
-                        } catch {
-                          showError('Failed to copy');
-                        }
-                      }}
-                    >
-                      Copy error
-                    </Button>
                     <Button variant='secondary' size='sm' onClick={regenerateLast}>
                       Retry
                     </Button>
@@ -574,7 +637,7 @@ export const AiChat = ({
 
       {isOffline && (
         <div className='mx-4 mb-1 rounded-md border border-amber-200 bg-amber-50 px-3 py-1 text-center text-xs text-amber-800'>
-          You’re offline. Messages can’t be sent until connection is restored.
+          You're offline. Messages can't be sent until connection is restored.
         </div>
       )}
 

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { featuresList } from '@/lib/data/features-list';
 import { Icon } from '../ui/icon';
 import { BentoGrid, BentoGridItem } from '../ui/bento-grid';
+import { cn } from '@/lib/utils';
 
 export const AllFeaturesSection = () => {
   return (
@@ -19,19 +20,21 @@ export const AllFeaturesSection = () => {
 
         <BentoGrid className='mt-16'>
           {featuresList.map((feature, i) => {
-            const isLarge = i === 0 || i === featuresList.length - 1;
-            const isMedium = i === 3 || i === 4;
-
+            const classNames = [
+              'md:col-span-6 md:row-span-2', // 0
+              'md:col-span-6', // 1
+              'md:col-span-6', // 2
+              'md:col-span-3', // 3
+              'md:col-span-3', // 4
+              'md:col-span-3', // 5
+              'md:col-span-3', // 6
+              'md:col-span-6', // 7
+              'md:col-span-6' // 8
+            ];
             return (
               <BentoGridItem
                 key={feature.slug}
-                className={
-                  isLarge
-                    ? 'col-span-12 md:col-span-6'
-                    : isMedium
-                      ? 'col-span-12 md:col-span-4'
-                      : 'col-span-12 md:col-span-4'
-                }
+                className={cn('col-span-12', classNames[i])}
               >
                 <Link
                   href={`/features/${feature.slug}`}

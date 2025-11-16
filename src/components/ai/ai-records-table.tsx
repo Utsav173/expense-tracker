@@ -27,7 +27,10 @@ import { Button } from '../ui/button';
 import { Icon } from '../ui/icon';
 
 interface AiRecordsTableProps {
-  records: any[];
+  records: {
+    records: any[];
+    count: number;
+  };
 }
 
 const PREVIEW_ROW_LIMIT = 5;
@@ -65,10 +68,18 @@ const RecordsTableContent = ({
   </Table>
 );
 
-const AiRecordsTable: React.FC<AiRecordsTableProps> = ({ records }) => {
+const AiRecordsTable: React.FC<AiRecordsTableProps> = ({ records: _preRecords }) => {
   const { session } = useAuth();
   const user = session?.user;
   const currency = user?.preferredCurrency || 'INR';
+
+  const records = useMemo(() => {
+    if (!_preRecords || !_preRecords.records || _preRecords.records.length === 0) return [];
+
+    return _preRecords.records;
+  }, [_preRecords]);
+
+  if (!records || records.length === 0) return <div>No records found.</div>;
 
   const headers = useMemo(() => {
     if (!records || records.length === 0 || !records[0]) return [];
@@ -151,7 +162,7 @@ const AiRecordsTable: React.FC<AiRecordsTableProps> = ({ records }) => {
   return (
     <Card className='bg-muted/50 mt-2'>
       <CardContent className='p-2'>
-        <ScrollArea className='max-h-72 w-full rounded-md border'>
+        <ScrollArea className='max-h-72 w-full rounded-md border-0'>
           <RecordsTableContent
             records={recordsToShow}
             headers={headers}

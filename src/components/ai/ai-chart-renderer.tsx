@@ -97,7 +97,7 @@ const generateMonochromeScale = (color: string, count: number): string[] => {
   const matches = color.match(/\d+/g);
   if (!matches || matches.length < 2) {
     console.warn('Invalid color format for generateMonochromeScale:', color);
-    return Array(count).fill('#CCCCCC'); // Return a default grey scale
+    return Array(count).fill('#CCCCCC');
   }
   const [hue, saturation] = matches.map(Number);
   const scale = [];

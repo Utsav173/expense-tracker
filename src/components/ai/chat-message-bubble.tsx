@@ -7,8 +7,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/lib/hooks/useToast';
 import { Button } from '../ui/button';
 import { Icon } from '@/components/ui/icon';
-import type { MyUIMessage, MyCustomData } from '@/lib/ai-types';
-import type { UIMessagePart } from 'ai';
+import type {
+  FileDataPart,
+  MyUIMessage,
+  MyUIMessagePart,
+  RenderableDataPart,
+  TextDataPart
+} from '@/lib/ai-types';
 import { Response } from '@/components/ai-elements/response';
 import AiChartRenderer from '@/components/ai/ai-chart-renderer';
 import AiTransactionPreview from '@/components/transactions/ai-transaction-preview';
@@ -20,16 +25,19 @@ import AiClarificationOptionsDisplay from './ai-clarification-options-display';
 import AiStockSearchResultsDisplay from './ai-stock-search-results-display';
 import AiIpoLinkDisplay from './ai-ipo-link-display';
 import AiCreatedEntitySummaryDisplay from './ai-created-entity-summary-display';
-import AiGenericDataDisplay from './ai-generic-data-display'; // Changed import
+import AiConfirmationDisplay from './ai-confirmation-display';
+import AiGenericDataDisplay from './ai-generic-data-display';
 import { IconName } from '../ui/icon-map';
-import { MyToolTypes, tools as allToolsSchemas } from '@/lib/ai-tool-types';
-
-type FilePart = Extract<UIMessagePart<MyCustomData, MyToolTypes>, { type: 'file' }>;
+import { tools as allToolsSchemas } from '@/lib/ai-tool-types';
+import type { z } from 'zod';
+import { User } from 'better-auth';
 
 interface ChatMessageBubbleProps {
   message: MyUIMessage;
   isStreaming?: boolean;
-  user: any;
+  user: User | null;
+  onConfirm?: (id: string) => void;
+  onClarificationSelect?: (id: string) => void;
 }
 
 const getFileIcon = (mediaType: string): IconName => {
@@ -39,11 +47,11 @@ const getFileIcon = (mediaType: string): IconName => {
   return 'file';
 };
 
-const TextPartBubble: React.FC<{
+const TextPartBubble = memo<{
   content: string;
   isUser: boolean;
   isStreaming: boolean;
-}> = memo(({ content, isUser, isStreaming }) => {
+}>(({ content, isUser, isStreaming }) => {
   const { showSuccess, showError } = useToast();
   const [copied, setCopied] = useState(false);
 
@@ -93,7 +101,9 @@ const TextPartBubble: React.FC<{
 });
 TextPartBubble.displayName = 'TextPartBubble';
 
-const FilePartBubble: React.FC<{ part: FilePart }> = memo(({ part }) => {
+const FilePartBubble = memo<{
+  part: Extract<MyUIMessagePart, { type: 'file' }>;
+}>(({ part }) => {
   const [hasError, setHasError] = useState(false);
   const isImage = part.mediaType?.startsWith('image/');
 
@@ -109,7 +119,7 @@ const FilePartBubble: React.FC<{ part: FilePart }> = memo(({ part }) => {
         <div className='relative aspect-video w-full bg-slate-50 dark:bg-slate-800/50'>
           <Image
             src={part.url}
-            alt={part?.filename || 'Uploaded image'}
+            alt={part.filename || 'Uploaded image'}
             fill
             className='object-cover'
             onError={() => setHasError(true)}
@@ -143,176 +153,366 @@ const FilePartBubble: React.FC<{ part: FilePart }> = memo(({ part }) => {
 });
 FilePartBubble.displayName = 'FilePartBubble';
 
-const dataComponentMap: Record<string, { Component: React.ComponentType<any>; propName: string }> =
-  {
-    'data-chart': { Component: AiChartRenderer, propName: 'chart' },
-    'data-records': { Component: AiRecordsTable, propName: 'records' },
-    'data-metrics': { Component: AiMetricsDisplay, propName: 'metrics' },
-    'data-imageAnalysisData': { Component: AiTransactionPreview, propName: 'transactions' },
-    'data-financialHealthAnalysis': { Component: AiFinancialHealthDisplay, propName: 'analysis' },
-    'data-subscriptionAnalysis': { Component: AiSubscriptionDisplay, propName: 'subscriptions' },
-    'data-clarificationOptions': { Component: AiClarificationOptionsDisplay, propName: 'options' },
-    'data-stockSearchResults': { Component: AiStockSearchResultsDisplay, propName: 'results' },
-    'data-ipoLink': { Component: AiIpoLinkDisplay, propName: 'url' },
-    'data-createdEntitySummary': { Component: AiCreatedEntitySummaryDisplay, propName: 'entity' },
-    json: { Component: AiGenericDataDisplay, propName: 'data' }
-  };
+interface ComponentConfig {
+  Component: React.FC<any>;
+  propName: string;
+}
 
-const CustomDataDisplay: React.FC<{ part: { type: string; content: any; id: string } }> = memo(
-  ({ part }) => {
-    const config = dataComponentMap[part.type];
+const dataComponentMap: Record<string, ComponentConfig> = {
+  'data-chart': { Component: AiChartRenderer, propName: 'chart' },
+  'data-records': { Component: AiRecordsTable, propName: 'records' },
+  'data-metrics': { Component: AiMetricsDisplay, propName: 'metrics' },
+  'data-imageAnalysisData': { Component: AiTransactionPreview, propName: 'transactions' },
+  'data-financialHealthAnalysis': { Component: AiFinancialHealthDisplay, propName: 'analysis' },
+  'data-subscriptionAnalysis': { Component: AiSubscriptionDisplay, propName: 'subscriptions' },
+  'data-clarificationOptions': {
+    Component: AiClarificationOptionsDisplay,
+    propName: 'options'
+  },
+  'data-stockSearchResults': { Component: AiStockSearchResultsDisplay, propName: 'results' },
+  'data-ipoLink': { Component: AiIpoLinkDisplay, propName: 'url' },
+  'data-createdEntitySummary': { Component: AiCreatedEntitySummaryDisplay, propName: 'entity' },
+  'data-confirmation': { Component: AiConfirmationDisplay, propName: 'confirmation' },
+  json: { Component: AiGenericDataDisplay, propName: 'data' }
+} as const;
 
-    if (!config) return null;
+const CustomDataDisplay = memo<{
+  part: RenderableDataPart;
+  onConfirm?: (id: string) => void;
+  onSelect?: (id: string) => void;
+}>(({ part, onConfirm, onSelect }) => {
+  const config = dataComponentMap[part.type];
 
-    const { Component, propName } = config;
-
-    if (part.type === 'data-clarificationOptions') {
-      return <Component options={part.content} message='Please select an option:' />;
-    }
-
-    const props = { [propName]: part.content };
-    return <Component {...props} />;
+  if (!config) {
+    console.warn(`No component found for type: ${part.type}`);
+    return null;
   }
-);
+
+  const { Component, propName } = config;
+
+  // Handle special cases
+  if (part.type === 'data-clarificationOptions') {
+    const clarificationPart = part as Extract<
+      RenderableDataPart,
+      { type: 'data-clarificationOptions' }
+    >;
+    if (Array.isArray(clarificationPart.content)) {
+      return (
+        <Component
+          options={clarificationPart.content}
+          message='Please select an option:'
+          onSelect={onSelect}
+        />
+      );
+    }
+    return <Component {...clarificationPart.content} onSelect={onSelect} />;
+  }
+
+  if (part.type === 'data-confirmation') {
+    const confirmationPart = part as Extract<RenderableDataPart, { type: 'data-confirmation' }>;
+    return <Component confirmation={confirmationPart.content} onConfirm={onConfirm} />;
+  }
+
+  const props = { [propName]: part.content };
+  return <Component {...props} />;
+});
 CustomDataDisplay.displayName = 'CustomDataDisplay';
 
 const ThinkingIndicator = () => (
-  <div className='flex items-end justify-start space-x-3'>
-    <div className='bg-muted flex items-center space-x-1.5 rounded-2xl rounded-bl-none px-4 py-3 shadow-sm'>
-      <div className='bg-muted-foreground h-2 w-2 animate-pulse rounded-full [animation-delay:-0.3s]'></div>
-      <div className='bg-muted-foreground h-2 w-2 animate-pulse rounded-full [animation-delay:-0.15s]'></div>
-      <div className='bg-muted-foreground h-2 w-2 animate-pulse rounded-full'></div>
-    </div>
+  <div className='flex items-center space-x-1.5 rounded-2xl rounded-bl-none border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-700 dark:bg-slate-900'>
+    <div className='h-2 w-2 animate-pulse rounded-full bg-slate-400 [animation-delay:-0.3s] dark:bg-slate-600'></div>
+    <div className='h-2 w-2 animate-pulse rounded-full bg-slate-400 [animation-delay:-0.15s] dark:bg-slate-600'></div>
+    <div className='h-2 w-2 animate-pulse rounded-full bg-slate-400 dark:bg-slate-600'></div>
   </div>
 );
 
-const toolOutputHandlers: Record<string, (data: any) => { type: string; content: any } | null> = {
-  getHelpArticle: (data) => {
-    if ('article' in data) return { type: 'text', content: data.article };
-    return null;
-  },
-  analyzeFinancialImage: (data) => {
-    if ('data' in data) return { type: 'data-imageAnalysisData', content: data.data };
-    return null;
-  },
-  analyzeFinancialHealth: (data) => {
-    if ('data' in data) return { type: 'data-financialHealthAnalysis', content: data.data };
-    return null;
-  },
-  findRecurringTransactions: (data) => {
-    if ('data' in data) return { type: 'data-subscriptionAnalysis', content: data.data };
-    return null;
-  },
-  getExpenseBreakdown: (data) => {
-    if ('data' in data)
-      return { type: 'data-records', content: { records: data.data, count: data.data.length } };
-    return null;
-  },
-
-  'data-clarificationOptions': (data) => {
-    if ('data' in data) return { type: 'data-clarificationOptions', content: data.data };
-    return null;
-  },
-  'data-createdEntitySummary': (data) => {
-    if ('data' in data) return { type: 'data-createdEntitySummary', content: data.data };
-    return null;
-  },
-  'data-stockSearchResults': (data) => {
-    if ('data' in data) return { type: 'data-stockSearchResults', content: data.data };
-    return null;
-  },
-  'data-ipoLink': (data) => {
-    if ('data' in data) return { type: 'data-ipoLink', content: data.data };
-    return null;
-  },
-  'data-chart': (data) => {
-    if ('data' in data) return { type: 'data-chart', content: data.data };
-    return null;
-  },
-  'data-records': (data) => {
-    if ('data' in data) return { type: 'data-records', content: { records: data.data } };
-    return null;
-  },
-  'data-metrics': (data) => {
-    if ('data' in data) return { type: 'data-metrics', content: data.data };
-    return null;
-  }
+// Type guard helpers
+const isObjectWithKey = <K extends string>(value: unknown, key: K): value is Record<K, unknown> => {
+  return typeof value === 'object' && value !== null && key in value;
 };
 
+const hasSuccessField = (value: unknown): value is { success: boolean } => {
+  return isObjectWithKey(value, 'success') && typeof value.success === 'boolean';
+};
+
+const hasTypeField = (value: unknown): value is { type: string } => {
+  return isObjectWithKey(value, 'type') && typeof value.type === 'string';
+};
+
+/**
+ * Extract structured data from tool outputs based on their schemas
+ */
 const extractDataFromToolOutput = (
   toolName: string,
-  output: any
-): { type: string; content: any } | null => {
+  output: unknown
+): RenderableDataPart | null => {
   if (!output || typeof output !== 'object') return null;
 
   const toolSchema = allToolsSchemas[toolName as keyof typeof allToolsSchemas]?.outputSchema;
 
   if (!toolSchema) {
     console.warn(`No output schema found for tool: ${toolName}`);
-    return null;
+    return { type: 'json', content: output as Record<string, unknown>, id: crypto.randomUUID() };
   }
 
   const parsed = toolSchema.safeParse(output);
 
   if (!parsed.success) {
     console.error(`Failed to parse output for tool ${toolName}:`, parsed.error);
-    return null;
+    return {
+      type: 'text',
+      content: `Error parsing ${toolName} output.`,
+      id: crypto.randomUUID()
+    };
   }
 
   const data = parsed.data;
 
-  if (typeof data === 'object' && data !== null && 'success' in data) {
-    if (data.success === false) {
+  // Handle error responses (success: false)
+  if (hasSuccessField(data) && data.success === false) {
+    const errorMsg =
+      isObjectWithKey(data, 'error') && typeof data.error === 'string'
+        ? data.error
+        : isObjectWithKey(data, 'message') && typeof data.message === 'string'
+          ? data.message
+          : `Error executing ${toolName}.`;
+    return { type: 'text', content: errorMsg, id: crypto.randomUUID() };
+  }
+
+  // Handle confirmation needed responses
+  if (
+    isObjectWithKey(data, 'confirmationNeeded') &&
+    data.confirmationNeeded === true &&
+    isObjectWithKey(data, 'id') &&
+    isObjectWithKey(data, 'details') &&
+    isObjectWithKey(data, 'message') &&
+    typeof data.id === 'string' &&
+    typeof data.details === 'string' &&
+    typeof data.message === 'string'
+  ) {
+    return {
+      type: 'data-confirmation',
+      content: {
+        id: data.id,
+        details: data.details,
+        message: data.message
+      },
+      id: crypto.randomUUID()
+    };
+  }
+
+  // Handle clarification needed responses (identifyBudgetForAction style)
+  if (
+    isObjectWithKey(data, 'clarificationNeeded') &&
+    data.clarificationNeeded === true &&
+    isObjectWithKey(data, 'options') &&
+    isObjectWithKey(data, 'message') &&
+    Array.isArray(data.options) &&
+    typeof data.message === 'string'
+  ) {
+    return {
+      type: 'data-clarificationOptions',
+      content: {
+        message: data.message,
+        options: data.options as Array<{
+          id: string;
+          name?: string;
+          description?: string;
+          details?: string;
+        }>
+      },
+      id: crypto.randomUUID()
+    };
+  }
+
+  // Handle responses with explicit type field
+  if (hasTypeField(data) && data.type.startsWith('data-')) {
+    return {
+      type: data.type,
+      content: (isObjectWithKey(data, 'data') ? data.data : data) as Record<string, unknown>,
+      id: crypto.randomUUID()
+    };
+  }
+
+  // Handle clarification options (identifyAccountForAction style)
+  if (
+    hasSuccessField(data) &&
+    data.success === true &&
+    isObjectWithKey(data, 'data') &&
+    Array.isArray(data.data)
+  ) {
+    const firstItem = data.data[0];
+    if (
+      firstItem &&
+      typeof firstItem === 'object' &&
+      'id' in firstItem &&
+      ('name' in firstItem || 'description' in firstItem)
+    ) {
       return {
-        type: 'text',
-        content: (data as any).error || (data as any).message || `Error executing ${toolName}.`
+        type: 'data-clarificationOptions',
+        content: {
+          message:
+            isObjectWithKey(data, 'message') && typeof data.message === 'string'
+              ? data.message
+              : 'Please select an option:',
+          options: data.data as Array<{
+            id: string;
+            name?: string;
+            description?: string;
+            details?: string;
+          }>
+        },
+        id: crypto.randomUUID()
       };
     }
-
-    if (data.success === true && 'message' in data && !('type' in data) && !('data' in data)) {
-      return { type: 'text', content: (data as any).message };
-    }
   }
 
-  const handler = toolOutputHandlers[toolName];
+  // Special handling for specific tools
+  const specificHandlers: Record<
+    string,
+    (data: z.infer<typeof toolSchema>) => RenderableDataPart | null
+  > = {
+    generateChartData: (data) => {
+      if (isObjectWithKey(data, 'data') && isObjectWithKey(data.data, 'data')) {
+        return {
+          type: 'data-chart',
+          content: data.data as { type: string; data: Array<Record<string, unknown>> },
+          id: crypto.randomUUID()
+        };
+      }
+      return null;
+    },
+
+    fetchDataRecords: (data) => {
+      if (isObjectWithKey(data, 'data') && isObjectWithKey(data.data, 'records')) {
+        return {
+          type: 'data-records',
+          content: data.data as { records: Array<Record<string, unknown>>; count: number },
+          id: crypto.randomUUID()
+        };
+      }
+      return null;
+    },
+
+    calculateMetrics: (data) => {
+      if (
+        isObjectWithKey(data, 'data') &&
+        isObjectWithKey(data.data, 'metrics') &&
+        typeof data.data.metrics === 'object'
+      ) {
+        return {
+          type: 'data-metrics',
+          content: data.data.metrics as Record<string, unknown>,
+          id: crypto.randomUUID()
+        };
+      }
+      return null;
+    },
+
+    analyzeFinancialImage: (data) => {
+      if (isObjectWithKey(data, 'data') && Array.isArray(data.data)) {
+        return { type: 'data-imageAnalysisData', content: data.data, id: crypto.randomUUID() };
+      }
+      return null;
+    },
+
+    analyzeFinancialHealth: (data) => {
+      if (isObjectWithKey(data, 'data')) {
+        return {
+          type: 'data-financialHealthAnalysis',
+          content: data.data as Record<string, unknown>,
+          id: crypto.randomUUID()
+        };
+      }
+      return null;
+    },
+
+    findRecurringTransactions: (data) => {
+      if (isObjectWithKey(data, 'data') && isObjectWithKey(data.data, 'subscriptions')) {
+        return {
+          type: 'data-subscriptionAnalysis',
+          content: data.data.subscriptions,
+          id: crypto.randomUUID()
+        };
+      }
+      return null;
+    },
+
+    getExpenseBreakdown: (data) => {
+      if (isObjectWithKey(data, 'data') && Array.isArray(data.data)) {
+        return {
+          type: 'data-records',
+          content: { records: data.data, count: data.data.length },
+          id: crypto.randomUUID()
+        };
+      }
+      return null;
+    },
+
+    searchStockSymbols: (data) => {
+      if (isObjectWithKey(data, 'data') && Array.isArray(data.data)) {
+        return { type: 'data-stockSearchResults', content: data.data, id: crypto.randomUUID() };
+      }
+      return null;
+    },
+
+    getUpcomingIpos: (data) => {
+      if (isObjectWithKey(data, 'data') && typeof data.data === 'string') {
+        return { type: 'data-ipoLink', content: data.data, id: crypto.randomUUID() };
+      }
+      return null;
+    },
+
+    getHelpArticle: (data) => {
+      if (isObjectWithKey(data, 'article') && typeof data.article === 'string') {
+        return { type: 'text', content: data.article, id: crypto.randomUUID() };
+      }
+      return null;
+    }
+  };
+
+  const handler = specificHandlers[toolName];
   if (handler) {
-    const handled = handler(data);
-    if (handled) return handled;
+    const result = handler(data);
+    if (result) return result;
   }
 
-  if (
-    typeof data === 'object' &&
-    data !== null &&
-    'type' in data &&
-    (data as any).type.startsWith('data-')
-  ) {
-    const dataHandler = toolOutputHandlers[(data as any).type];
-    if (dataHandler) {
-      const handled = dataHandler(data);
-      if (handled) return handled;
+  // Handle simple success message responses
+  if (hasSuccessField(data) && data.success === true && isObjectWithKey(data, 'message')) {
+    const keys = Object.keys(data);
+    const hasOnlyMessage =
+      keys.length === 2 ||
+      (keys.length === 3 && hasTypeField(data) && !data.type.startsWith('data-'));
+
+    if (hasOnlyMessage && typeof data.message === 'string') {
+      return { type: 'text', content: data.message, id: crypto.randomUUID() };
     }
   }
 
-  if ('data' in data && typeof (data as any).data === 'object' && (data as any).data !== null) {
-    return { type: 'json', content: (data as any).data };
+  // Try to extract data field if present
+  if (isObjectWithKey(data, 'data') && data.data !== null && typeof data.data === 'object') {
+    return { type: 'json', content: data.data as Record<string, unknown>, id: crypto.randomUUID() };
   }
 
-  if (typeof data === 'object' && data !== null) {
-    return { type: 'json', content: data };
+  // Last resort: return as JSON if object
+  if (typeof data === 'object' && data !== null && Object.keys(data).length > 0) {
+    return { type: 'json', content: data as Record<string, unknown>, id: crypto.randomUUID() };
   }
 
   return null;
 };
 
-const ChatMessageBubbleImpl: React.FC<ChatMessageBubbleProps> = ({
+const ChatMessageBubbleImpl = ({
   message,
   isStreaming = false,
-  user
-}) => {
+  user,
+  onConfirm,
+  onClarificationSelect
+}: ChatMessageBubbleProps) => {
   const isUser = message.role === 'user';
 
-  const renderableParts = useMemo(() => {
-    const result: Array<{ type: string; content: any; id: string }> = [];
+  const renderableParts = useMemo((): RenderableDataPart[] => {
+    const result: RenderableDataPart[] = [];
     let textBuffer = '';
     let partCounter = 0;
 
@@ -327,48 +527,78 @@ const ChatMessageBubbleImpl: React.FC<ChatMessageBubbleProps> = ({
       }
     };
 
-    if (message.parts && Array.isArray(message.parts)) {
-      message.parts.forEach((part: any) => {
-        if (part.type === 'text') {
-          textBuffer += part.text || '';
-        } else if (part.type.startsWith('data-')) {
-          flushText();
-          result.push({
-            type: part.type,
-            content: part.data,
-            id: `${part.type}-${partCounter++}`
-          });
-        } else if (part.type === 'file') {
-          flushText();
-          result.push({
-            type: 'file',
-            content: part,
-            id: `file-${partCounter++}`
-          });
-        } else if (part.type.startsWith('tool-')) {
-          const toolPart = part as any;
-
-          if (toolPart.state === 'output-available' && toolPart.output) {
-            flushText();
-            const toolName = toolPart.type.replace('tool-', '');
-            const extracted = extractDataFromToolOutput(toolName, toolPart.output);
-            if (extracted) {
-              result.push({
-                type: extracted.type,
-                content: extracted.content,
-                id: `tool-${partCounter++}`
-              });
-            }
-          }
-        } else if (part.type === 'step-start') {
-        }
-      });
+    if (!message.parts || !Array.isArray(message.parts)) {
+      return result;
     }
+
+    message.parts.forEach((part) => {
+      // Text parts
+      if (part.type === 'text') {
+        textBuffer += part.text || '';
+        return;
+      }
+
+      // File parts
+      if (part.type === 'file') {
+        flushText();
+        result.push({
+          type: 'file',
+          content: {
+            mediaType: part.mediaType || '',
+            url: part.url,
+            filename: part.filename
+          },
+          id: `file-${partCounter++}`
+        });
+        return;
+      }
+
+      // Data parts (custom)
+      if (part.type?.startsWith('data-')) {
+        flushText();
+        result.push({
+          type: part.type,
+          content: ('data' in part ? part.data : 'content' in part ? part.content : {}) as Record<
+            string,
+            unknown
+          >,
+          id: `${part.type}-${partCounter++}`
+        });
+        return;
+      }
+
+      // Tool parts
+      if (part.type?.startsWith('tool-')) {
+        // Only process completed tool calls
+        if (
+          'state' in part &&
+          part.state === 'output-available' &&
+          'output' in part &&
+          part.output
+        ) {
+          flushText();
+          const toolName = part.type.replace('tool-', '');
+          const extracted = extractDataFromToolOutput(toolName, part.output);
+
+          if (extracted) {
+            result.push(extracted);
+          }
+        }
+        return;
+      }
+
+      // Step start parts (can be ignored)
+      if (part.type === 'step-start') {
+        flushText();
+        return;
+      }
+    });
 
     flushText();
     return result;
   }, [message.parts]);
 
+  // Don't render empty assistant messages
   if (!isUser && renderableParts.length === 0 && !isStreaming) {
     return null;
   }
@@ -407,23 +637,35 @@ const ChatMessageBubbleImpl: React.FC<ChatMessageBubbleProps> = ({
           const isLastPart = index === renderableParts.length - 1;
 
           switch (part.type) {
-            case 'text':
+            case 'text': {
+              const textPart = part as TextDataPart;
               return (
                 <TextPartBubble
                   key={key}
-                  content={part.content}
+                  content={textPart.content}
                   isUser={isUser}
                   isStreaming={isStreaming && isLastPart}
                 />
               );
-            case 'file':
-              return <FilePartBubble key={key} part={part.content} />;
+            }
+            case 'file': {
+              const filePart = part as FileDataPart;
+              const filePartForComponent: Extract<MyUIMessagePart, { type: 'file' }> = {
+                type: 'file',
+                mediaType: filePart.content.mediaType,
+                url: filePart.content.url,
+                filename: filePart.content.filename
+              };
+              return <FilePartBubble key={key} part={filePartForComponent} />;
+            }
             default:
               if (part.type.startsWith('data-') || part.type === 'json') {
                 return (
                   <div key={key} className='w-full max-w-4xl'>
                     <CustomDataDisplay
-                      part={{ type: part.type, content: part.content, id: part.id }}
+                      part={part}
+                      onConfirm={onConfirm}
+                      onSelect={onClarificationSelect}
                     />
                   </div>
                 );
@@ -432,6 +674,7 @@ const ChatMessageBubbleImpl: React.FC<ChatMessageBubbleProps> = ({
           }
         })}
 
+        {/* Show thinking indicator when streaming but no content yet */}
         {isStreaming && renderableParts.length === 0 && <ThinkingIndicator />}
       </div>
     </div>
@@ -439,25 +682,16 @@ const ChatMessageBubbleImpl: React.FC<ChatMessageBubbleProps> = ({
 };
 
 export const ChatMessageBubble = memo(ChatMessageBubbleImpl, (prev, next) => {
-  if (prev.message.id !== next.message.id) {
-    return false;
-  }
-
-  if (prev.isStreaming !== next.isStreaming) {
-    return false;
-  }
+  if (prev.message.id !== next.message.id) return false;
+  if (prev.isStreaming !== next.isStreaming) return false;
 
   if (next.isStreaming) {
     const prevParts = prev.message.parts || [];
     const nextParts = next.message.parts || [];
-
-    if (prevParts.length !== nextParts.length) {
-      return false;
-    }
+    if (prevParts.length !== nextParts.length) return false;
 
     const prevLast = prevParts[prevParts.length - 1];
     const nextLast = nextParts[nextParts.length - 1];
-
     return JSON.stringify(prevLast) === JSON.stringify(nextLast);
   }
 
