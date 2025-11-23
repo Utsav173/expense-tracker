@@ -28,20 +28,27 @@ const CallToActionSection = () => {
   }, []);
 
   return (
-    <section ref={sectionRef} id='final-cta' className='bg-background px-6 py-28'>
+    <section ref={sectionRef} id='final-cta' className='relative overflow-hidden bg-background px-6 py-32'>
+      {/* Background Glow */}
+      <div className='pointer-events-none absolute top-1/2 left-1/2 -z-10 h-[60vw] w-[60vw] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-[120px]' />
+
       <div className='container mx-auto text-center'>
-        <div className='section-content-anim mb-6 inline-block'>
-          <div className='from-primary rounded-full bg-gradient-to-r to-blue-500 p-3 shadow-lg'>
-            <Icon name='zap' className='text-primary-foreground h-8 w-8' />
+        <div className='section-content-anim mb-8 inline-block'>
+          <div className='flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 shadow-xl shadow-primary/20 backdrop-blur-sm'>
+            <Icon name='zap' className='h-10 w-10 text-primary' />
           </div>
         </div>
         <div className='section-content-anim'>
-          <h2 className='text-foreground text-4xl leading-tight font-bold md:text-5xl'>
-            Your Journey to Financial Freedom Starts Now.
+          <h2 className='text-5xl font-bold tracking-tighter text-foreground md:text-7xl'>
+            Your Journey to <br />
+            <span className='bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent'>
+              Financial Freedom
+            </span>{' '}
+            Starts Now.
           </h2>
         </div>
         <div className='section-content-anim'>
-          <p className='text-muted-foreground mx-auto mt-6 max-w-xl text-lg'>
+          <p className='mx-auto mt-8 max-w-xl text-2xl font-medium text-muted-foreground'>
             All core features are free to use. Take the first step towards financial clarity today.
           </p>
         </div>
@@ -49,8 +56,9 @@ const CallToActionSection = () => {
           <Link href='/auth/signup'>
             <Button
               size='lg'
-              className='hover:shadow-primary/40 focus:ring-primary/60 dark:focus:ring-offset-background px-12 py-4 text-xl font-semibold shadow-xl transition-all duration-300 hover:scale-105 focus:ring-4 focus:ring-offset-2'
+              className='relative h-16 overflow-hidden rounded-full bg-foreground px-12 text-xl font-bold text-background shadow-2xl transition-all hover:scale-105 hover:shadow-primary/25 dark:bg-white dark:text-black'
             >
+              <div className='absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 transition-opacity hover:opacity-100' />
               Sign Up & Take Control
             </Button>
           </Link>

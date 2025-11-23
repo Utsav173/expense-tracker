@@ -1,105 +1,169 @@
 'use client';
 
-import React, { Suspense, useRef } from 'react';
+import React, { useRef } from 'react';
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
 import { Icon } from '../ui/icon';
 
-const FinancialOrb = dynamic(
-  () => import('@/components/landing/3d/financial-orb').then((mod) => mod.FinancialOrb),
-  { ssr: false }
-);
-
 const HeroSection = () => {
-  const mainRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const marqueeRef = useRef<HTMLDivElement>(null);
 
   useGSAP(
     () => {
-      const tl = gsap.timeline({ delay: 0.3 });
+      const blobs = gsap.utils.toArray('.aurora-blob');
+      blobs.forEach((blob: any, i) => {
+        gsap.to(blob, {
+          x: 'random(-100, 100)',
+          y: 'random(-50, 50)',
+          scale: 'random(0.8, 1.2)',
+          duration: 'random(10, 20)',
+          repeat: -1,
+          yoyo: true,
+          ease: 'sine.inOut',
+          delay: i * 2
+        });
+      });
+
+      if (marqueeRef.current) {
+        gsap.to(marqueeRef.current, {
+          xPercent: -50,
+          ease: 'none',
+          duration: 20,
+          repeat: -1
+        });
+      }
+
+      const tl = gsap.timeline({ delay: 0.1 });
       tl.fromTo(
-        '.hero-anim',
-        { opacity: 0, y: 25 },
+        '.hero-reveal',
         {
-          opacity: 1,
+          y: 80,
+          opacity: 0,
+          filter: 'blur(10px)'
+        },
+        {
           y: 0,
-          duration: 0.8,
-          ease: 'power3.out',
-          stagger: 0.2
+          opacity: 1,
+          filter: 'blur(0px)',
+          duration: 1.2,
+          stagger: 0.08,
+          ease: 'power3.out'
         }
       );
     },
-    { scope: mainRef }
+    { scope: containerRef }
+  );
+
+  const MarqueeContent = () => (
+    <div className='flex shrink-0 items-center gap-8 px-4'>
+      <span className='stroke-text text-6xl font-bold tracking-tighter text-transparent opacity-40 md:text-8xl'>
+        Track • Save • Invest • Grow •
+      </span>
+      <span className='text-foreground/90 text-6xl font-bold tracking-tighter md:text-8xl'>
+        Track • Save • Invest • Grow •
+      </span>
+    </div>
   );
 
   return (
     <section
-      ref={mainRef}
-      className={cn(
-        'relative flex min-h-screen w-full items-center justify-center overflow-hidden',
-        'dark:bg-gray-950 dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(34,197,94,0.15),rgba(255,255,255,0))]',
-        'bg-gray-50 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(34,197,94,0.1),rgba(255,255,255,0))]'
-      )}
+      ref={containerRef}
+      className='bg-background relative flex min-h-screen w-full flex-col justify-center overflow-hidden pt-20'
     >
-      <div className='relative z-10 container mx-auto flex flex-col items-center justify-center px-4 pt-20 text-center max-sm:mb-40 sm:pt-24 lg:pt-0'>
-        <div className='hero-anim'>
-          <Badge variant='outline' className='border-primary/20 bg-primary/10 text-primary'>
-            <Icon name='sparkles' className='mr-2 h-3 w-3' />
-            Your Personal AI Financial Analyst
-          </Badge>
+      <div className='pointer-events-none absolute inset-0 z-0 overflow-hidden'>
+        <div className='aurora-blob bg-primary/20 dark:bg-primary/10 absolute -top-[10%] -left-[10%] h-[60vh] w-[60vw] rounded-full mix-blend-multiply blur-[100px] dark:mix-blend-screen dark:blur-[120px]' />
+        <div className='aurora-blob absolute top-[20%] -right-[10%] h-[50vh] w-[50vw] rounded-full bg-blue-500/20 mix-blend-multiply blur-[100px] dark:bg-blue-600/10 dark:mix-blend-screen dark:blur-[120px]' />
+        <div className='aurora-blob absolute -bottom-[20%] left-[20%] h-[60vh] w-[60vw] rounded-full bg-purple-500/20 mix-blend-multiply blur-[100px] dark:bg-purple-500/10 dark:mix-blend-screen dark:blur-[120px]' />
+        <div className='absolute inset-0 bg-[url("https://grainy-gradients.vercel.app/noise.svg")] opacity-[0.03]' />
+      </div>
+
+      <div className='relative z-10 container mx-auto px-4 md:px-6'>
+        <div className='hero-reveal mb-8 flex justify-center md:justify-start'>
+          <div className='border-border/50 bg-background/50 text-foreground hover:bg-muted/50 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium backdrop-blur-xl transition-colors'>
+            <span className='relative flex h-2 w-2'>
+              <span className='bg-primary absolute inline-flex h-full w-full animate-ping rounded-full opacity-75'></span>
+              <span className='bg-primary relative inline-flex h-2 w-2 rounded-full'></span>
+            </span>
+            <span className='tracking-wide'>AI Financial Analyst</span>
+          </div>
         </div>
 
-        <h1
-          className={cn(
-            'hero-anim hero-text-glow mt-6 text-5xl font-extrabold tracking-tighter md:text-7xl lg:text-8xl',
-            'text-gray-900 dark:text-slate-50'
-          )}
-        >
-          Master Your Money.
-          <br />
-          <span className='from-primary bg-linear-to-r to-emerald-500 bg-clip-text text-transparent'>
-            Effortlessly.
-          </span>
-        </h1>
+        <div className='flex flex-col leading-[0.9] font-bold tracking-[-0.04em] select-none'>
+          <div className='hero-reveal overflow-hidden'>
+            <h1 className='text-foreground text-[12vw] md:text-[9vw]'>Master</h1>
+          </div>
 
-        <p
-          className={cn(
-            'hero-anim mx-auto mt-6 max-w-xl text-base leading-relaxed sm:text-lg',
-            'text-gray-600 dark:text-slate-400'
-          )}
-        >
-          Go beyond simple tracking. Get predictive insights, automated budgeting from PDF
-          statements, and actionable advice to finally take control of your money.
-        </p>
+          <div className='hero-reveal flex flex-wrap items-baseline gap-x-4 overflow-hidden'>
+            <h1 className='from-primary bg-gradient-to-r via-purple-500 to-blue-600 bg-clip-text pb-4 text-[12vw] text-transparent md:text-[9vw]'>
+              Your
+            </h1>
+            <h1 className='text-foreground/50 pb-4 font-serif text-[12vw] italic md:text-[9vw]'>
+              Money
+            </h1>
+          </div>
+        </div>
 
-        <div className='hero-anim mt-10'>
-          <Link href='/auth/signup'>
-            <Button size='lg' className='group h-12 px-8 text-base font-bold'>
-              Get Started for Free
-              <Icon
-                name='arrowRight'
-                className='ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1'
-              />
-            </Button>
-          </Link>
+        <div className='hero-reveal mt-12 grid items-end gap-8 md:grid-cols-2'>
+          <p className='text-muted-foreground max-w-lg text-lg leading-relaxed font-medium md:text-xl'>
+            Stop guessing, start knowing. Unlock predictive insights and automated budgeting to
+            finally take full control of your wealth.
+          </p>
+
+          <div className='flex flex-col items-start gap-4 sm:flex-row md:justify-end'>
+            <Link href='/auth/signup' className='w-full sm:w-auto'>
+              <Button
+                size='lg'
+                className='group bg-foreground text-background relative h-14 w-full overflow-hidden rounded-full px-8 text-lg font-semibold shadow-lg transition-all hover:scale-105 hover:shadow-xl sm:w-auto dark:bg-white dark:text-black'
+              >
+                <div className='absolute inset-0 -translate-x-[100%] bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-1000 group-hover:translate-x-[100%]' />
+                <span className='relative flex items-center gap-2'>
+                  Get Started Free
+                  <Icon
+                    name='arrowRight'
+                    className='h-5 w-5 transition-transform group-hover:translate-x-1'
+                  />
+                </span>
+              </Button>
+            </Link>
+
+            <Link href='#how-it-works' className='w-full sm:w-auto'>
+              <Button
+                variant='ghost'
+                size='lg'
+                className='text-foreground hover:bg-muted/50 h-14 w-full rounded-full px-8 text-lg font-medium sm:w-auto'
+              >
+                How it works
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 
-      <div
-        className={cn(
-          'absolute right-0 -bottom-20 left-0 z-0 h-[70vh] w-full max-sm:h-[55vh]',
-          'dark:[mask-image:linear-gradient(to_top,rgba(0,0,0,1)_20%,transparent)]',
-          '[mask-image:linear-gradient(to_top,rgba(249,250,251,1)_20%,transparent)]'
-        )}
-      >
-        <Suspense fallback={null}>
-          <FinancialOrb />
-        </Suspense>
+      <div className='bg-background/10 absolute bottom-0 left-0 z-20 w-full overflow-hidden border-t border-white/10 backdrop-blur-sm'>
+        <div className='flex w-max py-8 whitespace-nowrap' ref={marqueeRef}>
+          <div className='flex'>
+            <MarqueeContent />
+            <MarqueeContent />
+          </div>
+          <div className='flex'>
+            <MarqueeContent />
+            <MarqueeContent />
+          </div>
+        </div>
       </div>
+
+      <style jsx global>{`
+        .stroke-text {
+          -webkit-text-stroke: 1px currentColor;
+          color: transparent;
+        }
+        .dark .stroke-text {
+          -webkit-text-stroke: 1px rgba(255, 255, 255, 0.2);
+        }
+      `}</style>
     </section>
   );
 };

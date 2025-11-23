@@ -137,9 +137,9 @@ const LandingPageHeader = () => {
 
   return (
     <>
-      <header className='glassmorphism-nav fixed top-0 left-0 z-50 w-full px-4 py-4 backdrop-blur-sm sm:px-6'>
+      <header className='glassmorphism-nav fixed top-0 left-0 z-50 w-full border-b border-white/10 bg-background/60 px-4 py-4 backdrop-blur-xl sm:px-6'>
         <div className='container mx-auto flex items-center justify-between'>
-          <Link href='/' className='flex items-center gap-2 text-2xl font-bold'>
+          <Link href='/' className='flex items-center gap-2 text-2xl font-bold tracking-tight'>
             <Image
               src='/favicon.svg'
               alt='Expense Pro Logo'
@@ -147,22 +147,24 @@ const LandingPageHeader = () => {
               height={32}
               className='-mb-0.5'
             />
-            <span className='max-sm:text-sm'>Expense Pro</span>
+            <span className='bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent max-sm:text-sm'>
+              Expense Pro
+            </span>
           </Link>
 
-          <nav className='hidden items-center gap-4 md:flex'>
+          <nav className='hidden items-center gap-8 md:flex'>
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 href={link.href}
-                className='text-muted-foreground hover:text-primary text-sm font-medium transition-colors'
+                className='text-sm font-medium text-muted-foreground transition-colors hover:text-primary'
               >
                 {link.name}
               </Link>
             ))}
           </nav>
 
-          <div className='hidden items-center gap-2 md:flex'>
+          <div className='hidden items-center gap-4 md:flex'>
             <ModeToggle />
             <AuthButtons />
           </div>
@@ -174,6 +176,7 @@ const LandingPageHeader = () => {
               size='icon'
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               aria-label='Toggle mobile menu'
+              className='hover:bg-primary/10'
             >
               <AnimatePresence mode='wait' initial={false}>
                 {isMenuOpen ? (

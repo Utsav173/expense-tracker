@@ -16,24 +16,47 @@ const BentoGrid = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivE
 );
 BentoGrid.displayName = 'BentoGrid';
 
-const BentoGridItem = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, children, ...props }, ref) => {
-    return (
-      <div
-        ref={ref}
-        className={cn(
-          'group bento-grid-item relative col-span-12 flex h-full flex-col justify-between overflow-hidden rounded-xl', // Added bento-grid-item class
-          'bg-card border-border border shadow-md', // Use bg-card, border-border, and a standard shadow for light mode
-          'dark:bg-card dark:border-border transform-gpu dark:shadow-lg', // Use dark:bg-card, dark:border-border, and a slightly stronger shadow for dark mode
-          className
-        )}
-        {...props}
-      >
-        {children}
-      </div>
-    );
-  }
-);
+const BentoGridItem = ({
+  className,
+  title,
+  description,
+  header,
+  icon,
+  children,
+}: {
+  className?: string;
+  title?: string | React.ReactNode;
+  description?: string | React.ReactNode;
+  header?: React.ReactNode;
+  icon?: React.ReactNode;
+  children?: React.ReactNode;
+}) => {
+  return (
+    <div
+      className={cn(
+        'group/bento row-span-1 flex flex-col justify-between space-y-4 rounded-3xl border border-black/5 bg-black/5 p-4 shadow-xl backdrop-blur-md transition duration-200 hover:bg-black/10 hover:shadow-2xl hover:shadow-primary/5 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10',
+        className
+      )}
+    >
+      {children ? (
+        children
+      ) : (
+        <>
+          {header}
+          <div className='transition duration-200 group-hover/bento:translate-x-2'>
+            {icon}
+            <div className='mb-2 mt-2 font-bold text-foreground'>
+              {title}
+            </div>
+            <div className='text-xs font-normal text-muted-foreground'>
+              {description}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
 BentoGridItem.displayName = 'BentoGridItem';
 
 export { BentoGrid, BentoGridItem };

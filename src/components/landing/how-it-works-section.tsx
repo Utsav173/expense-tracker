@@ -35,10 +35,14 @@ export const HowItWorksSection = () => {
   return (
     <section id='how-it-works' ref={sectionRef} className='bg-muted px-3 py-24'>
       <div className='container mx-auto text-center'>
-        <h2 className='text-4xl font-bold max-sm:text-2xl'>Get Started in 3 Simple Steps</h2>
-        <p className='text-muted-foreground mx-auto mt-4 max-w-2xl text-lg'>
-          From data to decisions, mastering your finances has never been easier.
-        </p>
+        <div className='mb-20'>
+          <h2 className='text-4xl font-bold tracking-tighter text-foreground md:text-6xl'>
+            How It <span className='text-primary'>Works</span>
+          </h2>
+          <p className='mx-auto mt-6 max-w-2xl text-xl font-medium text-muted-foreground'>
+            From data to decisions, mastering your finances has never been easier.
+          </p>
+        </div>
 
         <div className='mt-20 grid grid-cols-1 gap-y-20 md:grid-cols-3 md:gap-x-8'>
           <HowItWorksStep

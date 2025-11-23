@@ -24,21 +24,26 @@ const LandingPageFooter = () => {
   ];
 
   return (
-    <footer className='border-border bg-background border-t py-8 md:py-12'>
+    <footer className='border-t border-white/10 bg-background py-12 md:py-16'>
       <div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
         <div className='grid grid-cols-1 gap-8 lg:grid-cols-4 lg:gap-12'>
           <div className='lg:col-span-2'>
             <div className='flex items-center justify-center gap-2 sm:justify-start'>
               <Image src='/favicon.svg' alt='Expense Pro Logo' width={28} height={28} />
-              <span className='text-foreground text-lg font-bold sm:text-xl'>Expense Pro</span>
+              <span className='text-xl font-bold tracking-tight text-foreground sm:text-2xl'>
+                Expense Pro
+              </span>
             </div>
-            <p className='text-muted-foreground mx-auto mt-3 max-w-md text-sm leading-relaxed sm:mx-0 sm:text-base lg:mt-4'>
-              Your intelligent partner for mastering personal finance. Gain clarity, build habits,
-              and achieve your goals.
+            <p className='mx-auto mt-4 max-w-md text-sm font-medium leading-relaxed text-muted-foreground sm:mx-0 sm:text-base'>
+              Your intelligent partner for mastering personal finance. Gain clarity, build habits, and
+              achieve your goals.
             </p>
-            <div className='mt-4 flex justify-center sm:justify-start lg:mt-6'>
+            <div className='mt-6 flex justify-center sm:justify-start'>
               <Link href='/auth/signup'>
-                <Button size='sm' className='group'>
+                <Button
+                  size='sm'
+                  className='group rounded-full bg-primary px-6 text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:scale-105 hover:shadow-primary/40'
+                >
                   Get Started Free
                   <Icon
                     name='arrowRight'
@@ -49,17 +54,17 @@ const LandingPageFooter = () => {
             </div>
           </div>
 
-          <div className='grid grid-cols-1 gap-6 sm:grid-cols-3 lg:col-span-2 lg:gap-8'>
+          <div className='grid grid-cols-1 gap-8 sm:grid-cols-3 lg:col-span-2'>
             <div className='text-center sm:text-left'>
-              <h3 className='text-foreground text-sm font-semibold tracking-wide uppercase'>
+              <h3 className='text-sm font-bold uppercase tracking-wider text-foreground'>
                 Product
               </h3>
-              <ul className='mt-3 space-y-2'>
+              <ul className='mt-4 space-y-3'>
                 {productLinks.map((link) => (
                   <li key={link.name}>
                     <Link
                       href={link.href}
-                      className='text-muted-foreground hover:text-primary text-sm transition-colors'
+                      className='text-sm font-medium text-muted-foreground transition-colors hover:text-primary'
                     >
                       {link.name}
                     </Link>
@@ -69,15 +74,15 @@ const LandingPageFooter = () => {
             </div>
 
             <div className='text-center sm:text-left'>
-              <h3 className='text-foreground text-sm font-semibold tracking-wide uppercase'>
+              <h3 className='text-sm font-bold uppercase tracking-wider text-foreground'>
                 Company
               </h3>
-              <ul className='mt-3 space-y-2'>
+              <ul className='mt-4 space-y-3'>
                 {companyLinks.map((link) => (
                   <li key={link.name}>
                     <Link
                       href={link.href}
-                      className='text-muted-foreground hover:text-primary text-sm transition-colors'
+                      className='text-sm font-medium text-muted-foreground transition-colors hover:text-primary'
                     >
                       {link.name}
                     </Link>
@@ -87,15 +92,15 @@ const LandingPageFooter = () => {
             </div>
 
             <div className='text-center sm:text-left'>
-              <h3 className='text-foreground text-sm font-semibold tracking-wide uppercase'>
+              <h3 className='text-sm font-bold uppercase tracking-wider text-foreground'>
                 Legal
               </h3>
-              <ul className='mt-3 space-y-2'>
+              <ul className='mt-4 space-y-3'>
                 {legalLinks.map((link) => (
                   <li key={link.name}>
                     <Link
                       href={link.href}
-                      className='text-muted-foreground hover:text-primary text-sm transition-colors'
+                      className='text-sm font-medium text-muted-foreground transition-colors hover:text-primary'
                     >
                       {link.name}
                     </Link>
@@ -107,9 +112,9 @@ const LandingPageFooter = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className='border-border mt-8 border-t pt-6 lg:mt-12'>
+        <div className='mt-12 border-t border-white/10 pt-8'>
           <Suspense fallback={null}>
-            <p className='text-muted-foreground text-center text-xs sm:text-sm'>
+            <p className='text-center text-xs font-medium text-muted-foreground sm:text-sm'>
               © <CurrentYear /> Expense Pro. All Rights Reserved.
             </p>
           </Suspense>

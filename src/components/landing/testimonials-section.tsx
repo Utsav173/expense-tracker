@@ -4,6 +4,7 @@ import React, { useRef, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { gsap } from 'gsap';
+import { Icon } from '../ui/icon';
 
 interface TestimonialProps {
   quote: string;
@@ -13,19 +14,26 @@ interface TestimonialProps {
 }
 
 const TestimonialCard: React.FC<TestimonialProps> = ({ quote, name, title, avatar }) => (
-  <Card className='testimonial-card-anim flex flex-col items-center p-6 text-center shadow-lg transition-all duration-300 hover:-translate-y-[1px] hover:shadow-xl'>
-    <Avatar className='mb-4 h-20 w-20'>
-      <AvatarImage src={avatar} alt={name} />
-      <AvatarFallback>
-        {name
-          .split(' ')
-          .map((n) => n[0])
-          .join('')}
-      </AvatarFallback>
-    </Avatar>
-    <CardContent className='text-muted-foreground text-md mb-4 italic'>"{quote}"</CardContent>
-    <h3 className='text-foreground text-lg font-semibold'>{name}</h3>
-    <p className='text-muted-foreground text-sm'>{title}</p>
+  <Card className='testimonial-card-anim flex h-full flex-col items-start justify-between rounded-3xl border border-white/10 bg-white/5 p-8 shadow-xl backdrop-blur-md transition-all duration-500 hover:-translate-y-2 hover:bg-white/10 hover:shadow-2xl hover:shadow-primary/10 dark:bg-white/5 dark:hover:bg-white/10'>
+    <div className='mb-6'>
+      <Icon name='messageSquare' className='h-8 w-8 text-primary/80' />
+      <p className='mt-4 text-lg font-medium leading-relaxed text-foreground/90'>"{quote}"</p>
+    </div>
+    <div className='flex items-center gap-4'>
+      <Avatar className='h-12 w-12 rounded-full border-2 border-primary/20'>
+        <AvatarImage src={avatar} alt={name} />
+        <AvatarFallback className='rounded-full font-bold bg-primary/10 text-primary'>
+          {name
+            .split(' ')
+            .map((n) => n[0])
+            .join('')}
+        </AvatarFallback>
+      </Avatar>
+      <div>
+        <h3 className='text-base font-bold tracking-wide text-foreground'>{name}</h3>
+        <p className='text-sm font-medium text-muted-foreground'>{title}</p>
+      </div>
+    </div>
   </Card>
 );
 
@@ -74,14 +82,18 @@ const TestimonialsSection = () => {
   ];
 
   return (
-    <section className='bg-background py-20'>
-      <div className='container mx-auto px-4 text-center'>
-        <h2 className='text-foreground mb-4 text-4xl font-bold'>What Our Users Say</h2>
-        <p className='text-muted-foreground mx-auto mb-12 max-w-3xl text-lg'>
-          Don't just take our word for it. Hear from real users who have transformed their financial
-          lives with Expense Pro.
-        </p>
-        <div ref={testimonialsRef} className='grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3'>
+    <section className='bg-background py-24'>
+      <div className='container mx-auto px-4'>
+        <div className='mb-20 text-center'>
+          <h2 className='text-4xl font-bold tracking-tighter text-foreground md:text-6xl'>
+            What Our <span className='text-primary'>Users Say</span>
+          </h2>
+          <p className='mx-auto mt-6 max-w-2xl text-xl font-medium text-muted-foreground'>
+            Don't just take our word for it. Hear from real users who have transformed their financial
+            lives.
+          </p>
+        </div>
+        <div ref={testimonialsRef} className='mx-auto grid max-w-7xl grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3'>
           {testimonials.map((testimonial, index) => (
             <TestimonialCard key={index} {...testimonial} />
           ))}

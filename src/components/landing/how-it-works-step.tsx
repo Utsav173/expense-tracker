@@ -23,24 +23,26 @@ export const HowItWorksStep = ({
   return (
     <div
       className={cn(
-        'group relative flex flex-col items-center text-center transition-transform duration-300 hover:-translate-y-2',
+        'group relative flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-2',
         className
       )}
     >
-      <div className='relative mb-6'>
-        <div className='bg-primary/10 group-hover:bg-primary/20 absolute inset-0 rounded-full blur-lg transition-all duration-300 group-hover:blur-xl' />
-        <div className='border-border/50 bg-background flex h-24 w-24 items-center justify-center rounded-full border shadow-lg'>
+      <div className='relative mb-8'>
+        {/* Soft Glow Background */}
+        <div className='absolute inset-0 rounded-full bg-primary/20 blur-2xl transition-all duration-500 group-hover:bg-primary/30 group-hover:blur-3xl' />
+        
+        <div className='relative flex h-24 w-24 items-center justify-center rounded-2xl border border-white/10 bg-white/5 shadow-2xl backdrop-blur-md transition-all duration-300 group-hover:scale-105 group-hover:bg-white/10 dark:bg-white/5 dark:group-hover:bg-white/10'>
           <Icon
             name={icon}
-            className='text-primary h-10 w-10 transition-transform duration-300 group-hover:scale-110'
+            className='h-10 w-10 text-primary transition-transform duration-300 group-hover:scale-110'
           />
         </div>
-        <div className='border-background bg-primary text-primary-foreground absolute -top-2 -right-2 flex h-9 w-9 items-center justify-center rounded-full border-4 text-base font-bold'>
+        <div className='absolute -right-3 -top-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground shadow-lg shadow-primary/30'>
           {stepNumber}
         </div>
       </div>
-      <h3 className='mb-2 text-2xl font-bold'>{title}</h3>
-      <p className='text-muted-foreground max-w-xs px-4 text-base'>{description}</p>
+      <h3 className='mb-3 text-2xl font-bold tracking-tight text-foreground'>{title}</h3>
+      <p className='max-w-xs px-4 text-base font-medium text-muted-foreground'>{description}</p>
     </div>
   );
 };

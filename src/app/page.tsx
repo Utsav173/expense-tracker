@@ -9,7 +9,6 @@ import HeroSection from '@/components/landing/hero-section';
 import TestimonialsSection from '@/components/landing/testimonials-section';
 import CallToActionSection from '@/components/landing/call-to-action-section';
 import { SocialProofSection } from '@/components/landing/social-proof-section';
-import { FeatureDeepDiveSection } from '@/components/landing/feature-deep-dive-section';
 import { HowItWorksSection } from '@/components/landing/how-it-works-section';
 import { AllFeaturesSection } from '@/components/landing/all-features-section'; // New import
 
@@ -23,7 +22,6 @@ const LandingPage = () => {
         <main>
           <HeroSection />
           {/* <SocialProofSection /> */}
-          <FeatureDeepDiveSection />
           <HowItWorksSection />
           <AllFeaturesSection />
           <TestimonialsSection />
