@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { cn } from '@/lib/utils';
 
 import LandingPageHeader from '@/components/landing/landing-page-header';
@@ -8,9 +7,8 @@ import LandingPageFooter from '@/components/landing/landing-page-footer';
 import HeroSection from '@/components/landing/hero-section';
 import TestimonialsSection from '@/components/landing/testimonials-section';
 import CallToActionSection from '@/components/landing/call-to-action-section';
-import { SocialProofSection } from '@/components/landing/social-proof-section';
 import { HowItWorksSection } from '@/components/landing/how-it-works-section';
-import { AllFeaturesSection } from '@/components/landing/all-features-section'; // New import
+import { AllFeaturesSection } from '@/components/landing/all-features-section';
 
 const LandingPage = () => {
   return (
@@ -21,7 +19,6 @@ const LandingPage = () => {
         <LandingPageHeader />
         <main>
           <HeroSection />
-          {/* <SocialProofSection /> */}
           <HowItWorksSection />
           <AllFeaturesSection />
           <TestimonialsSection />

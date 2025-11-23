@@ -397,12 +397,14 @@ const SignupPage = () => {
                     </FormLabel>
                     <FormControl>
                       <div className='flex items-center gap-4'>
-                        <Avatar className='h-16 w-16 border-2 border-gray-200 dark:border-gray-700'>
-                          <AvatarImage src={imagePreview ?? undefined} alt='Profile preview' />
-                          <AvatarFallback className='bg-gray-50 dark:bg-gray-900'>
-                            <Icon name='user' className='text-muted-foreground h-6 w-6' />
-                          </AvatarFallback>
-                        </Avatar>
+                        {imagePreview ? (
+                          <Avatar className='h-11 w-11 border-2 border-gray-200 dark:border-gray-700'>
+                            <AvatarImage src={imagePreview ?? undefined} alt='Profile preview' />
+                            <AvatarFallback className='bg-gray-50 dark:bg-gray-900'>
+                              <Icon name='user' className='text-muted-foreground h-6 w-6' />
+                            </AvatarFallback>
+                          </Avatar>
+                        ) : null}
 
                         <div className='flex flex-1 gap-2'>
                           {imagePreview ? (
@@ -462,7 +464,7 @@ const SignupPage = () => {
               <Button
                 type='submit'
                 disabled={isAnyLoading}
-                className='h-11 w-full font-medium'
+                className='mt-3 h-11 w-full font-medium'
                 size='lg'
               >
                 {loading ? (

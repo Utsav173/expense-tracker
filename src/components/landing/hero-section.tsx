@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 import Link from 'next/link';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -59,10 +59,10 @@ const HeroSection = () => {
 
   const MarqueeContent = () => (
     <div className='flex shrink-0 items-center gap-8 px-4'>
-      <span className='stroke-text text-6xl font-bold tracking-tighter text-transparent opacity-40 md:text-8xl'>
+      <span className='stroke-text text-7xl font-bold tracking-[-0.04em] text-transparent md:text-8xl'>
         Track • Save • Invest • Grow •
       </span>
-      <span className='text-foreground/90 text-6xl font-bold tracking-tighter md:text-8xl'>
+      <span className='text-foreground/90 text-7xl font-bold tracking-[-0.04em] md:text-8xl'>
         Track • Save • Invest • Grow •
       </span>
     </div>
@@ -71,7 +71,7 @@ const HeroSection = () => {
   return (
     <section
       ref={containerRef}
-      className='bg-background relative flex min-h-screen w-full flex-col justify-center overflow-hidden pt-20'
+      className='bg-background relative flex min-h-screen w-full flex-col justify-center overflow-hidden'
     >
       <div className='pointer-events-none absolute inset-0 z-0 overflow-hidden'>
         <div className='aurora-blob bg-primary/20 dark:bg-primary/10 absolute -top-[10%] -left-[10%] h-[60vh] w-[60vw] rounded-full mix-blend-multiply blur-[100px] dark:mix-blend-screen dark:blur-[120px]' />
@@ -84,30 +84,32 @@ const HeroSection = () => {
         <div className='hero-reveal mb-8 flex justify-center md:justify-start'>
           <div className='border-border/50 bg-background/50 text-foreground hover:bg-muted/50 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium backdrop-blur-xl transition-colors'>
             <span className='relative flex h-2 w-2'>
-              <span className='bg-primary absolute inline-flex h-full w-full animate-ping rounded-full opacity-75'></span>
-              <span className='bg-primary relative inline-flex h-2 w-2 rounded-full'></span>
+              <span className='dark:bg-primary bg-income absolute inline-flex h-full w-full animate-ping rounded-full opacity-75'></span>
+              <span className='dark:bg-income bg-primary relative inline-flex h-2 w-2 rounded-full'></span>
             </span>
             <span className='tracking-wide'>AI Financial Analyst</span>
           </div>
         </div>
 
-        <div className='flex flex-col leading-[0.9] font-bold tracking-[-0.04em] select-none'>
+        <div className='flex flex-col font-bold select-none'>
           <div className='hero-reveal overflow-hidden'>
-            <h1 className='text-foreground text-[12vw] md:text-[9vw]'>Master</h1>
+            <h1 className='text-foreground text-[7vw] leading-[1] tracking-[-0.03em] max-sm:text-[14vw]'>
+              Master
+            </h1>
           </div>
 
-          <div className='hero-reveal flex flex-wrap items-baseline gap-x-4 overflow-hidden'>
-            <h1 className='from-primary bg-gradient-to-r via-purple-500 to-blue-600 bg-clip-text pb-4 text-[12vw] text-transparent md:text-[9vw]'>
+          <div className='hero-reveal flex flex-wrap items-baseline gap-x-8 overflow-hidden leading-[1.2]'>
+            <h1 className='from-primary dark:to-income to-primary/50 bg-linear-to-r bg-clip-text text-[8vw] tracking-[-0.05em] text-transparent max-sm:text-[14vw] dark:from-white'>
               Your
             </h1>
-            <h1 className='text-foreground/50 pb-4 font-serif text-[12vw] italic md:text-[9vw]'>
+            <h1 className='text-foreground/50 font-serif text-[8vw] italic max-sm:text-[14vw]'>
               Money
             </h1>
           </div>
         </div>
 
-        <div className='hero-reveal mt-12 grid items-end gap-8 md:grid-cols-2'>
-          <p className='text-muted-foreground max-w-lg text-lg leading-relaxed font-medium md:text-xl'>
+        <div className='hero-reveal mt-10 grid items-end gap-8 md:grid-cols-2'>
+          <p className='text-muted-foreground text-lg leading-relaxed font-medium md:text-xl'>
             Stop guessing, start knowing. Unlock predictive insights and automated budgeting to
             finally take full control of your wealth.
           </p>
@@ -142,7 +144,7 @@ const HeroSection = () => {
         </div>
       </div>
 
-      <div className='bg-background/10 absolute bottom-0 left-0 z-20 w-full overflow-hidden border-t border-white/10 backdrop-blur-sm'>
+      <div className='border-border/60 bg-background/20 absolute bottom-0 left-0 z-20 w-full overflow-hidden border-t backdrop-blur-sm'>
         <div className='flex w-max py-8 whitespace-nowrap' ref={marqueeRef}>
           <div className='flex'>
             <MarqueeContent />
@@ -157,11 +159,11 @@ const HeroSection = () => {
 
       <style jsx global>{`
         .stroke-text {
-          -webkit-text-stroke: 1px currentColor;
+          -webkit-text-stroke: 1px var(--primary);
           color: transparent;
         }
         .dark .stroke-text {
-          -webkit-text-stroke: 1px rgba(255, 255, 255, 0.2);
+          -webkit-text-stroke: 1px var(--income);
         }
       `}</style>
     </section>

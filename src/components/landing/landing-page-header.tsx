@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,6 @@ import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { Icon } from '../ui/icon';
 import { useAuth } from '@/components/providers/auth-provider';
-import { Skeleton } from '../ui/skeleton';
 
 const navLinks = [
   { name: 'Features', href: '#features' },
@@ -137,7 +136,7 @@ const LandingPageHeader = () => {
 
   return (
     <>
-      <header className='glassmorphism-nav fixed top-0 left-0 z-50 w-full border-b border-white/10 bg-background/60 px-4 py-4 backdrop-blur-xl sm:px-6'>
+      <header className='glassmorphism-nav bg-background/60 fixed top-0 left-0 z-50 w-full border-b border-white/10 px-4 py-4 backdrop-blur-xl sm:px-6'>
         <div className='container mx-auto flex items-center justify-between'>
           <Link href='/' className='flex items-center gap-2 text-2xl font-bold tracking-tight'>
             <Image
@@ -147,7 +146,7 @@ const LandingPageHeader = () => {
               height={32}
               className='-mb-0.5'
             />
-            <span className='bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent max-sm:text-sm'>
+            <span className='from-foreground to-foreground/70 bg-gradient-to-r bg-clip-text text-transparent max-sm:text-sm'>
               Expense Pro
             </span>
           </Link>
@@ -156,8 +155,9 @@ const LandingPageHeader = () => {
             {navLinks.map((link) => (
               <Link
                 key={link.name}
-                href={link.href}
-                className='text-sm font-medium text-muted-foreground transition-colors hover:text-primary'
+                href={link.href.startsWith('#') ? `/${link.href}` : link.href}
+                replace={link.href.startsWith('#')}
+                className='text-muted-foreground hover:text-primary text-sm font-medium transition-colors'
               >
                 {link.name}
               </Link>
