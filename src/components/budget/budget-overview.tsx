@@ -211,7 +211,7 @@ const BudgetOverview = ({ month, year, period }: BudgetOverviewProps) => {
 
       <div className='grid min-w-0 gap-6 lg:grid-cols-3'>
         {/* Main Chart: Composed Chart (Bullet Style) */}
-        <Card className='col-span-1 overflow-hidden shadow-sm lg:col-span-2'>
+        <Card className='col-span-1 min-w-0 overflow-hidden shadow-sm lg:col-span-2'>
           <CardHeader>
             <CardTitle>Budget vs Actual</CardTitle>
           </CardHeader>
