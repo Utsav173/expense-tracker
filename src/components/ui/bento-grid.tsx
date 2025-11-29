@@ -22,7 +22,7 @@ const BentoGridItem = ({
   description,
   header,
   icon,
-  children,
+  children
 }: {
   className?: string;
   title?: string | React.ReactNode;
@@ -34,7 +34,7 @@ const BentoGridItem = ({
   return (
     <div
       className={cn(
-        'group/bento row-span-1 flex flex-col justify-between space-y-4 rounded-3xl border border-black/5 bg-black/5 p-4 shadow-xl backdrop-blur-md transition duration-200 hover:bg-black/10 hover:shadow-2xl hover:shadow-primary/5 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10',
+        'group/bento hover:shadow-primary/5 row-span-1 flex flex-col justify-between space-y-4 rounded-2xl border border-black/5 bg-white/5 p-4 shadow-lg backdrop-blur-md transition duration-200 hover:bg-white hover:shadow-2xl dark:border-white/10 dark:bg-black/5 dark:hover:bg-black',
         className
       )}
     >
@@ -45,12 +45,8 @@ const BentoGridItem = ({
           {header}
           <div className='transition duration-200 group-hover/bento:translate-x-2'>
             {icon}
-            <div className='mb-2 mt-2 font-bold text-foreground'>
-              {title}
-            </div>
-            <div className='text-xs font-normal text-muted-foreground'>
-              {description}
-            </div>
+            <div className='text-foreground mt-2 mb-2 font-bold'>{title}</div>
+            <div className='text-muted-foreground text-xs font-normal'>{description}</div>
           </div>
         </>
       )}

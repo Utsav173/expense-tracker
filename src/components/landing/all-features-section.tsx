@@ -18,7 +18,7 @@ export const AllFeaturesSection = () => {
 
       <div className='container mx-auto px-4'>
         <div className='mb-20 text-center'>
-          <h2 className='text-foreground text-4xl font-bold tracking-tighter md:text-6xl'>
+          <h2 className='text-foreground text-4xl font-bold md:text-6xl'>
             Everything You Need to <br />
             <span className='from-primary bg-gradient-to-r to-blue-500 bg-clip-text text-transparent'>
               Dominate Your Finances

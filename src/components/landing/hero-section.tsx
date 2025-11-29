@@ -13,17 +13,49 @@ const HeroSection = () => {
 
   useGSAP(
     () => {
-      const blobs = gsap.utils.toArray('.aurora-blob');
-      blobs.forEach((blob: any, i) => {
+      const blobs = gsap.utils.toArray<HTMLElement>('.aurora-blob');
+
+      blobs.forEach((blob, i) => {
+        // Set initial inline styles for colors (so GSAP can animate them)
+        const colors = [
+          { from: 'rgba(var(--primary-rgb), 0.2)', to: 'rgba(147, 51, 234, 0.25)' },
+          { from: 'rgba(59, 130, 246, 0.2)', to: 'rgba(6, 182, 212, 0.25)' },
+          { from: 'rgba(168, 85, 247, 0.2)', to: 'rgba(236, 72, 153, 0.25)' }
+        ];
+
+        gsap.set(blob, { backgroundColor: colors[i]?.from || colors[0].from });
+
+        // Position and transform animation
         gsap.to(blob, {
-          x: 'random(-100, 100)',
-          y: 'random(-50, 50)',
-          scale: 'random(0.8, 1.2)',
-          duration: 'random(10, 20)',
+          x: gsap.utils.random(-150, 150),
+          y: gsap.utils.random(-80, 80),
+          scale: gsap.utils.random(0.7, 1.3),
+          rotation: gsap.utils.random(-20, 20),
+          duration: gsap.utils.random(12, 18),
+          repeat: -1,
+          yoyo: true,
+          ease: 'sine.inOut',
+          delay: i * 1.5
+        });
+
+        // Separate color animation with different timing
+        gsap.to(blob, {
+          backgroundColor: colors[i]?.to || colors[0].to,
+          duration: gsap.utils.random(8, 14),
           repeat: -1,
           yoyo: true,
           ease: 'sine.inOut',
           delay: i * 2
+        });
+
+        // Scale pulse animation (layered)
+        gsap.to(blob, {
+          scale: '+=0.15',
+          duration: gsap.utils.random(4, 6),
+          repeat: -1,
+          yoyo: true,
+          ease: 'power1.inOut',
+          delay: i * 0.5
         });
       });
 
@@ -73,39 +105,33 @@ const HeroSection = () => {
       ref={containerRef}
       className='bg-background relative flex min-h-screen w-full flex-col justify-center overflow-hidden'
     >
+      {/* Aurora blobs - using inline styles for GSAP color animation */}
       <div className='pointer-events-none absolute inset-0 z-0 overflow-hidden'>
-        <div className='aurora-blob bg-primary/20 dark:bg-primary/10 absolute -top-[10%] -left-[10%] h-[60vh] w-[60vw] rounded-full mix-blend-multiply blur-[100px] dark:mix-blend-screen dark:blur-[120px]' />
-        <div className='aurora-blob absolute top-[20%] -right-[10%] h-[50vh] w-[50vw] rounded-full bg-blue-500/20 mix-blend-multiply blur-[100px] dark:bg-blue-600/10 dark:mix-blend-screen dark:blur-[120px]' />
-        <div className='aurora-blob absolute -bottom-[20%] left-[20%] h-[60vh] w-[60vw] rounded-full bg-purple-500/20 mix-blend-multiply blur-[100px] dark:bg-purple-500/10 dark:mix-blend-screen dark:blur-[120px]' />
+        <div
+          className='aurora-blob absolute -top-[10%] -left-[10%] h-[60vh] w-[60vw] rounded-full mix-blend-multiply blur-[100px] dark:mix-blend-screen dark:blur-[120px]'
+          style={{ backgroundColor: 'rgba(var(--primary-rgb, 34, 197, 94), 0.2)' }}
+        />
+        <div
+          className='aurora-blob absolute top-[20%] -right-[10%] h-[50vh] w-[50vw] rounded-full mix-blend-multiply blur-[100px] dark:mix-blend-screen dark:blur-[120px]'
+          style={{ backgroundColor: 'rgba(59, 130, 246, 0.2)' }}
+        />
+        <div
+          className='aurora-blob absolute -bottom-[20%] left-[20%] h-[60vh] w-[60vw] rounded-full mix-blend-multiply blur-[100px] dark:mix-blend-screen dark:blur-[120px]'
+          style={{ backgroundColor: 'rgba(168, 85, 247, 0.2)' }}
+        />
         <div className='absolute inset-0 bg-[url("https://grainy-gradients.vercel.app/noise.svg")] opacity-[0.03]' />
       </div>
 
       <div className='relative z-10 container mx-auto px-4 md:px-6'>
-        <div className='hero-reveal mb-8 flex justify-center md:justify-start'>
-          <div className='border-border/50 bg-background/50 text-foreground hover:bg-muted/50 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium backdrop-blur-xl transition-colors'>
-            <span className='relative flex h-2 w-2'>
-              <span className='dark:bg-primary bg-income absolute inline-flex h-full w-full animate-ping rounded-full opacity-75'></span>
-              <span className='dark:bg-income bg-primary relative inline-flex h-2 w-2 rounded-full'></span>
-            </span>
-            <span className='tracking-wide'>AI Financial Analyst</span>
-          </div>
-        </div>
-
-        <div className='flex flex-col font-bold select-none'>
-          <div className='hero-reveal overflow-hidden'>
-            <h1 className='text-foreground text-[7vw] leading-[1] tracking-[-0.03em] max-sm:text-[14vw]'>
-              Master
-            </h1>
-          </div>
-
-          <div className='hero-reveal flex flex-wrap items-baseline gap-x-8 overflow-hidden leading-[1.2]'>
-            <h1 className='from-primary dark:to-income to-primary/50 bg-linear-to-r bg-clip-text text-[8vw] tracking-[-0.05em] text-transparent max-sm:text-[14vw] dark:from-white'>
+        <div className='hero-reveal select-none'>
+          <h1 className='text-[7vw] leading-[0.95] font-bold tracking-[-0.03em] max-sm:text-center max-sm:text-[15vw] max-sm:leading-none'>
+            <span className='text-foreground max-sm:text-[25vw]'>Master</span>
+            <br />
+            <span className='from-primary to-primary/50 dark:to-primary/50 dark:from-primary/90 bg-linear-to-r bg-clip-text text-transparent'>
               Your
-            </h1>
-            <h1 className='text-foreground/50 font-serif text-[8vw] italic max-sm:text-[14vw]'>
-              Money
-            </h1>
-          </div>
+            </span>{' '}
+            <span className='text-foreground/50 font-serif italic dark:text-white'>Money</span>
+          </h1>
         </div>
 
         <div className='hero-reveal mt-10 grid items-end gap-8 md:grid-cols-2'>
@@ -118,9 +144,9 @@ const HeroSection = () => {
             <Link href='/auth/signup' className='w-full sm:w-auto'>
               <Button
                 size='lg'
-                className='group bg-foreground text-background relative h-14 w-full overflow-hidden rounded-full px-8 text-lg font-semibold shadow-lg transition-all hover:scale-105 hover:shadow-xl sm:w-auto dark:bg-white dark:text-black'
+                className='group bg-foreground text-background relative h-14 w-full overflow-hidden rounded-full px-8 text-lg font-semibold shadow-lg transition-all hover:shadow-xl sm:w-auto dark:bg-white dark:text-black'
               >
-                <div className='absolute inset-0 -translate-x-[100%] bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-1000 group-hover:translate-x-[100%]' />
+                <div className='absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-white/30 to-transparent transition-transform duration-1000 group-hover:translate-x-full' />
                 <span className='relative flex items-center gap-2'>
                   Get Started Free
                   <Icon

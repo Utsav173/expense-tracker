@@ -176,7 +176,8 @@ export const iconMap = {
   budgetSidebar: 'mdi:cash-check',
   pdfExport: 'material-icon-theme:pdf',
   xlsxExport: 'vscode-icons:file-type-excel',
-  code: 'material-symbols:code'
+  code: 'material-symbols:code',
+  wifi: 'material-symbols:wifi'
   // statement: "streamline-ultimate:cashless-payment-online-statement-monitor"
 } as const;
 

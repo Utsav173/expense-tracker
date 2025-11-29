@@ -164,12 +164,12 @@ const LoginPage = () => {
             <button
               type='button'
               className={cn(
-                'group relative flex h-12 w-full items-center justify-center gap-3',
-                'bg-background rounded-lg border transition-all duration-200',
-                // Light mode
-                'border-gray-300 hover:bg-gray-50',
-                // Dark mode
-                'dark:border-transparent dark:hover:bg-gray-900/50',
+                'group relative flex h-11 w-full items-center justify-center gap-2',
+                'rounded-lg border shadow-sm transition-all duration-200',
+                // Light mode: Standard White
+                'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50',
+                // Dark mode: Standard Dark (Google Gray)
+                'dark:border-gray-700 dark:bg-[#131314] dark:text-white dark:hover:border-gray-600 dark:hover:bg-[#1a1a1c]',
                 'focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
                 'disabled:cursor-not-allowed disabled:opacity-50'
               )}
@@ -178,7 +178,7 @@ const LoginPage = () => {
             >
               {googleLoading ? (
                 <>
-                  <Icon name='loader2' className='h-5 w-5 animate-spin' />
+                  <Icon name='loader2' className='h-4 w-4 animate-spin' />
                   <span className='text-sm font-medium'>Connecting...</span>
                 </>
               ) : (
@@ -201,7 +201,7 @@ const LoginPage = () => {
                       d='M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z'
                     />
                   </svg>
-                  <span className='text-foreground text-sm font-medium'>Continue with Google</span>
+                  <span className='text-sm font-medium'>Continue with Google</span>
                 </>
               )}
             </button>
@@ -210,12 +210,12 @@ const LoginPage = () => {
             <button
               type='button'
               className={cn(
-                'group relative flex h-12 w-full items-center justify-center gap-3',
-                'rounded-lg border transition-all duration-200',
-                // Light mode
-                'border-gray-300 bg-gray-900 text-white hover:bg-gray-800',
-                // Dark mode
-                'dark:border-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700',
+                'group relative flex h-11 w-full items-center justify-center gap-2',
+                'rounded-lg border shadow-sm transition-all duration-200',
+                // Light mode: Standard GitHub Dark
+                'border-transparent bg-[#24292e] text-white hover:bg-[#2f363d]',
+                // Dark mode: High Contrast White
+                'dark:border-transparent dark:bg-white dark:text-[#24292e] dark:hover:bg-gray-100',
                 'focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
                 'disabled:cursor-not-allowed disabled:opacity-50'
               )}
@@ -224,7 +224,7 @@ const LoginPage = () => {
             >
               {githubLoading ? (
                 <>
-                  <Icon name='loader2' className='h-5 w-5 animate-spin' />
+                  <Icon name='loader2' className='h-4 w-4 animate-spin' />
                   <span className='text-sm font-medium'>Connecting...</span>
                 </>
               ) : (

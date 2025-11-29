@@ -805,3 +805,34 @@
 [data-state='closed'] {
   --transition-timing-function: var(--transition-timing-function-close);
 }
+
+/* Autofill styling - override browser defaults to match theme */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+input:-internal-autofill-selected,
+input:-internal-autofill-selected:hover,
+input:-internal-autofill-selected:focus,
+input:-internal-autofill-selected:active {
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: var(--input-foreground) !important;
+  transition: background-color 5000s ease-in-out 0s;
+  box-shadow: inset 0 0 20px 20px var(--input) !important;
+  caret-color: var(--input-foreground) !important;
+  border-color: oklch(from var(--primary) l c h / 0.3) !important;
+}
+
+/* For dark mode, ensure proper contrast */
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus,
+.dark input:-webkit-autofill:active,
+.dark input:-internal-autofill-selected,
+.dark input:-internal-autofill-selected:hover,
+.dark input:-internal-autofill-selected:focus,
+.dark input:-internal-autofill-selected:active {
+  -webkit-text-fill-color: var(--input-foreground) !important;
+  box-shadow: inset 0 0 20px 20px var(--input) !important;
+  border-color: oklch(from var(--primary) l c h / 0.4) !important;
+}
