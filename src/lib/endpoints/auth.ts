@@ -13,12 +13,13 @@ const profileUpdateSchema = z.object({
 export type UpdateUserBody = z.infer<typeof profileUpdateSchema>;
 type UpdatePreferencesBody = z.infer<typeof apiEndpoints.user.updatePreferences.body>;
 
-export const authForgotPassword = (body: { email: string }) => authClient.forgetPassword(body);
+export const authForgotPassword = (body: { email: string }) =>
+  authClient.forgetPassword.emailOtp(body);
 
 export const authResetPassword = (body: { email: string; otp: string; password: string }) =>
-  authClient.resetPassword({
+  authClient.emailOtp.resetPassword({
     ...body,
-    newPassword: body.password
+    password: body.password
   });
 
 export const authGetMe = (): Promise<UserAPI.GetMeResponse> => apiClient(apiEndpoints.user.getMe);
