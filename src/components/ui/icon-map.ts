@@ -121,6 +121,7 @@ export const iconMap = {
   users: 'material-symbols:group-outline',
   sharedAccountsSidebar: 'ic:baseline-diversity-3',
   wallet: 'material-symbols:account-balance-wallet-outline',
+  walletFill: 'mdi:wallet',
   wallet2: 'material-symbols:account-balance-wallet',
   wand: 'material-symbols:auto-awesome-outline',
   wand2: 'material-symbols:auto-awesome',

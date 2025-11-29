@@ -7,7 +7,6 @@ import { Button } from './button';
 import type { AccountAPI } from '@/lib/api/api-types';
 import { SingleLineEllipsis } from './ellipsis-components';
 import { motion, Variants } from 'framer-motion';
-import { Badge } from './badge';
 import { Icon } from '@/components/ui/icon';
 
 interface AccountCardProps {
@@ -20,126 +19,177 @@ interface AccountCardProps {
   variants?: Variants;
 }
 
-const ChangePill: React.FC<{ change: number; isExpense?: boolean }> = ({
-  change,
+// Percentage change indicator component
+const PercentageChange: React.FC<{ value: number; isExpense?: boolean }> = ({
+  value,
   isExpense = false
 }) => {
-  if (change === 0) return null;
-  const isPositive = isExpense ? change < 0 : change > 0;
-  const displayChange = Math.abs(change);
+  if (value === 0) return null;
+
+  const isPositive = isExpense ? value < 0 : value > 0;
+  const displayValue = Math.abs(value);
+
   return (
-    <Badge
+    <span
       className={cn(
-        'flex items-center gap-1 px-1.5 py-0.5 text-xs font-semibold',
-        isPositive
-          ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'
-          : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300'
+        'inline-flex items-center gap-0.5 text-[10px] font-medium',
+        isPositive ? 'text-emerald-600 dark:text-emerald-500' : 'text-red-600 dark:text-red-500'
       )}
     >
-      <Icon name={isPositive ? 'arrowUp' : 'arrowDown'} className='h-3 w-3' />
-      <span>{displayChange.toFixed(1)}%</span>
-    </Badge>
+      <Icon name={isPositive ? 'trendingUp' : 'trendingDown'} className='h-3 w-3' />
+      {displayValue.toFixed(1)}%
+    </span>
   );
 };
 
 const AccountCard = React.forwardRef<HTMLDivElement, AccountCardProps>(
   ({ className, href, account, onEdit, onDelete, showActions = true, variants }, ref) => {
-    const { balance, currency, analytics, name } = account;
+    const { balance, currency, analytics, name, isDefault, owner, createdAt } = account;
+
+    // Handle edge cases for analytics
+    const hasAnalytics = analytics && (analytics.income > 0 || analytics.expense > 0);
+    const totalFlow = (analytics?.income || 0) + (analytics?.expense || 0);
+    const incomePercent = totalFlow > 0 ? ((analytics?.income || 0) / totalFlow) * 100 : 50;
+    const expensePercent = totalFlow > 0 ? ((analytics?.expense || 0) / totalFlow) * 100 : 50;
 
     return (
       <motion.div
         ref={ref}
         variants={variants}
-        whileHover={{ y: -5, transition: { duration: 0.2 } }}
+        whileHover={{ y: -2 }}
+        transition={{ duration: 0.2 }}
         className={cn('group relative h-full', className)}
       >
+        {isDefault && (
+          <span className='bg-secondary text-secondary-foreground border-accent absolute -top-2 -right-2 rounded-md border px-1.5 py-0.5 text-[10px] font-medium'>
+            Default
+          </span>
+        )}
         <Link
           href={href}
-          className='bg-card group-hover:border-primary/30 flex h-full flex-col overflow-hidden rounded-xl border shadow-sm transition-all duration-300 group-hover:shadow-lg'
+          className='bg-card hover:border-primary/20 flex h-full flex-col overflow-hidden rounded-xl border shadow-sm transition-colors duration-300'
         >
-          <div className='flex items-start justify-between p-4'>
-            <div className='flex min-w-0 items-center gap-3'>
-              <div className='bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-lg'>
-                <Icon name='creditCard' className='h-5 w-5' />
+          <div className='flex h-full flex-col p-5'>
+            {/* Header: Icon + Name + Actions */}
+            <div className='mb-4 flex items-start justify-between gap-2'>
+              <div className='flex min-w-0 flex-1 items-center gap-3'>
+                <div
+                  className={cn(
+                    'bg-primary/5 text-primary group-hover:bg-primary/10 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-transparent transition-colors',
+                    isDefault &&
+                      'bg-accent/20 group-hover:bg-accent/50 text-accent-foreground h-8 w-8 bg-none'
+                  )}
+                >
+                  <Icon name={isDefault ? 'walletFill' : 'wallet'} className='h-6 w-6' />
+                </div>
+                <div className='min-w-0 flex-1'>
+                  <SingleLineEllipsis
+                    className='text-foreground font-semibold'
+                    tooltipContent={name}
+                  >
+                    {name}
+                  </SingleLineEllipsis>
+                  <div className='flex items-center gap-2'>
+                    <span className='text-muted-foreground text-xs font-medium'>{currency}</span>
+                  </div>
+                </div>
               </div>
-              <div className='min-w-0'>
-                <SingleLineEllipsis className='font-semibold'>{name}</SingleLineEllipsis>
-                <p className='text-muted-foreground text-xs'>
-                  {account.isDefault ? 'Default Account' : 'Standard Account'}
-                </p>
-              </div>
-            </div>
-            <div className='flex scale-90 items-center gap-1 opacity-0 transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 max-sm:opacity-100'>
+
               {showActions && (
-                <>
+                <div className='flex shrink-0 items-center gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100'>
                   <Button
                     size='icon'
                     variant='ghost'
-                    className='h-7 w-7 rounded-md'
+                    className='text-muted-foreground hover:text-foreground h-8 w-8'
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       onEdit(account);
                     }}
-                    aria-label={`Edit ${name}`}
                   >
-                    <Icon name='edit' className='h-[14px] w-[14px]' />
+                    <Icon name='edit' className='h-4 w-4' />
                   </Button>
                   <Button
                     size='icon'
                     variant='ghost'
-                    className='hover:bg-destructive/10 hover:text-destructive h-7 w-7 rounded-md'
+                    className='text-muted-foreground hover:bg-destructive/10 hover:text-destructive h-8 w-8'
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       onDelete(account.id);
                     }}
-                    aria-label={`Delete ${name}`}
                   >
-                    <Icon name='trash' className='h-[14px] w-[14px]' />
+                    <Icon name='trash' className='h-4 w-4' />
                   </Button>
-                </>
+                </div>
               )}
             </div>
-          </div>
 
-          <div className='flex min-w-0 flex-grow flex-col items-center justify-center px-4 py-6'>
-            <p className='text-muted-foreground text-xs font-medium uppercase'>Balance</p>
-            <SingleLineEllipsis
-              className={cn(
-                'min-w-0 font-mono text-4xl font-bold tracking-tight tabular-nums',
-                balance >= 0 ? 'text-foreground' : 'text-destructive'
-              )}
-              tooltipContent={balance.toFixed(2)}
-            >
-              {formatCurrency(balance, currency)}
-            </SingleLineEllipsis>
-          </div>
+            {/* Balance */}
+            <div className='mb-2'>
+              <p className='text-muted-foreground mb-1 text-xs font-medium'>Total Balance</p>
+              <SingleLineEllipsis
+                className={cn(
+                  'text-foreground text-2xl font-bold tracking-tight',
+                  balance < 0 && 'text-destructive'
+                )}
+                tooltipContent={formatCurrency(balance, currency)}
+              >
+                {formatCurrency(balance, currency)}
+              </SingleLineEllipsis>
+            </div>
 
-          {analytics && (
-            <div className='bg-muted/30 mt-auto border-t p-4'>
-              <div className='grid grid-cols-2 gap-4'>
-                <div className='text-center'>
-                  <p className='text-muted-foreground mb-1 text-xs'>Income</p>
-                  <div className='flex items-center justify-center gap-2'>
-                    <span className='text-sm font-medium text-green-600 dark:text-green-400'>
-                      {formatCurrency(analytics.income, currency)}
+            {/* Analytics Footer */}
+            {hasAnalytics ? (
+              <div className='border-border/50 mt-auto space-y-2 border-t pt-4'>
+                {/* Labels with Percentage Changes */}
+                <div className='flex items-center justify-between text-xs'>
+                  <div className='flex items-center gap-1.5'>
+                    <span className='text-muted-foreground font-medium tracking-wider uppercase'>
+                      Income
                     </span>
-                    <ChangePill change={analytics.incomePercentageChange} />
+                    {analytics && analytics.incomePercentageChange !== 0 && (
+                      <PercentageChange value={analytics.incomePercentageChange} />
+                    )}
+                  </div>
+                  <div className='flex items-center gap-1.5'>
+                    {analytics && analytics.expensesPercentageChange !== 0 && (
+                      <PercentageChange value={analytics.expensesPercentageChange} isExpense />
+                    )}
+                    <span className='text-muted-foreground font-medium tracking-wider uppercase'>
+                      Expense
+                    </span>
                   </div>
                 </div>
-                <div className='text-center'>
-                  <p className='text-muted-foreground mb-1 text-xs'>Expense</p>
-                  <div className='flex items-center justify-center gap-2'>
-                    <span className='text-sm font-medium text-red-600 dark:text-red-400'>
-                      {formatCurrency(analytics.expense, currency)}
-                    </span>
-                    <ChangePill change={analytics.expensesPercentageChange} isExpense />
+
+                {/* Minimalist Progress Line */}
+                <div className='bg-secondary flex h-1.5 w-full overflow-hidden rounded-full'>
+                  <div
+                    className='bg-emerald-400 transition-all duration-500'
+                    style={{ width: `${incomePercent}%` }}
+                  />
+                  <div
+                    className='bg-gray-200 transition-all duration-500 dark:bg-gray-600'
+                    style={{ width: `${expensePercent}%` }}
+                  />
+                </div>
+
+                {/* Values */}
+                <div className='flex items-center justify-between'>
+                  <div className='text-income text-sm font-semibold'>
+                    +{formatCurrency(analytics?.income || 0, currency)}
+                  </div>
+                  <div className='text-sm font-semibold text-gray-600 dark:text-gray-400'>
+                    -{formatCurrency(analytics?.expense || 0, currency)}
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            ) : (
+              <div className='border-border/50 mt-auto border-t pt-4'>
+                <p className='text-muted-foreground text-center text-xs'>No transactions yet</p>
+              </div>
+            )}
+          </div>
         </Link>
       </motion.div>
     );

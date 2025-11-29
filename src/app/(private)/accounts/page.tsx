@@ -127,7 +127,7 @@ const AccountListPage = () => {
         <Loader />
       ) : (
         <motion.div
-          className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3'
+          className='grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3'
           variants={containerVariants}
           initial='hidden'
           animate='visible'

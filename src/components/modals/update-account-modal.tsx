@@ -79,7 +79,8 @@ export function UpdateAccountModal({
                   value={formatCurrency(initialValues.balance ?? 0, initialValues.currency)}
                   readOnly
                   disabled
-                  className='bg-muted/50 cursor-not-allowed opacity-70'
+                  className='bg-muted/50'
+                  title="You can\'t change the balance after account creation."
                 />
               </FormControl>
             </FormItem>
@@ -93,7 +94,8 @@ export function UpdateAccountModal({
                   value={initialValues.currency ?? 'N/A'}
                   readOnly
                   disabled
-                  className='bg-muted/50 cursor-not-allowed opacity-70'
+                  className='bg-muted/50'
+                  title="You can't change the currency after account creation."
                 />
               </FormControl>
             </FormItem>

@@ -102,7 +102,7 @@ export function UpdateModal<TFormValues extends z.ZodType<any, any>>({
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6 pt-2'>
+          <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-3 pt-2'>
             {children(form)}
             <DialogFooter className='gap-2 pt-4 sm:gap-0'>
               <DialogClose asChild>
