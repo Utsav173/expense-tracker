@@ -113,7 +113,11 @@ export const BudgetProgress: React.FC<{ className?: string }> = ({ className }) 
   const { data, isLoading, error, isFetching } =
     useQuery<BudgetAPI.GetBudgetSummaryResponse | null>({
       queryKey: ['budgetSummaryDashboard', selectedMonth, selectedYear],
-      queryFn: () => budgetGetSummary(selectedMonth, selectedYear),
+      queryFn: () =>
+        budgetGetSummary({
+          month: String(selectedMonth),
+          year: String(selectedYear)
+        }),
       enabled: true,
       retry: 1,
       staleTime: 5 * 60 * 1000,

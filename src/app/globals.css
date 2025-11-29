@@ -728,6 +728,7 @@
 
 .recharts-tooltip-wrapper {
   outline: none !important;
+  z-index: var(--z-tooltip);
 }
 
 .custom-chart-tooltip {

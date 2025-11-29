@@ -92,6 +92,7 @@
     "@types/react-dom": "^19.2.2",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@types/three": "^0.178.1",
+    "baseline-browser-mapping": "^2.8.32",
     "eslint": "^9.39.1",
     "eslint-config-next": "^16.0.1",
     "postcss": "^8.5.6",

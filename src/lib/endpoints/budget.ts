@@ -30,10 +30,8 @@ export const budgetDelete = (id: string) =>
   );
 
 export const budgetGetSummary = (
-  month: number,
-  year: number
+  params: GetSummaryParams
 ): Promise<BudgetAPI.GetBudgetSummaryResponse> => {
-  const params: GetSummaryParams = { month: String(month), year: String(year) };
   return apiClient(apiEndpoints.budget.getSummary, { query: params });
 };
 
