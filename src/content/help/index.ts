@@ -16,26 +16,26 @@ export const helpSections: HelpSection[] = [
     id: 'getting-started',
     icon: 'rocket',
     subsections: [
-      { title: 'Signing Up', id: 'getting-started-signup' },
-      { title: 'Creating Your First Account', id: 'getting-started-first-account' },
-      { title: 'Understanding the Layout', id: 'getting-started-layout' }
+      { title: 'Signing Up & Account Creation', id: 'getting-started-signup' },
+      { title: 'Setting Up Your First Account', id: 'getting-started-first-account' },
+      { title: 'App Layout & Navigation', id: 'getting-started-layout' }
     ]
   },
   {
-    title: 'Dashboard',
+    title: 'Dashboard Overview',
     id: 'dashboard',
     icon: 'layoutGrid',
     subsections: [
-      { title: 'Financial Snapshot', id: 'dashboard-financial-snapshot' },
-      { title: 'Quick Stats', id: 'dashboard-quick-stats' },
-      { title: 'Financial Health', id: 'dashboard-financial-health' },
-      { title: 'Financial Trends', id: 'dashboard-financial-trends' },
-      { title: 'Spending Breakdown', id: 'dashboard-spending-breakdown' },
-      { title: 'Budget Progress', id: 'dashboard-budget-progress' },
-      { title: 'Goal Highlights', id: 'dashboard-goal-highlights' },
-      { title: 'Debt Summary', id: 'dashboard-debt-summary' },
-      { title: 'Investment Summary', id: 'dashboard-investment-summary' },
-      { title: 'Accounts Summary', id: 'dashboard-accounts-summary' }
+      { title: 'Financial Snapshot Card', id: 'dashboard-financial-snapshot' },
+      { title: 'Quick Statistics', id: 'dashboard-quick-stats' },
+      { title: 'Financial Health Score', id: 'dashboard-financial-health' },
+      { title: 'Income vs Expense Trends', id: 'dashboard-financial-trends' },
+      { title: 'Category Spending Breakdown', id: 'dashboard-spending-breakdown' },
+      { title: 'Budget Tracking Progress', id: 'dashboard-budget-progress' },
+      { title: 'Savings Goals Highlights', id: 'dashboard-goal-highlights' },
+      { title: 'Debt Management Summary', id: 'dashboard-debt-summary' },
+      { title: 'Investment Portfolio Summary', id: 'dashboard-investment-summary' },
+      { title: 'All Accounts Overview', id: 'dashboard-accounts-summary' }
     ]
   },
   {
@@ -83,8 +83,8 @@ export const helpSections: HelpSection[] = [
     id: 'data-management',
     icon: 'database',
     subsections: [
-      { title: 'Importing Transactions', id: 'transactions-import' },
-      { title: 'Generating Statements', id: 'accounts-statement' },
+      { title: 'Importing Transactions', id: 'data-management-import' },
+      { title: 'Generating Statements', id: 'data-management-statement' },
       { title: 'Exporting Data', id: 'data-export' }
     ]
   },

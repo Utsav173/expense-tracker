@@ -1,3 +1,5 @@
+'use client';
+
 import React, { Suspense, lazy } from 'react';
 import { helpSections } from '@/content/help';
 import { cn } from '@/lib/utils';
@@ -5,6 +7,8 @@ import { Icon } from '@/components/ui/icon';
 import Loader from '@/components/ui/loader';
 import { Button } from '@/components/ui/button';
 import HelpNavigation from './HelpNavigation';
+import HelpSearch from './HelpSearch';
+import { motion } from 'framer-motion';
 
 const GettingStarted = lazy(() => import('@/content/help/getting-started.mdx'));
 const Dashboard = lazy(() => import('@/content/help/dashboard.mdx'));
@@ -28,61 +32,73 @@ const mdxComponents: { [key: string]: React.ComponentType } = {
 
 export default function HelpPageClient() {
   return (
-    <div className='from-background via-background to-muted/20 min-h-screen bg-gradient-to-br'>
+    <div className='bg-background selection:bg-primary/20 selection:text-primary min-h-screen'>
       {/* Hero Section */}
-      <header className='relative overflow-hidden'>
-        <div className='from-primary/5 to-secondary/10 absolute inset-0 bg-gradient-to-br via-transparent' />
+      <header className='border-border/40 bg-background/50 relative z-20 border-b backdrop-blur-xl'>
+        <div className='bg-grid-black/[0.02] dark:bg-grid-white/[0.02] absolute inset-0' />
+        <div className='from-background/5 via-background/50 to-background absolute inset-0 bg-linear-to-b' />
 
-        <div className='relative px-6 py-12 text-center max-sm:py-4'>
-          <div className='mx-auto max-w-4xl'>
+        <div className='relative mx-auto max-w-5xl px-6 py-16 text-center lg:py-24'>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
             <div className='mb-8 inline-flex items-center justify-center'>
-              <div className='relative'>
-                <div className='from-primary to-secondary absolute inset-0 animate-pulse rounded-full bg-gradient-to-r opacity-30 blur-lg' />
-                <div className='from-primary/10 to-secondary/10 border-primary/20 relative flex h-16 w-16 items-center justify-center rounded-full border bg-gradient-to-r'>
+              <div className='group relative cursor-default'>
+                <div className='bg-primary/20 absolute inset-0 rounded-full opacity-50 blur-xl transition-all duration-500 group-hover:blur-2xl' />
+                <div className='from-primary/10 to-primary/5 border-primary/20 relative flex h-16 w-16 items-center justify-center rounded-2xl border bg-linear-to-br shadow-lg backdrop-blur-sm transition-transform duration-500 group-hover:scale-105'>
                   <Icon name='lifeBuoy' className='text-primary h-8 w-8' />
                 </div>
               </div>
             </div>
 
-            <h1 className='from-foreground via-foreground to-foreground/70 mb-6 bg-gradient-to-r bg-clip-text text-4xl font-bold tracking-tight text-transparent md:text-6xl lg:text-7xl'>
-              Help Center
+            <h1 className='text-foreground mb-6 text-4xl font-bold tracking-tight md:text-6xl lg:text-7xl'>
+              How can we <span className='text-primary'>help</span> you?
             </h1>
 
-            <p className='text-muted-foreground mx-auto max-w-2xl text-lg leading-relaxed md:text-xl'>
-              Master every feature with our comprehensive guides, tutorials, and expert tips.
+            <p className='text-muted-foreground mx-auto mb-10 max-w-2xl text-lg md:text-xl'>
+              Search our knowledge base for guides, tutorials, and answers to common questions.
             </p>
 
-            <div className='text-muted-foreground/70 mt-8 flex flex-wrap items-center justify-center gap-2 text-sm'>
-              <span className='flex items-center gap-1.5'>
-                <div className='h-2 w-2 rounded-full bg-green-500' />
-                Updated daily
-              </span>
-              <span className='text-muted-foreground/30'>•</span>
-              <span className='flex items-center gap-1.5'>
-                <Icon name='clock' className='h-3 w-3' />
-                ~5 min read each
-              </span>
+            <div className='mx-auto mb-12 max-w-2xl'>
+              <HelpSearch />
             </div>
-          </div>
+
+            <div className='text-muted-foreground/80 flex flex-wrap justify-center gap-4 text-sm'>
+              <div className='bg-muted/50 border-border/50 flex items-center gap-2 rounded-full border px-3 py-1.5'>
+                <Icon name='zap' className='h-3.5 w-3.5 text-amber-500' />
+                <span>Quick Start Guide</span>
+              </div>
+              <div className='bg-muted/50 border-border/50 flex items-center gap-2 rounded-full border px-3 py-1.5'>
+                <Icon name='sparkles' className='h-3.5 w-3.5 text-purple-500' />
+                <span>AI Assistant Tips</span>
+              </div>
+              <div className='bg-muted/50 border-border/50 flex items-center gap-2 rounded-full border px-3 py-1.5'>
+                <Icon name='shield' className='h-3.5 w-3.5 text-green-500' />
+                <span>Security Best Practices</span>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </header>
 
       {/* Main Content */}
       <div className='relative'>
-        <div className='mx-auto max-w-7xl px-6 py-8 lg:py-12'>
-          <div className='grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-12'>
+        <div className='mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8'>
+          <div className='grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-12'>
             <HelpNavigation />
 
             {/* Content */}
-            <main className='lg:col-span-9'>
-              <article className='border-border/50 bg-card/20 prose prose-sm dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-headings:inline-flex prose-headings:items-baseline prose-headings:gap-2 prose-p:leading-relaxed prose-a:text-primary hover:prose-a:underline prose-li:my-2 prose-blockquote:border-l-primary prose-blockquote:bg-primary/5 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-md prose-code:bg-muted prose-code:text-foreground prose-code:rounded-md prose-code:px-1.5 prose-code:py-1 mx-auto max-w-full overflow-hidden rounded-2xl border px-2 shadow-lg backdrop-blur-sm md:px-6 md:py-3'>
+            <main className='min-w-0 lg:col-span-9'>
+              <article className='border-border/50 bg-card/20 prose prose-sm dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-p:leading-relaxed prose-a:text-primary hover:prose-a:underline prose-li:my-2 prose-blockquote:border-l-primary prose-blockquote:bg-primary/5 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-md prose-code:bg-muted prose-code:text-foreground prose-code:rounded-md prose-code:px-1.5 prose-code:py-1 mx-auto max-w-full overflow-hidden rounded-2xl border px-2 shadow-lg backdrop-blur-sm md:px-6 md:py-3 [&_:is(h2,h3)_span]:inline-flex [&_:is(h2,h3)_span]:items-center [&_:is(h2,h3)_span]:gap-2'>
                 <Suspense
                   fallback={
-                    <div className='flex items-center justify-center py-12'>
-                      <div className='text-center'>
-                        <Loader className='mx-auto mb-4' />
-                        <p className='text-muted-foreground text-sm'>Loading content...</p>
-                      </div>
+                    <div className='flex flex-col items-center justify-center space-y-4 py-24'>
+                      <Loader className='text-primary h-8 w-8' />
+                      <p className='text-muted-foreground animate-pulse'>
+                        Loading documentation...
+                      </p>
                     </div>
                   }
                 >
@@ -90,40 +106,62 @@ export default function HelpPageClient() {
                     const MdxComponent = mdxComponents[section.id];
                     if (!MdxComponent) return null;
                     return (
-                      <section
+                      <motion.section
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: '-100px' }}
+                        transition={{ duration: 0.5, delay: index * 0.1 }}
                         key={section.id}
                         id={section.id}
                         className={cn(
-                          'scroll-mt-20',
-                          index > 0 && 'border-border/30 mt-8 border-t pt-8'
+                          'scroll-mt-28',
+                          index > 0 && 'border-border/40 mt-16 border-t pt-16'
                         )}
                       >
+                        <div className='mt-1 mb-8 flex items-center gap-4'>
+                          <Icon name={section.icon} className='text-primary h-6 w-6' />
+                          <h2 className='text-foreground m-0! text-3xl font-bold tracking-tight'>
+                            {section.title}
+                          </h2>
+                        </div>
                         <MdxComponent />
-                      </section>
+                      </motion.section>
                     );
                   })}
                 </Suspense>
               </article>
 
               {/* Footer CTA */}
-              <div className='mt-12 text-center'>
-                <div className='border-border/50 from-primary/5 to-secondary/5 rounded-2xl border bg-gradient-to-r p-8'>
-                  <Icon
-                    name='messageCircleQuestion'
-                    className='text-primary mx-auto mb-4 h-12 w-12'
-                  />
-                  <h3 className='mb-3 text-xl font-semibold'>Still need help?</h3>
-                  <p className='text-muted-foreground mb-6'>
-                    Can't find what you're looking for? Our support team is here to help.
-                  </p>
-                  <div className='flex flex-col gap-3 sm:flex-row sm:justify-center'>
-                    <Button className='bg-primary/20 hover:bg-primary/90 text-blue-950 dark:text-blue-300'>
-                      <Icon name='mail' className='mr-2 h-4 w-4' />
-                      Contact Support
-                    </Button>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className='mt-24'
+              >
+                <div className='border-border/50 bg-card relative rounded-3xl border p-8 text-center md:p-12'>
+                  <div className='from-primary/5 to-secondary/5 absolute inset-0 bg-linear-to-br via-transparent' />
+                  <div className='relative z-10'>
+                    <div className='bg-primary/10 text-primary mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl'>
+                      <Icon name='messageCircleQuestion' className='h-8 w-8' />
+                    </div>
+                    <h3 className='mb-3 text-2xl font-bold'>Still need help?</h3>
+                    <p className='text-muted-foreground mx-auto mb-8 max-w-lg text-lg'>
+                      Can't find what you're looking for? Our support team is here to help you get
+                      back on track.
+                    </p>
+                    <div className='flex flex-col justify-center gap-4 sm:flex-row'>
+                      <Button size='lg' className='rounded-full px-8'>
+                        <Icon name='mail' className='mr-2 h-4 w-4' />
+                        Contact Support
+                      </Button>
+                      <Button variant='outline' size='lg' className='rounded-full px-8'>
+                        <Icon name='messageSquare' className='mr-2 h-4 w-4' />
+                        Community Forum
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             </main>
           </div>
         </div>

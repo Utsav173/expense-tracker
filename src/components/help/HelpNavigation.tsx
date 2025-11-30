@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { Icon } from '@/components/ui/icon';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
 
 export default function HelpNavigation() {
   const [activeId, setActiveId] = useState('getting-started');
@@ -25,7 +26,7 @@ export default function HelpNavigation() {
           }
         }
       },
-      { rootMargin: '-80px 0px -60% 0px', threshold: 0.1 }
+      { rootMargin: '-20% 0px -60% 0px', threshold: 0 }
     );
     const elements = allIds.map((id) => document.getElementById(id)).filter(Boolean);
     elements.forEach((el) => observer.observe(el!));
@@ -36,9 +37,9 @@ export default function HelpNavigation() {
     e.preventDefault();
     const element = document.getElementById(id);
     if (element) {
-      const yOffset = -80;
+      const yOffset = -120; // Increased offset to account for fixed header
       const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-      window.scrollTo({ top: y, behavior: 'auto' });
+      window.scrollTo({ top: y, behavior: 'smooth' });
       history.pushState(null, '', `#${id}`);
       setActiveId(id);
       setIsMobileSheetOpen(false);
@@ -53,53 +54,87 @@ export default function HelpNavigation() {
   }, [activeId]);
 
   const TableOfContents = () => (
-    <div className='space-y-0.5'>
-      {helpSections.map((item) => (
-        <div key={item.id}>
-          <a
-            href={`#${item.id}`}
-            onClick={(e) => handleLinkClick(e, item.id)}
-            aria-current={
-              activeId === item.id || item.subsections?.some((sub) => sub.id === activeId)
-                ? 'page'
-                : undefined
-            }
-            className={cn(
-              'group relative flex items-center gap-3 overflow-hidden rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ease-out',
-              activeId === item.id || item.subsections?.some((sub) => sub.id === activeId)
-                ? 'from-primary/8 via-primary/2 to-primary/0 text-primary bg-gradient-to-r shadow-sm'
-                : 'text-muted-foreground hover:from-muted/60 hover:to-muted/40 hover:text-foreground hover:bg-gradient-to-r'
-            )}
-          >
-            <div
+    <nav className='space-y-1'>
+      {helpSections.map((item) => {
+        const isActive =
+          activeId === item.id || item.subsections?.some((sub) => sub.id === activeId);
+
+        return (
+          <div key={item.id} className='relative'>
+            <a
+              href={`#${item.id}`}
+              onClick={(e) => handleLinkClick(e, item.id)}
               className={cn(
-                'flex h-8 w-8 items-center justify-center rounded-md transition-colors duration-200'
+                'group relative flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300',
+                isActive
+                  ? 'bg-primary/10 text-primary shadow-sm'
+                  : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
               )}
             >
-              <Icon name={item.icon} className='h-4 w-4' aria-hidden='true' />
-            </div>
-            <span className='truncate font-medium'>{item.title}</span>
+              <div
+                className={cn(
+                  'flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-300',
+                  isActive
+                    ? 'text-primary'
+                    : 'text-muted-foreground group-hover:bg-muted group-hover:text-foreground'
+                )}
+              >
+                <Icon name={item.icon} className='h-4 w-4' aria-hidden='true' />
+              </div>
+              <span className='flex-1 truncate font-medium'>{item.title}</span>
 
-            {(activeId === item.id || item.subsections?.some((sub) => sub.id === activeId)) && (
-              <div className='bg-primary ml-auto h-2 w-2 rounded-full' />
+              {isActive && (
+                <motion.div
+                  layoutId='active-pill'
+                  className='bg-primary absolute inset-y-0 left-0 w-1 rounded-r-full'
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                />
+              )}
+            </a>
+
+            {/* Subsections - Only show when active or expanded */}
+            {isActive && item.subsections && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className='border-border/50 mt-1 ml-11 space-y-1 border-l pl-2'
+              >
+                {item.subsections.map((sub) => (
+                  <a
+                    key={sub.id}
+                    href={`#${sub.id}`}
+                    onClick={(e) => handleLinkClick(e, sub.id)}
+                    className={cn(
+                      'block rounded-lg px-3 py-2 text-xs font-medium transition-colors',
+                      activeId === sub.id
+                        ? 'bg-primary/5 text-primary'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
+                    )}
+                  >
+                    {sub.title}
+                  </a>
+                ))}
+              </motion.div>
             )}
-          </a>
-        </div>
-      ))}
-    </div>
+          </div>
+        );
+      })}
+    </nav>
   );
 
   return (
     <>
       {/* Mobile Navigation */}
-      <div className='border-border/50 bg-background/80 sticky top-16 z-40 border-b backdrop-blur-md md:hidden'>
-        <div className='px-4 py-3'>
+      <div className='sticky top-16 z-40 md:hidden'>
+        <div className='bg-background/80 border-border/50 absolute inset-0 border-b backdrop-blur-xl' />
+        <div className='relative px-4 py-3'>
           <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
             <SheetTrigger asChild>
               <Button
                 variant='outline'
-                size='sm'
-                className='bg-background/50 hover:bg-background/80 w-full justify-between'
+                className='bg-background/50 border-border/50 w-full justify-between shadow-sm backdrop-blur-sm'
               >
                 <div className='flex items-center gap-2.5'>
                   <Icon name='menu' className='h-4 w-4' />
@@ -110,23 +145,34 @@ export default function HelpNavigation() {
                 <Icon name='chevronDown' className='text-muted-foreground h-4 w-4' />
               </Button>
             </SheetTrigger>
-            <SheetContent side='left' className='w-full max-w-sm p-6'>
-              <SheetHeader className='mb-6'>
-                <SheetTitle className='text-left text-lg font-semibold'>Help Topics</SheetTitle>
-              </SheetHeader>
-              <TableOfContents />
+            <SheetContent side='left' className='w-full max-w-xs p-0'>
+              <div className='flex h-full flex-col'>
+                <SheetHeader className='border-border/50 border-b p-6'>
+                  <SheetTitle className='flex items-center gap-2 text-left text-lg font-bold'>
+                    <Icon name='lifeBuoy' className='text-primary h-5 w-5' />
+                    Help Center
+                  </SheetTitle>
+                </SheetHeader>
+                <div className='flex-1 overflow-y-auto p-4'>
+                  <TableOfContents />
+                </div>
+              </div>
             </SheetContent>
           </Sheet>
         </div>
       </div>
 
-      {/* Sidebar */}
+      {/* Desktop Sidebar */}
       <aside className='hidden lg:col-span-3 lg:block'>
-        <div className='sticky top-20'>
-          <div className='border-border/50 bg-card/30 rounded-2xl border p-6 shadow-lg backdrop-blur-sm'>
-            <div className='mb-4 flex items-center gap-2'>
-              <Icon name='bookOpen' className='text-primary h-5 w-5' />
-              <h2 className='text-foreground font-semibold'>Navigation</h2>
+        <div className='sticky top-24'>
+          <div className='border-border/50 bg-card/30 rounded-2xl border p-4 shadow-sm backdrop-blur-xl'>
+            <div className='mb-6 flex items-center gap-2 px-2'>
+              <div className='bg-primary/10 text-primary flex h-8 w-8 items-center justify-center rounded-lg'>
+                <Icon name='bookOpen' className='h-4 w-4' />
+              </div>
+              <h2 className='text-muted-foreground text-sm font-bold tracking-wider uppercase'>
+                Contents
+              </h2>
             </div>
             <TableOfContents />
           </div>

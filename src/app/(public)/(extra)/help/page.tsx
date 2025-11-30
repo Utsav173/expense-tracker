@@ -19,7 +19,7 @@ const jsonLd: WithContext<FAQPage> = {
           name: subsection.title,
           acceptedAnswer: {
             '@type': 'Answer',
-            text: `Find the answer to "${subsection.title}" in the ${section.title} section.`
+            text: `Learn about ${subsection.title} in our detailed guide. Visit the ${section.title} section for more information.`
           }
         }))
       : [
@@ -28,7 +28,7 @@ const jsonLd: WithContext<FAQPage> = {
             name: section.title,
             acceptedAnswer: {
               '@type': 'Answer',
-              text: `Find the answer in the ${section.title} section.`
+              text: `Find comprehensive information about ${section.title} in our help center.`
             }
           }
         ]
