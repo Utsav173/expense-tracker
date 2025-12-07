@@ -103,7 +103,7 @@ const DashboardPage = () => {
   return (
     <div className='mx-auto w-full max-w-7xl space-y-4 p-3 pt-4 select-none md:space-y-6'>
       <BentoGrid>
-        <BentoGridItem className='col-span-12 row-span-2 md:col-span-6 lg:col-span-4'>
+        <BentoGridItem className='col-span-12 row-span-2 p-0 md:col-span-6 lg:col-span-4'>
           <DashboardCardContent
             title={DASHBOARD_CARD_CONFIG.default.financialSnapshot.title}
             description={DASHBOARD_CARD_CONFIG.default.financialSnapshot.description}
@@ -118,7 +118,7 @@ const DashboardPage = () => {
             ) : null}
           </DashboardCardContent>
         </BentoGridItem>
-        <BentoGridItem className='col-span-12 row-span-2 md:col-span-6 lg:col-span-4'>
+        <BentoGridItem className='col-span-12 row-span-2 p-0 md:col-span-6 lg:col-span-4'>
           <DashboardCardContent
             title={DASHBOARD_CARD_CONFIG.default.quickStats.title}
             description={DASHBOARD_CARD_CONFIG.default.quickStats.description}
@@ -127,7 +127,7 @@ const DashboardPage = () => {
             <QuickStats data={dashboardPageData} isLoading={isLoading} />
           </DashboardCardContent>
         </BentoGridItem>
-        <BentoGridItem className='col-span-12 row-span-2 md:col-span-6 lg:col-span-4'>
+        <BentoGridItem className='col-span-12 row-span-2 p-0 md:col-span-6 lg:col-span-4'>
           <DashboardCardContent
             title={DASHBOARD_CARD_CONFIG.default.financialHealth.title}
             description={DASHBOARD_CARD_CONFIG.default.financialHealth.description}
@@ -137,7 +137,7 @@ const DashboardPage = () => {
             <FinancialHealth />
           </DashboardCardContent>
         </BentoGridItem>
-        <BentoGridItem className='col-span-12 row-span-2 md:col-span-6 lg:col-span-6'>
+        <BentoGridItem className='col-span-12 row-span-2 p-0 md:col-span-6 lg:col-span-6'>
           <DashboardCardContent
             title={DASHBOARD_CARD_CONFIG.default.trendChart.title}
             description={DASHBOARD_CARD_CONFIG.default.trendChart.description}
@@ -153,7 +153,7 @@ const DashboardPage = () => {
             ) : null}
           </DashboardCardContent>
         </BentoGridItem>
-        <BentoGridItem className='col-span-12 row-span-2 md:col-span-6 lg:col-span-6'>
+        <BentoGridItem className='col-span-12 row-span-2 p-0 md:col-span-6 lg:col-span-6'>
           <DashboardCardContent
             title={DASHBOARD_CARD_CONFIG.default.spendingBreakdown.title}
             description={DASHBOARD_CARD_CONFIG.default.spendingBreakdown.description}
@@ -162,7 +162,7 @@ const DashboardPage = () => {
             <SpendingBreakdown className='h-full' />
           </DashboardCardContent>
         </BentoGridItem>
-        <BentoGridItem className='col-span-12 row-span-2 md:col-span-6 lg:col-span-4'>
+        <BentoGridItem className='col-span-12 row-span-2 p-0 md:col-span-6 lg:col-span-4'>
           <DashboardCardContent
             title={DASHBOARD_CARD_CONFIG.default.budgetProgress.title}
             description={DASHBOARD_CARD_CONFIG.default.budgetProgress.description}
@@ -171,7 +171,7 @@ const DashboardPage = () => {
             <BudgetProgress />
           </DashboardCardContent>
         </BentoGridItem>
-        <BentoGridItem className='col-span-12 row-span-2 md:col-span-6 lg:col-span-4'>
+        <BentoGridItem className='col-span-12 row-span-2 p-0 md:col-span-6 lg:col-span-4'>
           <DashboardCardContent
             title={DASHBOARD_CARD_CONFIG.default.goals.title}
             description={DASHBOARD_CARD_CONFIG.default.goals.description}
@@ -180,7 +180,7 @@ const DashboardPage = () => {
             <GoalHighlights />
           </DashboardCardContent>
         </BentoGridItem>
-        <BentoGridItem className='col-span-12 row-span-2 md:col-span-6 lg:col-span-4'>
+        <BentoGridItem className='col-span-12 row-span-2 p-0 md:col-span-6 lg:col-span-4'>
           <DashboardCardContent
             title={DASHBOARD_CARD_CONFIG.default.debtSummary.title}
             description={DASHBOARD_CARD_CONFIG.default.debtSummary.description}
@@ -189,7 +189,7 @@ const DashboardPage = () => {
             <DebtSummaryCard />
           </DashboardCardContent>
         </BentoGridItem>
-        <BentoGridItem className='col-span-12 row-span-2 md:col-span-6 lg:col-span-6'>
+        <BentoGridItem className='col-span-12 row-span-2 p-0 md:col-span-6 lg:col-span-6'>
           <DashboardCardContent
             title={DASHBOARD_CARD_CONFIG.default.investments.title}
             description={DASHBOARD_CARD_CONFIG.default.investments.description}
@@ -198,7 +198,7 @@ const DashboardPage = () => {
             <InvestmentSummaryCard />
           </DashboardCardContent>
         </BentoGridItem>
-        <BentoGridItem className='col-span-12 row-span-2 md:col-span-6 lg:col-span-6'>
+        <BentoGridItem className='col-span-12 row-span-2 p-0 md:col-span-6 lg:col-span-6'>
           <DashboardCardContent
             title={DASHBOARD_CARD_CONFIG.default.accounts.title}
             description={DASHBOARD_CARD_CONFIG.default.accounts.description}

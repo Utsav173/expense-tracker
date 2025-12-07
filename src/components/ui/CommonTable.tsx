@@ -148,7 +148,7 @@ const CommonTable = <T extends object>({
               ? Array.from({ length: pageSize }).map((_, i) => (
                   <TableRow key={`loading-${i}`} className='hover:bg-transparent'>
                     {columns.map((_col, j) => (
-                      <TableCell key={`skeleton-${i}-${j}`} className='p-2'>
+                      <TableCell key={`skeleton-${i}-${j}`} className='px-4 py-2'>
                         <Skeleton className='h-6 w-full' />
                       </TableCell>
                     ))}
@@ -159,7 +159,7 @@ const CommonTable = <T extends object>({
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
-                        className={cn('p-2', cellClassName)}
+                        className={cn('px-4 py-2', cellClassName)}
                         style={{ width: cell.column.getSize() }}
                       >
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}

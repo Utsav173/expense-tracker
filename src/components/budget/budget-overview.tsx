@@ -14,7 +14,8 @@ import {
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
   ComposedChart,
-  Treemap
+  Treemap,
+  Cell
 } from 'recharts';
 import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
 import { cn, formatCurrency } from '@/lib/utils';
@@ -53,7 +54,6 @@ const BudgetOverview = ({ month, year, period }: BudgetOverviewProps) => {
     if (!summaryData || summaryData.length === 0) return [];
     const insightsList = [];
 
-    // Over budget categories
     const overBudget = summaryData.filter((item) => item.actualSpend > item.budgetedAmount);
     if (overBudget.length > 0) {
       insightsList.push({
@@ -62,7 +62,6 @@ const BudgetOverview = ({ month, year, period }: BudgetOverviewProps) => {
       });
     }
 
-    // High spending categories ( > 80% )
     const highSpending = summaryData.filter(
       (item) =>
         item.actualSpend > item.budgetedAmount * 0.8 && item.actualSpend <= item.budgetedAmount
@@ -74,7 +73,6 @@ const BudgetOverview = ({ month, year, period }: BudgetOverviewProps) => {
       });
     }
 
-    // Good job ( < 50% used and month is > 20th day? - simplistic for now)
     const wellManaged = summaryData.filter((item) => item.actualSpend < item.budgetedAmount * 0.5);
     if (wellManaged.length > 0 && wellManaged.length < summaryData.length) {
       insightsList.push({
@@ -96,23 +94,47 @@ const BudgetOverview = ({ month, year, period }: BudgetOverviewProps) => {
   const processedData = useMemo(() => {
     if (!summaryData) return [];
 
-    // Sort by budgeted amount descending
     const sorted = [...summaryData].sort((a, b) => b.budgetedAmount - a.budgetedAmount);
 
-    if (sorted.length <= 10) return sorted;
+    let dataToProcess = sorted;
 
-    const top10 = sorted.slice(0, 10);
-    const others = sorted.slice(10);
+    if (sorted.length > 8) {
+      const top8 = sorted.slice(0, 8);
+      const others = sorted.slice(8);
 
-    const otherItem = {
-      category: 'others',
-      categoryName: 'Others',
-      budgetedAmount: others.reduce((acc, curr) => acc + curr.budgetedAmount, 0),
-      actualSpend: others.reduce((acc, curr) => acc + curr.actualSpend, 0),
-      breakdown: others // Store the breakdown for tooltip
-    };
+      const otherItem = {
+        category: 'others',
+        categoryName: 'Others',
+        budgetedAmount: others.reduce((acc, curr) => acc + curr.budgetedAmount, 0),
+        actualSpend: others.reduce((acc, curr) => acc + curr.actualSpend, 0),
+        breakdown: others
+      };
 
-    return [...top10, otherItem];
+      dataToProcess = [...top8, otherItem];
+    }
+
+    return dataToProcess.map((item) => {
+      const isOverBudget = item.actualSpend > item.budgetedAmount;
+      const withinBudget = isOverBudget ? item.budgetedAmount : item.actualSpend;
+      const overBudget = isOverBudget ? item.actualSpend - item.budgetedAmount : 0;
+      const cappingRef = item.budgetedAmount > 0 ? item.budgetedAmount : item.actualSpend;
+      const visualOverBudget = Math.min(overBudget, cappingRef * 0.5);
+
+      const remaining = isOverBudget ? 0 : item.budgetedAmount - item.actualSpend;
+      const utilizationPercent =
+        item.budgetedAmount > 0 ? (item.actualSpend / item.budgetedAmount) * 100 : 0;
+
+      return {
+        ...item,
+        withinBudget,
+        overBudget,
+        visualOverBudget,
+        remaining,
+        isOverBudget,
+        utilizationPercent,
+        total: Math.max(item.budgetedAmount, item.actualSpend)
+      };
+    });
   }, [summaryData]);
 
   const treemapData = useMemo(() => {
@@ -132,7 +154,7 @@ const BudgetOverview = ({ month, year, period }: BudgetOverviewProps) => {
         };
       })
       .filter((item) => item.size > 0)
-      .sort((a, b) => b.size - a.size); // Sort by size descending for better packing
+      .sort((a, b) => b.size - a.size);
   }, [summaryData]);
 
   if (isLoading) {
@@ -155,28 +177,59 @@ const BudgetOverview = ({ month, year, period }: BudgetOverviewProps) => {
     );
   }
 
+  const paletteStyle = {
+    '--budget-spent': '#8b5cf6',
+    '--budget-over': '#f43f5e',
+    '--budget-over-chart': '#f43f5e',
+    '--budget-warning': '#f59e0b',
+    '--budget-info': '#6366f1',
+    '--budget-spent-bg': '#8b5cf61a',
+    '--budget-over-bg': '#f43f5e1a',
+    '--budget-warning-bg': '#f59e0b1a',
+    '--budget-info-bg': '#6366f11a'
+  } as React.CSSProperties;
+
   const chartConfig = {
-    budgetedAmount: {
-      label: 'Budgeted',
-      color: 'var(--primary)'
+    withinBudget: {
+      label: 'Spent (Within Budget)',
+      color: 'var(--budget-spent)'
     },
-    actualSpend: {
-      label: 'Actual Spend',
-      color: 'var(--destructive)'
+    overBudget: {
+      label: 'Over Budget',
+      color: 'var(--budget-over)'
+    },
+    remaining: {
+      label: 'Remaining',
+      color: 'hsl(var(--muted))'
     }
   };
 
   return (
-    <div className='animate-in fade-in slide-in-from-bottom-4 space-y-6 duration-500'>
-      {/* Summary Cards */}
-      <div className='grid gap-4 md:grid-cols-3'>
+    <div
+      className='animate-in fade-in slide-in-from-bottom-4 space-y-6 duration-500'
+      style={{ ...paletteStyle } as React.CSSProperties}
+    >
+      <style suppressHydrationWarning>{`
+        .dark {
+          --budget-spent: #a78bfa;   
+          --budget-over: #fb7185;    
+          --budget-over-chart: #f43f5e;
+          --budget-warning: #fbbf24;
+          --budget-info: #818cf8;
+          --budget-spent-bg: #a78bfa26;
+          --budget-over-bg: #fb718526;
+          --budget-warning-bg: #fbbf2426;
+          --budget-info-bg: #818cf826;
+        }
+      `}</style>
+
+      <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
         <SummaryCard
           title='Total Budget'
           value={stats.totalBudget}
           icon='wallet'
           trend='Total planned'
-          className='rounded-[28px] border border-[#E2E5ED] bg-[#F4F6FA] text-[#1B1D26] shadow-sm shadow-slate-200/40 transition-all duration-300 hover:bg-[#EEF1F8] dark:border-[#272A36] dark:bg-[#16181F] dark:text-[#E2E4EA] dark:shadow-none dark:hover:bg-[#1C1F29]'
-          iconClassName='rounded-xl bg-[#E0E4F2] p-3.5 text-[#424966] dark:bg-[#272A36] dark:text-[#A8ACBD]'
+          variant='default'
           currency={currency}
         />
         <SummaryCard
@@ -184,84 +237,98 @@ const BudgetOverview = ({ month, year, period }: BudgetOverviewProps) => {
           value={stats.totalSpent}
           icon='creditCard'
           trend={`${stats.percentageUsed.toFixed(1)}% used`}
-          trendColor={
-            stats.percentageUsed > 100
-              ? 'text-[#8C1D18] font-medium dark:text-[#F2B8B5]'
-              : 'text-[#5C5F66] dark:text-[#9EA3AE]'
-          }
-          className='rounded-[28px] border border-[#F5E0DE] bg-[#FFF8F7] text-[#3E1A1A] shadow-sm shadow-orange-100/40 transition-all duration-300 hover:bg-[#FFF3F1] dark:border-[#3D2426] dark:bg-[#241819] dark:text-[#F5DEDD] dark:shadow-none dark:hover:bg-[#2B1C1E]'
-          iconClassName='rounded-xl bg-[#FAE8E6] p-3.5 text-[#8C1D18] dark:bg-[#3D2426] dark:text-[#F2B8B5]'
+          progress={Math.min(stats.percentageUsed, 100)}
+          variant='destructive'
+          isOverBudget={stats.percentageUsed > 100}
           currency={currency}
         />
         <SummaryCard
-          title='Remaining'
+          title='Remaining Total'
           value={stats.remaining}
           icon='piggyBank'
           trend='Available funds'
-          valueColor={
-            stats.remaining < 0
-              ? 'text-[#8C1D18] dark:text-[#F2B8B5]'
-              : 'text-[#146C43] dark:text-[#8CDAC1]'
-          }
-          className='rounded-[28px] border border-[#DCEBE4] bg-[#F5FAF8] text-[#12261E] shadow-sm shadow-emerald-100/40 transition-all duration-300 hover:bg-[#EDF7F4] dark:border-[#22362E] dark:bg-[#151F1B] dark:text-[#E0F2EA] dark:shadow-none dark:hover:bg-[#1A2621]'
-          iconClassName='rounded-xl bg-[#D6EBE2] p-3.5 text-[#146C43] dark:bg-[#22362E] dark:text-[#8CDAC1]'
+          variant={stats.remaining < 0 ? 'destructive' : 'success'}
           currency={currency}
         />
       </div>
 
-      <div className='grid min-w-0 gap-6 lg:grid-cols-3'>
-        {/* Main Chart: Composed Chart (Bullet Style) */}
-        <Card className='col-span-1 min-w-0 overflow-hidden shadow-sm lg:col-span-2'>
-          <CardHeader>
-            <CardTitle>Budget vs Actual</CardTitle>
+      <div className='grid grid-cols-1 gap-6 xl:grid-cols-5'>
+        <Card className='overflow-hidden shadow-sm xl:col-span-3'>
+          <CardHeader className='pb-2'>
+            <CardTitle className='flex items-center gap-2 text-base font-semibold'>
+              <Icon name='barChart' className='text-primary h-4 w-4' />
+              Budget vs Actual
+            </CardTitle>
           </CardHeader>
-          <CardContent className='pr-2 pl-0'>
-            <div className='h-[300px] w-full sm:h-[400px]'>
+          <CardContent className='px-2 pb-4 sm:px-4'>
+            <div className='h-[280px] w-full sm:h-[350px] lg:h-[380px]'>
               <ChartContainer config={chartConfig} className='h-full w-full'>
                 <ComposedChart
                   data={processedData}
-                  margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+                  margin={{ top: 0, right: 0, bottom: 0, left: 32 }}
                   layout='vertical'
+                  barSize={22}
+                  barGap={0}
                 >
-                  <CartesianGrid
-                    horizontal={false}
-                    strokeDasharray='3 3'
-                    className='stroke-muted/50'
-                  />
+                  <CartesianGrid horizontal={false} strokeDasharray='3 3' stroke='var(--muted)' />
                   <XAxis
                     type='number'
                     tickLine={false}
                     axisLine={false}
                     tickFormatter={(value) => formatCurrency(value, currency, 'compact')}
-                    tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }}
+                    tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
+                    tickMargin={8}
                   />
                   <YAxis
                     dataKey='categoryName'
                     type='category'
                     tickLine={false}
                     axisLine={false}
-                    width={80}
-                    tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }}
+                    width={100}
+                    tick={({ x, y, payload }) => {
+                      const name = payload.value || '';
+                      const maxLength = 12;
+                      const truncated =
+                        name.length > maxLength ? name.slice(0, maxLength) + '…' : name;
+                      return (
+                        <g transform={`translate(${x},${y})`}>
+                          <title>{name}</title>
+                          <text
+                            x={-4}
+                            y={0}
+                            dy={4}
+                            textAnchor='end'
+                            fill='var(--muted-foreground)'
+                            fontSize={11}
+                            style={{ cursor: name.length > maxLength ? 'help' : 'default' }}
+                          >
+                            {truncated}
+                          </text>
+                        </g>
+                      );
+                    }}
+                    tickMargin={4}
                   />
                   <ChartTooltip
-                    cursor={{ fill: 'var(--muted)', fillOpacity: 0.2 }}
+                    cursor={{ fill: 'var(--muted)', fillOpacity: 0.15 }}
                     content={({ active, payload }) => {
                       if (!active || !payload || payload.length === 0) return null;
 
                       const data = payload[0].payload;
 
-                      // Check if this is the "Others" category
                       if (data.categoryName === 'Others' && data.breakdown) {
                         return (
-                          <div className='bg-background border-border z-tooltip rounded-lg border p-3 shadow-lg'>
+                          <div className='bg-popover border-border z-tooltip rounded-xl border p-3 shadow-xl'>
                             <p className='mb-2 font-semibold'>Others Breakdown</p>
-                            <div className='mb-2 space-y-1'>
+                            <div className='mb-2 max-h-40 space-y-1 overflow-y-auto'>
                               {data.breakdown.map((item: any, idx: number) => (
                                 <div
                                   key={idx}
                                   className='flex items-center justify-between gap-4 text-xs'
                                 >
-                                  <span className='text-muted-foreground'>{item.categoryName}</span>
+                                  <span className='text-muted-foreground max-w-[120px] truncate'>
+                                    {item.categoryName}
+                                  </span>
                                   <span className='font-mono font-medium'>
                                     {formatCurrency(item.actualSpend, currency)}
                                   </span>
@@ -280,35 +347,50 @@ const BudgetOverview = ({ month, year, period }: BudgetOverviewProps) => {
                         );
                       }
 
-                      // Standard tooltip for other categories
+                      const utilizationPercent =
+                        data.budgetedAmount > 0
+                          ? ((data.actualSpend / data.budgetedAmount) * 100).toFixed(1)
+                          : '0';
+
                       return (
-                        <div className='bg-background border-border z-tooltip min-w-[150px] rounded-lg border p-3 shadow-lg'>
+                        <div className='bg-popover border-border z-tooltip min-w-[180px] rounded-xl border p-3 shadow-xl'>
                           <p className='mb-2 font-semibold'>{data.categoryName}</p>
                           <div className='space-y-1.5'>
                             <div className='flex items-center justify-between gap-4 text-xs'>
                               <span className='text-muted-foreground'>Budgeted</span>
-                              <span className='font-mono font-medium text-emerald-600 dark:text-emerald-400'>
+                              <span className='font-mono font-medium'>
                                 {formatCurrency(data.budgetedAmount, currency)}
                               </span>
                             </div>
                             <div className='flex items-center justify-between gap-4 text-xs'>
                               <span className='text-muted-foreground'>Spent</span>
-                              <span className='font-mono font-medium text-rose-600 dark:text-rose-400'>
+                              <span
+                                className={cn(
+                                  'font-mono font-medium',
+                                  data.isOverBudget ? 'text-destructive' : 'text-success'
+                                )}
+                              >
                                 {formatCurrency(data.actualSpend, currency)}
                               </span>
                             </div>
+                            {data.isOverBudget && (
+                              <div className='flex items-center justify-between gap-4 text-xs'>
+                                <span className='text-destructive font-medium'>Over by</span>
+                                <span className='text-destructive font-mono font-bold'>
+                                  {formatCurrency(data.overBudget, currency)}
+                                </span>
+                              </div>
+                            )}
                             <div className='border-border mt-2 border-t pt-2'>
                               <div className='flex items-center justify-between text-xs'>
                                 <span className='text-muted-foreground'>Utilization</span>
                                 <span
                                   className={cn(
                                     'font-bold',
-                                    data.actualSpend > data.budgetedAmount
-                                      ? 'text-rose-600'
-                                      : 'text-emerald-600'
+                                    data.isOverBudget ? 'text-destructive' : 'text-success'
                                   )}
                                 >
-                                  {((data.actualSpend / data.budgetedAmount) * 100).toFixed(1)}%
+                                  {utilizationPercent}%
                                 </span>
                               </div>
                             </div>
@@ -317,60 +399,115 @@ const BudgetOverview = ({ month, year, period }: BudgetOverviewProps) => {
                       );
                     }}
                   />
-                  {/* Budget Bar (Background) */}
-                  <Bar
-                    dataKey='budgetedAmount'
-                    fill='var(--color-budgetedAmount)'
-                    barSize={24}
-                    radius={[0, 4, 4, 0]}
-                    fillOpacity={0.3}
-                  />
-                  {/* Actual Spend Bar (Foreground) */}
-                  <Bar
-                    dataKey='actualSpend'
-                    fill='var(--color-actualSpend)'
-                    barSize={16}
-                    radius={[0, 4, 4, 0]}
-                  />
+                  <defs>
+                    <linearGradient id='successGradient' x1='0' y1='0' x2='1' y2='0'>
+                      <stop offset='0%' stopColor='var(--budget-spent)' stopOpacity={0.9} />
+                      <stop offset='100%' stopColor='var(--budget-spent)' stopOpacity={1} />
+                    </linearGradient>
+                    <linearGradient id='overBudgetGradientBase' x1='0' y1='0' x2='1' y2='0'>
+                      <stop offset='0%' stopColor='var(--budget-over)' stopOpacity={0.5} />
+                      <stop offset='100%' stopColor='var(--budget-over)' stopOpacity={0.6} />
+                    </linearGradient>
+                    <pattern
+                      id='overBudgetPattern'
+                      patternUnits='userSpaceOnUse'
+                      width='6'
+                      height='6'
+                      patternTransform='rotate(45)'
+                    >
+                      <rect width='3' height='6' fill='url(#overBudgetGradientBase)' />
+                      <rect
+                        x='3'
+                        width='3'
+                        height='6'
+                        fill='url(#overBudgetGradientBase)'
+                        fillOpacity='0.2'
+                      />
+                    </pattern>
+                  </defs>
+                  <Bar dataKey='withinBudget' stackId='budget'>
+                    {processedData.map((entry, index) => {
+                      const isEnd = entry.visualOverBudget <= 0 && entry.remaining <= 0;
+                      const radius: [number, number, number, number] = isEnd
+                        ? [4, 4, 4, 4]
+                        : [4, 0, 0, 4];
+                      return (
+                        <Cell
+                          key={`cell-within-${index}`}
+                          fill='url(#successGradient)'
+                          radius={radius as any}
+                        />
+                      );
+                    })}
+                  </Bar>
+
+                  <Bar dataKey='visualOverBudget' stackId='budget'>
+                    {processedData.map((entry, index) => {
+                      const isStart = entry.withinBudget <= 0;
+                      const radius: [number, number, number, number] = isStart
+                        ? [4, 4, 4, 4]
+                        : [0, 4, 4, 0];
+                      return (
+                        <Cell
+                          key={`cell-over-${index}`}
+                          fill='url(#overBudgetPattern)'
+                          radius={radius as any}
+                        />
+                      );
+                    })}
+                  </Bar>
+
+                  <Bar dataKey='remaining' stackId='budget'>
+                    {processedData.map((entry, index) => {
+                      const isStart = entry.withinBudget <= 0;
+                      const radius: [number, number, number, number] = isStart
+                        ? [4, 4, 4, 4]
+                        : [0, 4, 4, 0];
+                      return (
+                        <Cell
+                          key={`cell-remaining-${index}`}
+                          fill='hsl(var(--muted))'
+                          radius={radius as any}
+                          fillOpacity={0.3}
+                        />
+                      );
+                    })}
+                  </Bar>
                 </ComposedChart>
               </ChartContainer>
             </div>
           </CardContent>
         </Card>
 
-        {/* Insights & Heatmap */}
-        <Card className='col-span-1 flex flex-col shadow-sm'>
-          <CardHeader>
-            <CardTitle className='flex items-center gap-2'>
-              <div className='rounded-full bg-yellow-100 p-1.5 dark:bg-yellow-900/30'>
-                <Icon name='sparkles' className='h-4 w-4 text-yellow-600 dark:text-yellow-400' />
+        <Card className='flex flex-col shadow-sm xl:col-span-2'>
+          <CardHeader className='pb-3'>
+            <CardTitle className='flex items-center gap-2 text-base font-semibold'>
+              <div className='rounded-lg bg-[var(--budget-warning-bg)] p-1.5'>
+                <Icon name='sparkles' className='h-4 w-4 text-[var(--budget-warning)]' />
               </div>
               Smart Insights
             </CardTitle>
           </CardHeader>
-          <CardContent className='flex-1 space-y-6'>
-            <div className='space-y-3'>
-              {insights.slice(0, 3).map((insight, idx) => (
+          <CardContent className='flex flex-1 flex-col gap-5 pb-4'>
+            <div className='space-y-2.5'>
+              {insights.slice(0, 2).map((insight, idx) => (
                 <InsightItem key={idx} insight={insight} />
               ))}
             </div>
 
-            {/* Category Treemap */}
-            <div className='space-y-4 border-t pt-4'>
-              <div className='flex items-center justify-between'>
-                <h4 className='text-muted-foreground flex items-center gap-2 text-xs font-semibold tracking-wider uppercase'>
-                  <Icon name='layoutGrid' className='h-3 w-3' />
-                  Spending Treemap
-                </h4>
-              </div>
+            <div className='flex flex-1 flex-col gap-3 border-t pt-4'>
+              <h4 className='text-muted-foreground flex items-center gap-2 text-xs font-semibold tracking-wider uppercase'>
+                <Icon name='layoutGrid' className='h-3.5 w-3.5' />
+                Spending Treemap
+              </h4>
 
-              <div className='h-[250px] w-full sm:h-[280px]'>
+              <div className='min-h-[180px] flex-1 sm:min-h-[220px]'>
                 <ResponsiveContainer width='100%' height='100%'>
                   <Treemap
                     data={treemapData}
                     dataKey='size'
                     aspectRatio={4 / 3}
-                    stroke='#fff'
+                    stroke='hsl(var(--background))'
                     fill='#8884d8'
                     content={<CustomTreemapContent currency={currency} />}
                   >
@@ -379,7 +516,7 @@ const BudgetOverview = ({ month, year, period }: BudgetOverviewProps) => {
                         if (!payload || !payload[0]) return null;
                         const data = payload[0].payload;
                         return (
-                          <div className='bg-background border-border rounded-lg border p-2 shadow-lg'>
+                          <div className='bg-popover border-border rounded-xl border p-2.5 shadow-xl'>
                             <p className='font-semibold'>{data.name}</p>
                             <p className='text-muted-foreground text-xs'>
                               Spent: {formatCurrency(data.spent, currency)}
@@ -387,7 +524,7 @@ const BudgetOverview = ({ month, year, period }: BudgetOverviewProps) => {
                             <p className='text-muted-foreground text-xs'>
                               Budget: {formatCurrency(data.budget, currency)}
                             </p>
-                            <p className='text-xs font-semibold'>
+                            <p className='mt-1 text-xs font-semibold'>
                               {data.percent?.toFixed(1)}% used
                             </p>
                           </div>
@@ -405,51 +542,116 @@ const BudgetOverview = ({ month, year, period }: BudgetOverviewProps) => {
   );
 };
 
+type SummaryCardVariant = 'default' | 'destructive' | 'success';
+
+const variantStyles: Record<
+  SummaryCardVariant,
+  {
+    card: string;
+    icon: string;
+    value?: string;
+    trend?: string;
+    progressTrack?: string;
+    progressFill?: string;
+  }
+> = {
+  default: {
+    card: 'border-t-4 border-t-primary shadow-sm hover:shadow-md transition-all',
+    icon: 'bg-primary/10 text-primary',
+    progressTrack: 'bg-muted',
+    progressFill: 'bg-primary'
+  },
+  destructive: {
+    card: 'border-t-4 border-t-[var(--budget-over)] shadow-sm hover:shadow-md transition-all',
+    icon: 'bg-[var(--budget-over-bg)] text-[var(--budget-over)]',
+    trend: 'text-[var(--budget-over)] font-medium',
+    progressTrack: 'bg-[var(--budget-over-bg)]',
+    progressFill: 'bg-[var(--budget-over)]'
+  },
+  success: {
+    card: 'border-t-4 border-t-[var(--budget-spent)] shadow-sm hover:shadow-md transition-all',
+    icon: 'bg-[var(--budget-spent-bg)] text-[var(--budget-spent)]',
+    value: 'text-[var(--budget-spent)]',
+    progressTrack: 'bg-[var(--budget-spent-bg)]',
+    progressFill: 'bg-[var(--budget-spent)]'
+  }
+};
+
 const SummaryCard = ({
   title,
   value,
   icon,
   trend,
-  trendColor,
-  valueColor,
-  className,
-  iconClassName,
+  variant = 'default',
+  isOverBudget,
+  progress,
   currency
 }: {
   title: string;
   value: number;
   icon: any;
   trend?: string;
-  trendColor?: string;
-  valueColor?: string;
-  className?: string;
-  iconClassName?: string;
+  variant?: SummaryCardVariant;
+  isOverBudget?: boolean;
+  progress?: number;
   currency: string;
-}) => (
-  <Card className={cn('shadow-sm transition-all hover:shadow-md', className)}>
-    <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-      <CardTitle className='font-medium'>{title}</CardTitle>
-      <div className={cn('bg-background/80 rounded-full p-2 backdrop-blur-sm', iconClassName)}>
-        <Icon name={icon} className='h-4 w-4' />
-      </div>
-    </CardHeader>
-    <CardContent>
-      <div className={cn('text-2xl font-bold', valueColor)}>{formatCurrency(value, currency)}</div>
-      {trend && <p className={cn('text-muted-foreground mt-1 text-xs', trendColor)}>{trend}</p>}
-    </CardContent>
-  </Card>
-);
+}) => {
+  const styles = variantStyles[variant];
+
+  return (
+    <Card className={cn(styles.card, 'group')}>
+      <CardHeader className='relative z-10 flex flex-row items-center justify-between space-y-0 pb-2'>
+        <CardTitle className='text-sm font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400'>
+          {title}
+        </CardTitle>
+        <div className={cn(styles.icon, 'transition-transform duration-300 group-hover:scale-110')}>
+          <Icon name={icon} className='h-4.5 w-4.5' />
+        </div>
+      </CardHeader>
+      <CardContent className='relative z-10 pt-1'>
+        <div className={cn('text-2xl font-bold tracking-tight', styles.value)}>
+          {formatCurrency(value, currency)}
+        </div>
+
+        <div className='mt-3 flex items-center justify-between'>
+          {trend && (
+            <p
+              className={cn(
+                'text-xs font-medium',
+                isOverBudget
+                  ? 'text-rose-600 dark:text-rose-400'
+                  : 'text-gray-500 dark:text-gray-400',
+                styles.trend
+              )}
+            >
+              {trend}
+            </p>
+          )}
+        </div>
+
+        {(variant === 'destructive' || variant === 'success') && (
+          <div className={cn('mt-3 h-1 w-full rounded-full', styles.progressTrack)}>
+            <div
+              className={cn('h-full rounded-full transition-all duration-500', styles.progressFill)}
+              style={{ width: `${progress ?? (variant === 'success' ? 100 : 0)}%` }}
+            />
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
 
 const OverviewSkeleton = () => (
   <div className='space-y-6'>
-    <div className='grid gap-4 md:grid-cols-3'>
+    <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
       {[1, 2, 3].map((i) => (
-        <Skeleton key={i} className='h-32 w-full rounded-xl' />
+        <Skeleton key={i} className='h-28 w-full rounded-2xl' />
       ))}
     </div>
-    <div className='grid gap-6 lg:grid-cols-7'>
-      <Skeleton className='col-span-4 h-[400px] rounded-xl' />
-      <Skeleton className='col-span-3 h-[400px] rounded-xl' />
+    <div className='grid grid-cols-1 gap-6 xl:grid-cols-5'>
+      <Skeleton className='h-[380px] rounded-xl xl:col-span-3' />
+      <Skeleton className='h-[380px] rounded-xl xl:col-span-2' />
     </div>
   </div>
 );
@@ -458,17 +660,15 @@ const CustomTreemapContent = (props: any) => {
   const { x, y, width, height, name, percent, spent, currency } = props;
   if (!name || width < 30 || height < 30) return null;
 
-  // Use actual color values instead of CSS variables for SVG
   const backgroundColor =
     percent > 100
-      ? '#ef4444' // Red for over budget
+      ? 'var(--budget-over-chart)'
       : percent > 80
-        ? '#f97316' // Orange for warning
-        : '#10b981'; // Green for healthy
+        ? 'var(--budget-warning)'
+        : 'var(--budget-spent)';
 
-  const strokeColor = '#ffffff'; // White stroke for contrast
+  const strokeColor = 'var(--background)';
 
-  // Responsive font sizes
   const nameFontSize = width < 60 ? 10 : 12;
   const percentFontSize = width < 60 ? 11 : 14;
 
@@ -528,36 +728,59 @@ const InsightItem = ({ insight }: { insight: { type: string; message: string } }
   const [isExpanded, setIsExpanded] = React.useState(false);
   const isLong = insight.message.length > 100;
 
+  const styles = {
+    warning:
+      'border-l-[var(--budget-over)] bg-[var(--budget-over-bg)] text-[var(--budget-over)] shadow-sm dark:shadow-none',
+    alert:
+      'border-l-[var(--budget-warning)] bg-[var(--budget-warning-bg)] text-[var(--budget-warning)] shadow-sm dark:shadow-none',
+    success:
+      'border-l-[var(--budget-spent)] bg-[var(--budget-spent-bg)] text-[var(--budget-spent)] shadow-sm dark:shadow-none',
+    info: 'border-l-[var(--budget-info)] bg-[var(--budget-info-bg)] text-[var(--budget-info)] shadow-sm dark:shadow-none'
+  };
+
+  const iconColors = {
+    warning: 'text-[var(--budget-over)]',
+    alert: 'text-[var(--budget-warning)]',
+    success: 'text-[var(--budget-spent)]',
+    info: 'text-[var(--budget-info)]'
+  };
+
+  const type = insight.type as keyof typeof styles;
+
   return (
     <div
       className={cn(
-        'flex items-start gap-3 rounded-lg border p-3 text-sm shadow-sm transition-colors',
-        insight.type === 'warning' &&
-          'border-red-200 bg-red-50 text-red-700 dark:border-red-900/50 dark:bg-red-950/20 dark:text-red-400',
-        insight.type === 'alert' &&
-          'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-900/50 dark:bg-orange-950/20 dark:text-orange-400',
-        insight.type === 'success' &&
-          'border-green-200 bg-green-50 text-green-700 dark:border-green-900/50 dark:bg-green-950/20 dark:text-green-400',
-        insight.type === 'info' &&
-          'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/50 dark:bg-blue-950/20 dark:text-blue-400'
+        'relative flex items-start gap-3 overflow-hidden rounded-lg border border-l-[3px] border-y-transparent border-r-transparent p-3.5 shadow-sm transition-all hover:translate-x-1',
+        styles[type] || styles.info
       )}
     >
-      <Icon
-        name={
-          insight.type === 'warning'
-            ? 'alertCircle'
-            : insight.type === 'success'
-              ? 'checkCircle'
-              : 'info'
-        }
-        className='mt-0.5 h-4 w-4 shrink-0'
-      />
+      <div
+        className={cn(
+          'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/50 backdrop-blur-sm dark:bg-black/20',
+          iconColors[type] || iconColors.info
+        )}
+      >
+        <Icon
+          name={
+            type === 'warning'
+              ? 'alertTriangle'
+              : type === 'success'
+                ? 'checkCircle'
+                : type === 'alert'
+                  ? 'alertCircle'
+                  : 'info'
+          }
+          className='h-3.5 w-3.5'
+        />
+      </div>
       <div className='flex-1'>
-        <p className={cn('font-medium', !isExpanded && 'line-clamp-2')}>{insight.message}</p>
+        <p className={cn('text-sm leading-relaxed font-medium', !isExpanded && 'line-clamp-2')}>
+          {insight.message}
+        </p>
         {isLong && (
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className='hover:text-foreground/80 mt-1 text-xs font-semibold underline decoration-dotted underline-offset-2'
+            className='mt-1.5 flex items-center gap-1 text-[11px] font-bold tracking-wider uppercase opacity-60 transition-opacity hover:opacity-100'
           >
             {isExpanded ? 'Show Less' : 'View More'}
           </button>
