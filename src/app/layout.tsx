@@ -6,7 +6,7 @@ import ReactQueryProvider from '@/components/providers/provider';
 import { AuthProvider } from '@/components/providers/auth-provider';
 import { cn } from '@/lib/utils';
 import './globals.css';
-import { GoogleAnalytics } from '@next/third-parties/google';
+import { GoogleTagManager } from '@next/third-parties/google';
 import { Organization, WebSite } from 'schema-dts';
 
 const openSans = Open_Sans({
@@ -135,18 +135,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             __html: JSON.stringify(websiteSchema)
           }}
         />
-        <Script
-          src='https://www.googletagmanager.com/gtag/js?id=GTM-NRXZ2WPR'
-          strategy='afterInteractive'
-        />
-        <Script id='google-analytics' strategy='afterInteractive'>
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'GTM-NRXZ2WPR');
-          `}
-        </Script>
       </head>
       <body
         className={cn(openSans.className, 'bg-background text-foreground dark:subtle-noise-bg')}
@@ -154,8 +142,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ReactQueryProvider>
           <AuthProvider>{children}</AuthProvider>
         </ReactQueryProvider>
+        <GoogleTagManager gtmId='GTM-NRXZ2WPR' />
       </body>
-      <GoogleAnalytics gaId='GTM-NRXZ2WPR' />
     </html>
   );
 }

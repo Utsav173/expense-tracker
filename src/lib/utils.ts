@@ -10,7 +10,8 @@ export function cn(...inputs: ClassValue[]) {
 export function formatCurrency(
   amount: number | null | undefined,
   currencyCode: string = 'INR',
-  mode?: 'standard' | 'scientific' | 'engineering' | 'compact' | 'auto' | undefined
+  mode?: 'standard' | 'scientific' | 'engineering' | 'compact' | 'auto' | undefined,
+  locale: string = 'en-IN'
 ): string {
   const numAmount = Number(amount ?? 0);
 
@@ -35,7 +36,7 @@ export function formatCurrency(
       options.compactDisplay = 'short';
     }
 
-    return new Intl.NumberFormat('en-IN', options).format(numAmount);
+    return new Intl.NumberFormat(locale, options).format(numAmount);
   } catch (error) {
     console.error('Error formatting currency:', error);
     return `${currencyCode} ${numAmount.toFixed(2)}`;
