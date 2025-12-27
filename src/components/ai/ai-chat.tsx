@@ -17,6 +17,7 @@ import type { MyUIMessage } from '@/lib/ai-types';
 import { SuggestionGroup } from './suggestion-group';
 import { authClient } from '@/lib/auth-client';
 import { aiGetSuggestions } from '@/lib/endpoints/ai';
+import { PasswordDialog } from '@/components/transactions/import/password-dialog';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = [
@@ -26,12 +27,6 @@ const ALLOWED_TYPES = [
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 ] as const;
-
-interface Attachment {
-  id: string;
-  file: File;
-  previewUrl?: string | null;
-}
 
 interface FileUIPart {
   type: 'file';
@@ -54,6 +49,45 @@ interface AiChatProps {
   pathname: string;
 }
 
+// PDF Helper function (copied/adapted from import page)
+let pdfjsLibPromise: Promise<any> | null = null;
+async function getPdfjs() {
+  if (!pdfjsLibPromise) {
+    pdfjsLibPromise = import('pdfjs-dist').then((pdfjs) => {
+      pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+        'pdfjs-dist/build/pdf.worker.min.mjs',
+        import.meta.url
+      ).toString();
+      return pdfjs;
+    });
+  }
+  return pdfjsLibPromise;
+}
+
+async function extractTextFromPdf(file: File, password?: string) {
+  const pdfjs = await getPdfjs();
+  const arrayBuffer = await file.arrayBuffer();
+  const loadingTask = pdfjs.getDocument({ data: arrayBuffer, password });
+  const pdf = await loadingTask.promise;
+  let fullText = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const textContent = await page.getTextContent();
+    const pageText = textContent.items.map((item: any) => item.str).join(' ');
+    fullText += pageText + '\n';
+  }
+  return fullText.trim();
+  return fullText.trim();
+}
+
+interface Attachment {
+  id: string;
+  file: File;
+  previewUrl?: string | null;
+  extractedText?: string;
+  isLocked?: boolean;
+}
+
 export const AiChat = ({ isFullPage = false, pathname }: AiChatProps) => {
   const prefersReducedMotion = useReducedMotion();
   const [sessionId, setSessionId] = useState(() => crypto.randomUUID());
@@ -67,6 +101,8 @@ export const AiChat = ({ isFullPage = false, pathname }: AiChatProps) => {
   }, []);
 
   const transport = useMemo(() => new DefaultChatTransport({ api, credentials: 'include' }), [api]);
+
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   const { messages, setMessages, sendMessage, status, error, stop } = useChat<MyUIMessage>({
     id: sessionId,
@@ -94,7 +130,6 @@ export const AiChat = ({ isFullPage = false, pathname }: AiChatProps) => {
   const [unread, setUnread] = useState(0);
   const [dynamicSuggestions, setDynamicSuggestions] = useState<string[]>([]);
 
-  const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -193,62 +228,6 @@ export const AiChat = ({ isFullPage = false, pathname }: AiChatProps) => {
     };
   }, [attachments]);
 
-  const resetAttachments = useCallback(() => {
-    setAttachments((prev) => {
-      prev.forEach((a) => a.previewUrl && URL.revokeObjectURL(a.previewUrl));
-      return [];
-    });
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  }, []);
-
-  const removeAttachment = useCallback((id: string) => {
-    setAttachments((prev) => {
-      const toRemove = prev.find((a) => a.id === id);
-      if (toRemove?.previewUrl) URL.revokeObjectURL(toRemove.previewUrl);
-      return prev.filter((a) => a.id !== id);
-    });
-  }, []);
-
-  const attachFiles = useCallback(
-    (files: FileList | File[] | null) => {
-      if (!files) return;
-      const arr = Array.from(files);
-      const next: Attachment[] = [];
-      for (const f of arr) {
-        if (f.size > MAX_FILE_SIZE) {
-          showError(`"${f.name}" is too large. Max 5MB.`);
-          continue;
-        }
-        if (!ALLOWED_TYPES.includes(f.type as (typeof ALLOWED_TYPES)[number])) {
-          showError(`Unsupported type: ${f.type || 'unknown'}`);
-          continue;
-        }
-        const preview = f.type.startsWith('image/') ? URL.createObjectURL(f) : null;
-        next.push({ id: crypto.randomUUID(), file: f, previewUrl: preview });
-      }
-      if (next.length) setAttachments((prev) => [...prev, ...next]);
-    },
-    [showError]
-  );
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    attachFiles(e.target.files);
-  };
-
-  const handlePaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
-    const file = event.clipboardData?.files?.[0];
-    if (file) {
-      event.preventDefault();
-      attachFiles([file]);
-    }
-  };
-
-  const onDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setIsDragging(false);
-    attachFiles(event.dataTransfer?.files || null);
-  };
-
   const fetchSuggestions = useCallback(async () => {
     try {
       const res = await aiGetSuggestions();
@@ -298,6 +277,130 @@ export const AiChat = ({ isFullPage = false, pathname }: AiChatProps) => {
     };
   }, [pathname, dynamicSuggestions, getContextualSuggestions]);
 
+  // Password Dialog State
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [filePassword, setFilePassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [isUnlocking, setIsUnlocking] = useState(false);
+
+  const processPdf = useCallback(async (file: File, password?: string): Promise<string | null> => {
+    try {
+      const text = await extractTextFromPdf(file, password);
+      return text;
+    } catch (error: any) {
+      if (error?.name === 'PasswordException') {
+        throw error; // Re-throw to handle in UI
+      }
+      console.error('PDF Parse Error:', error);
+      return null;
+    }
+  }, []);
+
+  const attachFiles = useCallback(
+    async (files: FileList | File[] | null) => {
+      if (!files) return;
+      const arr = Array.from(files);
+      const next: Attachment[] = [];
+
+      for (const f of arr) {
+        if (f.size > MAX_FILE_SIZE) {
+          showError(`"${f.name}" is too large. Max 5MB.`);
+          continue;
+        }
+        if (!ALLOWED_TYPES.includes(f.type as (typeof ALLOWED_TYPES)[number])) {
+          showError(`Unsupported type: ${f.type || 'unknown'}`);
+          continue;
+        }
+
+        const preview = f.type.startsWith('image/') ? URL.createObjectURL(f) : null;
+        let attachment: Attachment = { id: crypto.randomUUID(), file: f, previewUrl: preview };
+
+        if (f.type === 'application/pdf') {
+          try {
+            const text = await processPdf(f);
+            if (text) {
+              attachment.extractedText = text;
+            }
+          } catch (err: any) {
+            if (err?.name === 'PasswordException') {
+              attachment.isLocked = true;
+              setPendingFile(f);
+              setPasswordDialogOpen(true);
+              return;
+            }
+          }
+        }
+        next.push(attachment);
+      }
+      if (next.length) setAttachments((prev) => [...prev, ...next]);
+    },
+    [showError, processPdf]
+  );
+
+  const handleUnlockSubmit = async () => {
+    if (!pendingFile || !filePassword) return;
+    setIsUnlocking(true);
+    setPasswordError(null);
+    try {
+      const text = await processPdf(pendingFile, filePassword);
+      if (text) {
+        const attachment: Attachment = {
+          id: crypto.randomUUID(),
+          file: pendingFile,
+          previewUrl: null,
+          extractedText: text
+        };
+        setAttachments((prev) => [...prev, attachment]);
+        setPasswordDialogOpen(false);
+        setPendingFile(null);
+        setFilePassword('');
+      }
+    } catch (err: any) {
+      if (err?.name === 'PasswordException') {
+        setPasswordError('Incorrect password. Please try again.');
+      } else {
+        setPasswordError('Failed to unlock PDF.');
+      }
+    } finally {
+      setIsUnlocking(false);
+    }
+  };
+
+  const resetAttachments = useCallback(() => {
+    setAttachments((prev) => {
+      prev.forEach((a) => a.previewUrl && URL.revokeObjectURL(a.previewUrl));
+      return [];
+    });
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }, []);
+
+  const removeAttachment = useCallback((id: string) => {
+    setAttachments((prev) => {
+      const toRemove = prev.find((a) => a.id === id);
+      if (toRemove?.previewUrl) URL.revokeObjectURL(toRemove.previewUrl);
+      return prev.filter((a) => a.id !== id);
+    });
+  }, []);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    attachFiles(e.target.files);
+  };
+
+  const handlePaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const file = event.clipboardData?.files?.[0];
+    if (file) {
+      event.preventDefault();
+      attachFiles([file]);
+    }
+  };
+
+  const onDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    attachFiles(event.dataTransfer?.files || null);
+  };
+
   const handleSendMessage = useCallback(
     async (promptText?: string) => {
       const messageToSend = (promptText ?? input).trim();
@@ -309,21 +412,38 @@ export const AiChat = ({ isFullPage = false, pathname }: AiChatProps) => {
       if (textAreaRef.current) textAreaRef.current.style.height = 'auto';
 
       try {
-        const fileParts: FileUIPart[] | undefined =
-          attachments.length > 0
-            ? await Promise.all(
-                attachments.map(async (a) => ({
-                  type: 'file' as const,
-                  mediaType: a.file.type,
-                  url: await convertFileToDataURL(a.file),
-                  filename: a.file.name
-                }))
-              )
-            : undefined;
+        const fileParts: FileUIPart[] = [];
+        let finalMessageText = messageToSend;
+
+        if (attachments.length > 0) {
+          const imageAttachments = attachments.filter((a) => a.file.type.startsWith('image/'));
+          const pdfAttachments = attachments.filter((a) => a.file.type === 'application/pdf');
+
+          // Process Images
+          const imageParts = await Promise.all(
+            imageAttachments.map(async (a) => ({
+              type: 'file' as const,
+              mediaType: a.file.type,
+              url: await convertFileToDataURL(a.file),
+              filename: a.file.name
+            }))
+          );
+          fileParts.push(...imageParts);
+
+          // Process Text-based files
+          if (pdfAttachments.length > 0) {
+            finalMessageText += '\n\n--- Attached Documents ---\n';
+            for (const pdf of pdfAttachments) {
+              if (pdf.extractedText) {
+                finalMessageText += `\n[Document: ${pdf.file.name}]\n${pdf.extractedText}\n`;
+              }
+            }
+          }
+        }
 
         await sendMessage({
-          text: messageToSend || '(no message)',
-          files: fileParts
+          text: finalMessageText || '(no message)',
+          files: fileParts.length > 0 ? fileParts : undefined
         });
         fetchSuggestions();
       } finally {
@@ -413,19 +533,15 @@ export const AiChat = ({ isFullPage = false, pathname }: AiChatProps) => {
     showSuccess
   ]);
 
-  // Handle confirmation callbacks
   const handleConfirm = useCallback(
     (id: string) => {
-      // Send confirmation back to AI
       sendMessage({ text: `CONFIRM:${id}` });
     },
     [sendMessage]
   );
 
-  // Handle clarification selection
   const handleClarificationSelect = useCallback(
     (id: string) => {
-      // Send selected option back to AI
       sendMessage({ text: `SELECT:${id}` });
     },
     [sendMessage]
@@ -445,6 +561,7 @@ export const AiChat = ({ isFullPage = false, pathname }: AiChatProps) => {
         isFullPage ? 'bg-transparent' : 'bg-card/80 rounded-2xl border shadow-xl backdrop-blur-sm'
       )}
     >
+      {/* Messages Check */}
       {messages.length > 0 && (
         <div className='absolute top-1 right-3 z-10 flex items-center gap-1'>
           {isBusy && (
@@ -756,6 +873,17 @@ export const AiChat = ({ isFullPage = false, pathname }: AiChatProps) => {
           Press Enter to send • Shift+Enter for newline
         </div>
       </div>
+
+      <PasswordDialog
+        isOpen={passwordDialogOpen}
+        onOpenChange={setPasswordDialogOpen}
+        fileName={pendingFile?.name}
+        password={filePassword}
+        setPassword={setFilePassword}
+        onSubmit={handleUnlockSubmit}
+        error={passwordError}
+        loading={isUnlocking}
+      />
     </div>
   );
 };
