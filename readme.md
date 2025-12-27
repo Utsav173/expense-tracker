@@ -4,11 +4,12 @@
   <p>A modern, AI-powered, open-source expense tracker built to provide a seamless and intuitive financial management experience.</p>
 
   <div>
-    <img src="https://img.shields.io/badge/Next.js-15-black.svg?style=for-the-badge&logo=nextdotjs" alt="Next.js 15">
+    <img src="https://img.shields.io/badge/Next.js-16-black.svg?style=for-the-badge&logo=nextdotjs" alt="Next.js 16">
     <img src="https://img.shields.io/badge/React-19-blue.svg?style=for-the-badge&logo=react" alt="React 19">
     <img src="https://img.shields.io/badge/TypeScript-5-blue.svg?style=for-the-badge&logo=typescript" alt="TypeScript">
     <img src="https://img.shields.io/badge/Tailwind_CSS-4-38B2AC.svg?style=for-the-badge&logo=tailwind-css" alt="Tailwind CSS 4">
     <img src="https://img.shields.io/badge/Shadcn_UI-black?style=for-the-badge&logo=shadcnui&logoColor=white" alt="Shadcn UI">
+    <img src="https://img.shields.io/badge/Better_Auth-blueviolet?style=for-the-badge&logo=auth0" alt="Better Auth">
   </div>
 
   <p>
@@ -21,6 +22,8 @@
     <a href="#-contributing">Contributing</a>
   </p>
 </div>
+
+![Frontend Architecture](public/frontend_architecture.png)
 
 ## 🚀 Features Showcase
 
@@ -61,6 +64,11 @@ This application is packed with features designed for comprehensive financial ma
 - ✅ **Debt Management:** Track loans (taken or given) with details on interest, duration, and payment status.
 - ✅ **Investment Tracking:** Monitor investment accounts, individual holdings, and overall portfolio performance.
 
+### 🎨 Visual Experience
+
+- ✅ **Immersive 3D Elements:** Interactive 3D visualizations powered by Three.js and React Three Fiber for a modern, engaging feel.
+- ✅ **Smooth Animations:** Powered by Framer Motion and GSAP for a polished, premium user experience.
+
 ### 🤖 AI Assistant
 
 - ✅ **Bring Your Own Key (BYOK):** Connect your preferred AI provider (OpenAI, Google, Anthropic, etc.) using your own API key for maximum privacy and control.
@@ -73,7 +81,7 @@ This application is packed with features designed for comprehensive financial ma
 
 ## 🌟 Why Choose This Project?
 
-- **Modern Tech Stack:** Built with the latest and greatest web technologies like Next.js 15, React 19, and Tailwind CSS 4 for a fast, reliable, and scalable application.
+- **Modern Tech Stack:** Built with the latest and greatest web technologies like Next.js 16, React 19, and Tailwind CSS 4 for a fast, reliable, and scalable application.
 - **Exceptional User Experience:** A huge emphasis has been placed on creating a clean, intuitive, and responsive UI/UX, powered by the elegant Shadcn UI component library.
 - **AI-Powered & User-Controlled:** Goes beyond simple tracking by integrating a powerful AI assistant that operates using **your** API key, ensuring your data's privacy and giving you full control over AI costs and provider choice.
 - **Extensible & Open Source:** The codebase is clean, well-structured, and ready for new features. Contributions are welcome!
@@ -85,17 +93,19 @@ This application is packed with features designed for comprehensive financial ma
 
 This project uses a modern, type-safe, and performant technology stack.
 
-| Category          | Technology                                                                | Role & Purpose                                                                                                 |
-| ----------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| **Framework**     | [Next.js](https://nextjs.org/) 15 (App Router)                            | Provides the core structure, file-based routing, server-side rendering, and API routes.                        |
-| **UI Library**    | [React](https://react.dev/) 19                                            | The foundational library for building the interactive user interface.                                          |
-| **Styling**       | [Tailwind CSS](https://tailwindcss.com/) 4                                | A utility-first CSS framework for rapid, custom UI development without leaving your HTML.                      |
-| **Components**    | [Shadcn UI](https://ui.shadcn.com/)                                       | A collection of beautifully designed, accessible, and unstyled components that we build upon.                  |
-| **Data Fetching** | [TanStack Query](https://tanstack.com/query/v5)                           | Manages all server state: fetching, caching, and updating data with hooks for a seamless developer experience. |
-| **Forms**         | [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/) | The standard for building performant, flexible, and type-safe forms with robust validation.                    |
-| **Charting**      | [Recharts](https://recharts.org/en-US/)                                   | A composable charting library built on React components for creating beautiful data visualizations.            |
-| **Icons**         | [iconify](https://iconify.design/)                                        | A simply beautiful and consistent icon toolkit.                                                                |
-| **Utilities**     | `date-fns`, `clsx`, `tailwind-merge`                                      | Best-in-class utilities for date manipulation and robust class name management.                                |
+| Category          | Technology                                                                  | Role & Purpose                                                             |
+| ----------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| **Framework**     | [Next.js](https://nextjs.org/) 16 (App Router)                              | The core React framework for the web.                                      |
+| **UI Library**    | [React](https://react.dev/) 19                                              | The foundational library for building the interactive user interface.      |
+| **Styling**       | [Tailwind CSS](https://tailwindcss.com/) 4                                  | A utility-first CSS framework for rapid, custom UI development.            |
+| **Components**    | [Shadcn UI](https://ui.shadcn.com/)                                         | A collection of beautifully designed, accessible, and unstyled components. |
+| **Animations**    | [Framer Motion](https://www.framer.com/motion/) & [GSAP](https://gsap.com/) | Powerful libraries for complex 2D and 3D animations and transitions.       |
+| **3D Elements**   | [React Three Fiber](https://docs.pmnd.rs/react-three-fiber/)                | Renders 3D graphics using Three.js in a React-friendly way.                |
+| **Data Fetching** | [TanStack Query](https://tanstack.com/query/v5)                             | Manages all server state: fetching, caching, and updating data.            |
+| **Auth**          | [Better Auth](https://www.better-auth.com/)                                 | A comprehensive authentication library for secure user management.         |
+| **AI SDK**        | [Vercel AI SDK](https://sdk.vercel.ai/docs)                                 | Seamlessly integrates AI capabilities for the chat assistant.              |
+| **Forms**         | [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/)   | Type-safe form validation and management.                                  |
+| **Charting**      | [Recharts](https://recharts.org/en-US/)                                     | A composable charting library for data visualizations.                     |
 
 ---
 
