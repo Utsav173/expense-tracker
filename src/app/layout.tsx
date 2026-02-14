@@ -1,5 +1,5 @@
 import React from 'react';
-import { Open_Sans } from 'next/font/google';
+import { Open_Sans, Instrument_Serif } from 'next/font/google';
 import { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import ReactQueryProvider from '@/components/providers/provider';
@@ -13,6 +13,13 @@ const openSans = Open_Sans({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-sans'
+});
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ['latin'],
+  weight: ['400'],
+  style: ['normal', 'italic'],
+  variable: '--font-display'
 });
 
 export const metadata: Metadata = {
@@ -149,7 +156,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </Script>
       </head>
       <body
-        className={cn(openSans.className, 'bg-background text-foreground dark:subtle-noise-bg')}
+        className={cn(
+          openSans.className,
+          instrumentSerif.variable,
+          'bg-background text-foreground dark:subtle-noise-bg'
+        )}
       >
         <ReactQueryProvider>
           <AuthProvider>{children}</AuthProvider>

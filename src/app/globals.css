@@ -47,6 +47,16 @@
   }
 }
 
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
 :root {
   --hue-neutral: 220;
   --hue-primary: 246;
@@ -532,6 +542,7 @@
   --font-mono:
     'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
     'Courier New', monospace;
+  --font-display: 'Instrument Serif', Georgia, 'Times New Roman', serif;
 
   --shadow-2xs: 0 1px 1px 0 hsl(var(--shadow-color-hsl) / calc(var(--shadow-strength) + 0.5%));
   --shadow-xs: 0 1px 2px 0 hsl(var(--shadow-color-hsl) / calc(var(--shadow-strength) + 1.5%));
@@ -777,6 +788,10 @@
 
 .animate-pulse-glow {
   animation: pulse-glow 3s infinite;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
 }
 
 .icon-gradient {
